@@ -15,7 +15,6 @@ interface StudentData {
   } | null;
   onboarding_status: string;
 }
-
 interface PlacementAttempt {
   score: number | null;
   total: number | null;
@@ -45,6 +44,24 @@ export default function StudentWelcomePage() {
       ? Math.round((attempt.score / attempt.total) * 100)
       : null;
 
+  const scoreColor =
+    pct === null
+      ? "#C8A96A"
+      : pct >= 70
+        ? "#2D7A4F"
+        : pct >= 50
+          ? "#A8863E"
+          : "#C0392B";
+
+  const scoreBg =
+    pct === null
+      ? "rgba(200,169,106,0.1)"
+      : pct >= 70
+        ? "rgba(45,122,79,0.08)"
+        : pct >= 50
+          ? "rgba(168,134,62,0.08)"
+          : "rgba(192,57,43,0.08)";
+
   if (loading)
     return (
       <div className="shell">
@@ -63,29 +80,67 @@ export default function StudentWelcomePage() {
           transition: "opacity 0.55s ease, transform 0.55s ease",
         }}
       >
-        {/* Header celebration */}
+        {/* Celebration banner */}
         <div className="top-banner">
-          <div className="stars">⭐ ⭐ ⭐</div>
-          <div className="banner-title">تم تعيينك في فصلك!</div>
+          <div className="banner-stars">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </div>
+          <div className="banner-title">تم تعيينك في فصلك الدراسي!</div>
           <div className="banner-sub">
             أهلاً وسهلاً، {student?.profile.full_name}
           </div>
         </div>
 
-        {/* Class card */}
-        <div className="class-highlight">
-          <div className="class-big-icon">📚</div>
-          <div className="class-big-label">فصلك الدراسي</div>
-          <div className="class-big-name">{student?.class?.name ?? "—"}</div>
+        {/* Class highlight */}
+        <div className="class-card">
+          <div className="class-icon">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z" />
+              <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
+            </svg>
+          </div>
+          <div className="class-label">فصلك الدراسي</div>
+          <div className="class-name">{student?.class?.name ?? "—"}</div>
           {student?.school && (
             <div className="class-school">{student.school.name}</div>
           )}
         </div>
 
-        {/* Teacher */}
+        {/* Info rows */}
         {student?.class?.teacher && (
           <div className="info-row">
-            <div className="info-icon">👨‍🏫</div>
+            <div className="info-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
             <div className="info-body">
               <div className="info-label">معلمك</div>
               <div className="info-value">
@@ -95,10 +150,24 @@ export default function StudentWelcomePage() {
           </div>
         )}
 
-        {/* Classmates count */}
         {student?.class && (
           <div className="info-row">
-            <div className="info-icon">👥</div>
+            <div className="info-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+              </svg>
+            </div>
             <div className="info-body">
               <div className="info-label">زملاؤك في الفصل</div>
               <div className="info-value">
@@ -108,48 +177,51 @@ export default function StudentWelcomePage() {
           </div>
         )}
 
-        {/* Placement score */}
+        {/* Score */}
         {pct !== null && attempt && (
-          <div className="score-section">
+          <div
+            className="score-section"
+            style={{ background: scoreBg, borderColor: `${scoreColor}33` }}
+          >
             <div className="score-header">
-              <span className="score-title">نتيجة اختبار التصنيف</span>
+              <span className="score-label">نتيجة اختبار التصنيف</span>
               <span
-                className="score-pct-badge"
-                style={{
-                  background:
-                    pct >= 70
-                      ? "rgba(16,185,129,0.1)"
-                      : pct >= 50
-                        ? "rgba(245,158,11,0.1)"
-                        : "rgba(239,68,68,0.1)",
-                  color:
-                    pct >= 70 ? "#10b981" : pct >= 50 ? "#b45309" : "#dc2626",
-                }}
+                className="score-pct"
+                style={{ color: scoreColor, background: `${scoreColor}18` }}
               >
-                {pct}%
+                {pct}٪
               </span>
             </div>
             <div className="score-nums">
-              <span className="score-num">{attempt.score}</span>
+              <span className="score-num" style={{ color: scoreColor }}>
+                {attempt.score}
+              </span>
               <span className="score-sep">/</span>
               <span className="score-den">{attempt.total}</span>
             </div>
-            <div className="score-bar-wrap">
+            <div className="score-track">
               <div
-                className="score-bar"
-                style={{
-                  width: `${pct}%`,
-                  background:
-                    pct >= 70 ? "#10b981" : pct >= 50 ? "#f59e0b" : "#ef4444",
-                }}
+                className="score-fill"
+                style={{ width: `${pct}%`, background: scoreColor }}
               />
             </div>
           </div>
         )}
 
-        {/* CTA */}
         <button className="go-btn" onClick={() => router.push("/student")}>
-          انتقل إلى الفصل الآن ←
+          انتقل إلى الفصل الآن
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
         </button>
 
         <div className="footer-note">
@@ -160,54 +232,49 @@ export default function StudentWelcomePage() {
       <style>{baseStyles}</style>
       <style>{`
         .top-banner {
-          background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-          border-radius: 16px; padding: 22px 20px;
-          text-align: center; display: flex; flex-direction: column; gap: 6px;
+          background: var(--ink); border-radius: 16px; padding: 22px 20px;
+          text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
-        .stars { font-size: 20px; letter-spacing: 4px; }
-        .banner-title { font-size: 20px; font-weight: 800; color: white; }
-        .banner-sub { font-size: 13.5px; color: rgba(255,255,255,0.8); }
+        .banner-stars { display: flex; align-items: center; gap: 6px; color: var(--gold); }
+        .banner-title { font-size: 20px; font-weight: 800; color: #fff; }
+        .banner-sub { font-size: 13.5px; color: rgba(255,255,255,0.6); }
 
-        .class-highlight {
-          display: flex; flex-direction: column; align-items: center; gap: 6px;
-          text-align: center; padding: 20px;
-          background: #f7f8fa; border-radius: 16px; border: 1px solid #e5e7eb;
+        .class-card {
+          display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center;
+          padding: 22px 20px; background: var(--gold-pale); border-radius: 16px; border: 1px solid var(--border);
         }
-        .class-big-icon { font-size: 40px; }
-        .class-big-label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.8px; }
-        .class-big-name { font-size: 28px; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
-        .class-school { font-size: 13px; color: #2563eb; font-weight: 600; }
+        .class-icon { color: var(--gold-dark); }
+        .class-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+        .class-name { font-size: 30px; font-weight: 800; color: var(--ink); letter-spacing: -0.5px; }
+        .class-school { font-size: 13px; color: var(--gold-dark); font-weight: 600; }
 
         .info-row {
           display: flex; align-items: center; gap: 14px;
-          background: #f7f8fa; border-radius: 12px; padding: 14px 16px;
-          border: 1px solid #e5e7eb;
+          background: var(--surface); border-radius: 12px; padding: 14px 16px; border: 1px solid var(--border);
         }
-        .info-icon { font-size: 26px; }
-        .info-label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.4px; }
-        .info-value { font-size: 15px; font-weight: 700; color: #111827; margin-top: 2px; }
+        .info-icon { color: var(--gold-dark); flex-shrink: 0; }
+        .info-label { font-size: 10.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 2px; }
 
-        .score-section { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #f7f8fa; border-radius: 12px; border: 1px solid #e5e7eb; }
+        .score-section { display: flex; flex-direction: column; gap: 9px; padding: 16px; border-radius: 12px; border: 1px solid; }
         .score-header { display: flex; align-items: center; justify-content: space-between; }
-        .score-title { font-size: 12px; font-weight: 700; color: #6b7280; }
-        .score-pct-badge { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 99px; }
-        .score-nums { display: flex; align-items: baseline; gap: 3px; }
-        .score-num { font-size: 32px; font-weight: 800; color: #111827; font-family: 'JetBrains Mono', monospace; letter-spacing: -1px; }
-        .score-sep { font-size: 22px; color: #d1d5db; }
-        .score-den { font-size: 22px; font-weight: 700; color: #9ca3af; font-family: 'JetBrains Mono', monospace; }
-        .score-bar-wrap { height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
-        .score-bar { height: 100%; border-radius: 99px; transition: width 1.2s ease; }
+        .score-label { font-size: 12px; font-weight: 700; color: var(--muted); }
+        .score-pct { font-size: 12px; font-weight: 800; padding: 3px 11px; border-radius: 99px; }
+        .score-nums { display: flex; align-items: baseline; gap: 4px; }
+        .score-num { font-size: 34px; font-weight: 800; font-family: 'JetBrains Mono', monospace; letter-spacing: -1px; }
+        .score-sep { font-size: 22px; color: var(--border); }
+        .score-den { font-size: 22px; font-weight: 700; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+        .score-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+        .score-fill { height: 100%; border-radius: 99px; transition: width 1.2s ease; }
 
         .go-btn {
           display: flex; align-items: center; justify-content: center; gap: 8px;
-          background: #111827; color: white;
-          padding: 14px; border-radius: 12px; border: none;
-          font-size: 15px; font-weight: 800; cursor: pointer;
-          transition: all 0.2s; font-family: Tajawal, sans-serif; width: 100%;
+          background: var(--ink); color: #fff; padding: 14px 20px; border-radius: 12px;
+          border: none; font-size: 15px; font-weight: 800; cursor: pointer;
+          transition: all 0.2s; font-family: 'Tajawal', sans-serif; width: 100%;
         }
-        .go-btn:hover { background: #1f2937; transform: translateY(-1px); }
-
-        .footer-note { text-align: center; font-size: 12px; color: #9ca3af; }
+        .go-btn:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); }
+        .footer-note { text-align: center; font-size: 12px; color: var(--muted); }
       `}</style>
     </div>
   );
@@ -216,17 +283,21 @@ export default function StudentWelcomePage() {
 const baseStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+    --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7; --border: #E8D9B8;
+  }
   .shell {
-    min-height: 100vh; background: #f7f8fa;
-    font-family: Tajawal, sans-serif; direction: rtl;
+    min-height: 100vh; background: var(--gold-pale);
+    font-family: 'Tajawal', sans-serif; direction: rtl;
     display: flex; align-items: center; justify-content: center; padding: 28px 16px;
   }
-  .spinner { width: 28px; height: 28px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: sp 0.7s linear infinite; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: sp 0.7s linear infinite; }
   @keyframes sp { to { transform: rotate(360deg); } }
   .card {
-    background: white; border: 1px solid #e5e7eb; border-radius: 22px;
-    padding: 32px 28px; width: 100%; max-width: 460px;
-    display: flex; flex-direction: column; gap: 18px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+    background: #fff; border: 1px solid var(--border); border-radius: 22px;
+    padding: 28px 26px; width: 100%; max-width: 460px;
+    display: flex; flex-direction: column; gap: 16px;
+    box-shadow: 0 8px 32px rgba(26,18,8,0.08);
   }
 `;

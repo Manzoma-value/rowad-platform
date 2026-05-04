@@ -99,7 +99,18 @@ export default function StudentPlacementPage() {
     return (
       <Shell>
         <div className="p-empty">
-          <div className="p-empty-icon">📋</div>
+          <div className="p-empty-icon">
+            <svg
+              width="40"
+              height="40"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
           <h2>لا يوجد اختبار تصنيف متاح حالياً</h2>
           <p>سيتم إخطارك عندما يكون الاختبار جاهزاً</p>
         </div>
@@ -112,97 +123,130 @@ export default function StudentPlacementPage() {
   return (
     <Shell>
       <div className="p-wrap">
+        {/* Header */}
         <div className="p-header">
-          <div>
-            {school && <div className="school-badge">🏫 {school.name}</div>}
+          <div className="p-header-left">
+            {school && (
+              <div className="school-chip">
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                {school.name}
+              </div>
+            )}
             <div className="p-label">اختبار التصنيف</div>
             <h1 className="p-title">{assessment.title}</h1>
           </div>
-          <div className="p-meta">
-            <span className="q-counter">
-              {currentQ + 1} / {questions.length}
-            </span>
-            <span className="answered">{answeredCount} مجاب</span>
+          <div className="p-header-right">
+            <div className="q-counter">
+              {currentQ + 1}
+              <span className="q-counter-total">/{questions.length}</span>
+            </div>
+            <div className="q-counter-label">السؤال الحالي</div>
+            <div className="answered-badge">{answeredCount} مجاب</div>
           </div>
         </div>
 
-        <div className="progress-wrap">
-          <div className="progress-bar" style={{ width: `${progress}%` }} />
+        {/* Progress */}
+        <div className="prog-section">
+          <div className="prog-info">
+            <span>التقدم</span>
+            <span>{Math.round(progress)}٪</span>
+          </div>
+          <div className="prog-track">
+            <div className="prog-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <div className="q-dots">
+            {questions.map((q, i) => (
+              <button
+                key={q.id}
+                className={`q-dot ${i === currentQ ? "current" : ""} ${answers[q.id] ? "answered" : ""}`}
+                onClick={() => setCurrentQ(i)}
+                title={`السؤال ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
-        <div className="q-dots">
-          {questions.map((q, i) => (
-            <button
-              key={q.id}
-              className={`q-dot ${i === currentQ ? "current" : ""} ${answers[q.id] ? "answered" : ""}`}
-              onClick={() => setCurrentQ(i)}
-            />
-          ))}
-        </div>
-
+        {/* Question card */}
         {current && (
           <div className="q-card" key={current.id}>
-            <div className="q-type-badge">
-              {current.type === "MCQ"
-                ? "اختيار من متعدد"
-                : current.type === "TF"
-                  ? "صح أم خطأ"
-                  : "إجابة مكتوبة"}
+            <div className="q-card-top">
+              <div className="q-type-pill">
+                {current.type === "MCQ"
+                  ? "اختيار من متعدد"
+                  : current.type === "TF"
+                    ? "صح أم خطأ"
+                    : "إجابة مكتوبة"}
+              </div>
+              <div className="q-num-label">
+                السؤال {currentQ + 1} من {questions.length}
+              </div>
             </div>
-            <div className="q-text">{current.text}</div>
+            <div className="q-card-body">
+              <div className="q-text">{current.text}</div>
 
-            {current.type === "MCQ" && (
-              <div className="q-options">
-                {current.options.map((opt) => (
-                  <button
-                    key={opt.id}
-                    className={`q-opt-btn ${answers[current.id] === opt.text ? "selected" : ""}`}
-                    onClick={() => setAnswer(current.id, opt.text)}
-                  >
-                    <span className="opt-radio">
-                      {answers[current.id] === opt.text && (
-                        <span className="opt-fill" />
-                      )}
-                    </span>
-                    {opt.text}
-                  </button>
-                ))}
-              </div>
-            )}
+              {current.type === "MCQ" && (
+                <div className="q-options">
+                  {current.options.map((opt) => (
+                    <button
+                      key={opt.id}
+                      className={`q-opt ${answers[current.id] === opt.text ? "selected" : ""}`}
+                      onClick={() => setAnswer(current.id, opt.text)}
+                    >
+                      <span className="opt-radio">
+                        {answers[current.id] === opt.text && (
+                          <span className="opt-fill" />
+                        )}
+                      </span>
+                      {opt.text}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {current.type === "TF" && (
-              <div className="tf-row">
-                {[
-                  { val: "true", label: "✔ صحيح" },
-                  { val: "false", label: "✘ خطأ" },
-                ].map((opt) => (
-                  <button
-                    key={opt.val}
-                    className={`tf-btn ${answers[current.id] === opt.val ? "sel" : ""} ${opt.val}`}
-                    onClick={() => setAnswer(current.id, opt.val)}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
+              {current.type === "TF" && (
+                <div className="tf-row">
+                  {[
+                    { val: "true", label: "✔ صحيح" },
+                    { val: "false", label: "✘ خطأ" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.val}
+                      className={`tf-btn ${answers[current.id] === opt.val ? `sel-${opt.val}` : ""}`}
+                      onClick={() => setAnswer(current.id, opt.val)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-            {current.type === "WRITTEN" && (
-              <textarea
-                className="written-inp"
-                placeholder="اكتب إجابتك هنا..."
-                value={answers[current.id] ?? ""}
-                onChange={(e) => setAnswer(current.id, e.target.value)}
-                rows={5}
-                dir="rtl"
-              />
-            )}
+              {current.type === "WRITTEN" && (
+                <textarea
+                  className="written-inp"
+                  placeholder="اكتب إجابتك هنا..."
+                  value={answers[current.id] ?? ""}
+                  onChange={(e) => setAnswer(current.id, e.target.value)}
+                  rows={5}
+                  dir="rtl"
+                />
+              )}
+            </div>
           </div>
         )}
 
         <div className="nav-row">
           <button
-            className="nav-btn secondary"
+            className="nav-btn nav-prev"
             onClick={() => setCurrentQ((q) => Math.max(0, q - 1))}
             disabled={currentQ === 0}
           >
@@ -210,14 +254,14 @@ export default function StudentPlacementPage() {
           </button>
           {currentQ < questions.length - 1 ? (
             <button
-              className="nav-btn primary"
+              className="nav-btn nav-next"
               onClick={() => setCurrentQ((q) => q + 1)}
             >
               التالي ←
             </button>
           ) : (
             <button
-              className={`nav-btn submit ${allAnswered ? "ready" : ""}`}
+              className={`nav-btn nav-submit ${allAnswered ? "ready" : ""}`}
               onClick={handleSubmit}
               disabled={submitting}
             >
@@ -225,6 +269,7 @@ export default function StudentPlacementPage() {
             </button>
           )}
         </div>
+
         {error && <div className="p-error">{error}</div>}
       </div>
       <style>{styles}</style>
@@ -239,7 +284,16 @@ function Shell({ children }: { children: React.ReactNode }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        .p-shell { min-height: 100vh; background: #f7f8fa; font-family: 'Tajawal', sans-serif; direction: rtl; display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px; }
+        :root {
+          --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+          --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7;
+          --border: #E8D9B8; --success: #2D7A4F; --danger: #C0392B;
+        }
+        .p-shell {
+          min-height: 100vh; background: var(--gold-pale);
+          font-family: 'Tajawal', sans-serif; direction: rtl;
+          display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px;
+        }
       `}</style>
     </div>
   );
@@ -252,7 +306,7 @@ function Spinner() {
         display: "flex",
         alignItems: "center",
         gap: 12,
-        color: "#6b7280",
+        color: "#7A6540",
         fontSize: 14,
         padding: "80px 0",
       }}
@@ -261,8 +315,8 @@ function Spinner() {
         style={{
           width: 20,
           height: 20,
-          border: "2px solid #e5e7eb",
-          borderTopColor: "#2563eb",
+          border: "2px solid #E8D9B8",
+          borderTopColor: "#C8A96A",
           borderRadius: "50%",
           animation: "spin 0.7s linear infinite",
         }}
@@ -274,59 +328,94 @@ function Spinner() {
 }
 
 const styles = `
-  .p-wrap { width: 100%; max-width: 660px; display: flex; flex-direction: column; gap: 18px; }
-  .p-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
-  .school-badge { font-size: 12px; font-weight: 700; color: #2563eb; background: rgba(37,99,235,0.08); border-radius: 7px; padding: 3px 10px; width: fit-content; margin-bottom: 6px; }
-  .p-label { font-size: 10.5px; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px; }
-  .p-title { font-size: 21px; font-weight: 800; color: #111827; }
-  .p-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-  .q-counter { font-size: 18px; font-weight: 800; color: #111827; }
-  .answered { font-size: 12px; color: #6b7280; }
+  .p-wrap { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 18px; }
 
-  .progress-wrap { height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
-  .progress-bar { height: 100%; background: linear-gradient(90deg, #2563eb, #7c3aed); border-radius: 99px; transition: width 0.4s ease; }
+  .p-header {
+    background: var(--ink); border-radius: 18px; padding: 22px 26px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .p-header-left {}
+  .school-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(200,169,106,0.18); border: 1px solid rgba(200,169,106,0.35);
+    color: var(--gold-light); font-size: 11.5px; font-weight: 700;
+    padding: 4px 12px; border-radius: 99px; margin-bottom: 10px;
+  }
+  .p-label { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 5px; }
+  .p-title { font-size: 20px; font-weight: 800; color: #fff; }
+  .p-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .q-counter { font-size: 30px; font-weight: 800; color: var(--gold); line-height: 1; }
+  .q-counter-total { font-size: 16px; color: rgba(200,169,106,0.5); }
+  .q-counter-label { font-size: 10.5px; color: rgba(255,255,255,0.45); }
+  .answered-badge { font-size: 11.5px; color: var(--gold-light); background: rgba(200,169,106,0.15); border-radius: 99px; padding: 3px 10px; }
 
+  .prog-section { background: rgba(200,169,106,0.1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .prog-info { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .prog-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); border-radius: 99px; transition: width 0.4s ease; }
   .q-dots { display: flex; flex-wrap: wrap; gap: 5px; }
-  .q-dot { width: 28px; height: 8px; border-radius: 99px; background: #e5e7eb; border: none; cursor: pointer; transition: all 0.2s; }
-  .q-dot.answered { background: #2563eb; }
-  .q-dot.current { background: #111827; transform: scaleY(1.3); }
+  .q-dot { width: 32px; height: 7px; border-radius: 99px; background: var(--border); border: none; cursor: pointer; transition: all 0.18s; }
+  .q-dot.answered { background: var(--gold); }
+  .q-dot.current { background: var(--ink); transform: scaleY(1.4); }
 
-  .q-card { background: white; border: 1px solid #e5e7eb; border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 16px; animation: fadeUp 0.2s ease both; }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  .q-type-badge { font-size: 11px; font-weight: 700; color: #6b7280; background: #f1f3f6; border-radius: 6px; padding: 3px 10px; width: fit-content; }
-  .q-text { font-size: 16px; font-weight: 700; color: #111827; line-height: 1.6; }
+  .q-card { background: #fff; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: 0 2px 16px rgba(26,18,8,0.06); animation: fadeUp 0.22s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+  .q-card-top { background: var(--gold-pale); border-bottom: 1px solid var(--border); padding: 13px 22px; display: flex; align-items: center; justify-content: space-between; }
+  .q-type-pill { font-size: 10.5px; font-weight: 700; color: var(--gold-dark); background: rgba(168,134,62,0.12); border: 1px solid rgba(168,134,62,0.25); padding: 4px 12px; border-radius: 99px; }
+  .q-num-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .q-card-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+  .q-text { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.65; }
 
   .q-options { display: flex; flex-direction: column; gap: 9px; }
-  .q-opt-btn { display: flex; align-items: center; gap: 11px; padding: 12px 15px; border-radius: 10px; background: #f7f8fa; border: 1.5px solid #e5e7eb; color: #374151; font-size: 14px; font-weight: 500; cursor: pointer; text-align: right; transition: all 0.15s; font-family: 'Tajawal', sans-serif; }
-  .q-opt-btn:hover { border-color: #2563eb; background: rgba(37,99,235,0.04); }
-  .q-opt-btn.selected { border-color: #2563eb; background: rgba(37,99,235,0.07); color: #1d4ed8; font-weight: 700; }
-  .opt-radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #d1d5db; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; }
-  .q-opt-btn.selected .opt-radio { border-color: #2563eb; }
-  .opt-fill { width: 8px; height: 8px; border-radius: 50%; background: #2563eb; }
+  .q-opt {
+    display: flex; align-items: center; gap: 12px; padding: 13px 15px;
+    border-radius: 11px; background: var(--surface); border: 1.5px solid var(--border);
+    color: var(--ink2); font-size: 14.5px; font-weight: 500; cursor: pointer;
+    text-align: right; transition: all 0.15s; font-family: 'Tajawal', sans-serif; width: 100%;
+  }
+  .q-opt:hover { border-color: var(--gold); background: var(--gold-pale); }
+  .q-opt.selected { border-color: var(--gold-dark); background: rgba(200,169,106,0.1); color: var(--ink); font-weight: 700; }
+  .opt-radio { width: 19px; height: 19px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; }
+  .q-opt.selected .opt-radio { border-color: var(--gold-dark); }
+  .opt-fill { width: 9px; height: 9px; border-radius: 50%; background: var(--gold-dark); }
 
   .tf-row { display: flex; gap: 10px; }
-  .tf-btn { flex: 1; padding: 13px; border-radius: 11px; font-size: 16px; font-weight: 700; cursor: pointer; border: 1.5px solid #e5e7eb; background: #f7f8fa; transition: all 0.15s; font-family: 'Tajawal', sans-serif; color: #374151; }
-  .tf-btn.sel.true { background: rgba(16,185,129,0.1); border-color: #10b981; color: #065f46; }
-  .tf-btn.sel.false { background: rgba(239,68,68,0.1); border-color: #ef4444; color: #991b1b; }
+  .tf-btn {
+    flex: 1; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700;
+    cursor: pointer; border: 1.5px solid var(--border); background: var(--surface);
+    transition: all 0.15s; font-family: 'Tajawal', sans-serif; color: var(--ink2);
+  }
+  .tf-btn:hover { border-color: var(--gold); }
+  .tf-btn.sel-true { background: rgba(45,122,79,0.08); border-color: #2D7A4F; color: #1A4D30; }
+  .tf-btn.sel-false { background: rgba(192,57,43,0.08); border-color: #C0392B; color: #7B1A12; }
 
-  .written-inp { width: 100%; padding: 12px 13px; background: #f7f8fa; border: 1.5px solid #e5e7eb; border-radius: 10px; color: #111827; font-size: 14px; font-family: 'Tajawal', sans-serif; line-height: 1.7; resize: vertical; outline: none; transition: border-color 0.15s; }
-  .written-inp:focus { border-color: #2563eb; background: white; }
+  .written-inp {
+    width: 100%; padding: 13px 15px; background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 11px; color: var(--ink); font-size: 14px; font-family: 'Tajawal', sans-serif;
+    line-height: 1.7; resize: vertical; outline: none; transition: border-color 0.15s;
+  }
+  .written-inp:focus { border-color: var(--gold-dark); background: #fff; }
 
   .nav-row { display: flex; justify-content: space-between; gap: 10px; }
-  .nav-btn { padding: 11px 22px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; font-family: 'Tajawal', sans-serif; }
-  .nav-btn.primary { background: #111827; color: white; }
-  .nav-btn.primary:hover { background: #1f2937; }
-  .nav-btn.secondary { background: white; color: #374151; border: 1.5px solid #e5e7eb; }
-  .nav-btn.secondary:disabled { opacity: 0.35; cursor: not-allowed; }
-  .nav-btn.submit { background: #e5e7eb; color: #9ca3af; }
-  .nav-btn.submit.ready { background: #2563eb; color: white; }
-  .nav-btn.submit.ready:hover { background: #1d4ed8; }
-  .nav-btn.submit:disabled { opacity: 0.5; cursor: not-allowed; }
+  .nav-btn { padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; font-family: 'Tajawal', sans-serif; }
+  .nav-prev { background: #fff; color: var(--ink2); border: 1.5px solid var(--border); }
+  .nav-prev:hover:not(:disabled) { border-color: var(--gold); }
+  .nav-prev:disabled { opacity: 0.35; cursor: not-allowed; }
+  .nav-next { background: var(--ink); color: #fff; }
+  .nav-next:hover { background: var(--ink2); }
+  .nav-submit { background: var(--border); color: var(--muted); }
+  .nav-submit.ready { background: var(--gold); color: var(--ink); font-weight: 800; }
+  .nav-submit.ready:hover { background: var(--gold-dark); color: #fff; }
+  .nav-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .p-error { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); color: #dc2626; font-size: 13px; padding: 9px 13px; border-radius: 9px; text-align: center; }
+  .p-error { background: rgba(192,57,43,0.07); border: 1px solid rgba(192,57,43,0.2); color: var(--danger); font-size: 13px; padding: 10px 14px; border-radius: 10px; text-align: center; }
 
-  .p-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 70px 28px; text-align: center; background: white; border-radius: 16px; border: 1px solid #e5e7eb; }
-  .p-empty-icon { font-size: 44px; }
-  .p-empty h2 { font-size: 17px; font-weight: 800; color: #111827; }
-  .p-empty p { font-size: 13px; color: #6b7280; }
+  .p-empty {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 70px 28px; text-align: center; background: #fff;
+    border-radius: 18px; border: 1px solid var(--border); max-width: 480px;
+  }
+  .p-empty-icon { color: var(--gold); }
+  .p-empty h2 { font-size: 17px; font-weight: 800; color: var(--ink); }
+  .p-empty p { font-size: 13px; color: var(--muted); }
 `;

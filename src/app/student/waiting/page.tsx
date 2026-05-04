@@ -17,172 +17,169 @@ export default function StudentWaitingPage() {
   }, []);
 
   return (
-    <div className="wait-shell">
+    <div className="shell">
       <div
-        className="wait-card"
+        className="card"
         style={{
           opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(16px)",
+          transform: visible ? "translateY(0)" : "translateY(18px)",
           transition: "opacity 0.5s ease, transform 0.5s ease",
         }}
       >
-        {/* Animated check */}
-        <div className="wait-icon-wrap">
-          <div className="wait-icon-ring" />
-          <div className="wait-icon">✔</div>
+        {/* Seal */}
+        <div className="seal-wrap">
+          <div className="seal-ring" />
+          <div className="seal-ring2" />
+          <div className="seal-inner">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#C8A96A"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
         </div>
 
-        <div className="wait-body">
-          <h1 className="wait-title">
+        <div className="card-text">
+          <h1 className="card-title">
             {studentName ? `شكراً، ${studentName}!` : "تم التقديم بنجاح!"}
           </h1>
-          <p className="wait-desc">
+          <div className="gold-rule" />
+          <p className="card-desc">
             تم استلام إجاباتك بنجاح. سيقوم المسؤول بمراجعة اختبارك وتحديد
-            المدرسة المناسبة لك قريباً.
-            
+            المدرسة المناسبة لك في أقرب وقت.
           </p>
+        </div>
 
-          <div className="wait-steps">
-            <div className="step done">
-              <div className="step-dot">✔</div>
-              <div className="step-text">
-                <div className="step-title">تقديم اختبار القبول</div>
-                <div className="step-sub">تم بنجاح</div>
+        <div className="steps-box">
+          <div className="step">
+            <div className="step-con">
+              <div className="step-dot dot-done">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--ink)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
+              <div className="step-line line-done" />
             </div>
-            <div className="step-line" />
-            <div className="step active">
-              <div className="step-dot pulse">
-                <span />
-              </div>
-              <div className="step-text">
-                <div className="step-title">مراجعة المسؤول</div>
-                <div className="step-sub">قيد الانتظار...</div>
-              </div>
-            </div>
-            <div className="step-line faded" />
-            <div className="step">
-              <div className="step-dot empty" />
-              <div className="step-text">
-                <div className="step-title">تحديد المدرسة</div>
-                <div className="step-sub">قريباً</div>
-              </div>
-            </div>
-            <div className="step-line faded" />
-            <div className="step">
-              <div className="step-dot empty" />
-              <div className="step-text">
-                <div className="step-title">الانضمام للفصل</div>
-                <div className="step-sub">قريباً</div>
-              </div>
+            <div className="step-text">
+              <div className="step-title">تقديم اختبار القبول</div>
+              <div className="step-sub sub-done">تم بنجاح</div>
             </div>
           </div>
-
-          <div className="wait-note">
-            <svg
-              width="14"
-              height="14"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4m0 4h.01" />
-            </svg>
-            ستظهر هذه الصفحة حتى يتم تعيينك في مدرسة. لا حاجة لفعل أي شيء الآن.
+          <div className="step">
+            <div className="step-con">
+              <div className="step-dot dot-active">
+                <span className="dot-pulse" />
+              </div>
+              <div className="step-line" />
+            </div>
+            <div className="step-text">
+              <div className="step-title">مراجعة المسؤول</div>
+              <div className="step-sub sub-active">قيد الانتظار...</div>
+            </div>
           </div>
+          <div className="step">
+            <div className="step-con">
+              <div className="step-dot dot-empty" />
+              <div className="step-line" />
+            </div>
+            <div className="step-text">
+              <div className="step-title">تحديد المدرسة</div>
+              <div className="step-sub">قريباً</div>
+            </div>
+          </div>
+          <div className="step" style={{ paddingBottom: 0 }}>
+            <div className="step-con">
+              <div className="step-dot dot-empty" />
+            </div>
+            <div className="step-text">
+              <div className="step-title">الانضمام للفصل الدراسي</div>
+              <div className="step-sub">قريباً</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="note-bar">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4m0 4h.01" />
+          </svg>
+          ستظهر هذه الصفحة حتى يتم تعيينك في مدرسة. لا حاجة لفعل أي شيء الآن.
         </div>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        .wait-shell {
-          min-height: 100vh;
-          background: #f7f8fa;
-          font-family: 'Tajawal', sans-serif;
-          direction: rtl;
-          display: flex; align-items: center; justify-content: center;
-          padding: 32px 16px;
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+          --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+          --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7; --border: #E8D9B8;
         }
-
-        .wait-card {
-          background: white; border: 1px solid #e5e7eb;
-          border-radius: 20px; padding: 40px 36px;
-          width: 100%; max-width: 520px;
-          display: flex; flex-direction: column; align-items: center;
-          gap: 28px; text-align: center;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        .shell {
+          min-height: 100vh; background: var(--gold-pale);
+          font-family: 'Tajawal', sans-serif; direction: rtl;
+          display: flex; align-items: center; justify-content: center; padding: 32px 16px;
         }
-
-        .wait-icon-wrap {
-          position: relative; width: 80px; height: 80px;
-          display: flex; align-items: center; justify-content: center;
+        .card {
+          background: #fff; border: 1px solid var(--border); border-radius: 22px;
+          padding: 36px 30px; width: 100%; max-width: 500px;
+          display: flex; flex-direction: column; align-items: center; gap: 24px;
+          box-shadow: 0 4px 32px rgba(26,18,8,0.08);
         }
-        .wait-icon-ring {
-          position: absolute; inset: 0; border-radius: 50%;
-          border: 2px solid rgba(79,142,247,0.3);
-          animation: ringPulse 2s ease infinite;
-        }
-        @keyframes ringPulse {
-          0%,100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.15); opacity: 1; }
-        }
-        .wait-icon {
-          width: 64px; height: 64px; border-radius: 50%;
-          background: linear-gradient(135deg, #4f8ef7, #7c5cfc);
-          color: white; font-size: 28px; font-weight: 700;
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 8px 20px rgba(79,142,247,0.3);
-        }
-
-        .wait-body { display: flex; flex-direction: column; gap: 16px; width: 100%; }
-        .wait-title { font-size: 24px; font-weight: 800; color: #111827; }
-        .wait-desc { font-size: 14px; color: #6b7280; line-height: 1.7; }
-
-        .wait-steps {
-          display: flex; flex-direction: column; gap: 0;
-          background: #f7f8fa; border-radius: 14px; padding: 20px;
-          text-align: right;
-        }
-        .step { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-        .step-line { width: 2px; height: 20px; background: #e5e7eb; margin-right: 15px; }
-        .step-line.faded { opacity: 0.4; }
-
-        .step-dot {
-          width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 700;
-        }
-        .step.done .step-dot { background: #10b981; color: white; }
-        .step.active .step-dot {
-          background: rgba(79,142,247,0.1);
-          border: 2px solid #4f8ef7;
-          position: relative;
-        }
-        .step.active .step-dot span {
-          width: 10px; height: 10px; border-radius: 50%;
-          background: #4f8ef7;
-          animation: dotPulse 1.5s ease infinite;
-        }
-        @keyframes dotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .step-dot.empty {
-          background: #f1f3f6; border: 2px solid #e5e7eb;
-        }
-
+        .seal-wrap { position: relative; width: 88px; height: 88px; display: flex; align-items: center; justify-content: center; }
+        .seal-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(200,169,106,0.35); animation: rp 2.4s ease infinite; }
+        @keyframes rp { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.14);opacity:1} }
+        .seal-ring2 { position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed rgba(200,169,106,0.25); animation: spin 8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .seal-inner { width: 66px; height: 66px; border-radius: 50%; background: var(--ink); display: flex; align-items: center; justify-content: center; }
+        .card-text { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; width: 100%; }
+        .card-title { font-size: 23px; font-weight: 800; color: var(--ink); }
+        .gold-rule { width: 56px; height: 2px; background: var(--gold); border-radius: 99px; opacity: 0.5; }
+        .card-desc { font-size: 13.5px; color: var(--muted); line-height: 1.8; max-width: 380px; }
+        .steps-box { background: var(--gold-pale); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; width: 100%; }
+        .step { display: flex; align-items: center; gap: 14px; padding: 9px 0; }
+        .step-con { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .step-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .step-line { width: 2px; height: 18px; background: var(--border); margin: 0 auto; }
+        .line-done { background: var(--gold); }
+        .dot-done { background: var(--gold); color: var(--ink); }
+        .dot-active { background: rgba(200,169,106,0.12); border: 2px solid var(--gold); }
+        .dot-pulse { width: 11px; height: 11px; border-radius: 50%; background: var(--gold); animation: dp 1.6s ease infinite; }
+        @keyframes dp { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.8)} }
+        .dot-empty { background: var(--surface); border: 2px solid var(--border); }
         .step-text { flex: 1; }
-        .step-title { font-size: 13.5px; font-weight: 700; color: #111827; }
-        .step-sub { font-size: 11.5px; color: #9ca3af; margin-top: 1px; }
-        .step.done .step-sub { color: #10b981; }
-        .step.active .step-sub { color: #4f8ef7; }
-
-        .wait-note {
-          display: flex; align-items: center; gap: 8px; justify-content: center;
-          background: rgba(79,142,247,0.06); border: 1px solid rgba(79,142,247,0.15);
-          color: #4f8ef7; font-size: 12.5px; padding: 10px 14px; border-radius: 9px;
+        .step-title { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+        .step-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+        .sub-done { color: var(--gold-dark); }
+        .sub-active { color: var(--gold-dark); }
+        .note-bar {
+          display: flex; align-items: center; gap: 9px; width: 100%;
+          background: rgba(200,169,106,0.08); border: 1px solid rgba(200,169,106,0.25);
+          color: var(--muted); font-size: 12.5px; padding: 11px 15px; border-radius: 10px;
         }
+        .note-bar svg { flex-shrink: 0; color: var(--gold-dark); }
       `}</style>
     </div>
   );

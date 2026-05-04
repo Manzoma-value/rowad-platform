@@ -20,15 +20,6 @@ type Quiz = {
   attempts: Attempt[];
 };
 
-function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`rounded-xl bg-gray-100 dark:bg-gray-800 ${className}`}
-      style={{ animation: "pulse 1.5s ease-in-out infinite" }}
-    />
-  );
-}
-
 export default function StudentQuizzesPage() {
   const { lang } = useLang();
   const tr = t[lang];
@@ -62,7 +53,6 @@ export default function StudentQuizzesPage() {
     return () => {
       if (visibleTimerRef.current) clearTimeout(visibleTimerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startQuiz = (quiz: Quiz) => {
@@ -70,10 +60,8 @@ export default function StudentQuizzesPage() {
     setAnswers({});
     setResult(null);
   };
-
-  const handleAnswer = (questionId: string, answer: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: answer }));
-  };
+  const handleAnswer = (questionId: string, answer: string) =>
+    setAnswers((p) => ({ ...p, [questionId]: answer }));
 
   const handleSubmit = async () => {
     if (!activeQuiz) return;
@@ -99,123 +87,122 @@ export default function StudentQuizzesPage() {
     fetchQuizzes();
   };
 
-  // ── TF option labels (language-aware) ─────────────────────────────────────
   const tfOptions = [
     { id: "t", text: tr.trueWord },
     { id: "f", text: tr.falseWord },
   ];
 
-  // ── Loading skeleton ──────────────────────────────────────────────────────
-  if (loading) {
+  // ── Loading ───────────────────────────────────────────────────────────────
+  if (loading)
     return (
-      <div className="space-y-4 p-6 max-w-2xl mx-auto" dir={dir}>
-        <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }`}</style>
-        <Skeleton className="h-8 w-36" />
-        <Skeleton className="h-5 w-48" />
-        <div className="space-y-3 pt-2">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20 w-full" />
-          ))}
+      <div className="qs-shell" dir={dir}>
+        <div className="qs-loading">
+          <div className="qs-spinner" />
+          <span>جارٍ التحميل...</span>
         </div>
+        <style>{styles}</style>
       </div>
     );
-  }
 
-  // ── Result screen ─────────────────────────────────────────────────────────
+  // ── Result ────────────────────────────────────────────────────────────────
   if (result && activeQuiz) {
     const percent = Math.round((result.score / result.total) * 100);
     const passed = percent >= 50;
-    return (
-      <div
-        className="flex flex-col items-center justify-center min-h-[60vh] p-6"
-        dir={dir}
-      >
-        <style>{`
-          @keyframes popIn {
-            0%   { opacity:0; transform:scale(0.82) }
-            65%  { transform:scale(1.04) }
-            100% { opacity:1; transform:scale(1) }
-          }
-          @keyframes ringFill {
-            from { stroke-dashoffset: 283 }
-          }
-        `}</style>
+    const scoreColor = passed ? "#2D7A4F" : "#C0392B";
+    const circumference = 251.2;
+    const offset = circumference - (circumference * percent) / 100;
 
-        <div
-          className="rounded-2xl border border-gray-200 bg-white p-8 text-center space-y-5 max-w-sm w-full shadow-sm"
-          style={{
-            animation: "popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards",
-          }}
-        >
-          {/* Circular progress ring */}
-          <div className="flex justify-center">
-            <svg width="96" height="96" viewBox="0 0 96 96">
+    return (
+      <div className="qs-shell result-shell" dir={dir}>
+        <div className="result-card">
+          <div className="result-ring-wrap">
+            <svg width="110" height="110" viewBox="0 0 110 110">
               <circle
-                cx="48"
-                cy="48"
-                r="40"
+                cx="55"
+                cy="55"
+                r="44"
                 fill="none"
-                stroke="#f3f4f6"
+                stroke="var(--border)"
                 strokeWidth="8"
               />
               <circle
-                cx="48"
-                cy="48"
-                r="40"
+                cx="55"
+                cy="55"
+                r="44"
                 fill="none"
-                stroke={passed ? "#22c55e" : "#ef4444"}
+                stroke={scoreColor}
                 strokeWidth="8"
                 strokeLinecap="round"
-                strokeDasharray="251.2"
-                strokeDashoffset={251.2 - (251.2 * percent) / 100}
-                transform="rotate(-90 48 48)"
-                style={{ transition: "stroke-dashoffset 0.9s ease" }}
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                transform="rotate(-90 55 55)"
+                style={{ transition: "stroke-dashoffset 1s ease" }}
               />
               <text
-                x="48"
-                y="53"
+                x="55"
+                y="61"
                 textAnchor="middle"
-                fontSize="20"
-                fontWeight="600"
-                fill={passed ? "#16a34a" : "#dc2626"}
+                fontSize="22"
+                fontWeight="800"
+                fill={scoreColor}
+                fontFamily="Tajawal, sans-serif"
               >
-                {percent}%
+                {percent}٪
               </text>
             </svg>
           </div>
 
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              {activeQuiz.name}
-            </h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {tr.answeredCorrectly}{" "}
-              <span className="font-medium text-gray-700">{result.score}</span>{" "}
-              {tr.outOf}{" "}
-              <span className="font-medium text-gray-700">{result.total}</span>{" "}
-              {tr.question}
-            </p>
+          <div className="result-quiz-name">{activeQuiz.name}</div>
+          <div className="result-score-text">
+            {tr.answeredCorrectly} <strong>{result.score}</strong> {tr.outOf}{" "}
+            <strong>{result.total}</strong> {tr.question}
           </div>
 
           <div
-            className={`rounded-xl px-4 py-3 text-sm font-medium flex items-center justify-center gap-2 ${
-              passed ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
-            }`}
+            className="result-verdict"
+            style={{
+              background: passed
+                ? "rgba(45,122,79,0.08)"
+                : "rgba(192,57,43,0.08)",
+              borderColor: passed
+                ? "rgba(45,122,79,0.25)"
+                : "rgba(192,57,43,0.2)",
+              color: scoreColor,
+            }}
           >
-            <span>{passed ? "✓" : "✗"}</span>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {passed ? (
+                <polyline points="20 6 9 17 4 12" />
+              ) : (
+                <>
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </>
+              )}
+            </svg>
             {passed ? tr.greatResult : tr.reviewAndRetry}
           </div>
 
           <button
+            className="result-back-btn"
             onClick={() => {
               setActiveQuiz(null);
               setResult(null);
             }}
-            className="w-full border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             {tr.backToQuizzes}
           </button>
         </div>
+        <style>{styles}</style>
       </div>
     );
   }
@@ -224,106 +211,94 @@ export default function StudentQuizzesPage() {
   if (activeQuiz) {
     const answered = Object.keys(answers).length;
     const total = activeQuiz.questions.length;
-    const progressPercent = (answered / total) * 100;
+    const progress = (answered / total) * 100;
+    const allDone = answered === total;
 
     return (
-      <div className="space-y-6 p-6 max-w-2xl mx-auto" dir={dir}>
-        <style>{`
-          @keyframes fadeSlideIn {
-            from { opacity:0; transform:translateY(10px) }
-            to   { opacity:1; transform:translateY(0) }
-          }
-        `}</style>
-
+      <div className="qs-shell quiz-shell" dir={dir}>
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">
-              {activeQuiz.name}
-            </h1>
-            <p className="text-sm text-gray-400 mt-0.5">
+        <div className="quiz-header">
+          <div className="quiz-header-left">
+            <div className="quiz-eyebrow">اختبار</div>
+            <h1 className="quiz-title">{activeQuiz.name}</h1>
+            <div className="quiz-progress-label">
               {answered} / {total} {tr.answeredOf}
-            </p>
+            </div>
           </div>
           <button
+            className="quiz-cancel-btn"
             onClick={() => setActiveQuiz(null)}
-            className="text-xs text-gray-400 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 transition-colors mt-0.5 shrink-0"
           >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
             {tr.cancel}
           </button>
         </div>
 
-        {/* Progress bar */}
-        <div className="space-y-1">
-          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+        {/* Progress */}
+        <div className="quiz-prog-wrap">
+          <div className="quiz-prog-track">
             <div
-              className="h-2 rounded-full"
+              className="quiz-prog-fill"
               style={{
-                width: `${progressPercent}%`,
-                background: progressPercent === 100 ? "#22c55e" : "#111827",
-                transition:
-                  "width 0.4s cubic-bezier(0.4,0,0.2,1), background 0.3s ease",
+                width: `${progress}%`,
+                background: allDone ? "#2D7A4F" : "var(--gold-dark)",
               }}
             />
           </div>
         </div>
 
         {/* Questions */}
-        <div className="space-y-4">
+        <div className="questions-list">
           {activeQuiz.questions.map((q, qi) => {
             const isAnswered = !!answers[q.id];
             const opts =
               q.type === "TF"
                 ? tfOptions
                 : q.options.map((o) => ({ id: o.id, text: o.text }));
-
             return (
               <div
                 key={q.id}
-                className={`rounded-2xl border p-5 space-y-3 transition-all duration-200 ${
-                  isAnswered
-                    ? "border-gray-900 shadow-sm bg-white"
-                    : "border-gray-200 hover:border-gray-300 bg-white"
-                }`}
-                style={{
-                  animation: `fadeSlideIn 0.3s ease ${qi * 60}ms both`,
-                }}
+                className={`q-card ${isAnswered ? "q-card-done" : ""}`}
+                style={{ animationDelay: `${qi * 55}ms` }}
               >
-                <p className="font-medium text-sm text-gray-900 leading-relaxed">
-                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-500 text-xs font-semibold ml-2 shrink-0">
-                    {qi + 1}
+                <div className="q-card-top">
+                  <span className="q-num">{qi + 1}</span>
+                  <span className="q-type-tag">
+                    {q.type === "TF" ? "صح / خطأ" : "اختيار متعدد"}
                   </span>
-                  {q.text}
-                </p>
-                <div className="space-y-2">
+                </div>
+                <p className="q-text">{q.text}</p>
+                <div className="q-opts">
                   {opts.map((opt) => {
                     const selected = answers[q.id] === opt.text;
                     return (
                       <label
                         key={opt.id}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-all duration-150 select-none ${
-                          selected
-                            ? "bg-gray-900 text-white border-gray-900 scale-[1.01]"
-                            : "border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 active:scale-[0.99]"
-                        }`}
+                        className={`q-opt-label ${selected ? "q-opt-selected" : ""}`}
                       >
                         <input
                           type="radio"
-                          className="hidden"
+                          className="q-radio-hidden"
                           name={q.id}
                           value={opt.text}
                           onChange={() => handleAnswer(q.id, opt.text)}
                         />
-                        <span
-                          className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors ${
-                            selected ? "border-white" : "border-gray-300"
-                          }`}
-                        >
-                          {selected && (
-                            <span className="w-2 h-2 rounded-full bg-white block" />
-                          )}
+                        <span className="q-radio-ring">
+                          {selected && <span className="q-radio-fill" />}
                         </span>
-                        <span className="text-sm">{opt.text}</span>
+                        <span className="q-opt-text">{opt.text}</span>
                       </label>
                     );
                   })}
@@ -335,83 +310,105 @@ export default function StudentQuizzesPage() {
 
         {/* Submit */}
         <button
+          className={`quiz-submit-btn ${allDone ? "quiz-submit-ready" : ""}`}
           onClick={handleSubmit}
-          disabled={submitting || answered < total}
-          className="w-full bg-gray-900 text-white py-3.5 rounded-xl text-sm font-medium disabled:opacity-40 transition-all hover:bg-gray-800 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2"
+          disabled={submitting || !allDone}
         >
           {submitting ? (
             <>
-              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="btn-spin" />
               {tr.submitting}
             </>
-          ) : answered < total ? (
+          ) : !allDone ? (
             `${total - answered} ${tr.questionsRemaining}`
           ) : (
-            tr.submitQuiz
+            <>{tr.submitQuiz} ✔</>
           )}
         </button>
+
+        <style>{styles}</style>
       </div>
     );
   }
 
-  // ── Quizzes list ──────────────────────────────────────────────────────────
+  // ── Quiz list ─────────────────────────────────────────────────────────────
   const doneCount = quizzes.filter((q) => q.attempts.length > 0).length;
+  const overallPct =
+    quizzes.length > 0 ? Math.round((doneCount / quizzes.length) * 100) : 0;
 
   return (
     <div
+      className="qs-shell list-shell"
       dir={dir}
-      className="space-y-6 p-6 max-w-2xl mx-auto"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(12px)",
         transition: "opacity 0.4s ease, transform 0.4s ease",
       }}
     >
-      <style>{`
-        @keyframes pulse       { 0%,100%{opacity:1} 50%{opacity:0.35} }
-        @keyframes fadeSlideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-      `}</style>
-
-      {/* Page header */}
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{tr.quizzes}</h1>
+      {/* Header */}
+      <div className="list-header">
+        <div className="list-header-left">
+          <div className="list-eyebrow">الاختبارات</div>
+          <h1 className="list-title">{tr.quizzes}</h1>
           {quizzes.length > 0 && (
-            <p className="text-sm text-gray-400 mt-0.5">
+            <div className="list-subtitle">
               {doneCount} {tr.outOf} {quizzes.length} {tr.completed}
-            </p>
+            </div>
           )}
         </div>
         {quizzes.length > 0 && (
-          <div className="flex gap-1.5 items-center text-xs text-gray-400 mb-0.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-400" />
-            {tr.completed}
-            <span className="inline-block w-2 h-2 rounded-full bg-gray-200 mr-2" />
-            {tr.notStarted}
+          <div className="list-stat">
+            <div className="list-stat-num">{overallPct}٪</div>
+            <div className="list-stat-label">{tr.completed}</div>
           </div>
         )}
       </div>
 
-      {/* Summary stats bar */}
-      {quizzes.length > 0 && doneCount > 0 && (
-        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-          <div
-            className="h-1.5 rounded-full bg-green-500"
-            style={{
-              width: `${(doneCount / quizzes.length) * 100}%`,
-              transition: "width 0.6s ease",
-            }}
-          />
+      {/* Overall progress */}
+      {quizzes.length > 0 && (
+        <div className="overall-prog-wrap">
+          <div className="overall-prog-info">
+            <div className="overall-legend">
+              <span className="legend-dot done-dot" />
+              {tr.completed}
+              <span
+                className="legend-dot pending-dot"
+                style={{ marginRight: 8 }}
+              />
+              {tr.notStarted}
+            </div>
+          </div>
+          <div className="overall-prog-track">
+            <div
+              className="overall-prog-fill"
+              style={{ width: `${overallPct}%` }}
+            />
+          </div>
         </div>
       )}
 
+      {/* Empty */}
       {quizzes.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-200 p-12 text-center">
-          <p className="text-3xl mb-3">📋</p>
-          <p className="text-gray-500 text-sm">{tr.noQuizzesYet}</p>
+        <div className="empty-box">
+          <div className="empty-icon">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <p className="empty-text">{tr.noQuizzesYet}</p>
         </div>
       ) : (
-        <div className="grid gap-3">
+        <div className="quiz-grid">
           {quizzes.map((quiz, i) => {
             const attempt = quiz.attempts[0];
             const done = !!attempt;
@@ -419,62 +416,99 @@ export default function StudentQuizzesPage() {
               ? Math.round((attempt.score / attempt.total) * 100)
               : null;
             const passed = percent !== null && percent >= 50;
+            const scoreColor = passed ? "#2D7A4F" : "#C0392B";
 
             return (
               <div
                 key={quiz.id}
-                className={`rounded-2xl border p-4 flex items-center justify-between gap-4 transition-all duration-200 bg-white ${
-                  done
-                    ? "border-gray-200"
-                    : "border-gray-200 hover:border-gray-400 hover:shadow-sm"
-                }`}
-                style={{
-                  animation: `fadeSlideIn 0.3s ease ${i * 55}ms both`,
-                }}
+                className={`quiz-row ${done ? "quiz-row-done" : "quiz-row-pending"}`}
+                style={{ animationDelay: `${i * 50}ms` }}
               >
-                {/* Left: icon + info */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`w-10 h-10 rounded-xl shrink-0 flex items-center justify-center text-base ${
-                      done
-                        ? passed
-                          ? "bg-green-50 text-green-600"
-                          : "bg-red-50 text-red-500"
-                        : "bg-gray-100 text-gray-400"
-                    }`}
-                  >
-                    {done ? (passed ? "✓" : "✗") : "?"}
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm truncate">
-                      {quiz.name}
-                    </h3>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {quiz.questions.length} {tr.question}
-                    </p>
+                <div
+                  className="quiz-row-icon"
+                  style={{
+                    background: done
+                      ? passed
+                        ? "rgba(45,122,79,0.1)"
+                        : "rgba(192,57,43,0.08)"
+                      : "var(--gold-pale)",
+                    border: `1px solid ${done ? (passed ? "rgba(45,122,79,0.25)" : "rgba(192,57,43,0.2)") : "var(--border)"}`,
+                    color: done ? scoreColor : "var(--gold-dark)",
+                  }}
+                >
+                  {done ? (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      {passed ? (
+                        <polyline points="20 6 9 17 4 12" />
+                      ) : (
+                        <>
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </>
+                      )}
+                    </svg>
+                  ) : (
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  )}
+                </div>
+
+                <div className="quiz-row-body">
+                  <div className="quiz-row-name">{quiz.name}</div>
+                  <div className="quiz-row-meta">
+                    {quiz.questions.length} {tr.question}
                   </div>
                 </div>
 
-                {/* Right: score or start button */}
                 {done ? (
-                  <div className="text-left shrink-0">
-                    <span
-                      className={`text-xl font-bold ${
-                        passed ? "text-green-600" : "text-red-500"
-                      }`}
+                  <div className="quiz-row-score">
+                    <div
+                      className="quiz-score-pct"
+                      style={{ color: scoreColor }}
                     >
-                      {percent}%
-                    </span>
-                    <p className="text-xs text-gray-400">
+                      {percent}٪
+                    </div>
+                    <div className="quiz-score-frac">
                       {attempt.score} / {attempt.total}
-                    </p>
+                    </div>
                   </div>
                 ) : (
                   <button
+                    className="quiz-start-btn"
                     onClick={() => startQuiz(quiz)}
-                    className="shrink-0 bg-gray-900 text-white px-4 py-2 rounded-xl text-xs font-medium transition-all hover:bg-gray-800 hover:scale-[1.03] active:scale-[0.98]"
                   >
                     {tr.startTest}
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
                 )}
               </div>
@@ -482,6 +516,183 @@ export default function StudentQuizzesPage() {
           })}
         </div>
       )}
+
+      <style>{styles}</style>
     </div>
   );
 }
+
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+    --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7;
+    --border: #E8D9B8; --white: #FFFFFF;
+  }
+
+  /* Shell */
+  .qs-shell { min-height: 100vh; background: var(--gold-pale); font-family: 'Tajawal', sans-serif; padding: 28px 20px; }
+  .list-shell, .quiz-shell { display: flex; flex-direction: column; gap: 18px; max-width: 680px; margin: 0 auto; }
+  .result-shell { display: flex; align-items: center; justify-content: center; }
+
+  /* Loading */
+  .qs-loading { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; padding: 80px 0; justify-content: center; }
+  .qs-spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Result */
+  .result-card {
+    background: var(--white); border: 1px solid var(--border); border-radius: 22px;
+    padding: 36px 30px; width: 100%; max-width: 420px;
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    box-shadow: 0 8px 32px rgba(26,18,8,0.08);
+    animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes popIn { from { opacity:0; transform:scale(0.88); } to { opacity:1; transform:scale(1); } }
+  .result-ring-wrap { }
+  .result-quiz-name { font-size: 18px; font-weight: 800; color: var(--ink); text-align: center; }
+  .result-score-text { font-size: 13px; color: var(--muted); text-align: center; }
+  .result-score-text strong { color: var(--ink); }
+  .result-verdict {
+    display: flex; align-items: center; gap: 8px; justify-content: center;
+    width: 100%; padding: 11px 16px; border-radius: 11px; border: 1px solid;
+    font-size: 13.5px; font-weight: 700;
+  }
+  .result-back-btn {
+    width: 100%; padding: 12px; border-radius: 11px; border: 1.5px solid var(--border);
+    background: var(--white); color: var(--ink2); font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.15s; font-family: 'Tajawal', sans-serif;
+  }
+  .result-back-btn:hover { border-color: var(--gold); background: var(--gold-pale); }
+
+  /* Quiz list header */
+  .list-header {
+    background: var(--ink); border-radius: 18px; padding: 22px 24px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .list-eyebrow { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 5px; }
+  .list-title { font-size: 22px; font-weight: 800; color: var(--white); }
+  .list-subtitle { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 4px; }
+  .list-stat { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+  .list-stat-num { font-size: 28px; font-weight: 800; color: var(--gold); line-height: 1; }
+  .list-stat-label { font-size: 10.5px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+  /* Overall progress */
+  .overall-prog-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .overall-prog-info { display: flex; justify-content: flex-end; }
+  .overall-legend { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .done-dot { background: var(--gold); }
+  .pending-dot { background: var(--border); }
+  .overall-prog-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .overall-prog-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width 0.6s ease; }
+
+  /* Empty */
+  .empty-box {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 60px 28px; text-align: center;
+    background: var(--white); border: 1px dashed var(--border); border-radius: 18px;
+  }
+  .empty-icon { color: var(--gold); }
+  .empty-text { font-size: 13.5px; color: var(--muted); }
+
+  /* Quiz rows */
+  .quiz-grid { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-row {
+    background: var(--white); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 14px;
+    transition: all 0.18s; animation: fadeUp 0.3s ease both;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  .quiz-row-pending:hover { border-color: var(--gold); box-shadow: 0 2px 12px rgba(26,18,8,0.06); }
+  .quiz-row-icon { width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .quiz-row-body { flex: 1; min-width: 0; }
+  .quiz-row-name { font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .quiz-row-meta { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .quiz-row-score { text-align: center; flex-shrink: 0; }
+  .quiz-score-pct { font-size: 20px; font-weight: 800; line-height: 1; }
+  .quiz-score-frac { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .quiz-start-btn {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    background: var(--ink); color: var(--white); padding: 9px 16px; border-radius: 10px;
+    border: none; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; font-family: 'Tajawal', sans-serif; white-space: nowrap;
+  }
+  .quiz-start-btn:hover { background: var(--gold); color: var(--ink); }
+
+  /* Active quiz header */
+  .quiz-header {
+    background: var(--ink); border-radius: 18px; padding: 20px 24px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .quiz-eyebrow { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 5px; }
+  .quiz-title { font-size: 19px; font-weight: 800; color: var(--white); }
+  .quiz-progress-label { font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 5px; }
+  .quiz-cancel-btn {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.6); font-size: 12px; font-weight: 700;
+    padding: 7px 13px; border-radius: 9px; cursor: pointer; transition: all 0.15s;
+    font-family: 'Tajawal', sans-serif; margin-top: 4px;
+  }
+  .quiz-cancel-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+
+  /* Quiz progress bar */
+  .quiz-prog-wrap { }
+  .quiz-prog-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .quiz-prog-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease, background 0.3s ease; }
+
+  /* Question cards */
+  .questions-list { display: flex; flex-direction: column; gap: 12px; }
+  .q-card {
+    background: var(--white); border: 1.5px solid var(--border); border-radius: 16px;
+    padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 14px;
+    transition: border-color 0.2s; animation: fadeUp 0.3s ease both;
+  }
+  .q-card-done { border-color: var(--gold-dark); }
+  .q-card-top { display: flex; align-items: center; gap: 10px; }
+  .q-num {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    background: var(--gold-pale); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; color: var(--gold-dark);
+  }
+  .q-card-done .q-num { background: var(--gold); color: var(--ink); border-color: var(--gold-dark); }
+  .q-type-tag {
+    font-size: 10.5px; font-weight: 700; color: var(--gold-dark);
+    background: rgba(168,134,62,0.1); border: 1px solid rgba(168,134,62,0.2);
+    padding: 3px 10px; border-radius: 99px;
+  }
+  .q-text { font-size: 15px; font-weight: 700; color: var(--ink); line-height: 1.65; }
+  .q-opts { display: flex; flex-direction: column; gap: 8px; }
+  .q-opt-label {
+    display: flex; align-items: center; gap: 11px; padding: 12px 14px;
+    border-radius: 11px; border: 1.5px solid var(--border); cursor: pointer;
+    background: var(--surface); transition: all 0.15s; user-select: none;
+  }
+  .q-opt-label:hover { border-color: var(--gold); background: var(--gold-pale); }
+  .q-opt-selected { background: var(--ink) !important; border-color: var(--ink) !important; }
+  .q-radio-hidden { display: none; }
+  .q-radio-ring {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s;
+  }
+  .q-opt-selected .q-radio-ring { border-color: rgba(255,255,255,0.5); }
+  .q-radio-fill { width: 8px; height: 8px; border-radius: 50%; background: var(--white); }
+  .q-opt-text { font-size: 14px; font-weight: 500; color: var(--ink2); }
+  .q-opt-selected .q-opt-text { color: var(--white); font-weight: 700; }
+
+  /* Submit */
+  .quiz-submit-btn {
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    width: 100%; padding: 14px; border-radius: 12px; border: none;
+    font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.18s;
+    font-family: 'Tajawal', sans-serif;
+    background: var(--border); color: var(--muted);
+  }
+  .quiz-submit-ready { background: var(--ink); color: var(--white); }
+  .quiz-submit-ready:hover { background: var(--gold); color: var(--ink); }
+  .quiz-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-spin { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.3); border-top-color: var(--white); border-radius: 50%; animation: spin 0.7s linear infinite; }
+`;

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import MandalaLoader from "@/components/MandalaLoader";
 
 interface Option {
   id: string;
@@ -36,19 +37,14 @@ export default function StudentIntakePage() {
     fetch("/api/student/intake")
       .then((r) => r.json())
       .then((d) => {
-        if (d.assessment) {
-          setAssessment(d.assessment);
-        } else {
-          setNoAssessment(true);
-        }
+        if (d.assessment) setAssessment(d.assessment);
+        else setNoAssessment(true);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  function setAnswer(questionId: string, value: string) {
-    setAnswers((a) => ({ ...a, [questionId]: value }));
-  }
-
+  const setAnswer = (qid: string, val: string) =>
+    setAnswers((a) => ({ ...a, [qid]: val }));
   const questions = assessment?.questions ?? [];
   const current = questions[currentQ];
   const answeredCount = Object.keys(answers).length;
@@ -61,11 +57,9 @@ export default function StudentIntakePage() {
     const unanswered = questions.filter((q) => !answers[q.id]);
     if (unanswered.length > 0) {
       setError(`يوجد ${unanswered.length} سؤال لم تجب عليه بعد`);
-      const idx = questions.findIndex((q) => !answers[q.id]);
-      setCurrentQ(idx);
+      setCurrentQ(questions.findIndex((q) => !answers[q.id]));
       return;
     }
-
     setSubmitting(true);
     setError("");
     try {
@@ -81,11 +75,8 @@ export default function StudentIntakePage() {
         }),
       });
       const d = await r.json();
-      if (d.success) {
-        router.push("/student/waiting");
-      } else {
-        setError(d.error ?? "حدث خطأ أثناء التقديم");
-      }
+      if (d.success) router.push("/student/waiting");
+      else setError(d.error ?? "حدث خطأ أثناء التقديم");
     } finally {
       setSubmitting(false);
     }
@@ -93,82 +84,114 @@ export default function StudentIntakePage() {
 
   if (loading)
     return (
-      <PageShell>
-        <LoadingSpinner />
-      </PageShell>
+      <div className="pg-shell">
+        <MandalaLoader label="جارٍ تحميل الاختبار" />
+      </div>
     );
 
   if (noAssessment)
     return (
-      <PageShell>
-        <div className="intake-empty">
-          <div className="empty-icon">📋</div>
-          <h2>لا يوجد اختبار متاح حالياً</h2>
-          <p>سيتم إخطارك عندما يكون الاختبار جاهزاً</p>
+      <div className="pg-shell">
+        <div className="empty-card">
+          <div className="empty-orn">
+            <div className="orn-line" />
+            <div className="orn-gem" />
+            <div className="orn-line" />
+          </div>
+          <div className="empty-icon-wrap">
+            <svg
+              width="28"
+              height="28"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.4}
+            >
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+              <rect x="9" y="3" width="6" height="4" rx="1" />
+              <path d="M9 12h6M9 16h4" />
+            </svg>
+          </div>
+          <h2 className="empty-title">لا يوجد اختبار متاح حالياً</h2>
+          <p className="empty-sub">سيتم إخطارك عندما يكون الاختبار جاهزاً</p>
+          <div className="empty-orn" style={{ marginTop: 8 }}>
+            <div className="orn-line" />
+            <div className="orn-gem" />
+            <div className="orn-line" />
+          </div>
         </div>
-      </PageShell>
+        <style>{css}</style>
+      </div>
     );
 
   if (!assessment) return null;
 
+  const typeLabel =
+    current?.type === "MCQ"
+      ? "اختيار من متعدد"
+      : current?.type === "TF"
+        ? "صح أم خطأ"
+        : "إجابة مكتوبة";
+
   return (
-    <PageShell>
+    <div className="pg-shell">
       <div className="intake-wrap">
-        {/* Header */}
-        <div className="intake-header">
-          <div className="intake-title-row">
-            <div className="intake-label">اختبار القبول</div>
+        {/* ── Header ── */}
+        <div className="intake-head">
+          <div className="intake-head-left">
+            <div className="intake-eyebrow">
+              <div className="ey-gem" />
+              اختبار القبول
+            </div>
             <h1 className="intake-title">{assessment.title}</h1>
           </div>
-          <div className="intake-meta">
-            <span className="q-counter">
-              {currentQ + 1} / {questions.length}
-            </span>
-            <span className="answered-count">{answeredCount} مجاب</span>
+          <div className="intake-counter">
+            <span className="counter-cur">{currentQ + 1}</span>
+            <span className="counter-sep">/</span>
+            <span className="counter-tot">{questions.length}</span>
+            <div className="counter-sub">{answeredCount} مجاب</div>
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="progress-wrap">
-          <div className="progress-bar" style={{ width: `${progress}%` }} />
+        {/* ── Progress ── */}
+        <div className="prog-wrap">
+          <div className="prog-track">
+            <div className="prog-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="prog-pct">{Math.round(progress)}%</span>
         </div>
 
-        {/* Question dots */}
+        {/* ── Question dots ── */}
         <div className="q-dots">
           {questions.map((q, i) => (
             <button
               key={q.id}
-              className={`q-dot ${i === currentQ ? "current" : ""} ${answers[q.id] ? "answered" : ""}`}
+              className={`q-dot ${i === currentQ ? "cur" : ""} ${answers[q.id] ? "ans" : ""}`}
               onClick={() => setCurrentQ(i)}
               title={`سؤال ${i + 1}`}
             />
           ))}
         </div>
 
-        {/* Current question */}
+        {/* ── Question card ── */}
         {current && (
           <div className="q-card" key={current.id}>
-            <div className="q-type-badge">
-              {current.type === "MCQ"
-                ? "اختيار من متعدد"
-                : current.type === "TF"
-                  ? "صح أم خطأ"
-                  : "إجابة مكتوبة"}
-            </div>
+            {/* Card top gold rule */}
+            <div className="q-card-rule" />
+            <div className="q-badge">{typeLabel}</div>
             <div className="q-text">{current.text}</div>
 
-            {/* MCQ */}
             {current.type === "MCQ" && (
-              <div className="q-options">
+              <div className="q-opts">
                 {current.options.map((opt) => (
                   <button
                     key={opt.id}
-                    className={`q-option-btn ${answers[current.id] === opt.text ? "selected" : ""}`}
+                    className={`opt-btn ${answers[current.id] === opt.text ? "sel" : ""}`}
                     onClick={() => setAnswer(current.id, opt.text)}
                   >
-                    <span className="opt-radio">
+                    <span className="opt-circle">
                       {answers[current.id] === opt.text && (
-                        <span className="opt-radio-fill" />
+                        <span className="opt-dot" />
                       )}
                     </span>
                     {opt.text}
@@ -177,28 +200,29 @@ export default function StudentIntakePage() {
               </div>
             )}
 
-            {/* T/F */}
             {current.type === "TF" && (
               <div className="tf-row">
                 {[
-                  { val: "true", label: "✔ صحيح" },
-                  { val: "false", label: "✘ خطأ" },
+                  { val: "true", label: "صحيح" },
+                  { val: "false", label: "خطأ" },
                 ].map((opt) => (
                   <button
                     key={opt.val}
-                    className={`tf-btn ${answers[current.id] === opt.val ? "selected" : ""} ${opt.val === "true" ? "true-btn" : "false-btn"}`}
+                    className={`tf-btn ${answers[current.id] === opt.val ? "sel" : ""} tf-${opt.val}`}
                     onClick={() => setAnswer(current.id, opt.val)}
                   >
+                    <span className="tf-icon">
+                      {opt.val === "true" ? "✔" : "✘"}
+                    </span>
                     {opt.label}
                   </button>
                 ))}
               </div>
             )}
 
-            {/* Written */}
             {current.type === "WRITTEN" && (
               <textarea
-                className="written-input"
+                className="written-inp"
                 placeholder="اكتب إجابتك هنا..."
                 value={answers[current.id] ?? ""}
                 onChange={(e) => setAnswer(current.id, e.target.value)}
@@ -209,22 +233,41 @@ export default function StudentIntakePage() {
           </div>
         )}
 
-        {/* Navigation */}
+        {/* ── Navigation ── */}
         <div className="nav-row">
           <button
-            className="nav-btn secondary"
+            className="nav-btn sec"
             onClick={() => setCurrentQ((q) => Math.max(0, q - 1))}
             disabled={currentQ === 0}
           >
-            → السابق
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+            السابق
           </button>
-
           {currentQ < questions.length - 1 ? (
             <button
-              className="nav-btn primary"
+              className="nav-btn pri"
               onClick={() => setCurrentQ((q) => q + 1)}
             >
-              التالي ←
+              التالي
+              <svg
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
             </button>
           ) : (
             <button
@@ -232,198 +275,228 @@ export default function StudentIntakePage() {
               onClick={handleSubmit}
               disabled={submitting}
             >
-              {submitting ? "جارٍ التقديم..." : "تقديم الاختبار ✔"}
+              {submitting ? (
+                <>
+                  <span className="nav-spin" />
+                  <span>جارٍ التقديم...</span>
+                </>
+              ) : (
+                "تقديم الاختبار ✔"
+              )}
             </button>
           )}
         </div>
 
-        {error && <div className="intake-error">{error}</div>}
+        {error && (
+          <div className="err-bar">
+            <svg
+              width="13"
+              height="13"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4m0 4h.01" />
+            </svg>
+            {error}
+          </div>
+        )}
       </div>
-
-      <style>{intakeStyles}</style>
-    </PageShell>
-  );
-}
-
-function PageShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="intake-shell">
-      {children}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        .intake-shell {
-          min-height: 100vh;
-          background: #f7f8fa;
-          font-family: 'Tajawal', sans-serif;
-          direction: rtl;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-          padding: 32px 16px;
-        }
-      `}</style>
+      <style>{css}</style>
     </div>
   );
 }
 
-function LoadingSpinner() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        color: "#6b7280",
-        fontSize: 14,
-        padding: "80px 0",
-      }}
-    >
-      <div
-        style={{
-          width: 20,
-          height: 20,
-          border: "2px solid #e5e7eb",
-          borderTopColor: "#4f8ef7",
-          borderRadius: "50%",
-          animation: "spin 0.7s linear infinite",
-        }}
-      />
-      جارٍ تحميل الاختبار...
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes sp{to{transform:rotate(360deg)}}
 
-const intakeStyles = `
-  .intake-wrap {
-    width: 100%; max-width: 680px;
-    display: flex; flex-direction: column; gap: 20px;
+  :root{
+    --gold:#C8A96A; --gold2:#E5B93C; --red:#7A1E1E;
+    --black:#0B0B0C; --ow:#F5F3EE; --cream:#EDE9E0;
+    --text:#0B0B0C; --text2:#3E3526; --text3:#8A7A5A;
+    --sur:#FFFFFF; --bdr:#DDD5C4; --bdr2:#CEC2AC;
+    --gm:rgba(200,169,106,0.09); --gm2:rgba(200,169,106,0.18); --gbdr:rgba(200,169,106,0.24);
+    --rm:rgba(122,30,30,0.08); --rbdr:rgba(122,30,30,0.2);
+    --success:#1a6b3c; --danger:#8b1a1a;
+    --sh:0 4px 20px rgba(11,11,12,0.07);
+    --shsm:0 1px 4px rgba(11,11,12,0.05);
   }
 
-  .intake-header {
-    display: flex; align-items: flex-start; justify-content: space-between;
-    flex-wrap: wrap; gap: 8px;
-  }
-  .intake-label {
-    font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
-    text-transform: uppercase; color: #4f8ef7;
-    background: rgba(79,142,247,0.1); border-radius: 6px;
-    padding: 3px 10px; width: fit-content; margin-bottom: 6px;
-  }
-  .intake-title { font-size: 22px; font-weight: 800; color: #111827; }
-  .intake-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-  .q-counter { font-size: 18px; font-weight: 800; color: #111827; }
-  .answered-count { font-size: 12px; color: #6b7280; }
-
-  .progress-wrap {
-    height: 6px; background: #e5e7eb; border-radius: 99px; overflow: hidden;
-  }
-  .progress-bar {
-    height: 100%; background: linear-gradient(90deg, #4f8ef7, #7c5cfc);
-    border-radius: 99px; transition: width 0.4s ease;
+  .pg-shell{
+    min-height:100vh; background:var(--ow);
+    font-family:'Cairo',sans-serif; direction:rtl;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:40px 20px 80px;
   }
 
-  .q-dots {
-    display: flex; flex-wrap: wrap; gap: 6px;
-  }
-  .q-dot {
-    width: 28px; height: 8px; border-radius: 99px;
-    background: #e5e7eb; border: none; cursor: pointer;
-    transition: all 0.2s;
-  }
-  .q-dot.answered { background: #4f8ef7; }
-  .q-dot.current { background: #111827; transform: scaleY(1.3); }
+  /* ── Ornament ── */
+  .orn-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gbdr),transparent)}
+  .orn-gem{width:5px;height:5px;background:rgba(200,169,106,0.4);transform:rotate(45deg);margin:0 10px;flex-shrink:0}
 
-  .q-card {
-    background: white; border: 1px solid #e5e7eb;
-    border-radius: 16px; padding: 24px;
-    display: flex; flex-direction: column; gap: 18px;
-    animation: fadeUp 0.2s ease both;
+  /* ── Empty state ── */
+  .empty-card{
+    width:100%;max-width:480px;
+    background:var(--sur);border:1px solid var(--bdr);border-radius:16px;
+    padding:44px 40px;display:flex;flex-direction:column;align-items:center;gap:16px;
+    text-align:center;box-shadow:var(--sh);
+    border-top:2px solid var(--gold);
+    animation:fadeUp 0.4s ease both;
   }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .empty-orn{display:flex;align-items:center;width:100%}
+  .empty-icon-wrap{
+    width:72px;height:72px;border-radius:50%;
+    background:var(--gm);border:1px solid var(--gbdr);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--gold);
+  }
+  .empty-title{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.3px}
+  .empty-sub{font-size:13.5px;color:var(--text3);font-weight:500}
 
-  .q-type-badge {
-    font-size: 11px; font-weight: 700; color: #6b7280;
-    background: #f1f3f6; border-radius: 6px; padding: 3px 10px;
-    width: fit-content;
-  }
-  .q-text { font-size: 17px; font-weight: 600; color: #111827; line-height: 1.6; }
-
-  .q-options { display: flex; flex-direction: column; gap: 10px; }
-  .q-option-btn {
-    display: flex; align-items: center; gap: 12px;
-    padding: 13px 16px; border-radius: 10px;
-    background: #f7f8fa; border: 1.5px solid #e5e7eb;
-    color: #374151; font-size: 14px; font-weight: 500;
-    cursor: pointer; text-align: right;
-    transition: all 0.15s; font-family: 'Tajawal', sans-serif;
-  }
-  .q-option-btn:hover { border-color: #4f8ef7; background: rgba(79,142,247,0.04); }
-  .q-option-btn.selected { border-color: #4f8ef7; background: rgba(79,142,247,0.08); color: #1d4ed8; font-weight: 700; }
-  .opt-radio {
-    width: 18px; height: 18px; border-radius: 50%;
-    border: 2px solid #d1d5db; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    transition: border-color 0.15s;
-  }
-  .q-option-btn.selected .opt-radio { border-color: #4f8ef7; }
-  .opt-radio-fill { width: 8px; height: 8px; border-radius: 50%; background: #4f8ef7; }
-
-  .tf-row { display: flex; gap: 12px; }
-  .tf-btn {
-    flex: 1; padding: 14px; border-radius: 12px; font-size: 16px;
-    font-weight: 700; cursor: pointer; border: 1.5px solid #e5e7eb;
-    background: #f7f8fa; transition: all 0.15s; font-family: 'Tajawal', sans-serif;
-  }
-  .tf-btn.true-btn.selected { background: rgba(16,185,129,0.1); border-color: #10b981; color: #065f46; }
-  .tf-btn.false-btn.selected { background: rgba(239,68,68,0.1); border-color: #ef4444; color: #991b1b; }
-  .tf-btn:not(.selected):hover { border-color: #9ca3af; }
-
-  .written-input {
-    width: 100%; padding: 12px 14px;
-    background: #f7f8fa; border: 1.5px solid #e5e7eb;
-    border-radius: 10px; color: #111827;
-    font-size: 14px; font-family: 'Tajawal', sans-serif;
-    line-height: 1.7; resize: vertical; outline: none;
-    transition: border-color 0.15s;
-  }
-  .written-input:focus { border-color: #4f8ef7; background: white; }
-
-  .nav-row {
-    display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  }
-  .nav-btn {
-    padding: 11px 24px; border-radius: 10px;
-    font-size: 14px; font-weight: 700;
-    cursor: pointer; border: none;
-    transition: all 0.15s; font-family: 'Tajawal', sans-serif;
-  }
-  .nav-btn.primary { background: #111827; color: white; }
-  .nav-btn.primary:hover { background: #1f2937; }
-  .nav-btn.secondary {
-    background: white; color: #374151;
-    border: 1.5px solid #e5e7eb;
-  }
-  .nav-btn.secondary:hover { border-color: #9ca3af; }
-  .nav-btn.secondary:disabled { opacity: 0.3; cursor: not-allowed; }
-  .nav-btn.submit { background: #e5e7eb; color: #9ca3af; }
-  .nav-btn.submit.ready { background: #4f8ef7; color: white; }
-  .nav-btn.submit.ready:hover { background: #3b82f6; }
-  .nav-btn.submit:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .intake-error {
-    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
-    color: #dc2626; font-size: 13px; padding: 10px 14px;
-    border-radius: 9px; text-align: center;
+  /* ── Main wrap ── */
+  .intake-wrap{
+    width:100%;max-width:700px;
+    display:flex;flex-direction:column;gap:22px;
+    animation:fadeUp 0.4s ease both;
   }
 
-  .intake-empty {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 12px; padding: 80px 32px; text-align: center;
-    background: white; border-radius: 16px; border: 1px solid #e5e7eb;
+  /* ── Header ── */
+  .intake-head{
+    display:flex;align-items:flex-start;justify-content:space-between;
+    gap:16px;padding-bottom:22px;
+    border-bottom:1px solid var(--bdr);
+    position:relative;
   }
-  .empty-icon { font-size: 48px; }
-  .intake-empty h2 { font-size: 18px; font-weight: 700; color: #111827; }
-  .intake-empty p { font-size: 14px; color: #6b7280; }
+  .intake-head::after{
+    content:'';position:absolute;bottom:-1px;right:0;
+    width:60px;height:2px;
+    background:linear-gradient(90deg,var(--gold),transparent);
+  }
+  .intake-head-left{display:flex;flex-direction:column;gap:8px}
+  .intake-eyebrow{
+    display:flex;align-items:center;gap:7px;
+    font-size:10px;font-weight:700;color:var(--gold);
+    text-transform:uppercase;letter-spacing:2px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .ey-gem{width:4px;height:4px;background:var(--gold);transform:rotate(45deg);flex-shrink:0}
+  .intake-title{font-size:24px;font-weight:900;color:var(--text);letter-spacing:-0.5px}
+  .intake-counter{
+    display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;
+    background:var(--gm);border:1px solid var(--gbdr);
+    padding:12px 16px;border-radius:10px;
+  }
+  .counter-cur{font-size:28px;font-weight:900;color:var(--text);font-family:'IBM Plex Mono',monospace;line-height:1}
+  .counter-sep{font-size:14px;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin:0 1px}
+  .counter-tot{font-size:13px;font-weight:700;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+  .counter-sub{font-size:10px;color:var(--text3);font-weight:600;margin-top:3px}
+
+  /* ── Progress ── */
+  .prog-wrap{display:flex;align-items:center;gap:12px}
+  .prog-track{flex:1;height:6px;background:var(--cream);border-radius:99px;overflow:hidden}
+  .prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;transition:width 0.4s ease}
+  .prog-pct{font-size:11px;font-weight:700;color:var(--text3);font-family:'IBM Plex Mono',monospace;min-width:32px;text-align:left}
+
+  /* ── Dots ── */
+  .q-dots{display:flex;flex-wrap:wrap;gap:5px}
+  .q-dot{width:30px;height:7px;border-radius:99px;background:var(--cream);border:1px solid var(--bdr);cursor:pointer;transition:all 0.2s}
+  .q-dot.ans{background:var(--gold);border-color:var(--gold)}
+  .q-dot.cur{background:var(--black);border-color:var(--black);transform:scaleY(1.4)}
+
+  /* ── Question card ── */
+  .q-card{
+    background:var(--sur);border:1px solid var(--bdr);border-radius:14px;
+    padding:28px;display:flex;flex-direction:column;gap:20px;
+    box-shadow:var(--sh);position:relative;overflow:hidden;
+    animation:fadeUp 0.22s ease both;
+  }
+  .q-card-rule{
+    position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),var(--gold2),transparent);
+  }
+  .q-badge{
+    font-size:10px;font-weight:700;color:var(--gold);
+    background:var(--gm);border:1px solid var(--gbdr);
+    padding:3px 10px;border-radius:6px;width:fit-content;
+    text-transform:uppercase;letter-spacing:1px;font-family:'IBM Plex Mono',monospace;
+  }
+  .q-text{font-size:18px;font-weight:700;color:var(--text);line-height:1.65}
+
+  /* Options */
+  .q-opts{display:flex;flex-direction:column;gap:10px}
+  .opt-btn{
+    display:flex;align-items:center;gap:13px;
+    padding:13px 16px;border-radius:10px;
+    background:var(--ow);border:1.5px solid var(--bdr);
+    color:var(--text2);font-size:14.5px;font-weight:500;
+    cursor:pointer;text-align:right;
+    transition:all 0.16s;font-family:'Cairo',sans-serif;
+  }
+  .opt-btn:hover{border-color:var(--gold);background:var(--gm)}
+  .opt-btn.sel{border-color:var(--gold);background:var(--gm2);color:var(--text);font-weight:700}
+  .opt-circle{
+    width:20px;height:20px;border-radius:50%;
+    border:2px solid var(--bdr2);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color 0.16s;
+  }
+  .opt-btn.sel .opt-circle{border-color:var(--gold)}
+  .opt-dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+
+  /* TF */
+  .tf-row{display:flex;gap:12px}
+  .tf-btn{
+    flex:1;padding:16px;border-radius:12px;
+    font-size:16px;font-weight:700;cursor:pointer;
+    border:1.5px solid var(--bdr);background:var(--ow);
+    transition:all 0.16s;font-family:'Cairo',sans-serif;color:var(--text2);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .tf-btn:hover{border-color:var(--gold);background:var(--gm)}
+  .tf-btn.sel.tf-true{background:rgba(26,107,60,0.09);border-color:rgba(26,107,60,0.35);color:var(--success,#1a6b3c)}
+  .tf-btn.sel.tf-false{background:var(--rm);border-color:var(--rbdr);color:var(--red)}
+  .tf-icon{font-size:14px}
+
+  /* Written */
+  .written-inp{
+    width:100%;padding:13px 15px;
+    background:var(--ow);border:1.5px solid var(--bdr);
+    border-radius:10px;color:var(--text);
+    font-size:14.5px;font-family:'Cairo',sans-serif;
+    line-height:1.75;resize:vertical;outline:none;
+    transition:border-color 0.16s,background 0.16s;
+  }
+  .written-inp:focus{border-color:var(--gold);background:var(--sur);box-shadow:0 0 0 3px var(--gm)}
+  .written-inp::placeholder{color:var(--text3)}
+
+  /* Navigation */
+  .nav-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .nav-btn{
+    display:flex;align-items:center;gap:7px;
+    padding:12px 24px;border-radius:10px;
+    font-size:14px;font-weight:700;cursor:pointer;
+    transition:all 0.16s;font-family:'Cairo',sans-serif;border:none;
+  }
+  .nav-btn.pri{background:var(--black);color:var(--gold);border:1px solid rgba(200,169,106,0.2)}
+  .nav-btn.pri:hover{background:#1a1208;border-color:var(--gold)}
+  .nav-btn.sec{background:var(--sur);color:var(--text2);border:1.5px solid var(--bdr2)}
+  .nav-btn.sec:hover:not(:disabled){border-color:var(--gold);color:var(--text)}
+  .nav-btn.sec:disabled{opacity:0.35;cursor:not-allowed}
+  .nav-btn.submit{background:var(--cream);color:var(--text3);border:1px solid var(--bdr)}
+  .nav-btn.submit.ready{background:var(--black);color:var(--gold);border-color:rgba(200,169,106,0.2)}
+  .nav-btn.submit.ready:hover{background:#1a1208;border-color:var(--gold)}
+  .nav-btn.submit:disabled{opacity:0.5;cursor:not-allowed}
+  .nav-spin{width:13px;height:13px;border:2px solid rgba(200,169,106,0.25);border-top-color:var(--gold);border-radius:50%;animation:sp 0.7s linear infinite}
+
+  /* Error */
+  .err-bar{
+    display:flex;align-items:center;gap:8px;
+    background:var(--rm,rgba(122,30,30,0.07));border:1px solid var(--rbdr,rgba(122,30,30,0.2));
+    color:var(--red);font-size:13px;font-weight:600;
+    padding:11px 14px;border-radius:9px;
+  }
 `;
