@@ -4,6 +4,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 interface School {
   id: string;
@@ -65,8 +66,7 @@ export default function OwnerSchoolsPage() {
   }
 
   useEffect(() => {
-    fetch("/api/owner/schools")
-      .then((r) => r.json())
+    cachedFetch<{ schools: School[] }>("/api/owner/schools", 60_000)
       .then((d) => setSchools(d.schools ?? []))
       .finally(() => setLoading(false));
   }, []);
@@ -94,35 +94,41 @@ export default function OwnerSchoolsPage() {
     }
     setCreating(true);
     const slug = newSlug.trim() || autoSlug(newName);
-    const r = await fetch("/api/owner/schools", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: newName.trim(),
-        slug,
-        description: newDesc.trim() || null,
-        language: newLang,
-        color_primary: newColorPrimary,
-        color_secondary: newColorSecondary,
-        color_bg: newColorBg,
-      }),
-    });
-    const d = await r.json();
-    if (!r.ok) {
-      setCreateError(d.error ?? "فشل إنشاء المدرسة");
+    try {
+      const r = await fetch("/api/owner/schools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName.trim(),
+          slug,
+          description: newDesc.trim() || null,
+          language: newLang,
+          color_primary: newColorPrimary,
+          color_secondary: newColorSecondary,
+          color_bg: newColorBg,
+        }),
+      });
+      const d = await r.json();
+      if (!r.ok) {
+        setCreateError(d.error ?? "فشل إنشاء المدرسة");
+        return;
+      }
+      invalidateCache("/api/owner/schools");
+      invalidateCache("/api/owner/stats");
+      setSchools((prev) => [d.school, ...prev]);
+      setShowCreate(false);
+      setNewName("");
+      setNewSlug("");
+      setNewDesc("");
+      setNewLang("ar");
+      setNewColorPrimary("#C8A96A");
+      setNewColorSecondary("#E5B93C");
+      setNewColorBg("#0B0B0C");
+    } catch {
+      setCreateError("تعذر الاتصال بالخادم");
+    } finally {
       setCreating(false);
-      return;
     }
-    setSchools((prev) => [d.school, ...prev]);
-    setShowCreate(false);
-    setNewName("");
-    setNewSlug("");
-    setNewDesc("");
-    setNewLang("ar");
-    setNewColorPrimary("#C8A96A");
-    setNewColorSecondary("#E5B93C");
-    setNewColorBg("#0B0B0C");
-    setCreating(false);
   }
 
   return (

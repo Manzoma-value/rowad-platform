@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 import MandalaLoader from "@/components/MandalaLoader";
 import { useEffect, useState } from "react";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 interface AssessmentOption {
   id: string;
@@ -22,7 +23,6 @@ interface Assessment {
   is_active: boolean;
   questions: AssessmentQuestion[];
 }
-
 type QuestionType = "MCQ" | "TF" | "WRITTEN";
 type ModalMode = "add" | "edit";
 
@@ -58,8 +58,10 @@ export default function OwnerIntakeAssessmentPage() {
 
   async function loadAssessment() {
     setLoading(true);
-    const r = await fetch("/api/owner/intake-assessment");
-    const d = await r.json();
+    const d = await cachedFetch<{ assessment: Assessment | null }>(
+      "/api/owner/intake-assessment",
+      120_000,
+    );
     setAssessment(d.assessment ?? null);
     setLoading(false);
   }
@@ -72,7 +74,10 @@ export default function OwnerIntakeAssessmentPage() {
       body: JSON.stringify({ title: newTitle }),
     });
     const d = await r.json();
-    if (d.assessment) setAssessment({ ...d.assessment, questions: [] });
+    if (d.assessment) {
+      invalidateCache("/api/owner/intake-assessment");
+      setAssessment({ ...d.assessment, questions: [] });
+    }
     setCreating(false);
   }
 
@@ -83,6 +88,7 @@ export default function OwnerIntakeAssessmentPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: titleDraft }),
     });
+    invalidateCache("/api/owner/intake-assessment");
     setAssessment((a) => (a ? { ...a, title: titleDraft } : a));
     setEditingTitle(false);
   }
@@ -94,6 +100,7 @@ export default function OwnerIntakeAssessmentPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ is_active: !assessment.is_active }),
     });
+    invalidateCache("/api/owner/intake-assessment");
     setAssessment((a) => (a ? { ...a, is_active: !a.is_active } : a));
   }
 
@@ -103,6 +110,7 @@ export default function OwnerIntakeAssessmentPage() {
     setEditingQId(null);
     setModalOpen(true);
   }
+
   function openEdit(q: AssessmentQuestion) {
     setForm({
       type: q.type,
@@ -148,6 +156,7 @@ export default function OwnerIntakeAssessmentPage() {
           setAssessment((a) =>
             a ? { ...a, questions: [...a.questions, d.question] } : a,
           );
+        invalidateCache("/api/owner/intake-assessment");
       } else if (editingQId) {
         const r = await fetch(
           `/api/owner/intake-assessment/${assessment.id}/questions/${editingQId}`,
@@ -169,6 +178,7 @@ export default function OwnerIntakeAssessmentPage() {
                 }
               : a,
           );
+        invalidateCache("/api/owner/intake-assessment");
       }
       setModalOpen(false);
     } finally {
@@ -186,6 +196,7 @@ export default function OwnerIntakeAssessmentPage() {
     setAssessment((a) =>
       a ? { ...a, questions: a.questions.filter((q) => q.id !== qid) } : a,
     );
+    invalidateCache("/api/owner/intake-assessment");
     setDeleting(null);
   }
 
@@ -202,10 +213,7 @@ export default function OwnerIntakeAssessmentPage() {
       options: f.options.map((o, idx) => (idx === i ? { text } : o)),
     }));
 
-  if (loading)
-    return (
-      <MandalaLoader label="جارٍ تحميل الاختبار" sublabel="يرجى الانتظار..." />
-    );
+  if (loading) return <MandalaLoader label="جارٍ تحميل الاختبار" />;
 
   if (!assessment)
     return (
@@ -666,11 +674,7 @@ export default function OwnerIntakeAssessmentPage() {
 const css = `
   :root{--gold:#C8A96A;--gold2:#E5B93C;--gold-muted:rgba(200,169,106,0.1);--gold-border:rgba(200,169,106,0.2);--black:#0B0B0C;--off-white:#F5F3EE;--text:#0B0B0C;--text2:#4a3f2f;--text3:#9a8a6a;--surface:#ffffff;--surface2:#faf8f4;--surface3:#f5f0e8;--border:#e8dfd0;--border2:#d8ccb8;--success:#1a6b3c;--success-bg:rgba(26,107,60,0.08);--warning:#9a6200;--warning-bg:rgba(154,98,0,0.08);--danger:#8b1a1a;--danger-bg:rgba(139,26,26,0.08);--radius:10px;--shadow-sm:0 1px 3px rgba(11,11,12,0.06);--shadow:0 4px 12px rgba(11,11,12,0.08);--shadow-md:0 8px 24px rgba(11,11,12,0.10)}
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
   .ia-page{display:flex;flex-direction:column;gap:22px;font-family:'Cairo',sans-serif}
-  .ia-load{display:flex;align-items:center;justify-content:center;gap:12px;height:220px;color:var(--text3);font-size:14px;font-family:'Cairo',sans-serif}
-  .ia-spin{width:20px;height:20px;border:2px solid var(--gold-border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
   .ia-eyebrow{font-size:10.5px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px}
   .ia-page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-bottom:20px;border-bottom:1px solid var(--border)}
   .ia-title-area{display:flex;flex-direction:column;gap:10px}
@@ -683,7 +687,6 @@ const css = `
   .ia-active-badge.active{background:rgba(26,107,60,0.08);color:var(--success);border-color:rgba(26,107,60,0.2)}
   .ia-active-badge.inactive{background:var(--danger-bg);color:var(--danger);border-color:rgba(139,26,26,0.2)}
   .ia-active-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-
   .ia-btn-primary{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(200,169,106,0.3);background:var(--black);color:var(--gold);transition:all 0.18s;font-family:'Cairo',sans-serif;white-space:nowrap}
   .ia-btn-primary:hover:not(:disabled){background:rgba(200,169,106,0.1);border-color:var(--gold)}
   .ia-btn-primary:disabled{opacity:0.4;cursor:not-allowed}
@@ -691,18 +694,15 @@ const css = `
   .ia-btn-ghost{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:none;color:var(--text2);transition:all 0.15s;font-family:'Cairo',sans-serif}
   .ia-btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
   .ia-btn-ghost.sm{padding:6px 13px;font-size:12px}
-
   .ia-icon-btn{background:none;border:1px solid var(--border);color:var(--text3);width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;flex-shrink:0}
   .ia-icon-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-muted)}
   .ia-icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-bg)}
   .ia-icon-btn:disabled{opacity:0.4;cursor:not-allowed}
   .ia-icon-btn.sm{width:24px;height:24px}
-
   .ia-create-card{background:var(--surface);border:1px dashed var(--gold-border);border-radius:12px;padding:48px 36px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;max-width:520px;margin:0 auto;box-shadow:var(--shadow-sm)}
   .ia-create-icon{width:68px;height:68px;border-radius:16px;background:var(--gold-muted);color:var(--gold);border:1px solid var(--gold-border);display:flex;align-items:center;justify-content:center}
   .ia-create-title{font-size:20px;font-weight:800;color:var(--black)}
   .ia-create-desc{font-size:13px;color:var(--text3);line-height:1.7;max-width:380px}
-
   .ia-field{display:flex;flex-direction:column;gap:8px}
   .ia-field-label{font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
   .ia-field-hint{font-size:10.5px;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0}
@@ -711,7 +711,6 @@ const css = `
   .ia-title-input{font-size:15px;font-weight:700}
   .ia-textarea{background:var(--surface);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:11px 13px;font-size:13.5px;font-family:'Cairo',sans-serif;outline:none;width:100%;resize:vertical;line-height:1.6;transition:border-color 0.15s,box-shadow 0.15s}
   .ia-textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-muted)}
-
   .ia-q-list{display:flex;flex-direction:column;gap:10px}
   .ia-q-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--text3);padding:48px;background:var(--surface);border:1px dashed var(--gold-border);border-radius:10px;font-size:13.5px;line-height:1.6}
   .ia-q-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-sm);transition:border-color 0.15s}
@@ -729,31 +728,24 @@ const css = `
   .ia-q-opt.correct{background:var(--gold-muted);border-color:var(--gold-border);color:var(--gold);font-weight:700}
   .ia-q-tf{font-size:12.5px;color:var(--text2);font-weight:500}
   .ia-q-written-note{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--warning);font-weight:600;background:var(--warning-bg);border:1px solid rgba(154,98,0,0.18);padding:7px 12px;border-radius:6px;width:fit-content}
-
   .ia-add-more-btn{display:flex;align-items:center;gap:8px;justify-content:center;background:none;border:1px dashed var(--gold-border);color:var(--gold);padding:13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.15s;font-family:'Cairo',sans-serif;width:100%}
   .ia-add-more-btn:hover{border-color:var(--gold);background:var(--gold-muted)}
-
   .ia-overlay{position:fixed;inset:0;background:rgba(11,11,12,0.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;backdrop-filter:blur(2px)}
   .ia-modal{background:var(--surface);border:1px solid var(--gold-border);border-radius:14px;padding:26px;width:100%;max-width:540px;display:flex;flex-direction:column;gap:20px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md)}
   .ia-modal-head{display:flex;align-items:center;justify-content:space-between}
   .ia-modal-title{font-size:17px;font-weight:800;color:var(--black)}
-
   .ia-type-row{display:flex;gap:8px}
   .ia-type-btn{flex:1;padding:9px 6px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);transition:all 0.15s;font-family:'Cairo',sans-serif}
   .ia-type-btn.active{background:var(--gold-muted);border-color:var(--gold);color:var(--gold)}
-
   .ia-options{display:flex;flex-direction:column;gap:8px}
   .ia-opt-row{display:flex;align-items:center;gap:9px}
   .ia-radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0;transition:all 0.15s}
   .ia-radio.sel{border-color:var(--gold);background:var(--gold-muted)}
   .ia-add-opt-btn{display:flex;align-items:center;gap:6px;background:none;border:1px dashed var(--gold-border);color:var(--text3);padding:8px 13px;border-radius:7px;cursor:pointer;font-size:12.5px;font-family:'Cairo',sans-serif;transition:all 0.15s;width:fit-content;font-weight:600}
   .ia-add-opt-btn:hover{border-color:var(--gold);color:var(--gold)}
-
   .ia-tf-row{display:flex;gap:10px}
   .ia-tf-btn{flex:1;padding:11px;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);transition:all 0.15s;font-family:'Cairo',sans-serif}
   .ia-tf-btn.sel{background:var(--gold-muted);border-color:var(--gold);color:var(--gold)}
-
   .ia-written-note{display:flex;align-items:center;gap:9px;background:var(--warning-bg);border:1px solid rgba(154,98,0,0.2);color:var(--warning);font-size:13px;font-weight:600;padding:12px 14px;border-radius:8px}
-
   .ia-modal-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:4px;border-top:1px solid var(--border)}
 `;

@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
+import { cachedFetch } from "@/lib/api-cache";
 
 interface Submission {
   id: string;

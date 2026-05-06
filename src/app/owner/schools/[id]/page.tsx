@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { cachedFetch } from "@/lib/api-cache";
 
 interface SchoolDetail {
   id: string;
@@ -85,8 +86,7 @@ export default function OwnerSchoolDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    fetch(`/api/owner/schools/${id}`)
-      .then((r) => r.json())
+    cachedFetch<{ school: SchoolDetail }>(`/api/owner/schools/${id}`, 60_000)
       .then((d) => {
         setSchool(d.school);
         setSettingsName(d.school?.name ?? "");
@@ -97,7 +97,8 @@ export default function OwnerSchoolDetailPage() {
         setColorSecondary(d.school?.color_secondary || "#E5B93C");
         setColorBg(d.school?.color_bg || "#0B0B0C");
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, [id]);
 
   async function saveSettings() {

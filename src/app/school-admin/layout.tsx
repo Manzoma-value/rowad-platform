@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { cachedFetch } from "@/lib/api-cache";
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -96,9 +98,8 @@ export default function SchoolAdminLayout({
   ];
 
   useEffect(() => {
-    fetch("/api/school-admin/stats")
-      .then((r) => r.json())
-      .then((d) => {
+    cachedFetch("/api/school-admin/stats", 60_000)
+      .then((d: any) => {
         if (d?.school) {
           setSchoolName(d.school.name ?? "");
           if (d.school?.slug) {

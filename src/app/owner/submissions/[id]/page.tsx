@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 interface Option {
   id: string;
   text: string;
@@ -63,8 +63,8 @@ export default function OwnerSubmissionDetailPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/owner/submissions/${id}`).then((r) => r.json()),
-      fetch("/api/owner/schools").then((r) => r.json()),
+      cachedFetch<{ attempt: Attempt }>(`/api/owner/submissions/${id}`, 30_000),
+      cachedFetch<{ schools: School[] }>("/api/owner/schools", 60_000),
     ])
       .then(([aData, sData]) => {
         const a: Attempt = aData.attempt;
@@ -83,7 +83,6 @@ export default function OwnerSubmissionDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
-
   async function handleSubmitReview() {
     if (!assignedSchoolId) {
       setSubmitError("يرجى تحديد المدرسة المراد التعيين إليها.");
@@ -106,6 +105,9 @@ export default function OwnerSubmissionDetailPage() {
         setSubmitError(d.error ?? "فشل إرسال المراجعة.");
         return;
       }
+      invalidateCache(`/api/owner/submissions/${id}`);
+      invalidateCache("/api/owner/submissions");
+      invalidateCache("/api/owner/stats");
       router.push("/owner/submissions");
     } finally {
       setSubmitting(false);
