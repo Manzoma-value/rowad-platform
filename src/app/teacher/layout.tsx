@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -8,6 +9,7 @@ import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
+import { cachedFetch } from "@/lib/api-cache";
 
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
 
@@ -115,8 +117,7 @@ export default function TeacherLayout({
   const isRtl = lang === "ar";
 
   useEffect(() => {
-    fetch("/api/teacher")
-      .then((r) => r.json())
+cachedFetch<any>("/api/teacher", 300_000)
       .then((d) => {
         if (d?.school?.slug) schoolSlugRef.current = d.school.slug;
         if (d?.school?.name) setSchoolName(d.school.name);

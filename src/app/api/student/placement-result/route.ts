@@ -1,25 +1,27 @@
-﻿// api/student/placement-result/route.ts
+﻿// api/student/announcements/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export const revalidate = 30;
 
-  const student = await prisma.student.findUnique({ where: { profile_id: user.id } });
-  if (!student) return NextResponse.json({ attempt: null });
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const classId = searchParams.get("classId");
+  if (!classId)
+    return NextResponse.json({ error: "classId is required" }, { status: 400 });
 
-  const attempt = await prisma.assessmentAttempt.findFirst({
-    where: {
-      student_id: student.id,
-      assessment: { type: "SCHOOL_PLACEMENT" },
-      review_status: "REVIEWED",
+  const announcements = await prisma.announcement.findMany({
+    where: { class_id: classId },
+    select: {
+      id: true,
+      content: true,
+      created_at: true,
+      teacher: {
+        select: { profile: { select: { full_name: true } } },
+      },
     },
-    select: { score: true, total: true },
-    orderBy: { submitted_at: "desc" },
+    orderBy: { created_at: "desc" },
   });
 
-  return NextResponse.json({ attempt });
+  return NextResponse.json(announcements);
 }

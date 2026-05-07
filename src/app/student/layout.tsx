@@ -1,5 +1,6 @@
-﻿"use client";
-
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+import { cachedFetch } from "@/lib/api-cache";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -176,8 +177,7 @@ export default function StudentLayout({
   const showFullNav = SHOW_NAV_STATUSES.includes(onboardingStatus);
 
   useEffect(() => {
-    fetch("/api/student")
-      .then((r) => r.json())
+    cachedFetch<any>("/api/student", 60_000)
       .then((data) => {
         if (data.error) {
           router.push("/login");

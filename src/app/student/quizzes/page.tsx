@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 type Option = { id: string; text: string; order: number };
 type Question = {
@@ -38,7 +39,10 @@ export default function StudentQuizzesPage() {
 
   async function fetchQuizzes() {
     try {
-      const data = await fetch("/api/student/quizzes").then((r) => r.json());
+      const data = await cachedFetch<{ quizzes: Quiz[] }>(
+        "/api/student/quizzes",
+        60_000,
+      );
       setQuizzes(data.quizzes ?? []);
     } catch {
       setQuizzes([]);
@@ -84,6 +88,7 @@ export default function StudentQuizzesPage() {
     setSubmitting(false);
     if (!res.ok) return alert(data.error);
     setResult({ score: data.score, total: data.total });
+    invalidateCache("/api/student/quizzes");
     fetchQuizzes();
   };
 

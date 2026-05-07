@@ -1,5 +1,6 @@
 ﻿"use client";
 export const dynamic = "force-dynamic";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 import { useEffect, useState, useCallback } from "react";
 import { useLang } from "@/lib/language-context";
@@ -39,8 +40,11 @@ export default function TeacherPage() {
 
   const fetchAnnouncements = useCallback(async (classId: string) => {
     setAnnouncementsLoading(true);
-    const res = await fetch(`/api/teacher/announcements?classId=${classId}`);
-    setAnnouncements(await res.json());
+    const data = await cachedFetch<Announcement[]>(
+      `/api/teacher/announcements?classId=${classId}`,
+      30_000,
+    );
+    setAnnouncements(data);
     setAnnouncementsLoading(false);
   }, []);
 
@@ -53,14 +57,12 @@ export default function TeacherPage() {
   );
 
   useEffect(() => {
-    fetch("/api/teacher")
-      .then((r) => r.json())
-      .then((d: TeacherData) => {
-        setData(d);
-        if (d.classes?.length > 0) handleSelectClass(d.classes[0]);
-        setLoading(false);
-        setTimeout(() => setVisible(true), 50);
-      });
+    cachedFetch<TeacherData>("/api/teacher", 300_000).then((d) => {
+      setData(d);
+      if (d.classes?.length > 0) handleSelectClass(d.classes[0]);
+      setLoading(false);
+      setTimeout(() => setVisible(true), 50);
+    });
   }, [handleSelectClass]);
 
   const handlePost = async () => {
@@ -75,6 +77,7 @@ export default function TeacherPage() {
       }),
     });
     setNewAnnouncement("");
+    invalidateCache(`/api/teacher/announcements?classId=${selectedClass.id}`);
     await fetchAnnouncements(selectedClass.id);
     setPosting(false);
   };
@@ -82,6 +85,7 @@ export default function TeacherPage() {
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     await fetch(`/api/teacher/announcements?id=${id}`, { method: "DELETE" });
+    invalidateCache(`/api/teacher/announcements?classId=${selectedClass?.id}`);
     await new Promise((r) => setTimeout(r, 300));
     if (selectedClass) await fetchAnnouncements(selectedClass.id);
     setDeletingId(null);

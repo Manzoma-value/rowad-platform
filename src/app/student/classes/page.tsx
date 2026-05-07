@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
+import { cachedFetch } from "@/lib/api-cache";
 
 type Announcement = {
   id: string;
@@ -31,19 +32,17 @@ export default function StudentClassPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
-    fetch("/api/student")
-      .then((r) => r.json())
-      .then(async (d: StudentData) => {
-        setData(d);
-        if (d.class) {
-          const res = await fetch(
-            `/api/student/announcements?classId=${d.class.id}`,
-          );
-          setAnnouncements(await res.json());
-        }
-      });
+    cachedFetch<StudentData>("/api/student", 60_000).then(async (d) => {
+      setData(d);
+      if (d.class) {
+        const ann = await cachedFetch<Announcement[]>(
+          `/api/student/announcements?classId=${d.class.id}`,
+          30_000,
+        );
+        setAnnouncements(ann);
+      }
+    });
   }, []);
-
   if (!data) return <MandalaLoader label={tr.loading} />;
 
   if (!data.class) {

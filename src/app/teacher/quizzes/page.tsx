@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 type Option = { id: string; text: string; order: number };
 type Question = {

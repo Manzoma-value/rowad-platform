@@ -334,6 +334,7 @@ export default function LoginPage() {
               <input
                 type="email"
                 className="lp-input"
+                suppressHydrationWarning   
                 placeholder="example@mail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -363,6 +364,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 className="lp-input"
+                suppressHydrationWarning   
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

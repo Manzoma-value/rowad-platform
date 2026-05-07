@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
+import { cachedFetch } from "@/lib/api-cache";
 
 type Announcement = {
   id: string;
@@ -34,24 +35,21 @@ export default function StudentPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/student")
-      .then((r) => r.json())
-      .then(async (d: StudentData) => {
+    cachedFetch<StudentData>("/api/student", 60_000)
+      .then(async (d) => {
         setData(d);
         if (d.class) {
-          const ann = await fetch(
+          const ann = await cachedFetch<Announcement[]>(
             `/api/student/announcements?classId=${d.class.id}`,
-          ).then((r) => r.json());
+            30_000,
+          );
           setAnnouncements(Array.isArray(ann) ? ann : []);
         }
       })
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading)
-    return (
-      <MandalaLoader label={tr.loading} />
-    );
+  if (loading) return <MandalaLoader label={tr.loading} />;
 
   const initials = data?.profile?.full_name
     ? data.profile.full_name
