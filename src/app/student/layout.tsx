@@ -132,7 +132,7 @@ const navItems: NavItem[] = [
     key: "roadmap" as const,
     href: "/student/roadmap",
     exact: false,
-    labelAr: "بنك الأسئلة",
+    labelAr: "الخريطة",
     labelSq: "Banka e Pyetjeve",
     labelEn: "Question Bank",
     icon: (

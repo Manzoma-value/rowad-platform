@@ -1,6 +1,10 @@
+import { report } from "process";
+
 export const t = {
   ar: {
     // Roadmap builder
+    reports: "التقارير",
+
 noRoadmapYet: "لا يوجد بنك أسئلة بعد",
 createRoadmapSub: "أنشئ خارطة الطريق التعليمية لمدرستك",
 createRoadmap: "إنشاء بنك الأسئلة",
@@ -379,6 +383,7 @@ tfShort: "صح/خطأ",
     placementResults: "Rezultatet e testit të vendosjes",
     reviewDesc: "Shikoni përgjigjet e nxënësve dhe caktojini ata në klasa",
     awaitingReview: "duke pritur rishikimin",
+    reports: "Raportet",
     filterAll: "Të gjitha",
     filterPending: "Në pritje",
     filterReviewed: "Rishikuar",
@@ -735,6 +740,7 @@ tfShort: "E vërtetë / E gabuar",
   addTwoOptions: "Add at least two options",
   addAtLeastOne: "Add at least one question",
   savingQuiz: "Saving...",
+  reports: "Reports",
   saveQuizWithCount: "Save Quiz",
   noQuizzesTeacher: "No quizzes yet",
   createFirstQuiz: "Create the first quiz for your class",

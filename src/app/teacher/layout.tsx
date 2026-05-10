@@ -97,6 +97,29 @@ const sidebarItems = [
       </svg>
     ),
   },
+  {
+    key: "reports" as const,
+    href: "/teacher/reports",
+    exact: false,
+    label: "التقارير", // ← add this
+
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  },
 ];
 
 export default function TeacherLayout({
@@ -117,7 +140,7 @@ export default function TeacherLayout({
   const isRtl = lang === "ar";
 
   useEffect(() => {
-cachedFetch<any>("/api/teacher", 300_000)
+    cachedFetch<any>("/api/teacher", 300_000)
       .then((d) => {
         if (d?.school?.slug) schoolSlugRef.current = d.school.slug;
         if (d?.school?.name) setSchoolName(d.school.name);

@@ -1,4 +1,6 @@
-﻿import { createClient } from "@/lib/supabase/server";
+﻿
+// school admin auth 
+import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
 export async function requireSchoolAdmin() {

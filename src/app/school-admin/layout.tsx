@@ -91,8 +91,14 @@ export default function SchoolAdminLayout({
     },
     {
       href: "/school-admin/roadmap",
-      label: lang === "ar" ? "بنك الأسئلة" : "Banka e Pyetjeve",
+      label: lang === "ar" ? "الخريطة" : "Rruga e Pyetjeve",
       icon: "◆",
+      exact: false,
+    },
+    {
+      href: "/school-admin/reports",
+      label: lang === "ar" ? "التبليغات" : "Raportet",
+      icon: "⊞",
       exact: false,
     },
   ];
