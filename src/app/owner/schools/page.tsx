@@ -89,7 +89,7 @@ export default function OwnerSchoolsPage() {
   async function handleCreate() {
     setCreateError("");
     if (!newName.trim()) {
-      setCreateError("اسم المدرسة مطلوب");
+      setCreateError("اسم الجهة مطلوب");
       return;
     }
     setCreating(true);
@@ -110,7 +110,7 @@ export default function OwnerSchoolsPage() {
       });
       const d = await r.json();
       if (!r.ok) {
-        setCreateError(d.error ?? "فشل إنشاء المدرسة");
+        setCreateError(d.error ?? "فشل إنشاء الجهة");
         return;
       }
       invalidateCache("/api/owner/schools");
@@ -139,7 +139,7 @@ export default function OwnerSchoolsPage() {
           <div className="pg-rule" />
           <div>
             <div className="pg-eyebrow">إدارة المنصة</div>
-            <h1 className="pg-title">المدارس المسجَّلة</h1>
+            <h1 className="pg-title">الجهات المسجَّلة</h1>
           </div>
         </div>
         <button className="btn-create" onClick={() => setShowCreate((s) => !s)}>
@@ -153,7 +153,7 @@ export default function OwnerSchoolsPage() {
           >
             <path d="M12 5v14M5 12h14" />
           </svg>
-          إضافة مدرسة
+          إضافة جهة
         </button>
       </div>
 
@@ -161,21 +161,21 @@ export default function OwnerSchoolsPage() {
       {showCreate && (
         <div className="create-panel">
           <div className="create-panel-header">
-            <div className="create-panel-title">تسجيل مدرسة جديدة</div>
+            <div className="create-panel-title">تسجيل جهة جديدة</div>
             <div className="create-panel-sub">
-              ستظهر المدرسة فور إنشائها في قائمة المدارس مع صفحتها العامة
+              ستظهر الجهة فور إنشائها في قائمة الجهات مع صفحتها العامة
             </div>
           </div>
 
           <div className="create-grid">
             <div className="cf">
               <label className="cf-label">
-                اسم المدرسة <span className="cf-req">*</span>
+                اسم الجهة <span className="cf-req">*</span>
               </label>
               <input
                 className="cf-input"
                 value={newName}
-                placeholder="مدرسة الرواد"
+                placeholder=" الرواد"
                 onChange={(e) => {
                   setNewName(e.target.value);
                   if (!newSlug) setNewSlug(autoSlug(e.target.value));
@@ -198,7 +198,7 @@ export default function OwnerSchoolsPage() {
               </div>
             </div>
             <div className="cf cf-full">
-              <label className="cf-label">وصف المدرسة</label>
+              <label className="cf-label">وصف الجهة</label>
               <input
                 className="cf-input"
                 value={newDesc}
@@ -207,7 +207,7 @@ export default function OwnerSchoolsPage() {
               />
             </div>
             <div className="cf">
-              <label className="cf-label">لغة المدرسة</label>
+              <label className="cf-label">لغة الجهة</label>
               <select
                 className="cf-select"
                 value={newLang}
@@ -251,7 +251,7 @@ export default function OwnerSchoolsPage() {
               onClick={handleCreate}
               disabled={creating}
             >
-              {creating ? "جارٍ الإنشاء..." : "إنشاء المدرسة"}
+              {creating ? "جارٍ الإنشاء..." : "إنشاء الجهة"}
             </button>
             <button
               className="btn-cancel"
@@ -270,9 +270,9 @@ export default function OwnerSchoolsPage() {
       {!loading && schools.length > 0 && (
         <div className="summary">
           {[
-            { num: schools.length, lab: "مدرسة مسجَّلة", icon: "🏫" },
-            { num: totalTeachers, lab: "معلم في المنصة", icon: "👨‍🏫" },
-            { num: totalStudents, lab: "طالب منتسب", icon: "🎓" },
+            { num: schools.length, lab: " جهة مسجَّلة", icon: "�" },
+            { num: totalTeachers, lab: "مشرف في المنصة", icon: "👨‍🏫" },
+            { num: totalStudents, lab: "مستفيد منتسب", icon: "🎓" },
           ].map((s, i) => (
             <div key={i} className="summary-item">
               <span className="summary-icon">{s.icon}</span>
@@ -300,7 +300,7 @@ export default function OwnerSchoolsPage() {
           </svg>
           <input
             className="search-inp"
-            placeholder="البحث عن مدرسة أو مدير..."
+            placeholder="البحث عن الجهة أو مدير..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -334,7 +334,7 @@ export default function OwnerSchoolsPage() {
             </svg>
           </div>
           <p>
-            {search ? "لا توجد نتائج مطابقة لبحثك" : "لا توجد مدارس مسجّلة بعد"}
+            {search ? "لا توجد نتائج مطابقة لبحثك" : "لا توجد جهات مسجّلة بعد"}
           </p>
         </div>
       ) : (
@@ -414,8 +414,8 @@ export default function OwnerSchoolsPage() {
 
               <div className="card-stats">
                 {[
-                  { val: school._count?.teachers ?? 0, lab: "معلم" },
-                  { val: school._count?.students ?? 0, lab: "طالب" },
+                  { val: school._count?.teachers ?? 0, lab: "الجهة" },
+                  { val: school._count?.students ?? 0, lab: "مستفيد" },
                   { val: school._count?.classes ?? 0, lab: "فصل" },
                 ].map((s, i) => (
                   <div key={i} className="stat">
@@ -430,7 +430,7 @@ export default function OwnerSchoolsPage() {
                   href={`/owner/schools/${school.id}`}
                   className="btn-manage"
                 >
-                  إدارة المدرسة
+                  إدارة الجهة
                 </Link>
                 <a
                   href={`/schools/${school.slug}`}

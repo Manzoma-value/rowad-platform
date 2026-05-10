@@ -239,7 +239,7 @@ export default function OwnerIntakeAssessmentPage() {
           </div>
           <h2 className="ia-create-title">إنشاء اختبار القبول</h2>
           <p className="ia-create-desc">
-            سيتم إجراء هذا الاختبار لجميع الطلاب الجدد قبل تعيينهم في المدرسة
+            سيتم إجراء هذا الاختبار لجميع الطلاب الجدد قبل تعيينهم في الجهة
             المناسبة.
           </p>
           <div className="ia-field">

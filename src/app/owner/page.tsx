@@ -18,7 +18,7 @@ interface Stats {
 const STATUS_LABELS: Record<string, string> = {
   PENDING_INTAKE: "في انتظار الاختبار",
   INTAKE_SUBMITTED: "تم تقديم الاختبار",
-  SCHOOL_ASSIGNED: "تم تعيين المدرسة",
+  SCHOOL_ASSIGNED: "تم تعيين الجهة",
   SCHOOL_PLACEMENT_SUBMITTED: "تم تقديم التوزيع",
   CLASS_ASSIGNED: "تم تعيين الفصل",
 };
@@ -172,9 +172,9 @@ export default function OwnerDashboardPage() {
   );
 
   const statCards = [
-    { label: "المدارس",          value: stats.schoolCount,        href: "/owner/schools",                  accent: "#7A1E1E", sub: "مدرسة مسجّلة",  icon: "🏫" },
-    { label: "المعلمون",         value: stats.teacherCount,       href: "/owner/schools",                  accent: "#080B0C", sub: "معلم نشط",       icon: "👨‍🏫" },
-    { label: "الطلاب",           value: stats.studentCount,       href: "/owner/submissions",              accent: "#C8A96A", sub: "طالب مسجّل",     icon: "🎓" },
+    { label: "الجهات",          value: stats.schoolCount,        href: "/owner/schools",                  accent: "#7A1E1E", sub: "جهة مسجّلة",  icon: "🏫" },
+    { label: "المشرفون",         value: stats.teacherCount,       href: "/owner/schools",                  accent: "#080B0C", sub: "مشرف نشط",       icon: "👨‍🏫" },
+    { label: "المستفيدين",           value: stats.studentCount,       href: "/owner/submissions",              accent: "#C8A96A", sub: "مستفيد مسجّل",     icon: "🎓" },
     { label: "بانتظار المراجعة", value: stats.pendingSubmissions, href: "/owner/submissions?status=PENDING", accent: "#7A1E1E", sub: "إجابة معلّقة", icon: "⏳", alert: stats.pendingSubmissions > 0 },
   ];
 
@@ -315,8 +315,8 @@ export default function OwnerDashboardPage() {
                 tagType: stats.pendingSubmissions > 0 ? "warning" : "success",
               },
               {
-                href: "/owner/schools", icon: "🏫", title: "المدارس المسجّلة",
-                sub: `${stats.schoolCount.toLocaleString("en")} مدرسة في منظومة النظام`,
+                href: "/owner/schools", icon: "🏫", title: "الجهات المسجّلة",
+                sub: `${stats.schoolCount.toLocaleString("en")} جهات في منظومة النظام`,
                 tag: "نشطة", tagType: "success",
               },
             ].map((link, i) => (

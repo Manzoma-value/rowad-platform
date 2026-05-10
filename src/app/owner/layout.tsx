@@ -52,7 +52,7 @@ const navItems = [
   },
   {
     href: "/owner/schools",
-    label: "المدارس",
+    label: "الجهات",
     icon: (
       <svg
         width="16"

@@ -38,7 +38,7 @@ interface SchoolDetail {
 const STATUS_LABELS: Record<string, string> = {
   PENDING_INTAKE: "في انتظار الاختبار",
   INTAKE_SUBMITTED: "تم تقديم الاختبار",
-  SCHOOL_ASSIGNED: "تم تعيين المدرسة",
+  SCHOOL_ASSIGNED: "تم تعيين الجهة",
   SCHOOL_PLACEMENT_SUBMITTED: "تم تقديم التوزيع",
   CLASS_ASSIGNED: "تم تعيين الفصل",
 };
@@ -146,20 +146,20 @@ export default function OwnerSchoolDetailPage() {
     return (
       <div className="sd-load">
         <div className="sd-spin" />
-        جارٍ تحميل بيانات المدرسة…<style>{css}</style>
+        جارٍ تحميل بيانات الجهة<style>{css}</style>
       </div>
     );
   if (!school)
     return (
       <div className="sd-load">
-        المدرسة غير موجودة.<style>{css}</style>
+        الجهة غير موجودة.<style>{css}</style>
       </div>
     );
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: "overview", label: "نظرة عامة" },
-    { id: "teachers", label: "المعلمون", count: school.teachers.length },
-    { id: "students", label: "الطلاب", count: school.students.length },
+    { id: "teachers", label: "المشرفون", count: school.teachers.length },
+    { id: "students", label: "مستفيدين", count: school.students.length },
     { id: "classes", label: "الفصول", count: school.classes.length },
     { id: "settings", label: "⚙️ الإعدادات" },
   ];
@@ -251,7 +251,7 @@ export default function OwnerSchoolDetailPage() {
               <polyline points="15 3 21 3 21 9" />
               <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
-            صفحة المدرسة
+            صفحة الجهة
           </a>
         </div>
       </div>
@@ -281,8 +281,8 @@ export default function OwnerSchoolDetailPage() {
         <div className="sd-ov">
           <div className="sd-ov-grid">
             {[
-              { label: "المعلمون", value: school.teachers.length, icon: "👨‍🏫" },
-              { label: "الطلاب", value: school.students.length, icon: "🎓" },
+              { label: "المشرفون", value: school.teachers.length, icon: "👨‍🏫" },
+              { label: "مستفيدين", value: school.students.length, icon: "🎓" },
               { label: "الفصول", value: school.classes.length, icon: "📚" },
               {
                 label: "تاريخ الإنشاء",
@@ -303,16 +303,16 @@ export default function OwnerSchoolDetailPage() {
           <div className="sd-ov-info-grid">
             {[
               {
-                label: "المعلمون بدون فصول",
+                label: "المشرفون بدون فصول",
                 val: school.teachers.filter((t) => t.classes.length === 0)
                   .length,
               },
               {
-                label: "الطلاب بدون فصل",
+                label: "مستفيدين بدون فصل",
                 val: school.students.filter((s) => !s.class).length,
               },
               {
-                label: "الفصول بدون معلم",
+                label: "الفصول بدون مشرفين",
                 val: school.classes.filter((c) => !c.teacher).length,
               },
             ].map((item, i) => (
@@ -327,7 +327,7 @@ export default function OwnerSchoolDetailPage() {
               <div className="sd-landing-preview-icon">🌐</div>
               <div>
                 <div className="sd-landing-preview-title">
-                  صفحة المدرسة العامة
+                  صفحة الجهة العامة
                 </div>
                 <div className="sd-landing-preview-url">{`/schools/${school.slug}`}</div>
               </div>
@@ -375,7 +375,7 @@ export default function OwnerSchoolDetailPage() {
               </svg>
               <input
                 className="sd-search"
-                placeholder="ابحث عن معلم…"
+                placeholder="ابحث عن مشرف…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -425,7 +425,7 @@ export default function OwnerSchoolDetailPage() {
               </svg>
               <input
                 className="sd-search"
-                placeholder="ابحث عن طالب…"
+                placeholder="ابحث عن مستفيد"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -473,10 +473,10 @@ export default function OwnerSchoolDetailPage() {
                 <div className="sd-row-body">
                   <div className="sd-row-name">{c.name}</div>
                   <div className="sd-row-sub">
-                    {c.teacher?.profile.full_name ?? "لم يُعيَّن معلم"}
+                    {c.teacher?.profile.full_name ?? "لم يُعيَّن مشرف"}
                   </div>
                 </div>
-                <div className="sd-tag">{c._count.students} طالب</div>
+                <div className="sd-tag">{c._count.students} مستفيد</div>
               </div>
             ))
           )}
@@ -487,10 +487,10 @@ export default function OwnerSchoolDetailPage() {
       {tab === "settings" && (
         <div className="sd-settings">
           <div className="sd-settings-card">
-            <h2 className="sd-settings-title">إعدادات المدرسة</h2>
+            <h2 className="sd-settings-title">إعدادات الجهة</h2>
 
             <div className="sd-field">
-              <label className="sd-field-label">اسم المدرسة</label>
+              <label className="sd-field-label">اسم الجهة</label>
               <input
                 className="sd-input"
                 value={settingsName}
@@ -527,7 +527,7 @@ export default function OwnerSchoolDetailPage() {
             </div>
 
             <div className="sd-field">
-              <label className="sd-field-label">وصف المدرسة</label>
+              <label className="sd-field-label">وصف الجهة</label>
               <textarea
                 className="sd-textarea"
                 value={settingsDesc}
@@ -538,7 +538,7 @@ export default function OwnerSchoolDetailPage() {
             </div>
 
             <div className="sd-field">
-              <label className="sd-field-label">لغة المدرسة</label>
+              <label className="sd-field-label">لغة الجهة</label>
               <select
                 className="sd-select"
                 value={settingsLang}
@@ -595,7 +595,7 @@ export default function OwnerSchoolDetailPage() {
                   },
                   {
                     label: "لون الخلفية",
-                    hint: "خلفية صفحة المدرسة",
+                    hint: "خلفية صفحة الجهة",
                     value: colorBg,
                     setter: setColorBg,
                   },
@@ -695,7 +695,7 @@ export default function OwnerSchoolDetailPage() {
                       marginTop: 8,
                     }}
                   >
-                    {settingsName || "اسم المدرسة"}
+                    {settingsName || "اسم الجهة"}
                   </div>
                   <div
                     style={{
@@ -733,7 +733,7 @@ export default function OwnerSchoolDetailPage() {
               <div className="sd-landing-preview-icon">🌐</div>
               <div>
                 <div className="sd-landing-preview-title">
-                  صفحة المدرسة العامة
+                  صفحة الجهة العامة
                 </div>
                 <div className="sd-landing-preview-url">{`/schools/${school.slug}`}</div>
               </div>
