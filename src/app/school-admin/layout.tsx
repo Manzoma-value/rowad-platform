@@ -97,7 +97,7 @@ export default function SchoolAdminLayout({
     },
     {
       href: "/school-admin/reports",
-      label: lang === "ar" ? "التبليغات" : "Raportet",
+      label: lang === "ar" ? "التقارير" : "Raportet",
       icon: "⊞",
       exact: false,
     },

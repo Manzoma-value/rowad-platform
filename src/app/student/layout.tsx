@@ -150,6 +150,7 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  
 ];
 
 export default function StudentLayout({

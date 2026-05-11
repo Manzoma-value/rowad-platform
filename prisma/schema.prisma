@@ -15,6 +15,8 @@ model Profile {
   managed_school               School?             @relation("SchoolAdmin")
   student                      Student?
   teacher                      Teacher?
+  posts                        Post[]
+  post_reactions               PostReaction[]
 
   @@map("profiles")
 }
@@ -39,6 +41,7 @@ model School {
   admin              Profile?            @relation("SchoolAdmin", fields: [admin_id], references: [id])
   students           Student[]
   teachers           Teacher[]
+  posts              Post[]
 
   @@map("schools")
 }
@@ -369,6 +372,46 @@ model ModuleAnswer {
   question    RoadmapQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   @@map("module_answers")
+}
+
+model Post {
+  id          String   @id @default(uuid()) @db.Uuid
+  school_id   String   @db.Uuid
+  author_id   String   @db.Uuid // profile.id
+  content     String? // text (nullable if image only)
+  image_url   String? // Supabase Storage public URL
+  image_path  String? // Supabase Storage path (for deletion)
+  reply_to_id String?  @db.Uuid // null = top-level post
+  created_at  DateTime @default(now())
+
+  school    School         @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author    Profile        @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  reply_to  Post?          @relation("PostReplies", fields: [reply_to_id], references: [id], onDelete: Cascade)
+  replies   Post[]         @relation("PostReplies")
+  reactions PostReaction[]
+
+  @@map("posts")
+}
+
+model PostReaction {
+  id        String       @id @default(uuid()) @db.Uuid
+  post_id   String       @db.Uuid
+  author_id String       @db.Uuid
+  type      ReactionType
+
+  post   Post    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  author Profile @relation(fields: [author_id], references: [id], onDelete: Cascade)
+
+  @@unique([post_id, author_id]) // one reaction per user per post
+  @@map("post_reactions")
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  DISLIKE
+  HAHA
+  SAD
 }
 
 enum Role {
