@@ -2,8 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
-
-// ─── TYPES ────────────────────────────────────────────────────────────────────
+import { useRouter } from "next/navigation";
 
 interface StudentSummary {
   id: string;
@@ -11,6 +10,8 @@ interface StudentSummary {
   attempts_count: number;
   passed_count: number;
   avg_score: number | null;
+  trait_assessments_count: number;
+  pending_trait_assessments: number;
 }
 
 interface ClassData {
@@ -20,58 +21,11 @@ interface ClassData {
   total_attempts: number;
   avg_score: number | null;
   score_distribution: number[];
+  pending_trait_assessments: number;
   students: StudentSummary[];
 }
 
-interface TimelineItem {
-  date: string;
-  module_title: string;
-  stage_title: string;
-  stage_order: number;
-  module_order: number;
-  score_pct: number;
-  passed: boolean;
-  score: number;
-  total: number;
-}
-
-interface TypeAccuracy {
-  type: string;
-  correct: number;
-  total: number;
-  pct: number;
-}
-
-interface StageBreakdown {
-  title: string;
-  avg_score: number | null;
-  modules_done: number;
-}
-
-interface StudentDetail {
-  student: {
-    id: string;
-    full_name: string;
-    class_name: string | null;
-    attempts_count: number;
-    passed_count: number;
-    avg_score: number | null;
-  };
-  timeline: TimelineItem[];
-  type_accuracy: TypeAccuracy[];
-  stage_breakdown: StageBreakdown[];
-}
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-
-const TYPE_LABELS: Record<string, string> = {
-  MCQ: "اختيار متعدد",
-  TF: "صح/خطأ",
-  WRITTEN: "مقالي",
-  MATCHING: "توصيل",
-};
-
-function ScoreRing({ pct, size = 56 }: { pct: number | null; size?: number }) {
+function ScoreRing({ pct, size = 52 }: { pct: number | null; size?: number }) {
   if (pct === null)
     return (
       <div
@@ -79,7 +33,7 @@ function ScoreRing({ pct, size = 56 }: { pct: number | null; size?: number }) {
           width: size,
           height: size,
           borderRadius: "50%",
-          background: "#f0e8e0",
+          background: "rgba(200,169,106,0.08)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -104,7 +58,7 @@ function ScoreRing({ pct, size = 56 }: { pct: number | null; size?: number }) {
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="#f0e8e0"
+          stroke="rgba(200,169,106,0.12)"
           strokeWidth="5"
         />
         <circle
@@ -137,247 +91,28 @@ function ScoreRing({ pct, size = 56 }: { pct: number | null; size?: number }) {
   );
 }
 
-function LineChart({
-  points,
-  labels,
-}: {
-  points: number[];
-  labels?: string[];
-}) {
-  if (points.length < 2)
-    return (
-      <div
-        style={{
-          color: "#9a7a6a",
-          fontSize: 12,
-          padding: "20px 0",
-          textAlign: "center",
-        }}
-      >
-        لا توجد بيانات كافية
-      </div>
-    );
-  const w = 560,
-    h = 140,
-    pad = 20;
-  const maxV = Math.max(...points, 1);
-  const xs = points.map(
-    (_, i) => pad + (i / (points.length - 1)) * (w - pad * 2),
-  );
-  const ys = points.map((v) => pad + (1 - v / maxV) * (h - pad * 2));
-  const pathD = xs
-    .map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`)
-    .join(" ");
-  const areaD = `${pathD} L${xs[xs.length - 1]},${h} L${xs[0]},${h} Z`;
-  return (
-    <svg
-      width="100%"
-      viewBox={`0 0 ${w} ${h + 30}`}
-      style={{ overflow: "visible" }}
-    >
-      <defs>
-        <linearGradient id="tGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#C8A96A" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#C8A96A" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {/* Grid lines */}
-      {[0, 25, 50, 75, 100].map((v) => {
-        const y = pad + (1 - v / 100) * (h - pad * 2);
-        return (
-          <g key={v}>
-            <line
-              x1={pad}
-              y1={y}
-              x2={w - pad}
-              y2={y}
-              stroke="#f0e8e0"
-              strokeWidth="1"
-            />
-            <text
-              x={pad - 4}
-              y={y + 4}
-              fontSize="9"
-              fill="#9a7a6a"
-              textAnchor="end"
-            >
-              {v}%
-            </text>
-          </g>
-        );
-      })}
-      <path d={areaD} fill="url(#tGrad)" />
-      <path
-        d={pathD}
-        fill="none"
-        stroke="#C8A96A"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {xs.map((x, i) => (
-        <g key={i}>
-          <circle
-            cx={x}
-            cy={ys[i]}
-            r="5"
-            fill={points[i] >= 50 ? "#C8A96A" : "#7A1E1E"}
-            stroke="white"
-            strokeWidth="2"
-          />
-          {labels && (
-            <text
-              x={x}
-              y={h + 18}
-              fontSize="9"
-              fill="#9a7a6a"
-              textAnchor="middle"
-              transform={`rotate(-30,${x},${h + 18})`}
-            >
-              {labels[i]?.slice(0, 6)}
-            </text>
-          )}
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-function TypeAccuracyChart({ data }: { data: TypeAccuracy[] }) {
-  if (!data.length)
-    return (
-      <div
-        style={{
-          color: "#9a7a6a",
-          fontSize: 12,
-          textAlign: "center",
-          padding: 16,
-        }}
-      >
-        لا توجد بيانات
-      </div>
-    );
-  return (
-    <div className="tr-type-chart">
-      {data.map((item) => (
-        <div key={item.type} className="tr-type-row">
-          <span className="tr-type-label">
-            {TYPE_LABELS[item.type] ?? item.type}
-          </span>
-          <div className="tr-type-track">
-            <div
-              className="tr-type-fill"
-              style={{
-                width: `${item.pct}%`,
-                background:
-                  item.pct >= 75
-                    ? "#2D8A4A"
-                    : item.pct >= 50
-                      ? "#C8A96A"
-                      : "#7A1E1E",
-              }}
-            />
-          </div>
-          <span className="tr-type-pct">{item.pct}%</span>
-          <span className="tr-type-frac">
-            {item.correct}/{item.total}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function StageChart({ data }: { data: StageBreakdown[] }) {
-  if (!data.length)
-    return (
-      <div
-        style={{
-          color: "#9a7a6a",
-          fontSize: 12,
-          textAlign: "center",
-          padding: 16,
-        }}
-      >
-        لا توجد بيانات
-      </div>
-    );
-  const max = Math.max(...data.map((d) => d.avg_score ?? 0), 1);
-  return (
-    <div className="tr-stage-chart">
-      {data.map((s, i) => (
-        <div key={i} className="tr-stage-bar-col">
-          <div className="tr-stage-bar-wrap">
-            <div
-              className="tr-stage-bar"
-              style={{
-                height: `${((s.avg_score ?? 0) / max) * 100}%`,
-                background:
-                  (s.avg_score ?? 0) >= 75
-                    ? "#2D8A4A"
-                    : (s.avg_score ?? 0) >= 50
-                      ? "#C8A96A"
-                      : "#7A1E1E",
-              }}
-            />
-          </div>
-          <span className="tr-stage-val">
-            {s.avg_score !== null ? `${s.avg_score}%` : "—"}
-          </span>
-          <span className="tr-stage-name">{s.title.slice(0, 10)}</span>
-          <span className="tr-stage-mods">{s.modules_done} وحدة</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
-
 export default function TeacherReportsPage() {
+  const router = useRouter();
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(
-    null,
-  );
-  const [studentDetail, setStudentDetail] = useState<StudentDetail | null>(
-    null,
-  );
-  const [studentLoading, setStudentLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/teacher/reports")
       .then((r) => r.json())
       .then((d) => {
-        const cls = d.classes ?? [];
+        const cls: ClassData[] = d.classes ?? [];
         setClasses(cls);
         if (cls.length > 0) setSelectedClass(cls[0]);
-        setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .finally(() => setLoading(false));
   }, []);
-
-  const openStudent = async (studentId: string) => {
-    if (selectedStudentId === studentId) {
-      setSelectedStudentId(null);
-      setStudentDetail(null);
-      return;
-    }
-    setSelectedStudentId(studentId);
-    setStudentDetail(null);
-    setStudentLoading(true);
-    const res = await fetch(`/api/teacher/reports/students/${studentId}`);
-    const d = await res.json();
-    setStudentDetail(d);
-    setStudentLoading(false);
-  };
 
   if (loading)
     return (
-      <div className="tr-page" dir="rtl">
-        <div className="tr-loading">
-          <div className="tr-spinner" />
+      <div className="rp-page" dir="rtl">
+        <div className="rp-loading">
+          <div className="rp-spinner" />
           <span>جارٍ تحميل التقارير...</span>
         </div>
         <style>{css}</style>
@@ -385,39 +120,57 @@ export default function TeacherReportsPage() {
     );
 
   return (
-    <div className="tr-page" dir="rtl">
-      {/* ── HEADER ── */}
-      <div className="tr-header">
+    <div className="rp-page" dir="rtl">
+      {/* Header */}
+      <div className="rp-header">
         <div>
-          <p className="tr-eyebrow">تقارير المعلم</p>
-          <h1 className="tr-title">أداء الطلاب</h1>
+          <p className="rp-eyebrow">تقارير المعلم</p>
+          <h1 className="rp-title">أداء الطلاب</h1>
         </div>
+        {selectedClass && selectedClass.pending_trait_assessments > 0 && (
+          <div className="rp-pending-banner">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            {selectedClass.pending_trait_assessments} تقييم سمات معلّق
+          </div>
+        )}
       </div>
-      <div className="tr-rule">
-        <div className="tr-rule-line" />
-        <div className="tr-rule-diamond" />
-        <div className="tr-rule-line" />
+
+      <div className="rp-rule">
+        <div className="rp-rule-line" />
+        <div className="rp-rule-diamond" />
+        <div className="rp-rule-line" />
       </div>
 
       {classes.length === 0 ? (
-        <div className="tr-empty">لا توجد فصول مُعيَّنة لك بعد</div>
+        <div className="rp-empty">لا توجد فصول مُعيَّنة لك بعد</div>
       ) : (
         <>
-          {/* ── CLASS TABS ── */}
+          {/* Class tabs */}
           {classes.length > 1 && (
-            <div className="tr-class-tabs">
+            <div className="rp-class-tabs">
               {classes.map((cls) => (
                 <button
                   key={cls.id}
-                  className={`tr-class-tab ${selectedClass?.id === cls.id ? "active" : ""}`}
-                  onClick={() => {
-                    setSelectedClass(cls);
-                    setSelectedStudentId(null);
-                    setStudentDetail(null);
-                  }}
+                  className={`rp-class-tab ${selectedClass?.id === cls.id ? "active" : ""}`}
+                  onClick={() => setSelectedClass(cls)}
                 >
                   {cls.name}
-                  <span className="tr-tab-count">{cls.student_count}</span>
+                  <span className="rp-tab-count">{cls.student_count}</span>
+                  {cls.pending_trait_assessments > 0 && (
+                    <span className="rp-tab-pending">
+                      {cls.pending_trait_assessments}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -425,227 +178,120 @@ export default function TeacherReportsPage() {
 
           {selectedClass && (
             <>
-              {/* ── CLASS SUMMARY CARDS ── */}
-              <div className="tr-summary-grid">
-                {[
-                  { label: "عدد الطلاب", value: selectedClass.student_count },
-                  {
-                    label: "إجمالي المحاولات",
-                    value: selectedClass.total_attempts,
-                  },
-                  {
-                    label: "متوسط الدرجات",
-                    value:
-                      selectedClass.avg_score !== null
-                        ? `${selectedClass.avg_score}%`
-                        : "—",
-                  },
-                ].map((c) => (
-                  <div key={c.label} className="tr-sum-card">
-                    <div className="tr-sum-val">{c.value}</div>
-                    <div className="tr-sum-label">{c.label}</div>
+              {/* Class stats row */}
+              <div className="rp-stats-row">
+                <div className="rp-stat-card">
+                  <div className="rp-stat-num">
+                    {selectedClass.student_count}
                   </div>
-                ))}
+                  <div className="rp-stat-label">طالب</div>
+                </div>
+                <div className="rp-stat-card">
+                  <div className="rp-stat-num">
+                    {selectedClass.total_attempts}
+                  </div>
+                  <div className="rp-stat-label">محاولة</div>
+                </div>
+                <div className="rp-stat-card">
+                  <div className="rp-stat-num">
+                    {selectedClass.avg_score !== null
+                      ? `${selectedClass.avg_score}%`
+                      : "—"}
+                  </div>
+                  <div className="rp-stat-label">متوسط الدرجات</div>
+                </div>
+                <div className="rp-stat-card gold">
+                  <div className="rp-stat-num">
+                    {selectedClass.pending_trait_assessments}
+                  </div>
+                  <div className="rp-stat-label">تقييم سمات معلّق</div>
+                </div>
               </div>
 
-              {/* ── SCORE DISTRIBUTION ── */}
-              <div className="tr-card">
-                <div className="tr-card-title">
-                  توزيع الدرجات — {selectedClass.name}
-                </div>
-                <div className="tr-dist-wrap">
-                  {["0–25%", "26–50%", "51–75%", "76–100%"].map((label, i) => {
-                    const count = selectedClass.score_distribution[i] ?? 0;
-                    const max = Math.max(
-                      ...selectedClass.score_distribution,
-                      1,
-                    );
-                    const colors = ["#7A1E1E", "#C8A96A", "#A8863E", "#2D8A4A"];
-                    return (
-                      <div key={label} className="tr-dist-row">
-                        <span className="tr-dist-label">{label}</span>
-                        <div className="tr-dist-track">
-                          <div
-                            className="tr-dist-fill"
-                            style={{
-                              width: `${(count / max) * 100}%`,
-                              background: colors[i],
-                            }}
-                          />
-                        </div>
-                        <span className="tr-dist-count">{count}</span>
+              {/* Student card grid */}
+              <div className="rp-section-label">قائمة الطلاب</div>
+              <div className="rp-student-grid">
+                {selectedClass.students.map((s, i) => (
+                  <button
+                    key={s.id}
+                    className="rp-student-card"
+                    style={{ animationDelay: `${i * 40}ms` }}
+                    onClick={() =>
+                      router.push(`/teacher/reports/students/${s.id}`)
+                    }
+                  >
+                    {/* Pending badge */}
+                    {s.pending_trait_assessments > 0 && (
+                      <div className="rp-card-pending-badge">
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        {s.pending_trait_assessments}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                    )}
 
-              {/* ── STUDENT LIST ── */}
-              <div className="tr-card">
-                <div className="tr-card-title">قائمة الطلاب</div>
-                <div className="tr-student-list">
-                  {selectedClass.students.map((s, i) => (
-                    <div key={s.id}>
-                      <div
-                        className={`tr-student-row ${selectedStudentId === s.id ? "active" : ""}`}
-                        style={{ animationDelay: `${i * 40}ms` }}
-                        onClick={() => openStudent(s.id)}
-                      >
-                        <div className="tr-student-av">
-                          {s.full_name.charAt(0)}
-                        </div>
-                        <div className="tr-student-info">
-                          <span className="tr-student-name">{s.full_name}</span>
-                          <span className="tr-student-meta">
-                            {s.attempts_count} محاولة · {s.passed_count} ناجحة
-                          </span>
-                        </div>
-                        <ScoreRing pct={s.avg_score} size={48} />
-                        <div className="tr-student-chevron">
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                          >
-                            <polyline
-                              points={
-                                selectedStudentId === s.id
-                                  ? "18 15 12 9 6 15"
-                                  : "6 9 12 15 18 9"
-                              }
+                    {/* Avatar */}
+                    <div className="rp-card-av">{s.full_name.charAt(0)}</div>
+
+                    {/* Name */}
+                    <div className="rp-card-name">{s.full_name}</div>
+
+                    {/* Score ring */}
+                    <ScoreRing pct={s.avg_score} size={52} />
+
+                    {/* Stats */}
+                    <div className="rp-card-stats">
+                      <span>{s.attempts_count} محاولة</span>
+                      <span className="rp-card-sep">·</span>
+                      <span>{s.passed_count} ناجحة</span>
+                    </div>
+
+                    {/* Trait assessment bar */}
+                    <div className="rp-card-trait-row">
+                      {s.trait_assessments_count > 0 ||
+                      s.pending_trait_assessments > 0 ? (
+                        <>
+                          <div className="rp-card-trait-bar-bg">
+                            <div
+                              className="rp-card-trait-bar-fill"
+                              style={{
+                                width: `${s.passed_count > 0 ? Math.round((s.trait_assessments_count / s.passed_count) * 100) : 0}%`,
+                              }}
                             />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* ── STUDENT DETAIL PANEL ── */}
-                      {selectedStudentId === s.id && (
-                        <div className="tr-student-panel">
-                          {studentLoading ? (
-                            <div className="tr-loading-sm">
-                              <div className="tr-spinner" />
-                            </div>
-                          ) : studentDetail ? (
-                            <div className="tr-panel-inner">
-                              {/* KPIs */}
-                              <div className="tr-panel-kpis">
-                                <div className="tr-panel-kpi">
-                                  <span className="tr-panel-kpi-val">
-                                    {studentDetail.student.attempts_count}
-                                  </span>
-                                  <span className="tr-panel-kpi-label">
-                                    محاولة
-                                  </span>
-                                </div>
-                                <div className="tr-panel-kpi">
-                                  <span className="tr-panel-kpi-val">
-                                    {studentDetail.student.passed_count}
-                                  </span>
-                                  <span className="tr-panel-kpi-label">
-                                    ناجحة
-                                  </span>
-                                </div>
-                                <div className="tr-panel-kpi">
-                                  <ScoreRing
-                                    pct={studentDetail.student.avg_score}
-                                    size={52}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Line chart */}
-                              {studentDetail.timeline.length >= 2 && (
-                                <div className="tr-panel-chart-section">
-                                  <div className="tr-panel-subtitle">
-                                    الأداء عبر الوحدات
-                                  </div>
-                                  <div className="tr-line-chart-wrap">
-                                    <LineChart
-                                      points={studentDetail.timeline.map(
-                                        (t) => t.score_pct,
-                                      )}
-                                      labels={studentDetail.timeline.map(
-                                        (t) => t.module_title,
-                                      )}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="tr-panel-two-col">
-                                {/* Type accuracy */}
-                                <div className="tr-panel-sub-card">
-                                  <div className="tr-panel-subtitle">
-                                    الدقة حسب نوع السؤال
-                                  </div>
-                                  <TypeAccuracyChart
-                                    data={studentDetail.type_accuracy}
-                                  />
-                                </div>
-
-                                {/* Stage breakdown */}
-                                <div className="tr-panel-sub-card">
-                                  <div className="tr-panel-subtitle">
-                                    الأداء حسب المرحلة
-                                  </div>
-                                  <StageChart
-                                    data={studentDetail.stage_breakdown}
-                                  />
-                                </div>
-                              </div>
-
-                              {/* Timeline */}
-                              <div className="tr-panel-subtitle">
-                                سجل المحاولات
-                              </div>
-                              <div className="tr-attempts-list">
-                                {studentDetail.timeline.map((item, idx) => (
-                                  <div
-                                    key={idx}
-                                    className={`tr-attempt-row ${item.passed ? "passed" : "failed"}`}
-                                  >
-                                    <div className="tr-att-dot" />
-                                    <div className="tr-att-body">
-                                      <span className="tr-att-stage">
-                                        {item.stage_title}
-                                      </span>
-                                      <span className="tr-att-mod">
-                                        {item.module_title}
-                                      </span>
-                                    </div>
-                                    <div className="tr-att-right">
-                                      <span
-                                        className="tr-att-score"
-                                        style={{
-                                          color: item.passed
-                                            ? "#2D8A4A"
-                                            : "#7A1E1E",
-                                        }}
-                                      >
-                                        {item.score}/{item.total} (
-                                        {item.score_pct}%)
-                                      </span>
-                                      <span className="tr-att-date">
-                                        {new Date(item.date).toLocaleDateString(
-                                          "ar-SA",
-                                          { month: "short", day: "numeric" },
-                                        )}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-                        </div>
+                          </div>
+                          <span className="rp-card-trait-label">
+                            {s.trait_assessments_count}/{s.passed_count} سمات
+                          </span>
+                        </>
+                      ) : (
+                        <span className="rp-card-trait-none">
+                          لا توجد تقييمات بعد
+                        </span>
                       )}
                     </div>
-                  ))}
-                </div>
+
+                    {/* Arrow */}
+                    <div className="rp-card-arrow">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                      >
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                        <polyline points="12 5 19 12 12 19" />
+                      </svg>
+                    </div>
+                  </button>
+                ))}
               </div>
             </>
           )}
@@ -658,126 +304,132 @@ export default function TeacherReportsPage() {
 }
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes fillIn{from{width:0}}
-  @keyframes spin{to{transform:rotate(360deg)}}
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
-  :root{
-    --gold:#C8A96A; --gold-bright:#E5B93C;
-    --gold-pale:rgba(200,169,106,0.08);
-    --gold-border:rgba(200,169,106,0.18);
-    --black:#0B0B0C; --off-white:#F5F3EE;
-    --text:#0B0B0C; --text2:#3D3526; --text3:#8A7B60;
-    --surface:#FFFFFF; --border:#E4DDD0;
-    --red:#7A1E1E; --red-pale:rgba(122,30,30,0.07);
-    --red-border:rgba(122,30,30,0.2);
-    --font:'Cairo',sans-serif;
-  }
+:root{
+  --gold:#C8A96A;--gold2:#E5B93C;
+  --gold-pale:rgba(200,169,106,0.08);
+  --gold-border:rgba(200,169,106,0.18);
+  --black:#0B0B0C;--off-white:#F5F3EE;
+  --text:#0B0B0C;--text2:#3D3526;--text3:#8A7B60;
+  --surface:#FFFFFF;--surface2:#FAFAF8;
+  --border:rgba(8,11,12,0.09);
+  --font:'Cairo',sans-serif;
+}
 
-  .tr-page{display:flex;flex-direction:column;gap:20px;font-family:var(--font);color:var(--text);animation:fadeUp 0.35s ease}
+.rp-page{display:flex;flex-direction:column;gap:22px;font-family:var(--font);color:var(--text);animation:fadeUp 0.35s ease;padding:36px 40px 80px;min-height:100vh}
 
-  .tr-header{display:flex;align-items:flex-start;justify-content:space-between}
-  .tr-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
-  .tr-title{font-size:26px;font-weight:900;color:var(--black);letter-spacing:-0.5px}
+/* Header */
+.rp-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.rp-eyebrow{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.rp-title{font-size:28px;font-weight:900;color:var(--black);letter-spacing:-0.4px}
+.rp-pending-banner{display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;background:rgba(229,185,60,0.1);border:1px solid rgba(229,185,60,0.25);color:#7A6020;font-size:13px;font-weight:700;align-self:flex-end}
 
-  .tr-rule{display:flex;align-items:center;gap:10px}
-  .tr-rule-line{flex:1;height:1px;background:var(--border)}
-  .tr-rule-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);opacity:0.5;flex-shrink:0}
+.rp-rule{display:flex;align-items:center;gap:10px}
+.rp-rule-line{flex:1;height:1px;background:var(--border)}
+.rp-rule-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);opacity:0.5;flex-shrink:0}
 
-  .tr-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:200px;color:var(--text3);font-size:14px}
-  .tr-loading-sm{display:flex;align-items:center;justify-content:center;height:60px}
-  .tr-spinner{width:26px;height:26px;border:3px solid var(--gold-border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
-  .tr-empty{text-align:center;color:var(--text3);font-size:14px;padding:60px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.rp-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:200px;color:var(--text3);font-size:14px}
+.rp-spinner{width:26px;height:26px;border:3px solid var(--gold-border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
+.rp-empty{text-align:center;color:var(--text3);font-size:14px;padding:60px;background:var(--surface);border:1px solid var(--border);border-radius:16px}
 
-  /* Class tabs */
-  .tr-class-tabs{display:flex;gap:6px;flex-wrap:wrap}
-  .tr-class-tab{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--text2);transition:all 0.15s}
-  .tr-class-tab:hover{border-color:var(--gold-border)}
-  .tr-class-tab.active{background:var(--black);border-color:var(--black);color:var(--gold)}
-  .tr-tab-count{font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,0.15);color:inherit}
-  .tr-class-tab:not(.active) .tr-tab-count{background:#f0e8e0;color:var(--text3)}
+/* Class tabs */
+.rp-class-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.rp-class-tab{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--text2);transition:all 0.15s}
+.rp-class-tab:hover{border-color:var(--gold-border)}
+.rp-class-tab.active{background:var(--black);border-color:var(--black);color:var(--gold)}
+.rp-tab-count{font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,0.12);color:inherit}
+.rp-class-tab:not(.active) .rp-tab-count{background:rgba(8,11,12,0.06);color:var(--text3)}
+.rp-tab-pending{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(229,185,60,0.2);color:#7A6020;border:1px solid rgba(229,185,60,0.3)}
 
-  /* Summary */
-  .tr-summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .tr-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden}
-  .tr-sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-bright))}
-  .tr-sum-val{font-size:28px;font-weight:900;color:var(--black);line-height:1;margin-bottom:4px;letter-spacing:-0.5px}
-  .tr-sum-label{font-size:11.5px;color:var(--text3);font-weight:600}
+/* Stats row */
+.rp-stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.rp-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+.rp-stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.3),transparent)}
+.rp-stat-card.gold::before{background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.rp-stat-num{font-size:26px;font-weight:900;color:var(--black);line-height:1;margin-bottom:4px;letter-spacing:-0.5px}
+.rp-stat-card.gold .rp-stat-num{color:#7A6020}
+.rp-stat-label{font-size:11.5px;color:var(--text3);font-weight:600}
 
-  /* Card */
-  .tr-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
-  .tr-card-title{font-size:11px;font-weight:800;color:var(--text);letter-spacing:1px;text-transform:uppercase}
+/* Section label */
+.rp-section-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text3)}
 
-  /* Distribution */
-  .tr-dist-wrap{display:flex;flex-direction:column;gap:10px}
-  .tr-dist-row{display:flex;align-items:center;gap:10px}
-  .tr-dist-label{font-size:12px;color:var(--text2);font-weight:500;width:64px;flex-shrink:0}
-  .tr-dist-track{flex:1;height:8px;background:var(--border);border-radius:99px;overflow:hidden}
-  .tr-dist-fill{height:100%;border-radius:99px;animation:fillIn 0.8s ease both}
-  .tr-dist-count{font-size:12px;font-weight:800;color:var(--text);width:22px;text-align:start}
+/* Student card grid */
+.rp-student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
 
-  /* Students */
-  .tr-student-list{display:flex;flex-direction:column;gap:0}
-  .tr-student-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:all 0.15s;animation:fadeUp 0.3s ease both}
-  .tr-student-row:hover{background:var(--gold-pale);border-color:var(--gold-border)}
-  .tr-student-row.active{background:rgba(200,169,106,0.08);border-color:var(--gold-border)}
-  .tr-student-av{width:36px;height:36px;border-radius:9px;background:var(--black);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;flex-shrink:0}
-  .tr-student-info{flex:1;display:flex;flex-direction:column;gap:2px}
-  .tr-student-name{font-size:14px;font-weight:700;color:var(--black)}
-  .tr-student-meta{font-size:11.5px;color:var(--text3);font-weight:500}
-  .tr-student-chevron{color:var(--text3);display:flex;flex-shrink:0}
+.rp-student-card{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;
+  gap:10px;padding:24px 18px 18px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px;
+  cursor:pointer;
+  font-family:var(--font);
+  text-align:center;
+  transition:all 0.2s cubic-bezier(0.22,1,0.36,1);
+  animation:cardIn 0.35s ease both;
+  box-shadow:0 2px 8px rgba(8,11,12,0.04);
+}
+.rp-student-card:hover{
+  border-color:rgba(200,169,106,0.35);
+  transform:translateY(-3px);
+  box-shadow:0 12px 32px rgba(8,11,12,0.08);
+}
+.rp-student-card::before{
+  content:'';position:absolute;top:0;left:20%;right:20%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  border-radius:0 0 4px 4px;
+  opacity:0;transition:opacity 0.2s;
+}
+.rp-student-card:hover::before{opacity:1}
 
-  /* Student panel */
-  .tr-student-panel{background:rgba(200,169,106,0.04);border:1px solid var(--gold-border);border-radius:0 0 12px 12px;padding:20px;animation:fadeUp 0.25s ease}
-  .tr-panel-inner{display:flex;flex-direction:column;gap:18px}
-  .tr-panel-kpis{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px}
-  .tr-panel-kpi{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
-  .tr-panel-kpi-val{font-size:24px;font-weight:900;color:var(--black);line-height:1}
-  .tr-panel-kpi-label{font-size:11px;color:var(--text3);font-weight:600}
-  .tr-panel-subtitle{font-size:10.5px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px}
-  .tr-panel-chart-section{display:flex;flex-direction:column;gap:10px}
-  .tr-line-chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;overflow:hidden}
-  .tr-panel-two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .tr-panel-sub-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+/* Pending badge */
+.rp-card-pending-badge{
+  position:absolute;top:12px;left:12px;
+  display:flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:800;
+  color:#7A6020;
+  background:rgba(229,185,60,0.15);
+  border:1px solid rgba(229,185,60,0.3);
+  border-radius:99px;padding:3px 8px;
+}
 
-  /* Type accuracy */
-  .tr-type-chart{display:flex;flex-direction:column;gap:10px}
-  .tr-type-row{display:flex;align-items:center;gap:8px}
-  .tr-type-label{font-size:11.5px;color:var(--text2);font-weight:600;width:72px;flex-shrink:0}
-  .tr-type-track{flex:1;height:7px;background:var(--border);border-radius:99px;overflow:hidden}
-  .tr-type-fill{height:100%;border-radius:99px;animation:fillIn 0.8s ease both}
-  .tr-type-pct{font-size:11.5px;font-weight:800;color:var(--text);width:34px;text-align:start}
-  .tr-type-frac{font-size:10.5px;color:var(--text3);width:32px}
+/* Avatar */
+.rp-card-av{
+  width:60px;height:60px;border-radius:18px;
+  background:var(--black);color:var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;
+  flex-shrink:0;
+}
 
-  /* Stage chart */
-  .tr-stage-chart{display:flex;align-items:flex-end;gap:8px;height:100px;padding-top:10px}
-  .tr-stage-bar-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
-  .tr-stage-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end;border-bottom:1px solid var(--border)}
-  .tr-stage-bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.6s ease}
-  .tr-stage-val{font-size:10px;font-weight:800;color:var(--text)}
-  .tr-stage-name{font-size:9px;color:var(--text3);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
-  .tr-stage-mods{font-size:9px;color:var(--text3)}
+.rp-card-name{font-size:14px;font-weight:800;color:var(--black);line-height:1.3}
 
-  /* Attempts list */
-  .tr-attempts-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
-  .tr-attempt-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface)}
-  .tr-attempt-row.passed .tr-att-dot{background:#2D8A4A}
-  .tr-attempt-row.failed .tr-att-dot{background:var(--red)}
-  .tr-att-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-  .tr-att-body{flex:1;display:flex;flex-direction:column;gap:1px}
-  .tr-att-stage{font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.5px}
-  .tr-att-mod{font-size:13px;font-weight:700;color:var(--black)}
-  .tr-att-right{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
-  .tr-att-score{font-size:13px;font-weight:800}
-  .tr-att-date{font-size:11px;color:var(--text3)}
+.rp-card-stats{font-size:11.5px;color:var(--text3);font-weight:500;display:flex;align-items:center;gap:6px}
+.rp-card-sep{opacity:0.4}
 
-  @media(max-width:700px){
-    .tr-summary-grid{grid-template-columns:1fr 1fr 1fr}
-    .tr-panel-two-col{grid-template-columns:1fr}
-  }
-  @media(max-width:500px){
-    .tr-summary-grid{grid-template-columns:1fr 1fr}
-  }
+/* Trait bar */
+.rp-card-trait-row{width:100%;display:flex;align-items:center;gap:8px}
+.rp-card-trait-bar-bg{flex:1;height:4px;background:rgba(200,169,106,0.12);border-radius:99px;overflow:hidden}
+.rp-card-trait-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;transition:width 0.8s ease}
+.rp-card-trait-label{font-size:10px;font-weight:700;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.rp-card-trait-none{font-size:10px;color:rgba(8,11,12,0.25);width:100%;text-align:center}
+
+/* Arrow */
+.rp-card-arrow{color:rgba(200,169,106,0.4);transition:color 0.15s,transform 0.15s}
+.rp-student-card:hover .rp-card-arrow{color:var(--gold);transform:translateX(-3px)}
+
+@media(max-width:900px){
+  .rp-page{padding:24px 18px 60px}
+  .rp-stats-row{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:500px){
+  .rp-student-grid{grid-template-columns:1fr 1fr}
+  .rp-stats-row{grid-template-columns:1fr 1fr}
+}
 `;

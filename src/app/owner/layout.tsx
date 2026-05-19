@@ -5,6 +5,23 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
 import Image from "next/image";
+import {
+  LayoutDashboard,
+  Building2,
+  ClipboardCheck,
+  FileStack,
+  Menu,
+  LogOut,
+  Bell,
+  ChevronLeft,
+  Sparkles,
+  LucideIcon,
+} from "lucide-react";
+
+/* ─────────────────────────────────────────────
+   Inline SVG components (replaces @/components/Mandala)
+   keeping them self-contained so the file is drop-in ready
+───────────────────────────────────────────── */
 
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
 
@@ -29,81 +46,299 @@ const INNER_PETALS = Array.from({ length: 4 }, (_, i) => {
   return { cx: r2(100 + 24 * Math.sin(a)), cy: r2(100 - 24 * Math.cos(a)) };
 });
 
-const navItems = [
+function Mandala({
+  size = 160,
+  stroke = "rgba(200,169,106,0.32)",
+  className = "",
+}: {
+  size?: number;
+  stroke?: string;
+  className?: string;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 200 200"
+      fill="none"
+      className={className}
+    >
+      <circle
+        cx="100"
+        cy="100"
+        r="92"
+        stroke={stroke}
+        strokeWidth="0.4"
+        opacity="0.55"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="80"
+        stroke={stroke}
+        strokeWidth="0.35"
+        opacity="0.45"
+      />
+      {PETAL_CIRCLES.map((p, i) => (
+        <circle
+          key={i}
+          cx={p.cx}
+          cy={p.cy}
+          r="52"
+          stroke={stroke}
+          strokeWidth="0.55"
+          opacity="0.45"
+          fill="none"
+        />
+      ))}
+      <circle
+        cx="100"
+        cy="100"
+        r="70"
+        stroke={stroke}
+        strokeWidth="0.45"
+        opacity="0.55"
+        strokeDasharray="2 7"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="58"
+        stroke={stroke}
+        strokeWidth="0.4"
+        opacity="0.40"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="46"
+        stroke={stroke}
+        strokeWidth="0.45"
+        opacity="0.55"
+        strokeDasharray="4 5"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="34"
+        stroke={stroke}
+        strokeWidth="0.35"
+        opacity="0.45"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="24"
+        stroke={stroke}
+        strokeWidth="0.45"
+        opacity="0.60"
+        strokeDasharray="3 4"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="14"
+        stroke={stroke}
+        strokeWidth="0.35"
+        opacity="0.55"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="7"
+        stroke={stroke}
+        strokeWidth="0.55"
+        opacity="0.70"
+      />
+      {STAR_LINES.map((l, i) => (
+        <line
+          key={i}
+          x1={l.x1}
+          y1={l.y1}
+          x2={l.x2}
+          y2={l.y2}
+          stroke={stroke}
+          strokeWidth="0.40"
+          opacity="0.50"
+        />
+      ))}
+      {INNER_PETALS.map((p, i) => (
+        <circle
+          key={i}
+          cx={p.cx}
+          cy={p.cy}
+          r="24"
+          stroke={stroke}
+          strokeWidth="0.40"
+          opacity="0.50"
+          fill="none"
+        />
+      ))}
+      <line
+        x1="100"
+        y1="68"
+        x2="100"
+        y2="132"
+        stroke={stroke}
+        strokeWidth="0.55"
+        opacity="0.60"
+      />
+      <line
+        x1="72"
+        y1="84"
+        x2="128"
+        y2="116"
+        stroke={stroke}
+        strokeWidth="0.55"
+        opacity="0.60"
+      />
+      <line
+        x1="128"
+        y1="84"
+        x2="72"
+        y2="116"
+        stroke={stroke}
+        strokeWidth="0.55"
+        opacity="0.60"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="5"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="0.70"
+        opacity="0.80"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="2.5"
+        fill="none"
+        stroke={stroke}
+        strokeWidth="0.50"
+        opacity="0.85"
+      />
+      <circle cx="100" cy="100" r="1.2" fill={stroke} opacity="0.90" />
+    </svg>
+  );
+}
+
+function GeoMark({
+  size = 22,
+  color = "var(--gold)",
+}: {
+  size?: number;
+  color?: string;
+}) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none">
+      <circle
+        cx="11"
+        cy="11"
+        r="9.5"
+        stroke={color}
+        strokeWidth="0.7"
+        opacity="0.65"
+      />
+      <circle
+        cx="11"
+        cy="11"
+        r="6.5"
+        stroke={color}
+        strokeWidth="0.6"
+        opacity="0.55"
+      />
+      <circle
+        cx="11"
+        cy="11"
+        r="3.2"
+        stroke={color}
+        strokeWidth="0.55"
+        opacity="0.65"
+      />
+      <line
+        x1="11"
+        y1="1"
+        x2="11"
+        y2="21"
+        stroke={color}
+        strokeWidth="0.45"
+        opacity="0.40"
+      />
+      <line
+        x1="1"
+        y1="11"
+        x2="21"
+        y2="11"
+        stroke={color}
+        strokeWidth="0.45"
+        opacity="0.40"
+      />
+      <line
+        x1="3.7"
+        y1="3.7"
+        x2="18.3"
+        y2="18.3"
+        stroke={color}
+        strokeWidth="0.35"
+        opacity="0.28"
+      />
+      <line
+        x1="18.3"
+        y1="3.7"
+        x2="3.7"
+        y2="18.3"
+        stroke={color}
+        strokeWidth="0.35"
+        opacity="0.28"
+      />
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Nav items
+───────────────────────────────────────────── */
+interface NavItem {
+  href: string;
+  label: string;
+  sublabel: string;
+  exact?: boolean;
+  icon: LucideIcon;
+}
+
+const navItems: NavItem[] = [
   {
     href: "/owner",
     label: "لوحة التحكم",
+    sublabel: "Overview",
     exact: true,
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      >
-        <rect x="3" y="3" width="7" height="7" rx="1.5" />
-        <rect x="14" y="3" width="7" height="7" rx="1.5" />
-        <rect x="3" y="14" width="7" height="7" rx="1.5" />
-        <rect x="14" y="14" width="7" height="7" rx="1.5" />
-      </svg>
-    ),
+    icon: LayoutDashboard,
   },
   {
     href: "/owner/schools",
     label: "الجهات",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      >
-        <path d="M3 21V9l9-6 9 6v12" />
-        <path d="M9 21V12h6v9" />
-      </svg>
-    ),
+    sublabel: "Entities",
+    icon: Building2,
   },
   {
     href: "/owner/intake-assessment",
     label: "اختبار القبول",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      >
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-        <rect x="9" y="3" width="6" height="4" rx="1" />
-        <path d="M9 12h6M9 16h4" />
-      </svg>
-    ),
+    sublabel: "Assessment",
+    icon: ClipboardCheck,
   },
   {
     href: "/owner/submissions",
     label: "الطلبات المقدمة",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.5}
-      >
-        <path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
-        <path d="M12 11v6M9 14l3 3 3-3" />
-      </svg>
-    ),
+    sublabel: "Submissions",
+    icon: FileStack,
   },
 ];
 
+/* ─────────────────────────────────────────────
+   Layout component
+───────────────────────────────────────────── */
 export default function OwnerLayout({
   children,
 }: {
@@ -111,15 +346,19 @@ export default function OwnerLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+
   const [ownerName, setOwnerName] = useState("المالك");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user?.user_metadata?.full_name)
-        setOwnerName(user.user_metadata.full_name);
-    });
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.profile?.full_name) setOwnerName(d.profile.full_name);
+        if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url);
+      })
+      .catch(() => {});
   }, []);
 
   const handleLogout = async () => {
@@ -128,46 +367,52 @@ export default function OwnerLayout({
     router.push("/login");
   };
 
-  const isActive = (item: (typeof navItems)[0]) =>
+  const isActive = (item: NavItem) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
-  const currentLabel = navItems.find((n) => isActive(n))?.label ?? "الصفحة";
+  const current = navItems.find(isActive);
+  const initial = ownerName.charAt(0);
 
   return (
     <div className="ow-shell" dir="rtl">
+      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="ow-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
+      {/* ═══════════════════ SIDEBAR ═══════════════════ */}
       <aside className={`ow-sidebar ${sidebarOpen ? "open" : ""}`}>
-        <div className="ow-sidebar-rule" />
+        {/* Atmospheric glow */}
+        <div className="ow-sidebar-glow" aria-hidden="true" />
 
-        <div className="ow-logo-wrap">
-          <Image
-            src="/ahlia.png"
-            alt="بناء الأهلية"
-            width={2400}
-            height={250}
-            style={{
-              objectFit: "cover",
-              width: "100%",
-              height: "auto",
-              display: "block",
-            }}
-            priority
-          />
+        {/* ── Logo block ── */}
+        <div className="ow-logo-block">
+          <div className="ow-logo-icon">
+            <GeoMark size={26} color="var(--gold)" />
+          </div>
+          <div className="ow-logo-text">
+            <span className="ow-logo-name">بناء الأهلية</span>
+            <span className="ow-logo-sub">Institutional Suite</span>
+          </div>
         </div>
 
-        <div className="ow-divider">
-          <div className="ow-divider-line" />
-          <div className="ow-divider-diamond" />
-          <div className="ow-divider-line" />
+        {/* ── Gold rule ── */}
+        <div className="ow-gold-rule" aria-hidden="true">
+          <div className="ow-rule-line" />
+          <div className="ow-rule-diamond" />
+          <div className="ow-rule-dash" />
+          <div className="ow-rule-diamond" />
+          <div className="ow-rule-line" />
         </div>
 
+        {/* ── Section label ── */}
+        <div className="ow-section-label">القوائم الرئيسية · Main</div>
+
+        {/* ── Navigation ── */}
         <nav className="ow-nav">
-          <div className="ow-nav-section-label">القوائم الرئيسية</div>
           {navItems.map((item) => {
             const active = isActive(item);
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
@@ -175,325 +420,215 @@ export default function OwnerLayout({
                 className={`ow-nav-item ${active ? "active" : ""}`}
                 onClick={() => setSidebarOpen(false)}
               >
-                {active && <div className="ow-nav-active-bar" />}
-                <span className="ow-nav-icon">{item.icon}</span>
-                <span className="ow-nav-text">{item.label}</span>
                 {active && (
-                  <span className="ow-nav-chevron">
-                    <svg
-                      width="10"
-                      height="10"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                  </span>
+                  <>
+                    <span className="ow-nav-pill" />
+                    <span className="ow-nav-shimmer" />
+                  </>
                 )}
+
+                <span className="ow-nav-icon-wrap">
+                  <Icon size={17} strokeWidth={1.6} />
+                </span>
+
+                <span className="ow-nav-labels">
+                  <span className="ow-nav-label-ar">{item.label}</span>
+                  <span className="ow-nav-label-en">{item.sublabel}</span>
+                </span>
+
+                {active && <span className="ow-nav-dot" />}
               </Link>
             );
           })}
+
+          {/* Mandala watermark inside nav scroll area */}
+          <div className="ow-mandala-wrap" aria-hidden="true">
+            <Mandala size={172} stroke="rgba(200,169,106,0.32)" />
+          </div>
         </nav>
 
-        {/* Enhanced Mandala */}
-        <div className="ow-mandala" aria-hidden="true">
-          <svg viewBox="0 0 200 200" fill="none">
-            {/* Outer halos */}
-            <circle
-              cx="100"
-              cy="100"
-              r="92"
-              stroke="#C8A96A"
-              strokeWidth="0.3"
-              opacity="0.05"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="86"
-              stroke="#C8A96A"
-              strokeWidth="0.3"
-              opacity="0.04"
-            />
-            {/* 8-petal flower */}
-            {PETAL_CIRCLES.map((p, i) => (
-              <circle
-                key={i}
-                cx={p.cx}
-                cy={p.cy}
-                r="52"
-                stroke="#C8A96A"
-                strokeWidth="0.5"
-                opacity="0.10"
-                fill="none"
-              />
-            ))}
-            {/* Concentric rings */}
-            <circle
-              cx="100"
-              cy="100"
-              r="74"
-              stroke="#C8A96A"
-              strokeWidth="0.4"
-              opacity="0.13"
-              strokeDasharray="3 8"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="62"
-              stroke="#E5B93C"
-              strokeWidth="0.35"
-              opacity="0.10"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="50"
-              stroke="#C8A96A"
-              strokeWidth="0.5"
-              opacity="0.15"
-              strokeDasharray="5 5"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="38"
-              stroke="#C8A96A"
-              strokeWidth="0.35"
-              opacity="0.12"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="28"
-              stroke="#E5B93C"
-              strokeWidth="0.45"
-              opacity="0.18"
-              strokeDasharray="3 4"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="18"
-              stroke="#C8A96A"
-              strokeWidth="0.35"
-              opacity="0.20"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="9"
-              stroke="#E5B93C"
-              strokeWidth="0.55"
-              opacity="0.26"
-            />
-            {/* 12-spoke radial lines */}
-            {STAR_LINES.map((l, i) => (
-              <line
-                key={i}
-                x1={l.x1}
-                y1={l.y1}
-                x2={l.x2}
-                y2={l.y2}
-                stroke="#C8A96A"
-                strokeWidth="0.35"
-                opacity="0.13"
-              />
-            ))}
-            {/* Inner 4-petal rosette */}
-            {INNER_PETALS.map((p, i) => (
-              <circle
-                key={i}
-                cx={p.cx}
-                cy={p.cy}
-                r="24"
-                stroke="#C8A96A"
-                strokeWidth="0.45"
-                opacity="0.16"
-                fill="none"
-              />
-            ))}
-            {/* 6-pointed star */}
-            <line
-              x1="100"
-              y1="73"
-              x2="100"
-              y2="127"
-              stroke="#E5B93C"
-              strokeWidth="0.6"
-              opacity="0.20"
-            />
-            <line
-              x1="76"
-              y1="87"
-              x2="124"
-              y2="113"
-              stroke="#E5B93C"
-              strokeWidth="0.6"
-              opacity="0.20"
-            />
-            <line
-              x1="124"
-              y1="87"
-              x2="76"
-              y2="113"
-              stroke="#E5B93C"
-              strokeWidth="0.6"
-              opacity="0.20"
-            />
-            {/* Center */}
-            <circle
-              cx="100"
-              cy="100"
-              r="7"
-              fill="none"
-              stroke="#E5B93C"
-              strokeWidth="0.7"
-              opacity="0.38"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="4"
-              fill="none"
-              stroke="#C8A96A"
-              strokeWidth="0.45"
-              opacity="0.45"
-            />
-            <circle cx="100" cy="100" r="2" fill="#E5B93C" opacity="0.55" />
-          </svg>
+        {/* ── Footer rule ── */}
+        <div className="ow-gold-rule ow-gold-rule--footer" aria-hidden="true">
+          <div className="ow-rule-line" />
+          <div className="ow-rule-diamond" />
+          <div className="ow-rule-line" />
         </div>
 
-        <div className="ow-foot">
-          <div className="ow-divider" style={{ margin: "0 0 14px" }}>
-            <div className="ow-divider-line" />
-            <div className="ow-divider-diamond" />
-            <div className="ow-divider-line" />
-          </div>
-          <div className="ow-user">
-            <div className="ow-user-av">{ownerName.charAt(0)}</div>
+        {/* ── User block ── */}
+        <div className="ow-user-block">
+          <Link
+            href="/owner/profile"
+            className="ow-user"
+            style={{ textDecoration: "none" }}
+          >
+            <div className="ow-user-av">
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt={ownerName}
+                  width={40}
+                  height={40}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: 12,
+                  }}
+                />
+              ) : (
+                <span className="ow-user-initial">{initial}</span>
+              )}
+            </div>
             <div className="ow-user-info">
               <span className="ow-user-name">{ownerName}</span>
               <span className="ow-user-role">مالك النظام</span>
             </div>
             <button
               className="ow-logout-btn"
-              onClick={handleLogout}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleLogout();
+              }}
               title="تسجيل الخروج"
+              type="button"
             >
-              <svg
-                width="13"
-                height="13"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <LogOut size={15} strokeWidth={1.7} />
             </button>
-          </div>
+          </Link>
         </div>
       </aside>
 
+      {/* ═══════════════════ MAIN ═══════════════════ */}
       <div className="ow-main">
+        {/* ── Topbar ── */}
         <header className="ow-topbar">
-          <button className="ow-hamburger" onClick={() => setSidebarOpen(true)}>
-            <svg
-              width="18"
-              height="18"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+          {/* Gold top accent line */}
+          <div className="ow-topbar-accent" aria-hidden="true" />
+
+          {/* Hamburger — mobile only */}
+          <button
+            type="button"
+            className="ow-hamburger"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="فتح القائمة"
+          >
+            <Menu size={20} strokeWidth={1.7} />
           </button>
-          <div className="ow-breadcrumb">
-            <span className="ow-bc-home">الرئيسية</span>
-            <div className="ow-bc-sep">
-              <svg
-                width="10"
-                height="10"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
+
+          {/* Breadcrumb */}
+          <div className="ow-breadcrumb-wrap">
+            <div className="ow-breadcrumb-geo">
+              <GeoMark size={18} color="var(--gold-deep)" />
             </div>
-            <span className="ow-bc-cur">{currentLabel}</span>
+            <div className="ow-breadcrumb">
+              <span className="ow-bc-root">الرئيسية</span>
+              <ChevronLeft
+                size={13}
+                strokeWidth={1.8}
+                className="ow-bc-sep-icon"
+              />
+              <span className="ow-bc-cur">{current?.label ?? "الصفحة"}</span>
+            </div>
           </div>
+
           <div className="ow-topbar-spacer" />
+
+          {/* Right-side actions */}
+          <div className="ow-topbar-actions">
+            <div className="ow-topbar-divider" />
+
+            {/* Bell */}
+            <button
+              type="button"
+              className="ow-bell-btn"
+              aria-label="الإشعارات"
+            >
+              <Bell size={15} strokeWidth={1.7} />
+            </button>
+
+            {/* User pill */}
+            <Link href="/owner/profile" className="ow-topbar-user-pill">
+              <div className="ow-topbar-av">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={ownerName}
+                    width={28}
+                    height={28}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "50%",
+                    }}
+                  />
+                ) : (
+                  <span className="ow-topbar-initial">{initial}</span>
+                )}
+              </div>
+              <span className="ow-topbar-name">{ownerName}</span>
+            </Link>
+          </div>
         </header>
 
-        <main className="ow-content">{children}</main>
+        {/* ── Page content ── */}
+        <main className="ow-content">
+          {/* Corner watermark */}
+          <div className="ow-watermark" aria-hidden="true">
+            <Mandala size={260} stroke="var(--graphite)" />
+          </div>
+          <div className="ow-content-inner">{children}</div>
+        </main>
 
+        {/* ── Bottom band ── */}
         <div className="ow-bottom-band" aria-hidden="true">
           <svg
-            viewBox="0 0 1200 120"
-            fill="none"
-            preserveAspectRatio="xMidYMax meet"
+            viewBox="0 0 1200 80"
+            preserveAspectRatio="none"
+            width="100%"
+            height="100%"
           >
             <line
               x1="0"
-              y1="60"
+              y1="40"
               x2="1200"
-              y2="60"
-              stroke="#C8A96A"
-              strokeWidth="0.3"
-              opacity="0.15"
+              y2="40"
+              stroke="rgba(200,169,106,0.25)"
+              strokeWidth="0.5"
             />
-            {Array.from({ length: 30 }).map((_, i) => (
-              <polygon
+            {Array.from({ length: 36 }).map((_, i) => (
+              <circle
                 key={i}
-                points={`${20 + i * 40},50 ${28 + i * 40},60 ${20 + i * 40},70 ${12 + i * 40},60`}
-                stroke="#C8A96A"
-                strokeWidth="0.4"
-                fill="none"
-                opacity={i % 3 === 0 ? 0.18 : 0.07}
+                cx={(i + 0.5) * (1200 / 36)}
+                cy="40"
+                r="1.2"
+                fill="rgba(200,169,106,0.45)"
               />
             ))}
-            <polygon
-              points="600,38 616,60 600,82 584,60"
-              stroke="#C8A96A"
-              strokeWidth="0.6"
+            <circle
+              cx="600"
+              cy="40"
+              r="6"
               fill="none"
-              opacity="0.25"
+              stroke="rgba(200,169,106,0.55)"
+              strokeWidth="0.7"
             />
-            <polygon
-              points="600,48 608,60 600,72 592,60"
-              stroke="#C8A96A"
+            <circle
+              cx="600"
+              cy="40"
+              r="14"
+              fill="none"
+              stroke="rgba(200,169,106,0.30)"
               strokeWidth="0.5"
-              fill="#C8A96A"
-              fillOpacity="0.04"
-              opacity="0.3"
             />
-            <line
-              x1="540"
-              y1="60"
-              x2="575"
-              y2="60"
-              stroke="#C8A96A"
-              strokeWidth="0.4"
-              opacity="0.2"
-            />
-            <line
-              x1="625"
-              y1="60"
-              x2="660"
-              y2="60"
-              stroke="#C8A96A"
-              strokeWidth="0.4"
-              opacity="0.2"
-            />
-            <circle cx="600" cy="60" r="3" fill="#C8A96A" opacity="0.3" />
           </svg>
+        </div>
+
+        {/* ── Footer caption ── */}
+        <div className="ow-footer-caption">
+          <Sparkles size={11} className="ow-footer-sparkle" />
+          <span className="ow-footer-text">منصة الرواد - 2026 </span>
         </div>
       </div>
 
@@ -502,241 +637,470 @@ export default function OwnerLayout({
   );
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   STYLES
+══════════════════════════════════════════════════════════════════════ */
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=El+Messiri:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
-  @keyframes slideIn { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: translateY(0) } }
-  @keyframes pulse   { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(26,107,60,0.4) } 70% { opacity: 0.8; box-shadow: 0 0 0 5px rgba(26,107,60,0) } }
+  /* ── Keyframes ── */
+  @keyframes ow-fadein  { from { opacity: 0 }               to { opacity: 1 } }
+  @keyframes ow-slidein { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes ow-pulse   { 0%, 100% { opacity: 1 } 55% { opacity: 0.30 } }
 
+  /* ── Design tokens ── */
   :root {
-    --gold:      #C8A96A;
-    --gold2:     #E5B93C;
-    --gold3:     #F0D080;
-    --gold-dim:  rgba(200,169,106,0.08);
-    --gold-mid:  rgba(200,169,106,0.16);
-    --gold-bdr:  rgba(200,169,106,0.22);
-    --black:     #0A0A0B;
-    --black2:    #111115;
-    --off-white: #F6F3EE;
-    --cream:     #EDE9E0;
-    --text:      #0B0B0C;
-    --text2:     #3E3526;
-    --text3:     #8A7A5A;
-    --surface:   #FFFFFF;
-    --surface2:  #FAF8F4;
-    --surface3:  #F3EEE5;
-    --border:    #E2D9CA;
-    --border2:   #CEC2AD;
-    --success:   #1a6b3c;
-    --success-bg:rgba(26,107,60,0.07);
-    --warning:   #9a6200;
-    --warning-bg:rgba(154,98,0,0.07);
-    --danger:    #8b1a1a;
-    --danger-bg: rgba(139,26,26,0.07);
-    --radius:    10px;
-    --shadow-sm: 0 1px 3px rgba(11,11,12,0.05);
-    --shadow:    0 4px 16px rgba(11,11,12,0.08);
-    --shadow-md: 0 8px 28px rgba(11,11,12,0.10);
-    --sidebar-w: 268px;
-    --topbar-h:  60px;
+    --bg-main:      #F6F4EE;
+    --bg-soft:      #FBFAF6;
+    --bg-card:      #FFFDF8;
+    --bg-muted:     #EFEAE1;
+
+    --graphite:     #080B0C;
+    --graphite-s:   #1A1D21;
+    --graphite-muted: #5E5A52;
+    --graphite-soft:  #8A8478;
+
+    --gold:         #C8A96A;
+    --gold-deep:    #B89B5E;
+    --gold-soft:    #D8C28A;
+    --gold-pale:    #EFE2BD;
+
+    --burgundy:     #7A1E1E;
+
+    --bdr-soft:     rgba(8,11,12,0.07);
+    --bdr-med:      rgba(8,11,12,0.11);
+    --bdr-gold:     rgba(200,169,106,0.38);
+
+    --sidebar-w:    286px;
+    --topbar-h:     68px;
+
+    --font-heading: 'El Messiri', 'Cairo', serif;
+    --font-mono:    'IBM Plex Mono', monospace;
+
+    --ease-out:     cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   html, body {
-    background: var(--off-white);
-    color: var(--text);
-    font-family: 'Cairo', sans-serif;
     direction: rtl;
+    font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+    background:
+      radial-gradient(ellipse at 12% 8%,  rgba(200,169,106,0.07), transparent 30%),
+      radial-gradient(ellipse at 88% 85%, rgba(122,30,30,0.04),   transparent 32%),
+      var(--bg-main);
+    color: var(--graphite);
+    -webkit-font-smoothing: antialiased;
   }
 
-  .ow-shell { display: flex; min-height: 100vh; background: var(--off-white); }
+  ::selection { background: rgba(200,169,106,0.20); }
 
-  /* ── Sidebar ── */
+  /* ══ SHELL ══ */
+  .ow-shell { display: flex; min-height: 100vh; width: 100%; }
+
+  /* ══ OVERLAY ══ */
+  .ow-overlay {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(8,11,12,0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: ow-fadein 0.22s ease;
+  }
+
+  /* ══ SIDEBAR ══ */
   .ow-sidebar {
-    width: var(--sidebar-w);
-    min-height: 100vh;
-    background: var(--black);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; right: 0;
+    position: fixed; top: 0; right: 0;
+    width: var(--sidebar-w); height: 100vh;
     z-index: 50;
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    display: flex; flex-direction: column; overflow: hidden;
+    border-left: 1px solid rgba(200,169,106,0.10);
+    background: linear-gradient(180deg, #0B0E10 0%, #060809 100%);
+    transition: transform 0.32s var(--ease-out);
+    transform: translateX(0);
+  }
+  @media (max-width: 767px) {
+    .ow-sidebar            { transform: translateX(100%); }
+    .ow-sidebar.open       { transform: translateX(0); box-shadow: -22px 0 60px rgba(8,11,12,0.42); }
+  }
+
+  /* Atmospheric glow */
+  .ow-sidebar-glow {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.08), transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.05),   transparent 44%);
+  }
+
+  /* ── Logo block ── */
+  .ow-logo-block {
+    position: relative; z-index: 10; flex-shrink: 0;
+    display: flex; align-items: center; gap: 12px;
+    padding: 28px 24px 20px;
+  }
+  .ow-logo-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+    border: 1px solid rgba(200,169,106,0.30);
+    background: linear-gradient(135deg, rgba(200,169,106,0.18), rgba(200,169,106,0.04));
+  }
+  .ow-logo-text {
+    display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  }
+  .ow-logo-name {
+    font-family: var(--font-heading);
+    font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+    color: #FFFDF8; white-space: nowrap;
+  }
+  .ow-logo-sub {
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(200,169,106,0.55);
+  }
+
+  /* ── Gold rule ── */
+  .ow-gold-rule {
+    position: relative; z-index: 10; flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    margin: 0 24px 16px;
+  }
+  .ow-gold-rule--footer { margin: 0 24px 16px; }
+  .ow-rule-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.22), transparent);
+  }
+  .ow-rule-diamond {
+    width: 4px; height: 4px; border-radius: 1px;
+    background: rgba(200,169,106,0.50);
+    transform: rotate(45deg); flex-shrink: 0;
+  }
+  .ow-rule-dash {
+    width: 10px; height: 1px;
+    background: rgba(200,169,106,0.38);
+    flex-shrink: 0;
+  }
+
+  /* ── Section label ── */
+  .ow-section-label {
+    position: relative; z-index: 10; flex-shrink: 0;
+    padding: 0 28px 12px;
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: rgba(200,169,106,0.35);
+  }
+
+  /* ── Nav ── */
+  .ow-nav {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 0 14px;
+    flex: 1; overflow-y: auto;
+  }
+  .ow-nav::-webkit-scrollbar { display: none; }
+
+  .ow-nav-item {
+    position: relative;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    color: rgba(200,169,106,0.40);
+    transition: all 0.20s var(--ease-out);
     overflow: hidden;
   }
-  .ow-sidebar::after {
-    content: '';
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(ellipse at 50% -5%, rgba(200,169,106,0.07) 0%, transparent 55%),
-      radial-gradient(ellipse at 140% 110%, rgba(200,169,106,0.04) 0%, transparent 50%);
-    pointer-events: none; z-index: 0;
+  .ow-nav-item:hover {
+    background: rgba(200,169,106,0.05);
+    color: rgba(200,169,106,0.65);
+    border-color: rgba(200,169,106,0.07);
   }
-  .ow-sidebar-rule {
-    position: absolute;
-    top: 60px; bottom: 60px; left: 0;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, rgba(200,169,106,0.25) 30%, rgba(200,169,106,0.25) 70%, transparent);
-    z-index: 2;
-  }
-
-  .ow-logo-wrap {
-    padding: 0;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; position: relative; z-index: 1;
-  }
-
-  .ow-divider {
-    display: flex; align-items: center; gap: 0;
-    margin: 14px 18px; flex-shrink: 0; position: relative; z-index: 1;
-  }
-  .ow-divider-line {
-    flex: 1; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.18), transparent);
-  }
-  .ow-divider-diamond {
-    width: 5px; height: 5px;
-    background: rgba(200,169,106,0.3);
-    transform: rotate(45deg); margin: 0 8px; flex-shrink: 0;
-  }
-
-  .ow-nav {
-    display: flex; flex-direction: column; gap: 1px;
-    padding: 0 10px; flex: 1; position: relative; z-index: 1;
-  }
-  .ow-nav-section-label {
-    font-size: 9px; font-weight: 700;
-    color: rgba(200,169,106,0.22);
-    text-transform: uppercase; letter-spacing: 2px;
-    padding: 0 10px 10px;
-  }
-  .ow-nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 8px;
-    text-decoration: none; color: rgba(200,169,106,0.38);
-    font-size: 13px; font-weight: 600;
-    transition: all 0.18s ease; position: relative;
-    border: 1px solid transparent; overflow: hidden;
-  }
-  .ow-nav-item:hover { background: rgba(200,169,106,0.05); color: rgba(200,169,106,0.68); }
   .ow-nav-item.active {
-    background: rgba(200,169,106,0.08); color: var(--gold);
-    font-weight: 700; border-color: rgba(200,169,106,0.16);
+    background: rgba(255,253,248,0.06);
+    color: var(--gold);
+    border-color: rgba(200,169,106,0.20);
+    box-shadow: 0 10px 28px rgba(8,11,12,0.30);
   }
-  .ow-nav-active-bar {
-    position: absolute; right: 0; top: 6px; bottom: 6px;
-    width: 2px;
-    background: linear-gradient(180deg, var(--gold2), var(--gold));
-    border-radius: 2px 0 0 2px;
-  }
-  .ow-nav-icon {
-    width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 7px; background: rgba(200,169,106,0.04);
-    flex-shrink: 0; transition: background 0.18s;
-  }
-  .ow-nav-item:hover .ow-nav-icon,
-  .ow-nav-item.active .ow-nav-icon { background: rgba(200,169,106,0.1); }
-  .ow-nav-text { flex: 1; }
-  .ow-nav-chevron { color: rgba(200,169,106,0.4); display: flex; align-items: center; }
 
-  /* Mandala */
-  .ow-mandala {
-    width: 160px; height: 160px;
-    margin: auto auto 0;
-    flex-shrink: 0; position: relative; z-index: 0;
-    opacity: 0.9;
-    display: flex; align-items: center; justify-content: center;
+  /* Active right bar */
+  .ow-nav-pill {
+    position: absolute; right: 0; top: 8px; bottom: 8px;
+    width: 3px; border-radius: 2px 0 0 2px;
+    background: linear-gradient(180deg, var(--gold-soft), var(--gold-deep));
   }
-  .ow-mandala svg { width: 100%; height: 100%; }
+  /* Active shimmer top line */
+  .ow-nav-shimmer {
+    position: absolute; top: 0; left: 14px; right: 14px; height: 1px;
+    background: linear-gradient(to left, transparent, rgba(200,169,106,0.55), transparent);
+  }
 
-  .ow-foot {
-    padding: 0 10px 16px; flex-shrink: 0; position: relative; z-index: 1;
+  /* Icon container */
+  .ow-nav-icon-wrap {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
+    background: rgba(200,169,106,0.04);
+    transition: background 0.18s;
   }
+  .ow-nav-item:hover  .ow-nav-icon-wrap,
+  .ow-nav-item.active .ow-nav-icon-wrap {
+    background: rgba(200,169,106,0.14);
+  }
+
+  /* Label group */
+  .ow-nav-labels {
+    flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  }
+  .ow-nav-label-ar {
+    font-size: 13.5px; font-weight: 700; line-height: 1.25;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ow-nav-label-en {
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.50;
+  }
+
+  /* Active dot */
+  .ow-nav-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); opacity: 0.70; flex-shrink: 0;
+  }
+
+  /* Mandala inside nav */
+  .ow-mandala-wrap {
+    margin-top: auto;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px 0 12px;
+    opacity: 0.70;
+  }
+
+  /* ── User block ── */
+  .ow-user-block {
+    position: relative; z-index: 10; flex-shrink: 0;
+    padding: 0 14px 20px;
+  }
+
   .ow-user {
-    display: flex; align-items: center; gap: 9px;
-    padding: 10px 12px; border-radius: 9px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 16px;
     background: rgba(200,169,106,0.06);
-    border: 1px solid rgba(200,169,106,0.12);
+    border: 1px solid rgba(200,169,106,0.16);
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
   }
+  .ow-user:hover {
+    background: rgba(200,169,106,0.11);
+    border-color: rgba(200,169,106,0.26);
+  }
+
   .ow-user-av {
-    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--gold2), var(--gold));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 900; color: var(--black);
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg, var(--gold-soft), var(--gold-deep));
+    font-family: var(--font-heading);
   }
-  .ow-user-info { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .ow-user-initial {
+    font-size: 16px; font-weight: 900; color: var(--graphite);
+    font-family: var(--font-heading);
+  }
+
+  .ow-user-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .ow-user-name {
-    font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,0.9);
+    font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .ow-user-role {
-    font-size: 9px; color: rgba(200,169,106,0.4);
-    font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    font-family: var(--font-mono);
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(200,169,106,0.45);
   }
+
   .ow-logout-btn {
-    background: none; border: none; color: rgba(200,169,106,0.28);
-    cursor: pointer; padding: 5px; border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+    background: none; border: none; cursor: pointer;
+    color: rgba(200,169,106,0.40);
+    transition: all 0.15s;
+  }
+  .ow-logout-btn:hover {
+    background: rgba(200,169,106,0.10);
+    color: rgba(200,169,106,0.80);
+  }
+
+  /* ══ MAIN ══ */
+  .ow-main {
+    flex: 1;
+    display: flex; flex-direction: column; min-height: 100vh;
+    margin-right: var(--sidebar-w);
+  }
+  @media (max-width: 767px) { .ow-main { margin-right: 0; } }
+
+  /* ══ TOPBAR ══ */
+  .ow-topbar {
+    position: sticky; top: 0; z-index: 40;
+    height: var(--topbar-h);
+    display: flex; align-items: center; gap: 16px;
+    padding: 0 20px;
+    background: rgba(251,250,246,0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(8,11,12,0.07);
+    box-shadow: 0 1px 0 rgba(8,11,12,0.04), 0 6px 24px rgba(8,11,12,0.025);
+  }
+  @media (min-width: 768px) { .ow-topbar { padding: 0 36px; } }
+
+  /* Gold top accent line */
+  .ow-topbar-accent {
+    position: absolute; inset-x: 0; top: 0; height: 1.5px; pointer-events: none;
+    background: linear-gradient(
+      90deg, transparent,
+      rgba(200,169,106,0.30) 15%,
+      rgba(229,185,60,0.55) 50%,
+      rgba(200,169,106,0.30) 85%,
+      transparent
+    );
+  }
+
+  /* Hamburger */
+  .ow-hamburger {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: none; border: none; cursor: pointer;
+    color: var(--graphite-muted);
     transition: all 0.15s; flex-shrink: 0;
   }
-  .ow-logout-btn:hover { color: rgba(200,169,106,0.75); background: rgba(200,169,106,0.08); }
+  .ow-hamburger:hover { background: rgba(200,169,106,0.10); color: var(--graphite); }
+  @media (min-width: 768px) { .ow-hamburger { display: none; } }
 
-  /* ── Main ── */
-  .ow-main {
-    flex: 1; margin-right: var(--sidebar-w);
-    display: flex; flex-direction: column; min-height: 100vh; position: relative;
+  /* Breadcrumb */
+  .ow-breadcrumb-wrap {
+    display: flex; align-items: center; gap: 10px; flex: 1;
   }
-  .ow-topbar {
-    height: var(--topbar-h); background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; padding: 0 36px; gap: 16px;
-    position: sticky; top: 0; z-index: 40;
-    box-shadow: 0 1px 0 var(--border), 0 2px 12px rgba(11,11,12,0.04);
+  .ow-breadcrumb-geo {
+    display: none; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
+    border: 1px solid var(--bdr-soft);
+    background: var(--bg-card); opacity: 0.90;
   }
-  .ow-topbar::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.4) 20%, rgba(229,185,60,0.5) 50%, rgba(200,169,106,0.4) 80%, transparent);
+  @media (min-width: 640px) { .ow-breadcrumb-geo { display: flex; } }
+
+  .ow-breadcrumb {
+    display: flex; align-items: center; gap: 8px;
   }
-  .ow-hamburger {
-    display: none; background: none; border: none;
-    color: var(--text2); cursor: pointer; padding: 4px; border-radius: 6px;
+  .ow-bc-root {
+    font-size: 12.5px; font-weight: 500;
+    color: var(--graphite-muted);
   }
-  .ow-breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-  .ow-bc-home { color: var(--text3); font-weight: 500; }
-  .ow-bc-sep  { color: var(--text3); opacity: 0.4; display: flex; align-items: center; }
-  .ow-bc-cur  { color: var(--text); font-weight: 700; }
+  .ow-bc-sep-icon {
+    color: var(--graphite-muted); opacity: 0.38; flex-shrink: 0;
+  }
+  .ow-bc-cur {
+    font-size: 13.5px; font-weight: 700; color: var(--graphite);
+  }
+
   .ow-topbar-spacer { flex: 1; }
 
+  /* Right actions */
+  .ow-topbar-actions {
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+
+  .ow-status {
+    display: none; align-items: center; gap: 6px;
+  }
+  @media (min-width: 768px) { .ow-status { display: flex; } }
+  .ow-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(42,112,88,0.90);
+    box-shadow: 0 0 0 3px rgba(42,112,88,0.18);
+    animation: ow-pulse 2.8s ease-in-out infinite;
+  }
+  .ow-status-text {
+    font-size: 11.5px; font-weight: 600; color: var(--graphite-muted);
+  }
+
+  .ow-topbar-divider {
+    display: none; width: 1px; height: 20px;
+    background: var(--bdr-med); opacity: 0.65;
+  }
+  @media (min-width: 768px) { .ow-topbar-divider { display: block; } }
+
+  /* Bell button */
+  .ow-bell-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg-card); border: 1px solid var(--bdr-soft);
+    cursor: pointer; color: var(--graphite-muted);
+    transition: all 0.18s;
+  }
+  .ow-bell-btn:hover { border-color: var(--bdr-gold); color: var(--graphite); }
+  @media (min-width: 768px) { .ow-bell-btn { display: flex; } }
+
+  /* User pill */
+  .ow-topbar-user-pill {
+    display: none; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 999px;
+    border: 1px solid var(--bdr-soft);
+    background: var(--bg-card);
+    text-decoration: none;
+    transition: all 0.18s var(--ease-out);
+  }
+  .ow-topbar-user-pill:hover {
+    border-color: var(--bdr-gold);
+    box-shadow: 0 4px 16px rgba(8,11,12,0.06);
+  }
+  @media (min-width: 768px) { .ow-topbar-user-pill { display: flex; } }
+
+  .ow-topbar-av {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg, var(--gold-soft), var(--gold-deep));
+  }
+  .ow-topbar-initial {
+    font-size: 11px; font-weight: 900; color: var(--graphite);
+    font-family: var(--font-heading);
+  }
+  .ow-topbar-name {
+    font-size: 12.5px; font-weight: 700; color: var(--graphite);
+    white-space: nowrap; padding-inline-start: 2px;
+  }
+
+  /* ══ CONTENT ══ */
   .ow-content {
-    padding: 36px 40px; flex: 1;
-    background:
-      radial-gradient(ellipse at 0% 0%, rgba(200,169,106,0.035) 0%, transparent 55%),
-      radial-gradient(ellipse at 100% 100%, rgba(229,185,60,0.025) 0%, transparent 55%),
-      var(--off-white);
-    animation: fadeIn 0.3s ease;
+    position: relative; flex: 1;
+    padding: 28px 20px;
+    animation: ow-slidein 0.42s var(--ease-out);
+  }
+  @media (min-width: 768px) { .ow-content { padding: 40px; } }
+
+  /* Watermark */
+  .ow-watermark {
+    position: absolute; left: 24px; top: 24px;
+    opacity: 0.04; pointer-events: none;
   }
 
+  .ow-content-inner { position: relative; z-index: 10; }
+
+  /* ══ BOTTOM BAND ══ */
   .ow-bottom-band {
-    width: 100%; height: 120px; pointer-events: none; flex-shrink: 0; opacity: 0.7;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 40%);
-    mask-image: linear-gradient(to bottom, transparent 0%, black 40%);
-  }
-  .ow-bottom-band svg { width: 100%; height: 100%; display: block; }
-
-  .ow-overlay {
-    position: fixed; inset: 0; background: rgba(10,10,11,0.6);
-    z-index: 49; backdrop-filter: blur(3px); animation: fadeIn 0.2s ease;
+    pointer-events: none; width: 100%; height: 80px; flex-shrink: 0;
+    opacity: 0.60;
+    mask-image: linear-gradient(to bottom, transparent, black 55%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 55%);
   }
 
-  @media (max-width: 768px) {
-    .ow-sidebar { transform: translateX(100%); }
-    .ow-sidebar.open { transform: translateX(0); box-shadow: -12px 0 48px rgba(10,10,11,0.45); }
-    .ow-main { margin-right: 0; }
-    .ow-hamburger { display: flex; }
-    .ow-content { padding: 20px 18px; }
-    .ow-topbar { padding: 0 18px; }
+  /* ══ FOOTER CAPTION ══ */
+  .ow-footer-caption {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding-bottom: 20px; padding-top: 4px;
+  }
+  .ow-footer-sparkle { color: var(--gold-deep); opacity: 0.60; }
+  .ow-footer-text {
+    font-family: var(--font-mono);
+    font-size: 10px; font-weight: 500;
+    letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--graphite-muted); opacity: 0.60;
   }
 `;

@@ -6,6 +6,85 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Maqsad {
+  DEEN // الدين
+  AQL // العقل
+  NAFS // النفس
+  NASL // النسل
+  MAL // المال
+}
+
+// One trait per Maqsad per stage (so max 5 traits per stage)
+model StageTrait {
+  id         String   @id @default(uuid()) @db.Uuid
+  stage_id   String   @db.Uuid
+  maqsad     Maqsad
+  name       String // e.g. "الدراية"
+  definition String // e.g. "قدرة الطالب على فهم سبب الفعل..."
+  created_at DateTime @default(now())
+
+  stage              RoadmapStage      @relation(fields: [stage_id], references: [id], onDelete: Cascade)
+  elements           TraitElement[]
+  module_main_traits RoadmapModule[]   @relation("ModuleMainTrait")
+  evaluations        TraitEvaluation[]
+
+  @@unique([stage_id, maqsad]) // one trait per Maqsad per stage
+  @@map("stage_traits")
+}
+
+// Assessment elements — visual guidance only, not scored individually
+model TraitElement {
+  id         String   @id @default(uuid()) @db.Uuid
+  trait_id   String   @db.Uuid
+  text       String // e.g. "يفهم الطالب لماذا يتحرك"
+  order      Int
+  created_at DateTime @default(now())
+
+  trait StageTrait @relation(fields: [trait_id], references: [id], onDelete: Cascade)
+
+  @@map("trait_elements")
+}
+
+// Link the main activating trait to a module
+// Add this field to RoadmapModule:
+// main_trait_id  String?  @db.Uuid
+// main_trait     StageTrait? @relation("ModuleMainTrait", fields: [main_trait_id], references: [id])
+
+// Teacher's trait evaluation after student completes a module
+model TraitAssessment {
+  id           String   @id @default(uuid()) @db.Uuid
+  module_id    String   @db.Uuid
+  student_id   String   @db.Uuid
+  teacher_id   String   @db.Uuid
+  general_note String?
+  submitted_at DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  module       RoadmapModule     @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  student      Student           @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  teacher      Teacher           @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  trait_scores TraitEvaluation[]
+
+  @@unique([module_id, student_id]) // one assessment per student per module, but updatable
+  @@map("trait_assessments")
+}
+
+// One score row per trait inside the assessment
+model TraitEvaluation {
+  id            String   @id @default(uuid()) @db.Uuid
+  assessment_id String   @db.Uuid
+  trait_id      String   @db.Uuid
+  score         Float // e.g. 42.0 out of 50 for main, or 8.0 out of 12.5 for others
+  note          String?
+  created_at    DateTime @default(now())
+
+  assessment TraitAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  trait      StageTrait      @relation(fields: [trait_id], references: [id], onDelete: Cascade)
+
+  @@unique([assessment_id, trait_id]) // one score per trait per assessment
+  @@map("trait_evaluations")
+}
+
 model Profile {
   id                           String              @id @db.Uuid
   created_at                   DateTime            @default(now())
@@ -17,6 +96,8 @@ model Profile {
   teacher                      Teacher?
   posts                        Post[]
   post_reactions               PostReaction[]
+  avatar_url                   String?
+  avatar_path                  String?
 
   @@map("profiles")
 }
@@ -47,15 +128,16 @@ model School {
 }
 
 model Teacher {
-  id            String         @id @default(uuid()) @db.Uuid
-  created_at    DateTime       @default(now())
-  profile_id    String         @unique @db.Uuid
-  school_id     String         @db.Uuid
-  announcements Announcement[]
-  classes       Class[]
-  quizzes       Quiz[]
-  profile       Profile        @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-  school        School         @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  id               String            @id @default(uuid()) @db.Uuid
+  created_at       DateTime          @default(now())
+  profile_id       String            @unique @db.Uuid
+  school_id        String            @db.Uuid
+  announcements    Announcement[]
+  classes          Class[]
+  quizzes          Quiz[]
+  profile          Profile           @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  school           School            @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  traitAssessments TraitAssessment[]
 
   @@map("teachers")
 }
@@ -73,6 +155,7 @@ model Student {
   class               Class?                  @relation(fields: [class_id], references: [id])
   profile             Profile                 @relation(fields: [profile_id], references: [id], onDelete: Cascade)
   school              School?                 @relation(fields: [school_id], references: [id])
+  traitAssessments    TraitAssessment[]
 
   @@map("students")
 }
@@ -273,21 +356,25 @@ model RoadmapStage {
   created_at DateTime        @default(now())
   modules    RoadmapModule[]
   roadmap    Roadmap         @relation(fields: [roadmap_id], references: [id], onDelete: Cascade)
+  traits     StageTrait[]
 
   @@map("roadmap_stages")
 }
 
 model RoadmapModule {
-  id          String            @id @default(uuid()) @db.Uuid
-  stage_id    String            @db.Uuid
-  title       String
-  description String?
-  order       Int
-  created_at  DateTime          @default(now())
-  stage       RoadmapStage      @relation(fields: [stage_id], references: [id], onDelete: Cascade)
-  contents    ModuleContent[]
-  questions   RoadmapQuestion[]
-  attempts    ModuleAttempt[]
+  id               String            @id @default(uuid()) @db.Uuid
+  stage_id         String            @db.Uuid
+  title            String
+  description      String?
+  order            Int
+  created_at       DateTime          @default(now())
+  stage            RoadmapStage      @relation(fields: [stage_id], references: [id], onDelete: Cascade)
+  contents         ModuleContent[]
+  questions        RoadmapQuestion[]
+  attempts         ModuleAttempt[]
+  main_trait_id    String?           @db.Uuid
+  main_trait       StageTrait?       @relation("ModuleMainTrait", fields: [main_trait_id], references: [id])
+  traitAssessments TraitAssessment[]
 
   @@map("roadmap_modules")
 }

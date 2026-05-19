@@ -16,10 +16,27 @@ export async function GET() {
         orderBy: { order: "asc" },
         select: {
           id: true, title: true, order: true,
+          traits: {
+            orderBy: { maqsad: "asc" },
+            select: {
+              id: true,
+              maqsad: true,
+              name: true,
+              definition: true,
+              elements: {
+                orderBy: { order: "asc" },
+                select: { id: true, text: true, order: true },
+              },
+              module_main_traits: {
+                select: { id: true, title: true },
+              },
+            },
+          },
           modules: {
             orderBy: { order: "asc" },
             select: {
               id: true, title: true, description: true, order: true,
+              main_trait_id: true,
               _count: { select: { attempts: true } },
               contents: {
                 orderBy: { order: "asc" },

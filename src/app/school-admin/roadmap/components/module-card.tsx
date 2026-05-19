@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { Icons } from "./icons";
-import type { Module, ModuleContent, Question } from "./types";
+import type { Module, ModuleContent, Question, StageTrait } from "./types";
 import { TextModal, ImageModal, VideoModal } from "./content-modals";
 import { QuestionModal } from "./question-modal";
+import { ModuleMainTraitSelector } from "./module-main-trait-selector";
 
 interface Props {
   mod: Module;
+  stageTraits: StageTrait[];
   onRefresh: () => void;
 }
 
 type AddingContent = "TEXT" | "IMAGE" | "VIDEO" | null;
 
-export function ModuleCard({ mod, onRefresh }: Props) {
+export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   const [open, setOpen] = useState(false);
   const [addingContent, setAddingContent] = useState<AddingContent>(null);
   const [editingContent, setEditingContent] = useState<ModuleContent | null>(
@@ -49,6 +51,8 @@ export function ModuleCard({ mod, onRefresh }: Props) {
   const contents = mod.contents ?? [];
   const questions = mod.questions ?? [];
   const attemptCount = mod._count?.attempts ?? 0;
+  const hasMainTrait = !!mod.main_trait_id;
+  const mainTrait = stageTraits.find((t) => t.id === mod.main_trait_id);
 
   const renderContentPreview = (block: ModuleContent) => {
     if (block.type === "TEXT") {
@@ -130,7 +134,13 @@ export function ModuleCard({ mod, onRefresh }: Props) {
         <div className="rb-mod-head">
           <button className="rb-mod-toggle" onClick={() => setOpen((v) => !v)}>
             <span className="rb-mod-dot-wrap">
-              <span className="rb-mod-dot" />
+              {hasMainTrait ? (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#E5B93C">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              ) : (
+                <span className="rb-mod-dot" />
+              )}
             </span>
             <span className="rb-mod-info">
               <span className="rb-mod-name">{mod.title}</span>
@@ -138,6 +148,18 @@ export function ModuleCard({ mod, onRefresh }: Props) {
                 <span>{contents.length} محتوى</span>
                 <span className="rb-mod-meta-sep">·</span>
                 <span>{questions.length} سؤال</span>
+                <span className="rb-mod-meta-sep">·</span>
+                {mainTrait ? (
+                  <span
+                    style={{ color: "#C8A96A", fontWeight: 700, fontSize: 10 }}
+                  >
+                    ★ {mainTrait.name}
+                  </span>
+                ) : (
+                  <span style={{ color: "#bbb", fontSize: 10 }}>
+                    بلا سمة مشغّلة
+                  </span>
+                )}
                 <span className="rb-mod-meta-sep">·</span>
                 <span
                   className="rb-completion"
@@ -292,12 +314,32 @@ export function ModuleCard({ mod, onRefresh }: Props) {
                 {Icons.plus} إضافة سؤال
               </button>
             </div>
+
+            {/* ── DIVIDER ── */}
+            {stageTraits.length > 0 && (
+              <div className="rb-section-divider">
+                <span className="rb-divider-line" />
+                <span className="rb-divider-diamond">◆</span>
+                <span className="rb-divider-line" />
+              </div>
+            )}
+
+            {/* ── MAIN TRAIT SECTION ── */}
+            {stageTraits.length > 0 && (
+              <div className="rb-q-section">
+                <ModuleMainTraitSelector
+                  moduleId={mod.id}
+                  mainTraitId={mod.main_trait_id}
+                  stageTraits={stageTraits}
+                  onRefresh={onRefresh}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {/* ── MODALS ── */}
-
       {addingContent === "TEXT" && (
         <TextModal
           moduleId={mod.id}

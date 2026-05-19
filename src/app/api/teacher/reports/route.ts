@@ -11,6 +11,24 @@ function scoreToPct(score: number, total: number): number {
   return Math.round((score / total) * 100);
 }
 
+interface StudentAttempt {
+  module_id: string;
+  score: number;
+  total: number;
+  passed: boolean;
+}
+
+interface RawStudent {
+  id: string;
+  profile: { full_name: string };
+  moduleAttempts: StudentAttempt[];
+}
+
+interface TraitAssessmentRef {
+  module_id: string;
+  student_id: string;
+}
+
 export async function GET() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,27 +40,55 @@ export async function GET() {
   });
   if (!teacher) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  // ── Query 1: classes + students + attempts (no trait nesting) ──
   const classes = await prisma.class.findMany({
     where: { teacher_id: teacher.id },
+    orderBy: { created_at: "asc" },
     select: {
       id: true,
       name: true,
+      created_at: true,
       _count: { select: { students: true } },
       students: {
         select: {
           id: true,
           profile: { select: { full_name: true } },
           moduleAttempts: {
-            select: { score: true, total: true, passed: true },
+            select: {
+              module_id: true,
+              score: true,
+              total: true,
+              passed: true,
+            },
           },
         },
       },
     },
-    orderBy: { created_at: "asc" },
   });
 
+  // ── Query 2: all trait assessments for students in these classes ──
+  const studentIds = classes.flatMap((cls) => cls.students.map((s) => s.id));
+
+  const rawTraitAssessments = await prisma.traitAssessment.findMany({
+    where: { student_id: { in: studentIds } },
+    select: { module_id: true, student_id: true },
+  });
+
+  const traitAssessments: TraitAssessmentRef[] = rawTraitAssessments;
+
+  // Build a map: studentId → Set of assessed module_ids
+  const assessedMap = new Map<string, Set<string>>();
+  traitAssessments.forEach((ta) => {
+    if (!assessedMap.has(ta.student_id)) {
+      assessedMap.set(ta.student_id, new Set());
+    }
+    assessedMap.get(ta.student_id)!.add(ta.module_id);
+  });
+
+  // ── Build response ──
   const data = classes.map((cls) => {
-    const allAttempts = cls.students.flatMap((s) => s.moduleAttempts);
+    const students: RawStudent[] = cls.students;
+    const allAttempts: StudentAttempt[] = students.flatMap((s) => s.moduleAttempts);
     const totalAttempts = allAttempts.length;
 
     const avgScore =
@@ -62,8 +108,12 @@ export async function GET() {
       else distribution[3]++;
     });
 
-    const students = cls.students.map((s) => {
-      const attempts = s.moduleAttempts;
+    const builtStudents = students.map((s) => {
+      const attempts: StudentAttempt[] = s.moduleAttempts;
+      const assessedIds: Set<string> = assessedMap.get(s.id) ?? new Set();
+     const allModuleIds: string[] = attempts.map((a) => a.module_id);
+const pendingCount = allModuleIds.filter((mid) => !assessedIds.has(mid)).length;
+
       const studentAvg =
         attempts.length > 0
           ? Math.round(
@@ -71,14 +121,21 @@ export async function GET() {
                 attempts.length,
             )
           : null;
+
       return {
         id: s.id,
         full_name: s.profile.full_name,
         attempts_count: attempts.length,
-        passed_count: attempts.filter((a) => a.passed).length,
         avg_score: studentAvg,
+        trait_assessments_count: assessedIds.size,
+        pending_trait_assessments: pendingCount,
       };
     });
+
+    const totalPending = builtStudents.reduce(
+      (sum, s) => sum + s.pending_trait_assessments,
+      0,
+    );
 
     return {
       id: cls.id,
@@ -87,7 +144,8 @@ export async function GET() {
       total_attempts: totalAttempts,
       avg_score: avgScore,
       score_distribution: distribution,
-      students,
+      pending_trait_assessments: totalPending,
+      students: builtStudents,
     };
   });
 

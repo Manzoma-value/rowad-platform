@@ -2,6 +2,14 @@
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'zrydlelcdcizuybkargl.supabase.co',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
