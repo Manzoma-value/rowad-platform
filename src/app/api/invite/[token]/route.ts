@@ -68,7 +68,6 @@ export async function POST(
 ) {
   const { token } = await context.params;
 
-  // Re-validate invite before doing anything
   const state = await resolveInvite(token);
   if (!state.valid) {
     const messages: Record<string, string> = {
@@ -80,32 +79,28 @@ export async function POST(
     return NextResponse.json({ error: messages[state.reason] }, { status: 410 });
   }
 
-  // ── Parse body — handle both JSON and multipart/form-data ──────────────
+  // ── Parse body — handle both JSON and multipart/form-data ─────────────
   let full_name: string | undefined;
   let email: string | undefined;
   let password: string | undefined;
-  let avatarFile: File | null = null;
 
   const contentType = req.headers.get("content-type") ?? "";
 
   if (contentType.includes("multipart/form-data")) {
     try {
       const form = await req.formData();
-      full_name  = (form.get("full_name") as string | null)?.trim();
-      email      = (form.get("email")     as string | null)?.trim().toLowerCase();
-      password   = (form.get("password")  as string | null) ?? undefined;
-      const av   = form.get("avatar");
-      if (av instanceof File && av.size > 0) avatarFile = av;
+      full_name = (form.get("full_name") as string | null)?.trim();
+      email     = (form.get("email")     as string | null)?.trim().toLowerCase();
+      password  = (form.get("password")  as string | null) ?? undefined;
     } catch {
       return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
     }
   } else {
-    // JSON (no avatar)
     try {
       const body = await req.json();
-      full_name  = (body.full_name as string | undefined)?.trim();
-      email      = (body.email    as string | undefined)?.trim().toLowerCase();
-      password   = body.password  as string | undefined;
+      full_name = (body.full_name as string | undefined)?.trim();
+      email     = (body.email    as string | undefined)?.trim().toLowerCase();
+      password  = body.password  as string | undefined;
     } catch {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
@@ -118,15 +113,12 @@ export async function POST(
       { status: 400 }
     );
   }
-
   if (full_name.length < 3) {
     return NextResponse.json({ error: "الاسم يجب أن يكون 3 أحرف على الأقل" }, { status: 400 });
   }
-
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: "بريد إلكتروني غير صالح" }, { status: 400 });
   }
-
   if (password.length < 8) {
     return NextResponse.json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }, { status: 400 });
   }
@@ -142,41 +134,21 @@ export async function POST(
   if (authError || !authData.user) {
     const msg = authError?.message?.toLowerCase().includes("already registered")
       ? "يوجد حساب مسجّل بهذا البريد الإلكتروني مسبقاً."
-      : "فشل إنشاء الحساب. حاول مجدداً.";
+      : `فشل إنشاء الحساب: ${authError?.message ?? "خطأ غير معروف"}`;
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
   const userId = authData.user.id;
 
-  // ── Upload avatar if provided ─────────────────────────────────────────
-  let avatar_url: string | null = null;
-  if (avatarFile) {
-    try {
-      const ext  = avatarFile.name.split(".").pop() ?? "jpg";
-      const path = `avatars/${userId}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(path, avatarFile, { contentType: avatarFile.type, upsert: true });
-
-      if (!uploadError) {
-        const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-        avatar_url = publicUrl;
-      }
-      // If upload fails we continue — avatar is optional
-    } catch {
-      // Non-fatal — continue without avatar
-    }
-  }
-
-  // ── Create Profile + Teacher row + mark invite used — all in one tx ──
+  // ── Create Profile + Teacher + mark invite — single transaction ───────
   try {
     await prisma.$transaction(async (tx) => {
+      // Only pass fields that exist on your Profile model
       await tx.profile.create({
         data: {
           id:        userId,
-          full_name,
+          full_name: full_name!,
           role:      "TEACHER",
-          ...(avatar_url ? { avatar_url } : {}),
         },
       });
 
@@ -198,11 +170,13 @@ export async function POST(
       });
     });
   } catch (err) {
-    // Clean up auth user to avoid orphan
+    // Clean up orphan auth user
     await supabase.auth.admin.deleteUser(userId);
-    console.error("Invite acceptance transaction failed:", err);
+    console.error("[invite] transaction failed:", err);
+    // Return the actual error in dev so you can see what's wrong
+    const message = err instanceof Error ? err.message : "خطأ غير معروف";
     return NextResponse.json(
-      { error: "فشل إنشاء الحساب. حاول مجدداً." },
+      { error: `فشل إنشاء الحساب: ${message}` },
       { status: 500 }
     );
   }
