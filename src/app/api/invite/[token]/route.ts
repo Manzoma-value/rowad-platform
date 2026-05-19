@@ -66,41 +66,72 @@ export async function POST(
   req: Request,
   context: { params: Promise<{ token: string }> }
 ) {
-  const [{ token }, body] = await Promise.all([
-    context.params,
-    req.json().catch(() => ({})),
-  ]);
+  const { token } = await context.params;
 
-  // Re-validate invite
+  // Re-validate invite before doing anything
   const state = await resolveInvite(token);
   if (!state.valid) {
     const messages: Record<string, string> = {
-      not_found: "This invite link is invalid.",
-      disabled:  "This invite has been disabled.",
-      expired:   "This invite link has expired. Please contact your school admin.",
-      used:      "This invite has already been used.",
+      not_found: "رابط الدعوة غير صالح.",
+      disabled:  "تم تعطيل هذه الدعوة.",
+      expired:   "انتهت صلاحية الدعوة. تواصل مع مدير المدرسة.",
+      used:      "تم استخدام هذه الدعوة مسبقاً.",
     };
     return NextResponse.json({ error: messages[state.reason] }, { status: 410 });
   }
 
-  const full_name = (body.full_name as string | undefined)?.trim();
-  const email     = (body.email    as string | undefined)?.trim().toLowerCase();
-  const password  = body.password  as string | undefined;
+  // ── Parse body — handle both JSON and multipart/form-data ──────────────
+  let full_name: string | undefined;
+  let email: string | undefined;
+  let password: string | undefined;
+  let avatarFile: File | null = null;
 
+  const contentType = req.headers.get("content-type") ?? "";
+
+  if (contentType.includes("multipart/form-data")) {
+    try {
+      const form = await req.formData();
+      full_name  = (form.get("full_name") as string | null)?.trim();
+      email      = (form.get("email")     as string | null)?.trim().toLowerCase();
+      password   = (form.get("password")  as string | null) ?? undefined;
+      const av   = form.get("avatar");
+      if (av instanceof File && av.size > 0) avatarFile = av;
+    } catch {
+      return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+    }
+  } else {
+    // JSON (no avatar)
+    try {
+      const body = await req.json();
+      full_name  = (body.full_name as string | undefined)?.trim();
+      email      = (body.email    as string | undefined)?.trim().toLowerCase();
+      password   = body.password  as string | undefined;
+    } catch {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+  }
+
+  // ── Validate ──────────────────────────────────────────────────────────
   if (!full_name || !email || !password) {
     return NextResponse.json(
-      { error: "full_name, email, and password are required" },
-      { status: 400 }
-    );
-  }
-  if (password.length < 8) {
-    return NextResponse.json(
-      { error: "Password must be at least 8 characters" },
+      { error: "الاسم الكامل والبريد الإلكتروني وكلمة المرور مطلوبة" },
       { status: 400 }
     );
   }
 
-  // Create Supabase auth user (requires service role key)
+  if (full_name.length < 3) {
+    return NextResponse.json({ error: "الاسم يجب أن يكون 3 أحرف على الأقل" }, { status: 400 });
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: "بريد إلكتروني غير صالح" }, { status: 400 });
+  }
+
+  if (password.length < 8) {
+    return NextResponse.json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }, { status: 400 });
+  }
+
+  // ── Create Supabase auth user ─────────────────────────────────────────
   const supabase = await createClient();
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
@@ -109,37 +140,69 @@ export async function POST(
   });
 
   if (authError || !authData.user) {
-    const message = authError?.message?.toLowerCase().includes("already registered")
-      ? "An account with this email already exists."
-      : "Failed to create account. Please try again.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const msg = authError?.message?.toLowerCase().includes("already registered")
+      ? "يوجد حساب مسجّل بهذا البريد الإلكتروني مسبقاً."
+      : "فشل إنشاء الحساب. حاول مجدداً.";
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
 
   const userId = authData.user.id;
 
+  // ── Upload avatar if provided ─────────────────────────────────────────
+  let avatar_url: string | null = null;
+  if (avatarFile) {
+    try {
+      const ext  = avatarFile.name.split(".").pop() ?? "jpg";
+      const path = `avatars/${userId}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(path, avatarFile, { contentType: avatarFile.type, upsert: true });
+
+      if (!uploadError) {
+        const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+        avatar_url = publicUrl;
+      }
+      // If upload fails we continue — avatar is optional
+    } catch {
+      // Non-fatal — continue without avatar
+    }
+  }
+
+  // ── Create Profile + Teacher row + mark invite used — all in one tx ──
   try {
     await prisma.$transaction(async (tx) => {
       await tx.profile.create({
-        data: { id: userId, full_name, role: "TEACHER" },
+        data: {
+          id:        userId,
+          full_name,
+          role:      "TEACHER",
+          ...(avatar_url ? { avatar_url } : {}),
+        },
       });
+
       await tx.teacher.create({
-        data: { profile_id: userId, school_id: state.invite.school_id },
+        data: {
+          profile_id: userId,
+          school_id:  state.invite.school_id,
+        },
       });
+
       await tx.invite.update({
         where: { id: state.invite.id },
         data: {
           use_count: { increment: 1 },
           is_active: false,
-          used_at: new Date(),
-          used_by: userId,
+          used_at:   new Date(),
+          used_by:   userId,
         },
       });
     });
   } catch (err) {
+    // Clean up auth user to avoid orphan
     await supabase.auth.admin.deleteUser(userId);
     console.error("Invite acceptance transaction failed:", err);
     return NextResponse.json(
-      { error: "Account creation failed. Please try again." },
+      { error: "فشل إنشاء الحساب. حاول مجدداً." },
       { status: 500 }
     );
   }
