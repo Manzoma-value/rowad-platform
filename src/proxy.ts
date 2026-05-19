@@ -28,13 +28,16 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
 
+  // API routes — always pass through
   if (pathname.startsWith("/api/")) return response;
 
-const isPublicRoute =
-  pathname === "/" ||
-  pathname === "/login" ||
-  pathname === "/signup" ||
-  pathname.startsWith("/schools/");   // ← add this line
+  const isPublicRoute =
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname.startsWith("/schools/") ||
+    pathname.startsWith("/invite/");   // ← invite pages are public
+
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -50,6 +53,7 @@ const isPublicRoute =
 
     const role = profile?.role as string | undefined;
 
+    // Redirect logged-in users away from login/signup
     if (pathname === "/login" || pathname === "/signup") {
       const url = request.nextUrl.clone();
       if (role === "OWNER")        { url.pathname = "/owner";        return NextResponse.redirect(url); }
@@ -57,6 +61,9 @@ const isPublicRoute =
       if (role === "TEACHER")      { url.pathname = "/teacher";      return NextResponse.redirect(url); }
       if (role === "STUDENT")      { url.pathname = "/student";      return NextResponse.redirect(url); }
     }
+
+    // If a logged-in user hits an invite page, let them through
+    // (the page itself handles the "already logged in" case gracefully)
 
     if (pathname.startsWith("/owner") && role !== "OWNER") {
       const url = request.nextUrl.clone();
@@ -87,33 +94,36 @@ const isPublicRoute =
         .single();
 
       const status = student?.onboarding_status as string | undefined;
-if (status) {
-  const allowedPaths: Record<string, string[]> = {
-    PENDING_INTAKE:             ["/student/intake"],
-    INTAKE_SUBMITTED:           ["/student/waiting"],
-    SCHOOL_ASSIGNED:            ["/student/school-assigned", "/student/placement"],
-    SCHOOL_PLACEMENT_SUBMITTED: ["/student/waiting-class"],
-    CLASS_ASSIGNED:             ["/student/welcome"],
-  };
 
-  const defaultRoute: Record<string, string> = {
-    PENDING_INTAKE:             "/student/intake",
-    INTAKE_SUBMITTED:           "/student/waiting",
-    SCHOOL_ASSIGNED:            "/student/school-assigned",
-    SCHOOL_PLACEMENT_SUBMITTED: "/student/waiting-class",
-    CLASS_ASSIGNED:             "/student/welcome",
-  };
+      if (status) {
+        const allowedPaths: Record<string, string[]> = {
+          PENDING_INTAKE:             ["/student/intake"],
+          INTAKE_SUBMITTED:           ["/student/waiting"],
+          SCHOOL_ASSIGNED:            ["/student/school-assigned", "/student/placement"],
+          SCHOOL_PLACEMENT_SUBMITTED: ["/student/waiting-class"],
+          CLASS_ASSIGNED:             ["/student/welcome"],
+        };
 
-  const allowed = allowedPaths[status] ?? [];
-  const isAllowed = allowed.includes(pathname) ||
-    (status === "CLASS_ASSIGNED" && (pathname === "/student" || pathname.startsWith("/student/")));
+        const defaultRoute: Record<string, string> = {
+          PENDING_INTAKE:             "/student/intake",
+          INTAKE_SUBMITTED:           "/student/waiting",
+          SCHOOL_ASSIGNED:            "/student/school-assigned",
+          SCHOOL_PLACEMENT_SUBMITTED: "/student/waiting-class",
+          CLASS_ASSIGNED:             "/student/welcome",
+        };
 
-  if (!isAllowed) {
-    const url = request.nextUrl.clone();
-    url.pathname = defaultRoute[status] ?? "/student";
-    return NextResponse.redirect(url);
-  }
-}
+        const allowed = allowedPaths[status] ?? [];
+        const isAllowed =
+          allowed.includes(pathname) ||
+          (status === "CLASS_ASSIGNED" &&
+            (pathname === "/student" || pathname.startsWith("/student/")));
+
+        if (!isAllowed) {
+          const url = request.nextUrl.clone();
+          url.pathname = defaultRoute[status] ?? "/student";
+          return NextResponse.redirect(url);
+        }
+      }
     }
   }
 
