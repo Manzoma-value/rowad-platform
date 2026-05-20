@@ -173,6 +173,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
   const T = STRINGS[lang];
 
   const goToLogin = () => router.push(`/schools/${school.slug}/login`);
+  const goToSignup = () => router.push(`/schools/${school.slug}/signup`);
 
   const statItems = [
     { n: school.student_count, l: T.students },
@@ -229,7 +230,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
             <button className="lc-btn-ghost" onClick={goToLogin}>
               {T.loginBtn}
             </button>
-            <button className="lc-btn-gold" onClick={goToLogin}>
+            <button className="lc-btn-gold" onClick={goToSignup}>
               {T.signupBtn}
             </button>
           </div>
@@ -398,7 +399,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
               <button className="lc-cta-outline" onClick={goToLogin}>
                 {T.loginBtn}
               </button>
-              <button className="lc-cta-gold" onClick={goToLogin}>
+              <button className="lc-cta-gold" onClick={goToSignup}>
                 {T.signupBtn}
               </button>
             </div>
@@ -625,7 +626,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
               <button className="lc-cta-outline" onClick={goToLogin}>
                 {T.loginBtn}
               </button>
-              <button className="lc-cta-gold" onClick={goToLogin}>
+              <button className="lc-cta-gold" onClick={goToSignup}>
                 {T.signupBtn}
               </button>
             </div>

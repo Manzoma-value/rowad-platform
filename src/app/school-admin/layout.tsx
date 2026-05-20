@@ -344,27 +344,33 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
         {/* User block */}
         <div className="sa-user-block">
           <div className="sa-user">
-            <div className="sa-user-av">
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt={name}
-                  width={40}
-                  height={40}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }}
-                />
-              ) : (
-                <span className="sa-user-initial">{initials}</span>
-              )}
-            </div>
-            <div className="sa-user-info">
-              <span className="sa-user-name">
-                {name || (lang === "ar" ? "المدير" : "Drejtori")}
-              </span>
-              <span className="sa-user-role">
-                {lang === "ar" ? "مدير الجهة" : lang === "sq" ? "Drejtori" : "Admin"}
-              </span>
-            </div>
+            <Link
+              href="/school-admin/profile"
+              className="sa-user-clickable"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <div className="sa-user-av">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={name}
+                    width={40}
+                    height={40}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }}
+                  />
+                ) : (
+                  <span className="sa-user-initial">{initials}</span>
+                )}
+              </div>
+              <div className="sa-user-info">
+                <span className="sa-user-name">
+                  {name || (lang === "ar" ? "المدير" : "Drejtori")}
+                </span>
+                <span className="sa-user-role">
+                  {lang === "ar" ? "مدير الجهة" : lang === "sq" ? "Drejtori" : "Admin"}
+                </span>
+              </div>
+            </Link>
             <button
               className="sa-logout-btn"
               onClick={handleLogout}
@@ -646,6 +652,12 @@ const styles = `
   .sa-user-info    { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .sa-user-name    { font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sa-user-role    { font-family: var(--sa-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.45); }
+
+  .sa-user-clickable {
+    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+    text-decoration: none; border-radius: 10px; transition: opacity 0.15s;
+  }
+  .sa-user-clickable:hover { opacity: 0.80; }
 
   .sa-logout-btn {
     display: flex; align-items: center; justify-content: center;

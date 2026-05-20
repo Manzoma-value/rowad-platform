@@ -182,6 +182,8 @@ model Student {
   onboarding_status   StudentOnboardingStatus @default(PENDING_INTAKE)
   profile_id          String                  @unique @db.Uuid
   school_id           String?                 @db.Uuid
+  city                String?
+  age                 Int?
   assessment_attempts AssessmentAttempt[]
   moduleAttempts      ModuleAttempt[]
   quiz_attempts       QuizAttempt[]

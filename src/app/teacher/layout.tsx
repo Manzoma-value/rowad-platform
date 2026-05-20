@@ -25,7 +25,7 @@ import {
   X,
 } from "lucide-react";
 
-/* ─── Geometric SVG decorations (matches owner layout) ─── */
+/* ─── Geometric SVG decorations ─── */
 
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
 
@@ -33,10 +33,8 @@ const STAR_LINES = Array.from({ length: 12 }, (_, i) => {
   const a1 = (i * 30 * Math.PI) / 180;
   const a2 = ((i * 30 + 15) * Math.PI) / 180;
   return {
-    x1: r2(100 + 80 * Math.sin(a1)),
-    y1: r2(100 - 80 * Math.cos(a1)),
-    x2: r2(100 + 40 * Math.sin(a2)),
-    y2: r2(100 - 40 * Math.cos(a2)),
+    x1: r2(100 + 80 * Math.sin(a1)), y1: r2(100 - 80 * Math.cos(a1)),
+    x2: r2(100 + 40 * Math.sin(a2)), y2: r2(100 - 40 * Math.cos(a2)),
   };
 });
 const PETAL_CIRCLES = Array.from({ length: 8 }, (_, i) => {
@@ -48,309 +46,73 @@ const INNER_PETALS = Array.from({ length: 4 }, (_, i) => {
   return { cx: r2(100 + 24 * Math.sin(a)), cy: r2(100 - 24 * Math.cos(a)) };
 });
 
-function Mandala({
-  size = 160,
-  stroke = "rgba(200,169,106,0.32)",
-  className = "",
-}: {
-  size?: number;
-  stroke?: string;
-  className?: string;
+function Mandala({ size = 160, stroke = "rgba(200,169,106,0.32)", className = "" }: {
+  size?: number; stroke?: string; className?: string;
 }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 200 200"
-      fill="none"
-      className={className}
-    >
-      <circle
-        cx="100"
-        cy="100"
-        r="92"
-        stroke={stroke}
-        strokeWidth="0.4"
-        opacity="0.55"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="80"
-        stroke={stroke}
-        strokeWidth="0.35"
-        opacity="0.45"
-      />
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" className={className}>
+      <circle cx="100" cy="100" r="92" stroke={stroke} strokeWidth="0.4" opacity="0.55" />
+      <circle cx="100" cy="100" r="80" stroke={stroke} strokeWidth="0.35" opacity="0.45" />
       {PETAL_CIRCLES.map((p, i) => (
-        <circle
-          key={i}
-          cx={p.cx}
-          cy={p.cy}
-          r="52"
-          stroke={stroke}
-          strokeWidth="0.55"
-          opacity="0.45"
-          fill="none"
-        />
+        <circle key={i} cx={p.cx} cy={p.cy} r="52" stroke={stroke} strokeWidth="0.55" opacity="0.45" fill="none" />
       ))}
-      <circle
-        cx="100"
-        cy="100"
-        r="70"
-        stroke={stroke}
-        strokeWidth="0.45"
-        opacity="0.55"
-        strokeDasharray="2 7"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="58"
-        stroke={stroke}
-        strokeWidth="0.4"
-        opacity="0.40"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="46"
-        stroke={stroke}
-        strokeWidth="0.45"
-        opacity="0.55"
-        strokeDasharray="4 5"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="34"
-        stroke={stroke}
-        strokeWidth="0.35"
-        opacity="0.45"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="24"
-        stroke={stroke}
-        strokeWidth="0.45"
-        opacity="0.60"
-        strokeDasharray="3 4"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="14"
-        stroke={stroke}
-        strokeWidth="0.35"
-        opacity="0.55"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="7"
-        stroke={stroke}
-        strokeWidth="0.55"
-        opacity="0.70"
-      />
+      <circle cx="100" cy="100" r="70" stroke={stroke} strokeWidth="0.45" opacity="0.55" strokeDasharray="2 7" />
+      <circle cx="100" cy="100" r="58" stroke={stroke} strokeWidth="0.4" opacity="0.40" />
+      <circle cx="100" cy="100" r="46" stroke={stroke} strokeWidth="0.45" opacity="0.55" strokeDasharray="4 5" />
+      <circle cx="100" cy="100" r="34" stroke={stroke} strokeWidth="0.35" opacity="0.45" />
+      <circle cx="100" cy="100" r="24" stroke={stroke} strokeWidth="0.45" opacity="0.60" strokeDasharray="3 4" />
+      <circle cx="100" cy="100" r="14" stroke={stroke} strokeWidth="0.35" opacity="0.55" />
+      <circle cx="100" cy="100" r="7" stroke={stroke} strokeWidth="0.55" opacity="0.70" />
       {STAR_LINES.map((l, i) => (
-        <line
-          key={i}
-          x1={l.x1}
-          y1={l.y1}
-          x2={l.x2}
-          y2={l.y2}
-          stroke={stroke}
-          strokeWidth="0.40"
-          opacity="0.50"
-        />
+        <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={stroke} strokeWidth="0.40" opacity="0.50" />
       ))}
       {INNER_PETALS.map((p, i) => (
-        <circle
-          key={i}
-          cx={p.cx}
-          cy={p.cy}
-          r="24"
-          stroke={stroke}
-          strokeWidth="0.40"
-          opacity="0.50"
-          fill="none"
-        />
+        <circle key={i} cx={p.cx} cy={p.cy} r="24" stroke={stroke} strokeWidth="0.40" opacity="0.50" fill="none" />
       ))}
-      <line
-        x1="100"
-        y1="68"
-        x2="100"
-        y2="132"
-        stroke={stroke}
-        strokeWidth="0.55"
-        opacity="0.60"
-      />
-      <line
-        x1="72"
-        y1="84"
-        x2="128"
-        y2="116"
-        stroke={stroke}
-        strokeWidth="0.55"
-        opacity="0.60"
-      />
-      <line
-        x1="128"
-        y1="84"
-        x2="72"
-        y2="116"
-        stroke={stroke}
-        strokeWidth="0.55"
-        opacity="0.60"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="5"
-        fill="none"
-        stroke={stroke}
-        strokeWidth="0.70"
-        opacity="0.80"
-      />
-      <circle
-        cx="100"
-        cy="100"
-        r="2.5"
-        fill="none"
-        stroke={stroke}
-        strokeWidth="0.50"
-        opacity="0.85"
-      />
+      <line x1="100" y1="68" x2="100" y2="132" stroke={stroke} strokeWidth="0.55" opacity="0.60" />
+      <line x1="72" y1="84" x2="128" y2="116" stroke={stroke} strokeWidth="0.55" opacity="0.60" />
+      <line x1="128" y1="84" x2="72" y2="116" stroke={stroke} strokeWidth="0.55" opacity="0.60" />
+      <circle cx="100" cy="100" r="5" fill="none" stroke={stroke} strokeWidth="0.70" opacity="0.80" />
+      <circle cx="100" cy="100" r="2.5" fill="none" stroke={stroke} strokeWidth="0.50" opacity="0.85" />
       <circle cx="100" cy="100" r="1.2" fill={stroke} opacity="0.90" />
     </svg>
   );
 }
 
-function GeoMark({
-  size = 22,
-  color = "var(--tl-gold)",
-}: {
-  size?: number;
-  color?: string;
-}) {
+function GeoMark({ size = 22, color = "var(--tl-gold)" }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 22 22" fill="none">
-      <circle
-        cx="11"
-        cy="11"
-        r="9.5"
-        stroke={color}
-        strokeWidth="0.7"
-        opacity="0.65"
-      />
-      <circle
-        cx="11"
-        cy="11"
-        r="6.5"
-        stroke={color}
-        strokeWidth="0.6"
-        opacity="0.55"
-      />
-      <circle
-        cx="11"
-        cy="11"
-        r="3.2"
-        stroke={color}
-        strokeWidth="0.55"
-        opacity="0.65"
-      />
-      <line
-        x1="11"
-        y1="1"
-        x2="11"
-        y2="21"
-        stroke={color}
-        strokeWidth="0.45"
-        opacity="0.40"
-      />
-      <line
-        x1="1"
-        y1="11"
-        x2="21"
-        y2="11"
-        stroke={color}
-        strokeWidth="0.45"
-        opacity="0.40"
-      />
-      <line
-        x1="3.7"
-        y1="3.7"
-        x2="18.3"
-        y2="18.3"
-        stroke={color}
-        strokeWidth="0.35"
-        opacity="0.28"
-      />
-      <line
-        x1="18.3"
-        y1="3.7"
-        x2="3.7"
-        y2="18.3"
-        stroke={color}
-        strokeWidth="0.35"
-        opacity="0.28"
-      />
+      <circle cx="11" cy="11" r="9.5" stroke={color} strokeWidth="0.7" opacity="0.65" />
+      <circle cx="11" cy="11" r="6.5" stroke={color} strokeWidth="0.6" opacity="0.55" />
+      <circle cx="11" cy="11" r="3.2" stroke={color} strokeWidth="0.55" opacity="0.65" />
+      <line x1="11" y1="1" x2="11" y2="21" stroke={color} strokeWidth="0.45" opacity="0.40" />
+      <line x1="1" y1="11" x2="21" y2="11" stroke={color} strokeWidth="0.45" opacity="0.40" />
+      <line x1="3.7" y1="3.7" x2="18.3" y2="18.3" stroke={color} strokeWidth="0.35" opacity="0.28" />
+      <line x1="18.3" y1="3.7" x2="3.7" y2="18.3" stroke={color} strokeWidth="0.35" opacity="0.28" />
     </svg>
   );
 }
 
-/* ─── Nav items ─── */
+/* ─── Nav ─── */
 interface NavItem {
   href: string;
   key: "dashboard" | "myClasses" | "quizzes" | "reports";
-  labelAr?: string;
   sublabel: string;
   exact?: boolean;
   icon: LucideIcon;
 }
 
 const navItems: NavItem[] = [
-  {
-    href: "/teacher",
-    key: "dashboard",
-    sublabel: "Dashboard",
-    exact: true,
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/teacher/classes",
-    key: "myClasses",
-    sublabel: "Classes",
-    exact: false,
-    icon: Users,
-  },
-  {
-    href: "/teacher/quizzes",
-    key: "quizzes",
-    sublabel: "Quizzes",
-    exact: false,
-    icon: ClipboardList,
-  },
-  {
-    href: "/teacher/reports",
-    key: "reports",
-    sublabel: "Reports",
-    exact: false,
-    icon: BarChart3,
-  },
+  { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
+  { href: "/teacher/classes",  key: "myClasses", sublabel: "Classes",   exact: false, icon: Users },
+  { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList },
+  { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3 },
 ];
 
-/* community item is separate so it can be rendered distinctly if desired */
-const communityItem = {
-  href: "/teacher/hub",
-  sublabel: "Community",
-  icon: Globe2,
-};
+const COMMUNITY_HREF = "/teacher/hub";
 
 /* ─── Layout ─── */
-export default function TeacherLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function TeacherLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const { lang, setLang } = useLang();
   const tr = t[lang];
@@ -359,6 +121,7 @@ export default function TeacherLayout({
   const [name, setName] = useState("");
   const [initials, setInitials] = useState("م");
   const [schoolName, setSchoolName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [showToggle, setShowToggle] = useState(false);
@@ -384,10 +147,14 @@ export default function TeacherLayout({
           const savedLang = localStorage.getItem("lang");
           if (!savedLang) setLang(d.school.language as "ar" | "sq" | "en");
           setSchoolLang(d.school.language ?? "ar");
-          if (d.school.language && d.school.language !== "ar")
-            setShowToggle(true);
+          if (d.school.language && d.school.language !== "ar") setShowToggle(true);
         }
       })
+      .catch(() => {});
+
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
       .catch(() => {});
   }, []);
 
@@ -403,25 +170,19 @@ export default function TeacherLayout({
     exact ? pathname === href : pathname.startsWith(href);
 
   const currentLabel = (() => {
-    if (isActive(communityItem.href))
-      return lang === "ar"
-        ? "المجتمع"
-        : lang === "sq"
-          ? "Komuniteti"
-          : "Community";
+    if (isActive(COMMUNITY_HREF))
+      return lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community";
     const found = navItems.find((item) => isActive(item.href, item.exact));
-    if (!found) return lang === "ar" ? "الصفحة" : "Faqja";
-    return found.labelAr && lang === "ar" ? found.labelAr : tr[found.key];
+    return found ? tr[found.key] : (lang === "ar" ? "الصفحة" : "Faqja");
   })();
 
   return (
     <div className="tl-shell" dir="rtl">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="tl-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* ═══ SIDEBAR ═══ */}
+      {/* ═══════════════════ SIDEBAR ═══════════════════ */}
       <aside className={`tl-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="tl-sidebar-glow" aria-hidden="true" />
 
@@ -436,12 +197,7 @@ export default function TeacherLayout({
               alt="بناء الأهلية"
               width={140}
               height={32}
-              style={{
-                objectFit: "contain",
-                width: "auto",
-                height: 28,
-                display: "block",
-              }}
+              style={{ objectFit: "contain", width: "auto", height: 28, display: "block" }}
               priority
             />
           </div>
@@ -454,7 +210,7 @@ export default function TeacherLayout({
           </button>
         </div>
 
-        {/* Ornamental rule */}
+        {/* Gold rule */}
         <div className="tl-gold-rule" aria-hidden="true">
           <div className="tl-rule-line" />
           <div className="tl-rule-diamond" />
@@ -463,41 +219,22 @@ export default function TeacherLayout({
           <div className="tl-rule-line" />
         </div>
 
-        {/* Profile */}
-        <div className="tl-profile">
-          <div className="tl-profile-av">{initials}</div>
-          <div className="tl-profile-info">
-            <span className="tl-profile-name">
-              {name || (lang === "ar" ? "مشرف" : "Mësuesi")}
-            </span>
-            <span className="tl-profile-role">
-              {lang === "ar" ? "مشرف" : lang === "sq" ? "Mësues" : "Teacher"}
-            </span>
-          </div>
+        {/* Section label */}
+        <div className="tl-section-label">
+          {lang === "ar" ? "القوائم الرئيسية · Main" : lang === "sq" ? "Menuja Kryesore · Main" : "Main Menu"}
         </div>
 
         {showToggle && (
-          <div style={{ padding: "0 14px 12px" }}>
+          <div style={{ padding: "0 14px 10px" }}>
             <LangToggle dark secondaryLang={schoolLang} />
           </div>
         )}
-
-        {/* Section label */}
-        <div className="tl-section-label">
-          {lang === "ar"
-            ? "القوائم الرئيسية · Main"
-            : lang === "sq"
-              ? "Menuja Kryesore · Main"
-              : "Main Menu"}
-        </div>
 
         {/* Nav */}
         <nav className="tl-nav">
           {navItems.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
-            const label =
-              item.labelAr && lang === "ar" ? item.labelAr : tr[item.key];
             return (
               <Link
                 key={item.href}
@@ -515,7 +252,7 @@ export default function TeacherLayout({
                   <Icon size={17} strokeWidth={1.6} />
                 </span>
                 <span className="tl-nav-labels">
-                  <span className="tl-nav-label-main">{label}</span>
+                  <span className="tl-nav-label-main">{tr[item.key]}</span>
                   <span className="tl-nav-label-sub">{item.sublabel}</span>
                 </span>
                 {active && <span className="tl-nav-dot" />}
@@ -523,20 +260,13 @@ export default function TeacherLayout({
             );
           })}
 
-          {/* Community item — visually separated */}
+          {/* Community — visually separated */}
           <div className="tl-nav-sep" aria-hidden="true" />
           {(() => {
-            const active = isActive(communityItem.href);
-            const Icon = communityItem.icon;
-            const label =
-              lang === "ar"
-                ? "المجتمع"
-                : lang === "sq"
-                  ? "Komuniteti"
-                  : "Community";
+            const active = isActive(COMMUNITY_HREF);
             return (
               <Link
-                href={communityItem.href}
+                href={COMMUNITY_HREF}
                 className={`tl-nav-item tl-nav-community ${active ? "active" : ""}`}
                 onClick={() => setSidebarOpen(false)}
               >
@@ -547,13 +277,13 @@ export default function TeacherLayout({
                   </>
                 )}
                 <span className="tl-nav-icon-wrap">
-                  <Icon size={17} strokeWidth={1.6} />
+                  <Globe2 size={17} strokeWidth={1.6} />
                 </span>
                 <span className="tl-nav-labels">
-                  <span className="tl-nav-label-main">{label}</span>
-                  <span className="tl-nav-label-sub">
-                    {communityItem.sublabel}
+                  <span className="tl-nav-label-main">
+                    {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
                   </span>
+                  <span className="tl-nav-label-sub">Community</span>
                 </span>
                 {active && <span className="tl-nav-dot" />}
               </Link>
@@ -565,34 +295,57 @@ export default function TeacherLayout({
           </div>
         </nav>
 
-        {/* Footer rule + logout */}
+        {/* Footer rule */}
         <div className="tl-gold-rule tl-gold-rule--footer" aria-hidden="true">
           <div className="tl-rule-line" />
           <div className="tl-rule-diamond" />
           <div className="tl-rule-line" />
         </div>
-        <div className="tl-footer">
-          <button
-            className="tl-logout"
-            onClick={handleLogout}
-            disabled={loggingOut}
-          >
-            {loggingOut ? (
-              <>
-                <div className="tl-spin" />
-                <span>...</span>
-              </>
-            ) : (
-              <>
-                <LogOut size={14} strokeWidth={1.8} />
-                <span>{tr.logout}</span>
-              </>
-            )}
-          </button>
+
+        {/* User block */}
+        <div className="tl-user-block">
+          <div className="tl-user">
+            <Link
+              href="/teacher/profile"
+              className="tl-user-clickable"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <div className="tl-user-av">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={name}
+                    width={40}
+                    height={40}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }}
+                  />
+                ) : (
+                  <span className="tl-user-initial">{initials}</span>
+                )}
+              </div>
+              <div className="tl-user-info">
+                <span className="tl-user-name">
+                  {name || (lang === "ar" ? "مشرف" : "Mësuesi")}
+                </span>
+                <span className="tl-user-role">
+                  {lang === "ar" ? "مشرف" : lang === "sq" ? "Mësues" : "Teacher"}
+                </span>
+              </div>
+            </Link>
+            <button
+              className="tl-logout-btn"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              title={lang === "ar" ? "تسجيل الخروج" : "Dalje"}
+              type="button"
+            >
+              {loggingOut ? <div className="tl-spin" /> : <LogOut size={15} strokeWidth={1.7} />}
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* ═══ MAIN ═══ */}
+      {/* ═══════════════════ MAIN ═══════════════════ */}
       <div className="tl-main" dir={isRtl ? "rtl" : "ltr"}>
         {/* Topbar */}
         <header className="tl-topbar">
@@ -605,30 +358,39 @@ export default function TeacherLayout({
           >
             <Menu size={20} strokeWidth={1.7} />
           </button>
+
           <div className="tl-breadcrumb-wrap">
             <div className="tl-breadcrumb-geo">
               <GeoMark size={18} color="var(--tl-gold-deep)" />
             </div>
             <div className="tl-breadcrumb">
-              <span className="tl-bc-root">
-                {lang === "ar" ? "الرئيسية" : "Kryesore"}
-              </span>
+              <span className="tl-bc-root">{lang === "ar" ? "الرئيسية" : "Kryesore"}</span>
               <ChevronLeft size={13} strokeWidth={1.8} className="tl-bc-sep" />
               <span className="tl-bc-cur">{currentLabel}</span>
             </div>
           </div>
+
           <div className="tl-topbar-spacer" />
+
           <div className="tl-topbar-actions">
             <div className="tl-topbar-divider" />
-            <button
-              type="button"
-              className="tl-bell-btn"
-              aria-label="الإشعارات"
-            >
+            <button type="button" className="tl-bell-btn" aria-label="الإشعارات">
               <Bell size={15} strokeWidth={1.7} />
             </button>
             <div className="tl-topbar-user-pill">
-              <div className="tl-topbar-av">{initials}</div>
+              <div className="tl-topbar-av">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={name}
+                    width={28}
+                    height={28}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                  />
+                ) : (
+                  <span className="tl-topbar-initial">{initials}</span>
+                )}
+              </div>
               <span className="tl-topbar-name">{name || schoolName}</span>
             </div>
           </div>
@@ -644,45 +406,13 @@ export default function TeacherLayout({
 
         {/* Bottom band */}
         <div className="tl-bottom-band" aria-hidden="true">
-          <svg
-            viewBox="0 0 1200 80"
-            preserveAspectRatio="none"
-            width="100%"
-            height="100%"
-          >
-            <line
-              x1="0"
-              y1="40"
-              x2="1200"
-              y2="40"
-              stroke="rgba(200,169,106,0.25)"
-              strokeWidth="0.5"
-            />
+          <svg viewBox="0 0 1200 80" preserveAspectRatio="none" width="100%" height="100%">
+            <line x1="0" y1="40" x2="1200" y2="40" stroke="rgba(200,169,106,0.25)" strokeWidth="0.5" />
             {Array.from({ length: 36 }).map((_, i) => (
-              <circle
-                key={i}
-                cx={(i + 0.5) * (1200 / 36)}
-                cy="40"
-                r="1.2"
-                fill="rgba(200,169,106,0.45)"
-              />
+              <circle key={i} cx={(i + 0.5) * (1200 / 36)} cy="40" r="1.2" fill="rgba(200,169,106,0.45)" />
             ))}
-            <circle
-              cx="600"
-              cy="40"
-              r="6"
-              fill="none"
-              stroke="rgba(200,169,106,0.55)"
-              strokeWidth="0.7"
-            />
-            <circle
-              cx="600"
-              cy="40"
-              r="14"
-              fill="none"
-              stroke="rgba(200,169,106,0.30)"
-              strokeWidth="0.5"
-            />
+            <circle cx="600" cy="40" r="6" fill="none" stroke="rgba(200,169,106,0.55)" strokeWidth="0.7" />
+            <circle cx="600" cy="40" r="14" fill="none" stroke="rgba(200,169,106,0.30)" strokeWidth="0.5" />
           </svg>
         </div>
 
@@ -697,9 +427,9 @@ export default function TeacherLayout({
   );
 }
 
-/* ═══════════════════════════════════════════════
-   STYLES — mirrors owner layout tokens exactly
-═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════
+   STYLES
+══════════════════════════════════════════════════════════════════════ */
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=El+Messiri:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -716,6 +446,7 @@ const styles = `
 
     --tl-graphite:       #080B0C;
     --tl-graphite-muted: #5E5A52;
+    --tl-graphite-soft:  #8A8478;
 
     --tl-gold:           #C8A96A;
     --tl-gold-deep:      #B89B5E;
@@ -746,22 +477,22 @@ const styles = `
   }
   ::selection { background: rgba(200,169,106,0.20); }
 
+  /* ══ SHELL ══ */
   .tl-shell { display: flex; min-height: 100vh; width: 100%; }
 
+  /* ══ OVERLAY ══ */
   .tl-overlay {
     position: fixed; inset: 0; z-index: 40;
     background: rgba(8,11,12,0.55);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     animation: tl-fadein 0.22s ease;
   }
 
-  /* ── Sidebar ── */
+  /* ══ SIDEBAR ══ */
   .tl-sidebar {
     position: fixed; top: 0; right: 0;
     width: var(--tl-sidebar-w); height: 100vh;
-    z-index: 50;
-    display: flex; flex-direction: column; overflow: hidden;
+    z-index: 50; display: flex; flex-direction: column; overflow: hidden;
     border-left: 1px solid rgba(200,169,106,0.10);
     background: linear-gradient(180deg, #0B0E10 0%, #060809 100%);
     transition: transform 0.32s var(--tl-ease-out);
@@ -771,6 +502,7 @@ const styles = `
     .tl-sidebar       { transform: translateX(100%); }
     .tl-sidebar.open  { transform: translateX(0); box-shadow: -22px 0 60px rgba(8,11,12,0.42); }
   }
+
   .tl-sidebar-glow {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
     background:
@@ -778,7 +510,7 @@ const styles = `
       radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.06),   transparent 44%);
   }
 
-  /* Logo block */
+  /* Logo */
   .tl-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
     display: flex; align-items: center; gap: 10px;
@@ -807,29 +539,9 @@ const styles = `
     margin: 0 20px 14px;
   }
   .tl-gold-rule--footer { margin: 0 20px 12px; }
-  .tl-rule-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,169,106,0.22), transparent); }
+  .tl-rule-line    { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,169,106,0.22), transparent); }
   .tl-rule-diamond { width: 4px; height: 4px; border-radius: 1px; background: rgba(200,169,106,0.50); transform: rotate(45deg); flex-shrink: 0; }
-  .tl-rule-dash { width: 10px; height: 1px; background: rgba(200,169,106,0.38); flex-shrink: 0; }
-
-  /* Profile */
-  .tl-profile {
-    position: relative; z-index: 10; flex-shrink: 0;
-    display: flex; align-items: center; gap: 10px;
-    margin: 0 14px 14px; padding: 11px 13px;
-    background: rgba(200,169,106,0.06);
-    border: 1px solid rgba(200,169,106,0.14);
-    border-radius: 14px;
-  }
-  .tl-profile-av {
-    width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--tl-gold-soft), var(--tl-gold-deep));
-    font-family: var(--tl-font-heading);
-    font-size: 14px; font-weight: 900; color: var(--tl-graphite);
-  }
-  .tl-profile-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .tl-profile-name { font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tl-profile-role { font-family: var(--tl-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.40); }
+  .tl-rule-dash    { width: 10px; height: 1px; background: rgba(200,169,106,0.38); flex-shrink: 0; }
 
   /* Section label */
   .tl-section-label {
@@ -853,103 +565,161 @@ const styles = `
   }
 
   .tl-nav-item {
-    position: relative;
-    display: flex; align-items: center; gap: 11px;
+    position: relative; display: flex; align-items: center; gap: 11px;
     padding: 9px 11px; border-radius: 14px;
     text-decoration: none; border: 1px solid transparent;
     color: rgba(200,169,106,0.38);
-    transition: all 0.18s var(--tl-ease-out);
-    overflow: hidden;
+    transition: all 0.18s var(--tl-ease-out); overflow: hidden;
   }
-  .tl-nav-item:hover { background: rgba(200,169,106,0.05); color: rgba(200,169,106,0.65); border-color: rgba(200,169,106,0.07); }
+  .tl-nav-item:hover  { background: rgba(200,169,106,0.05); color: rgba(200,169,106,0.65); border-color: rgba(200,169,106,0.07); }
   .tl-nav-item.active { background: rgba(255,253,248,0.06); color: var(--tl-gold); border-color: rgba(200,169,106,0.20); box-shadow: 0 8px 24px rgba(8,11,12,0.28); }
 
-  /* Community item gets a subtle gold tint border when inactive */
   .tl-nav-community { border-color: rgba(200,169,106,0.06); }
   .tl-nav-community:hover { border-color: rgba(200,169,106,0.14); }
 
-  .tl-nav-pill { position: absolute; right: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px 0 0 2px; background: linear-gradient(180deg, var(--tl-gold-soft), var(--tl-gold-deep)); }
+  .tl-nav-pill    { position: absolute; right: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px 0 0 2px; background: linear-gradient(180deg, var(--tl-gold-soft), var(--tl-gold-deep)); }
   .tl-nav-shimmer { position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(to left, transparent, rgba(200,169,106,0.55), transparent); }
 
-  .tl-nav-icon-wrap { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; background: rgba(200,169,106,0.04); transition: background 0.16s; }
-  .tl-nav-item:hover .tl-nav-icon-wrap,
+  .tl-nav-icon-wrap {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(200,169,106,0.04); transition: background 0.16s;
+  }
+  .tl-nav-item:hover  .tl-nav-icon-wrap,
   .tl-nav-item.active .tl-nav-icon-wrap { background: rgba(200,169,106,0.14); }
 
-  .tl-nav-labels { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .tl-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
   .tl-nav-label-main { font-size: 13px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tl-nav-label-sub { font-family: var(--tl-font-mono); font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.45; }
-  .tl-nav-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--tl-gold); opacity: 0.65; flex-shrink: 0; }
+  .tl-nav-label-sub  { font-family: var(--tl-font-mono); font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.45; }
+  .tl-nav-dot        { width: 5px; height: 5px; border-radius: 50%; background: var(--tl-gold); opacity: 0.65; flex-shrink: 0; }
 
   .tl-mandala-wrap { margin-top: auto; display: flex; align-items: center; justify-content: center; padding: 20px 0 10px; opacity: 0.70; }
 
-  /* Footer / logout */
-  .tl-footer { position: relative; z-index: 10; flex-shrink: 0; padding: 0 12px 20px; }
-  .tl-logout {
-    display: flex; align-items: center; gap: 9px;
-    padding: 9px 12px; border-radius: 10px; width: 100%;
-    background: none; border: 1px solid rgba(200,169,106,0.10);
-    color: rgba(200,169,106,0.32);
-    font-family: var(--tl-font); font-size: 12.5px; font-weight: 600;
-    cursor: pointer; transition: all 0.15s;
+  /* User block */
+  .tl-user-block { position: relative; z-index: 10; flex-shrink: 0; padding: 0 14px 20px; }
+  .tl-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 16px;
+    background: rgba(200,169,106,0.06); border: 1px solid rgba(200,169,106,0.16);
+    transition: background 0.18s, border-color 0.18s;
   }
-  .tl-logout:hover:not(:disabled) { background: rgba(200,169,106,0.06); border-color: rgba(200,169,106,0.22); color: rgba(200,169,106,0.72); }
-  .tl-logout:disabled { opacity: 0.4; cursor: not-allowed; }
-  .tl-spin { width: 13px; height: 13px; flex-shrink: 0; border: 2px solid rgba(200,169,106,0.15); border-top-color: var(--tl-gold); border-radius: 50%; animation: tl-spin 0.7s linear infinite; }
+  .tl-user:hover { background: rgba(200,169,106,0.11); border-color: rgba(200,169,106,0.26); }
 
-  /* ── Main ── */
+  .tl-user-clickable {
+    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+    text-decoration: none; border-radius: 10px; transition: opacity 0.15s;
+  }
+  .tl-user-clickable:hover { opacity: 0.80; }
+
+  .tl-user-av {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg, var(--tl-gold-soft), var(--tl-gold-deep));
+  }
+  .tl-user-initial { font-size: 16px; font-weight: 900; color: var(--tl-graphite); font-family: var(--tl-font-heading); }
+  .tl-user-info    { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .tl-user-name    { font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-user-role    { font-family: var(--tl-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.45); }
+
+  .tl-logout-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+    background: none; border: none; cursor: pointer;
+    color: rgba(200,169,106,0.40); transition: all 0.15s;
+  }
+  .tl-logout-btn:hover:not(:disabled) { background: rgba(200,169,106,0.10); color: rgba(200,169,106,0.80); }
+  .tl-logout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tl-spin { width: 13px; height: 13px; border: 2px solid rgba(200,169,106,0.15); border-top-color: var(--tl-gold); border-radius: 50%; animation: tl-spin 0.7s linear infinite; }
+
+  /* ══ MAIN ══ */
   .tl-main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; margin-right: var(--tl-sidebar-w); }
   @media (max-width: 767px) { .tl-main { margin-right: 0; } }
 
   /* Topbar */
   .tl-topbar {
     position: sticky; top: 0; z-index: 40;
-    height: var(--tl-topbar-h);
-    display: flex; align-items: center; gap: 14px;
+    height: var(--tl-topbar-h); display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
     background: rgba(251,250,246,0.82);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(8,11,12,0.07);
     box-shadow: 0 1px 0 rgba(8,11,12,0.04), 0 6px 24px rgba(8,11,12,0.025);
   }
-  @media (min-width: 768px) { .tl-topbar { padding: 0 32px; } }
-  .tl-topbar-accent { position: absolute; inset-x: 0; top: 0; height: 1.5px; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(200,169,106,0.30) 15%, rgba(229,185,60,0.55) 50%, rgba(200,169,106,0.30) 85%, transparent); }
-  .tl-hamburger { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; background: none; border: none; cursor: pointer; color: var(--tl-graphite-muted); transition: all 0.15s; flex-shrink: 0; }
+  @media (min-width: 768px) { .tl-topbar { padding: 0 36px; } }
+
+  .tl-topbar-accent {
+    position: absolute; inset-x: 0; top: 0; height: 1.5px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.30) 15%, rgba(229,185,60,0.55) 50%, rgba(200,169,106,0.30) 85%, transparent);
+  }
+
+  .tl-hamburger {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: none; border: none; cursor: pointer;
+    color: var(--tl-graphite-muted); transition: all 0.15s; flex-shrink: 0;
+  }
   .tl-hamburger:hover { background: rgba(200,169,106,0.10); color: var(--tl-graphite); }
   @media (min-width: 768px) { .tl-hamburger { display: none; } }
 
   .tl-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
-  .tl-breadcrumb-geo { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--tl-bdr-soft); background: var(--tl-bg-card); opacity: 0.90; }
+  .tl-breadcrumb-geo  {
+    display: none; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
+    border: 1px solid var(--tl-bdr-soft); background: var(--tl-bg-card); opacity: 0.90;
+  }
   @media (min-width: 640px) { .tl-breadcrumb-geo { display: flex; } }
   .tl-breadcrumb { display: flex; align-items: center; gap: 8px; }
   .tl-bc-root { font-size: 12.5px; font-weight: 500; color: var(--tl-graphite-muted); }
-  .tl-bc-sep { color: var(--tl-graphite-muted); opacity: 0.38; flex-shrink: 0; }
-  .tl-bc-cur { font-size: 13.5px; font-weight: 700; color: var(--tl-graphite); }
+  .tl-bc-sep  { color: var(--tl-graphite-muted); opacity: 0.38; flex-shrink: 0; }
+  .tl-bc-cur  { font-size: 13.5px; font-weight: 700; color: var(--tl-graphite); }
   .tl-topbar-spacer { flex: 1; }
 
-  .tl-topbar-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .tl-topbar-divider { display: none; width: 1px; height: 20px; background: var(--tl-bdr-med); opacity: 0.65; }
+  .tl-topbar-actions  { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .tl-topbar-divider  { display: none; width: 1px; height: 20px; background: var(--tl-bdr-med); opacity: 0.65; }
   @media (min-width: 768px) { .tl-topbar-divider { display: block; } }
-  .tl-bell-btn { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--tl-bg-card); border: 1px solid var(--tl-bdr-soft); cursor: pointer; color: var(--tl-graphite-muted); transition: all 0.18s; }
+
+  .tl-bell-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--tl-bg-card); border: 1px solid var(--tl-bdr-soft);
+    cursor: pointer; color: var(--tl-graphite-muted); transition: all 0.18s;
+  }
   .tl-bell-btn:hover { border-color: var(--tl-bdr-gold); color: var(--tl-graphite); }
   @media (min-width: 768px) { .tl-bell-btn { display: flex; } }
-  .tl-topbar-user-pill { display: none; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; border: 1px solid var(--tl-bdr-soft); background: var(--tl-bg-card); transition: all 0.18s var(--tl-ease-out); }
+
+  .tl-topbar-user-pill {
+    display: none; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px; border-radius: 999px;
+    border: 1px solid var(--tl-bdr-soft); background: var(--tl-bg-card);
+    transition: all 0.18s var(--tl-ease-out);
+  }
   .tl-topbar-user-pill:hover { border-color: var(--tl-bdr-gold); box-shadow: 0 4px 16px rgba(8,11,12,0.06); }
   @media (min-width: 768px) { .tl-topbar-user-pill { display: flex; } }
-  .tl-topbar-av { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--tl-gold-soft), var(--tl-gold-deep)); font-size: 11px; font-weight: 900; color: var(--tl-graphite); font-family: var(--tl-font-heading); }
-  .tl-topbar-name { font-size: 12.5px; font-weight: 700; color: var(--tl-graphite); white-space: nowrap; }
+
+  .tl-topbar-av {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg, var(--tl-gold-soft), var(--tl-gold-deep));
+  }
+  .tl-topbar-initial { font-size: 11px; font-weight: 900; color: var(--tl-graphite); font-family: var(--tl-font-heading); }
+  .tl-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--tl-graphite); white-space: nowrap; padding-inline-start: 2px; }
 
   /* Content */
   .tl-content { position: relative; flex: 1; padding: 28px 20px; animation: tl-slidein 0.42s var(--tl-ease-out); }
   @media (min-width: 768px) { .tl-content { padding: 40px; } }
-  .tl-watermark { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
+  .tl-watermark    { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
   .tl-content-inner { position: relative; z-index: 10; }
 
   /* Bottom band */
-  .tl-bottom-band { pointer-events: none; width: 100%; height: 80px; flex-shrink: 0; opacity: 0.60; mask-image: linear-gradient(to bottom, transparent, black 55%); -webkit-mask-image: linear-gradient(to bottom, transparent, black 55%); }
+  .tl-bottom-band {
+    pointer-events: none; width: 100%; height: 80px; flex-shrink: 0;
+    opacity: 0.60;
+    mask-image: linear-gradient(to bottom, transparent, black 55%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 55%);
+  }
 
   /* Footer caption */
   .tl-footer-caption { display: flex; align-items: center; justify-content: center; gap: 8px; padding-bottom: 20px; padding-top: 4px; }
   .tl-footer-sparkle { color: var(--tl-gold-deep); opacity: 0.60; }
-  .tl-footer-text { font-family: var(--tl-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--tl-graphite-muted); opacity: 0.60; }
+  .tl-footer-text    { font-family: var(--tl-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--tl-graphite-muted); opacity: 0.60; }
 `;

@@ -225,10 +225,12 @@ function AvatarUpload({
         onClick={() => ref.current?.click()}
       >
         {preview ? (
-          <img
+          <Image
             src={preview}
             alt="صورة الملف الشخصي"
-            className="if-avatar-img"
+            width={64}
+            height={64}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />
         ) : (
           <div className="if-avatar-placeholder">
