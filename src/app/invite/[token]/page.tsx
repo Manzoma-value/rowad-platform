@@ -124,16 +124,20 @@ function Field({
   type = "text",
   value,
   onChange,
+  onBlur,
   placeholder,
   error,
+  success,
   hint,
 }: {
   label: string;
   type?: string;
   value: string;
   onChange: (v: string) => void;
+  onBlur?: () => void;
   placeholder: string;
   error?: string;
+  success?: string;
   hint?: string;
 }) {
   const [show, setShow] = useState(false);
@@ -145,9 +149,10 @@ function Field({
       <div className="if-input-wrap">
         <input
           type={isPassword && show ? "text" : type}
-          className={`if-input ${error ? "error" : ""}`}
+          className={`if-input${error ? " error" : success ? " success" : ""}`}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={placeholder}
           dir="auto"
           autoComplete={
@@ -194,7 +199,8 @@ function Field({
           </button>
         )}
       </div>
-      {error && <span className="if-error">{error}</span>}
+      {error && <span className="if-field-msg if-field-msg--error">{error}</span>}
+      {!error && success && <span className="if-field-msg if-field-msg--success">{success}</span>}
     </div>
   );
 }
@@ -334,6 +340,7 @@ export default function InvitePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [emailTouched, setEmailTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2>(1); // step 1 = basic info, step 2 = password
@@ -677,8 +684,10 @@ export default function InvitePage() {
                 type="email"
                 value={form.email}
                 onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+                onBlur={() => setEmailTouched(true)}
                 placeholder="teacher@school.com"
-                error={errors.email}
+                error={errors.email || (emailTouched && form.email.trim().length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) ? "بريد إلكتروني غير صالح" : undefined)}
+                success={!errors.email && emailTouched && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()) ? "بريد إلكتروني صحيح ✓" : undefined}
               />
 
               <button className="if-next-btn" onClick={goToStep2}>
@@ -888,10 +897,14 @@ const css = `
 .if-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;font-family:var(--font);color:var(--text);background:#FAFAF7;outline:none;transition:border-color 0.15s,background 0.15s}
 .if-input:focus{border-color:var(--gold-b);background:var(--surface);box-shadow:0 0 0 3px rgba(200,169,106,0.08)}
 .if-input.error{border-color:var(--red-b);background:var(--red-l)}
+.if-input.success{border-color:#27ae60;box-shadow:0 0 0 3px rgba(39,174,96,0.10)}
 .if-input::placeholder{color:var(--text3)}
 .if-eye{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);display:flex;padding:2px;transition:color 0.15s}
 .if-eye:hover{color:var(--text2)}
 .if-error{font-size:11.5px;color:var(--red);font-weight:600}
+.if-field-msg{font-size:11.5px;font-weight:600}
+.if-field-msg--error{color:var(--red)}
+.if-field-msg--success{color:#27ae60}
 
 /* Password strength */
 .if-strength{display:flex;align-items:center;gap:10px;margin-top:-4px}

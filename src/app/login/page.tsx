@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "../../lib/supabase/client";
 
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
@@ -200,16 +200,43 @@ function Mandala({
   );
 }
 
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [redirectTo, setRedirectTo] = useState("");
+
+  // Read URL params on the client side
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const rd = params.get("redirectTo") ?? "";
+    const err = params.get("error") ?? "";
+    // Accept only same-origin relative paths
+    if (rd.startsWith("/") && !rd.startsWith("//")) setRedirectTo(rd);
+    if (err === "link_invalid")
+      setError("رابط التأكيد غير صالح أو منتهي الصلاحية — يرجى التسجيل مجدداً أو طلب رابط جديد");
+    else if (err === "oauth_failed")
+      setError("فشل تسجيل الدخول عبر الجهة الخارجية");
+    else if (err === "session_error")
+      setError("حدث خطأ في الجلسة — يرجى المحاولة مجدداً");
+  }, []);
+
+  const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
+  const showEmailSuccess = emailTouched && isValidEmail(email);
 
   const handleLogin = async () => {
     setError("");
+    setEmailTouched(true);
     if (!email.trim() || !password) {
       setError("من فضلك أدخل البريد الإلكتروني وكلمة المرور");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError("صيغة البريد الإلكتروني غير صحيحة");
       return;
     }
     setLoading(true);
@@ -218,7 +245,15 @@ export default function LoginPage() {
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         { email: email.trim(), password },
       );
-      if (authError || !data.user) {
+      if (authError) {
+        if (authError.code === "email_not_confirmed") {
+          setError("يرجى تأكيد بريدك الإلكتروني أولاً — تحقق من صندوق الوارد وانقر على رابط التأكيد");
+        } else {
+          setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+        }
+        return;
+      }
+      if (!data.user) {
         setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
         return;
       }
@@ -237,7 +272,10 @@ export default function LoginPage() {
         TEACHER: "/teacher",
         STUDENT: "/student",
       };
-      const dest = roleRoutes[profile.role];
+      // Use the redirectTo param if present and valid, otherwise fall back to role route
+      const dest = (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//"))
+        ? redirectTo
+        : roleRoutes[profile.role];
       if (dest) window.location.href = dest;
       else setError("نوع الحساب غير معروف: " + profile.role);
     } catch {
@@ -333,15 +371,22 @@ export default function LoginPage() {
               </label>
               <input
                 type="email"
-                className="lp-input"
-                suppressHydrationWarning   
+                className={`lp-input${showEmailError ? " lp-input--error" : showEmailSuccess ? " lp-input--valid" : ""}`}
+                suppressHydrationWarning
                 placeholder="example@mail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setEmailTouched(true)}
                 disabled={loading}
                 dir="ltr"
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />
+              {showEmailError && (
+                <span className="lp-field-msg lp-field-msg--error">صيغة البريد الإلكتروني غير صحيحة</span>
+              )}
+              {showEmailSuccess && (
+                <span className="lp-field-msg lp-field-msg--success">بريد إلكتروني صحيح ✓</span>
+              )}
             </div>
 
             <div className="lp-field">
@@ -686,6 +731,21 @@ const css = `
   }
   .lp-input::placeholder { color: #bbb0a0; }
   .lp-input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--cream); }
+  .lp-input--error {
+    border-color: #c0392b !important;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
+  }
+  .lp-input--valid {
+    border-color: #27ae60 !important;
+    box-shadow: 0 0 0 3px rgba(39,174,96,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
+  }
+  .lp-field-msg {
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 2px;
+  }
+  .lp-field-msg--error { color: #c0392b; }
+  .lp-field-msg--success { color: #27ae60; }
 
   .lp-error {
     display: flex; align-items: center; gap: 8px;

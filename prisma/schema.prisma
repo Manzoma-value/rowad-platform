@@ -119,6 +119,7 @@ model Profile {
   id                           String              @id @db.Uuid
   created_at                   DateTime            @default(now())
   full_name                    String
+  email                        String?             @unique
   role                         Role
   reviewed_assessment_attempts AssessmentAttempt[] @relation("AssessmentReviewedBy")
   managed_school               School?             @relation("SchoolAdmin")

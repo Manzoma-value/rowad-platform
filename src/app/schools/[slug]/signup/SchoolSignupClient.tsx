@@ -78,6 +78,8 @@ function Rule({ dim = false }: { dim?: boolean }) {
 }
 
 /* ─── i18n ─── */
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
 const STRINGS = {
   ar: {
     dir: "rtl" as const,
@@ -98,9 +100,11 @@ const STRINGS = {
     loadingBtn: "جارٍ إنشاء الحساب...",
     uploadingBtn: "جارٍ رفع الصورة...",
     errEmpty: "من فضلك أدخل جميع الحقول المطلوبة",
+    errEmailInvalid: "صيغة البريد الإلكتروني غير صحيحة",
     errAge: "العمر يجب أن يكون رقمًا صحيحًا",
     errPass: "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
     errServer: "تعذر الاتصال بالخادم، حاول مرة أخرى",
+    emailSuccess: "بريد إلكتروني صحيح ✓",
     haveAccount: "لديك حساب بالفعل؟",
     login: "تسجيل الدخول",
     poweredBy: "مدعومة من",
@@ -126,9 +130,11 @@ const STRINGS = {
     loadingBtn: "Duke krijuar llogarinë...",
     uploadingBtn: "Duke ngarkuar foton...",
     errEmpty: "Ju lutemi plotësoni të gjitha fushat e kërkuara",
+    errEmailInvalid: "Formati i email-it është i pasaktë",
     errAge: "Mosha duhet të jetë një numër i vlefshëm",
     errPass: "Fjalëkalimi duhet të ketë të paktën 6 karaktere",
     errServer: "Gabim lidhjeje, provoni përsëri",
+    emailSuccess: "Email i vlefshëm ✓",
     haveAccount: "Keni tashmë një llogari?",
     login: "Hyrje",
     poweredBy: "E mundësuar nga",
@@ -167,10 +173,14 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<"idle" | "creating" | "uploading">("idle");
   const [error, setError] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const L = STRINGS[lang];
   const dir = L.dir;
+
+  const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
+  const showEmailSuccess = emailTouched && isValidEmail(email);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -183,8 +193,13 @@ export default function SchoolSignupClient({ school }: { school: School }) {
 
   const handleSignup = async () => {
     setError("");
+    setEmailTouched(true);
     if (!fullName.trim() || !email.trim() || !password || !city.trim() || !age.trim()) {
       setError(L.errEmpty);
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError(L.errEmailInvalid);
       return;
     }
     const ageNum = parseInt(age, 10);
@@ -358,7 +373,13 @@ export default function SchoolSignupClient({ school }: { school: School }) {
                   </span>
                   {L.emailLabel}
                 </label>
-                <input type="email" className="sp-input" placeholder="example@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} dir="ltr" suppressHydrationWarning />
+                <input type="email" className={`sp-input${showEmailError ? " sp-input--error" : showEmailSuccess ? " sp-input--valid" : ""}`} placeholder="example@mail.com" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)} disabled={loading} dir="ltr" suppressHydrationWarning />
+                {showEmailError && (
+                  <span className="sp-field-msg sp-field-msg--error">{L.errEmailInvalid}</span>
+                )}
+                {showEmailSuccess && (
+                  <span className="sp-field-msg sp-field-msg--success">{L.emailSuccess}</span>
+                )}
               </div>
 
               <div className="sp-field">
@@ -569,6 +590,21 @@ const css = `
   .sp-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,169,106,0.12); background: #FFFDF9; }
   .sp-input::placeholder { color: #bbb0a0; }
   .sp-input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--cream); }
+  .sp-input--error {
+    border-color: #c0392b !important;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.10) !important;
+  }
+  .sp-input--valid {
+    border-color: #27ae60 !important;
+    box-shadow: 0 0 0 3px rgba(39,174,96,0.10) !important;
+  }
+  .sp-field-msg {
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 2px;
+  }
+  .sp-field-msg--error { color: #c0392b; }
+  .sp-field-msg--success { color: #27ae60; }
   input[type=number].sp-input::-webkit-inner-spin-button { opacity: 0.4; }
   .sp-error {
     display: flex; align-items: center; gap: 8px;

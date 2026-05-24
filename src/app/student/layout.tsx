@@ -1,5 +1,6 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+
 import { cachedFetch } from "@/lib/api-cache";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -9,16 +10,30 @@ import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardList,
+  MapPin,
+  Globe2,
+  Menu,
+  LogOut,
+  Bell,
+  ChevronLeft,
+  Sparkles,
+  X,
+  LucideIcon,
+} from "lucide-react";
+
+/* ─── Geometric SVG decorations ─── */
 
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
 const STAR_LINES = Array.from({ length: 12 }, (_, i) => {
   const a1 = (i * 30 * Math.PI) / 180;
   const a2 = ((i * 30 + 15) * Math.PI) / 180;
   return {
-    x1: r2(100 + 80 * Math.sin(a1)),
-    y1: r2(100 - 80 * Math.cos(a1)),
-    x2: r2(100 + 40 * Math.sin(a2)),
-    y2: r2(100 - 40 * Math.cos(a2)),
+    x1: r2(100 + 80 * Math.sin(a1)), y1: r2(100 - 80 * Math.cos(a1)),
+    x2: r2(100 + 40 * Math.sin(a2)), y2: r2(100 - 40 * Math.cos(a2)),
   };
 });
 const PETAL_CIRCLES = Array.from({ length: 8 }, (_, i) => {
@@ -29,6 +44,55 @@ const INNER_PETALS = Array.from({ length: 4 }, (_, i) => {
   const a = (i * 90 * Math.PI) / 180;
   return { cx: r2(100 + 24 * Math.sin(a)), cy: r2(100 - 24 * Math.cos(a)) };
 });
+
+function Mandala({ size = 160, stroke = "rgba(200,169,106,0.32)", className = "" }: {
+  size?: number; stroke?: string; className?: string;
+}) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" className={className}>
+      <circle cx="100" cy="100" r="92" stroke={stroke} strokeWidth="0.4" opacity="0.55" />
+      <circle cx="100" cy="100" r="80" stroke={stroke} strokeWidth="0.35" opacity="0.45" />
+      {PETAL_CIRCLES.map((p, i) => (
+        <circle key={i} cx={p.cx} cy={p.cy} r="52" stroke={stroke} strokeWidth="0.55" opacity="0.45" fill="none" />
+      ))}
+      <circle cx="100" cy="100" r="70" stroke={stroke} strokeWidth="0.45" opacity="0.55" strokeDasharray="2 7" />
+      <circle cx="100" cy="100" r="58" stroke={stroke} strokeWidth="0.4" opacity="0.40" />
+      <circle cx="100" cy="100" r="46" stroke={stroke} strokeWidth="0.45" opacity="0.55" strokeDasharray="4 5" />
+      <circle cx="100" cy="100" r="34" stroke={stroke} strokeWidth="0.35" opacity="0.45" />
+      <circle cx="100" cy="100" r="24" stroke={stroke} strokeWidth="0.45" opacity="0.60" strokeDasharray="3 4" />
+      <circle cx="100" cy="100" r="14" stroke={stroke} strokeWidth="0.35" opacity="0.55" />
+      <circle cx="100" cy="100" r="7" stroke={stroke} strokeWidth="0.55" opacity="0.70" />
+      {STAR_LINES.map((l, i) => (
+        <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke={stroke} strokeWidth="0.40" opacity="0.50" />
+      ))}
+      {INNER_PETALS.map((p, i) => (
+        <circle key={i} cx={p.cx} cy={p.cy} r="24" stroke={stroke} strokeWidth="0.40" opacity="0.50" fill="none" />
+      ))}
+      <line x1="100" y1="68" x2="100" y2="132" stroke={stroke} strokeWidth="0.55" opacity="0.60" />
+      <line x1="72" y1="84" x2="128" y2="116" stroke={stroke} strokeWidth="0.55" opacity="0.60" />
+      <line x1="128" y1="84" x2="72" y2="116" stroke={stroke} strokeWidth="0.55" opacity="0.60" />
+      <circle cx="100" cy="100" r="5" fill="none" stroke={stroke} strokeWidth="0.70" opacity="0.80" />
+      <circle cx="100" cy="100" r="2.5" fill="none" stroke={stroke} strokeWidth="0.50" opacity="0.85" />
+      <circle cx="100" cy="100" r="1.2" fill={stroke} opacity="0.90" />
+    </svg>
+  );
+}
+
+function GeoMark({ size = 22, color = "var(--sl-gold)" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 22 22" fill="none">
+      <circle cx="11" cy="11" r="9.5" stroke={color} strokeWidth="0.7" opacity="0.65" />
+      <circle cx="11" cy="11" r="6.5" stroke={color} strokeWidth="0.6" opacity="0.55" />
+      <circle cx="11" cy="11" r="3.2" stroke={color} strokeWidth="0.55" opacity="0.65" />
+      <line x1="11" y1="1" x2="11" y2="21" stroke={color} strokeWidth="0.45" opacity="0.40" />
+      <line x1="1" y1="11" x2="21" y2="11" stroke={color} strokeWidth="0.45" opacity="0.40" />
+      <line x1="3.7" y1="3.7" x2="18.3" y2="18.3" stroke={color} strokeWidth="0.35" opacity="0.28" />
+      <line x1="18.3" y1="3.7" x2="3.7" y2="18.3" stroke={color} strokeWidth="0.35" opacity="0.28" />
+    </svg>
+  );
+}
+
+/* ─── Onboarding config ─── */
 
 const ONBOARDING_ROUTES: Record<string, string> = {
   PENDING_INTAKE: "/student/intake",
@@ -51,149 +115,69 @@ const ALLOWED_PAGES: Record<string, string[]> = {
     "/student/announcements",
     "/student/roadmap",
     "/student/hub",
+    "/student/profile",
   ],
 };
 
-// Only show full nav when student is assigned to a class
 const SHOW_NAV_STATUSES = ["CLASS_ASSIGNED"];
-type NavItem = {
+
+/* ─── Nav ─── */
+interface NavItem {
   key: "dashboard" | "myClass" | "quizzes" | "roadmap";
   href: string;
   exact: boolean;
+  sublabel: string;
   labelAr?: string;
   labelSq?: string;
   labelEn?: string;
-  icon: React.ReactNode;
-};
+  icon: LucideIcon;
+}
 
 const navItems: NavItem[] = [
+  { key: "dashboard", href: "/student",          exact: true,  sublabel: "Dashboard", icon: LayoutDashboard },
+  { key: "myClass",   href: "/student/classes",  exact: false, sublabel: "Classes",   icon: Users },
+  { key: "quizzes",   href: "/student/quizzes",  exact: false, sublabel: "Quizzes",   icon: ClipboardList },
   {
-    key: "dashboard" as const,
-    href: "/student",
-    exact: true,
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
+    key: "roadmap", href: "/student/roadmap", exact: false, sublabel: "Roadmap",
+    labelAr: "الخريطة", labelSq: "Banka e Pyetjeve", labelEn: "Question Bank",
+    icon: MapPin,
   },
-  {
-    key: "myClass" as const,
-    href: "/student/classes",
-    exact: false,
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-      </svg>
-    ),
-  },
-  {
-    key: "quizzes" as const,
-    href: "/student/quizzes",
-    exact: false,
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-        <rect x="9" y="3" width="6" height="4" rx="1" />
-        <path d="M9 12h6M9 16h4" />
-      </svg>
-    ),
-  },
-  {
-    key: "roadmap" as const,
-    href: "/student/roadmap",
-    exact: false,
-    labelAr: "الخريطة",
-    labelSq: "Banka e Pyetjeve",
-    labelEn: "Question Bank",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
-      </svg>
-    ),
-  },
-  
 ];
 
-export default function StudentLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [name, setName] = useState("");
-  const [initials, setInitials] = useState("ط");
-  const [schoolName, setSchoolName] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [showToggle, setShowToggle] = useState(false);
-  const [schoolLang, setSchoolLang] = useState("ar");
-  const [checked, setChecked] = useState(false);
+const COMMUNITY_HREF = "/student/hub";
+
+/* ─── Layout ─── */
+export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  const pathname  = usePathname();
+  const router    = useRouter();
+  const { lang, setLang } = useLang();
+  const tr        = t[lang];
+  const isRtl     = lang === "ar";
+
+  const [name, setName]                   = useState("");
+  const [initials, setInitials]           = useState("ط");
+  const [schoolName, setSchoolName]       = useState("");
+  const [avatarUrl, setAvatarUrl]         = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen]     = useState(false);
+  const [loggingOut, setLoggingOut]       = useState(false);
+  const [showToggle, setShowToggle]       = useState(false);
+  const [schoolLang, setSchoolLang]       = useState("ar");
+  const [checked, setChecked]             = useState(false);
   const [onboardingStatus, setOnboardingStatus] = useState("");
   const langInitialized = useRef(false);
-  const schoolSlugRef = useRef<string>("");
-  const pathname = usePathname();
-  const router = useRouter();
-  const { lang, setLang } = useLang();
-  const tr = t[lang];
-  const isRtl = lang === "ar";
+  const schoolSlugRef   = useRef<string>("");
 
   const showFullNav = SHOW_NAV_STATUSES.includes(onboardingStatus);
 
   useEffect(() => {
     cachedFetch<any>("/api/student", 60_000)
       .then((data) => {
-        if (data.error) {
-          router.push("/login");
-          return;
-        }
+        if (data.error) { router.push("/login"); return; }
 
         if (data?.profile?.full_name) {
           setName(data.profile.full_name);
           setInitials(
-            data.profile.full_name
-              .split(" ")
-              .map((w: string) => w[0])
-              .slice(0, 2)
-              .join(""),
+            data.profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join(""),
           );
         }
         if (data?.school?.name) setSchoolName(data.school.name);
@@ -204,36 +188,34 @@ export default function StudentLayout({
           const savedLang = localStorage.getItem("lang");
           if (!savedLang) setLang(data.school.language as "ar" | "sq" | "en");
           setSchoolLang(data.school.language ?? "ar");
-          if (data.school.language && data.school.language !== "ar")
-            setShowToggle(true);
+          if (data.school.language && data.school.language !== "ar") setShowToggle(true);
         }
 
         const status: string = data.onboarding_status;
         setOnboardingStatus(status);
 
         const allowed = ALLOWED_PAGES[status];
-        if (!allowed) {
-          setChecked(true);
-          return;
-        }
+        if (!allowed) { setChecked(true); return; }
 
         if (status === "CLASS_ASSIGNED") {
-          const onDashboard =
-            pathname === "/student" || pathname.startsWith("/student/");
+          const onDashboard = pathname === "/student" || pathname.startsWith("/student/");
           if (!onDashboard || pathname === "/student/school-assigned")
             router.push("/student/welcome");
           else setChecked(true);
           return;
         }
 
-        const isAllowed = allowed.some(
-          (p) => p === pathname || pathname.startsWith(p + "/"),
-        );
+        const isAllowed = allowed.some((p) => p === pathname || pathname.startsWith(p + "/"));
         if (!isAllowed) router.push(ONBOARDING_ROUTES[status] ?? "/student");
         else setChecked(true);
       })
       .catch(() => router.push("/login"));
-  }, [pathname]);
+
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
+      .catch(() => {});
+  }, [pathname, router, setLang]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -242,391 +224,266 @@ export default function StudentLayout({
     const slug = schoolSlugRef.current;
     window.location.href = slug ? `/schools/${slug}` : "/login";
   }
-  type NavItem = {
-    key: "dashboard" | "myClass" | "quizzes" | "roadmap";
-    href: string;
-    exact: boolean;
-    labelAr?: string;
-    labelSq?: string;
-    labelEn?: string;
-    icon: React.ReactNode;
-  };
-  const getNavLabel = (item: (typeof navItems)[0]) => {
+
+  const getNavLabel = (item: NavItem) => {
     if (item.labelAr) {
       if (lang === "ar") return item.labelAr;
       if (lang === "sq") return item.labelSq!;
-      return item.labelEn ?? item.labelAr!;
+      return item.labelEn ?? item.labelAr;
     }
     return tr[item.key as keyof typeof tr] as string;
   };
 
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname.startsWith(href);
+
+  const currentLabel = (() => {
+    if (isActive(COMMUNITY_HREF))
+      return lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community";
+    const found = navItems.find((item) => isActive(item.href, item.exact));
+    if (!found) return lang === "ar" ? "الصفحة" : "Faqja";
+    return getNavLabel(found);
+  })();
+
+  /* ── Loading guard ── */
   if (!checked)
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#F5F3EE",
-        }}
-      >
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            border: "2.5px solid rgba(200,169,106,0.25)",
-            borderTopColor: "#C8A96A",
-            borderRadius: "50%",
-            animation: "spin 0.7s linear infinite",
-          }}
-        />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#F6F4EE" }}>
+        <div style={{ width: 28, height: 28, border: "2.5px solid rgba(200,169,106,0.25)", borderTopColor: "#C8A96A", borderRadius: "50%", animation: "sl-spin 0.7s linear infinite" }} />
+        <style>{`@keyframes sl-spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
 
   return (
-    <div className="sl-root" dir={isRtl ? "rtl" : "ltr"}>
-      {/* Mobile topbar */}
-      <header className="sl-mobile-bar">
-        <button className="sl-hamburger" onClick={() => setSidebarOpen(true)}>
-          <svg
-            width="17"
-            height="17"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
-        <span className="sl-mobile-title">{schoolName || tr.platform}</span>
-        <div className="sl-mobile-avatar">{initials}</div>
-      </header>
-
+    <div className="sl-shell" dir="rtl">
       {sidebarOpen && (
-        <div className="sl-backdrop" onClick={() => setSidebarOpen(false)} />
+        <div className="sl-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <div className="sl-body">
-        <aside className={`sl-sidebar ${sidebarOpen ? "open" : ""}`}>
-          <div className="sl-edge-rule" />
+      {/* ═══════════════════ SIDEBAR ═══════════════════ */}
+      <aside className={`sl-sidebar ${sidebarOpen ? "open" : ""}`}>
+        <div className="sl-sidebar-glow" aria-hidden="true" />
 
-          {/* Logo */}
-          <div className="sl-brand">
+        {/* Logo */}
+        <div className="sl-logo-block">
+          <div className="sl-logo-icon">
+            <GeoMark size={26} color="var(--sl-gold)" />
+          </div>
+          <div className="sl-logo-text">
             <Image
               src="/ahlia.png"
               alt="بناء الأهلية"
-              width={2400}
-              height={250}
-              style={{
-                objectFit: "cover",
-                width: "100%",
-                height: "auto",
-                display: "block",
-              }}
+              width={140}
+              height={32}
+              style={{ objectFit: "contain", width: "auto", height: 28, display: "block" }}
               priority
             />
-            <button
-              className="sl-close-btn"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
+          </div>
+          <button className="sl-close-btn" onClick={() => setSidebarOpen(false)} aria-label="إغلاق">
+            <X size={14} strokeWidth={2} />
+          </button>
+        </div>
+
+        {/* Gold rule */}
+        <div className="sl-gold-rule" aria-hidden="true">
+          <div className="sl-rule-line" />
+          <div className="sl-rule-diamond" />
+          <div className="sl-rule-dash" />
+          <div className="sl-rule-diamond" />
+          <div className="sl-rule-line" />
+        </div>
+
+        {/* Section label */}
+        <div className="sl-section-label">
+          {lang === "ar" ? "القوائم الرئيسية · Main" : lang === "sq" ? "Menuja Kryesore · Main" : "Main Menu"}
+        </div>
+
+        {showToggle && (
+          <div style={{ padding: "0 14px 10px" }}>
+            <LangToggle dark secondaryLang={schoolLang} />
+          </div>
+        )}
+
+        {/* Nav — only shown when CLASS_ASSIGNED */}
+        <nav className="sl-nav">
+          {showFullNav && navItems.map((item) => {
+            const active = isActive(item.href, item.exact);
+            const Icon   = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`sl-nav-item ${active ? "active" : ""}`}
+                onClick={() => setSidebarOpen(false)}
               >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
+                {active && (<><span className="sl-nav-pill" /><span className="sl-nav-shimmer" /></>)}
+                <span className="sl-nav-icon-wrap"><Icon size={17} strokeWidth={1.6} /></span>
+                <span className="sl-nav-labels">
+                  <span className="sl-nav-label-main">{getNavLabel(item)}</span>
+                  <span className="sl-nav-label-sub">{item.sublabel}</span>
+                </span>
+                {active && <span className="sl-nav-dot" />}
+              </Link>
+            );
+          })}
 
-          <div className="sl-ornament-rule">
-            <div className="sl-rule-line" />
-            <div className="sl-rule-diamond" />
-            <div className="sl-rule-line" />
-          </div>
-
-          {/* Profile */}
-          <div className="sl-profile">
-            <div className="sl-profile-av">{initials}</div>
-            <div className="sl-profile-info">
-              <div className="sl-profile-name">
-                {name || (lang === "ar" ? "الطالب" : "Nxënësi")}
-              </div>
-              <div className="sl-profile-role">
-                {lang === "ar" ? "طالب" : lang === "sq" ? "Nxënës" : "Student"}
-              </div>
-            </div>
-          </div>
-
-          {showToggle && (
-            <div style={{ padding: "0 14px 12px" }}>
-              <LangToggle dark secondaryLang={schoolLang} />
-            </div>
-          )}
-
-          {/* Nav — only shown when CLASS_ASSIGNED */}
+          {/* Community — visually separated */}
           {showFullNav && (
-            <nav className="sl-nav">
-              <div className="sl-nav-section">
-                {lang === "ar"
-                  ? "القائمة الرئيسية"
-                  : lang === "sq"
-                    ? "Menuja Kryesore"
-                    : "Main Menu"}
-              </div>
-              {navItems.map((item) => {
-                const isActive = item.exact
-                  ? pathname === item.href
-                  : pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`sl-nav-item ${isActive ? "active" : ""}`}
-                    onClick={() => setSidebarOpen(false)}
-                  >
-                    {isActive && <div className="sl-nav-indicator" />}
-                    <span className="sl-nav-icon-wrap">{item.icon}</span>
-                    <span className="sl-nav-label">{getNavLabel(item)}</span>
-                  </Link>
-                );
-              })}
-
-              <div className="sl-nav-sep" />
+            <>
+              <div className="sl-nav-sep" aria-hidden="true" />
               {(() => {
-                const hubHref = "/student/hub";
-                const isActive = pathname.startsWith(hubHref);
+                const active = isActive(COMMUNITY_HREF);
                 return (
                   <Link
-                    href={hubHref}
-                    className={`sl-nav-item ${isActive ? "active" : ""}`}
+                    href={COMMUNITY_HREF}
+                    className={`sl-nav-item sl-nav-community ${active ? "active" : ""}`}
                     onClick={() => setSidebarOpen(false)}
                   >
-                    {isActive && <div className="sl-nav-indicator" />}
-                    <span className="sl-nav-icon-wrap">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
-                      </svg>
+                    {active && (<><span className="sl-nav-pill" /><span className="sl-nav-shimmer" /></>)}
+                    <span className="sl-nav-icon-wrap"><Globe2 size={17} strokeWidth={1.6} /></span>
+                    <span className="sl-nav-labels">
+                      <span className="sl-nav-label-main">
+                        {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
+                      </span>
+                      <span className="sl-nav-label-sub">Community</span>
                     </span>
-                    <span className="sl-nav-label">
-                      {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
-                    </span>
+                    {active && <span className="sl-nav-dot" />}
                   </Link>
                 );
               })()}
-            </nav>
+            </>
           )}
 
-          {/* Mandala — fills space when nav is hidden */}
-          <div className="sl-mandala" aria-hidden="true">
-            <svg viewBox="0 0 200 200" fill="none">
-              <circle
-                cx="100"
-                cy="100"
-                r="92"
-                stroke="#C8A96A"
-                strokeWidth="0.3"
-                opacity="0.05"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="86"
-                stroke="#C8A96A"
-                strokeWidth="0.3"
-                opacity="0.04"
-              />
-              {PETAL_CIRCLES.map((p, i) => (
-                <circle
-                  key={i}
-                  cx={p.cx}
-                  cy={p.cy}
-                  r="52"
-                  stroke="#C8A96A"
-                  strokeWidth="0.5"
-                  opacity="0.10"
-                  fill="none"
-                />
-              ))}
-              <circle
-                cx="100"
-                cy="100"
-                r="74"
-                stroke="#C8A96A"
-                strokeWidth="0.4"
-                opacity="0.13"
-                strokeDasharray="3 8"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="62"
-                stroke="#E5B93C"
-                strokeWidth="0.35"
-                opacity="0.10"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="50"
-                stroke="#C8A96A"
-                strokeWidth="0.5"
-                opacity="0.15"
-                strokeDasharray="5 5"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="38"
-                stroke="#C8A96A"
-                strokeWidth="0.35"
-                opacity="0.12"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="28"
-                stroke="#E5B93C"
-                strokeWidth="0.45"
-                opacity="0.18"
-                strokeDasharray="3 4"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="18"
-                stroke="#C8A96A"
-                strokeWidth="0.35"
-                opacity="0.20"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="9"
-                stroke="#E5B93C"
-                strokeWidth="0.55"
-                opacity="0.26"
-              />
-              {STAR_LINES.map((l, i) => (
-                <line
-                  key={i}
-                  x1={l.x1}
-                  y1={l.y1}
-                  x2={l.x2}
-                  y2={l.y2}
-                  stroke="#C8A96A"
-                  strokeWidth="0.35"
-                  opacity="0.13"
-                />
-              ))}
-              {INNER_PETALS.map((p, i) => (
-                <circle
-                  key={i}
-                  cx={p.cx}
-                  cy={p.cy}
-                  r="24"
-                  stroke="#C8A96A"
-                  strokeWidth="0.45"
-                  opacity="0.16"
-                  fill="none"
-                />
-              ))}
-              <line
-                x1="100"
-                y1="73"
-                x2="100"
-                y2="127"
-                stroke="#E5B93C"
-                strokeWidth="0.6"
-                opacity="0.20"
-              />
-              <line
-                x1="76"
-                y1="87"
-                x2="124"
-                y2="113"
-                stroke="#E5B93C"
-                strokeWidth="0.6"
-                opacity="0.20"
-              />
-              <line
-                x1="124"
-                y1="87"
-                x2="76"
-                y2="113"
-                stroke="#E5B93C"
-                strokeWidth="0.6"
-                opacity="0.20"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="7"
-                fill="none"
-                stroke="#E5B93C"
-                strokeWidth="0.7"
-                opacity="0.38"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="4"
-                fill="none"
-                stroke="#C8A96A"
-                strokeWidth="0.45"
-                opacity="0.45"
-              />
-              <circle cx="100" cy="100" r="2" fill="#E5B93C" opacity="0.55" />
-            </svg>
+          <div className="sl-mandala-wrap" aria-hidden="true">
+            <Mandala size={172} stroke="rgba(200,169,106,0.32)" />
           </div>
+        </nav>
 
-          {/* Footer */}
-          <div className="sl-footer">
-            <div className="sl-ornament-rule" style={{ marginBottom: 12 }}>
-              <div className="sl-rule-line" />
-              <div className="sl-rule-diamond" />
-              <div className="sl-rule-line" />
-            </div>
+        {/* Footer rule */}
+        <div className="sl-gold-rule sl-gold-rule--footer" aria-hidden="true">
+          <div className="sl-rule-line" />
+          <div className="sl-rule-diamond" />
+          <div className="sl-rule-line" />
+        </div>
+
+        {/* User block */}
+        <div className="sl-user-block">
+          <div className="sl-user">
+            <Link
+              href="/student/profile"
+              className="sl-user-clickable"
+              onClick={() => setSidebarOpen(false)}
+            >
+              <div className="sl-user-av">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={name}
+                    width={40}
+                    height={40}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 12 }}
+                  />
+                ) : (
+                  <span className="sl-user-initial">{initials}</span>
+                )}
+              </div>
+              <div className="sl-user-info">
+                <span className="sl-user-name">
+                  {name || (lang === "ar" ? "الطالب" : "Nxënësi")}
+                </span>
+                <span className="sl-user-role">
+                  {lang === "ar" ? "طالب" : lang === "sq" ? "Nxënës" : "Student"}
+                </span>
+              </div>
+            </Link>
             <button
-              className="sl-logout"
+              className="sl-logout-btn"
               onClick={handleLogout}
               disabled={loggingOut}
+              title={lang === "ar" ? "تسجيل الخروج" : "Dalje"}
+              type="button"
             >
-              {loggingOut ? (
-                <div className="sl-spin" />
-              ) : (
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              )}
-              {loggingOut ? "..." : tr.logout}
+              {loggingOut ? <div className="sl-spin" /> : <LogOut size={15} strokeWidth={1.7} />}
             </button>
           </div>
-        </aside>
+        </div>
+      </aside>
 
-        <main className="sl-main">{children}</main>
+      {/* ═══════════════════ MAIN ═══════════════════ */}
+      <div className="sl-main" dir={isRtl ? "rtl" : "ltr"}>
+        {/* Topbar */}
+        <header className="sl-topbar">
+          <div className="sl-topbar-accent" aria-hidden="true" />
+          <button
+            type="button"
+            className="sl-hamburger"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="فتح القائمة"
+          >
+            <Menu size={20} strokeWidth={1.7} />
+          </button>
+
+          <div className="sl-breadcrumb-wrap">
+            <div className="sl-breadcrumb-geo">
+              <GeoMark size={18} color="var(--sl-gold-deep)" />
+            </div>
+            <div className="sl-breadcrumb">
+              <span className="sl-bc-root">{lang === "ar" ? "الرئيسية" : "Kryesore"}</span>
+              <ChevronLeft size={13} strokeWidth={1.8} className="sl-bc-sep" />
+              <span className="sl-bc-cur">{currentLabel}</span>
+            </div>
+          </div>
+
+          <div className="sl-topbar-spacer" />
+
+          <div className="sl-topbar-actions">
+            <div className="sl-topbar-divider" />
+            <button type="button" className="sl-bell-btn" aria-label="الإشعارات">
+              <Bell size={15} strokeWidth={1.7} />
+            </button>
+            <div className="sl-topbar-user-pill">
+              <div className="sl-topbar-av">
+                {avatarUrl ? (
+                  <Image
+                    src={avatarUrl}
+                    alt={name}
+                    width={28}
+                    height={28}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
+                  />
+                ) : (
+                  <span className="sl-topbar-initial">{initials}</span>
+                )}
+              </div>
+              <span className="sl-topbar-name">{name || schoolName}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="sl-content">
+          <div className="sl-watermark" aria-hidden="true">
+            <Mandala size={260} stroke="var(--sl-graphite)" />
+          </div>
+          <div className="sl-content-inner">{children}</div>
+        </main>
+
+        {/* Bottom band */}
+        <div className="sl-bottom-band" aria-hidden="true">
+          <svg viewBox="0 0 1200 80" preserveAspectRatio="none" width="100%" height="100%">
+            <line x1="0" y1="40" x2="1200" y2="40" stroke="rgba(200,169,106,0.25)" strokeWidth="0.5" />
+            {Array.from({ length: 36 }).map((_, i) => (
+              <circle key={i} cx={(i + 0.5) * (1200 / 36)} cy="40" r="1.2" fill="rgba(200,169,106,0.45)" />
+            ))}
+            <circle cx="600" cy="40" r="6" fill="none" stroke="rgba(200,169,106,0.55)" strokeWidth="0.7" />
+            <circle cx="600" cy="40" r="14" fill="none" stroke="rgba(200,169,106,0.30)" strokeWidth="0.5" />
+          </svg>
+        </div>
+
+        <div className="sl-footer-caption">
+          <Sparkles size={11} className="sl-footer-sparkle" />
+          <span className="sl-footer-text">منصة الرواد - 2026</span>
+        </div>
       </div>
 
       <style>{styles}</style>
@@ -634,153 +491,299 @@ export default function StudentLayout({
   );
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   STYLES
+══════════════════════════════════════════════════════════════════════ */
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  @keyframes sp{to{transform:rotate(360deg)}}
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=El+Messiri:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-  :root{
-    --gold:#C8A96A;
-    --gold2:#E5B93C;
-    --gold-pale:rgba(200,169,106,0.07);
-    --gold-border:rgba(200,169,106,0.16);
---black:#1A1A1F;
-    --off-white:#F5F3EE;
-    --font:'Cairo',sans-serif;
-    --sidebar-w:264px;
-    --topbar-h:54px;
-  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .sl-root{min-height:100vh;background:var(--off-white);font-family:var(--font)}
-  .sl-body{display:flex;min-height:100vh}
+  @keyframes sl-fadein  { from { opacity: 0 }               to { opacity: 1 } }
+  @keyframes sl-slidein { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes sl-spin    { to { transform: rotate(360deg) } }
 
-  /* ── Sidebar ── */
-  .sl-sidebar{
-    width:var(--sidebar-w);flex-shrink:0;
-    background:var(--black);
-    display:flex;flex-direction:column;
-    min-height:100vh;position:sticky;top:0;
-    height:100vh;overflow-y:auto;overflow-x:hidden;z-index:30;
-  }
-  .sl-sidebar::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:180px;
-    background:radial-gradient(ellipse at 50% -20%,rgba(200,169,106,0.07) 0%,transparent 65%);
-    pointer-events:none;
-  }
-  .sl-edge-rule{
-    position:absolute;top:70px;bottom:70px;left:0;
-    width:1px;
-    background:linear-gradient(180deg,transparent,rgba(200,169,106,0.2) 30%,rgba(200,169,106,0.2) 70%,transparent);
-    z-index:2;
+  :root {
+    --sl-bg-main:        #F6F4EE;
+    --sl-bg-soft:        #FBFAF6;
+    --sl-bg-card:        #FFFDF8;
+
+    --sl-graphite:       #080B0C;
+    --sl-graphite-muted: #5E5A52;
+    --sl-graphite-soft:  #8A8478;
+
+    --sl-gold:           #C8A96A;
+    --sl-gold-deep:      #B89B5E;
+    --sl-gold-soft:      #D8C28A;
+
+    --sl-bdr-soft:       rgba(8,11,12,0.07);
+    --sl-bdr-med:        rgba(8,11,12,0.11);
+    --sl-bdr-gold:       rgba(200,169,106,0.38);
+
+    --sl-sidebar-w:      286px;
+    --sl-topbar-h:       68px;
+
+    --sl-font-heading:   'El Messiri', 'Cairo', serif;
+    --sl-font-mono:      'IBM Plex Mono', monospace;
+    --sl-font:           'Cairo', 'IBM Plex Sans Arabic', sans-serif;
+
+    --sl-ease-out:       cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Brand / logo */
-  .sl-brand{
-    padding:0;
-    display:flex;align-items:center;justify-content:center;
-    flex-shrink:0;position:relative;z-index:1;
+  html, body {
+    font-family: var(--sl-font);
+    background:
+      radial-gradient(ellipse at 12% 8%,  rgba(200,169,106,0.07), transparent 30%),
+      radial-gradient(ellipse at 88% 85%, rgba(122,30,30,0.04),   transparent 32%),
+      var(--sl-bg-main);
+    color: var(--sl-graphite);
+    -webkit-font-smoothing: antialiased;
   }
-  .sl-close-btn{
-    display:none;background:none;border:none;
-    color:rgba(200,169,106,0.3);cursor:pointer;
-    padding:4px;border-radius:5px;flex-shrink:0;transition:color 0.15s;
-  }
-  .sl-close-btn:hover{color:var(--gold)}
+  ::selection { background: rgba(200,169,106,0.20); }
 
-  /* Ornament rule */
-  .sl-ornament-rule{
-    display:flex;align-items:center;gap:8px;
-    margin:2px 18px 14px;flex-shrink:0;position:relative;z-index:1;
-  }
-  .sl-rule-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.18),transparent)}
-  .sl-rule-diamond{width:4px;height:4px;background:rgba(200,169,106,0.28);transform:rotate(45deg);flex-shrink:0}
+  /* ══ SHELL ══ */
+  .sl-shell { display: flex; min-height: 100vh; width: 100%; }
 
-  /* Profile */
-  .sl-profile{
-    display:flex;align-items:center;gap:10px;
-    margin:0 14px 14px;padding:11px 13px;
-    background:rgba(200,169,106,0.05);
-    border:1px solid rgba(200,169,106,0.1);
-    border-radius:8px;flex-shrink:0;position:relative;z-index:1;
+  /* ══ OVERLAY ══ */
+  .sl-overlay {
+    position: fixed; inset: 0; z-index: 40;
+    background: rgba(8,11,12,0.55);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    animation: sl-fadein 0.22s ease;
   }
-  .sl-profile-av{
-    width:34px;height:34px;border-radius:7px;
-    background:var(--gold);
-    display:flex;align-items:center;justify-content:center;
-    font-size:12px;font-weight:900;color:var(--black);flex-shrink:0;
+
+  /* ══ SIDEBAR ══ */
+  .sl-sidebar {
+    position: fixed; top: 0; right: 0;
+    width: var(--sl-sidebar-w); height: 100vh;
+    z-index: 50; display: flex; flex-direction: column; overflow: hidden;
+    border-left: 1px solid rgba(200,169,106,0.10);
+    background: linear-gradient(180deg, #0B0E10 0%, #060809 100%);
+    transition: transform 0.32s var(--sl-ease-out);
+    transform: translateX(0);
   }
-  .sl-profile-info{display:flex;flex-direction:column;gap:1px;overflow:hidden;min-width:0}
-  .sl-profile-name{font-size:12.5px;font-weight:700;color:rgba(255,255,255,0.88);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .sl-profile-role{font-size:9px;color:rgba(200,169,106,0.38);font-weight:700;text-transform:uppercase;letter-spacing:1.2px}
+  @media (max-width: 767px) {
+    .sl-sidebar       { transform: translateX(100%); }
+    .sl-sidebar.open  { transform: translateX(0); box-shadow: -22px 0 60px rgba(8,11,12,0.42); }
+  }
+
+  .sl-sidebar-glow {
+    position: absolute; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.09), transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.06),   transparent 44%);
+  }
+
+  /* Logo */
+  .sl-logo-block {
+    position: relative; z-index: 10; flex-shrink: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 22px 18px 18px;
+  }
+  .sl-logo-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    border: 1px solid rgba(200,169,106,0.30);
+    background: linear-gradient(135deg, rgba(200,169,106,0.18), rgba(200,169,106,0.04));
+  }
+  .sl-logo-text { flex: 1; min-width: 0; }
+  .sl-close-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+    background: none; border: none; cursor: pointer;
+    color: rgba(200,169,106,0.35); transition: color 0.15s;
+  }
+  .sl-close-btn:hover { color: var(--sl-gold); }
+  @media (max-width: 767px) { .sl-close-btn { display: flex; } }
+
+  /* Gold rule */
+  .sl-gold-rule {
+    position: relative; z-index: 10; flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px;
+    margin: 0 20px 14px;
+  }
+  .sl-gold-rule--footer { margin: 0 20px 12px; }
+  .sl-rule-line    { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,169,106,0.22), transparent); }
+  .sl-rule-diamond { width: 4px; height: 4px; border-radius: 1px; background: rgba(200,169,106,0.50); transform: rotate(45deg); flex-shrink: 0; }
+  .sl-rule-dash    { width: 10px; height: 1px; background: rgba(200,169,106,0.38); flex-shrink: 0; }
+
+  /* Section label */
+  .sl-section-label {
+    position: relative; z-index: 10; flex-shrink: 0;
+    padding: 0 24px 10px;
+    font-family: var(--sl-font-mono); font-size: 9px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(200,169,106,0.32);
+  }
 
   /* Nav */
-  .sl-nav{display:flex;flex-direction:column;gap:1px;padding:0 12px;flex:1;position:relative;z-index:1}
-  .sl-nav-section{font-size:8.5px;font-weight:700;color:rgba(200,169,106,0.2);text-transform:uppercase;letter-spacing:2.5px;padding:0 10px 10px}
-  .sl-nav-sep{height:1px;margin:8px 8px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.15),transparent)}
-  .sl-nav-item{
-    display:flex;align-items:center;gap:10px;
-    padding:9px 12px;border-radius:6px;
-    text-decoration:none;color:rgba(200,169,106,0.32);
-    font-size:13px;font-weight:500;
-    transition:all 0.15s ease;position:relative;
+  .sl-nav {
+    position: relative; z-index: 10;
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 0 12px; flex: 1; overflow-y: auto;
   }
-  .sl-nav-item:hover{background:rgba(200,169,106,0.05);color:rgba(200,169,106,0.65)}
-  .sl-nav-item.active{background:rgba(200,169,106,0.07);color:var(--gold);font-weight:700}
-  .sl-nav-indicator{position:absolute;right:0;top:8px;bottom:8px;width:2px;background:var(--gold);border-radius:2px 0 0 2px;opacity:0.75}
-  .sl-nav-icon-wrap{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:rgba(200,169,106,0.04);border:1px solid transparent;flex-shrink:0;transition:all 0.15s}
-  .sl-nav-item.active .sl-nav-icon-wrap{background:rgba(200,169,106,0.09);border-color:rgba(200,169,106,0.13)}
-  .sl-nav-label{flex:1}
+  .sl-nav::-webkit-scrollbar { display: none; }
 
-  /* Mandala */
-  .sl-mandala{
-    width:160px;height:160px;
-    margin:auto auto 0;
-    flex-shrink:0;position:relative;z-index:1;
-    opacity:0.9;display:flex;align-items:center;justify-content:center;
+  .sl-nav-sep {
+    height: 1px; margin: 8px 8px;
+    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.15), transparent);
   }
-  .sl-mandala svg{width:100%;height:100%}
 
-  /* Footer */
-  .sl-footer{padding:0 12px 20px;flex-shrink:0;position:relative;z-index:1}
-  .sl-logout{
-    display:flex;align-items:center;gap:9px;
-    padding:9px 12px;border-radius:6px;
-    color:rgba(200,169,106,0.3);background:none;border:none;
-    font-size:12.5px;font-weight:600;font-family:var(--font);
-    cursor:pointer;transition:all 0.15s;width:100%;letter-spacing:0.2px;
+  .sl-nav-item {
+    position: relative; display: flex; align-items: center; gap: 11px;
+    padding: 9px 11px; border-radius: 14px;
+    text-decoration: none; border: 1px solid transparent;
+    color: rgba(200,169,106,0.38);
+    transition: all 0.18s var(--sl-ease-out); overflow: hidden;
   }
-  .sl-logout:hover:not(:disabled){background:rgba(200,169,106,0.05);color:rgba(200,169,106,0.65)}
-  .sl-logout:disabled{opacity:0.4;cursor:not-allowed}
-  .sl-spin{width:13px;height:13px;border:2px solid rgba(200,169,106,0.15);border-top-color:var(--gold);border-radius:50%;animation:sp 0.7s linear infinite;flex-shrink:0}
+  .sl-nav-item:hover  { background: rgba(200,169,106,0.05); color: rgba(200,169,106,0.65); border-color: rgba(200,169,106,0.07); }
+  .sl-nav-item.active { background: rgba(255,253,248,0.06); color: var(--sl-gold); border-color: rgba(200,169,106,0.20); box-shadow: 0 8px 24px rgba(8,11,12,0.28); }
 
-  /* Main */
-.sl-main{flex:1;min-width:0;overflow-x:hidden;padding:0}
+  .sl-nav-community { border-color: rgba(200,169,106,0.06); }
+  .sl-nav-community:hover { border-color: rgba(200,169,106,0.14); }
+
+  .sl-nav-pill    { position: absolute; right: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px 0 0 2px; background: linear-gradient(180deg, var(--sl-gold-soft), var(--sl-gold-deep)); }
+  .sl-nav-shimmer { position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(to left, transparent, rgba(200,169,106,0.55), transparent); }
+
+  .sl-nav-icon-wrap {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(200,169,106,0.04); transition: background 0.16s;
+  }
+  .sl-nav-item:hover  .sl-nav-icon-wrap,
+  .sl-nav-item.active .sl-nav-icon-wrap { background: rgba(200,169,106,0.14); }
+
+  .sl-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .sl-nav-label-main { font-size: 13px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl-nav-label-sub  { font-family: var(--sl-font-mono); font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.45; }
+  .sl-nav-dot        { width: 5px; height: 5px; border-radius: 50%; background: var(--sl-gold); opacity: 0.65; flex-shrink: 0; }
+
+  .sl-mandala-wrap { margin-top: auto; display: flex; align-items: center; justify-content: center; padding: 20px 0 10px; opacity: 0.70; }
+
+  /* User block */
+  .sl-user-block { position: relative; z-index: 10; flex-shrink: 0; padding: 0 14px 20px; }
+  .sl-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 16px;
+    background: rgba(200,169,106,0.06); border: 1px solid rgba(200,169,106,0.16);
+    transition: background 0.18s, border-color 0.18s;
+  }
+  .sl-user:hover { background: rgba(200,169,106,0.11); border-color: rgba(200,169,106,0.26); }
+
+  .sl-user-clickable {
+    display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+    text-decoration: none; border-radius: 10px; transition: opacity 0.15s;
+  }
+  .sl-user-clickable:hover { opacity: 0.80; }
+
+  .sl-user-av {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg, var(--sl-gold-soft), var(--sl-gold-deep));
+  }
+  .sl-user-initial { font-size: 16px; font-weight: 900; color: var(--sl-graphite); font-family: var(--sl-font-heading); }
+  .sl-user-info    { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .sl-user-name    { font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl-user-role    { font-family: var(--sl-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.45); }
+
+  .sl-logout-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+    background: none; border: none; cursor: pointer;
+    color: rgba(200,169,106,0.40); transition: all 0.15s;
+  }
+  .sl-logout-btn:hover:not(:disabled) { background: rgba(200,169,106,0.10); color: rgba(200,169,106,0.80); }
+  .sl-logout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .sl-spin { width: 13px; height: 13px; border: 2px solid rgba(200,169,106,0.15); border-top-color: var(--sl-gold); border-radius: 50%; animation: sl-spin 0.7s linear infinite; }
+
+  /* ══ MAIN ══ */
+  .sl-main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; margin-right: var(--sl-sidebar-w); }
+  @media (max-width: 767px) { .sl-main { margin-right: 0; } }
+
+  /* Topbar */
+  .sl-topbar {
+    position: sticky; top: 0; z-index: 40;
+    height: var(--sl-topbar-h); display: flex; align-items: center; gap: 14px;
+    padding: 0 20px;
+    background: rgba(251,250,246,0.82);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(8,11,12,0.07);
+    box-shadow: 0 1px 0 rgba(8,11,12,0.04), 0 6px 24px rgba(8,11,12,0.025);
+  }
+  @media (min-width: 768px) { .sl-topbar { padding: 0 36px; } }
+
+  .sl-topbar-accent {
+    position: absolute; inset-x: 0; top: 0; height: 1.5px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.30) 15%, rgba(229,185,60,0.55) 50%, rgba(200,169,106,0.30) 85%, transparent);
+  }
+
+  .sl-hamburger {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: none; border: none; cursor: pointer;
+    color: var(--sl-graphite-muted); transition: all 0.15s; flex-shrink: 0;
+  }
+  .sl-hamburger:hover { background: rgba(200,169,106,0.10); color: var(--sl-graphite); }
+  @media (min-width: 768px) { .sl-hamburger { display: none; } }
+
+  .sl-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .sl-breadcrumb-geo  {
+    display: none; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
+    border: 1px solid var(--sl-bdr-soft); background: var(--sl-bg-card); opacity: 0.90;
+  }
+  @media (min-width: 640px) { .sl-breadcrumb-geo { display: flex; } }
+  .sl-breadcrumb { display: flex; align-items: center; gap: 8px; }
+  .sl-bc-root { font-size: 12.5px; font-weight: 500; color: var(--sl-graphite-muted); }
+  .sl-bc-sep  { color: var(--sl-graphite-muted); opacity: 0.38; flex-shrink: 0; }
+  .sl-bc-cur  { font-size: 13.5px; font-weight: 700; color: var(--sl-graphite); }
+  .sl-topbar-spacer { flex: 1; }
+
+  .sl-topbar-actions  { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .sl-topbar-divider  { display: none; width: 1px; height: 20px; background: var(--sl-bdr-med); opacity: 0.65; }
+  @media (min-width: 768px) { .sl-topbar-divider { display: block; } }
+
+  .sl-bell-btn {
+    display: none; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--sl-bg-card); border: 1px solid var(--sl-bdr-soft);
+    cursor: pointer; color: var(--sl-graphite-muted); transition: all 0.18s;
+  }
+  .sl-bell-btn:hover { border-color: var(--sl-bdr-gold); color: var(--sl-graphite); }
+  @media (min-width: 768px) { .sl-bell-btn { display: flex; } }
+
+  .sl-topbar-user-pill {
+    display: none; align-items: center; gap: 8px;
+    padding: 4px 12px 4px 4px; border-radius: 999px;
+    border: 1px solid var(--sl-bdr-soft); background: var(--sl-bg-card);
+    transition: all 0.18s var(--sl-ease-out);
+  }
+  .sl-topbar-user-pill:hover { border-color: var(--sl-bdr-gold); box-shadow: 0 4px 16px rgba(8,11,12,0.06); }
+  @media (min-width: 768px) { .sl-topbar-user-pill { display: flex; } }
+
+  .sl-topbar-av {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg, var(--sl-gold-soft), var(--sl-gold-deep));
+  }
+  .sl-topbar-initial { font-size: 11px; font-weight: 900; color: var(--sl-graphite); font-family: var(--sl-font-heading); }
+  .sl-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--sl-graphite); white-space: nowrap; padding-inline-start: 2px; }
+
+  /* Content */
+  .sl-content { position: relative; flex: 1; padding: 28px 20px; animation: sl-slidein 0.42s var(--sl-ease-out); }
+  @media (min-width: 768px) { .sl-content { padding: 40px; } }
+  .sl-watermark     { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
+  .sl-content-inner { position: relative; z-index: 10; }
 
   /* Bottom band */
-  .sl-bottom-band{width:100%;height:160px;pointer-events:none;flex-shrink:0;opacity:0.8;-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 35%);mask-image:linear-gradient(to bottom,transparent 0%,black 35%)}
-  .sl-bottom-band svg{width:100%;height:100%;display:block}
-
-  /* Mobile topbar */
-  .sl-mobile-bar{
-    display:none;align-items:center;justify-content:space-between;
-    padding:0 20px;height:var(--topbar-h);
-    background:var(--black);position:sticky;top:0;z-index:40;
-    border-bottom:1px solid rgba(200,169,106,0.12);
+  .sl-bottom-band {
+    pointer-events: none; width: 100%; height: 80px; flex-shrink: 0;
+    opacity: 0.60;
+    mask-image: linear-gradient(to bottom, transparent, black 55%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 55%);
   }
-  .sl-mobile-bar::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.5) 50%,transparent)}
-  .sl-hamburger{background:rgba(200,169,106,0.07);border:1px solid rgba(200,169,106,0.14);border-radius:6px;color:var(--gold);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer}
-  .sl-mobile-title{font-size:13.5px;font-weight:800;color:var(--gold);letter-spacing:-0.1px}
-  .sl-mobile-avatar{width:30px;height:30px;border-radius:6px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--black)}
 
-.sl-backdrop{position:fixed;inset:0;background:rgba(11,11,12,0.55);z-index:29;backdrop-filter:blur(2px);animation:fadeIn 0.2s ease;cursor:pointer}
-  @media(max-width:768px){
-    .sl-backdrop{display:none!important}
-    .sl-mobile-bar{display:flex}
-    .sl-sidebar{position:fixed;right:0;top:0;bottom:0;transform:translateX(100%);transition:transform 0.26s cubic-bezier(0.4,0,0.2,1);height:100%}
-    .sl-sidebar.open{transform:translateX(0);box-shadow:-12px 0 50px rgba(11,11,12,0.45)}
-    .sl-close-btn{display:flex}
-    .sl-body{flex-direction:column}
-.sl-main{min-height:calc(100vh - var(--topbar-h));padding:0}
-  }
+  /* Footer caption */
+  .sl-footer-caption { display: flex; align-items: center; justify-content: center; gap: 8px; padding-bottom: 20px; padding-top: 4px; }
+  .sl-footer-sparkle { color: var(--sl-gold-deep); opacity: 0.60; }
+  .sl-footer-text    { font-family: var(--sl-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--sl-graphite-muted); opacity: 0.60; }
 `;

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\('zod'\\); console.log\\('installed:', require\\('./node_modules/zod/package.json'\\).version\\)\")"
+    ]
+  }
+}

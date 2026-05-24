@@ -2,21 +2,34 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const SchoolSignupSchema = z.object({
+  school_slug: z.string().trim().min(1, "رمز المدرسة مطلوب"),
+  full_name:   z.string().trim().min(1, "الاسم الكامل مطلوب"),
+  email:       z.string().trim().email("صيغة البريد الإلكتروني غير صحيحة"),
+  password:    z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+  city:        z.string().trim().min(1, "المدينة مطلوبة"),
+  age:         z.coerce.number({ error: "العمر يجب أن يكون رقمًا" })
+                 .int("العمر يجب أن يكون رقمًا صحيحًا")
+                 .min(5, "العمر غير صالح")
+                 .max(120, "العمر غير صالح"),
+});
 
 export async function POST(req: Request) {
   try {
-    const { school_slug, full_name, email, password, city, age } = await req.json();
-
-    if (!school_slug || !full_name || !email || !password || !city || !age) {
-      return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 });
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "طلب غير صالح" }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" },
-        { status: 400 },
-      );
+    const result = SchoolSignupSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
+
+    const { school_slug, full_name, password, city, age } = result.data;
+    const email = result.data.email.toLowerCase();
 
     // Verify school exists
     const school = await prisma.school.findUnique({
@@ -68,7 +81,7 @@ export async function POST(req: Request) {
         profile_id: userId,
         school_id: school.id,
         city,
-        age: Number(age),
+        age,
         onboarding_status: "SCHOOL_ASSIGNED",
       },
     });

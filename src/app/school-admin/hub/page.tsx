@@ -30,28 +30,34 @@ const T: Record<Lang, {
   replyLabel: string; replies: string; teacher: string; admin: string;
   composerPH: string; replyPH: string; loadMore: string; loading: string;
   emptyTitle: string; emptySub: string; noSchoolTitle: string; noSchoolSub: string;
-  del: string; img: string; send: string; newMsg: (n: number) => string;
+  del: string; img: string; send: string; modeBar: string; delConfirmTip: string;
+  adminLabel: string; newMsg: (n: number) => string;
 }> = {
   ar: {
     today: "اليوم", yesterday: "أمس", community: "المجتمع", react: "تفاعل",
     replyLabel: "رد", replies: "ردود", teacher: "معلم", admin: "مشرف",
-    composerPH: "شارك شيئاً مع المجموعة...", replyPH: "اكتب رداً...",
+    composerPH: "اكتب رسالة للمجتمع...", replyPH: "اكتب رداً...",
     loadMore: "رسائل أقدم", loading: "تحميل...",
-    emptyTitle: "كن أول من يكتب!", emptySub: "ابدأ المحادثة مع زملائك",
-    noSchoolTitle: "لم يتم تعيينك في مدرسة بعد",
-    noSchoolSub: "تواصل مع المدير لتفعيل حسابك",
+    emptyTitle: "لا توجد رسائل بعد", emptySub: "ابدأ بكتابة رسالة للمجتمع",
+    noSchoolTitle: "لم يتم تعيينك في مدرسة", noSchoolSub: "تواصل مع المالك لتفعيل حسابك",
     del: "حذف", img: "صورة", send: "إرسال",
+    modeBar: "صلاحيات المشرف · يمكنك حذف أي منشور أو رد",
+    delConfirmTip: "اضغط مرة أخرى للتأكيد",
+    adminLabel: "مشرف",
     newMsg: (n) => `${n} رسالة جديدة · اضغط للتحديث`,
   },
   sq: {
     today: "Sot", yesterday: "Dje", community: "Komuniteti", react: "Reagoj",
     replyLabel: "Përgjigje", replies: "përgjigje", teacher: "Mësues", admin: "Drejtori",
-    composerPH: "Ndaj diçka me grupin...", replyPH: "Shkruaj një përgjigje...",
+    composerPH: "Shkruaj një mesazh për komunitetin...", replyPH: "Shkruaj një përgjigje...",
     loadMore: "Mesazhe më të vjetra", loading: "Po ngarkohet...",
-    emptyTitle: "Ji i pari që shkruan!", emptySub: "Filloni bisedën me shokët tuaj",
+    emptyTitle: "Nuk ka mesazhe ende", emptySub: "Filloni duke shkruar një mesazh",
     noSchoolTitle: "Nuk jeni caktuar në asnjë shkollë",
-    noSchoolSub: "Kontaktoni administratorin për aktivizimin",
+    noSchoolSub: "Kontaktoni pronarin për aktivizimin",
     del: "Fshij", img: "Foto", send: "Dërgo",
+    modeBar: "Aksesi i administratorit · Mund të fshini çdo mesazh",
+    delConfirmTip: "Shtypni përsëri për të konfirmuar",
+    adminLabel: "Drejtori",
     newMsg: (n) => `${n} mesazhe të reja · shtypni për rifreskuar`,
   },
 };
@@ -124,20 +130,25 @@ const AV_COLORS = [
   { bg: "#B86B8A", text: "#2A0A15" }, { bg: "#6B9BB8", text: "#0A2535" },
 ];
 
-function getAvColor(name: string, isStaff: boolean) {
-  if (isStaff) return { bg: "#0B0B0C", text: "#C8A96A" };
+function getAvColor(name: string, role: string) {
+  if (role === "SCHOOL_ADMIN") return { bg: "linear-gradient(135deg,#C8A96A,#E5B93C)", text: "#1A0D00" };
+  if (role === "TEACHER") return { bg: "#0B0B0C", text: "#C8A96A" };
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return AV_COLORS[Math.abs(h) % AV_COLORS.length];
+  return { bg: AV_COLORS[Math.abs(h) % AV_COLORS.length].bg, text: AV_COLORS[Math.abs(h) % AV_COLORS.length].text };
 }
 
-function Av({ name, role, size = 40 }: { name: string; role: string; size?: number }) {
-  const isStaff = role === "TEACHER" || role === "SCHOOL_ADMIN";
-  const col = getAvColor(name, isStaff);
+function Av({ name, role, size = 40, isAdminSelf = false }: {
+  name: string; role: string; size?: number; isAdminSelf?: boolean;
+}) {
+  const col = getAvColor(name, role);
+  const isAdmin = role === "SCHOOL_ADMIN";
+  const isStaff = role === "TEACHER" || isAdmin;
   return (
-    <div className="av" style={{ width: size, height: size, minWidth: size, fontSize: size * 0.36, background: col.bg, color: col.text }}>
+    <div className={`av ${isAdminSelf ? "av-admin-self" : ""}`}
+      style={{ width: size, height: size, minWidth: size, fontSize: size * 0.36, background: col.bg, color: col.text }}>
       {initials(name)}
-      {isStaff && <span className="av-badge">✦</span>}
+      {isStaff && <span className={`av-badge ${isAdmin ? "av-badge-admin" : ""}`}>{isAdmin ? "★" : "✦"}</span>}
     </div>
   );
 }
@@ -220,8 +231,8 @@ function DateDivider({ label }: { label: string }) {
 
 // ─── REPLIES ──────────────────────────────────────────────────────────────────
 
-function Replies({ postId, me, canDelete, lang, onReact }: {
-  postId: string; me: Me; canDelete: boolean; lang: Lang;
+function Replies({ postId, me, lang, onReact }: {
+  postId: string; me: Me; lang: Lang;
   onReact: (pid: string, type: ReactionType) => void;
 }) {
   const [replies, setReplies] = useState<Post[]>([]);
@@ -288,7 +299,8 @@ function Replies({ postId, me, canDelete, lang, onReact }: {
               <DateDivider label={group.day} />
               {group.items.map((r) => {
                 const isMe    = r.author.id === me.id;
-                const isStaff = r.author.role === "TEACHER" || r.author.role === "SCHOOL_ADMIN";
+                const isAdmin = r.author.role === "SCHOOL_ADMIN";
+                const isStaff = r.author.role === "TEACHER" || isAdmin;
                 return (
                   <div key={r.id} className={`msg-row ${isMe ? "msg-mine" : "msg-theirs"}`}>
                     {!isMe && <Av name={r.author.full_name} role={r.author.role} size={32} />}
@@ -297,13 +309,13 @@ function Replies({ postId, me, canDelete, lang, onReact }: {
                         <div className="msg-sender">
                           <span className="msg-sender-name">{r.author.full_name}</span>
                           {isStaff && (
-                            <span className={`chip-staff ${r.author.role === "SCHOOL_ADMIN" ? "chip-admin" : ""}`}>
-                              {r.author.role === "SCHOOL_ADMIN" ? tr.admin : tr.teacher}
+                            <span className={`chip-staff ${isAdmin ? "chip-admin" : ""}`}>
+                              {isAdmin ? tr.admin : tr.teacher}
                             </span>
                           )}
                         </div>
                       )}
-                      <div className={`bubble ${isMe ? "bubble-mine" : "bubble-theirs"}`}>
+                      <div className={`bubble ${isMe ? "bubble-mine bubble-mine-admin" : "bubble-theirs"}`}>
                         {r.content && <p className="bubble-text" dir="auto">{r.content}</p>}
                         {r.image_url && (
                           <img src={r.image_url} className="bubble-img" alt=""
@@ -312,19 +324,18 @@ function Replies({ postId, me, canDelete, lang, onReact }: {
                         <span className="bubble-time">{formatDate(r.created_at, lang)}</span>
                       </div>
                       <div className={`msg-meta ${isMe ? "msg-meta-mine" : ""}`}>
-                        {(canDelete || r.author.id === me.id) && (
-                          <button className="del-micro" onClick={() => del(r.id)} title={tr.del}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-                            </svg>
-                          </button>
-                        )}
+                        {/* Admin can always delete replies */}
+                        <button className="del-micro admin-del" onClick={() => del(r.id)} title={tr.del}>
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                          </svg>
+                        </button>
                         <RxBar postId={r.id} reactions={r.reactions} myId={me.id} lang={lang}
                           onReact={handleReplyReact} compact alignEnd={isMe} />
                       </div>
                     </div>
-                    {isMe && <Av name={r.author.full_name} role={r.author.role} size={32} />}
+                    {isMe && <Av name={r.author.full_name} role={r.author.role} size={32} isAdminSelf />}
                   </div>
                 );
               })}
@@ -335,7 +346,7 @@ function Replies({ postId, me, canDelete, lang, onReact }: {
       </div>
 
       <div className="reply-composer">
-        <Av name={me.name} role={me.role} size={34} />
+        <Av name={me.name} role={me.role} size={34} isAdminSelf />
         <div className="reply-composer-inner">
           {img.preview && (
             <div className="img-preview-mini">
@@ -356,8 +367,8 @@ function Replies({ postId, me, canDelete, lang, onReact }: {
                 <polyline points="21 15 16 10 5 21" />
               </svg>
             </button>
-            <button className="reply-send-btn" disabled={sending || (!text.trim() && !img.file)} onClick={send}>
-              {sending ? <div className="mini-spin s-light" /> : (
+            <button className="reply-send-btn admin-send" disabled={sending || (!text.trim() && !img.file)} onClick={send}>
+              {sending ? <div className="mini-spin s-dark" /> : (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                   <line x1="22" y1="2" x2="11" y2="13" />
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -371,10 +382,10 @@ function Replies({ postId, me, canDelete, lang, onReact }: {
   );
 }
 
-// ─── POST CARD ────────────────────────────────────────────────────────────────
+// ─── POST CARD (admin: distinctive gold mine bubble, always-delete) ────────────
 
-function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
-  post: Post; me: Me; canDelete: boolean; lang: Lang;
+function PostCard({ post, me, lang, onDelete, onReact, index }: {
+  post: Post; me: Me; lang: Lang;
   onDelete: (id: string) => void;
   onReact: (pid: string, type: ReactionType) => void;
   index: number;
@@ -382,12 +393,18 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
   const [showReplies, setShowReplies] = useState(false);
   const [replyCt] = useState(post._count.replies);
   const [imgOpen, setImgOpen] = useState(false);
+  const [delConfirm, setDelConfirm] = useState(false);
   const isMe    = post.author.id === me.id;
-  const isStaff = post.author.role === "TEACHER" || post.author.role === "SCHOOL_ADMIN";
   const isAdmin = post.author.role === "SCHOOL_ADMIN";
+  const isStaff = post.author.role === "TEACHER" || isAdmin;
   const tr = T[lang];
 
   const del = async () => {
+    if (!delConfirm) {
+      setDelConfirm(true);
+      setTimeout(() => setDelConfirm(false), 3000);
+      return;
+    }
     await fetch(`/api/hub/posts/${post.id}`, { method: "DELETE" });
     onDelete(post.id);
   };
@@ -402,6 +419,16 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
       )}
 
       <div className="chat-col">
+        {/* Admin's own posts show a gold label above the bubble */}
+        {isMe && (
+          <div className="admin-mine-label">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            {tr.adminLabel}
+          </div>
+        )}
+
         {!isMe && (
           <div className="chat-author">
             <span className="chat-author-name">{post.author.full_name}</span>
@@ -413,16 +440,24 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
           </div>
         )}
 
-        <div className={`chat-bubble ${isMe ? "chat-bubble-mine" : "chat-bubble-theirs"} ${isStaff && !isMe ? "chat-bubble-staff" : ""}`}>
-          {(canDelete || isMe) && (
-            <button className="bubble-del" onClick={del} title={tr.del}>
+        <div className={`chat-bubble ${isMe ? "chat-bubble-mine chat-bubble-admin-mine" : "chat-bubble-theirs"} ${isStaff && !isMe ? "chat-bubble-staff" : ""}`}>
+          {/* Admin: always-visible delete, two-step confirm */}
+          <button
+            className={`bubble-del admin-del-btn ${delConfirm ? "bubble-del-confirm" : ""}`}
+            onClick={del}
+            title={delConfirm ? tr.delConfirmTip : tr.del}>
+            {delConfirm ? (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
                 <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
               </svg>
-            </button>
-          )}
+            )}
+          </button>
 
           {post.content && <p className="chat-text" dir="auto">{post.content}</p>}
 
@@ -444,6 +479,17 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
           </div>
         </div>
 
+        {delConfirm && (
+          <div className="del-confirm-toast">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {tr.delConfirmTip}
+          </div>
+        )}
+
         <div className={`chat-actions ${isMe ? "chat-actions-mine" : ""}`}>
           <RxBar postId={post.id} reactions={post.reactions} myId={me.id} lang={lang}
             onReact={onReact} compact alignEnd={isMe} />
@@ -458,14 +504,14 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
 
         {showReplies && (
           <div className="replies-container">
-            <Replies postId={post.id} me={me} canDelete={canDelete} lang={lang} onReact={onReact} />
+            <Replies postId={post.id} me={me} lang={lang} onReact={onReact} />
           </div>
         )}
       </div>
 
       {isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} size={42} />
+          <Av name={post.author.full_name} role={post.author.role} size={42} isAdminSelf />
         </div>
       )}
     </div>
@@ -503,7 +549,7 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
   };
 
   return (
-    <div className={`composer ${focused ? "composer-focused" : ""}`}>
+    <div className={`composer composer-admin ${focused ? "composer-focused" : ""}`}>
       {img.preview && (
         <div className="composer-img-preview">
           <img src={img.preview} className="composer-img-preview-img" alt="" />
@@ -511,7 +557,7 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
         </div>
       )}
       <div className="composer-row">
-        <Av name={me.name} role={me.role} size={40} />
+        <Av name={me.name} role={me.role} size={40} isAdminSelf />
         <div className="composer-field-wrap">
           <textarea ref={taRef} className="composer-ta"
             placeholder={tr.composerPH} value={text}
@@ -531,9 +577,9 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
               <polyline points="21 15 16 10 5 21" />
             </svg>
           </button>
-          <button className="composer-send-btn" disabled={sending || (!text.trim() && !img.file)}
+          <button className="composer-send-btn admin-send" disabled={sending || (!text.trim() && !img.file)}
             onClick={submit} title={tr.send}>
-            {sending ? <div className="mini-spin s-light" /> : (
+            {sending ? <div className="mini-spin s-dark" /> : (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="22" y1="2" x2="11" y2="13" />
                 <polygon points="22 2 15 22 11 13 2 9 22 2" />
@@ -548,14 +594,13 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
-export default function HubPage() {
+export default function AdminHubPage() {
   const [me, setMe]               = useState<Me | null>(null);
   const [posts, setPosts]         = useState<Post[]>([]);
   const [loading, setLoading]     = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [cursor, setCursor]       = useState<string | null>(null);
   const [newCount, setNewCount]   = useState(0);
-  const [canDelete, setCanDelete] = useState(false);
   const supabase = createClient();
   const topRef   = useRef<HTMLDivElement>(null);
   const feedRef  = useRef<HTMLDivElement>(null);
@@ -564,17 +609,15 @@ export default function HubPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       cachedFetch<{
-        profile: { full_name: string; role?: string };
         school: { id: string; name: string; language: string } | null;
-      }>("/api/student", 60_000).then((d) => {
+        adminName?: string;
+      }>("/api/school-admin/stats", 60_000).then((d) => {
         setMe({
           id: user.id,
-          name: d.profile?.full_name ?? "Nxënës",
-          role: "STUDENT",
+          name: d.adminName ?? "Drejtori",
+          role: "SCHOOL_ADMIN",
           school: d.school ?? null,
         });
-        const role = d.profile?.role ?? "STUDENT";
-        setCanDelete(role === "TEACHER" || role === "SCHOOL_ADMIN");
       });
     });
   }, []);
@@ -588,7 +631,7 @@ export default function HubPage() {
 
   useEffect(() => {
     if (!me?.school?.id) return;
-    const ch = supabase.channel(`hub:${me.school.id}`)
+    const ch = supabase.channel(`hub-admin:${me.school.id}`)
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "posts",
         filter: `school_id=eq.${me.school.id}`,
@@ -644,6 +687,7 @@ export default function HubPage() {
     return (
       <div className="hub" dir="ltr">
         <div className="skel-header" />
+        <div className="skel-mode-bar" />
         <div className="skel-body">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className={`skel-row ${i % 2 === 0 ? "skel-theirs" : "skel-mine"}`}>
@@ -697,6 +741,14 @@ export default function HubPage() {
         </div>
       </header>
 
+      {/* Admin mode bar — gold */}
+      <div className="mode-bar mode-bar-admin">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+        <span>{tr.modeBar}</span>
+      </div>
+
       {newCount > 0 && (
         <button className="new-posts-banner" onClick={refresh}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -734,7 +786,7 @@ export default function HubPage() {
             <div key={group.day}>
               <DateDivider label={group.day} />
               {group.items.map((p, i) => (
-                <PostCard key={p.id} post={p} me={me} canDelete={canDelete} lang={lang}
+                <PostCard key={p.id} post={p} me={me} lang={lang}
                   onDelete={handleDelete} onReact={handleReact} index={i} />
               ))}
             </div>
@@ -765,14 +817,17 @@ const css = `
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.6)}}
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 @keyframes blobIn{0%{opacity:0;transform:scale(.88) translateY(6px)}70%{transform:scale(1.02)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+@keyframes goldPulse{0%,100%{box-shadow:0 4px 20px rgba(200,169,106,.35)}50%{box-shadow:0 4px 28px rgba(200,169,106,.55)}}
 
 :root{
   --cream:#F7F2EA;--cream2:#EFE8DC;--cream3:#E6DDD0;--cream4:#DDD2C2;
   --graphite:#0B0B0C;--graphite2:#1A1208;
-  --gold:#C8A96A;--gold2:#D4B87A;--gold3:#E0C98A;
+  --gold:#C8A96A;--gold2:#D4B87A;--gold3:#E0C98A;--gold4:#E5B93C;
   --gold-dim:rgba(200,169,106,.10);--gold-mid:rgba(200,169,106,.18);--gold-border:rgba(200,169,106,.35);
   --text:#2A1A0A;--text2:#6B5A4A;--text3:#9A8A7A;
   --mine-bg:#C8A96A;--mine-fg:#1A0D00;
+  --admin-mine-bg:linear-gradient(135deg,#D4B87A,#E5B93C);--admin-mine-border:rgba(200,169,106,.45);
   --their-bg:#FFFFFF;--their-fg:#2A1A0A;--their-border:rgba(0,0,0,.08);
   --staff-bg:rgba(200,169,106,.06);--staff-border:rgba(200,169,106,.20);
   --r:16px;--r-sm:12px;--r-xs:8px;--r-pill:100px;
@@ -782,10 +837,11 @@ const css = `
 }
 
 .hub{display:flex;flex-direction:column;height:100dvh;height:100vh;background:var(--cream);font-family:var(--font);color:var(--text);position:relative;overflow:hidden;}
-.hub-bg-pattern{position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle at 20% 20%,rgba(200,169,106,.07) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(11,11,12,.04) 0%,transparent 50%);}
+.hub-bg-pattern{position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle at 20% 20%,rgba(200,169,106,.09) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(11,11,12,.04) 0%,transparent 50%);}
 
 /* skeleton */
 .skel-header{height:72px;background:var(--graphite);flex-shrink:0;}
+.skel-mode-bar{height:38px;background:rgba(200,169,106,.15);flex-shrink:0;}
 .skel-body{flex:1;padding:20px 16px;display:flex;flex-direction:column;gap:16px;overflow:hidden;}
 .skel-row{display:flex;align-items:flex-end;gap:10px;}.skel-mine{flex-direction:row-reverse;}
 .skel-av{width:42px;height:42px;border-radius:50%;background:var(--cream3);flex-shrink:0;}
@@ -793,26 +849,28 @@ const css = `
 
 /* header */
 .hub-header{background:var(--graphite);position:relative;z-index:100;flex-shrink:0;box-shadow:0 4px 24px rgba(11,11,12,.45);}
-.hub-header-stripe{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold) 30%,#E5B93C 60%,transparent);}
+.hub-header-stripe{position:absolute;top:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,transparent,var(--gold) 25%,var(--gold4) 50%,var(--gold) 75%,transparent);}
 .hub-header-inner{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;max-width:860px;margin:0 auto;}
 .hub-brand{display:flex;align-items:center;gap:14px;}
-.hub-brand-icon{width:44px;height:44px;border-radius:13px;flex-shrink:0;background:rgba(200,169,106,.15);border:1.5px solid rgba(200,169,106,.30);display:flex;align-items:center;justify-content:center;color:var(--gold);transition:all .3s var(--ease-b);}
-.hub-brand-icon:hover{background:rgba(200,169,106,.25);transform:scale(1.08) rotate(-3deg);}
+.hub-brand-icon{width:44px;height:44px;border-radius:13px;flex-shrink:0;background:rgba(200,169,106,.15);border:1.5px solid rgba(200,169,106,.35);display:flex;align-items:center;justify-content:center;color:var(--gold);transition:all .3s var(--ease-b);}
+.hub-brand-icon:hover{background:rgba(200,169,106,.28);transform:scale(1.08) rotate(-3deg);}
 .hub-title{font-size:16px;font-weight:800;color:#F7EDD8;letter-spacing:-.2px;line-height:1.25;}
 .hub-subtitle{font-size:11px;color:rgba(200,169,106,.60);font-weight:500;margin-top:2px;}
 .hub-live-badge{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;color:rgba(110,231,183,.9);background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.22);padding:5px 13px;border-radius:var(--r-pill);}
 .hub-live-dot{width:6px;height:6px;border-radius:50%;background:#6EE7B7;animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
 
+/* mode bar */
+.mode-bar{display:flex;align-items:center;gap:8px;padding:9px 20px;font-size:12px;font-weight:700;flex-shrink:0;z-index:90;position:relative;}
+.mode-bar-admin{background:linear-gradient(90deg,rgba(200,169,106,.16),rgba(229,185,60,.12));border-bottom:1px solid rgba(200,169,106,.25);color:var(--gold4);}
+
 /* new posts */
-.new-posts-banner{width:100%;padding:10px 20px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--gold),var(--gold2));color:var(--text);font-size:13px;font-weight:700;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;z-index:50;position:relative;flex-shrink:0;animation:slideDown .35s var(--ease);transition:filter .2s;}
+.new-posts-banner{width:100%;padding:10px 20px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--gold),var(--gold4));color:var(--text);font-size:13px;font-weight:700;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;z-index:50;position:relative;flex-shrink:0;animation:slideDown .35s var(--ease);}
 .new-posts-banner:hover{filter:brightness(1.06);}
 
 /* feed */
 .hub-feed{flex:1;overflow-y:auto;padding:16px 12px 8px;max-width:860px;width:100%;margin:0 auto;scroll-behavior:smooth;position:relative;z-index:10;}
 .hub-feed::-webkit-scrollbar{width:5px;}
-.hub-feed::-webkit-scrollbar-track{background:transparent;}
 .hub-feed::-webkit-scrollbar-thumb{background:var(--cream3);border-radius:10px;}
-.hub-feed::-webkit-scrollbar-thumb:hover{background:var(--cream4);}
 
 /* date divider */
 .date-divider{display:flex;align-items:center;justify-content:center;margin:20px 0 14px;}
@@ -827,28 +885,40 @@ const css = `
 .chat-author{display:flex;align-items:center;gap:7px;padding:0 4px;margin-bottom:3px;}
 .chat-author-name{font-size:12px;font-weight:700;color:var(--graphite2);}
 
+/* admin mine label */
+.admin-mine-label{display:flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;color:var(--gold4);letter-spacing:.06em;text-transform:uppercase;padding:0 4px;margin-bottom:3px;opacity:.8;}
+
 /* bubbles */
 .chat-bubble{padding:12px 15px;border-radius:18px;position:relative;word-break:break-word;transition:transform .2s var(--ease);max-width:100%;}
 .chat-bubble:hover{transform:scale(1.005);}
-.chat-bubble-mine{background:var(--mine-bg);color:var(--mine-fg);border-bottom-right-radius:5px;box-shadow:0 3px 16px rgba(200,169,106,.3),0 1px 4px rgba(200,169,106,.2);}
+.chat-bubble-mine{background:var(--mine-bg);color:var(--mine-fg);border-bottom-right-radius:5px;box-shadow:0 3px 16px rgba(200,169,106,.3);}
 [dir="rtl"] .chat-bubble-mine{border-bottom-right-radius:18px;border-bottom-left-radius:5px;}
+
+/* Admin's distinctive gold gradient bubble */
+.chat-bubble-admin-mine{background:var(--admin-mine-bg);border:1.5px solid var(--admin-mine-border);animation:goldPulse 3s ease-in-out infinite;box-shadow:0 4px 20px rgba(200,169,106,.4),0 1px 4px rgba(200,169,106,.3);}
+
 .chat-bubble-theirs{background:var(--their-bg);color:var(--their-fg);border:1px solid var(--their-border);border-bottom-left-radius:5px;box-shadow:var(--sh-soft);}
 [dir="rtl"] .chat-bubble-theirs{border-bottom-left-radius:18px;border-bottom-right-radius:5px;}
 .chat-bubble-staff{background:var(--staff-bg);border-color:var(--staff-border);}
 .chat-text{font-size:15px;line-height:1.8;font-weight:400;}
-.chat-bubble-mine .chat-text{color:var(--mine-fg);}.chat-bubble-theirs .chat-text{color:var(--their-fg);}
-.chat-img-wrap{margin-top:8px;border-radius:var(--r-sm);overflow:hidden;cursor:zoom-in;max-height:280px;transition:max-height .4s var(--ease);}
+.chat-img-wrap{margin-top:8px;border-radius:var(--r-sm);overflow:hidden;cursor:zoom-in;max-height:280px;}
 .chat-img-wrap.expanded{max-height:none;cursor:zoom-out;}
-.chat-img{width:100%;display:block;object-fit:cover;max-height:280px;border-radius:var(--r-sm);transition:transform .3s var(--ease);}
-.chat-img-wrap:hover .chat-img{transform:scale(1.02);}
-.chat-img-wrap.expanded .chat-img{max-height:none;object-fit:contain;}
+.chat-img{width:100%;display:block;object-fit:cover;max-height:280px;border-radius:var(--r-sm);}
 .chat-time-row{display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:6px;}
 .chat-time{font-size:10px;opacity:.65;font-weight:500;white-space:nowrap;}
-.chat-bubble-mine .chat-time{color:var(--mine-fg);}.chat-bubble-theirs .chat-time{color:var(--text3);}
+.chat-bubble-mine .chat-time{color:var(--mine-fg);}
+.chat-bubble-theirs .chat-time{color:var(--text3);}
 .read-tick{color:var(--mine-fg);opacity:.55;}
-.bubble-del{position:absolute;top:8px;inset-inline-end:8px;background:rgba(0,0,0,.1);border:none;cursor:pointer;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:currentColor;opacity:0;transition:all .2s var(--ease);}
+
+/* delete buttons */
+.bubble-del{position:absolute;top:8px;inset-inline-end:8px;background:rgba(0,0,0,.08);border:none;cursor:pointer;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:currentColor;opacity:0;transition:all .2s var(--ease);}
 .chat-bubble:hover .bubble-del{opacity:.55;}
-.bubble-del:hover{opacity:1 !important;background:rgba(200,169,106,.25);color:var(--graphite);}
+.admin-del-btn{opacity:0.45;}
+.admin-del-btn:hover{opacity:1 !important;background:rgba(200,0,0,.12);color:#c00;}
+.bubble-del-confirm{opacity:1 !important;background:rgba(200,169,106,.25);color:var(--graphite);animation:shake .3s var(--ease);}
+
+/* confirm toast */
+.del-confirm-toast{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gold);background:rgba(200,169,106,.12);border:1px solid rgba(200,169,106,.28);border-radius:var(--r-pill);padding:5px 12px;margin-top:4px;animation:fadeUp .2s var(--ease);}
 
 /* actions */
 .chat-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:2px 4px;}
@@ -872,6 +942,7 @@ const css = `
 .msg-sender-name{font-size:10px;font-weight:700;color:var(--graphite2);}
 .bubble{border-radius:14px;padding:9px 13px;word-break:break-word;position:relative;}
 .bubble-mine{background:var(--mine-bg);color:var(--mine-fg);border-bottom-right-radius:4px;box-shadow:0 2px 10px rgba(200,169,106,.25);}
+.bubble-mine-admin{background:var(--admin-mine-bg);}
 [dir="rtl"] .bubble-mine{border-bottom-right-radius:14px;border-bottom-left-radius:4px;}
 .bubble-theirs{background:var(--their-bg);color:var(--their-fg);border:1px solid var(--their-border);border-bottom-left-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.07);}
 [dir="rtl"] .bubble-theirs{border-bottom-left-radius:14px;border-bottom-right-radius:4px;}
@@ -880,8 +951,11 @@ const css = `
 .bubble-img{max-width:180px;max-height:160px;border-radius:8px;margin-top:6px;display:block;cursor:pointer;object-fit:cover;}
 .msg-meta{display:flex;align-items:center;gap:4px;padding:0 4px;}
 .msg-meta-mine{flex-direction:row-reverse;}
-.del-micro{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 4px;display:flex;align-items:center;border-radius:4px;transition:all .15s var(--ease);}
-.del-micro:hover{color:var(--graphite);background:var(--gold-dim);}
+.del-micro{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 4px;display:flex;align-items:center;border-radius:4px;transition:all .15s var(--ease);opacity:0;}
+.msg-col:hover .del-micro{opacity:0.5;}
+.del-micro:hover{color:var(--graphite);background:var(--gold-dim);opacity:1 !important;}
+.admin-del{opacity:0.45;}
+.msg-col:hover .admin-del{opacity:0.5;}
 
 /* reply composer */
 .reply-composer{display:flex;gap:8px;align-items:flex-end;padding:10px 12px;background:rgba(255,255,255,.6);border-top:1px solid rgba(0,0,0,.07);}
@@ -895,18 +969,21 @@ const css = `
 .reply-input::placeholder{color:var(--text3);}
 .reply-icon-btn{background:none;border:1.5px solid var(--cream4);color:var(--text2);width:36px;height:36px;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease);}
 .reply-icon-btn:hover{border-color:var(--gold);color:var(--graphite);background:var(--gold-dim);}
-.reply-send-btn{background:var(--graphite);border:none;color:#F7EDD8;width:36px;height:36px;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease-b);box-shadow:0 3px 14px rgba(11,11,12,.25);}
-.reply-send-btn:hover:not(:disabled){background:var(--gold);color:var(--mine-fg);transform:scale(1.1);}
+.reply-send-btn{background:var(--graphite);border:none;color:#F7EDD8;width:36px;height:36px;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease-b);}
+.admin-send{background:linear-gradient(135deg,var(--gold),var(--gold4));color:var(--graphite);box-shadow:0 3px 14px rgba(200,169,106,.35);}
+.admin-send:hover:not(:disabled){filter:brightness(1.08);transform:scale(1.1);box-shadow:0 5px 20px rgba(200,169,106,.5);}
 .reply-send-btn:disabled{opacity:.35;cursor:not-allowed;}
 
 /* chips */
 .chip-staff{font-size:9px;font-weight:700;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(200,169,106,.28);padding:2px 8px;border-radius:var(--r-pill);}
-.chip-admin{color:#E5B93C;background:rgba(229,185,60,.1);border-color:rgba(229,185,60,.32);}
+.chip-admin{color:var(--gold4);background:rgba(229,185,60,.12);border-color:rgba(229,185,60,.38);}
 
 /* avatar */
 .av{border-radius:50%;flex-shrink:0;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15),0 0 0 2px rgba(255,255,255,.8);transition:transform .2s var(--ease-b);}
 .av:hover{transform:scale(1.07);}
+.av-admin-self{box-shadow:0 2px 8px rgba(0,0,0,.15),0 0 0 2px rgba(200,169,106,.5),0 0 0 3.5px rgba(229,185,60,.25);}
 .av-badge{position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid #fff;font-size:6px;font-weight:900;color:var(--graphite);display:flex;align-items:center;justify-content:center;}
+.av-badge-admin{background:var(--gold4);font-size:7px;}
 
 /* reactions */
 .rxbar{position:relative;display:flex;flex-direction:column;gap:4px;}
@@ -930,11 +1007,11 @@ const css = `
 /* composer */
 .hub-composer-wrap{padding:12px 16px 16px;flex-shrink:0;background:rgba(247,242,234,.92);backdrop-filter:blur(20px);border-top:1px solid rgba(0,0,0,.08);position:relative;z-index:50;}
 .composer{max-width:860px;margin:0 auto;background:#fff;border:1.5px solid var(--cream4);border-radius:28px;padding:8px 8px 8px 14px;box-shadow:var(--sh-med);transition:border-color .25s var(--ease),box-shadow .25s var(--ease);}
+.composer-admin{border-color:rgba(200,169,106,.2);}
 .composer-focused{border-color:var(--gold);box-shadow:var(--sh-med),0 0 0 3px rgba(200,169,106,.12);}
 .composer-img-preview{padding:8px 8px 0;position:relative;display:inline-block;margin-bottom:4px;}
 .composer-img-preview-img{max-height:120px;border-radius:12px;display:block;object-fit:cover;border:1px solid var(--cream4);}
-.composer-img-x{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.6);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
-.composer-img-x:hover{background:rgba(0,0,0,.9);}
+.composer-img-x{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.6);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;}
 .composer-row{display:flex;align-items:center;gap:10px;}
 .composer-field-wrap{flex:1;min-width:0;}
 .composer-ta{width:100%;border:none;outline:none;resize:none;overflow:hidden;font-family:var(--font);font-size:15px;color:var(--text);background:transparent;line-height:1.7;min-height:26px;max-height:160px;}
@@ -943,13 +1020,11 @@ const css = `
 .composer-img-btn{background:none;border:none;cursor:pointer;color:var(--text3);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease);}
 .composer-img-btn:hover{background:var(--gold-dim);color:var(--graphite);}
 .composer-send-btn{background:var(--graphite);border:none;color:#F7EDD8;width:42px;height:42px;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .22s var(--ease-b);box-shadow:0 3px 16px rgba(11,11,12,.25);}
-.composer-send-btn:hover:not(:disabled){background:var(--gold);color:var(--mine-fg);transform:scale(1.08);}
-.composer-send-btn:active:not(:disabled){transform:scale(.93);}
-.composer-send-btn:disabled{opacity:.3;cursor:not-allowed;}
 
 /* spinner */
 .mini-spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,.1);border-top-color:currentColor;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0;}
 .s-light{border-color:rgba(247,237,216,.2);border-top-color:#F7EDD8;}
+.s-dark{border-color:rgba(26,13,0,.15);border-top-color:var(--graphite);}
 
 /* load more */
 .load-more-wrap{display:flex;justify-content:center;margin-bottom:8px;}

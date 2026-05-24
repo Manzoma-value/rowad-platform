@@ -199,17 +199,29 @@ function Mandala({
   );
 }
 
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
 export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
+  const showEmailSuccess = emailTouched && isValidEmail(email);
 
   const handleSignup = async () => {
     setError("");
+    setEmailTouched(true);
     if (!fullName.trim() || !email.trim() || !password) {
       setError("من فضلك أكمل جميع الحقول");
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError("صيغة البريد الإلكتروني غير صحيحة");
       return;
     }
     if (password.length < 6) {
@@ -230,6 +242,10 @@ export default function SignupPage() {
       const d = await r.json();
       if (!r.ok || d.error) {
         setError(d.error ?? "حدث خطأ أثناء إنشاء الحساب");
+        return;
+      }
+      if (d.emailConfirmationRequired) {
+        setEmailSent(true);
         return;
       }
       window.location.href = "/login";
@@ -273,6 +289,31 @@ export default function SignupPage() {
       {/* ── Right panel: form ── */}
       <div className="lp-form-side">
         <div className="lp-form-wrap">
+
+          {/* ── Email-sent success screen ── */}
+          {emailSent ? (
+            <div className="lp-email-sent">
+              <div className="lp-email-sent-icon">
+                <svg width="52" height="52" fill="none" viewBox="0 0 24 24" stroke="#C8A96A" strokeWidth={1.5}>
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+              </div>
+              <h2 className="lp-form-title" style={{ fontSize: 22 }}>تحقق من بريدك الإلكتروني</h2>
+              <p className="lp-email-sent-msg">
+                أرسلنا رابط تأكيد إلى{" "}
+                <span className="lp-email-sent-addr" dir="ltr">{email.trim()}</span>
+                .<br />افتح البريد وانقر على الرابط لتفعيل حسابك.
+              </p>
+              <p className="lp-email-sent-note">
+                لم تستلم الرسالة؟ تحقق من مجلد الرسائل غير المرغوب فيها (Spam).
+              </p>
+              <Link href="/login" className="lp-btn" style={{ textDecoration: "none", marginTop: 24 }}>
+                الانتقال إلى تسجيل الدخول
+              </Link>
+            </div>
+          ) : (
+          <>
           <div className="lp-form-ornament">
             <div className="lp-rule">
               <div
@@ -349,13 +390,20 @@ export default function SignupPage() {
               </label>
               <input
                 type="email"
-                className="lp-input"
+                className={`lp-input${showEmailError ? " lp-input--error" : showEmailSuccess ? " lp-input--valid" : ""}`}
                 placeholder="example@mail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setEmailTouched(true)}
                 disabled={loading}
                 dir="ltr"
               />
+              {showEmailError && (
+                <span className="lp-field-msg lp-field-msg--error">صيغة البريد الإلكتروني غير صحيحة</span>
+              )}
+              {showEmailSuccess && (
+                <span className="lp-field-msg lp-field-msg--success">بريد إلكتروني صحيح ✓</span>
+              )}
             </div>
 
             <div className="lp-field">
@@ -455,6 +503,8 @@ export default function SignupPage() {
               />
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
 
@@ -605,6 +655,21 @@ const css = `
   }
   .lp-input::placeholder { color: #bbb0a0; }
   .lp-input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--cream); }
+  .lp-input--error {
+    border-color: #c0392b !important;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
+  }
+  .lp-input--valid {
+    border-color: #27ae60 !important;
+    box-shadow: 0 0 0 3px rgba(39,174,96,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
+  }
+  .lp-field-msg {
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 2px;
+  }
+  .lp-field-msg--error { color: #c0392b; }
+  .lp-field-msg--success { color: #27ae60; }
 
   .lp-error {
     display: flex; align-items: center; gap: 8px;
@@ -642,6 +707,47 @@ const css = `
   .lp-footer-text { text-align: center; font-size: 13px; color: var(--text3); font-weight: 500; }
   .lp-link { color: var(--black); font-weight: 800; text-decoration: none; border-bottom: 1.5px solid var(--gold); padding-bottom: 1px; transition: color 0.15s, border-color 0.15s; }
   .lp-link:hover { color: #4a3012; border-color: var(--gold2); }
+
+  /* ── Email-sent success screen ── */
+  .lp-email-sent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0;
+    padding: 12px 0;
+    animation: scaleIn 0.4s cubic-bezier(0.4,0,0.2,1) both;
+  }
+  .lp-email-sent-icon {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(200,169,106,0.10);
+    border: 1.5px solid rgba(200,169,106,0.25);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+  }
+  .lp-email-sent .lp-form-title { text-align: center; }
+  .lp-email-sent .lp-form-title::after { margin: 8px auto 0; }
+  .lp-email-sent-msg {
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--text2);
+    font-weight: 500;
+    line-height: 1.7;
+    max-width: 340px;
+  }
+  .lp-email-sent-addr {
+    font-weight: 800;
+    color: var(--text);
+    font-family: monospace;
+    font-size: 13px;
+  }
+  .lp-email-sent-note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text3);
+    font-weight: 500;
+  }
 
   @media (max-width: 820px) {
     .lp-shell { flex-direction: column-reverse; height: auto; overflow: auto; }

@@ -231,6 +231,8 @@ function Rule({ dim = false }: { dim?: boolean }) {
 }
 
 /* ─── i18n strings ─── */
+const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+
 const STRINGS = {
   sq: {
     loginTitle: "Hyrje",
@@ -240,9 +242,12 @@ const STRINGS = {
     btn: "Hyni",
     loadingBtn: "Duke hyrë...",
     errEmpty: "Ju lutemi plotësoni të gjitha fushat",
+    errEmailInvalid: "Formati i email-it është i pasaktë",
     errWrong: "Email ose fjalëkalim i gabuar",
+    errNotConfirmed: "Ju lutemi konfirmoni email-in tuaj — kontrolloni kutinë hyrëse dhe klikoni lidhjen e konfirmimit",
     errProfile: "Nuk mund të ngarkohen të dhënat e llogarisë",
     errServer: "Gabim lidhje, provoni përsëri",
+    emailSuccess: "Email i vlefshëm ✓",
     haveAccount: "Nuk keni llogari?",
     signup: "Regjistrohu",
     poweredBy: "E mundësuar nga",
@@ -257,9 +262,12 @@ const STRINGS = {
     btn: "دخول",
     loadingBtn: "جارٍ تسجيل الدخول...",
     errEmpty: "من فضلك أدخل البريد الإلكتروني وكلمة المرور",
+    errEmailInvalid: "صيغة البريد الإلكتروني غير صحيحة",
     errWrong: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    errNotConfirmed: "يرجى تأكيد بريدك الإلكتروني أولاً — تحقق من صندوق الوارد وانقر على رابط التأكيد",
     errProfile: "تعذر جلب بيانات الحساب",
     errServer: "تعذر الاتصال بالخادم، حاول مرة أخرى",
+    emailSuccess: "بريد إلكتروني صحيح ✓",
     haveAccount: "لا تملك حسابًا؟",
     signup: "إنشاء حساب",
     poweredBy: "مدعومة من",
@@ -314,9 +322,13 @@ export default function SchoolLoginClient({ school }: { school: School }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailTouched, setEmailTouched] = useState(false);
 
   const L = STRINGS[lang];
   const dir = lang === "sq" ? "ltr" : "rtl";
+
+  const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
+  const showEmailSuccess = emailTouched && isValidEmail(email);
 
   const handleLangChange = (l: Lang) => {
     setLang(l);
@@ -325,8 +337,13 @@ export default function SchoolLoginClient({ school }: { school: School }) {
 
   const handleLogin = async () => {
     setError("");
+    setEmailTouched(true);
     if (!email.trim() || !password) {
       setError(L.errEmpty);
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError(L.errEmailInvalid);
       return;
     }
     setLoading(true);
@@ -335,7 +352,15 @@ export default function SchoolLoginClient({ school }: { school: School }) {
       const { data, error: authError } = await supabase.auth.signInWithPassword(
         { email: email.trim(), password },
       );
-      if (authError || !data.user) {
+      if (authError) {
+        if (authError.code === "email_not_confirmed") {
+          setError(L.errNotConfirmed);
+        } else {
+          setError(L.errWrong);
+        }
+        return;
+      }
+      if (!data.user) {
         setError(L.errWrong);
         return;
       }
@@ -441,15 +466,22 @@ export default function SchoolLoginClient({ school }: { school: School }) {
                 </label>
                 <input
                   type="email"
-                  className="lp-input"
+                  className={`lp-input${showEmailError ? " lp-input--error" : showEmailSuccess ? " lp-input--valid" : ""}`}
                   placeholder="example@mail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmailTouched(true)}
                   disabled={loading}
                   dir="ltr"
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   suppressHydrationWarning
                 />
+                {showEmailError && (
+                  <span className="lp-field-msg lp-field-msg--error">{L.errEmailInvalid}</span>
+                )}
+                {showEmailSuccess && (
+                  <span className="lp-field-msg lp-field-msg--success">{L.emailSuccess}</span>
+                )}
               </div>
 
               <div className="lp-field">
@@ -834,6 +866,21 @@ const css = `
   }
   .lp-input::placeholder { color: #bbb0a0; }
   .lp-input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--cream); }
+  .lp-input--error {
+    border-color: #c0392b !important;
+    box-shadow: 0 0 0 3px rgba(192,57,43,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
+  }
+  .lp-input--valid {
+    border-color: #27ae60 !important;
+    box-shadow: 0 0 0 3px rgba(39,174,96,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
+  }
+  .lp-field-msg {
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 2px;
+  }
+  .lp-field-msg--error { color: #c0392b; }
+  .lp-field-msg--success { color: #27ae60; }
 
   .lp-error {
     display: flex; align-items: center; gap: 8px;

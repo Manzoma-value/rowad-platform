@@ -2,6 +2,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
+
+const InviteBodySchema = z.object({
+  full_name: z.string().trim().min(3, "الاسم يجب أن يكون 3 أحرف على الأقل"),
+  email:     z.string().trim().email("بريد إلكتروني غير صالح"),
+  password:  z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
+});
 
 // ── Admin client using service role key ────────────────────────────────────
 const adminClient = createClient(
@@ -92,48 +99,44 @@ export async function POST(
   }
 
   // ── Parse body ────────────────────────────────────────────────────────
-  let full_name: string | undefined;
-  let email: string | undefined;
-  let password: string | undefined;
+  let rawFullName: string | undefined;
+  let rawEmail: string | undefined;
+  let rawPassword: string | undefined;
 
   const contentType = req.headers.get("content-type") ?? "";
 
   if (contentType.includes("multipart/form-data")) {
     try {
       const form = await req.formData();
-      full_name = (form.get("full_name") as string | null)?.trim();
-      email     = (form.get("email")     as string | null)?.trim().toLowerCase();
-      password  = (form.get("password")  as string | null) ?? undefined;
+      rawFullName = (form.get("full_name") as string | null) ?? undefined;
+      rawEmail    = (form.get("email")     as string | null) ?? undefined;
+      rawPassword = (form.get("password")  as string | null) ?? undefined;
     } catch {
       return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
     }
   } else {
     try {
       const body = await req.json();
-      full_name = (body.full_name as string | undefined)?.trim();
-      email     = (body.email    as string | undefined)?.trim().toLowerCase();
-      password  = body.password  as string | undefined;
+      rawFullName = body.full_name as string | undefined;
+      rawEmail    = body.email     as string | undefined;
+      rawPassword = body.password  as string | undefined;
     } catch {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
   }
 
   // ── Validate ──────────────────────────────────────────────────────────
-  if (!full_name || !email || !password) {
-    return NextResponse.json(
-      { error: "الاسم الكامل والبريد الإلكتروني وكلمة المرور مطلوبة" },
-      { status: 400 }
-    );
+  const validation = InviteBodySchema.safeParse({
+    full_name: rawFullName ?? "",
+    email:     rawEmail    ?? "",
+    password:  rawPassword ?? "",
+  });
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues[0].message }, { status: 400 });
   }
-  if (full_name.length < 3) {
-    return NextResponse.json({ error: "الاسم يجب أن يكون 3 أحرف على الأقل" }, { status: 400 });
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "بريد إلكتروني غير صالح" }, { status: 400 });
-  }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }, { status: 400 });
-  }
+
+  const { full_name, password } = validation.data;
+  const email = validation.data.email.toLowerCase();
 
   // ── Create auth user ──────────────────────────────────────────────────
   console.log("[invite] creating auth user for:", email);
@@ -162,7 +165,7 @@ export async function POST(
       await tx.profile.create({
         data: {
           id:        userId,
-          full_name: full_name!,
+          full_name: full_name,
           role:      "TEACHER",
         },
       });
