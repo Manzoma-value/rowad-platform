@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -40,32 +40,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "المدرسة غير موجودة" }, { status: 404 });
     }
 
-    // Admin client: gives a real error for duplicate emails (unlike signUp() which
-    // silently re-sends the confirmation link). email_confirm: false → Supabase
-    // sends the standard verification email to the user.
-    const adminSupabase = createAdminClient();
-    const { data: adminData, error: adminError } = await adminSupabase.auth.admin.createUser({
+    // signUp() is the only flow that triggers Supabase's confirmation email.
+    // admin.createUser() creates the account server-side but never sends the email.
+    const supabase = await createClient();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: false,
-      user_metadata: { full_name, role: "STUDENT" },
+      options: {
+        data: { full_name, role: "STUDENT" },
+        emailRedirectTo: `${siteUrl}/auth/callback`,
+      },
     });
 
-    if (adminError) {
-      // Translate common Supabase errors to Arabic
-      if (adminError.message.toLowerCase().includes("already been registered") ||
-          adminError.message.toLowerCase().includes("already exists") ||
-          adminError.code === "email_exists") {
+    if (authError) {
+      if (
+        authError.message.toLowerCase().includes("already registered") ||
+        authError.message.toLowerCase().includes("already exists")
+      ) {
         return NextResponse.json({ error: "هذا البريد الإلكتروني مسجل بالفعل" }, { status: 400 });
       }
-      return NextResponse.json({ error: adminError.message }, { status: 400 });
+      return NextResponse.json({ error: authError.message }, { status: 400 });
     }
 
-    if (!adminData.user) {
-      return NextResponse.json({ error: "فشل إنشاء المستخدم" }, { status: 500 });
+    // When "Confirm email" is ON, Supabase returns success for existing emails too
+    // (to avoid user enumeration). Detect duplicates via empty identities array.
+    if (!authData.user || authData.user.identities?.length === 0) {
+      return NextResponse.json({ error: "هذا البريد الإلكتروني مسجل بالفعل" }, { status: 400 });
     }
 
-    const userId = adminData.user.id;
+    const userId = authData.user.id;
 
     // Create Profile + Student via Prisma (server-side, bypasses RLS)
     await prisma.profile.upsert({
@@ -86,7 +91,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // Account created — user must click the confirmation link before logging in.
+    // User must click the confirmation link before they can log in.
     return NextResponse.json({ success: true, emailConfirmationRequired: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
