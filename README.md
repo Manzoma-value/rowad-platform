@@ -1,9 +1,9 @@
 <div align="center">
 
 # منصة بناء الأهلية
-### Bina Al-Ahliya · الرواد Educational Platform
+### Binaa Al-Ahliya · الرواد Educational Platform
 
-**A full-stack, multi-tenant Islamic educational platform powering schools, teachers, and students — bilingual Arabic & Albanian.**
+**A full-stack, multi-tenant educational platform powering schools, teachers, and students — bilingual Arabic & Albanian.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=flat-square&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
