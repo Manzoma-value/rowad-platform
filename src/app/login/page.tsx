@@ -218,14 +218,17 @@ export default function LoginPage() {
     // Accept only same-origin relative paths
     if (rd.startsWith("/") && !rd.startsWith("//")) setRedirectTo(rd);
     if (err === "link_invalid")
-      setError("رابط التأكيد غير صالح أو منتهي الصلاحية — يرجى التسجيل مجدداً أو طلب رابط جديد");
+      setError(
+        "رابط التأكيد غير صالح أو منتهي الصلاحية — يرجى التسجيل مجدداً أو طلب رابط جديد",
+      );
     else if (err === "oauth_failed")
       setError("فشل تسجيل الدخول عبر الجهة الخارجية");
     else if (err === "session_error")
       setError("حدث خطأ في الجلسة — يرجى المحاولة مجدداً");
   }, []);
 
-  const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
+  const showEmailError =
+    emailTouched && email.trim().length > 0 && !isValidEmail(email);
   const showEmailSuccess = emailTouched && isValidEmail(email);
 
   const handleLogin = async () => {
@@ -247,7 +250,9 @@ export default function LoginPage() {
       );
       if (authError) {
         if (authError.code === "email_not_confirmed") {
-          setError("يرجى تأكيد بريدك الإلكتروني أولاً — تحقق من صندوق الوارد وانقر على رابط التأكيد");
+          setError(
+            "يرجى تأكيد بريدك الإلكتروني أولاً — تحقق من صندوق الوارد وانقر على رابط التأكيد",
+          );
         } else {
           setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
         }
@@ -273,9 +278,10 @@ export default function LoginPage() {
         STUDENT: "/student",
       };
       // Use the redirectTo param if present and valid, otherwise fall back to role route
-      const dest = (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//"))
-        ? redirectTo
-        : roleRoutes[profile.role];
+      const dest =
+        redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")
+          ? redirectTo
+          : roleRoutes[profile.role];
       if (dest) window.location.href = dest;
       else setError("نوع الحساب غير معروف: " + profile.role);
     } catch {
@@ -309,12 +315,6 @@ export default function LoginPage() {
               <div className="lp-rule-diamond" />
               <div className="lp-rule-line" />
             </div>
-          </div>
-
-          <div className="lp-panel-footer">
-            <p className="lp-panel-quote">
-              نمط دائري هندسي يعكس التركيز والنمو والاستمرار
-            </p>
           </div>
         </div>
       </div>
@@ -382,10 +382,14 @@ export default function LoginPage() {
                 onKeyDown={(e) => e.key === "Enter" && handleLogin()}
               />
               {showEmailError && (
-                <span className="lp-field-msg lp-field-msg--error">صيغة البريد الإلكتروني غير صحيحة</span>
+                <span className="lp-field-msg lp-field-msg--error">
+                  صيغة البريد الإلكتروني غير صحيحة
+                </span>
               )}
               {showEmailSuccess && (
-                <span className="lp-field-msg lp-field-msg--success">بريد إلكتروني صحيح ✓</span>
+                <span className="lp-field-msg lp-field-msg--success">
+                  بريد إلكتروني صحيح ✓
+                </span>
               )}
             </div>
 
@@ -409,7 +413,7 @@ export default function LoginPage() {
               <input
                 type="password"
                 className="lp-input"
-                suppressHydrationWarning   
+                suppressHydrationWarning
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
