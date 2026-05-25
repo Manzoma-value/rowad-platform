@@ -368,7 +368,7 @@ const styles = `
   .td-compose-head{display:flex;align-items:center;gap:10px}
   .td-compose-av{width:34px;height:34px;border-radius:10px;flex-shrink:0;background:#0B0B0C;border:1px solid rgba(200,169,106,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#C8A96A}
   .td-compose-label{font-size:12.5px;font-weight:700;color:#9A8A70}
-  .td-textarea{width:100%;border:1.5px solid rgba(200,169,106,0.15);border-radius:11px;padding:11px 14px;font-size:14px;font-family:'Cairo',Tajawal,sans-serif;resize:none;outline:none;color:#0B0B0C;background:#F6F4EE;transition:border-color 0.18s,box-shadow 0.18s;line-height:1.65}
+  .td-textarea{width:100%;border:1.5px solid rgba(200,169,106,0.15);border-radius:11px;padding:11px 14px;font-size:16px;/* ≥16px prevents iOS auto-zoom */font-family:'Cairo',Tajawal,sans-serif;resize:none;outline:none;color:#0B0B0C;background:#F6F4EE;transition:border-color 0.18s,box-shadow 0.18s;line-height:1.65}
   .td-textarea:focus{border-color:rgba(200,169,106,0.35);background:#FFFDF8;box-shadow:0 0 0 3px rgba(200,169,106,0.08)}
   .td-textarea::placeholder{color:#B0A090}
   .td-compose-foot{display:flex;align-items:center;justify-content:space-between}
@@ -413,9 +413,23 @@ const styles = `
   .td-sk-col{display:flex;flex-direction:column;gap:10px}
 
   @media(max-width:600px){
-    .td-inner{padding:16px 16px 40px;gap:18px}
-    .td-banner{padding:20px}
+    .td-inner{padding:16px 16px 40px;gap:16px}
+    .td-banner{padding:18px 20px}
     .td-banner-name{font-size:20px}
     .td-banner-stats{display:none}
+    .td-empty{padding:36px 20px}
+    .td-ann-empty{padding:32px 20px}
+    .td-post-btn{padding:11px 16px;font-size:14px}
+    .td-compose{padding:14px 15px}
+    .td-textarea{font-size:16px}
+  }
+  @media(max-width:400px){
+    .td-banner{padding:14px 16px}
+    .td-banner-name{font-size:17px}
+    .td-banner-greeting{font-size:11px}
+    .td-banner-sub{font-size:12px}
+    .td-empty{padding:28px 16px}
+    .td-empty h2{font-size:15px}
+    .td-ann-empty{padding:24px 16px}
   }
 `;

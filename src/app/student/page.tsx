@@ -352,9 +352,21 @@ const styles = `
   .sd-action:hover .sd-action-arrow{color:#C8A96A}
 
   @media(max-width:600px){
-    .sd-main{padding:16px}
+    .sd-main{padding:16px;gap:14px}
     .sd-welcome{padding:20px}
     .sd-name{font-size:21px}
     .sd-avatar{width:50px;height:50px;font-size:17px}
+    .sd-empty-state{padding:36px 24px}
+    .sd-actions{gap:10px}
+    .sd-action{min-width:0;flex-basis:100%}
+  }
+  @media(max-width:400px){
+    .sd-welcome{padding:16px}
+    .sd-name{font-size:18px}
+    .sd-greeting{font-size:11px}
+    .sd-avatar{display:none}
+    .sd-empty-state{padding:28px 16px}
+    .sd-empty-title{font-size:15px}
+    .sd-empty-sub{font-size:12px}
   }
 `;

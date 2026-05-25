@@ -118,7 +118,7 @@ export default function MandalaLoader({
 
         {/* Main mandala SVG */}
         <div className="ml-mandala-wrap">
-          <svg width="260" height="260" viewBox="0 0 260 260" fill="none">
+          <svg viewBox="0 0 260 260" fill="none" style={{ width: '100%', height: 'auto', display: 'block' }}>
             <defs>
               <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#E5B93C" stopOpacity="0.15" />
@@ -292,6 +292,7 @@ const css = `
     position: relative;
     font-family: 'Cairo', sans-serif;
     direction: rtl;
+    padding: 16px;
   }
 
   /* Ambient background glow */
@@ -317,7 +318,9 @@ const css = `
     flex-direction: column;
     align-items: center;
     gap: 0;
-    padding: 32px 48px 36px;
+    padding: 28px 40px 32px;
+    width: 100%;
+    max-width: 360px;
     background: #FFFFFF;
     border: 1px solid #E2D9CA;
     border-radius: 16px;
@@ -327,10 +330,6 @@ const css = `
       0 32px 80px rgba(11,11,12,0.05),
       inset 0 1px 0 rgba(255,255,255,0.8);
     animation: mlFadeIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
-    /* Gold top accent */
-    border-top: 2px solid transparent;
-    background-clip: padding-box;
-    position: relative;
     overflow: hidden;
   }
 
@@ -389,6 +388,8 @@ const css = `
   /* Mandala wrapper */
   .ml-mandala-wrap {
     position: relative;
+    width: 100%;
+    max-width: 240px;
     display: flex;
     align-items: center;
     justify-content: center;

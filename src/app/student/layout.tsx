@@ -486,6 +486,37 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </div>
       </div>
 
+      {/* ═══════════════════ MOBILE BOTTOM TAB BAR ═══════════════════ */}
+      {showFullNav && (
+        <nav className="sl-bottom-tabs" dir={isRtl ? "rtl" : "ltr"} aria-label="Mobile navigation">
+          {navItems.map((item) => {
+            const active = isActive(item.href, item.exact);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`sl-tab-item ${active ? "active" : ""}`}
+              >
+                <span className="sl-tab-icon"><Icon size={22} strokeWidth={1.6} /></span>
+                <span className="sl-tab-label">{getNavLabel(item)}</span>
+              </Link>
+            );
+          })}
+          {(() => {
+            const active = isActive(COMMUNITY_HREF);
+            return (
+              <Link href={COMMUNITY_HREF} className={`sl-tab-item ${active ? "active" : ""}`}>
+                <span className="sl-tab-icon"><Globe2 size={22} strokeWidth={1.6} /></span>
+                <span className="sl-tab-label">
+                  {lang === "ar" ? "المجتمع" : lang === "sq" ? "Hub" : "Hub"}
+                </span>
+              </Link>
+            );
+          })()}
+        </nav>
+      )}
+
       <style>{styles}</style>
     </div>
   );
@@ -735,9 +766,9 @@ const styles = `
   }
   @media (min-width: 640px) { .sl-breadcrumb-geo { display: flex; } }
   .sl-breadcrumb { display: flex; align-items: center; gap: 8px; }
-  .sl-bc-root { font-size: 12.5px; font-weight: 500; color: var(--sl-graphite-muted); }
+  .sl-bc-root { font-size: 12.5px; font-weight: 500; color: var(--sl-graphite-muted); white-space: nowrap; }
   .sl-bc-sep  { color: var(--sl-graphite-muted); opacity: 0.38; flex-shrink: 0; }
-  .sl-bc-cur  { font-size: 13.5px; font-weight: 700; color: var(--sl-graphite); }
+  .sl-bc-cur  { font-size: 13.5px; font-weight: 700; color: var(--sl-graphite); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sl-topbar-spacer { flex: 1; }
 
   .sl-topbar-actions  { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
@@ -787,4 +818,87 @@ const styles = `
   .sl-footer-caption { display: flex; align-items: center; justify-content: center; gap: 8px; padding-bottom: 20px; padding-top: 4px; }
   .sl-footer-sparkle { color: var(--sl-gold-deep); opacity: 0.60; }
   .sl-footer-text    { font-family: var(--sl-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--sl-graphite-muted); opacity: 0.60; }
+
+  /* ══ MOBILE BOTTOM TAB BAR ══ */
+  .sl-bottom-tabs { display: none; }
+
+  @media (max-width: 767px) {
+    /* Content padding for tab bar + safe area */
+    .sl-content {
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+    }
+    /* Hide decorative bottom band on mobile (tab bar replaces it) */
+    .sl-bottom-band { display: none; }
+    .sl-footer-caption { display: none; }
+
+    /* Bottom tab bar */
+    .sl-bottom-tabs {
+      display: flex;
+      justify-content: space-around;
+      align-items: stretch;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 45;
+      background: rgba(8, 11, 12, 0.94);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-top: 1px solid rgba(200, 169, 106, 0.14);
+      padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 6px);
+      box-shadow: 0 -6px 30px rgba(8,11,12,0.30);
+    }
+
+    .sl-tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      flex: 1;
+      padding: 4px 2px;
+      text-decoration: none;
+      color: rgba(200,169,106,0.32);
+      transition: color 0.15s;
+      min-width: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sl-tab-item.active { color: var(--sl-gold); }
+    .sl-tab-item:active { opacity: 0.75; }
+
+    .sl-tab-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px; height: 30px;
+      border-radius: 10px;
+      transition: background 0.15s;
+    }
+    .sl-tab-item.active .sl-tab-icon {
+      background: rgba(200,169,106,0.12);
+    }
+    .sl-tab-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      font-family: 'Cairo', sans-serif;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    /* Safe area for topbar on notched phones */
+    .sl-topbar {
+      padding-top: max(0px, env(safe-area-inset-top, 0px));
+      height: calc(var(--sl-topbar-h) + max(0px, env(safe-area-inset-top, 0px)));
+    }
+
+    /* Smaller breadcrumb on mobile */
+    .sl-bc-cur { max-width: 120px; font-size: 12.5px; }
+    .sl-bc-root { display: none; }
+    .sl-bc-sep { display: none; }
+  }
+
+  @media (max-width: 400px) {
+    .sl-tab-label { font-size: 8.5px; }
+    .sl-tab-icon { width: 34px; }
+  }
 `;

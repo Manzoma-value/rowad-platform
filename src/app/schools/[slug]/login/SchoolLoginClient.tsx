@@ -861,7 +861,7 @@ const css = `
     border: 1px solid var(--border);
     border-radius: 10px;
     color: var(--text);
-    font-size: 14px;
+    font-size: 16px; /* ≥16px prevents iOS auto-zoom on focus */
     font-family: 'Cairo', sans-serif;
     outline: none;
     transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
@@ -969,7 +969,12 @@ const css = `
 
   /* ── Responsive ── */
   @media (max-width: 820px) {
-    .lp-shell { flex-direction: column-reverse; overflow-y: auto; height: auto; min-height: 100vh; }
+    .lp-shell {
+      flex-direction: column-reverse;
+      overflow-y: auto;
+      height: auto;
+      min-height: 100dvh; /* dvh accounts for browser chrome on mobile */
+    }
     .lp-panel { width: 100%; min-height: auto; }
     .lp-panel-inner { padding: 32px 24px; gap: 14px; }
     .lp-mandala { width: 110px !important; height: 110px !important; }
@@ -979,8 +984,21 @@ const css = `
     /* Hide panel toggle on mobile, show above form */
     .lp-panel .lp-lang-toggle { display: none; }
     .lp-lang-toggle-mobile { display: flex; }
-    .lp-form-side { padding: 32px 20px; min-height: auto; }
+    .lp-form-side {
+      padding: 32px 20px;
+      padding-bottom: calc(env(safe-area-inset-bottom) + 32px);
+      min-height: auto;
+    }
     .lp-form-ornament { margin-bottom: 16px; }
     .lp-form-header { margin-bottom: 24px; }
+    /* Better touch targets */
+    .lp-btn { padding: 16px; font-size: 16px; }
+    .lp-lang-btn { padding: 9px 16px; }
+  }
+
+  @media (max-width: 400px) {
+    .lp-form-side { padding: 24px 16px; padding-bottom: calc(env(safe-area-inset-bottom) + 24px); }
+    .lp-panel-inner { padding: 24px 16px; }
+    .lp-form-title { font-size: 22px; }
   }
 `;
