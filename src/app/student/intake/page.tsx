@@ -4,6 +4,50 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import MandalaLoader from "@/components/MandalaLoader";
+import { useLang } from "@/lib/language-context";
+
+const S = {
+  ar: {
+    loading: "جارٍ تحميل الاختبار",
+    noAssessmentTitle: "لا يوجد اختبار متاح حالياً",
+    noAssessmentSub: "سيتم إخطارك عندما يكون الاختبار جاهزاً",
+    eyebrow: "اختبار القبول",
+    answered: "مجاب",
+    questionDot: (i: number) => `سؤال ${i + 1}`,
+    mcq: "اختيار من متعدد",
+    tf: "صح أم خطأ",
+    written: "إجابة مكتوبة",
+    tfTrue: "صحيح",
+    tfFalse: "خطأ",
+    writtenPH: "اكتب إجابتك هنا...",
+    prev: "السابق",
+    next: "التالي",
+    submit: "تقديم الاختبار ✔",
+    submitting: "جارٍ التقديم...",
+    errUnanswered: (n: number) => `يوجد ${n} سؤال لم تجب عليه بعد`,
+    errGeneric: "حدث خطأ أثناء التقديم",
+  },
+  sq: {
+    loading: "Duke ngarkuar testin",
+    noAssessmentTitle: "Nuk ka test të disponueshëm tani",
+    noAssessmentSub: "Do të njoftoheni kur testi të jetë gati",
+    eyebrow: "Testi i Pranimit",
+    answered: "i përgjigjet",
+    questionDot: (i: number) => `Pyetja ${i + 1}`,
+    mcq: "Zgjedhje e shumëfishtë",
+    tf: "E vërtetë apo e gabuar",
+    written: "Përgjigje me shkrim",
+    tfTrue: "E vërtetë",
+    tfFalse: "E gabuar",
+    writtenPH: "Shkruani përgjigjen tuaj këtu...",
+    prev: "Mëparshëm",
+    next: "Tjetër",
+    submit: "Dërgo testin ✔",
+    submitting: "Duke dërguar...",
+    errUnanswered: (n: number) => `Keni ${n} pyetje të papërgjigjura`,
+    errGeneric: "Ndodhi një gabim gjatë dërgimit",
+  },
+} as const;
 
 interface Option {
   id: string;
@@ -25,6 +69,10 @@ interface Assessment {
 
 export default function StudentIntakePage() {
   const router = useRouter();
+  const { lang } = useLang();
+  const T = S[lang === "sq" ? "sq" : "ar"];
+  const dir = lang === "sq" ? "ltr" : "rtl";
+
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [noAssessment, setNoAssessment] = useState(false);
@@ -56,7 +104,7 @@ export default function StudentIntakePage() {
     if (!assessment) return;
     const unanswered = questions.filter((q) => !answers[q.id]);
     if (unanswered.length > 0) {
-      setError(`يوجد ${unanswered.length} سؤال لم تجب عليه بعد`);
+      setError(T.errUnanswered(unanswered.length));
       setCurrentQ(questions.findIndex((q) => !answers[q.id]));
       return;
     }
@@ -76,7 +124,7 @@ export default function StudentIntakePage() {
       });
       const d = await r.json();
       if (d.success) router.push("/student/waiting");
-      else setError(d.error ?? "حدث خطأ أثناء التقديم");
+      else setError(d.error ?? T.errGeneric);
     } finally {
       setSubmitting(false);
     }
@@ -84,14 +132,14 @@ export default function StudentIntakePage() {
 
   if (loading)
     return (
-      <div className="pg-shell">
-        <MandalaLoader label="جارٍ تحميل الاختبار" />
+      <div className="pg-shell" dir={dir}>
+        <MandalaLoader label={T.loading} />
       </div>
     );
 
   if (noAssessment)
     return (
-      <div className="pg-shell">
+      <div className="pg-shell" dir={dir}>
         <div className="empty-card">
           <div className="empty-orn">
             <div className="orn-line" />
@@ -99,21 +147,14 @@ export default function StudentIntakePage() {
             <div className="orn-line" />
           </div>
           <div className="empty-icon-wrap">
-            <svg
-              width="28"
-              height="28"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.4}
-            >
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
               <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
               <rect x="9" y="3" width="6" height="4" rx="1" />
               <path d="M9 12h6M9 16h4" />
             </svg>
           </div>
-          <h2 className="empty-title">لا يوجد اختبار متاح حالياً</h2>
-          <p className="empty-sub">سيتم إخطارك عندما يكون الاختبار جاهزاً</p>
+          <h2 className="empty-title">{T.noAssessmentTitle}</h2>
+          <p className="empty-sub">{T.noAssessmentSub}</p>
           <div className="empty-orn" style={{ marginTop: 8 }}>
             <div className="orn-line" />
             <div className="orn-gem" />
@@ -127,21 +168,17 @@ export default function StudentIntakePage() {
   if (!assessment) return null;
 
   const typeLabel =
-    current?.type === "MCQ"
-      ? "اختيار من متعدد"
-      : current?.type === "TF"
-        ? "صح أم خطأ"
-        : "إجابة مكتوبة";
+    current?.type === "MCQ" ? T.mcq : current?.type === "TF" ? T.tf : T.written;
 
   return (
-    <div className="pg-shell">
+    <div className="pg-shell" dir={dir}>
       <div className="intake-wrap">
         {/* ── Header ── */}
         <div className="intake-head">
           <div className="intake-head-left">
             <div className="intake-eyebrow">
               <div className="ey-gem" />
-              اختبار القبول
+              {T.eyebrow}
             </div>
             <h1 className="intake-title">{assessment.title}</h1>
           </div>
@@ -149,7 +186,7 @@ export default function StudentIntakePage() {
             <span className="counter-cur">{currentQ + 1}</span>
             <span className="counter-sep">/</span>
             <span className="counter-tot">{questions.length}</span>
-            <div className="counter-sub">{answeredCount} مجاب</div>
+            <div className="counter-sub">{answeredCount} {T.answered}</div>
           </div>
         </div>
 
@@ -168,7 +205,7 @@ export default function StudentIntakePage() {
               key={q.id}
               className={`q-dot ${i === currentQ ? "cur" : ""} ${answers[q.id] ? "ans" : ""}`}
               onClick={() => setCurrentQ(i)}
-              title={`سؤال ${i + 1}`}
+              title={T.questionDot(i)}
             />
           ))}
         </div>
@@ -203,8 +240,8 @@ export default function StudentIntakePage() {
             {current.type === "TF" && (
               <div className="tf-row">
                 {[
-                  { val: "true", label: "صحيح" },
-                  { val: "false", label: "خطأ" },
+                  { val: "true", label: T.tfTrue },
+                  { val: "false", label: T.tfFalse },
                 ].map((opt) => (
                   <button
                     key={opt.val}
@@ -223,11 +260,11 @@ export default function StudentIntakePage() {
             {current.type === "WRITTEN" && (
               <textarea
                 className="written-inp"
-                placeholder="اكتب إجابتك هنا..."
+                placeholder={T.writtenPH}
                 value={answers[current.id] ?? ""}
                 onChange={(e) => setAnswer(current.id, e.target.value)}
                 rows={5}
-                dir="rtl"
+                dir={dir}
               />
             )}
           </div>
@@ -240,32 +277,15 @@ export default function StudentIntakePage() {
             onClick={() => setCurrentQ((q) => Math.max(0, q - 1))}
             disabled={currentQ === 0}
           >
-            <svg
-              width="14"
-              height="14"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path d="M9 18l6-6-6-6" />
             </svg>
-            السابق
+            {T.prev}
           </button>
           {currentQ < questions.length - 1 ? (
-            <button
-              className="nav-btn pri"
-              onClick={() => setCurrentQ((q) => q + 1)}
-            >
-              التالي
-              <svg
-                width="14"
-                height="14"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
+            <button className="nav-btn pri" onClick={() => setCurrentQ((q) => q + 1)}>
+              {T.next}
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </button>
@@ -276,13 +296,8 @@ export default function StudentIntakePage() {
               disabled={submitting}
             >
               {submitting ? (
-                <>
-                  <span className="nav-spin" />
-                  <span>جارٍ التقديم...</span>
-                </>
-              ) : (
-                "تقديم الاختبار ✔"
-              )}
+                <><span className="nav-spin" /><span>{T.submitting}</span></>
+              ) : T.submit}
             </button>
           )}
         </div>
@@ -329,7 +344,7 @@ const css = `
 
   .pg-shell{
     min-height:100vh; background:var(--ow);
-    font-family:'Cairo',sans-serif; direction:rtl;
+    font-family:'Cairo',sans-serif;
     display:flex; align-items:flex-start; justify-content:center;
     padding:40px 20px 80px;
   }

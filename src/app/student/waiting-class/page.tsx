@@ -1,9 +1,41 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/language-context";
+
+const S = {
+  ar: {
+    headerLabel: "تعيين المدرسة",
+    headerTitle: "تم تعيينك في مدرسة!",
+    desc: (name: string) => `${name ? `مرحباً ${name}، ` : ""}تم قبولك في المدرسة بنجاح. الآن سيقوم مدير المدرسة بمراجعة نتائجك وتعيينك في الفصل الدراسي المناسب قريباً.`,
+    step1Title: "اختبار القبول",
+    step1Sub: "مكتمل",
+    step2Title: "تعيين المدرسة",
+    step2Sub: "مكتمل",
+    step3Title: "تعيين الفصل الدراسي",
+    step3Sub: "قيد الانتظار...",
+    note: "سيتم إخطارك فور تعيينك في فصلك الدراسي. لا حاجة لفعل أي شيء الآن.",
+  },
+  sq: {
+    headerLabel: "Caktimi i shkollës",
+    headerTitle: "Jeni caktuar në një shkollë!",
+    desc: (name: string) => `${name ? `Mirësevini ${name}, ` : ""}Jeni pranuar me sukses në shkollë. Tani drejtori i shkollës do të rishikojë rezultatet tuaja dhe do t'ju caktojë në klasën e duhur së shpejti.`,
+    step1Title: "Testi i pranimit",
+    step1Sub: "Kryer",
+    step2Title: "Caktimi i shkollës",
+    step2Sub: "Kryer",
+    step3Title: "Caktimi i klasës",
+    step3Sub: "Duke pritur...",
+    note: "Do të njoftoheni menjëherë sapo të caktoheni në klasën tuaj. Nuk keni nevojë të bëni asgjë tani.",
+  },
+} as const;
 
 export default function StudentWaitingClassPage() {
+  const { lang } = useLang();
+  const T = S[lang === "sq" ? "sq" : "ar"];
+  const dir = lang === "sq" ? "ltr" : "rtl";
+
   const [studentName, setStudentName] = useState("");
   const [schoolName, setSchoolName] = useState("");
   const [visible, setVisible] = useState(false);
@@ -18,8 +50,14 @@ export default function StudentWaitingClassPage() {
     setTimeout(() => setVisible(true), 50);
   }, []);
 
+  const checkIcon = (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+
   return (
-    <div className="shell">
+    <div className="shell" dir={dir}>
       <div
         className="card"
         style={{
@@ -31,80 +69,41 @@ export default function StudentWaitingClassPage() {
         {/* Dark header bar */}
         <div className="card-header">
           <div className="header-icon">
-            <svg
-              width="26"
-              height="26"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
               <polyline points="9 22 9 12 15 12 15 22" />
             </svg>
           </div>
           <div>
-            <div className="header-label">تعيين المدرسة</div>
-            <div className="header-title">تم تعيينك في مدرسة!</div>
+            <div className="header-label">{T.headerLabel}</div>
+            <div className="header-title">{T.headerTitle}</div>
             {schoolName && <div className="school-pill">{schoolName}</div>}
           </div>
         </div>
 
         {/* Body */}
         <div className="card-body">
-          <p className="desc-text">
-            {studentName ? `مرحباً ${studentName}، ` : ""}
-            تم قبولك في المدرسة بنجاح. الآن سيقوم مدير المدرسة بمراجعة نتائجك
-            وتعيينك في الفصل الدراسي المناسب قريباً.
-          </p>
+          <p className="desc-text">{T.desc(studentName)}</p>
 
           <div className="steps-box">
             <div className="step">
               <div className="step-con">
-                <div className="step-dot dot-done">
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--ink)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
+                <div className="step-dot dot-done">{checkIcon}</div>
                 <div className="step-line line-done" />
               </div>
               <div className="step-text">
-                <div className="step-title">اختبار القبول</div>
-                <div className="step-sub sub-done">مكتمل</div>
+                <div className="step-title">{T.step1Title}</div>
+                <div className="step-sub sub-done">{T.step1Sub}</div>
               </div>
             </div>
             <div className="step">
               <div className="step-con">
-                <div className="step-dot dot-done">
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="var(--ink)"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
+                <div className="step-dot dot-done">{checkIcon}</div>
                 <div className="step-line line-done" />
               </div>
               <div className="step-text">
-                <div className="step-title">تعيين المدرسة</div>
-                <div className="step-sub sub-done">مكتمل</div>
+                <div className="step-title">{T.step2Title}</div>
+                <div className="step-sub sub-done">{T.step2Sub}</div>
               </div>
             </div>
             <div className="step" style={{ paddingBottom: 0 }}>
@@ -114,8 +113,8 @@ export default function StudentWaitingClassPage() {
                 </div>
               </div>
               <div className="step-text">
-                <div className="step-title">تعيين الفصل الدراسي</div>
-                <div className="step-sub sub-active">قيد الانتظار...</div>
+                <div className="step-title">{T.step3Title}</div>
+                <div className="step-sub sub-active">{T.step3Sub}</div>
               </div>
             </div>
           </div>
@@ -123,24 +122,17 @@ export default function StudentWaitingClassPage() {
           <div className="divider" />
 
           <div className="note-bar">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v4m0 4h.01" />
             </svg>
-            سيتم إخطارك فور تعيينك في فصلك الدراسي. لا حاجة لفعل أي شيء الآن.
+            {T.note}
           </div>
         </div>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
@@ -148,7 +140,7 @@ export default function StudentWaitingClassPage() {
         }
         .shell {
           min-height: 100vh; background: var(--gold-pale);
-          font-family: 'Tajawal', sans-serif; direction: rtl;
+          font-family: 'Cairo', sans-serif;
           display: flex; align-items: center; justify-content: center; padding: 32px 16px;
         }
         .card {

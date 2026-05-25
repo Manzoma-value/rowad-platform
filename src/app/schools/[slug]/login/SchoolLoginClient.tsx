@@ -253,6 +253,7 @@ const STRINGS = {
     poweredBy: "E mundësuar nga",
     backTo: "Kthehu te faqja kryesore",
     or: "ose",
+    forgotPw: "Keni harruar fjalëkalimin?",
   },
   ar: {
     loginTitle: "تسجيل الدخول",
@@ -273,6 +274,7 @@ const STRINGS = {
     poweredBy: "مدعومة من",
     backTo: "العودة إلى الصفحة الرئيسية",
     or: "أو",
+    forgotPw: "نسيت كلمة المرور؟",
   },
 } as const;
 
@@ -530,6 +532,12 @@ export default function SchoolLoginClient({ school }: { school: School }) {
                   {error}
                 </div>
               )}
+
+              <div style={{ textAlign: "end", marginTop: -6 }}>
+                <Link href="/forgot-password" className="lp-forgot">
+                  {L.forgotPw}
+                </Link>
+              </div>
 
               <button
                 className="lp-btn"
@@ -938,6 +946,8 @@ const css = `
   .lp-divider-text { font-size: 12px; color: var(--text3); font-weight: 600; flex-shrink: 0; }
 
   .lp-footer-text { text-align: center; font-size: 13px; color: var(--text3); font-weight: 500; }
+  .lp-forgot { font-size: 12px; font-weight: 700; color: var(--gold); text-decoration: none; opacity: 0.8; transition: opacity 0.15s; }
+  .lp-forgot:hover { opacity: 1; text-decoration: underline; }
   .lp-link {
     color: var(--black);
     font-weight: 800;

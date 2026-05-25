@@ -1,9 +1,43 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/language-context";
+
+const S = {
+  ar: {
+    title: (name: string) => name ? `شكراً، ${name}!` : "تم التقديم بنجاح!",
+    desc: "تم استلام إجاباتك بنجاح. سيقوم المسؤول بمراجعة اختبارك وتحديد المدرسة المناسبة لك في أقرب وقت.",
+    step1Title: "تقديم اختبار القبول",
+    step1Sub: "تم بنجاح",
+    step2Title: "مراجعة المسؤول",
+    step2Sub: "قيد الانتظار...",
+    step3Title: "تحديد المدرسة",
+    step3Sub: "قريباً",
+    step4Title: "الانضمام للفصل الدراسي",
+    step4Sub: "قريباً",
+    note: "ستظهر هذه الصفحة حتى يتم تعيينك في مدرسة. لا حاجة لفعل أي شيء الآن.",
+  },
+  sq: {
+    title: (name: string) => name ? `Faleminderit, ${name}!` : "Aplikimi u dërgua me sukses!",
+    desc: "Përgjigjet tuaja u morën me sukses. Administratori do të rishikojë testin tuaj dhe do të caktojë shkollën e duhur sa më shpejt.",
+    step1Title: "Testi i pranimit u dërgua",
+    step1Sub: "Kryer me sukses",
+    step2Title: "Rishikimi nga administratori",
+    step2Sub: "Duke pritur...",
+    step3Title: "Caktimi i shkollës",
+    step3Sub: "Së shpejti",
+    step4Title: "Bashkimi me klasën",
+    step4Sub: "Së shpejti",
+    note: "Kjo faqe do të shfaqet derisa të caktoheni në një shkollë. Nuk keni nevojë të bëni asgjë tani.",
+  },
+} as const;
 
 export default function StudentWaitingPage() {
+  const { lang } = useLang();
+  const T = S[lang === "sq" ? "sq" : "ar"];
+  const dir = lang === "sq" ? "ltr" : "rtl";
+
   const [studentName, setStudentName] = useState("");
   const [visible, setVisible] = useState(false);
 
@@ -17,7 +51,7 @@ export default function StudentWaitingPage() {
   }, []);
 
   return (
-    <div className="shell">
+    <div className="shell" dir={dir}>
       <div
         className="card"
         style={{
@@ -31,54 +65,31 @@ export default function StudentWaitingPage() {
           <div className="seal-ring" />
           <div className="seal-ring2" />
           <div className="seal-inner">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#C8A96A"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C8A96A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
         </div>
 
         <div className="card-text">
-          <h1 className="card-title">
-            {studentName ? `شكراً، ${studentName}!` : "تم التقديم بنجاح!"}
-          </h1>
+          <h1 className="card-title">{T.title(studentName)}</h1>
           <div className="gold-rule" />
-          <p className="card-desc">
-            تم استلام إجاباتك بنجاح. سيقوم المسؤول بمراجعة اختبارك وتحديد
-            المدرسة المناسبة لك في أقرب وقت.
-          </p>
+          <p className="card-desc">{T.desc}</p>
         </div>
 
         <div className="steps-box">
           <div className="step">
             <div className="step-con">
               <div className="step-dot dot-done">
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--ink)"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
               <div className="step-line line-done" />
             </div>
             <div className="step-text">
-              <div className="step-title">تقديم اختبار القبول</div>
-              <div className="step-sub sub-done">تم بنجاح</div>
+              <div className="step-title">{T.step1Title}</div>
+              <div className="step-sub sub-done">{T.step1Sub}</div>
             </div>
           </div>
           <div className="step">
@@ -89,8 +100,8 @@ export default function StudentWaitingPage() {
               <div className="step-line" />
             </div>
             <div className="step-text">
-              <div className="step-title">مراجعة المسؤول</div>
-              <div className="step-sub sub-active">قيد الانتظار...</div>
+              <div className="step-title">{T.step2Title}</div>
+              <div className="step-sub sub-active">{T.step2Sub}</div>
             </div>
           </div>
           <div className="step">
@@ -99,8 +110,8 @@ export default function StudentWaitingPage() {
               <div className="step-line" />
             </div>
             <div className="step-text">
-              <div className="step-title">تحديد المدرسة</div>
-              <div className="step-sub">قريباً</div>
+              <div className="step-title">{T.step3Title}</div>
+              <div className="step-sub">{T.step3Sub}</div>
             </div>
           </div>
           <div className="step" style={{ paddingBottom: 0 }}>
@@ -108,30 +119,23 @@ export default function StudentWaitingPage() {
               <div className="step-dot dot-empty" />
             </div>
             <div className="step-text">
-              <div className="step-title">الانضمام للفصل الدراسي</div>
-              <div className="step-sub">قريباً</div>
+              <div className="step-title">{T.step4Title}</div>
+              <div className="step-sub">{T.step4Sub}</div>
             </div>
           </div>
         </div>
 
         <div className="note-bar">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" />
             <path d="M12 8v4m0 4h.01" />
           </svg>
-          ستظهر هذه الصفحة حتى يتم تعيينك في مدرسة. لا حاجة لفعل أي شيء الآن.
+          {T.note}
         </div>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
@@ -139,7 +143,7 @@ export default function StudentWaitingPage() {
         }
         .shell {
           min-height: 100vh; background: var(--gold-pale);
-          font-family: 'Tajawal', sans-serif; direction: rtl;
+          font-family: 'Cairo', sans-serif;
           display: flex; align-items: center; justify-content: center; padding: 32px 16px;
         }
         .card {

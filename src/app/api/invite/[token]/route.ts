@@ -26,7 +26,7 @@ const adminClient = createClient(
 
 type InviteState =
   | { valid: false; reason: "not_found" | "disabled" | "expired" | "used" }
-  | { valid: true; invite: { id: string; school_id: string; type: string; school_name: string } };
+  | { valid: true; invite: { id: string; school_id: string; type: string; school_name: string; school_language: string } };
 
 async function resolveInvite(token: string): Promise<InviteState> {
   const invite = await prisma.invite.findUnique({
@@ -39,7 +39,7 @@ async function resolveInvite(token: string): Promise<InviteState> {
       max_uses: true,
       expires_at: true,
       school_id: true,
-      school: { select: { name: true } },
+      school: { select: { name: true, language: true } },
     },
   });
 
@@ -55,6 +55,7 @@ async function resolveInvite(token: string): Promise<InviteState> {
       school_id: invite.school_id,
       type: invite.type,
       school_name: invite.school.name,
+      school_language: invite.school.language,
     },
   };
 }
@@ -76,6 +77,7 @@ export async function GET(
     valid: true,
     type: state.invite.type,
     school_name: state.invite.school_name,
+    language: state.invite.school_language,
   });
 }
 
@@ -138,16 +140,19 @@ export async function POST(
   const { full_name, password } = validation.data;
   const email = validation.data.email.toLowerCase();
 
-  // ── Create auth user ──────────────────────────────────────────────────
+  // ── Create auth user (sends confirmation email) ───────────────────────
   console.log("[invite] creating auth user for:", email);
-  const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const { data: authData, error: authError } = await adminClient.auth.signUp({
     email,
     password,
-    email_confirm: true,
+    options: {
+      emailRedirectTo: `${siteUrl}/auth/callback`,
+    },
   });
 
   if (authError || !authData?.user) {
-    console.error("[invite] auth.admin.createUser failed:", authError);
+    console.error("[invite] auth.signUp failed:", authError);
     const isAlreadyExists = authError?.message?.toLowerCase().includes("already registered")
       || authError?.message?.toLowerCase().includes("already exists");
     const msg = isAlreadyExists
@@ -215,5 +220,6 @@ export async function POST(
     );
   }
 
-  return NextResponse.json({ success: true }, { status: 201 });
+  const emailConfirmationRequired = !authData.session;
+  return NextResponse.json({ success: true, emailConfirmationRequired }, { status: 201 });
 }

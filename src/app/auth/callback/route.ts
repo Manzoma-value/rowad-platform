@@ -64,7 +64,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=session_error`);
   }
 
-  // ── 3. Ensure the email column on the profile is populated ───────────────
+  // ── 3. Password-recovery flow — send to reset page, skip role lookup ────
+  if (type === "recovery") {
+    return NextResponse.redirect(`${origin}/reset-password`);
+  }
+
+  // ── 4. Ensure the email column on the profile is populated ───────────────
   //       (idempotent — only writes when email is still null)
   if (user.email) {
     await prisma.profile
@@ -77,7 +82,7 @@ export async function GET(request: NextRequest) {
       );
   }
 
-  // ── 4. Redirect to role-based dashboard ──────────────────────────────────
+  // ── 5. Redirect to role-based dashboard ──────────────────────────────────
   const profile = await prisma.profile
     .findUnique({ where: { id: user.id }, select: { role: true } })
     .catch(() => null);

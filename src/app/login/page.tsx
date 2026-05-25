@@ -436,6 +436,12 @@ export default function LoginPage() {
               </div>
             )}
 
+            <div style={{ textAlign: "end", marginTop: -6 }}>
+              <Link href="/forgot-password" className="lp-forgot">
+                نسيت كلمة المرور؟
+              </Link>
+            </div>
+
             <button className="lp-btn" onClick={handleLogin} disabled={loading}>
               {loading ? (
                 <>
@@ -809,6 +815,13 @@ const css = `
     color: var(--text3);
     font-weight: 500;
   }
+  .lp-forgot {
+    font-size: 12px; font-weight: 700;
+    color: var(--gold); text-decoration: none;
+    opacity: 0.8; transition: opacity 0.15s;
+  }
+  .lp-forgot:hover { opacity: 1; text-decoration: underline; }
+
   .lp-link {
     color: var(--black);
     font-weight: 800;

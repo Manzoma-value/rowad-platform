@@ -3,6 +3,56 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLang } from "@/lib/language-context";
+
+const S = {
+  ar: {
+    loading: "جارٍ تحميل الاختبار...",
+    noAssessmentTitle: "لا يوجد اختبار تصنيف متاح حالياً",
+    noAssessmentSub: "سيتم إخطارك عندما يكون الاختبار جاهزاً",
+    label: "اختبار التصنيف",
+    currentQuestion: "السؤال الحالي",
+    answered: "مجاب",
+    progress: "التقدم",
+    questionOf: (cur: number, tot: number) => `السؤال ${cur} من ${tot}`,
+    questionDot: (i: number) => `السؤال ${i + 1}`,
+    mcq: "اختيار من متعدد",
+    tf: "صح أم خطأ",
+    written: "إجابة مكتوبة",
+    tfTrue: "✔ صحيح",
+    tfFalse: "✘ خطأ",
+    writtenPH: "اكتب إجابتك هنا...",
+    prev: "→ السابق",
+    next: "التالي ←",
+    submit: "تقديم الاختبار ✔",
+    submitting: "جارٍ التقديم...",
+    errUnanswered: (n: number) => `يوجد ${n} سؤال لم تجب عليه`,
+    errGeneric: "حدث خطأ",
+  },
+  sq: {
+    loading: "Duke ngarkuar testin...",
+    noAssessmentTitle: "Nuk ka test vendosjeje të disponueshëm",
+    noAssessmentSub: "Do të njoftoheni kur testi të jetë gati",
+    label: "Testi i Vendosjes",
+    currentQuestion: "Pyetja aktuale",
+    answered: "i përgjigjet",
+    progress: "Progresi",
+    questionOf: (cur: number, tot: number) => `Pyetja ${cur} nga ${tot}`,
+    questionDot: (i: number) => `Pyetja ${i + 1}`,
+    mcq: "Zgjedhje e shumëfishtë",
+    tf: "E vërtetë apo e gabuar",
+    written: "Përgjigje me shkrim",
+    tfTrue: "✔ E vërtetë",
+    tfFalse: "✘ E gabuar",
+    writtenPH: "Shkruani përgjigjen tuaj këtu...",
+    prev: "← Mëparshëm",
+    next: "Tjetër →",
+    submit: "Dërgo testin ✔",
+    submitting: "Duke dërguar...",
+    errUnanswered: (n: number) => `Keni ${n} pyetje të papërgjigjura`,
+    errGeneric: "Ndodhi një gabim",
+  },
+} as const;
 
 interface Option {
   id: string;
@@ -28,6 +78,9 @@ interface School {
 
 export default function StudentPlacementPage() {
   const router = useRouter();
+  const { lang } = useLang();
+  const T = S[lang === "sq" ? "sq" : "ar"];
+  const dir = lang === "sq" ? "ltr" : "rtl";
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +115,7 @@ export default function StudentPlacementPage() {
     if (!assessment) return;
     const unanswered = questions.filter((q) => !answers[q.id]);
     if (unanswered.length > 0) {
-      setError(`يوجد ${unanswered.length} سؤال لم تجب عليه`);
+      setError(T.errUnanswered(unanswered.length));
       setCurrentQ(questions.findIndex((q) => !answers[q.id]));
       return;
     }
@@ -82,7 +135,7 @@ export default function StudentPlacementPage() {
       });
       const d = await r.json();
       if (d.success) router.push("/student/waiting-class");
-      else setError(d.error ?? "حدث خطأ");
+      else setError(d.error ?? T.errGeneric);
     } finally {
       setSubmitting(false);
     }
@@ -90,29 +143,22 @@ export default function StudentPlacementPage() {
 
   if (loading)
     return (
-      <Shell>
-        <Spinner />
+      <Shell dir={dir}>
+        <Spinner label={T.loading} />
       </Shell>
     );
 
   if (noAssessment)
     return (
-      <Shell>
+      <Shell dir={dir}>
         <div className="p-empty">
           <div className="p-empty-icon">
-            <svg
-              width="40"
-              height="40"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            >
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <h2>لا يوجد اختبار تصنيف متاح حالياً</h2>
-          <p>سيتم إخطارك عندما يكون الاختبار جاهزاً</p>
+          <h2>{T.noAssessmentTitle}</h2>
+          <p>{T.noAssessmentSub}</p>
         </div>
         <style>{styles}</style>
       </Shell>
@@ -121,28 +167,21 @@ export default function StudentPlacementPage() {
   if (!assessment) return null;
 
   return (
-    <Shell>
+    <Shell dir={dir}>
       <div className="p-wrap">
         {/* Header */}
         <div className="p-header">
           <div className="p-header-left">
             {school && (
               <div className="school-chip">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
                 {school.name}
               </div>
             )}
-            <div className="p-label">اختبار التصنيف</div>
+            <div className="p-label">{T.label}</div>
             <h1 className="p-title">{assessment.title}</h1>
           </div>
           <div className="p-header-right">
@@ -150,16 +189,16 @@ export default function StudentPlacementPage() {
               {currentQ + 1}
               <span className="q-counter-total">/{questions.length}</span>
             </div>
-            <div className="q-counter-label">السؤال الحالي</div>
-            <div className="answered-badge">{answeredCount} مجاب</div>
+            <div className="q-counter-label">{T.currentQuestion}</div>
+            <div className="answered-badge">{answeredCount} {T.answered}</div>
           </div>
         </div>
 
         {/* Progress */}
         <div className="prog-section">
           <div className="prog-info">
-            <span>التقدم</span>
-            <span>{Math.round(progress)}٪</span>
+            <span>{T.progress}</span>
+            <span>{Math.round(progress)}%</span>
           </div>
           <div className="prog-track">
             <div className="prog-fill" style={{ width: `${progress}%` }} />
@@ -170,7 +209,7 @@ export default function StudentPlacementPage() {
                 key={q.id}
                 className={`q-dot ${i === currentQ ? "current" : ""} ${answers[q.id] ? "answered" : ""}`}
                 onClick={() => setCurrentQ(i)}
-                title={`السؤال ${i + 1}`}
+                title={T.questionDot(i)}
               />
             ))}
           </div>
@@ -181,14 +220,10 @@ export default function StudentPlacementPage() {
           <div className="q-card" key={current.id}>
             <div className="q-card-top">
               <div className="q-type-pill">
-                {current.type === "MCQ"
-                  ? "اختيار من متعدد"
-                  : current.type === "TF"
-                    ? "صح أم خطأ"
-                    : "إجابة مكتوبة"}
+                {current.type === "MCQ" ? T.mcq : current.type === "TF" ? T.tf : T.written}
               </div>
               <div className="q-num-label">
-                السؤال {currentQ + 1} من {questions.length}
+                {T.questionOf(currentQ + 1, questions.length)}
               </div>
             </div>
             <div className="q-card-body">
@@ -216,8 +251,8 @@ export default function StudentPlacementPage() {
               {current.type === "TF" && (
                 <div className="tf-row">
                   {[
-                    { val: "true", label: "✔ صحيح" },
-                    { val: "false", label: "✘ خطأ" },
+                    { val: "true", label: T.tfTrue },
+                    { val: "false", label: T.tfFalse },
                   ].map((opt) => (
                     <button
                       key={opt.val}
@@ -233,11 +268,11 @@ export default function StudentPlacementPage() {
               {current.type === "WRITTEN" && (
                 <textarea
                   className="written-inp"
-                  placeholder="اكتب إجابتك هنا..."
+                  placeholder={T.writtenPH}
                   value={answers[current.id] ?? ""}
                   onChange={(e) => setAnswer(current.id, e.target.value)}
                   rows={5}
-                  dir="rtl"
+                  dir={dir}
                 />
               )}
             </div>
@@ -250,14 +285,11 @@ export default function StudentPlacementPage() {
             onClick={() => setCurrentQ((q) => Math.max(0, q - 1))}
             disabled={currentQ === 0}
           >
-            → السابق
+            {T.prev}
           </button>
           {currentQ < questions.length - 1 ? (
-            <button
-              className="nav-btn nav-next"
-              onClick={() => setCurrentQ((q) => q + 1)}
-            >
-              التالي ←
+            <button className="nav-btn nav-next" onClick={() => setCurrentQ((q) => q + 1)}>
+              {T.next}
             </button>
           ) : (
             <button
@@ -265,7 +297,7 @@ export default function StudentPlacementPage() {
               onClick={handleSubmit}
               disabled={submitting}
             >
-              {submitting ? "جارٍ التقديم..." : "تقديم الاختبار ✔"}
+              {submitting ? T.submitting : T.submit}
             </button>
           )}
         </div>
@@ -277,12 +309,12 @@ export default function StudentPlacementPage() {
   );
 }
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, dir = "rtl" }: { children: React.ReactNode; dir?: string }) {
   return (
-    <div className="p-shell">
+    <div className="p-shell" dir={dir}>
       {children}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
@@ -291,7 +323,7 @@ function Shell({ children }: { children: React.ReactNode }) {
         }
         .p-shell {
           min-height: 100vh; background: var(--gold-pale);
-          font-family: 'Tajawal', sans-serif; direction: rtl;
+          font-family: 'Cairo', sans-serif;
           display: flex; align-items: flex-start; justify-content: center; padding: 32px 16px;
         }
       `}</style>
@@ -299,29 +331,11 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Spinner() {
+function Spinner({ label = "..." }: { label?: string }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        color: "#7A6540",
-        fontSize: 14,
-        padding: "80px 0",
-      }}
-    >
-      <div
-        style={{
-          width: 20,
-          height: 20,
-          border: "2px solid #E8D9B8",
-          borderTopColor: "#C8A96A",
-          borderRadius: "50%",
-          animation: "spin 0.7s linear infinite",
-        }}
-      />
-      جارٍ تحميل الاختبار...
+    <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#7A6540", fontSize: 14, padding: "80px 0" }}>
+      <div style={{ width: 20, height: 20, border: "2px solid #E8D9B8", borderTopColor: "#C8A96A", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      {label}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -371,7 +385,7 @@ const styles = `
     display: flex; align-items: center; gap: 12px; padding: 13px 15px;
     border-radius: 11px; background: var(--surface); border: 1.5px solid var(--border);
     color: var(--ink2); font-size: 14.5px; font-weight: 500; cursor: pointer;
-    text-align: right; transition: all 0.15s; font-family: 'Tajawal', sans-serif; width: 100%;
+    text-align: right; transition: all 0.15s; font-family: 'Cairo', sans-serif; width: 100%;
   }
   .q-opt:hover { border-color: var(--gold); background: var(--gold-pale); }
   .q-opt.selected { border-color: var(--gold-dark); background: rgba(200,169,106,0.1); color: var(--ink); font-weight: 700; }

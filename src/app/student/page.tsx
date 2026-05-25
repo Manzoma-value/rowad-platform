@@ -98,7 +98,7 @@ export default function StudentPage() {
               </svg>
             </div>
             <h2 className="sd-empty-title">{tr.noClass}</h2>
-            <p className="sd-empty-sub">{lang === "ar" ? "تواصل مع مدير المدرسة" : "Kontaktoni drejtorin e shkollës"}</p>
+            <p className="sd-empty-sub">{tr.noClassContact}</p>
           </div>
         ) : (
 
@@ -186,19 +186,19 @@ export default function StudentPage() {
               href: "/student/quizzes",
               icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>,
               title: tr.quizzes,
-              sub: lang === "ar" ? "أداء الاختبارات المتاحة" : "Kryej testet e disponueshme",
+              sub: tr.quizzesActionSub,
             },
             {
               href: "/student/roadmap",
               icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg>,
-              title: lang === "ar" ? "بنك الأسئلة" : "Banka e Pyetjeve",
-              sub: lang === "ar" ? "خارطة طريق التعلم" : "Harta e të nxënit",
+              title: tr.questionBank,
+              sub: tr.questionBankSub,
             },
             {
               href: "/student/classes",
               icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>,
               title: tr.myClass,
-              sub: lang === "ar" ? "تفاصيل فصلك الدراسي" : "Detajet e klasës suaj",
+              sub: tr.myClassActionSub,
             },
           ].map(({ href, icon, title, sub }, idx) => (
             <Link key={href} href={href} className="sd-action" style={{ animationDelay: `${idx * 60}ms` }}>

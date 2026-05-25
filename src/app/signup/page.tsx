@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useLang } from "@/lib/language-context";
 
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
 const STAR_LINES = Array.from({ length: 12 }, (_, i) => {
@@ -201,7 +202,24 @@ function Mandala({
 
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
+const EMAIL_SENT_STRINGS = {
+  ar: {
+    title: "تحقق من بريدك الإلكتروني",
+    msg: "أرسلنا رابط تأكيد إلى",
+    note: "افتح البريد وانقر على الرابط لتفعيل حسابك. تحقق من مجلد الرسائل غير المرغوب فيها (Spam) إذا لم تجده.",
+    btn: "الانتقال إلى تسجيل الدخول",
+  },
+  sq: {
+    title: "Kontrolloni emailin tuaj",
+    msg: "Kemi dërguar një link konfirmimi në",
+    note: "Klikoni linkun në email për të aktivizuar llogarinë tuaj. Kontrolloni dosjen spam nëse nuk e gjeni mesazhin.",
+    btn: "Shko te hyrja",
+  },
+};
+
 export default function SignupPage() {
+  const { lang } = useLang();
+  const ES = EMAIL_SENT_STRINGS[lang === "sq" ? "sq" : "ar"];
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -299,17 +317,14 @@ export default function SignupPage() {
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
               </div>
-              <h2 className="lp-form-title" style={{ fontSize: 22 }}>تحقق من بريدك الإلكتروني</h2>
+              <h2 className="lp-form-title" style={{ fontSize: 22 }}>{ES.title}</h2>
               <p className="lp-email-sent-msg">
-                أرسلنا رابط تأكيد إلى{" "}
+                {ES.msg}{" "}
                 <span className="lp-email-sent-addr" dir="ltr">{email.trim()}</span>
-                .<br />افتح البريد وانقر على الرابط لتفعيل حسابك.
               </p>
-              <p className="lp-email-sent-note">
-                لم تستلم الرسالة؟ تحقق من مجلد الرسائل غير المرغوب فيها (Spam).
-              </p>
+              <p className="lp-email-sent-note">{ES.note}</p>
               <Link href="/login" className="lp-btn" style={{ textDecoration: "none", marginTop: 24 }}>
-                الانتقال إلى تسجيل الدخول
+                {ES.btn}
               </Link>
             </div>
           ) : (

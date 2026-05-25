@@ -3,6 +3,34 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLang } from "@/lib/language-context";
+
+const S = {
+  ar: {
+    congrats: "مبروك!",
+    greeting: (name: string) => name ? `أهلاً ${name}،` : "أهلاً بك!",
+    sub: "تم قبولك في المنصة وتعيينك في مدرسة",
+    schoolLabel: "مدرستك",
+    scoreLabel: "نتيجة اختبار القبول",
+    nextTitle: "الخطوة التالية: اختبار التصنيف",
+    nextDesc: "ستجري الآن اختباراً قصيراً تعدّه مدرستك لتحديد الفصل المناسب لك. يشمل أسئلة اختيار متعدد وصح أم خطأ وأسئلة مكتوبة.",
+    startBtn: "ابدأ اختبار التصنيف",
+    starting: "جارٍ التحميل...",
+    footerNote: "الاختبار إلزامي لتحديد فصلك الدراسي",
+  },
+  sq: {
+    congrats: "Urime!",
+    greeting: (name: string) => name ? `Mirë se vini, ${name}!` : "Mirë se vini!",
+    sub: "Jeni pranuar në platformë dhe caktuar në një shkollë",
+    schoolLabel: "Shkolla juaj",
+    scoreLabel: "Rezultati i testit të pranimit",
+    nextTitle: "Hapi tjetër: Testi i Vendosjes",
+    nextDesc: "Tani do të bëni një test të shkurtër të përgatitur nga shkolla juaj për të përcaktuar klasën e duhur. Përfshin pyetje me zgjedhje të shumëfishtë, e vërtetë/e gabuar dhe me shkrim.",
+    startBtn: "Fillo testin e vendosjes",
+    starting: "Duke ngarkuar...",
+    footerNote: "Testi është i detyrueshëm për të përcaktuar klasën tuaj",
+  },
+} as const;
 
 interface StudentData {
   profile: { full_name: string };
@@ -16,6 +44,9 @@ interface IntakeAttempt {
 
 export default function StudentSchoolAssignedPage() {
   const router = useRouter();
+  const { lang } = useLang();
+  const T = S[lang === "sq" ? "sq" : "ar"];
+  const dir = lang === "sq" ? "ltr" : "rtl";
   const [student, setStudent] = useState<StudentData | null>(null);
   const [attempt, setAttempt] = useState<IntakeAttempt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,14 +90,14 @@ export default function StudentSchoolAssignedPage() {
 
   if (loading)
     return (
-      <div className="shell">
+      <div className="shell" dir={dir}>
         <div className="spinner" />
         <style>{baseStyles}</style>
       </div>
     );
 
   return (
-    <div className="shell">
+    <div className="shell" dir={dir}>
       <div
         className="card"
         style={{
@@ -96,15 +127,9 @@ export default function StudentSchoolAssignedPage() {
             </div>
           </div>
           <div className="banner-text">
-            <div className="banner-eyebrow">مبروك!</div>
-            <div className="banner-title">
-              {student?.profile.full_name
-                ? `أهلاً ${student.profile.full_name}،`
-                : "أهلاً بك!"}
-            </div>
-            <div className="banner-sub">
-              تم قبولك في المنصة وتعيينك في مدرسة
-            </div>
+            <div className="banner-eyebrow">{T.congrats}</div>
+            <div className="banner-title">{T.greeting(student?.profile.full_name ?? "")}</div>
+            <div className="banner-sub">{T.sub}</div>
           </div>
         </div>
 
@@ -127,7 +152,7 @@ export default function StudentSchoolAssignedPage() {
               </svg>
             </div>
             <div className="school-info">
-              <div className="school-label-sm">مدرستك</div>
+              <div className="school-label-sm">{T.schoolLabel}</div>
               <div className="school-name">{student.school.name}</div>
             </div>
           </div>
@@ -142,7 +167,7 @@ export default function StudentSchoolAssignedPage() {
               background: `${scoreColor}0D`,
             }}
           >
-            <div className="score-label-top">نتيجة اختبار القبول</div>
+            <div className="score-label-top">{T.scoreLabel}</div>
             <div className="score-display">
               <span className="score-num" style={{ color: scoreColor }}>
                 {attempt.score}
@@ -183,43 +208,26 @@ export default function StudentSchoolAssignedPage() {
             </svg>
           </div>
           <div className="next-step-body">
-            <div className="next-step-title">
-              الخطوة التالية: اختبار التصنيف
-            </div>
-            <div className="next-step-desc">
-              ستجري الآن اختباراً قصيراً تعدّه مدرستك لتحديد الفصل المناسب لك.
-              يشمل أسئلة اختيار متعدد وصح أم خطأ وأسئلة مكتوبة.
-            </div>
+            <div className="next-step-title">{T.nextTitle}</div>
+            <div className="next-step-desc">{T.nextDesc}</div>
           </div>
         </div>
 
         {/* CTA */}
         <button className="start-btn" onClick={handleStart} disabled={starting}>
           {starting ? (
-            <>
-              <div className="btn-spin" />
-              جارٍ التحميل...
-            </>
+            <><div className="btn-spin" />{T.starting}</>
           ) : (
             <>
-              ابدأ اختبار التصنيف
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+              {T.startBtn}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </>
           )}
         </button>
 
-        <div className="footer-note">الاختبار إلزامي لتحديد فصلك الدراسي</div>
+        <div className="footer-note">{T.footerNote}</div>
       </div>
 
       <style>{baseStyles}</style>
@@ -237,7 +245,7 @@ const baseStyles = `
   }
   .shell {
     min-height: 100vh; background: var(--gold-pale);
-    font-family: 'Tajawal', sans-serif; direction: rtl;
+    font-family: 'Cairo', sans-serif;
     display: flex; align-items: center; justify-content: center; padding: 28px 16px;
   }
   .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: sp 0.7s linear infinite; }
@@ -321,7 +329,7 @@ const pageStyles = `
     display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 18px;
     background: var(--ink); color: #fff; padding: 14px; border-radius: 12px;
     border: none; font-size: 15px; font-weight: 800; cursor: pointer;
-    transition: all 0.2s; font-family: 'Tajawal', sans-serif; width: calc(100% - 48px);
+    transition: all 0.2s; font-family: 'Cairo', sans-serif; width: calc(100% - 48px);
   }
   .start-btn:hover:not(:disabled) { background: var(--gold); color: var(--ink); }
   .start-btn:disabled { opacity: 0.5; cursor: not-allowed; }

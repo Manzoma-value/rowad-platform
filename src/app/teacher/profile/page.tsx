@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/language-context";
 
@@ -640,7 +641,7 @@ export default function TeacherProfilePage() {
                 <span className="pf-sec-title">{tr.password}</span>
                 <span className="pf-sec-dots">••••••••••••</span>
               </div>
-              <button className="pf-btn-sm">{tr.change}</button>
+              <Link href="/forgot-password" className="pf-btn-sm">{tr.change}</Link>
             </div>
           </div>
 

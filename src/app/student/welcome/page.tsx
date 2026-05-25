@@ -3,6 +3,32 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLang } from "@/lib/language-context";
+
+const S = {
+  ar: {
+    bannerTitle: "تم تعيينك في فصلك الدراسي!",
+    bannerSub: (name: string) => `أهلاً وسهلاً، ${name}`,
+    classLabel: "فصلك الدراسي",
+    teacherLabel: "معلمك",
+    classmatesLabel: "زملاؤك في الفصل",
+    classmatesCount: (n: number) => `${n} طالب`,
+    scoreLabel: "نتيجة اختبار التصنيف",
+    goBtn: "انتقل إلى الفصل الآن",
+    footerNote: "يمكنك الآن رؤية إعلانات فصلك وأداء الاختبارات",
+  },
+  sq: {
+    bannerTitle: "Jeni caktuar në klasën tuaj!",
+    bannerSub: (name: string) => `Mirë se vini, ${name}`,
+    classLabel: "Klasa juaj",
+    teacherLabel: "Mësuesi juaj",
+    classmatesLabel: "Shokët e klasës",
+    classmatesCount: (n: number) => `${n} nxënës`,
+    scoreLabel: "Rezultati i testit të vendosjes",
+    goBtn: "Shko te klasa tani",
+    footerNote: "Tani mund të shikoni njoftime dhe të bëni teste",
+  },
+} as const;
 
 interface StudentData {
   profile: { full_name: string };
@@ -22,6 +48,9 @@ interface PlacementAttempt {
 
 export default function StudentWelcomePage() {
   const router = useRouter();
+  const { lang } = useLang();
+  const T = S[lang === "sq" ? "sq" : "ar"];
+  const dir = lang === "sq" ? "ltr" : "rtl";
   const [student, setStudent] = useState<StudentData | null>(null);
   const [attempt, setAttempt] = useState<PlacementAttempt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,14 +93,14 @@ export default function StudentWelcomePage() {
 
   if (loading)
     return (
-      <div className="shell">
+      <div className="shell" dir={dir}>
         <div className="spinner" />
         <style>{baseStyles}</style>
       </div>
     );
 
   return (
-    <div className="shell">
+    <div className="shell" dir={dir}>
       <div
         className="card"
         style={{
@@ -93,10 +122,8 @@ export default function StudentWelcomePage() {
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </div>
-          <div className="banner-title">تم تعيينك في فصلك الدراسي!</div>
-          <div className="banner-sub">
-            أهلاً وسهلاً، {student?.profile.full_name}
-          </div>
+          <div className="banner-title">{T.bannerTitle}</div>
+          <div className="banner-sub">{T.bannerSub(student?.profile.full_name ?? "")}</div>
         </div>
 
         {/* Class highlight */}
@@ -116,7 +143,7 @@ export default function StudentWelcomePage() {
               <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z" />
             </svg>
           </div>
-          <div className="class-label">فصلك الدراسي</div>
+          <div className="class-label">{T.classLabel}</div>
           <div className="class-name">{student?.class?.name ?? "—"}</div>
           {student?.school && (
             <div className="class-school">{student.school.name}</div>
@@ -142,7 +169,7 @@ export default function StudentWelcomePage() {
               </svg>
             </div>
             <div className="info-body">
-              <div className="info-label">معلمك</div>
+              <div className="info-label">{T.teacherLabel}</div>
               <div className="info-value">
                 {student.class.teacher.profile.full_name}
               </div>
@@ -169,10 +196,8 @@ export default function StudentWelcomePage() {
               </svg>
             </div>
             <div className="info-body">
-              <div className="info-label">زملاؤك في الفصل</div>
-              <div className="info-value">
-                {student.class.students.length} طالب
-              </div>
+              <div className="info-label">{T.classmatesLabel}</div>
+              <div className="info-value">{T.classmatesCount(student.class.students.length)}</div>
             </div>
           </div>
         )}
@@ -184,7 +209,7 @@ export default function StudentWelcomePage() {
             style={{ background: scoreBg, borderColor: `${scoreColor}33` }}
           >
             <div className="score-header">
-              <span className="score-label">نتيجة اختبار التصنيف</span>
+              <span className="score-label">{T.scoreLabel}</span>
               <span
                 className="score-pct"
                 style={{ color: scoreColor, background: `${scoreColor}18` }}
@@ -209,7 +234,7 @@ export default function StudentWelcomePage() {
         )}
 
         <button className="go-btn" onClick={() => router.push("/student")}>
-          انتقل إلى الفصل الآن
+          {T.goBtn}
           <svg
             width="16"
             height="16"
@@ -224,9 +249,7 @@ export default function StudentWelcomePage() {
           </svg>
         </button>
 
-        <div className="footer-note">
-          يمكنك الآن رؤية إعلانات فصلك وأداء الاختبارات
-        </div>
+        <div className="footer-note">{T.footerNote}</div>
       </div>
 
       <style>{baseStyles}</style>
@@ -271,7 +294,7 @@ export default function StudentWelcomePage() {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           background: var(--ink); color: #fff; padding: 14px 20px; border-radius: 12px;
           border: none; font-size: 15px; font-weight: 800; cursor: pointer;
-          transition: all 0.2s; font-family: 'Tajawal', sans-serif; width: 100%;
+          transition: all 0.2s; font-family: 'Cairo', sans-serif; width: 100%;
         }
         .go-btn:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); }
         .footer-note { text-align: center; font-size: 12px; color: var(--muted); }
@@ -289,7 +312,7 @@ const baseStyles = `
   }
   .shell {
     min-height: 100vh; background: var(--gold-pale);
-    font-family: 'Tajawal', sans-serif; direction: rtl;
+    font-family: 'Cairo', sans-serif;
     display: flex; align-items: center; justify-content: center; padding: 28px 16px;
   }
   .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: sp 0.7s linear infinite; }

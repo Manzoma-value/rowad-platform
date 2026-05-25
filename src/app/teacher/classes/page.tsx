@@ -3,6 +3,44 @@ export const dynamic = "force-dynamic";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 import { useEffect, useState, useCallback } from "react";
+import { useLang } from "@/lib/language-context";
+
+const S = {
+  ar: {
+    loading: "جارٍ التحميل...",
+    eyebrow: "فصولي الدراسية",
+    pageTitle: "إدارة الفصول",
+    classCount: "فصل",
+    noClassTitle: "لم يتم تعيينك في أي فصل بعد",
+    noClassSub: "تواصل مع مدير المدرسة",
+    students: "الطلاب",
+    noStudents: "لا يوجد طلاب في هذا الفصل",
+    announcements: "الإعلانات",
+    announcementPH: "اكتب إعلاناً للفصل...",
+    posting: "جارٍ النشر...",
+    postBtn: "نشر الإعلان",
+    noAnnouncements: "لا توجد إعلانات بعد",
+    delete: "حذف",
+    dateLocale: "ar-SA",
+  },
+  sq: {
+    loading: "Duke ngarkuar...",
+    eyebrow: "Klasat e mia",
+    pageTitle: "Menaxhimi i klasave",
+    classCount: "klasë",
+    noClassTitle: "Nuk jeni caktuar në asnjë klasë ende",
+    noClassSub: "Kontaktoni drejtuesin e shkollës",
+    students: "Nxënësit",
+    noStudents: "Nuk ka nxënës në këtë klasë",
+    announcements: "Njoftime",
+    announcementPH: "Shkruaj një njoftim për klasën...",
+    posting: "Duke postuar...",
+    postBtn: "Posto njoftimin",
+    noAnnouncements: "Nuk ka njoftime ende",
+    delete: "Fshij",
+    dateLocale: "sq-AL",
+  },
+} as const;
 
 type Student = { id: string; profile: { full_name: string } };
 type ClassItem = { id: string; name: string; students: Student[] };
@@ -15,6 +53,10 @@ type Announcement = {
 };
 
 export default function TeacherClassesPage() {
+  const { lang } = useLang();
+  const T = S[lang === "sq" ? "sq" : "ar"];
+  const dir = lang === "sq" ? "ltr" : "rtl";
+
   const [data, setData] = useState<TeacherData | null>(null);
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -68,10 +110,10 @@ export default function TeacherClassesPage() {
 
   if (loading) {
     return (
-      <div className="tc-shell" dir="rtl">
+      <div className="tc-shell" dir={dir}>
         <div className="tc-loading">
           <div className="tc-spin" />
-          <span>جارٍ التحميل...</span>
+          <span>{T.loading}</span>
         </div>
         <style>{styles}</style>
       </div>
@@ -79,17 +121,17 @@ export default function TeacherClassesPage() {
   }
 
   return (
-    <div className="tc-shell" dir="rtl">
+    <div className="tc-shell" dir={dir}>
 
       {/* ── Page header ── */}
       <div className="tc-page-header">
         <div>
-          <p className="tc-eyebrow">فصولي الدراسية</p>
-          <h1 className="tc-page-title">إدارة الفصول</h1>
+          <p className="tc-eyebrow">{T.eyebrow}</p>
+          <h1 className="tc-page-title">{T.pageTitle}</h1>
         </div>
         <div className="tc-header-stat">
           <span className="tc-header-stat-num">{data?.classes.length ?? 0}</span>
-          <span className="tc-header-stat-lbl">فصل</span>
+          <span className="tc-header-stat-lbl">{T.classCount}</span>
         </div>
       </div>
 
@@ -101,8 +143,8 @@ export default function TeacherClassesPage() {
               <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
             </svg>
           </div>
-          <h3>لم يتم تعيينك في أي فصل بعد</h3>
-          <p>تواصل مع مدير المدرسة</p>
+          <h3>{T.noClassTitle}</h3>
+          <p>{T.noClassSub}</p>
         </div>
       ) : (
         <>
@@ -129,12 +171,12 @@ export default function TeacherClassesPage() {
                       <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
                     </svg>
                   </div>
-                  <h2 className="tc-card-title">الطلاب</h2>
+                  <h2 className="tc-card-title">{T.students}</h2>
                   <span className="tc-badge">{selectedClass.students.length}</span>
                 </div>
                 <div className="tc-students">
                   {selectedClass.students.length === 0 ? (
-                    <div className="tc-inner-empty">لا يوجد طلاب في هذا الفصل</div>
+                    <div className="tc-inner-empty">{T.noStudents}</div>
                   ) : (
                     selectedClass.students.map((s, i) => (
                       <div key={s.id} className="tc-student-row" style={{ animationDelay: `${i * 33}ms` }}>
@@ -155,29 +197,29 @@ export default function TeacherClassesPage() {
                       <path d="M13.73 21a2 2 0 01-3.46 0"/>
                     </svg>
                   </div>
-                  <h2 className="tc-card-title">الإعلانات</h2>
+                  <h2 className="tc-card-title">{T.announcements}</h2>
                   <span className="tc-badge">{announcements.length}</span>
                 </div>
 
                 <div className="tc-composer">
                   <textarea
                     className="tc-textarea"
-                    placeholder="اكتب إعلاناً للفصل..."
+                    placeholder={T.announcementPH}
                     value={newAnnouncement}
                     onChange={(e) => setNewAnnouncement(e.target.value)}
                     rows={3}
-                    dir="rtl"
+                    dir={dir}
                   />
                   <button className="tc-post-btn" onClick={handlePost} disabled={posting || !newAnnouncement.trim()}>
                     {posting ? (
-                      <><div className="tc-btn-spin" />جارٍ النشر...</>
+                      <><div className="tc-btn-spin" />{T.posting}</>
                     ) : (
                       <>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <line x1="22" y1="2" x2="11" y2="13"/>
                           <polygon points="22 2 15 22 11 13 2 9 22 2"/>
                         </svg>
-                        نشر الإعلان
+                        {T.postBtn}
                       </>
                     )}
                   </button>
@@ -187,7 +229,7 @@ export default function TeacherClassesPage() {
                   {annLoading ? (
                     <div className="tc-loading sm"><div className="tc-spin" /></div>
                   ) : announcements.length === 0 ? (
-                    <div className="tc-inner-empty">لا توجد إعلانات بعد</div>
+                    <div className="tc-inner-empty">{T.noAnnouncements}</div>
                   ) : (
                     announcements.map((a) => (
                       <div key={a.id} className={`tc-ann-item ${deletingId === a.id ? "deleting" : ""}`}>
@@ -202,10 +244,10 @@ export default function TeacherClassesPage() {
                               </svg>
                               {a.teacher.profile.full_name}
                               <span className="tc-ann-dot" />
-                              {new Date(a.created_at).toLocaleDateString("ar-SA", { month: "short", day: "numeric" })}
+                              {new Date(a.created_at).toLocaleDateString(T.dateLocale, { month: "short", day: "numeric" })}
                             </div>
                             <button className="tc-del-ann" onClick={() => handleDelete(a.id)} disabled={deletingId === a.id}>
-                              {deletingId === a.id ? <div className="tc-spin sm" /> : "حذف"}
+                              {deletingId === a.id ? <div className="tc-spin sm" /> : T.delete}
                             </button>
                           </div>
                         </div>

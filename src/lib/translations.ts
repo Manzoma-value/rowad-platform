@@ -237,6 +237,13 @@ tfShort: "صح/خطأ",
     backToQuizzes: "العودة إلى الاختبارات",
     optionNumber: "خيار",
 
+    // Student dashboard quick-action subtitles
+    noClassContact: "تواصل مع مدير المدرسة",
+    questionBank: "بنك الأسئلة",
+    questionBankSub: "خارطة طريق التعلم",
+    quizzesActionSub: "أداء الاختبارات المتاحة",
+    myClassActionSub: "تفاصيل فصلك الدراسي",
+
     // Teacher quizzes page
     createNewQuiz: "إنشاء اختبار جديد",
     quizNamePlaceholder: "مثال: اختبار الفصل الأول",
@@ -467,6 +474,13 @@ tfShort: "صح/خطأ",
     reviewAndRetry: "Rishikoni materialin dhe provoni përsëri",
     backToQuizzes: "Kthehu te testet",
     optionNumber: "opsion",
+
+    // Student dashboard quick-action subtitles
+    noClassContact: "Kontaktoni drejtorin e shkollës",
+    questionBank: "Banka e Pyetjeve",
+    questionBankSub: "Harta e të nxënit",
+    quizzesActionSub: "Kryej testet e disponueshme",
+    myClassActionSub: "Detajet e klasës suaj",
 
     // Teacher quizzes page
     createNewQuiz: "Krijo test të ri",
@@ -721,6 +735,12 @@ tfShort: "E vërtetë / E gabuar",
   reviewAndRetry: "Review the material and try again",
   backToQuizzes: "Back to Quizzes",
   optionNumber: "option",
+  noClassContact: "Contact the school administrator",
+  questionBank: "Question Bank",
+  questionBankSub: "Learning roadmap",
+  quizzesActionSub: "Take available quizzes",
+  myClassActionSub: "Your class details",
+
   createNewQuiz: "Create New Quiz",
   quizNamePlaceholder: "Example: First Term Quiz",
   mcqType: "Multiple Choice",
