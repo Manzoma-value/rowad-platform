@@ -203,8 +203,8 @@ const css = `
 .fp-label{font-size:12.5px;font-weight:700;color:var(--text2)}
 .fp-input{
   padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;
-  font-family:var(--font);font-size:14px;color:var(--text);background:#FAFAF7;
-  outline:none;transition:border-color 0.15s,box-shadow 0.15s;
+  font-family:var(--font);font-size:16px;color:var(--text);background:#FAFAF7;
+  outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%;
 }
 .fp-input:focus{border-color:rgba(200,169,106,0.5);box-shadow:0 0 0 3px rgba(200,169,106,0.1);background:var(--surface)}
 .fp-input--error{border-color:var(--red-b);background:var(--red-l)}

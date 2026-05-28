@@ -35,8 +35,10 @@ export async function proxy(request: NextRequest) {
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/forgot-password" ||   // ← password reset request page
+    pathname === "/reset-password" ||    // ← password reset form (after email link)
     pathname.startsWith("/schools/") ||
-    pathname.startsWith("/invite/");   // ← invite pages are public
+    pathname.startsWith("/invite/");     // ← invite pages are public
 
   if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
