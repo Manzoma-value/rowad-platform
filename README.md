@@ -525,3 +525,4 @@ npx prisma studio # Open Prisma Studio (database GUI)
 Built with purpose · منصة بناء الأهلية — 2026
 
 </div>
+Deployment test after moving repository to organization.
