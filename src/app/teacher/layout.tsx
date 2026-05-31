@@ -192,7 +192,7 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
             src="/ahlia.png"
             alt="بناء الأهلية"
             fill
-            style={{ objectFit: "cover", objectPosition: "center" }}
+            style={{ objectFit: "contain", objectPosition: "center" }}
             priority
           />
           <button
@@ -391,7 +391,7 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
         </header>
 
         {/* Page content */}
-        <main className="tl-content">
+        <main className={`tl-content${pathname === "/teacher/hub" ? " tl-content--hub" : ""}`}>
           <div className="tl-watermark" aria-hidden="true">
             <Mandala size={260} stroke="var(--tl-graphite)" />
           </div>
@@ -538,7 +538,8 @@ const styles = `
   /* Logo */
   .tl-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
-    width: 100%; height: 100px; overflow: hidden;
+    width: 100%; height: 80px; overflow: hidden;
+    background: #080B0C;
   }
   .tl-close-btn {
     display: none; align-items: center; justify-content: center;
@@ -724,7 +725,9 @@ const styles = `
   .tl-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--tl-graphite); white-space: nowrap; padding-inline-start: 2px; }
 
   /* Content */
-  .tl-content { position: relative; flex: 1; padding: 0; animation: tl-slidein 0.42s var(--tl-ease-out); }
+  .tl-content { position: relative; flex: 1; padding: 28px 20px; animation: tl-slidein 0.42s var(--tl-ease-out); }
+  @media (min-width: 768px) { .tl-content { padding: 40px; } }
+  .tl-content--hub { padding: 0 !important; }
   .tl-watermark    { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
   .tl-content-inner { position: relative; z-index: 10; }
 
@@ -748,6 +751,9 @@ const styles = `
     /* Content padding for tab bar + safe area */
     .tl-content {
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
+    }
+    .tl-content--hub {
+      padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
     }
     /* Hide decorative footer on mobile */
     .tl-bottom-band { display: none; }

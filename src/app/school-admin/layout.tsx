@@ -273,7 +273,7 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
             src="/ahlia.png"
             alt="بناء الأهلية"
             fill
-            style={{ objectFit: "cover", objectPosition: "center" }}
+            style={{ objectFit: "contain", objectPosition: "center" }}
             priority
           />
           <button
@@ -472,7 +472,7 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
         </header>
 
         {/* Page content */}
-        <main className="sa-content">
+        <main className={`sa-content${pathname === "/school-admin/hub" ? " sa-content--hub" : ""}`}>
           <div className="sa-watermark" aria-hidden="true">
             <Mandala size={260} stroke="var(--sa-graphite)" />
           </div>
@@ -588,7 +588,8 @@ const styles = `
   /* Logo */
   .sa-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
-    width: 100%; height: 100px; overflow: hidden;
+    width: 100%; height: 80px; overflow: hidden;
+    background: #080B0C;
   }
   .sa-close-btn {
     display: none; align-items: center; justify-content: center;
@@ -773,7 +774,9 @@ const styles = `
   .sa-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--sa-graphite); white-space: nowrap; padding-inline-start: 2px; }
 
   /* Content */
-  .sa-content { position: relative; flex: 1; padding: 0; animation: sa-slidein 0.42s var(--sa-ease-out); }
+  .sa-content { position: relative; flex: 1; padding: 28px 20px; animation: sa-slidein 0.42s var(--sa-ease-out); }
+  @media (min-width: 768px) { .sa-content { padding: 40px; } }
+  .sa-content--hub { padding: 0 !important; }
   .sa-watermark    { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
   .sa-content-inner { position: relative; z-index: 10; }
 

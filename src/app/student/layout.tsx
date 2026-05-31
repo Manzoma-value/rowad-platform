@@ -270,7 +270,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             src="/ahlia.png"
             alt="بناء الأهلية"
             fill
-            style={{ objectFit: "cover", objectPosition: "center" }}
+            style={{ objectFit: "contain", objectPosition: "center" }}
             priority
           />
           <button className="sl-close-btn" onClick={() => setSidebarOpen(false)} aria-label="إغلاق">
@@ -455,7 +455,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         </header>
 
         {/* Page content */}
-        <main className="sl-content">
+        <main className={`sl-content${pathname === "/student/hub" ? " sl-content--hub" : ""}`}>
           <div className="sl-watermark" aria-hidden="true">
             <Mandala size={260} stroke="var(--sl-graphite)" />
           </div>
@@ -604,7 +604,8 @@ const styles = `
   /* Logo */
   .sl-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
-    width: 100%; height: 100px; overflow: hidden;
+    width: 100%; height: 80px; overflow: hidden;
+    background: #080B0C;
   }
   .sl-close-btn {
     display: none; align-items: center; justify-content: center;
@@ -790,7 +791,9 @@ const styles = `
   .sl-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--sl-graphite); white-space: nowrap; padding-inline-start: 2px; }
 
   /* Content */
-  .sl-content { position: relative; flex: 1; padding: 0; animation: sl-slidein 0.42s var(--sl-ease-out); }
+  .sl-content { position: relative; flex: 1; padding: 28px 20px; animation: sl-slidein 0.42s var(--sl-ease-out); }
+  @media (min-width: 768px) { .sl-content { padding: 40px; } }
+  .sl-content--hub { padding: 0 !important; }
   .sl-watermark     { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
   .sl-content-inner { position: relative; z-index: 10; height: 100%; }
 
@@ -814,6 +817,9 @@ const styles = `
     /* Content padding for tab bar + safe area */
     .sl-content {
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+    }
+    .sl-content--hub {
+      padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 72px) !important;
     }
     /* Hide decorative bottom band on mobile (tab bar replaces it) */
     .sl-bottom-band { display: none; }
