@@ -266,19 +266,13 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
         {/* Logo */}
         <div className="sl-logo-block">
-          <div className="sl-logo-icon">
-            <GeoMark size={26} color="var(--sl-gold)" />
-          </div>
-          <div className="sl-logo-text">
-            <Image
-              src="/ahlia.png"
-              alt="بناء الأهلية"
-              width={140}
-              height={32}
-              style={{ objectFit: "contain", width: "auto", height: 28, display: "block" }}
-              priority
-            />
-          </div>
+          <Image
+            src="/ahlia.png"
+            alt="بناء الأهلية"
+            fill
+            style={{ objectFit: "cover", objectPosition: "center" }}
+            priority
+          />
           <button className="sl-close-btn" onClick={() => setSidebarOpen(false)} aria-label="إغلاق">
             <X size={14} strokeWidth={2} />
           </button>
@@ -610,23 +604,17 @@ const styles = `
   /* Logo */
   .sl-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
-    display: flex; align-items: center; gap: 10px;
-    padding: 22px 18px 18px;
+    width: 100%; height: 100px; overflow: hidden;
   }
-  .sl-logo-icon {
-    display: flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
-    border: 1px solid rgba(200,169,106,0.30);
-    background: linear-gradient(135deg, rgba(200,169,106,0.18), rgba(200,169,106,0.04));
-  }
-  .sl-logo-text { flex: 1; min-width: 0; }
   .sl-close-btn {
     display: none; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
-    background: none; border: none; cursor: pointer;
-    color: rgba(200,169,106,0.35); transition: color 0.15s;
+    position: absolute; top: 10px; inset-inline-end: 10px;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(8,11,12,0.55); border: none; cursor: pointer;
+    color: rgba(200,169,106,0.70); transition: color 0.15s, background 0.15s;
+    z-index: 2;
   }
-  .sl-close-btn:hover { color: var(--sl-gold); }
+  .sl-close-btn:hover { color: var(--sl-gold); background: rgba(8,11,12,0.80); }
   @media (max-width: 767px) { .sl-close-btn { display: flex; } }
 
   /* Gold rule */

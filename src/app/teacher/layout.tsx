@@ -188,19 +188,13 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
 
         {/* Logo */}
         <div className="tl-logo-block">
-          <div className="tl-logo-icon">
-            <GeoMark size={26} color="var(--tl-gold)" />
-          </div>
-          <div className="tl-logo-text">
-            <Image
-              src="/ahlia.png"
-              alt="بناء الأهلية"
-              width={140}
-              height={32}
-              style={{ objectFit: "contain", width: "auto", height: 28, display: "block" }}
-              priority
-            />
-          </div>
+          <Image
+            src="/ahlia.png"
+            alt="بناء الأهلية"
+            fill
+            style={{ objectFit: "cover", objectPosition: "center" }}
+            priority
+          />
           <button
             className="tl-close-btn"
             onClick={() => setSidebarOpen(false)}
@@ -544,23 +538,17 @@ const styles = `
   /* Logo */
   .tl-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
-    display: flex; align-items: center; gap: 10px;
-    padding: 22px 18px 18px;
+    width: 100%; height: 100px; overflow: hidden;
   }
-  .tl-logo-icon {
-    display: flex; align-items: center; justify-content: center;
-    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
-    border: 1px solid rgba(200,169,106,0.30);
-    background: linear-gradient(135deg, rgba(200,169,106,0.18), rgba(200,169,106,0.04));
-  }
-  .tl-logo-text { flex: 1; min-width: 0; }
   .tl-close-btn {
     display: none; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
-    background: none; border: none; cursor: pointer;
-    color: rgba(200,169,106,0.35); transition: color 0.15s;
+    position: absolute; top: 10px; inset-inline-end: 10px;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(8,11,12,0.55); border: none; cursor: pointer;
+    color: rgba(200,169,106,0.70); transition: color 0.15s, background 0.15s;
+    z-index: 2;
   }
-  .tl-close-btn:hover { color: var(--tl-gold); }
+  .tl-close-btn:hover { color: var(--tl-gold); background: rgba(8,11,12,0.80); }
   @media (max-width: 767px) { .tl-close-btn { display: flex; } }
 
   /* Gold rule */
