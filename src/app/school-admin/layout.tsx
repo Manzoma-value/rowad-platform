@@ -258,7 +258,7 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="sa-shell" dir="rtl">
+    <div className="sa-shell" dir={isRtl ? "rtl" : "ltr"}>
       {sidebarOpen && (
         <div className="sa-overlay" onClick={() => setSidebarOpen(false)} />
       )}
@@ -566,17 +566,19 @@ const styles = `
 
   /* ══ SIDEBAR ══ */
   .sa-sidebar {
-    position: fixed; top: 0; right: 0;
+    position: fixed; top: 0; inset-inline-start: 0;
     width: var(--sa-sidebar-w); height: 100vh;
     z-index: 50; display: flex; flex-direction: column; overflow: hidden;
-    border-left: 1px solid rgba(200,169,106,0.10);
+    border-inline-end: 1px solid rgba(200,169,106,0.10);
     background: linear-gradient(180deg, #0B0E10 0%, #060809 100%);
     transition: transform 0.32s var(--sa-ease-out);
     transform: translateX(0);
   }
   @media (max-width: 767px) {
-    .sa-sidebar       { transform: translateX(100%); }
-    .sa-sidebar.open  { transform: translateX(0); box-shadow: -22px 0 60px rgba(8,11,12,0.42); }
+    [dir="rtl"] .sa-sidebar      { transform: translateX(100%); }
+    [dir="rtl"] .sa-sidebar.open { transform: translateX(0); box-shadow: -22px 0 60px rgba(8,11,12,0.42); }
+    [dir="ltr"] .sa-sidebar      { transform: translateX(-100%); }
+    [dir="ltr"] .sa-sidebar.open { transform: translateX(0); box-shadow: 22px 0 60px rgba(8,11,12,0.42); }
   }
 
   .sa-sidebar-glow {
@@ -600,18 +602,6 @@ const styles = `
     background:
       linear-gradient(to right, rgba(8,11,12,0.65) 0%, transparent 26%, transparent 74%, rgba(8,11,12,0.65) 100%),
       linear-gradient(to bottom, transparent 50%, rgba(8,11,12,0.72) 100%);
-  }
-  .sa-logo-frame::before {
-    content: ''; position: absolute; top: 7px; left: 10px;
-    width: 16px; height: 16px;
-    border-top: 1.5px solid rgba(200,169,106,0.75);
-    border-left: 1.5px solid rgba(200,169,106,0.75);
-  }
-  .sa-logo-frame::after {
-    content: ''; position: absolute; top: 7px; right: 10px;
-    width: 16px; height: 16px;
-    border-top: 1.5px solid rgba(200,169,106,0.75);
-    border-right: 1.5px solid rgba(200,169,106,0.75);
   }
   .sa-close-btn {
     display: none; align-items: center; justify-content: center;
@@ -669,7 +659,7 @@ const styles = `
   .sa-nav-community { border-color: rgba(200,169,106,0.06); }
   .sa-nav-community:hover { border-color: rgba(200,169,106,0.14); }
 
-  .sa-nav-pill    { position: absolute; right: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px 0 0 2px; background: linear-gradient(180deg, var(--sa-gold-soft), var(--sa-gold-deep)); }
+  .sa-nav-pill    { position: absolute; inset-inline-end: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; background: linear-gradient(180deg, var(--sa-gold-soft), var(--sa-gold-deep)); }
   .sa-nav-shimmer { position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(to left, transparent, rgba(200,169,106,0.55), transparent); }
 
   .sa-nav-icon-wrap {
@@ -723,8 +713,8 @@ const styles = `
   .sa-spin { width: 13px; height: 13px; border: 2px solid rgba(200,169,106,0.15); border-top-color: var(--sa-gold); border-radius: 50%; animation: sa-spin 0.7s linear infinite; }
 
   /* ══ MAIN ══ */
-  .sa-main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; margin-right: var(--sa-sidebar-w); }
-  @media (max-width: 767px) { .sa-main { margin-right: 0; } }
+  .sa-main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; margin-inline-start: var(--sa-sidebar-w); }
+  @media (max-width: 767px) { .sa-main { margin-inline-start: 0; } }
 
   /* Topbar */
   .sa-topbar {

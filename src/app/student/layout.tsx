@@ -617,18 +617,6 @@ const styles = `
       linear-gradient(to right, rgba(8,11,12,0.65) 0%, transparent 26%, transparent 74%, rgba(8,11,12,0.65) 100%),
       linear-gradient(to bottom, transparent 50%, rgba(8,11,12,0.72) 100%);
   }
-  .sl-logo-frame::before {
-    content: ''; position: absolute; top: 7px; left: 10px;
-    width: 16px; height: 16px;
-    border-top: 1.5px solid rgba(200,169,106,0.75);
-    border-left: 1.5px solid rgba(200,169,106,0.75);
-  }
-  .sl-logo-frame::after {
-    content: ''; position: absolute; top: 7px; right: 10px;
-    width: 16px; height: 16px;
-    border-top: 1.5px solid rgba(200,169,106,0.75);
-    border-right: 1.5px solid rgba(200,169,106,0.75);
-  }
   .sl-close-btn {
     display: none; align-items: center; justify-content: center;
     position: absolute; top: 10px; inset-inline-end: 10px;

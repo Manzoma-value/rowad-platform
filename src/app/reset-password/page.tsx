@@ -37,7 +37,9 @@ const S = {
     errNoSession: "رابط إعادة التعيين غير صالح أو منتهي الصلاحية.",
     errServer: "حدث خطأ، حاول مرة أخرى",
     errExpiredLink: "انتهت صلاحية الرابط. اطلب رابطًا جديدًا.",
+    errSamePassword: "كلمة المرور الجديدة يجب أن تكون مختلفة عن القديمة",
     tryAgain: "طلب رابط جديد",
+    redirecting: "جارٍ التحويل إلى تسجيل الدخول...",
   },
   sq: {
     eyebrow: "Cakto fjalëkalim të ri",
@@ -68,7 +70,9 @@ const S = {
     errNoSession: "Linku i rivendosjes është i pavlefshëm ose ka skaduar.",
     errServer: "Ndodhi një gabim, provoni përsëri",
     errExpiredLink: "Linku ka skaduar. Kërkoni një link të ri.",
+    errSamePassword: "Fjalëkalimi i ri duhet të jetë i ndryshëm nga i vjetri",
     tryAgain: "Kërko link të ri",
+    redirecting: "Duke ju ridrejtuar te hyrja...",
   },
 } as const;
 
@@ -132,13 +136,27 @@ export default function ResetPasswordPage() {
       const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ password });
       if (error) {
-        const isExpired = error.message.toLowerCase().includes("expired") || error.message.toLowerCase().includes("invalid");
-        setGlobalError(isExpired ? T.errExpiredLink : T.errServer);
+        const msg = error.message.toLowerCase();
+        // Supabase 422: "New password should be different from the old password"
+        const isSame =
+          msg.includes("different") ||
+          msg.includes("same") ||
+          msg.includes("should be different");
+        const isExpired = msg.includes("expired") || msg.includes("invalid");
+        if (isSame) setGlobalError(T.errSamePassword);
+        else if (isExpired) setGlobalError(T.errExpiredLink);
+        else setGlobalError(T.errServer);
         return;
       }
+      // CRITICAL: sign out so the user must log in with the new password.
+      // Without this, the user stays authenticated and the proxy redirects
+      // them straight to their role dashboard, skipping login entirely.
+      await supabase.auth.signOut();
       setDone(true);
-      // Auto-redirect to login after 3 seconds
-      setTimeout(() => router.push("/login"), 3000);
+      // Hard navigation to clear any cached auth state, then redirect to login
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
     } catch {
       setGlobalError(T.errServer);
     } finally {
@@ -181,7 +199,19 @@ export default function ResetPasswordPage() {
             </div>
             <h1 className="rp-title rp-title--success">{T.doneTitle}</h1>
             <p className="rp-sub">{T.doneSub}</p>
-            <Link href="/login" className="rp-btn rp-btn--gold">{T.doneBtn}</Link>
+            <p className="rp-sub" style={{ fontSize: 12, fontStyle: "italic", marginTop: -8 }}>
+              {T.redirecting}
+            </p>
+            <a
+              href="/login"
+              className="rp-btn rp-btn--gold"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = "/login";
+              }}
+            >
+              {T.doneBtn}
+            </a>
           </div>
         </div>
       </div>
