@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Users,
   ClipboardList,
+  BookOpen,
   MapPin,
   Globe2,
   Menu,
@@ -111,6 +112,7 @@ const ALLOWED_PAGES: Record<string, string[]> = {
     "/student/welcome",
     "/student",
     "/student/classes",
+    "/student/lessons",
     "/student/quizzes",
     "/student/announcements",
     "/student/roadmap",
@@ -123,7 +125,7 @@ const SHOW_NAV_STATUSES = ["CLASS_ASSIGNED"];
 
 /* ─── Nav ─── */
 interface NavItem {
-  key: "dashboard" | "myClass" | "quizzes" | "roadmap";
+  key: "dashboard" | "myClass" | "lessons" | "quizzes" | "roadmap";
   href: string;
   exact: boolean;
   sublabel: string;
@@ -136,6 +138,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { key: "dashboard", href: "/student",          exact: true,  sublabel: "Dashboard", icon: LayoutDashboard },
   { key: "myClass",   href: "/student/classes",  exact: false, sublabel: "Classes",   icon: Users },
+  { key: "lessons",   href: "/student/lessons",  exact: false, sublabel: "Lessons",   icon: BookOpen },
   { key: "quizzes",   href: "/student/quizzes",  exact: false, sublabel: "Quizzes",   icon: ClipboardList },
   {
     key: "roadmap", href: "/student/roadmap", exact: false, sublabel: "Roadmap",

@@ -15,6 +15,7 @@ import {
   Users,
   ClipboardList,
   BarChart3,
+  BookOpen,
   Globe2,
   Menu,
   LogOut,
@@ -96,7 +97,7 @@ function GeoMark({ size = 22, color = "var(--tl-gold)" }: { size?: number; color
 /* ─── Nav ─── */
 interface NavItem {
   href: string;
-  key: "dashboard" | "myClasses" | "quizzes" | "reports";
+  key: "dashboard" | "myClasses" | "lessons" | "quizzes" | "reports";
   sublabel: string;
   exact?: boolean;
   icon: LucideIcon;
@@ -105,6 +106,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
   { href: "/teacher/classes",  key: "myClasses", sublabel: "Classes",   exact: false, icon: Users },
+  { href: "/teacher/lessons",  key: "lessons",   sublabel: "Lessons",   exact: false, icon: BookOpen },
   { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList },
   { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3 },
 ];
