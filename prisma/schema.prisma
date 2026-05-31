@@ -153,6 +153,7 @@ model School {
   assessments        Assessment[]
   classes            Class[]
   quizzes            Quiz[]
+  lessons            Lesson[]
   roadmap            Roadmap?
   admin              Profile?            @relation("SchoolAdmin", fields: [admin_id], references: [id])
   students           Student[]
@@ -171,6 +172,7 @@ model Teacher {
   announcements    Announcement[]
   classes          Class[]
   quizzes          Quiz[]
+  lessons          Lesson[]
   profile          Profile           @relation(fields: [profile_id], references: [id], onDelete: Cascade)
   school           School            @relation(fields: [school_id], references: [id], onDelete: Cascade)
   traitAssessments TraitAssessment[]
@@ -190,6 +192,7 @@ model Student {
   assessment_attempts AssessmentAttempt[]
   moduleAttempts      ModuleAttempt[]
   quiz_attempts       QuizAttempt[]
+  lesson_attempts     LessonAttempt[]
   class               Class?                  @relation(fields: [class_id], references: [id])
   profile             Profile                 @relation(fields: [profile_id], references: [id], onDelete: Cascade)
   school              School?                 @relation(fields: [school_id], references: [id])
@@ -209,6 +212,7 @@ model Class {
   school             School              @relation(fields: [school_id], references: [id], onDelete: Cascade)
   teacher            Teacher?            @relation(fields: [teacher_id], references: [id])
   quizzes            Quiz[]
+  lessons            Lesson[]
   students           Student[]
 
   @@unique([school_id, name])
@@ -241,6 +245,7 @@ model Quiz {
   class      Class          @relation(fields: [class_id], references: [id], onDelete: Cascade)
   school     School         @relation(fields: [school_id], references: [id], onDelete: Cascade)
   teacher    Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  linked_from_lessons Lesson[]
 
   @@map("quizzes")
 }
@@ -537,6 +542,133 @@ enum ReactionType {
   DISLIKE
   HAHA
   SAD
+}
+
+// ─────────────────────────────────────────────────────────────
+// LESSONS — teacher-authored class lessons with content + Qs
+// ─────────────────────────────────────────────────────────────
+
+model Lesson {
+  id             String           @id @default(uuid()) @db.Uuid
+  teacher_id     String           @db.Uuid
+  school_id      String           @db.Uuid
+  class_id       String           @db.Uuid
+  title          String
+  description    String?
+  is_published   Boolean          @default(false)
+  // true  = graded mode (one attempt, score recorded)
+  // false = practice mode (instant feedback, retryable, no grade)
+  is_graded      Boolean          @default(true)
+  linked_quiz_id String?          @db.Uuid
+  order          Int              @default(0)
+  created_at     DateTime         @default(now())
+  updated_at     DateTime         @updatedAt
+
+  teacher        Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  school         School           @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  class          Class            @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  linked_quiz    Quiz?            @relation(fields: [linked_quiz_id], references: [id], onDelete: SetNull)
+  contents       LessonContent[]
+  questions      LessonQuestion[]
+  attempts       LessonAttempt[]
+
+  @@index([teacher_id])
+  @@index([class_id, is_published])
+  @@map("lessons")
+}
+
+model LessonContent {
+  id           String      @id @default(uuid()) @db.Uuid
+  lesson_id    String      @db.Uuid
+  type         ContentType
+  order        Int
+  // TEXT-only fields. Body can include inline markdown-like formatting
+  // (**bold**, __highlight__, etc.) rendered by the lesson viewer.
+  body         String?
+  // IMAGE-only fields
+  storage_path String?
+  image_url    String?
+  alt_text     String?
+  // VIDEO-only fields
+  video_url    String?
+  video_title  String?
+  created_at   DateTime    @default(now())
+
+  lesson       Lesson      @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@index([lesson_id, order])
+  @@map("lesson_contents")
+}
+
+model LessonQuestion {
+  id             String                 @id @default(uuid()) @db.Uuid
+  lesson_id      String                 @db.Uuid
+  type           QuestionType
+  text           String
+  correct_answer String?
+  order          Int
+  created_at     DateTime               @default(now())
+
+  lesson         Lesson                 @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  options        LessonQuestionOption[]
+  matching_pairs LessonMatchingPair[]
+  answers        LessonAnswer[]
+
+  @@index([lesson_id, order])
+  @@map("lesson_questions")
+}
+
+model LessonQuestionOption {
+  id          String         @id @default(uuid()) @db.Uuid
+  question_id String         @db.Uuid
+  text        String
+  order       Int
+  question    LessonQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@map("lesson_question_options")
+}
+
+model LessonMatchingPair {
+  id          String         @id @default(uuid()) @db.Uuid
+  question_id String         @db.Uuid
+  left        String
+  right       String
+  order       Int
+  question    LessonQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@map("lesson_matching_pairs")
+}
+
+model LessonAttempt {
+  id           String         @id @default(uuid()) @db.Uuid
+  lesson_id    String         @db.Uuid
+  student_id   String         @db.Uuid
+  score        Int?
+  total        Int?
+  completed_at DateTime?
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+
+  lesson       Lesson         @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  student      Student        @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  answers      LessonAnswer[]
+
+  @@unique([lesson_id, student_id])
+  @@map("lesson_attempts")
+}
+
+model LessonAnswer {
+  id          String         @id @default(uuid()) @db.Uuid
+  attempt_id  String         @db.Uuid
+  question_id String         @db.Uuid
+  answer      String
+  is_correct  Boolean?
+  created_at  DateTime       @default(now())
+
+  attempt     LessonAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
+  question    LessonQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@map("lesson_answers")
 }
 
 enum Role {

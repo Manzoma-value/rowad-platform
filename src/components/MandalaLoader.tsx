@@ -267,43 +267,42 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 
   @keyframes mlFadeIn {
-    from { opacity: 0; transform: scale(0.94) translateY(8px); }
+    from { opacity: 0; transform: scale(0.96) translateY(6px); }
     to   { opacity: 1; transform: scale(1) translateY(0); }
   }
   @keyframes mlDot {
     0%, 80%, 100% { opacity: 0.15; transform: scaleY(0.4); }
     40%           { opacity: 1;    transform: scaleY(1); }
   }
-  @keyframes mlGlowPulse {
-    0%, 100% { transform: scale(1);   opacity: 0.6; }
-    50%      { transform: scale(1.08); opacity: 1; }
-  }
   @keyframes mlBgFloat {
-    0%, 100% { transform: translate(-50%, -50%) scale(1);   }
-    50%      { transform: translate(-50%, -50%) scale(1.06); }
+    0%, 100% { transform: translate(-50%, -50%) scale(1);    }
+    50%      { transform: translate(-50%, -50%) scale(1.05); }
   }
 
   .ml-root {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 480px;
+    /* responsive height — never shorter than content, never taller than viewport */
+    min-height: clamp(260px, 50vh, 480px);
     width: 100%;
     position: relative;
     font-family: 'Cairo', sans-serif;
     direction: rtl;
     padding: 16px;
+    box-sizing: border-box;
   }
 
   /* Ambient background glow */
   .ml-glow-bg {
     position: absolute;
     top: 50%; left: 50%;
-    width: 500px; height: 500px;
+    width: min(500px, 140vw);
+    height: min(500px, 140vw);
     border-radius: 50%;
     background: radial-gradient(circle,
-      rgba(200,169,106,0.08) 0%,
-      rgba(229,185,60,0.04) 40%,
+      rgba(200,169,106,0.07) 0%,
+      rgba(229,185,60,0.03) 40%,
       transparent 70%
     );
     transform: translate(-50%, -50%);
@@ -317,23 +316,24 @@ const css = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0;
-    padding: 28px 40px 32px;
+    /* responsive padding: tighter on mobile, roomier on desktop */
+    padding: clamp(18px, 4vw, 28px) clamp(20px, 6vw, 40px) clamp(22px, 4vw, 32px);
     width: 100%;
-    max-width: 360px;
+    /* never wider than viewport minus 32px gutters */
+    max-width: min(360px, calc(100vw - 32px));
     background: #FFFFFF;
     border: 1px solid #E2D9CA;
     border-radius: 16px;
     box-shadow:
-      0 2px 0 rgba(200,169,106,0.12),
-      0 8px 40px rgba(11,11,12,0.08),
-      0 32px 80px rgba(11,11,12,0.05),
+      0 2px 0 rgba(200,169,106,0.10),
+      0 8px 32px rgba(11,11,12,0.07),
+      0 24px 64px rgba(11,11,12,0.04),
       inset 0 1px 0 rgba(255,255,255,0.8);
-    animation: mlFadeIn 0.5s cubic-bezier(0.22,1,0.36,1) both;
+    animation: mlFadeIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
     overflow: hidden;
   }
 
-  /* Gold top border via pseudo */
+  /* Gold top accent */
   .ml-card::before {
     content: '';
     position: absolute;
@@ -341,16 +341,16 @@ const css = `
     height: 2px;
     background: linear-gradient(90deg,
       transparent 0%,
-      rgba(200,169,106,0.4) 15%,
-      rgba(229,185,60,0.7) 40%,
+      rgba(200,169,106,0.35) 15%,
+      rgba(229,185,60,0.65) 40%,
       #E5B93C 50%,
-      rgba(229,185,60,0.7) 60%,
-      rgba(200,169,106,0.4) 85%,
+      rgba(229,185,60,0.65) 60%,
+      rgba(200,169,106,0.35) 85%,
       transparent 100%
     );
   }
 
-  /* Corner ornaments */
+  /* Bottom subtle line */
   .ml-card::after {
     content: '';
     position: absolute;
@@ -358,8 +358,8 @@ const css = `
     height: 1px;
     background: linear-gradient(90deg,
       transparent,
-      rgba(200,169,106,0.15) 30%,
-      rgba(200,169,106,0.15) 70%,
+      rgba(200,169,106,0.12) 30%,
+      rgba(200,169,106,0.12) 70%,
       transparent
     );
   }
@@ -368,33 +368,35 @@ const css = `
   .ml-rule {
     display: flex;
     align-items: center;
-    gap: 0;
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: clamp(12px, 3vw, 20px);
   }
-  .ml-rule:last-of-type { margin-bottom: 0; margin-top: 20px; }
+  .ml-rule:last-of-type {
+    margin-bottom: 0;
+    margin-top: clamp(12px, 3vw, 20px);
+  }
   .ml-rule-line {
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.22), transparent);
   }
   .ml-rule-ornament {
     flex-shrink: 0;
-    padding: 0 12px;
+    padding: 0 10px;
     display: flex;
     align-items: center;
   }
 
-  /* Mandala wrapper */
+  /* Mandala wrapper — responsive size, never overflows card */
   .ml-mandala-wrap {
     position: relative;
     width: 100%;
-    max-width: 240px;
+    /* clamp: 140px on small phone → 220px on desktop */
+    max-width: clamp(140px, 55vw, 220px);
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Subtle drop shadow under the mandala */
-    filter: drop-shadow(0 8px 32px rgba(200,169,106,0.12));
+    filter: drop-shadow(0 6px 24px rgba(200,169,106,0.10));
   }
 
   /* Label */
@@ -402,18 +404,18 @@ const css = `
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
-    margin-top: 6px;
+    gap: 4px;
+    margin-top: 4px;
   }
   .ml-label {
-    font-size: 14px;
+    font-size: clamp(12px, 3.5vw, 14px);
     font-weight: 700;
     color: #4a3f2a;
     letter-spacing: 0.3px;
     text-align: center;
   }
   .ml-sublabel {
-    font-size: 11.5px;
+    font-size: clamp(10px, 2.8vw, 11.5px);
     font-weight: 500;
     color: #8A7A5A;
     text-align: center;
@@ -423,13 +425,13 @@ const css = `
   .ml-dots-row {
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-top: 14px;
-    height: 18px;
+    gap: 4px;
+    margin-top: 12px;
+    height: 16px;
   }
   .ml-dot {
     width: 3px;
-    height: 16px;
+    height: 14px;
     border-radius: 2px;
     background: #C8A96A;
     opacity: 0.2;
