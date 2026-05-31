@@ -536,8 +536,19 @@ const css = `
   .rp-hero,.rp-content{padding-inline:20px}
   .rp-stats{grid-template-columns:repeat(2,1fr)}
 }
+@media(max-width:600px){
+  .rp-hero{padding:22px 16px 20px}
+  .rp-content{padding:20px 16px 60px;gap:18px}
+  .rp-title{font-size:21px}
+  .rp-empty{padding:44px 20px}
+}
 @media(max-width:540px){
-  .rp-grid{grid-template-columns:repeat(2,1fr)}
+  .rp-grid{grid-template-columns:1fr}
   .rp-stats{grid-template-columns:1fr 1fr}
+}
+@media(max-width:380px){
+  .rp-hero,.rp-content{padding-inline:12px}
+  .rp-title{font-size:18px}
+  .rp-stats{grid-template-columns:1fr 1fr;gap:10px}
 }
 `;

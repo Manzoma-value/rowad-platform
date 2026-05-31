@@ -353,4 +353,24 @@ const styles = `
   .tc-empty-icon{color:rgba(200,169,106,0.35)}
   .tc-empty h3{font-size:16px;font-weight:800;color:#0B0B0C}
   .tc-empty p{font-size:13px;color:#9A8A70}
+
+  @media(max-width:600px){
+    .tc-shell{padding:16px 14px;gap:16px}
+    .tc-page-header{padding:18px 18px}
+    .tc-page-title{font-size:19px}
+    .tc-header-stat{padding:10px 14px}
+    .tc-header-stat-num{font-size:22px}
+    .tc-textarea{font-size:16px}
+    .tc-empty{padding:36px 20px}
+    .tc-tab{padding:7px 13px;font-size:13px}
+  }
+  @media(max-width:400px){
+    .tc-shell{padding:14px 11px}
+    .tc-page-header{padding:14px 15px}
+    .tc-page-title{font-size:17px}
+    .tc-header-stat{padding:8px 12px}
+    .tc-header-stat-num{font-size:19px}
+    .tc-empty{padding:28px 16px}
+    .tc-empty h3{font-size:15px}
+  }
 `;

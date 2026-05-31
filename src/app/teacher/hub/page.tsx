@@ -1024,5 +1024,15 @@ const css = `
   .composer{padding:6px 6px 6px 12px;}
   .hub-brand-icon{width:38px;height:38px;}
   .hub-title{font-size:14px;}
+  .composer-ta{font-size:16px;}
+  .reply-input{font-size:16px;}
+  .chat-col{max-width:88%;}
+  .msg-col{max-width:86%;}
+}
+@media(max-width:380px){
+  .hub-header-inner{padding:10px 12px;}
+  .hub-subtitle{display:none;}
+  .chat-text{font-size:14px;}
+  .composer{padding:5px 5px 5px 10px;}
 }
 `;

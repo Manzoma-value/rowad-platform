@@ -1363,12 +1363,31 @@ const css = `
 
   /* ── RESPONSIVE ── */
   @media (max-width:480px) {
+    .roadmap-hero { padding:22px 20px 20px; }
     .roadmap-hero-title { font-size:19px; }
+    .roadmap-progress-card { padding:16px 20px 16px; }
+    .progress-value { font-size:22px; }
     .stage-button { padding:12px; }
     .stage-title { font-size:15px; }
     .stage-node { max-width:230px; }
     .map-legend { gap:14px; padding:10px 18px; }
     .legend-item { font-size:12px; }
     .tf-grid { flex-direction:column; }
+    .modules-container,.quiz-screen { padding:18px 14px 80px; }
+    .question-card { padding:20px 16px; border-radius:18px; }
+    .module-card { padding:14px; gap:11px; }
+    .lesson-feed { padding:18px 14px; }
+    .text-card { padding:18px 16px; }
+    .result-container { padding:38px 18px 50px; }
+  }
+  @media (max-width:360px) {
+    .map-legend { gap:9px; padding:9px 14px; }
+    .legend-item { font-size:11px; }
+    .stage-node { max-width:210px; }
+    .stage-circle { width:46px; height:46px; }
+    .stage-title { font-size:14px; }
+    .question-card { padding:16px 13px; }
+    .nav-button { padding:12px 12px; font-size:14px; }
+    .option-card { padding:12px 13px; }
   }
 `;

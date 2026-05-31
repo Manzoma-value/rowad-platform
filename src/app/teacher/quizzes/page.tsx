@@ -383,4 +383,25 @@ const styles = `
   .tq-result-bar-bg{flex:1;height:5px;background:rgba(200,169,106,0.12);border-radius:99px;overflow:hidden}
   .tq-result-bar-fill{height:100%;border-radius:99px;transition:width 0.6s ease}
   .tq-result-score{font-size:12px;font-weight:800;width:42px;text-align:start;flex-shrink:0}
+
+  @media(max-width:600px){
+    .tq-shell{padding:16px 14px;gap:16px}
+    .tq-header{padding:18px 18px}
+    .tq-title{font-size:19px}
+    .tq-form{padding:18px 16px}
+    .tq-input{font-size:16px}
+    .tq-empty{padding:36px 20px}
+    .tq-quiz-top{padding:14px 15px;gap:11px}
+    .tq-quiz-actions{flex-wrap:wrap}
+    .tq-result-name{width:100px}
+  }
+  @media(max-width:400px){
+    .tq-shell{padding:14px 11px}
+    .tq-header{padding:14px 15px}
+    .tq-title{font-size:17px}
+    .tq-form{padding:15px 13px}
+    .tq-q-card{padding:13px}
+    .tq-empty{padding:28px 16px}
+    .tq-result-name{width:80px;font-size:12px}
+  }
 `;

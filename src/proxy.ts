@@ -28,8 +28,33 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
 
-  // API routes — always pass through
-  if (pathname.startsWith("/api/")) return response;
+  // API routes — check deactivation for student/teacher APIs
+  if (pathname.startsWith("/api/")) {
+    if (pathname.startsWith("/api/student") || pathname.startsWith("/api/teacher") || pathname.startsWith("/api/hub")) {
+      if (user) {
+        const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const svcKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+        const apiProfRes = await fetch(
+          `${sbUrl}/rest/v1/profiles?select=is_active&id=eq.${user.id}`,
+          {
+            headers: {
+              apikey: svcKey,
+              Authorization: `Bearer ${svcKey}`,
+              Accept: "application/vnd.pgrst.object+json",
+            },
+          },
+        );
+        const apiProfile = apiProfRes.ok ? await apiProfRes.json() : null;
+        if (apiProfile?.is_active === false) {
+          return NextResponse.json(
+            { error: "Account deactivated" },
+            { status: 403 }
+          );
+        }
+      }
+    }
+    return response;
+  }
 
   const isPublicRoute =
     pathname === "/" ||
@@ -47,13 +72,45 @@ export async function proxy(request: NextRequest) {
   }
 
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    // ── Fetch profile bypassing RLS (service role) so deactivated users are visible ──
+    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+    const profileRes = await fetch(
+      `${sbUrl}/rest/v1/profiles?select=role,is_active&id=eq.${user.id}`,
+      {
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          Accept: "application/vnd.pgrst.object+json",
+        },
+      },
+    );
+    const profile = profileRes.ok ? await profileRes.json() : null;
 
     const role = profile?.role as string | undefined;
+    const isActive = profile?.is_active as boolean | undefined;
+
+    // ── Deactivated account gate ──────────────────────────────────────────
+    if (isActive === false && pathname !== "/deactivated") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/deactivated";
+      return NextResponse.redirect(url);
+    }
+    // No profile found at all — treat as deactivated (safety net)
+    if (!profile && pathname !== "/deactivated" && pathname !== "/login") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/deactivated";
+      return NextResponse.redirect(url);
+    }
+    // If active user somehow hits /deactivated, send them to their dashboard
+    if (isActive !== false && pathname === "/deactivated") {
+      const url = request.nextUrl.clone();
+      if (role === "OWNER")        { url.pathname = "/owner"; }
+      else if (role === "SCHOOL_ADMIN") { url.pathname = "/school-admin"; }
+      else if (role === "TEACHER") { url.pathname = "/teacher"; }
+      else                         { url.pathname = "/student"; }
+      return NextResponse.redirect(url);
+    }
 
     // Redirect logged-in users away from login/signup
     if (pathname === "/login" || pathname === "/signup") {

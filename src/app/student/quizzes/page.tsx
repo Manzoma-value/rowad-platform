@@ -415,4 +415,35 @@ const styles = `
   .quiz-submit.ready:hover{background:#C8A96A;color:#0B0B0C}
   .quiz-submit:disabled{opacity:0.5;cursor:not-allowed}
   .btn-spin{width:15px;height:15px;border:2px solid rgba(255,255,255,0.25);border-top-color:#FFFFFF;border-radius:50%;animation:spin 0.7s linear infinite}
+
+  /* ── Mobile ── */
+  @media(max-width:600px){
+    .qs-shell{padding:18px 14px}
+    .list-shell,.quiz-shell{gap:13px}
+    .list-header,.quiz-header{padding:18px 18px}
+    .list-title{font-size:19px}
+    .list-stat-num{font-size:25px}
+    .quiz-title{font-size:17px}
+    .q-card{padding:15px;border-radius:14px}
+    .q-text{font-size:14.5px}
+    .q-opt{padding:13px 13px}
+    .q-opt-text{font-size:14px}
+    .quiz-row{padding:12px 13px;gap:11px}
+    .quiz-row-icon{width:40px;height:40px}
+    .quiz-score-pct{font-size:18px}
+    .result-card{padding:30px 22px;border-radius:20px}
+    /* tap targets ≥44px high */
+    .quiz-start{padding:11px 15px}
+    .quiz-submit{padding:15px}
+    .result-back{padding:14px}
+  }
+  @media(max-width:380px){
+    .qs-shell{padding:14px 11px}
+    .list-header,.quiz-header{padding:15px 14px;border-radius:16px}
+    .list-title{font-size:17px}
+    .list-eyebrow,.quiz-eyebrow{letter-spacing:1.5px}
+    .quiz-cancel{padding:7px 10px}
+    .quiz-row-name{font-size:13.5px}
+    .q-card{padding:13px}
+  }
 `;
