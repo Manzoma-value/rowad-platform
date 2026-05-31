@@ -56,6 +56,7 @@ export async function proxy(request: NextRequest) {
     pathname === "/signup" ||
     pathname === "/forgot-password" ||   // ← password reset request page
     pathname === "/reset-password" ||    // ← password reset form (after email link)
+    pathname.startsWith("/auth/") ||     // ← email-link / OAuth callback handler (MUST be reachable logged-out)
     pathname.startsWith("/schools/") ||
     pathname.startsWith("/invite/");     // ← invite pages are public
 

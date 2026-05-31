@@ -734,10 +734,6 @@ export default function AdminHubPage() {
               <p className="hub-subtitle">{me.school.name}</p>
             </div>
           </div>
-          <div className="hub-live-badge">
-            <span className="hub-live-dot" />
-            <span>Live</span>
-          </div>
         </div>
       </header>
 
@@ -856,8 +852,6 @@ const css = `
 .hub-brand-icon:hover{background:rgba(200,169,106,.28);transform:scale(1.08) rotate(-3deg);}
 .hub-title{font-size:16px;font-weight:800;color:#F7EDD8;letter-spacing:-.2px;line-height:1.25;}
 .hub-subtitle{font-size:11px;color:rgba(200,169,106,.60);font-weight:500;margin-top:2px;}
-.hub-live-badge{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;color:rgba(110,231,183,.9);background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.22);padding:5px 13px;border-radius:var(--r-pill);}
-.hub-live-dot{width:6px;height:6px;border-radius:50%;background:#6EE7B7;animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
 
 /* mode bar */
 .mode-bar{display:flex;align-items:center;gap:8px;padding:9px 20px;font-size:12px;font-weight:700;flex-shrink:0;z-index:90;position:relative;}

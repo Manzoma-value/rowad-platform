@@ -690,10 +690,6 @@ export default function HubPage() {
               <p className="hub-subtitle">{me.school.name}</p>
             </div>
           </div>
-          <div className="hub-live-badge">
-            <span className="hub-live-dot" />
-            <span>Live</span>
-          </div>
         </div>
       </header>
 
@@ -800,8 +796,6 @@ const css = `
 .hub-brand-icon:hover{background:rgba(200,169,106,.25);transform:scale(1.08) rotate(-3deg);}
 .hub-title{font-size:16px;font-weight:800;color:#F7EDD8;letter-spacing:-.2px;line-height:1.25;}
 .hub-subtitle{font-size:11px;color:rgba(200,169,106,.60);font-weight:500;margin-top:2px;}
-.hub-live-badge{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;color:rgba(110,231,183,.9);background:rgba(110,231,183,.1);border:1px solid rgba(110,231,183,.22);padding:5px 13px;border-radius:var(--r-pill);}
-.hub-live-dot{width:6px;height:6px;border-radius:50%;background:#6EE7B7;animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
 
 /* new posts */
 .new-posts-banner{width:100%;padding:10px 20px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--gold),var(--gold2));color:var(--text);font-size:13px;font-weight:700;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;z-index:50;position:relative;flex-shrink:0;animation:slideDown .35s var(--ease);transition:filter .2s;}

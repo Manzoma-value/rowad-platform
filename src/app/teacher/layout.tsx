@@ -195,6 +195,7 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
             style={{ objectFit: "contain", objectPosition: "center" }}
             priority
           />
+          <div className="tl-logo-frame" aria-hidden="true" />
           <button
             className="tl-close-btn"
             onClick={() => setSidebarOpen(false)}
@@ -538,8 +539,29 @@ const styles = `
   /* Logo */
   .tl-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
-    width: 100%; height: 80px; overflow: hidden;
+    width: 100%; height: 86px; overflow: hidden;
     background: #080B0C;
+    border-top: 1.5px solid rgba(200,169,106,0.55);
+    border-bottom: 1px solid rgba(200,169,106,0.20);
+    box-shadow: 0 6px 28px rgba(200,169,106,0.07), inset 0 -1px 0 rgba(200,169,106,0.08);
+  }
+  .tl-logo-frame {
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background:
+      linear-gradient(to right, rgba(8,11,12,0.65) 0%, transparent 26%, transparent 74%, rgba(8,11,12,0.65) 100%),
+      linear-gradient(to bottom, transparent 50%, rgba(8,11,12,0.72) 100%);
+  }
+  .tl-logo-frame::before {
+    content: ''; position: absolute; top: 7px; left: 10px;
+    width: 16px; height: 16px;
+    border-top: 1.5px solid rgba(200,169,106,0.75);
+    border-left: 1.5px solid rgba(200,169,106,0.75);
+  }
+  .tl-logo-frame::after {
+    content: ''; position: absolute; top: 7px; right: 10px;
+    width: 16px; height: 16px;
+    border-top: 1.5px solid rgba(200,169,106,0.75);
+    border-right: 1.5px solid rgba(200,169,106,0.75);
   }
   .tl-close-btn {
     display: none; align-items: center; justify-content: center;
