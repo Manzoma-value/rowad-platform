@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
+import { cachedFetch } from "@/lib/api-cache";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -14,7 +15,6 @@ import {
   LogOut,
   Bell,
   Sparkles,
-  Mail,
   ShieldCheck,
   LucideIcon,
 } from "lucide-react";
@@ -337,15 +337,9 @@ const navItems: NavItem[] = [
   },
   {
     href: "/owner/admins",
-    label: "المدراء",
-    sublabel: "Admins",
+    label: "المدراء والدعوات",
+    sublabel: "Admins & Invites",
     icon: ShieldCheck,
-  },
-  {
-    href: "/owner/invites",
-    label: "دعوات المدراء",
-    sublabel: "Admin Invites",
-    icon: Mail,
   },
 ];
 
@@ -365,8 +359,10 @@ export default function OwnerLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
+    cachedFetch<{ profile?: { full_name?: string; avatar_url?: string } }>(
+      "/api/profile",
+      600_000, // 10 min — owner profile rarely changes during a session
+    )
       .then((d) => {
         if (d?.profile?.full_name) setOwnerName(d.profile.full_name);
         if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url);
@@ -635,7 +631,7 @@ export default function OwnerLayout({
         {/* ── Footer caption ── */}
         <div className="ow-footer-caption">
           <Sparkles size={11} className="ow-footer-sparkle" />
-          <span className="ow-footer-text">منصة الرواد - 2026 </span>
+          <span className="ow-footer-text">جميع الحقوق محفوظة © منظومة - 2026</span>
         </div>
       </div>
 
@@ -720,8 +716,8 @@ const styles = `
     width: var(--sidebar-w); height: 100vh;
     z-index: 50;
     display: flex; flex-direction: column; overflow: hidden;
-    border-left: 1px solid rgba(200,169,106,0.10);
-    background: linear-gradient(180deg, #0B0E10 0%, #060809 100%);
+    border-left: 1px solid rgba(200,169,106,0.14);
+    background: linear-gradient(180deg, #1E2329 0%, #181C21 50%, #11151A 100%);
     transition: transform 0.32s var(--ease-out);
     transform: translateX(0);
   }
@@ -734,8 +730,8 @@ const styles = `
   .ow-sidebar-glow {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.08), transparent 50%),
-      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.05),   transparent 44%);
+      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.12), transparent 55%),
+      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.04),   transparent 44%);
   }
 
   /* ── Logo block ── */
@@ -792,9 +788,9 @@ const styles = `
     position: relative; z-index: 10; flex-shrink: 0;
     padding: 0 28px 12px;
     font-family: var(--font-mono);
-    font-size: 9px; font-weight: 700;
+    font-size: 9.5px; font-weight: 700;
     letter-spacing: 0.24em; text-transform: uppercase;
-    color: rgba(200,169,106,0.35);
+    color: rgba(232, 220, 188, 0.45);
   }
 
   /* ── Nav ── */
@@ -809,24 +805,26 @@ const styles = `
   .ow-nav-item {
     position: relative;
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 12px;
+    padding: 11px 13px;
     border-radius: 16px;
     text-decoration: none;
     border: 1px solid transparent;
-    color: rgba(200,169,106,0.40);
-    transition: all 0.20s var(--ease-out);
+    color: rgba(232, 220, 188, 0.72);
+    transition: all 0.2s var(--ease-out);
     overflow: hidden;
   }
   .ow-nav-item:hover {
-    background: rgba(200,169,106,0.05);
-    color: rgba(200,169,106,0.65);
-    border-color: rgba(200,169,106,0.07);
+    background: rgba(232, 220, 188, 0.06);
+    color: rgba(255, 248, 230, 0.95);
+    border-color: rgba(200,169,106,0.16);
   }
   .ow-nav-item.active {
-    background: rgba(255,253,248,0.06);
-    color: var(--gold);
-    border-color: rgba(200,169,106,0.20);
-    box-shadow: 0 10px 28px rgba(8,11,12,0.30);
+    background: linear-gradient(180deg, rgba(200,169,106,0.20), rgba(200,169,106,0.10));
+    color: #F5E5BC;
+    border-color: rgba(200,169,106,0.42);
+    box-shadow:
+      0 4px 14px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
   /* Active right bar */
@@ -845,12 +843,17 @@ const styles = `
   .ow-nav-icon-wrap {
     display: flex; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
-    background: rgba(200,169,106,0.04);
-    transition: background 0.18s;
+    background: rgba(232, 220, 188, 0.06);
+    border: 1px solid rgba(200,169,106,0.06);
+    transition: all 0.18s;
   }
-  .ow-nav-item:hover  .ow-nav-icon-wrap,
+  .ow-nav-item:hover  .ow-nav-icon-wrap {
+    background: rgba(232, 220, 188, 0.12);
+    border-color: rgba(200,169,106,0.18);
+  }
   .ow-nav-item.active .ow-nav-icon-wrap {
-    background: rgba(200,169,106,0.14);
+    background: linear-gradient(135deg, rgba(229,185,60,0.22), rgba(200,169,106,0.14));
+    border-color: rgba(200,169,106,0.40);
   }
 
   /* Label group */
@@ -863,14 +866,16 @@ const styles = `
   }
   .ow-nav-label-en {
     font-family: var(--font-mono);
-    font-size: 9px; font-weight: 500;
-    letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.50;
+    font-size: 9.5px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.60;
   }
 
   /* Active dot */
   .ow-nav-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--gold); opacity: 0.70; flex-shrink: 0;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(200,169,106,0.7);
+    flex-shrink: 0;
   }
 
   /* Mandala inside nav */
@@ -889,15 +894,15 @@ const styles = `
 
   .ow-user {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 16px;
-    background: rgba(200,169,106,0.06);
-    border: 1px solid rgba(200,169,106,0.16);
+    padding: 11px 13px; border-radius: 16px;
+    background: rgba(232,220,188,0.05);
+    border: 1px solid rgba(200,169,106,0.20);
     cursor: pointer;
-    transition: background 0.18s, border-color 0.18s;
+    transition: all 0.2s;
   }
   .ow-user:hover {
-    background: rgba(200,169,106,0.11);
-    border-color: rgba(200,169,106,0.26);
+    background: rgba(232,220,188,0.10);
+    border-color: rgba(200,169,106,0.35);
   }
 
   .ow-user-av {
@@ -913,26 +918,29 @@ const styles = `
 
   .ow-user-info { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .ow-user-name {
-    font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90);
+    font-size: 13px; font-weight: 700; color: rgba(255,250,235,0.95);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .ow-user-role {
     font-family: var(--font-mono);
-    font-size: 9px; font-weight: 700;
+    font-size: 9.5px; font-weight: 700;
     letter-spacing: 0.16em; text-transform: uppercase;
-    color: rgba(200,169,106,0.45);
+    color: rgba(200,169,106,0.70);
   }
 
   .ow-logout-btn {
     display: flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
-    background: none; border: none; cursor: pointer;
-    color: rgba(200,169,106,0.40);
-    transition: all 0.15s;
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(232,220,188,0.04);
+    border: 1px solid rgba(200,169,106,0.10);
+    cursor: pointer;
+    color: rgba(232,220,188,0.65);
+    transition: all 0.18s;
   }
   .ow-logout-btn:hover {
-    background: rgba(200,169,106,0.10);
-    color: rgba(200,169,106,0.80);
+    background: rgba(200,169,106,0.15);
+    color: var(--gold);
+    border-color: rgba(200,169,106,0.32);
   }
 
   /* ══ MAIN ══ */

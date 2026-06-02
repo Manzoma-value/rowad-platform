@@ -125,8 +125,10 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [showToggle, setShowToggle] = useState(false);
-  const [schoolLang, setSchoolLang] = useState("ar");
+  // Toggle is now ALWAYS visible (no gating on the school's default language).
+  // Users can swap between Arabic and the school's secondary language at any time.
+  const [showToggle] = useState(true);
+  const [schoolLang, setSchoolLang] = useState("sq");
   const schoolSlugRef = useRef<string>("");
 
   useEffect(() => {
@@ -147,14 +149,15 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
         if (d?.school?.language) {
           const savedLang = localStorage.getItem("lang");
           if (!savedLang) setLang(d.school.language as "ar" | "sq" | "en");
-          setSchoolLang(d.school.language ?? "ar");
-          if (d.school.language && d.school.language !== "ar") setShowToggle(true);
+          // Use the school's secondary language as the alternate option.
+          // If the school IS Arabic, default the secondary to Albanian.
+          setSchoolLang(d.school.language === "ar" ? "sq" : d.school.language);
         }
       })
       .catch(() => {});
 
-    fetch("/api/profile")
-      .then((r) => r.json())
+    // Cache profile — avatar doesn't change between page navigations.
+    cachedFetch<{ profile?: { avatar_url?: string } }>("/api/profile", 600_000)
       .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
       .catch(() => {});
   }, []);
@@ -412,7 +415,13 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
 
         <div className="tl-footer-caption">
           <Sparkles size={11} className="tl-footer-sparkle" />
-          <span className="tl-footer-text">منصة الرواد - 2026</span>
+          <span className="tl-footer-text">
+            {lang === "ar"
+              ? "جميع الحقوق محفوظة © منظومة - 2026"
+              : lang === "sq"
+                ? "Të gjitha të drejtat e rezervuara © Manzoma - 2026"
+                : "All rights reserved © Manzoma - 2026"}
+          </span>
         </div>
       </div>
 
@@ -516,8 +525,10 @@ const styles = `
     position: fixed; top: 0; inset-inline-start: 0;
     width: var(--tl-sidebar-w); height: 100vh;
     z-index: 50; display: flex; flex-direction: column; overflow: hidden;
-    border-inline-end: 1px solid rgba(200,169,106,0.10);
-    background: linear-gradient(180deg, #0B0E10 0%, #060809 100%);
+    border-inline-end: 1px solid rgba(200,169,106,0.14);
+    /* Layered charcoal — depth + a little warmth, not pitch-black */
+    background:
+      linear-gradient(180deg, #1E2329 0%, #181C21 50%, #11151A 100%);
     transition: transform 0.32s var(--tl-ease-out);
     transform: translateX(0);
   }
@@ -531,8 +542,8 @@ const styles = `
   .tl-sidebar-glow {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.09), transparent 50%),
-      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.06),   transparent 44%);
+      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.12), transparent 55%),
+      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.05),   transparent 44%);
   }
 
   /* Logo */
@@ -588,8 +599,9 @@ const styles = `
   .tl-section-label {
     position: relative; z-index: 10; flex-shrink: 0;
     padding: 0 24px 10px;
-    font-family: var(--tl-font-mono); font-size: 9px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(200,169,106,0.32);
+    font-family: var(--tl-font-mono); font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(232, 220, 188, 0.45);
   }
 
   /* Nav */
@@ -607,16 +619,27 @@ const styles = `
 
   .tl-nav-item {
     position: relative; display: flex; align-items: center; gap: 11px;
-    padding: 9px 11px; border-radius: 14px;
+    padding: 10px 12px; border-radius: 14px;
     text-decoration: none; border: 1px solid transparent;
-    color: rgba(200,169,106,0.38);
-    transition: all 0.18s var(--tl-ease-out); overflow: hidden;
+    color: rgba(232, 220, 188, 0.70);     /* cream — clearly readable */
+    transition: all 0.2s var(--tl-ease-out); overflow: hidden;
   }
-  .tl-nav-item:hover  { background: rgba(200,169,106,0.05); color: rgba(200,169,106,0.65); border-color: rgba(200,169,106,0.07); }
-  .tl-nav-item.active { background: rgba(255,253,248,0.06); color: var(--tl-gold); border-color: rgba(200,169,106,0.20); box-shadow: 0 8px 24px rgba(8,11,12,0.28); }
+  .tl-nav-item:hover {
+    background: rgba(232, 220, 188, 0.06);
+    color: rgba(255, 248, 230, 0.95);
+    border-color: rgba(200,169,106,0.16);
+  }
+  .tl-nav-item.active {
+    background: linear-gradient(180deg, rgba(200,169,106,0.18), rgba(200,169,106,0.08));
+    color: #F5E5BC;
+    border-color: rgba(200,169,106,0.42);
+    box-shadow:
+      0 4px 14px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+  }
 
-  .tl-nav-community { border-color: rgba(200,169,106,0.06); }
-  .tl-nav-community:hover { border-color: rgba(200,169,106,0.14); }
+  .tl-nav-community { border-color: rgba(200,169,106,0.10); }
+  .tl-nav-community:hover { border-color: rgba(200,169,106,0.22); }
 
   .tl-nav-pill    { position: absolute; inset-inline-end: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; background: linear-gradient(180deg, var(--tl-gold-soft), var(--tl-gold-deep)); }
   .tl-nav-shimmer { position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(to left, transparent, rgba(200,169,106,0.55), transparent); }
@@ -624,15 +647,23 @@ const styles = `
   .tl-nav-icon-wrap {
     display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    background: rgba(200,169,106,0.04); transition: background 0.16s;
+    background: rgba(232, 220, 188, 0.06);
+    border: 1px solid rgba(200,169,106,0.06);
+    transition: all 0.18s;
   }
-  .tl-nav-item:hover  .tl-nav-icon-wrap,
-  .tl-nav-item.active .tl-nav-icon-wrap { background: rgba(200,169,106,0.14); }
+  .tl-nav-item:hover  .tl-nav-icon-wrap {
+    background: rgba(232, 220, 188, 0.12);
+    border-color: rgba(200,169,106,0.18);
+  }
+  .tl-nav-item.active .tl-nav-icon-wrap {
+    background: linear-gradient(135deg, rgba(229,185,60,0.22), rgba(200,169,106,0.14));
+    border-color: rgba(200,169,106,0.40);
+  }
 
-  .tl-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .tl-nav-label-main { font-size: 13px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tl-nav-label-sub  { font-family: var(--tl-font-mono); font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.45; }
-  .tl-nav-dot        { width: 5px; height: 5px; border-radius: 50%; background: var(--tl-gold); opacity: 0.65; flex-shrink: 0; }
+  .tl-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .tl-nav-label-main { font-size: 13.5px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+  .tl-nav-label-sub  { font-family: var(--tl-font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; }
+  .tl-nav-dot        { width: 6px; height: 6px; border-radius: 50%; background: var(--tl-gold); box-shadow: 0 0 8px rgba(200,169,106,0.6); flex-shrink: 0; }
 
   .tl-mandala-wrap { margin-top: auto; display: flex; align-items: center; justify-content: center; padding: 20px 0 10px; opacity: 0.70; }
 
@@ -640,11 +671,12 @@ const styles = `
   .tl-user-block { position: relative; z-index: 10; flex-shrink: 0; padding: 0 14px 20px; }
   .tl-user {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 16px;
-    background: rgba(200,169,106,0.06); border: 1px solid rgba(200,169,106,0.16);
-    transition: background 0.18s, border-color 0.18s;
+    padding: 11px 13px; border-radius: 16px;
+    background: rgba(232,220,188,0.05);
+    border: 1px solid rgba(200,169,106,0.20);
+    transition: all 0.2s;
   }
-  .tl-user:hover { background: rgba(200,169,106,0.11); border-color: rgba(200,169,106,0.26); }
+  .tl-user:hover { background: rgba(232,220,188,0.10); border-color: rgba(200,169,106,0.35); }
 
   .tl-user-clickable {
     display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
@@ -659,16 +691,18 @@ const styles = `
   }
   .tl-user-initial { font-size: 16px; font-weight: 900; color: var(--tl-graphite); font-family: var(--tl-font-heading); }
   .tl-user-info    { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .tl-user-name    { font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tl-user-role    { font-family: var(--tl-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.45); }
+  .tl-user-name    { font-size: 13px; font-weight: 700; color: rgba(255,250,235,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tl-user-role    { font-family: var(--tl-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.70); }
 
   .tl-logout-btn {
     display: flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
-    background: none; border: none; cursor: pointer;
-    color: rgba(200,169,106,0.40); transition: all 0.15s;
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(232,220,188,0.04);
+    border: 1px solid rgba(200,169,106,0.10);
+    cursor: pointer;
+    color: rgba(232,220,188,0.65); transition: all 0.18s;
   }
-  .tl-logout-btn:hover:not(:disabled) { background: rgba(200,169,106,0.10); color: rgba(200,169,106,0.80); }
+  .tl-logout-btn:hover:not(:disabled) { background: rgba(200,169,106,0.15); color: var(--tl-gold); border-color: rgba(200,169,106,0.32); }
   .tl-logout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .tl-spin { width: 13px; height: 13px; border: 2px solid rgba(200,169,106,0.15); border-top-color: var(--tl-gold); border-radius: 50%; animation: tl-spin 0.7s linear infinite; }
 

@@ -26,6 +26,7 @@ export default async function SchoolLandingPage({ params }: Props) {
       school={{
         id: school.id,
         name: school.name,
+        name_alt: school.name_alt ?? null,
         slug: school.slug,
         description: school.description ?? null,
         language: school.language ?? "ar",

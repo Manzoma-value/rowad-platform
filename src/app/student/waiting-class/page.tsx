@@ -4,6 +4,10 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 
+// Status the student should see when the admin assigns them to a class
+const TARGET_STATUS = "CLASS_ASSIGNED";
+const POLL_INTERVAL_MS = 8000;
+
 const S = {
   ar: {
     headerLabel: "تعيين المدرسة",
@@ -41,13 +45,44 @@ export default function StudentWaitingClassPage() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    fetch("/api/student")
-      .then((r) => r.json())
-      .then((d) => {
+    let cancelled = false;
+
+    // Cache-busting fetch so the proxy/CDN doesn't serve stale status
+    const fetchStatus = async () => {
+      try {
+        const r = await fetch("/api/student", { cache: "no-store" });
+        const d = await r.json();
+        if (cancelled) return;
         if (d.profile?.full_name) setStudentName(d.profile.full_name);
         if (d.school?.name) setSchoolName(d.school.name);
-      });
-    setTimeout(() => setVisible(true), 50);
+        // 🔑 If the admin has approved + assigned a class, the student's
+        // onboarding_status flips to CLASS_ASSIGNED — navigate them out.
+        if (d.onboarding_status === TARGET_STATUS) {
+          window.location.href = "/student/welcome";
+        }
+      } catch {
+        /* ignore network blips — next poll will retry */
+      }
+    };
+
+    // Initial fetch
+    fetchStatus();
+
+    // Poll every 8s so the page reacts within seconds of admin approval
+    const intervalId = setInterval(fetchStatus, POLL_INTERVAL_MS);
+
+    // Also re-poll the moment the tab regains focus
+    const onVisibility = () => { if (!document.hidden) fetchStatus(); };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const showTimer = setTimeout(() => setVisible(true), 50);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+      clearTimeout(showTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   const checkIcon = (

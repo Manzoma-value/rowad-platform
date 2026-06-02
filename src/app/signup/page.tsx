@@ -64,7 +64,7 @@ const STRINGS = {
     sentMsg: "أرسلنا رابط تأكيد إلى",
     sentNote: "افتح البريد وانقر على الرابط لتفعيل حسابك. تحقق من مجلد الرسائل غير المرغوب فيها إذا لم تجده.",
     sentBtn: "الانتقال إلى تسجيل الدخول",
-    poweredBy: "منصة الرواد",
+    poweredBy: "جميع الحقوق محفوظة © منظومة 2026",
   },
   sq: {
     dir: "ltr" as const,
@@ -91,7 +91,7 @@ const STRINGS = {
     sentMsg: "Kemi dërguar një link konfirmimi në",
     sentNote: "Klikoni linkun në email për të aktivizuar llogarinë. Kontrolloni dosjen spam nëse nuk e gjeni.",
     sentBtn: "Shko te hyrja",
-    poweredBy: "Platforma Alrowad",
+    poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma 2026",
   },
 } as const;
 

@@ -139,7 +139,11 @@ model Profile {
 
 model School {
   id                 String              @id @default(uuid()) @db.Uuid
+  /// Primary Arabic name (always required). Used as the canonical identifier.
   name               String              @unique
+  /// Optional Latin-script name shown when the UI language is Albanian/English.
+  /// Falls back to `name` if null.
+  name_alt           String?
   admin_id           String?             @unique @db.Uuid
   created_at         DateTime            @default(now())
   language           String              @default("ar")
@@ -177,6 +181,7 @@ model Teacher {
   school           School            @relation(fields: [school_id], references: [id], onDelete: Cascade)
   traitAssessments TraitAssessment[]
 
+  @@index([school_id])
   @@map("teachers")
 }
 
@@ -198,6 +203,9 @@ model Student {
   school              School?                 @relation(fields: [school_id], references: [id])
   traitAssessments    TraitAssessment[]
 
+  @@index([school_id])
+  @@index([class_id])
+  @@index([school_id, onboarding_status])
   @@map("students")
 }
 
@@ -216,6 +224,7 @@ model Class {
   students           Student[]
 
   @@unique([school_id, name])
+  @@index([teacher_id])
   @@map("classes")
 }
 
@@ -230,6 +239,8 @@ model Announcement {
   school     School   @relation(fields: [school_id], references: [id], onDelete: Cascade)
   teacher    Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
+  @@index([class_id, created_at])
+  @@index([teacher_id])
   @@map("announcements")
 }
 
@@ -247,6 +258,8 @@ model Quiz {
   teacher    Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   linked_from_lessons Lesson[]
 
+  @@index([teacher_id, created_at])
+  @@index([class_id])
   @@map("quizzes")
 }
 

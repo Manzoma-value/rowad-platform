@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "../../lib/supabase/client";
+import MandalaLoader from "@/components/MandalaLoader";
 
 /* ─── Geometry ─── */
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
@@ -64,7 +65,7 @@ const STRINGS = {
     errProfile: "تعذر جلب بيانات الحساب",
     errServer: "تعذر الاتصال بالخادم، حاول مرة أخرى",
     emailSuccess: "بريد إلكتروني صحيح ✓",
-    poweredBy: "منصة الرواد",
+    poweredBy: "جميع الحقوق محفوظة © منظومة 2026",
   },
   sq: {
     dir: "ltr" as const,
@@ -87,7 +88,7 @@ const STRINGS = {
     errProfile: "Nuk mund të ngarkohen të dhënat e llogarisë",
     errServer: "Gabim lidhje, provoni përsëri",
     emailSuccess: "Email i vlefshëm ✓",
-    poweredBy: "Platforma Alrowad",
+    poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma 2026",
   },
 } as const;
 
@@ -125,6 +126,7 @@ export default function LoginPage() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading]   = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [error, setError]       = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [redirectTo, setRedirectTo]     = useState("");
@@ -168,11 +170,32 @@ export default function LoginPage() {
       if (profileError || !profile) { setError(L.errProfile); return; }
       const roleRoutes: Record<string, string> = { OWNER: "/owner", SCHOOL_ADMIN: "/school-admin", TEACHER: "/teacher", STUDENT: "/student" };
       const dest = redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : roleRoutes[profile.role];
-      if (dest) window.location.href = dest;
-      else setError(lang === "sq" ? "Lloji i llogarisë i panjohur: " + profile.role : "نوع الحساب غير معروف: " + profile.role);
+      if (dest) {
+        // Show the full-screen mandala loader while we navigate.
+        setRedirecting(true);
+        window.location.href = dest;
+      } else {
+        setError(lang === "sq" ? "Lloji i llogarisë i panjohur: " + profile.role : "نوع الحساب غير معروف: " + profile.role);
+      }
     } catch { setError(L.errServer); }
     finally { setLoading(false); }
   };
+
+  // Full-screen mandala while we navigate after successful auth.
+  if (redirecting) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "radial-gradient(ellipse at center, rgba(200,169,106,0.06), transparent 60%), #F6F4EE",
+      }}>
+        <MandalaLoader
+          label={lang === "ar" ? "جارٍ تحويلك..." : "Duke ju ridrejtuar..."}
+          sublabel={lang === "ar" ? "لحظة من فضلك" : "Një moment ju lutemi"}
+        />
+      </div>
+    );
+  }
 
   return (
     <>

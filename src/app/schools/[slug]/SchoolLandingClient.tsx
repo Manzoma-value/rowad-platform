@@ -7,6 +7,8 @@ import Image from "next/image";
 interface School {
   id: string;
   name: string;
+  /** Optional Latin-script name shown when UI language is Albanian. */
+  name_alt: string | null;
   slug: string;
   description: string | null;
   language: string;
@@ -28,7 +30,7 @@ const T = {
     loginBtn: "تسجيل الدخول", signupBtn: "إنشاء حساب",
     joinTitle: "ابدأ رحلتك معنا",
     joinSub: "كن جزءًا من جيل يصنع المستقبل",
-    poweredBy: "منصة الرواد · 2026",
+    poweredBy: "جميع الحقوق محفوظة © منظومة - 2026",
   },
   sq: {
     dir: "ltr" as const,
@@ -40,7 +42,7 @@ const T = {
     loginBtn: "Hyrje", signupBtn: "Regjistrohu",
     joinTitle: "Filloni Udhëtimin",
     joinSub: "Bëhuni pjesë e gjeneratës që ndërton të ardhmen",
-    poweredBy: "Platforma Alrowad · 2026",
+    poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma - 2026",
   },
 };
 
@@ -58,6 +60,13 @@ export default function SchoolLandingClient({ school }: { school: School }) {
 
   const goLogin  = () => router.push(`/schools/${school.slug}/login`);
   const goSignup = () => router.push(`/schools/${school.slug}/signup`);
+
+  // Show the Latin-script name in non-Arabic UIs when available;
+  // otherwise fall back to the canonical Arabic name.
+  const displayName =
+    lang !== "ar" && school.name_alt && school.name_alt.trim()
+      ? school.name_alt
+      : school.name;
 
   return (
     <>
@@ -79,7 +88,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
           </div>
 
           {/* School name centred */}
-          <span className="lp-nav-name">{school.name}</span>
+          <span className="lp-nav-name">{displayName}</span>
 
           {/* Right actions */}
           <div className="lp-nav-actions" dir="ltr">
@@ -101,7 +110,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
 
           <div className="lp-hero-body">
             <p  className="lp-eyebrow a1">{tr.eyebrow}</p>
-            <h1 className="lp-title a2">{school.name}</h1>
+            <h1 className="lp-title a2">{displayName}</h1>
 
             <div className="lp-divider a3">
               <span className="lp-dline" />

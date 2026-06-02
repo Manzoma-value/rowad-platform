@@ -42,12 +42,38 @@ export default function StudentWaitingPage() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    fetch("/api/student")
-      .then((r) => r.json())
-      .then((d) => {
+    let cancelled = false;
+
+    // When owner assigns the school, status → SCHOOL_ASSIGNED.
+    // Navigate the student onward so they don't sit here forever.
+    const fetchStatus = async () => {
+      try {
+        const r = await fetch("/api/student", { cache: "no-store" });
+        const d = await r.json();
+        if (cancelled) return;
         if (d.profile?.full_name) setStudentName(d.profile.full_name);
-      });
-    setTimeout(() => setVisible(true), 50);
+        if (d.onboarding_status === "SCHOOL_ASSIGNED") {
+          window.location.href = "/student/school-assigned";
+        } else if (d.onboarding_status === "CLASS_ASSIGNED") {
+          window.location.href = "/student/welcome";
+        }
+      } catch {
+        /* ignore — next poll retries */
+      }
+    };
+
+    fetchStatus();
+    const intervalId = setInterval(fetchStatus, 8000);
+    const onVisibility = () => { if (!document.hidden) fetchStatus(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    const showTimer = setTimeout(() => setVisible(true), 50);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+      clearTimeout(showTimer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   return (

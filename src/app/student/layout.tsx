@@ -162,8 +162,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const [avatarUrl, setAvatarUrl]         = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen]     = useState(false);
   const [loggingOut, setLoggingOut]       = useState(false);
-  const [showToggle, setShowToggle]       = useState(false);
-  const [schoolLang, setSchoolLang]       = useState("ar");
+  // Always show the toggle — users can swap language anytime.
+  const [showToggle] = useState(true);
+  const [schoolLang, setSchoolLang]       = useState("sq");
   const [checked, setChecked]             = useState(false);
   const [onboardingStatus, setOnboardingStatus] = useState("");
   const langInitialized = useRef(false);
@@ -189,8 +190,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           langInitialized.current = true;
           const savedLang = localStorage.getItem("lang");
           if (!savedLang) setLang(data.school.language as "ar" | "sq" | "en");
-          setSchoolLang(data.school.language ?? "ar");
-          if (data.school.language && data.school.language !== "ar") setShowToggle(true);
+          setSchoolLang(data.school.language === "ar" ? "sq" : data.school.language);
         }
 
         const status: string = data.onboarding_status;
@@ -200,9 +200,20 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         if (!allowed) { setChecked(true); return; }
 
         if (status === "CLASS_ASSIGNED") {
+          // Waiting/onboarding-pre-class pages must NOT render when the student
+          // has already been assigned to a class — bounce them to /welcome.
+          const PRE_CLASS_PAGES = [
+            "/student/intake",
+            "/student/waiting",
+            "/student/school-assigned",
+            "/student/placement",
+            "/student/waiting-class",
+          ];
           const onDashboard = pathname === "/student" || pathname.startsWith("/student/");
-          if (!onDashboard || pathname === "/student/school-assigned")
-            router.push("/student/welcome");
+          const onPreClassPage = PRE_CLASS_PAGES.some(
+            (p) => pathname === p || pathname.startsWith(p + "/"),
+          );
+          if (!onDashboard || onPreClassPage) router.push("/student/welcome");
           else setChecked(true);
           return;
         }
@@ -213,8 +224,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       })
       .catch(() => router.push("/login"));
 
-    fetch("/api/profile")
-      .then((r) => r.json())
+    cachedFetch<{ profile?: { avatar_url?: string } }>("/api/profile", 600_000)
       .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
       .catch(() => {});
   }, [pathname, router, setLang]);
@@ -477,7 +487,13 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
         <div className="sl-footer-caption">
           <Sparkles size={11} className="sl-footer-sparkle" />
-          <span className="sl-footer-text">منصة الرواد - 2026</span>
+          <span className="sl-footer-text">
+            {lang === "ar"
+              ? "جميع الحقوق محفوظة © منظومة - 2026"
+              : lang === "sq"
+                ? "Të gjitha të drejtat e rezervuara © Manzoma - 2026"
+                : "All rights reserved © Manzoma - 2026"}
+          </span>
         </div>
       </div>
 
@@ -583,8 +599,8 @@ const styles = `
     position: fixed; top: 0; inset-inline-start: 0;
     width: var(--sl-sidebar-w); height: 100vh;
     z-index: 50; display: flex; flex-direction: column; overflow: hidden;
-    border-inline-end: 1px solid rgba(200,169,106,0.10);
-    background: linear-gradient(180deg, #0B0E10 0%, #060809 100%);
+    border-inline-end: 1px solid rgba(200,169,106,0.14);
+    background: linear-gradient(180deg, #1E2329 0%, #181C21 50%, #11151A 100%);
     transition: transform 0.32s var(--sl-ease-out);
     transform: translateX(0);
   }
@@ -598,8 +614,8 @@ const styles = `
   .sl-sidebar-glow {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.09), transparent 50%),
-      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.06),   transparent 44%);
+      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.12), transparent 55%),
+      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.05),   transparent 44%);
   }
 
   /* Logo */
@@ -643,8 +659,9 @@ const styles = `
   .sl-section-label {
     position: relative; z-index: 10; flex-shrink: 0;
     padding: 0 24px 10px;
-    font-family: var(--sl-font-mono); font-size: 9px; font-weight: 700;
-    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(200,169,106,0.32);
+    font-family: var(--sl-font-mono); font-size: 9.5px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(232, 220, 188, 0.45);
   }
 
   /* Nav */
@@ -662,16 +679,27 @@ const styles = `
 
   .sl-nav-item {
     position: relative; display: flex; align-items: center; gap: 11px;
-    padding: 9px 11px; border-radius: 14px;
+    padding: 10px 12px; border-radius: 14px;
     text-decoration: none; border: 1px solid transparent;
-    color: rgba(200,169,106,0.38);
-    transition: all 0.18s var(--sl-ease-out); overflow: hidden;
+    color: rgba(232, 220, 188, 0.70);
+    transition: all 0.2s var(--sl-ease-out); overflow: hidden;
   }
-  .sl-nav-item:hover  { background: rgba(200,169,106,0.05); color: rgba(200,169,106,0.65); border-color: rgba(200,169,106,0.07); }
-  .sl-nav-item.active { background: rgba(255,253,248,0.06); color: var(--sl-gold); border-color: rgba(200,169,106,0.20); box-shadow: 0 8px 24px rgba(8,11,12,0.28); }
+  .sl-nav-item:hover {
+    background: rgba(232, 220, 188, 0.06);
+    color: rgba(255, 248, 230, 0.95);
+    border-color: rgba(200,169,106,0.16);
+  }
+  .sl-nav-item.active {
+    background: linear-gradient(180deg, rgba(200,169,106,0.18), rgba(200,169,106,0.08));
+    color: #F5E5BC;
+    border-color: rgba(200,169,106,0.42);
+    box-shadow:
+      0 4px 14px rgba(0,0,0,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+  }
 
-  .sl-nav-community { border-color: rgba(200,169,106,0.06); }
-  .sl-nav-community:hover { border-color: rgba(200,169,106,0.14); }
+  .sl-nav-community { border-color: rgba(200,169,106,0.10); }
+  .sl-nav-community:hover { border-color: rgba(200,169,106,0.22); }
 
   .sl-nav-pill    { position: absolute; inset-inline-end: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; background: linear-gradient(180deg, var(--sl-gold-soft), var(--sl-gold-deep)); }
   .sl-nav-shimmer { position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(to left, transparent, rgba(200,169,106,0.55), transparent); }
@@ -679,15 +707,23 @@ const styles = `
   .sl-nav-icon-wrap {
     display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    background: rgba(200,169,106,0.04); transition: background 0.16s;
+    background: rgba(232, 220, 188, 0.06);
+    border: 1px solid rgba(200,169,106,0.06);
+    transition: all 0.18s;
   }
-  .sl-nav-item:hover  .sl-nav-icon-wrap,
-  .sl-nav-item.active .sl-nav-icon-wrap { background: rgba(200,169,106,0.14); }
+  .sl-nav-item:hover  .sl-nav-icon-wrap {
+    background: rgba(232, 220, 188, 0.12);
+    border-color: rgba(200,169,106,0.18);
+  }
+  .sl-nav-item.active .sl-nav-icon-wrap {
+    background: linear-gradient(135deg, rgba(229,185,60,0.22), rgba(200,169,106,0.14));
+    border-color: rgba(200,169,106,0.40);
+  }
 
-  .sl-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-  .sl-nav-label-main { font-size: 13px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sl-nav-label-sub  { font-family: var(--sl-font-mono); font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.45; }
-  .sl-nav-dot        { width: 5px; height: 5px; border-radius: 50%; background: var(--sl-gold); opacity: 0.65; flex-shrink: 0; }
+  .sl-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .sl-nav-label-main { font-size: 13.5px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+  .sl-nav-label-sub  { font-family: var(--sl-font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; }
+  .sl-nav-dot        { width: 6px; height: 6px; border-radius: 50%; background: var(--sl-gold); box-shadow: 0 0 8px rgba(200,169,106,0.6); flex-shrink: 0; }
 
   .sl-mandala-wrap { margin-top: auto; display: flex; align-items: center; justify-content: center; padding: 20px 0 10px; opacity: 0.70; }
 
@@ -695,11 +731,12 @@ const styles = `
   .sl-user-block { position: relative; z-index: 10; flex-shrink: 0; padding: 0 14px 20px; }
   .sl-user {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: 16px;
-    background: rgba(200,169,106,0.06); border: 1px solid rgba(200,169,106,0.16);
-    transition: background 0.18s, border-color 0.18s;
+    padding: 11px 13px; border-radius: 16px;
+    background: rgba(232,220,188,0.05);
+    border: 1px solid rgba(200,169,106,0.20);
+    transition: all 0.2s;
   }
-  .sl-user:hover { background: rgba(200,169,106,0.11); border-color: rgba(200,169,106,0.26); }
+  .sl-user:hover { background: rgba(232,220,188,0.10); border-color: rgba(200,169,106,0.35); }
 
   .sl-user-clickable {
     display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
@@ -714,16 +751,18 @@ const styles = `
   }
   .sl-user-initial { font-size: 16px; font-weight: 900; color: var(--sl-graphite); font-family: var(--sl-font-heading); }
   .sl-user-info    { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .sl-user-name    { font-size: 12.5px; font-weight: 700; color: rgba(255,253,248,0.90); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sl-user-role    { font-family: var(--sl-font-mono); font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.45); }
+  .sl-user-name    { font-size: 13px; font-weight: 700; color: rgba(255,250,235,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl-user-role    { font-family: var(--sl-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.70); }
 
   .sl-logout-btn {
     display: flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
-    background: none; border: none; cursor: pointer;
-    color: rgba(200,169,106,0.40); transition: all 0.15s;
+    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(232,220,188,0.04);
+    border: 1px solid rgba(200,169,106,0.10);
+    cursor: pointer;
+    color: rgba(232,220,188,0.65); transition: all 0.18s;
   }
-  .sl-logout-btn:hover:not(:disabled) { background: rgba(200,169,106,0.10); color: rgba(200,169,106,0.80); }
+  .sl-logout-btn:hover:not(:disabled) { background: rgba(200,169,106,0.15); color: var(--sl-gold); border-color: rgba(200,169,106,0.32); }
   .sl-logout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .sl-spin { width: 13px; height: 13px; border: 2px solid rgba(200,169,106,0.15); border-top-color: var(--sl-gold); border-radius: 50%; animation: sl-spin 0.7s linear infinite; }
 
