@@ -122,7 +122,6 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
   const [loggingOut, setLoggingOut] = useState(false);
   // Always show the language toggle — both options remain visible.
   const [showToggle] = useState(true);
-  const [schoolLang, setSchoolLang] = useState("sq");
   const [deactivated, setDeactivated] = useState(false);
   const schoolSlugRef = useRef<string>("");
 
@@ -179,10 +178,15 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
         if (d?.school) {
           setSchoolName(d.school.name ?? "");
           if (d.school?.slug) schoolSlugRef.current = d.school.slug;
+          // Admin layout only supports AR + EN. If the school's default is "sq"
+          // we DON'T inherit it — we stick with AR as the default so the toggle
+          // stays in sync with what's actually rendered.
           if (d.school.language) {
             const savedLang = localStorage.getItem("lang");
-            if (!savedLang) setLang(d.school.language as "ar" | "sq" | "en");
-            setSchoolLang(d.school.language === "ar" ? "sq" : d.school.language);
+            const schoolLang = d.school.language;
+            if (!savedLang && (schoolLang === "ar" || schoolLang === "en")) {
+              setLang(schoolLang as "ar" | "en");
+            }
           }
         }
         if (d?.adminName) {
@@ -295,7 +299,8 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
 
         {showToggle && (
           <div style={{ padding: "0 14px 10px" }}>
-            <LangToggle dark secondaryLang={schoolLang} />
+            {/* Admin pages are always AR + EN (not the school's display language) */}
+            <LangToggle dark secondaryLang="en" />
           </div>
         )}
 
@@ -687,9 +692,9 @@ const styles = `
     border-color: rgba(200,169,106,0.40);
   }
 
-  .sa-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .sa-nav-label-main { font-size: 13.5px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
-  .sa-nav-label-sub  { font-family: var(--sa-font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55; }
+  .sa-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .sa-nav-label-main { font-size: 13.5px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+  .sa-nav-label-sub  { font-family: var(--sa-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; line-height: 1.2; }
   .sa-nav-dot        { width: 6px; height: 6px; border-radius: 50%; background: var(--sa-gold); box-shadow: 0 0 8px rgba(200,169,106,0.6); flex-shrink: 0; }
 
   .sa-mandala-wrap { margin-top: auto; display: flex; align-items: center; justify-content: center; padding: 20px 0 10px; opacity: 0.70; }

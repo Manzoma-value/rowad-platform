@@ -67,44 +67,60 @@ const STRINGS = {
     emailSuccess: "بريد إلكتروني صحيح ✓",
     poweredBy: "جميع الحقوق محفوظة © منظومة 2026",
   },
-  sq: {
+  en: {
     dir: "ltr" as const,
-    brand: "Brezi i Pionierëve",
-    tagline: "Fuqizimi i Njeriut · Ndërtimi i së Ardhmes",
-    loginTitle: "Hyrje",
-    sub: "Hyni në llogarinë tuaj",
+    brand: "Generation of Pioneers",
+    tagline: "Empowering people · Building the future",
+    loginTitle: "Sign in",
+    sub: "Enter your details to access your dashboard",
     emailLabel: "Email",
-    passLabel: "Fjalëkalimi",
-    btn: "Hyni",
-    loadingBtn: "Duke hyrë...",
-    forgotPw: "Keni harruar fjalëkalimin?",
-    noAccount: "Nuk keni llogari?",
-    signup: "Regjistrohu",
-    or: "ose",
-    errEmpty: "Ju lutemi plotësoni të gjitha fushat",
-    errEmailInvalid: "Formati i email-it është i pasaktë",
-    errWrong: "Email ose fjalëkalim i gabuar",
-    errNotConfirmed: "Konfirmoni email-in tuaj — kontrolloni kutinë hyrëse dhe klikoni lidhjen",
-    errProfile: "Nuk mund të ngarkohen të dhënat e llogarisë",
-    errServer: "Gabim lidhje, provoni përsëri",
-    emailSuccess: "Email i vlefshëm ✓",
-    poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma 2026",
+    passLabel: "Password",
+    btn: "Sign in",
+    loadingBtn: "Signing in...",
+    forgotPw: "Forgot password?",
+    noAccount: "Don't have an account?",
+    signup: "Create one",
+    or: "or",
+    errEmpty: "Please enter your email and password",
+    errEmailInvalid: "Invalid email format",
+    errWrong: "Incorrect email or password",
+    errNotConfirmed: "Please confirm your email first — check your inbox and click the verification link",
+    errProfile: "Could not load account data",
+    errServer: "Connection failed, please try again",
+    emailSuccess: "Valid email ✓",
+    poweredBy: "All rights reserved © Manzoma 2026",
   },
 } as const;
 
-type Lang = "ar" | "sq";
+type Lang = "ar" | "en";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 /* ─── Language toggle ─── */
 function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => void }) {
   return (
-    <div className="lp-lang-toggle" dir="ltr">
-      <button type="button" className={`lp-lang-btn${lang === "sq" ? " lp-lang-btn--active" : ""}`} onClick={() => onChange("sq")} aria-label="Shqip">
-        <span className="lp-lang-flag">🇦🇱</span><span className="lp-lang-name">Shqip</span>
+    <div className="lp-lang-toggle" dir="ltr" role="group" aria-label="Language">
+      <span
+        className="lp-lang-thumb"
+        style={{ transform: lang === "ar" ? "translateX(100%)" : "translateX(0%)" }}
+        aria-hidden="true"
+      />
+      <button
+        type="button"
+        className={`lp-lang-btn${lang === "en" ? " lp-lang-btn--active" : ""}`}
+        onClick={() => onChange("en")}
+        aria-pressed={lang === "en"}
+        aria-label="English"
+      >
+        <span className="lp-lang-name">EN</span>
       </button>
-      <div className="lp-lang-sep"/>
-      <button type="button" className={`lp-lang-btn${lang === "ar" ? " lp-lang-btn--active" : ""}`} onClick={() => onChange("ar")} aria-label="عربي">
-        <span className="lp-lang-flag">🇸🇦</span><span className="lp-lang-name">العربية</span>
+      <button
+        type="button"
+        className={`lp-lang-btn${lang === "ar" ? " lp-lang-btn--active" : ""}`}
+        onClick={() => onChange("ar")}
+        aria-pressed={lang === "ar"}
+        aria-label="العربية"
+      >
+        <span className="lp-lang-name">AR</span>
       </button>
     </div>
   );
@@ -125,6 +141,8 @@ export default function LoginPage() {
   const [lang, setLang] = useState<Lang>("ar");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw]     = useState(false);
+  const [capsOn, setCapsOn]     = useState(false);
   const [loading, setLoading]   = useState(false);
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError]       = useState("");
@@ -135,22 +153,23 @@ export default function LoginPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("lang") as Lang | null;
-    const effectiveLang: Lang = saved === "sq" || saved === "ar" ? saved : "ar";
+    // Albanian was previously the second option; if a user has "sq" in
+    // localStorage from another page, fall back to Arabic on this one.
+    const effectiveLang: Lang = saved === "en" || saved === "ar" ? saved : "ar";
     if (effectiveLang !== "ar") setLang(effectiveLang);
     const params = new URLSearchParams(window.location.search);
     const rd  = params.get("redirectTo") ?? "";
     const err = params.get("error") ?? "";
     if (rd.startsWith("/") && !rd.startsWith("//")) setRedirectTo(rd);
-    const isSq = effectiveLang === "sq";
-    if (err === "link_invalid")       setError(isSq ? "Lidhja e konfirmimit është e pavlefshme ose e skaduar" : "رابط التأكيد غير صالح أو منتهي الصلاحية");
-    else if (err === "oauth_failed")  setError(isSq ? "Hyrja dështoi" : "فشل تسجيل الدخول");
-    else if (err === "session_error") setError(isSq ? "Gabim sesioni, provoni përsëri" : "حدث خطأ في الجلسة");
+    const isEn = effectiveLang === "en";
+    if (err === "link_invalid")       setError(isEn ? "Verification link is invalid or expired" : "رابط التأكيد غير صالح أو منتهي الصلاحية");
+    else if (err === "oauth_failed")  setError(isEn ? "Sign-in failed" : "فشل تسجيل الدخول");
+    else if (err === "session_error") setError(isEn ? "Session error, please try again" : "حدث خطأ في الجلسة");
   }, []);
 
   const handleLangChange = (l: Lang) => { setLang(l); setError(""); localStorage.setItem("lang", l); };
 
-  const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
-  const showEmailSuccess = emailTouched && isValidEmail(email);
+  const showEmailError = emailTouched && email.trim().length > 0 && !isValidEmail(email);
 
   const handleLogin = async () => {
     setError("");
@@ -175,7 +194,7 @@ export default function LoginPage() {
         setRedirecting(true);
         window.location.href = dest;
       } else {
-        setError(lang === "sq" ? "Lloji i llogarisë i panjohur: " + profile.role : "نوع الحساب غير معروف: " + profile.role);
+        setError(lang === "en" ? "Unknown account type: " + profile.role : "نوع الحساب غير معروف: " + profile.role);
       }
     } catch { setError(L.errServer); }
     finally { setLoading(false); }
@@ -190,8 +209,8 @@ export default function LoginPage() {
         background: "radial-gradient(ellipse at center, rgba(200,169,106,0.06), transparent 60%), #F6F4EE",
       }}>
         <MandalaLoader
-          label={lang === "ar" ? "جارٍ تحويلك..." : "Duke ju ridrejtuar..."}
-          sublabel={lang === "ar" ? "لحظة من فضلك" : "Një moment ju lutemi"}
+          label={lang === "ar" ? "جارٍ تحويلك..." : "Redirecting..."}
+          sublabel={lang === "ar" ? "لحظة من فضلك" : "One moment please"}
         />
       </div>
     );
@@ -231,43 +250,94 @@ export default function LoginPage() {
               <p className="lp-form-sub">{L.sub}</p>
             </div>
 
-            <div className="lp-fields">
+            <form
+              className="lp-fields"
+              onSubmit={(e) => { e.preventDefault(); handleLogin(); }}
+              noValidate
+            >
               <div className="lp-field">
-                <label className="lp-label">
+                <label htmlFor="lp-email" className="lp-label">
                   <span className="lp-label-icon">
-                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                     </svg>
                   </span>
                   {L.emailLabel}
                 </label>
-                <input type="email"
-                  className={`lp-input${showEmailError ? " lp-input--error" : showEmailSuccess ? " lp-input--valid" : ""}`}
-                  placeholder="example@mail.com" value={email}
-                  onChange={(e) => setEmail(e.target.value)} onBlur={() => setEmailTouched(true)}
-                  disabled={loading} dir="ltr" onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  suppressHydrationWarning/>
-                {showEmailError   && <span className="lp-field-msg lp-field-msg--error">{L.errEmailInvalid}</span>}
-                {showEmailSuccess && <span className="lp-field-msg lp-field-msg--success">{L.emailSuccess}</span>}
+                <input
+                  id="lp-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  spellCheck={false}
+                  autoCapitalize="off"
+                  className={`lp-input${showEmailError ? " lp-input--error" : ""}`}
+                  placeholder="example@mail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmailTouched(true)}
+                  disabled={loading}
+                  dir="ltr"
+                  suppressHydrationWarning
+                />
+                {showEmailError && (
+                  <span className="lp-field-msg lp-field-msg--error">{L.errEmailInvalid}</span>
+                )}
               </div>
 
               <div className="lp-field">
-                <label className="lp-label">
+                <label htmlFor="lp-password" className="lp-label">
                   <span className="lp-label-icon">
-                    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                     </svg>
                   </span>
                   {L.passLabel}
                 </label>
-                <input type="password" className="lp-input" placeholder="••••••••" value={password}
-                  onChange={(e) => setPassword(e.target.value)} disabled={loading} dir="ltr"
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()} suppressHydrationWarning/>
+                <div className="lp-input-wrap">
+                  <input
+                    id="lp-password"
+                    type={showPw ? "text" : "password"}
+                    autoComplete="current-password"
+                    className="lp-input lp-input--with-action"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyUp={(e) => setCapsOn(e.getModifierState && e.getModifierState("CapsLock"))}
+                    onKeyDown={(e) => setCapsOn(e.getModifierState && e.getModifierState("CapsLock"))}
+                    disabled={loading}
+                    dir="ltr"
+                    suppressHydrationWarning
+                  />
+                  <button
+                    type="button"
+                    className="lp-eye"
+                    onClick={() => setShowPw((v) => !v)}
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                    tabIndex={-1}
+                  >
+                    {showPw ? (
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"/>
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {capsOn && password.length > 0 && (
+                  <span className="lp-field-msg lp-field-msg--warn">
+                    {lang === "ar" ? "Caps Lock مُفعَّل" : "Caps Lock is on"}
+                  </span>
+                )}
               </div>
 
               {error && (
-                <div className="lp-error">
-                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                <div className="lp-error" role="alert">
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
                   {error}
                 </div>
               )}
@@ -276,10 +346,10 @@ export default function LoginPage() {
                 <Link href="/forgot-password" className="lp-forgot">{L.forgotPw}</Link>
               </div>
 
-              <button className="lp-btn" onClick={handleLogin} disabled={loading}>
+              <button type="submit" className="lp-btn" disabled={loading}>
                 {loading ? <><span className="lp-spin"/>{L.loadingBtn}</> : L.btn}
               </button>
-            </div>
+            </form>
 
             <div className="lp-divider">
               <div className="lp-divider-line"/>
@@ -338,18 +408,41 @@ const css = `
   .lp-rule-diamond{width:5px;height:5px;background:rgba(200,169,106,.5);transform:rotate(45deg);margin:0 10px;flex-shrink:0;}
 
   /* Lang toggle */
-  .lp-lang-toggle{display:flex;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(200,169,106,.20);border-radius:10px;padding:3px;}
-  .lp-lang-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;border:none;background:transparent;color:rgba(200,169,106,.4);font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;transition:all .18s;white-space:nowrap;}
-  .lp-lang-btn:hover:not(.lp-lang-btn--active){color:rgba(200,169,106,.7);background:rgba(200,169,106,.07);}
-  .lp-lang-btn--active{background:rgba(200,169,106,.16);color:var(--gold);}
-  .lp-lang-flag{font-size:15px;line-height:1;}
-  .lp-lang-name{font-size:11.5px;}
-  .lp-lang-sep{width:1px;height:18px;background:rgba(200,169,106,.15);flex-shrink:0;}
+  /* Modern segmented language toggle with sliding gold thumb */
+  .lp-lang-toggle{
+    position:relative;display:grid;grid-template-columns:1fr 1fr;align-items:stretch;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(200,169,106,.22);border-radius:11px;
+    padding:4px;width:120px;overflow:hidden;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .lp-lang-thumb{
+    position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);
+    border-radius:8px;
+    background:linear-gradient(135deg,#E0C788 0%,#C8A96A 60%,#B89B5E 100%);
+    box-shadow:0 2px 8px rgba(200,169,106,.30),inset 0 1px 0 rgba(255,255,255,.25);
+    transition:transform .32s cubic-bezier(0.34,1.56,0.64,1);
+    z-index:0;pointer-events:none;
+  }
+  .lp-lang-btn{
+    position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:center;
+    padding:7px 0;border-radius:8px;border:none;background:transparent;
+    color:rgba(232,220,188,.85);font-size:12px;font-weight:800;letter-spacing:.05em;
+    font-family:'Cairo',sans-serif;cursor:pointer;
+    transition:color .22s ease,transform .15s ease;
+  }
+  .lp-lang-btn:hover:not(.lp-lang-btn--active){color:#FFF8E6;}
+  .lp-lang-btn:active{transform:scale(.97);}
+  .lp-lang-btn--active{color:var(--black);}
+  .lp-lang-name{font-size:12px;}
   .lp-lang-toggle-mobile{display:none;justify-content:center;margin-bottom:20px;}
-  .lp-lang-toggle-mobile .lp-lang-toggle{background:rgba(11,11,12,.04);border-color:rgba(200,169,106,.30);}
-  .lp-lang-toggle-mobile .lp-lang-btn{color:var(--text3);}
-  .lp-lang-toggle-mobile .lp-lang-btn--active{background:var(--black);color:var(--gold);}
-  .lp-lang-toggle-mobile .lp-lang-sep{background:var(--border);}
+  .lp-lang-toggle-mobile .lp-lang-toggle{
+    background:rgba(11,11,12,.04);border-color:rgba(168,134,62,.30);
+  }
+  .lp-lang-toggle-mobile .lp-lang-btn{color:#6B5A38;}
+  .lp-lang-toggle-mobile .lp-lang-btn:hover:not(.lp-lang-btn--active){color:#3D3320;}
+  .lp-lang-toggle-mobile .lp-lang-btn--active{color:var(--black);}
 
   /* Form side */
   .lp-form-side{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:var(--off-white);position:relative;min-height:100vh;align-self:stretch;}
@@ -374,6 +467,20 @@ const css = `
   .lp-field-msg{font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;margin-top:2px;}
   .lp-field-msg--error{color:#c0392b;}
   .lp-field-msg--success{color:#27ae60;}
+  .lp-field-msg--warn{color:#a8651e;}
+
+  /* Password input with show/hide button */
+  .lp-input-wrap{position:relative;display:flex;align-items:center;}
+  .lp-input--with-action{padding-inline-end:42px;}
+  .lp-eye{
+    position:absolute;inset-inline-end:8px;top:50%;transform:translateY(-50%);
+    display:flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:8px;
+    border:none;background:transparent;cursor:pointer;
+    color:var(--text3,#8A7A5A);transition:color .15s,background .15s;
+  }
+  .lp-eye:hover{color:var(--text2,#3D2E10);background:rgba(200,169,106,.10);}
+  .lp-eye:focus-visible{outline:2px solid rgba(200,169,106,.4);outline-offset:2px;}
   .lp-error{display:flex;align-items:center;gap:8px;background:rgba(139,26,26,.06);border:1px solid rgba(139,26,26,.2);color:#8b1a1a;font-size:12.5px;padding:11px 14px;border-radius:9px;font-weight:600;}
   .lp-btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;background:var(--black);color:var(--gold);border:1px solid rgba(200,169,106,.25);border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;transition:all .18s;font-family:'Cairo',sans-serif;margin-top:4px;position:relative;overflow:hidden;}
   .lp-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,169,106,.08),transparent 60%);pointer-events:none;}
@@ -407,13 +514,13 @@ const css = `
     .lp-form-ornament{margin-bottom:14px;}
     .lp-form-header{margin-bottom:22px;}
     .lp-btn{padding:16px;font-size:16px;}
-    .lp-lang-btn{padding:8px 12px;}
+    .lp-lang-toggle{width:108px;}
   }
   @media(max-width:400px){
     .lp-panel-inner{padding:10px 16px;padding-top:calc(env(safe-area-inset-top,0px) + 10px);}
     .lp-form-side{padding:22px 16px;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 32px);}
     .lp-form-title{font-size:21px;}
-    .lp-lang-btn{padding:7px 9px;}
-    .lp-lang-flag{font-size:13px;}
+    .lp-lang-toggle{width:100px;}
+    .lp-lang-btn{padding:6px 0;font-size:11.5px;}
   }
 `;

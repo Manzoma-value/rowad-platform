@@ -428,9 +428,17 @@ function SubmissionsContent() {
         }
         .sub-row:hover .sub-chevron { color: var(--gold); }
 
-        @media (max-width: 600px) {
-          .sub-row { padding: 12px 14px; gap: 10px; }
-          .sub-right { flex-wrap: wrap; justify-content: flex-end; }
+        @media (max-width: 700px) {
+          .sub-page { gap: 14px; }
+          .sub-title { font-size: 20px; }
+          .sub-desc { font-size: 12.5px; }
+          .sub-eyebrow { font-size: 10px; }
+          .sub-row { padding: 12px 14px; gap: 10px; flex-wrap: wrap; }
+          .sub-right { flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+          .sub-empty { padding: 40px 18px; }
+        }
+        @media (max-width: 420px) {
+          .sub-row { padding: 10px 12px; gap: 8px; }
         }
       `}</style>
     </div>

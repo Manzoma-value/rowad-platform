@@ -311,7 +311,15 @@ export default function SchoolAdminClassesPage() {
         .cl-teacher-label{font-size:11px;color:var(--text3);font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:0.5px}
         .cl-select{flex:1;background:var(--off-white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-family:var(--font);outline:none;cursor:pointer;transition:border-color 0.15s}
         .cl-select:focus{border-color:var(--gold)}
-        @media(max-width:600px){.cl-grid{grid-template-columns:1fr}.create-row{flex-direction:column}}
+        @media(max-width:700px){
+          .cl-grid{grid-template-columns:1fr; gap:10px}
+          .create-row{flex-direction:column; gap:10px}
+          .create-row input, .create-row button{width:100%}
+        }
+        @media(max-width:420px){
+          .cl-teacher-row{flex-wrap:wrap; gap:6px}
+          .cl-teacher-label{flex-basis:100%}
+        }
       `}</style>
     </div>
   );

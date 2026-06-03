@@ -831,8 +831,19 @@ const css = `
 .sc-toggle-btn--on:hover:not(:disabled){background:rgba(45,138,74,0.15)}
 .sc-spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(200,169,106,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
 
-@media(max-width:600px){
-  .sc-top{flex-wrap:wrap}
-  .sc-right{flex-direction:row;align-items:center}
+@media(max-width:700px){
+  .sc-top{flex-wrap:wrap; gap:10px}
+  .sc-right{flex-direction:row; align-items:center; flex-wrap:wrap}
+  .sc-name{font-size:14px}
+  .sc-stat-n{font-size:13px}
+  .sc-stat-l{font-size:8.5px}
+  .sc-card{padding:14px}
+  .sc-status{font-size:9.5px}
+  .sc-select{font-size:12.5px; max-width:100%}
+}
+@media(max-width:420px){
+  .sc-card{padding:12px}
+  .sc-stat-row{gap:4px}
+  .sc-stat-div{height:14px}
 }
 `;

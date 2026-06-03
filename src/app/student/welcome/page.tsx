@@ -298,6 +298,27 @@ export default function StudentWelcomePage() {
         }
         .go-btn:hover { background: var(--gold); color: var(--ink); transform: translateY(-1px); }
         .footer-note { text-align: center; font-size: 12px; color: var(--muted); }
+
+        /* ─── Mobile ─── */
+        @media (max-width: 500px) {
+          .shell { padding: 16px 12px; }
+          .card { padding: 20px 18px; border-radius: 18px; gap: 14px; }
+          .top-banner { padding: 18px 16px; }
+          .banner-title { font-size: 17px; }
+          .banner-sub { font-size: 12.5px; }
+          .class-card { padding: 18px 16px; }
+          .class-name { font-size: 24px; }
+          .info-row { padding: 12px 14px; gap: 11px; }
+          .info-value { font-size: 14px; }
+          .score-section { padding: 14px; }
+          .score-num { font-size: 28px; }
+          .score-den, .score-sep { font-size: 18px; }
+          .go-btn { padding: 13px 18px; font-size: 14px; }
+        }
+        @media (max-width: 380px) {
+          .card { padding: 16px 14px; }
+          .class-name { font-size: 22px; }
+        }
       `}</style>
     </div>
   );

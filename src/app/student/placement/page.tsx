@@ -432,4 +432,10 @@ const styles = `
   .p-empty-icon { color: var(--gold); }
   .p-empty h2 { font-size: 17px; font-weight: 800; color: var(--ink); }
   .p-empty p { font-size: 13px; color: var(--muted); }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 600px) {
+    .p-empty { padding: 48px 22px; border-radius: 16px; }
+    .p-empty h2 { font-size: 16px; }
+  }
 `;

@@ -258,10 +258,12 @@ const styles = `
   .sd-chip.muted{color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.07);margin-top:11px}
   .sd-avatar{
     width:66px;height:66px;border-radius:50%;flex-shrink:0;
-    background:rgba(200,169,106,0.1);border:2px solid rgba(200,169,106,0.28);
+    background:linear-gradient(135deg, rgba(200,169,106,0.18), rgba(229,185,60,0.10));
+    border:2px solid rgba(200,169,106,0.38);
     display:flex;align-items:center;justify-content:center;
-    font-size:23px;font-weight:900;color:#C8A96A;
+    font-size:23px;font-weight:900;color:#E5B93C;
     position:relative;z-index:1;
+    box-shadow:0 4px 18px rgba(200,169,106,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
   /* ── Empty state ── */
@@ -300,8 +302,15 @@ const styles = `
   }
 
   /* ── Announcement list ── */
-  .sd-ann-list{padding:8px 14px;display:flex;flex-direction:column;gap:0;max-height:420px;overflow-y:auto}
-  .sd-ann-item{display:flex;gap:12px;padding:13px 2px;border-bottom:1px solid rgba(200,169,106,0.07);animation:fadeUp 0.3s ease both}
+  .sd-ann-list{padding:6px 10px;display:flex;flex-direction:column;gap:0;max-height:420px;overflow-y:auto}
+  .sd-ann-item{
+    display:flex;gap:12px;padding:13px 8px;border-bottom:1px solid rgba(200,169,106,0.07);
+    animation:fadeUp 0.3s ease both;border-radius:10px;
+    transition:background 0.2s, transform 0.2s;
+  }
+  .sd-ann-item:hover{background:rgba(200,169,106,0.04); transform:translateX(0)}
+  [dir="rtl"] .sd-ann-item:hover{transform:translateX(-2px)}
+  [dir="ltr"] .sd-ann-item:hover{transform:translateX(2px)}
   .sd-ann-item:last-child{border-bottom:none}
   .sd-ann-bar{width:3px;min-height:36px;background:linear-gradient(180deg,#C8A96A,#E5B93C);border-radius:99px;flex-shrink:0;margin:2px 0}
   .sd-ann-body{flex:1}

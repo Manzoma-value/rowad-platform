@@ -210,6 +210,15 @@ export default function StudentWaitingPage() {
           color: var(--muted); font-size: 12.5px; padding: 11px 15px; border-radius: 10px;
         }
         .note-bar svg { flex-shrink: 0; color: var(--gold-dark); }
+
+        @media (max-width: 500px) {
+          .shell { padding: 16px 12px; }
+          .card { padding: 22px 18px; border-radius: 18px; gap: 14px; }
+          .card-title { font-size: 19px !important; }
+          .step-title { font-size: 12.5px; }
+          .step-sub { font-size: 11px; }
+          .note-bar { font-size: 11.5px; padding: 9px 12px; }
+        }
       `}</style>
     </div>
   );

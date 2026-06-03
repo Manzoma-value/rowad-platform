@@ -224,6 +224,22 @@ export default function StudentWaitingClassPage() {
           color: var(--muted); font-size: 12.5px; padding: 11px 15px; border-radius: 10px;
         }
         .note-bar svg { flex-shrink: 0; color: var(--gold-dark); }
+
+        @media (max-width: 500px) {
+          .shell { padding: 16px 12px; }
+          .card { border-radius: 18px; }
+          .card-header { padding: 18px 20px; gap: 12px; }
+          .header-icon { width: 46px; height: 46px; }
+          .header-title { font-size: 16px; }
+          .header-label { font-size: 9.5px; }
+          .school-pill { font-size: 11px; padding: 2px 10px; }
+          .card-body { padding: 18px 20px; gap: 14px; }
+          .desc-text { font-size: 12.5px; line-height: 1.75; }
+          .steps-box { padding: 12px 14px; }
+          .step-title { font-size: 12.5px; }
+          .step-sub { font-size: 11px; }
+          .note-bar { font-size: 11.5px; padding: 9px 12px; }
+        }
       `}</style>
     </div>
   );

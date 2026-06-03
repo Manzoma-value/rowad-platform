@@ -1,15 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import MandalaLoaderMobile from "./MandalaLoaderMobile";
+
 // ─────────────────────────────────────────────────────────────────────
 // MandalaLoader — pure-CSS animated loader (no rAF, no React re-renders)
 //
-// Why this design:
-//   - Old version used requestAnimationFrame + setState every ~16ms,
-//     forcing React to re-render the entire SVG tree on each frame.
-//     On low-end phones that was destroying the UI.
-//   - This version renders the SVG once and lets CSS spin the layers.
-//   - Layers tagged `ml-heavy` are stripped on mobile so phones render
-//     a leaner, fluid mandala — same brand, far cheaper to paint.
+// On phones (≤600px) we render the dedicated MandalaLoaderMobile —
+// a much lighter loader that doesn't break tight phone layouts.
+// On desktop we render the full ornate version below.
 // ─────────────────────────────────────────────────────────────────────
 
 const R = (n: number) => Math.round(n * 10000) / 10000;
@@ -69,6 +68,23 @@ export default function MandalaLoader({
   compact = false,
   bare = false,
 }: Props) {
+  // ── Mobile branch ──
+  // We detect viewport on mount (matchMedia is browser-only, so we start
+  // pessimistically as `false` to avoid hydration mismatches and flip it
+  // once we know).
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 600px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  if (isMobile) {
+    return <MandalaLoaderMobile label={label} />;
+  }
+
   return (
     <div className={`ml-root${compact ? " ml-root--compact" : ""}${bare ? " ml-root--bare" : ""}`}>
       <div className="ml-glow-bg" aria-hidden="true" />

@@ -379,4 +379,23 @@ const sharedStyles = `
   .tf-btn.sel.true{background:rgba(16,185,129,0.1);border-color:#10b981;color:#10b981}
   .tf-btn.sel.false{background:rgba(239,68,68,0.1);border-color:#ef4444;color:#ef4444}
   .written-note{background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);color:#b45309;font-size:12.5px;padding:10px 12px;border-radius:8px}
+
+  /* ─── Mobile ─── */
+  @media (max-width: 600px) {
+    .q-card { padding: 13px 14px; gap: 7px; }
+    .q-text { font-size: 13.5px; }
+    .q-type { font-size: 10px; }
+    .q-opt { font-size: 11.5px; }
+    .modal { padding: 18px; border-radius: 14px; max-height: 92vh; }
+    .modal-field { gap: 6px; }
+    .field-label { font-size: 11.5px; }
+    .type-btn { padding: 7px 6px; font-size: 11.5px; }
+    .tf-btn { padding: 9px; font-size: 13px; }
+    .add-q-btn { padding: 11px; font-size: 12.5px; }
+  }
+  @media (max-width: 400px) {
+    .q-card { padding: 11px 12px; }
+    .modal-overlay { padding: 10px; }
+    .modal { padding: 16px; }
+  }
 `;

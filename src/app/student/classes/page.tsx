@@ -228,4 +228,29 @@ const styles = `
   .cls-ann-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
   .cls-ann-author{display:flex;align-items:center;gap:5px;font-size:11px;color:#A8863E;font-weight:600}
   .cls-ann-date{font-size:11px;color:#9A8A70}
+
+  /* ─── Mobile ─── */
+  @media (max-width: 600px) {
+    .cls-shell { padding: 16px 14px; gap: 14px; }
+    .cls-header { padding: 18px 18px; border-radius: 16px; }
+    .cls-title { font-size: 20px; margin-bottom: 10px; }
+    .cls-eyebrow { font-size: 9.5px; letter-spacing: 1.5px; margin-bottom: 5px; }
+    .cls-chip { font-size: 11px; padding: 4px 10px; }
+    .cls-grid { grid-template-columns: 1fr; gap: 12px; }
+    .cls-panel { border-radius: 16px; }
+    .cls-panel-head { padding: 12px 14px; }
+    .cls-panel-title { font-size: 13px; }
+    .cls-roster { padding: 6px 8px; }
+    .cls-row { padding: 8px 8px; gap: 8px; }
+    .cls-av { width: 30px; height: 30px; font-size: 11.5px; }
+    .cls-row-name { font-size: 12.5px; }
+    .cls-ann-list { padding: 6px 12px; }
+    .cls-ann-text { font-size: 13px; line-height: 1.6; }
+    .cls-empty-wrap { padding: 40px 22px; border-radius: 16px; }
+  }
+  @media (max-width: 380px) {
+    .cls-shell { padding: 14px 12px; }
+    .cls-title { font-size: 18px; }
+    .cls-header { padding: 16px 14px; }
+  }
 `;

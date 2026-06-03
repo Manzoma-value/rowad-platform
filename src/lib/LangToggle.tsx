@@ -24,14 +24,22 @@ interface Props {
   compact?: boolean;
 }
 
-export default function LangToggle({ dark, secondaryLang = "sq", compact = false }: Props) {
+export default function LangToggle({ dark, secondaryLang = "en", compact = false }: Props) {
   const { lang, setLang } = useLang();
   const options: Lang[] = ["ar", secondaryLang as Lang];
+  // Fall back to AR (index 0) if the current global lang isn't one of our two.
   const activeIndex = options.indexOf(lang) === -1 ? 0 : options.indexOf(lang);
 
+  // The toggle is forced to dir="ltr" internally — that keeps the grid columns
+  // and the thumb's translateX math consistent no matter what direction the
+  // surrounding sidebar uses. (CSS transforms ignore `dir` so without this,
+  // the thumb sticks on the wrong side in RTL layouts.)
   return (
-    <div className={`ltg-wrap${dark ? " ltg-wrap--dark" : ""}${compact ? " ltg-wrap--compact" : ""}`}>
-      {/* Sliding indicator */}
+    <div
+      dir="ltr"
+      className={`ltg-wrap${dark ? " ltg-wrap--dark" : ""}${compact ? " ltg-wrap--compact" : ""}`}
+    >
+      {/* Sliding gold indicator */}
       <span
         className="ltg-thumb"
         style={{ transform: `translateX(${activeIndex === 0 ? "0%" : "100%"})` }}

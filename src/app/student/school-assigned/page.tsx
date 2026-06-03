@@ -340,4 +340,12 @@ const pageStyles = `
 
   /* Spacer between sections when no score */
   .school-card + .next-step-box { margin-top: 14px; }
+
+  /* ─── Mobile ─── */
+  @media (max-width: 500px) {
+    .shell { padding: 16px 12px; }
+    .card { padding: 22px 18px; border-radius: 18px; gap: 14px; }
+    .footer-note { font-size: 11.5px; }
+    .start-btn { padding: 12px 16px; font-size: 14px; }
+  }
 `;

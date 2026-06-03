@@ -2,6 +2,134 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import { useLang } from "@/lib/language-context";
+
+/* ───── i18n ───── */
+const T = {
+  ar: {
+    dir: "rtl" as const,
+    eyebrow: "إدارة الصلاحيات والوصول",
+    title: "المدراء والدعوات",
+    sub: "إدارة مدراء الجهات وإصدار دعوات تعيين المدراء الجدد",
+    createInvite: "إنشاء دعوة",
+    statActive: "مدراء نشطون",
+    statSchools: "إجمالي الجهات",
+    statInvites: "دعوات نشطة",
+    statDeactivated: "معطّلون",
+    tabAdmins: "المدراء",
+    tabInvites: "الدعوات",
+    inviteInfo1: "صلاحية الدعوة",
+    inviteInfo2: "30 يومًا",
+    inviteInfo3: "استخدام واحد فقط · يمكن إلغاؤها في أي وقت قبل قبولها",
+    flashCreated: "تم إنشاء رابط الدعوة بنجاح",
+    flashCopy: "نسخ الرابط",
+    flashCopied: "تم النسخ!",
+    loading: "جارٍ التحميل...",
+    secWithAdmin: "جهات لديها مدير",
+    secWithoutAdmin: "جهات بدون مدير",
+    secActiveInvites: "الدعوات النشطة",
+    secHistory: "السجل",
+    statusActive: "نشط",
+    statusInactive: "معطّل",
+    statusActiveInvite: "دعوة مفعّلة",
+    statusNone: "لا يوجد",
+    statusUsed: "مُستخدمة",
+    statusDisabled: "معطّلة",
+    statusExpired: "منتهية",
+    actDeactivate: "تعطيل",
+    actActivate: "تفعيل",
+    actInvite: "دعوة مدير",
+    actDisableInvite: "تعطيل الدعوة",
+    actCopy: "نسخ الرابط",
+    joinedAt: "انضم",
+    acceptedBy: "قبلها",
+    usedAt: "استُخدمت",
+    expiresAt: "تنتهي",
+    createdAt: "أُنشئت",
+    notAssigned: "لا يوجد مدير معيّن",
+    waitingInvite: "دعوة نشطة قيد الانتظار",
+    /* Empty states */
+    emptyNoSchools: "لا توجد جهات مسجّلة بعد",
+    emptyNoSchoolsSub: "يجب أن تكون لديك جهة (مدرسة) واحدة على الأقل قبل إصدار دعوات المدراء. أنشئ أول جهة من صفحة الجهات.",
+    emptyGoSchools: "صفحة الجهات",
+    emptyNoInvites: "لا توجد دعوات بعد",
+    emptyCreateFirst: "إنشاء أول دعوة",
+    /* Modal */
+    modalTitle: "إنشاء دعوة مدير",
+    modalDesc: "اختر الجهة التي تريد تعيين مدير لها. سيُرسَل الرابط للشخص المعني.",
+    modalLabel: "الجهة",
+    modalPlaceholder: "— اختر الجهة —",
+    modalHint: "جميع الجهات لديها مدير أو دعوة نشطة",
+    modalCancel: "إلغاء",
+    modalCreate: "إنشاء الرابط",
+    modalCreating: "جارٍ الإنشاء...",
+    errLoad: "تعذر تحميل البيانات",
+    errGeneric: "حدث خطأ",
+    errNet: "تعذر الاتصال بالخادم",
+    errChooseSchool: "يرجى اختيار الجهة أولاً",
+  },
+  en: {
+    dir: "ltr" as const,
+    eyebrow: "Access & Permissions",
+    title: "Admins & Invites",
+    sub: "Manage school admins and issue invite links for new admins",
+    createInvite: "Create invite",
+    statActive: "Active admins",
+    statSchools: "Total schools",
+    statInvites: "Active invites",
+    statDeactivated: "Deactivated",
+    tabAdmins: "Admins",
+    tabInvites: "Invites",
+    inviteInfo1: "Invite validity",
+    inviteInfo2: "30 days",
+    inviteInfo3: "Single-use · revocable any time before it's accepted",
+    flashCreated: "Invite link created successfully",
+    flashCopy: "Copy link",
+    flashCopied: "Copied!",
+    loading: "Loading...",
+    secWithAdmin: "Schools with an admin",
+    secWithoutAdmin: "Schools without an admin",
+    secActiveInvites: "Active invites",
+    secHistory: "History",
+    statusActive: "Active",
+    statusInactive: "Deactivated",
+    statusActiveInvite: "Invite pending",
+    statusNone: "None",
+    statusUsed: "Used",
+    statusDisabled: "Disabled",
+    statusExpired: "Expired",
+    actDeactivate: "Deactivate",
+    actActivate: "Activate",
+    actInvite: "Invite admin",
+    actDisableInvite: "Disable invite",
+    actCopy: "Copy link",
+    joinedAt: "Joined",
+    acceptedBy: "Accepted by",
+    usedAt: "Used",
+    expiresAt: "Expires",
+    createdAt: "Created",
+    notAssigned: "No admin assigned yet",
+    waitingInvite: "Invite link awaiting acceptance",
+    emptyNoSchools: "No schools registered yet",
+    emptyNoSchoolsSub: "You need at least one school before you can issue admin invites. Go to the Schools page to create your first one.",
+    emptyGoSchools: "Go to Schools",
+    emptyNoInvites: "No invites yet",
+    emptyCreateFirst: "Create your first invite",
+    modalTitle: "Create an admin invite",
+    modalDesc: "Pick the school you want to assign an admin to. The link will be sent to the recipient.",
+    modalLabel: "School",
+    modalPlaceholder: "— Pick a school —",
+    modalHint: "All schools already have an admin or pending invite",
+    modalCancel: "Cancel",
+    modalCreate: "Create link",
+    modalCreating: "Creating...",
+    errLoad: "Failed to load data",
+    errGeneric: "Something went wrong",
+    errNet: "Could not reach the server",
+    errChooseSchool: "Please pick a school first",
+  },
+} as const;
 
 /* ───── Types ───── */
 interface AdminProfile {
@@ -32,24 +160,34 @@ interface AdminInvite {
   usedBy: { full_name: string } | null;
 }
 
-function fmtDate(iso: string | null) {
+function fmtDate(iso: string | null, lang: "ar" | "en") {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("ar-SA", {
+  return new Date(iso).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
     year: "numeric", month: "short", day: "numeric",
   });
 }
 
-function getInviteStatus(inv: AdminInvite): { label: string; color: string; bg: string } {
-  if (!inv.is_active && inv.used_at) return { label: "مُستخدمة", color: "#2D8A4A", bg: "rgba(45,138,74,0.09)" };
-  if (!inv.is_active)                return { label: "معطّلة",   color: "#7A1E1E", bg: "rgba(122,30,30,0.09)" };
+function getInviteStatus(
+  inv: AdminInvite,
+  t: (typeof T)[keyof typeof T],
+): { label: string; color: string; bg: string } {
+  if (!inv.is_active && inv.used_at) return { label: t.statusUsed,     color: "#2D8A4A", bg: "rgba(45,138,74,0.09)" };
+  if (!inv.is_active)                return { label: t.statusDisabled, color: "#7A1E1E", bg: "rgba(122,30,30,0.09)" };
   if (inv.expires_at && new Date(inv.expires_at) < new Date())
-                                     return { label: "منتهية",   color: "#8A7B60", bg: "rgba(138,123,96,0.09)" };
-  return { label: "نشطة", color: "#C8A96A", bg: "rgba(200,169,106,0.12)" };
+                                     return { label: t.statusExpired,  color: "#8A7B60", bg: "rgba(138,123,96,0.09)" };
+  return { label: t.statusActive, color: "#C8A96A", bg: "rgba(200,169,106,0.12)" };
 }
 
 type Tab = "admins" | "invites";
 
 export default function OwnerAdminsPage() {
+  // Bilingual: read from the global language context (ar/sq/en).
+  // sq from other pages safely falls back to ar (we only support ar/en here).
+  const { lang: globalLang, setLang: setGlobalLang } = useLang();
+  const lang: "ar" | "en" = globalLang === "en" ? "en" : "ar";
+  const t = T[lang];
+  const dir = t.dir;
+
   const [tab, setTab] = useState<Tab>("admins");
 
   /* ── Admins state ── */
@@ -84,7 +222,7 @@ export default function OwnerAdminsPage() {
         setSchools(adm.schools ?? []);
         setInvites(inv.invites ?? []);
       })
-      .catch(() => setError("تعذر تحميل البيانات"))
+      .catch(() => setError(t.errLoad))
       .finally(() => setLoading(false));
   }, []);
 
@@ -99,7 +237,7 @@ export default function OwnerAdminsPage() {
         body: JSON.stringify({ is_active: !currentActive }),
       });
       const d = await r.json();
-      if (!r.ok) { setError(d.error ?? "حدث خطأ"); return; }
+      if (!r.ok) { setError(d.error ?? t.errGeneric); return; }
       setSchools((prev) =>
         prev.map((school) =>
           school.admin?.id === profileId
@@ -108,7 +246,7 @@ export default function OwnerAdminsPage() {
         ),
       );
     } catch {
-      setError("تعذر الاتصال بالخادم");
+      setError(t.errNet);
     } finally {
       setToggling(null);
     }
@@ -116,7 +254,7 @@ export default function OwnerAdminsPage() {
 
   /* ── Invites actions ── */
   const handleCreateInvite = async () => {
-    if (!selectedSchool) { setError("يرجى اختيار الجهة أولاً"); return; }
+    if (!selectedSchool) { setError(t.errChooseSchool); return; }
     setError("");
     setCreating(true);
     try {
@@ -126,7 +264,7 @@ export default function OwnerAdminsPage() {
         body: JSON.stringify({ school_id: selectedSchool }),
       });
       const d = await r.json();
-      if (!r.ok) { setError(d.error ?? "حدث خطأ"); return; }
+      if (!r.ok) { setError(d.error ?? t.errGeneric); return; }
       const invite = d.invite as AdminInvite;
       setInvites((prev) => [invite, ...prev]);
       setNewInvite(invite);
@@ -135,7 +273,7 @@ export default function OwnerAdminsPage() {
       if (newInviteTimer.current) clearTimeout(newInviteTimer.current);
       newInviteTimer.current = setTimeout(() => setNewInvite(null), 12_000);
     } catch {
-      setError("تعذر الاتصال بالخادم");
+      setError(t.errNet);
     } finally {
       setCreating(false);
     }
@@ -147,13 +285,13 @@ export default function OwnerAdminsPage() {
     try {
       const r = await fetch(`/api/owner/invites/${id}`, { method: "PATCH" });
       const d = await r.json();
-      if (!r.ok) { setError(d.error ?? "حدث خطأ"); return; }
+      if (!r.ok) { setError(d.error ?? t.errGeneric); return; }
       setInvites((prev) =>
         prev.map((inv) => (inv.id === id ? { ...inv, is_active: false } : inv)),
       );
       if (newInvite?.id === id) setNewInvite(null);
     } catch {
-      setError("تعذر الاتصال بالخادم");
+      setError(t.errNet);
     } finally {
       setDisabling(null);
     }
@@ -181,22 +319,45 @@ export default function OwnerAdminsPage() {
 
   /* ──────────── Render ──────────── */
   return (
-    <div className="ad-page" dir="rtl">
+    <div className="ad-page" dir={dir}>
       {/* ── Header ── */}
       <div className="ad-header">
         <div>
-          <p className="ad-eyebrow">إدارة الصلاحيات والوصول</p>
-          <h1 className="ad-title">المدراء والدعوات</h1>
-          <p className="ad-sub">إدارة مدراء الجهات وإصدار دعوات تعيين المدراء الجدد</p>
+          <p className="ad-eyebrow">{t.eyebrow}</p>
+          <h1 className="ad-title">{t.title}</h1>
+          <p className="ad-sub">{t.sub}</p>
         </div>
-        {tab === "invites" && inviteCandidateSchools.length > 0 && (
-          <button className="ad-primary-btn" onClick={() => setShowCreateModal(true)}>
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            إنشاء دعوة
-          </button>
-        )}
+        <div className="ad-header-actions">
+          {/* Language toggle (modern segmented control with sliding thumb) */}
+          <div className="ad-lang-toggle" dir="ltr" role="group" aria-label="Language">
+            <span
+              className="ad-lang-thumb"
+              style={{ transform: lang === "ar" ? "translateX(100%)" : "translateX(0%)" }}
+              aria-hidden="true"
+            />
+            <button
+              type="button"
+              className={`ad-lang-btn${lang === "en" ? " ad-lang-btn--on" : ""}`}
+              onClick={() => setGlobalLang("en")}
+              aria-pressed={lang === "en"}
+            >EN</button>
+            <button
+              type="button"
+              className={`ad-lang-btn${lang === "ar" ? " ad-lang-btn--on" : ""}`}
+              onClick={() => setGlobalLang("ar")}
+              aria-pressed={lang === "ar"}
+            >AR</button>
+          </div>
+
+          {tab === "invites" && inviteCandidateSchools.length > 0 && (
+            <button className="ad-primary-btn" onClick={() => setShowCreateModal(true)}>
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              {t.createInvite}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="ad-rule">
@@ -213,7 +374,7 @@ export default function OwnerAdminsPage() {
           </div>
           <div>
             <div className="ad-stat-n">{activeCount}</div>
-            <div className="ad-stat-l">مدراء نشطون</div>
+            <div className="ad-stat-l">{t.statActive}</div>
           </div>
         </div>
         <div className="ad-stat">
@@ -224,7 +385,7 @@ export default function OwnerAdminsPage() {
           </div>
           <div>
             <div className="ad-stat-n">{schools.length}</div>
-            <div className="ad-stat-l">إجمالي الجهات</div>
+            <div className="ad-stat-l">{t.statSchools}</div>
           </div>
         </div>
         <div className="ad-stat ad-stat--invite">
@@ -235,7 +396,7 @@ export default function OwnerAdminsPage() {
           </div>
           <div>
             <div className="ad-stat-n">{activeInvites.length}</div>
-            <div className="ad-stat-l">دعوات نشطة</div>
+            <div className="ad-stat-l">{t.statInvites}</div>
           </div>
         </div>
         <div className="ad-stat ad-stat--muted">
@@ -246,7 +407,7 @@ export default function OwnerAdminsPage() {
           </div>
           <div>
             <div className="ad-stat-n">{deactivatedCount}</div>
-            <div className="ad-stat-l">معطّلون</div>
+            <div className="ad-stat-l">{t.statDeactivated}</div>
           </div>
         </div>
       </div>
@@ -260,7 +421,7 @@ export default function OwnerAdminsPage() {
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" /><path d="M9 12l2 2 4-4" />
           </svg>
-          المدراء
+          {t.tabAdmins}
           <span className="ad-tab-count">{schoolsWithAdmin.length}</span>
         </button>
         <button
@@ -270,7 +431,7 @@ export default function OwnerAdminsPage() {
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
           </svg>
-          الدعوات
+          {t.tabInvites}
           {activeInvites.length > 0 && <span className="ad-tab-count ad-tab-count--accent">{activeInvites.length}</span>}
         </button>
       </div>
@@ -291,8 +452,8 @@ export default function OwnerAdminsPage() {
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#2D8A4A" strokeWidth={2}>
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>تم إنشاء رابط الدعوة بنجاح</span>
-            <button className="ad-flash-close" onClick={() => setNewInvite(null)} aria-label="إغلاق">×</button>
+            <span>{t.flashCreated}</span>
+            <button className="ad-flash-close" onClick={() => setNewInvite(null)} aria-label="×">×</button>
           </div>
           <div className="ad-flash-school">{newInvite.school?.name}</div>
           <div className="ad-flash-link" dir="ltr">
@@ -304,14 +465,14 @@ export default function OwnerAdminsPage() {
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                تم النسخ!
+                {t.flashCopied}
               </>
             ) : (
               <>
                 <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
                 </svg>
-                نسخ الرابط
+                {t.flashCopy}
               </>
             )}
           </button>
@@ -321,7 +482,7 @@ export default function OwnerAdminsPage() {
       {loading ? (
         <div className="ad-loading">
           <div className="ad-spin" />
-          <span>جارٍ التحميل...</span>
+          <span>{t.loading}</span>
         </div>
       ) : (
         <>
@@ -330,7 +491,7 @@ export default function OwnerAdminsPage() {
             <>
               {schoolsWithAdmin.length > 0 && (
                 <div className="ad-section">
-                  <div className="ad-section-title">جهات لديها مدير</div>
+                  <div className="ad-section-title">{t.secWithAdmin}</div>
                   <div className="ad-list">
                     {schoolsWithAdmin.map((school) => {
                       const admin = school.admin!;
@@ -343,10 +504,10 @@ export default function OwnerAdminsPage() {
                             <div className="ad-card-name">{admin.full_name}</div>
                             <div className="ad-card-school">{school.name}</div>
                             {admin.email && <div className="ad-card-email" dir="ltr">{admin.email}</div>}
-                            <div className="ad-card-meta">انضم {fmtDate(admin.created_at)}</div>
+                            <div className="ad-card-meta">{t.joinedAt} {fmtDate(admin.created_at, lang)}</div>
                           </div>
                           <div className={`ad-status-badge ${active ? "ad-status-badge--active" : "ad-status-badge--inactive"}`}>
-                            {active ? "نشط" : "معطّل"}
+                            {active ? t.statusActive : t.statusInactive}
                           </div>
                           <button
                             className={`ad-toggle-btn ${active ? "ad-toggle-btn--deactivate" : "ad-toggle-btn--activate"}`}
@@ -358,11 +519,11 @@ export default function OwnerAdminsPage() {
                             ) : active ? (
                               <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <circle cx="12" cy="12" r="10" /><path d="M8 12h8" />
-                              </svg>تعطيل</>
+                              </svg>{t.actDeactivate}</>
                             ) : (
                               <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <circle cx="12" cy="12" r="10" /><path d="M12 8v8m-4-4h8" />
-                              </svg>تفعيل</>
+                              </svg>{t.actActivate}</>
                             )}
                           </button>
                         </div>
@@ -375,7 +536,7 @@ export default function OwnerAdminsPage() {
               {schoolsWithoutAdmin.length > 0 && (
                 <div className="ad-section" style={{ marginTop: 32 }}>
                   <div className="ad-section-title ad-section-title--muted">
-                    جهات بدون مدير ({schoolsWithoutAdmin.length})
+                    {t.secWithoutAdmin} ({schoolsWithoutAdmin.length})
                   </div>
                   <div className="ad-list">
                     {schoolsWithoutAdmin.map((school) => {
@@ -386,12 +547,12 @@ export default function OwnerAdminsPage() {
                           <div className="ad-card-info">
                             <div className="ad-card-name">{school.name}</div>
                             <div className="ad-card-school ad-card-school--muted">
-                              {hasActiveInvite ? "دعوة نشطة قيد الانتظار" : "لا يوجد مدير معيّن"}
+                              {hasActiveInvite ? t.waitingInvite : t.notAssigned}
                             </div>
                           </div>
                           {hasActiveInvite ? (
                             <span className="ad-status-badge" style={{ color: "#C8A96A", background: "rgba(200,169,106,0.12)" }}>
-                              دعوة مفعّلة
+                              {t.statusActiveInvite}
                             </span>
                           ) : (
                             <button
@@ -402,7 +563,7 @@ export default function OwnerAdminsPage() {
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                                 <polyline points="22,6 12,13 2,6" />
                               </svg>
-                              دعوة مدير
+                              {t.actInvite}
                             </button>
                           )}
                         </div>
@@ -413,13 +574,21 @@ export default function OwnerAdminsPage() {
               )}
 
               {schools.length === 0 && (
-                <div className="ad-empty">
-                  <div className="ad-empty-icon">
-                    <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
+                <div className="ad-empty ad-empty--big">
+                  <div className="ad-empty-icon ad-empty-icon--big">
+                    <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.4}>
+                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
                   </div>
-                  <p>لا توجد جهات مسجّلة بعد</p>
+                  <h2 className="ad-empty-title">{t.emptyNoSchools}</h2>
+                  <p className="ad-empty-sub">{t.emptyNoSchoolsSub}</p>
+                  <Link href="/owner/schools" className="ad-primary-btn" style={{ textDecoration: "none", marginTop: 8 }}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+                    </svg>
+                    {t.emptyGoSchools}
+                  </Link>
                 </div>
               )}
             </>
@@ -433,17 +602,16 @@ export default function OwnerAdminsPage() {
                   <circle cx="12" cy="12" r="10" /><path d="M12 16v-4m0-4h.01" />
                 </svg>
                 <span>
-                  صلاحية الدعوة <strong>30 يومًا</strong> · استخدام واحد فقط ·
-                  يمكن إلغاؤها في أي وقت قبل قبولها
+                  {t.inviteInfo1} <strong>{t.inviteInfo2}</strong> · {t.inviteInfo3}
                 </span>
               </div>
 
               {activeInvites.length > 0 && (
                 <div className="ad-section">
-                  <div className="ad-section-title">الدعوات النشطة ({activeInvites.length})</div>
+                  <div className="ad-section-title">{t.secActiveInvites} ({activeInvites.length})</div>
                   <div className="ad-list">
                     {activeInvites.map((inv, i) => {
-                      const status = getInviteStatus(inv);
+                      const status = getInviteStatus(inv, t);
                       return (
                         <div key={inv.id} className="ad-card" style={{ animationDelay: `${i * 40}ms` }}>
                           <div className="ad-school-badge ad-school-badge--invite">
@@ -456,15 +624,15 @@ export default function OwnerAdminsPage() {
                             <div className="ad-card-name">{inv.school?.name ?? "—"}</div>
                             <div className="ad-card-token" dir="ltr">/invite/{inv.token.slice(0, 22)}…</div>
                             <div className="ad-card-meta">
-                              أُنشئت {fmtDate(inv.created_at)}
-                              {inv.expires_at && <> · تنتهي {fmtDate(inv.expires_at)}</>}
+                              {t.createdAt} {fmtDate(inv.created_at, lang)}
+                              {inv.expires_at && <> · {t.expiresAt} {fmtDate(inv.expires_at, lang)}</>}
                             </div>
                           </div>
                           <span className="ad-status-badge" style={{ color: status.color, background: status.bg }}>
                             {status.label}
                           </span>
                           <div className="ad-card-actions">
-                            <button className="ad-action-btn" onClick={() => copyLink(inv.token)} title="نسخ الرابط">
+                            <button className="ad-action-btn" onClick={() => copyLink(inv.token)} title={t.actCopy}>
                               {copied === inv.token ? (
                                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                   <polyline points="20 6 9 17 4 12" />
@@ -479,7 +647,7 @@ export default function OwnerAdminsPage() {
                               className="ad-action-btn ad-action-btn--danger"
                               onClick={() => handleDisableInvite(inv.id)}
                               disabled={disabling === inv.id}
-                              title="تعطيل الدعوة"
+                              title={t.actDisableInvite}
                             >
                               {disabling === inv.id
                                 ? <span className="ad-spin ad-spin--sm" />
@@ -498,11 +666,11 @@ export default function OwnerAdminsPage() {
               {historyInvites.length > 0 && (
                 <div className="ad-section" style={{ marginTop: 32 }}>
                   <div className="ad-section-title ad-section-title--muted">
-                    السجل ({historyInvites.length})
+                    {t.secHistory} ({historyInvites.length})
                   </div>
                   <div className="ad-list">
                     {historyInvites.map((inv, i) => {
-                      const status = getInviteStatus(inv);
+                      const status = getInviteStatus(inv, t);
                       return (
                         <div key={inv.id} className="ad-card ad-card--history" style={{ animationDelay: `${i * 30}ms` }}>
                           <div className="ad-school-badge ad-school-badge--invite ad-school-badge--muted">
@@ -513,10 +681,10 @@ export default function OwnerAdminsPage() {
                           </div>
                           <div className="ad-card-info">
                             <div className="ad-card-name" style={{ opacity: 0.75 }}>{inv.school?.name ?? "—"}</div>
-                            {inv.usedBy && <div className="ad-card-meta">قبلها: {inv.usedBy.full_name}</div>}
+                            {inv.usedBy && <div className="ad-card-meta">{t.acceptedBy}: {inv.usedBy.full_name}</div>}
                             <div className="ad-card-meta" style={{ opacity: 0.65 }}>
-                              {fmtDate(inv.created_at)}
-                              {inv.used_at && <> · استُخدمت {fmtDate(inv.used_at)}</>}
+                              {fmtDate(inv.created_at, lang)}
+                              {inv.used_at && <> · {t.usedAt} {fmtDate(inv.used_at, lang)}</>}
                             </div>
                           </div>
                           <span className="ad-status-badge" style={{ color: status.color, background: status.bg }}>
@@ -537,7 +705,7 @@ export default function OwnerAdminsPage() {
                       <polyline points="22,6 12,13 2,6" />
                     </svg>
                   </div>
-                  <p>لا توجد دعوات بعد</p>
+                  <p>{t.emptyNoInvites}</p>
                   {inviteCandidateSchools.length > 0 && (
                     <button
                       className="ad-primary-btn"
@@ -547,7 +715,7 @@ export default function OwnerAdminsPage() {
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path d="M12 5v14M5 12h14" />
                       </svg>
-                      إنشاء أول دعوة
+                      {t.emptyCreateFirst}
                     </button>
                   )}
                 </div>
@@ -560,33 +728,31 @@ export default function OwnerAdminsPage() {
       {/* ── CREATE INVITE MODAL ── */}
       {showCreateModal && (
         <div className="ad-modal-overlay" onClick={() => { setShowCreateModal(false); setSelectedSchool(""); setError(""); }}>
-          <div className="ad-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="ad-modal" onClick={(e) => e.stopPropagation()} dir={dir}>
             <div className="ad-modal-header">
-              <h2 className="ad-modal-title">إنشاء دعوة مدير</h2>
+              <h2 className="ad-modal-title">{t.modalTitle}</h2>
               <button
                 className="ad-modal-close"
                 onClick={() => { setShowCreateModal(false); setSelectedSchool(""); setError(""); }}
-                aria-label="إغلاق"
+                aria-label="×"
               >×</button>
             </div>
-            <p className="ad-modal-desc">
-              اختر الجهة التي تريد تعيين مدير لها. سيُرسَل الرابط للشخص المعني.
-            </p>
+            <p className="ad-modal-desc">{t.modalDesc}</p>
             <div className="ad-modal-field">
-              <label className="ad-modal-label">الجهة</label>
+              <label className="ad-modal-label">{t.modalLabel}</label>
               <select
                 className="ad-modal-select"
                 value={selectedSchool}
                 onChange={(e) => setSelectedSchool(e.target.value)}
                 autoFocus
               >
-                <option value="">— اختر الجهة —</option>
+                <option value="">{t.modalPlaceholder}</option>
                 {inviteCandidateSchools.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
               {inviteCandidateSchools.length === 0 && (
-                <p className="ad-modal-hint">جميع الجهات لديها مدير أو دعوة نشطة</p>
+                <p className="ad-modal-hint">{t.modalHint}</p>
               )}
             </div>
             {error && <div className="ad-error" style={{ marginTop: 0 }}>{error}</div>}
@@ -594,15 +760,15 @@ export default function OwnerAdminsPage() {
               <button
                 className="ad-modal-cancel"
                 onClick={() => { setShowCreateModal(false); setSelectedSchool(""); setError(""); }}
-              >إلغاء</button>
+              >{t.modalCancel}</button>
               <button
                 className="ad-primary-btn"
                 onClick={handleCreateInvite}
                 disabled={creating || !selectedSchool}
               >
                 {creating
-                  ? <><span className="ad-spin ad-spin--sm" /> جارٍ الإنشاء...</>
-                  : "إنشاء الرابط"}
+                  ? <><span className="ad-spin ad-spin--sm" /> {t.modalCreating}</>
+                  : t.modalCreate}
               </button>
             </div>
           </div>
@@ -633,6 +799,34 @@ const css = `
     display: flex; align-items: flex-start; justify-content: space-between;
     gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
   }
+  .ad-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  /* Language toggle (sliding gold thumb) */
+  .ad-lang-toggle {
+    position: relative; display: grid; grid-template-columns: 1fr 1fr;
+    background: rgba(11,11,12,0.04); border: 1px solid rgba(168,134,62,0.30);
+    border-radius: 11px; padding: 3px; width: 96px; overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  .ad-lang-thumb {
+    position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+    border-radius: 8px;
+    background: linear-gradient(135deg, #E0C788 0%, #C8A96A 60%, #B89B5E 100%);
+    box-shadow: 0 2px 8px rgba(200,169,106,0.30), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform .32s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 0; pointer-events: none;
+  }
+  .ad-lang-btn {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    padding: 6px 0; border: none; background: transparent; cursor: pointer;
+    font-family: 'Cairo', sans-serif; font-size: 11.5px; font-weight: 800;
+    letter-spacing: 0.05em; color: #6B5A38;
+    transition: color .22s, transform .15s;
+  }
+  .ad-lang-btn:hover:not(.ad-lang-btn--on) { color: #3D3320; }
+  .ad-lang-btn:active { transform: scale(.97); }
+  .ad-lang-btn--on { color: #0B0B0C; }
   .ad-eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.22em; color: var(--gold); margin-bottom: 4px; }
   .ad-title { font-size: 26px; font-weight: 900; color: var(--graphite); margin: 0 0 4px; }
   .ad-sub { font-size: 13px; color: var(--graphite-soft); }
@@ -819,11 +1013,37 @@ const css = `
     display: flex; flex-direction: column; align-items: center; gap: 12px;
     padding: 60px 0; color: var(--graphite-soft); text-align: center;
   }
+  .ad-empty--big {
+    background: linear-gradient(180deg, var(--bg-card) 0%, rgba(200,169,106,0.04) 100%);
+    border: 1px solid rgba(200,169,106,0.22);
+    border-radius: 20px;
+    padding: 56px 28px;
+    margin-top: 8px;
+    gap: 14px;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.04);
+    animation: ad-fadein 0.4s ease both;
+  }
   .ad-empty-icon {
     width: 64px; height: 64px; border-radius: 20px;
     background: rgba(200,169,106,0.08);
     display: flex; align-items: center; justify-content: center;
     color: rgba(200,169,106,0.5);
+  }
+  .ad-empty-icon--big {
+    width: 84px; height: 84px; border-radius: 22px;
+    background: linear-gradient(135deg, rgba(229,185,60,0.18), rgba(200,169,106,0.10));
+    border: 1px solid rgba(200,169,106,0.30);
+    color: var(--gold); margin-bottom: 6px;
+    box-shadow: 0 6px 20px rgba(200,169,106,0.12);
+  }
+  .ad-empty-title {
+    font-size: 20px; font-weight: 900; color: var(--graphite);
+    margin: 0; letter-spacing: -0.3px;
+  }
+  .ad-empty-sub {
+    font-size: 13.5px; color: var(--graphite-soft);
+    max-width: 460px; line-height: 1.75;
+    margin: 0;
   }
 
   /* Modal */

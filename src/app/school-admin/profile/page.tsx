@@ -847,5 +847,15 @@ const styles = `
 .pf-lb-name{margin-top:16px;font-size:15px;font-weight:700;color:rgba(255,255,255,0.88);font-family:var(--font)}
 
 @media(max-width:900px){.pf-layout{grid-template-columns:1fr}.pf-root{padding:24px 18px 60px}}
-@media(max-width:600px){.pf-stats{grid-template-columns:1fr;gap:12px}.pf-stat-div{display:none}.pf-lb-img{width:290px;height:290px}}
+@media(max-width:600px){
+  .pf-root{padding:18px 14px 56px}
+  .pf-stats{grid-template-columns:1fr;gap:12px}
+  .pf-stat-div{display:none}
+  .pf-lb-img{width:260px;height:260px}
+  .pf-lb-name{font-size:14px;margin-top:12px}
+}
+@media(max-width:400px){
+  .pf-root{padding:14px 12px 48px}
+  .pf-lb-img{width:230px;height:230px}
+}
 `;

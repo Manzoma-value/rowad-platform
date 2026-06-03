@@ -1590,7 +1590,15 @@ const css = `
   .rp-table-head span:last-child,.rp-table-row>span:last-child{display:none}
 }
 @media(max-width:480px){
-  .rp-kpi-strip{grid-template-columns:1fr 1fr}
+  .rp-kpi-strip{grid-template-columns:1fr 1fr; gap:8px}
   .rp-classes-grid{grid-template-columns:1fr}
+  .rp-page{padding:16px 12px 48px}
+  .rp-headline{font-size:21px}
+  .rp-table-head,.rp-table-row{grid-template-columns:1.6fr 1fr 1fr; font-size:11.5px}
+  .rp-table-head span:nth-child(3),.rp-table-row>span:nth-child(3){display:none}
+}
+@media(max-width:380px){
+  .rp-page{padding:14px 10px 44px}
+  .rp-headline{font-size:19px}
 }
 `;

@@ -834,8 +834,16 @@ const css = `
   .sp-hero,.sp-body{padding-inline:20px}
 }
 @media(max-width:600px){
-  .sp-hero-stats{gap:12px}
-  .sp-bar-label{width:90px;font-size:11px}
-  .sp-trait-name{width:80px}
+  .sp-hero,.sp-body{padding-inline:16px}
+  .sp-hero-stats{gap:10px; flex-wrap:wrap}
+  .sp-bar-label{width:72px;font-size:10.5px}
+  .sp-trait-name{width:64px;font-size:11.5px}
+  .sp-overlay{padding:0}
+  .sp-overlay-panel{border-radius:18px 18px 0 0;max-height:94vh}
+}
+@media(max-width:400px){
+  .sp-hero,.sp-body{padding-inline:12px}
+  .sp-bar-label{width:60px;font-size:10px}
+  .sp-trait-name{width:54px;font-size:11px}
 }
 `;

@@ -514,4 +514,19 @@ const css = `
     color:var(--red);font-size:13px;font-weight:600;
     padding:11px 14px;border-radius:9px;
   }
+
+  /* ─── Mobile ─── */
+  @media (max-width:600px){
+    .pg-shell{padding:16px 12px}
+    .empty-card{padding:32px 20px;border-radius:18px}
+    .empty-title{font-size:18px}
+    .empty-sub{font-size:13px;line-height:1.7}
+    .nav-btn{padding:11px 16px;font-size:13px;gap:6px}
+    .err-bar{font-size:12.5px;padding:10px 12px}
+  }
+  @media (max-width:380px){
+    .pg-shell{padding:12px 10px}
+    .empty-card{padding:24px 16px}
+    .nav-btn{padding:10px 14px;font-size:12.5px}
+  }
 `;

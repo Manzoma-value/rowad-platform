@@ -611,8 +611,12 @@ const css = `
 .inv-disable-btn:hover:not(:disabled){border-color:rgba(122,30,30,0.3);color:var(--red);background:var(--red-l)}
 .inv-disable-btn:disabled{opacity:0.5;cursor:not-allowed}
 
-@media(max-width:600px){
-  .inv-grid{grid-template-columns:1fr}
+@media(max-width:700px){
+  .inv-grid{grid-template-columns:1fr; gap:10px}
   .inv-new-flash-sub{display:none}
+  .inv-disable-btn{font-size:11.5px; padding:6px 12px}
+}
+@media(max-width:420px){
+  .inv-actions{flex-wrap:wrap; gap:6px}
 }
 `;

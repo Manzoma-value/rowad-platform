@@ -298,9 +298,23 @@ export function SchoolAdminTeachersPage() {
         .te-toggle--on:hover:not(:disabled) { background: rgba(45,138,74,0.15); }
         .te-spin { display: inline-block; width: 11px; height: 11px; border: 2px solid rgba(200,169,106,0.2); border-top-color: var(--gold); border-radius: 50%; animation: fadeUp 0.7s linear infinite; }
 
-        @media (max-width: 500px) {
+        @media (max-width: 600px) {
+          .te-page { gap: 14px; }
+          .te-title { font-size: 20px; }
+          .te-sub { font-size: 12px; }
+          .te-row { padding: 12px 14px; gap: 10px; flex-wrap: wrap; }
+          .te-av { width: 36px; height: 36px; font-size: 14px; }
+          .te-body { flex: 1 1 calc(100% - 100px); min-width: 0; }
+          .te-name { font-size: 13px; }
+          .te-classes { font-size: 11px; }
           .te-badge-label { display: none; }
-          .te-row { padding: 12px 14px; }
+          .te-badge { padding: 4px 8px; }
+          .te-empty { padding: 48px 16px; }
+        }
+        @media (max-width: 400px) {
+          .te-row { padding: 10px 12px; gap: 8px; }
+          .te-av { width: 34px; height: 34px; }
+          .te-toggle { width: 30px; height: 30px; }
         }
       `}</style>
     </div>

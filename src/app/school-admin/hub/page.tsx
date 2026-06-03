@@ -1043,11 +1043,16 @@ const css = `
   .hub-feed{padding:12px 8px 6px;}
   .hub-composer-wrap{padding:8px 10px 12px;}
   .hub-header-inner{padding:12px 14px;}
-  .chat-col{max-width:82%;}
+  .chat-col{max-width:88%;}
   .replies-container{width:100%;}
-  .chat-bubble{padding:10px 13px;}
+  .chat-bubble{padding:10px 13px;font-size:13.5px;}
   .composer{padding:6px 6px 6px 12px;}
   .hub-brand-icon{width:38px;height:38px;}
   .hub-title{font-size:14px;}
+}
+@media(max-width:400px){
+  .chat-col{max-width:92%;}
+  .chat-bubble{padding:9px 11px;font-size:13px;}
+  .composer{padding:5px 5px 5px 10px;}
 }
 `;

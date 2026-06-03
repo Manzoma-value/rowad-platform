@@ -336,10 +336,23 @@ const styles = `
   .td-class-btn{
     width:100%;display:flex;align-items:center;gap:10px;padding:11px 13px;
     border-radius:13px;border:1px solid rgba(200,169,106,0.14);background:#FFFDF8;
-    cursor:pointer;transition:all 0.18s;animation:fadeUp 0.3s ease both;
+    cursor:pointer;transition:all 0.22s cubic-bezier(0.22,1,0.36,1);
+    animation:fadeUp 0.3s ease both;font-family:'Cairo',sans-serif;
+    -webkit-tap-highlight-color:transparent;
   }
-  .td-class-btn:hover{border-color:rgba(200,169,106,0.32);background:rgba(200,169,106,0.04)}
-  .td-class-btn.active{background:#0B0B0C;border-color:#0B0B0C;box-shadow:0 4px 16px rgba(8,11,12,0.2)}
+  .td-class-btn:hover{
+    border-color:rgba(200,169,106,0.40);
+    background:rgba(200,169,106,0.06);
+    transform:translateX(-2px);
+    box-shadow:0 4px 14px rgba(11,11,12,0.04);
+  }
+  [dir="ltr"] .td-class-btn:hover{transform:translateX(2px)}
+  .td-class-btn:active{transform:translateX(0); transition:transform .05s}
+  .td-class-btn.active{
+    background:#0B0B0C;border-color:#0B0B0C;
+    box-shadow:0 6px 22px rgba(8,11,12,0.24), inset 0 1px 0 rgba(229,185,60,0.08);
+  }
+  .td-class-btn.active:hover{transform:none}
   .td-class-icon{width:32px;height:32px;border-radius:9px;flex-shrink:0;background:rgba(200,169,106,0.1);border:1px solid rgba(200,169,106,0.18);display:flex;align-items:center;justify-content:center;color:#9A8A70;transition:all 0.18s}
   .td-class-btn.active .td-class-icon{background:rgba(200,169,106,0.14);border-color:rgba(200,169,106,0.25);color:#C8A96A}
   .td-class-info{flex:1;display:flex;flex-direction:column;gap:1px;text-align:start}
