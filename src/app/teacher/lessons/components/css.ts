@@ -207,6 +207,19 @@ export const css = `
   transition: all .22s var(--ease);
 }
 .lb-content-block:hover { border-color: rgba(200,169,106,0.35); box-shadow: var(--shadow-xs); }
+
+/* ─── Drag handle (used on content blocks + question items) ─── */
+.lb-drag-handle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 28px; flex-shrink: 0;
+  color: var(--ink4);
+  border-radius: 6px;
+  /* touch-action set inline by SortableList; cursor inherited from dragHandleProps.style */
+  transition: color .15s, background .15s;
+  -webkit-user-select: none; user-select: none;
+}
+.lb-drag-handle:hover { color: var(--gold2); background: rgba(200,169,106,0.08); }
+.lb-drag-handle svg { display: block; }
 .lb-content-type-badge {
   font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px;
   white-space: nowrap; flex-shrink: 0; letter-spacing: .03em;

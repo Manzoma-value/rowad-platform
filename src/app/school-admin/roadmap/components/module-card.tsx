@@ -6,6 +6,7 @@ import type { Module, ModuleContent, Question, StageTrait } from "./types";
 import { TextModal, ImageModal, VideoModal } from "./content-modals";
 import { QuestionModal } from "./question-modal";
 import { ModuleMainTraitSelector } from "./module-main-trait-selector";
+import { SortableList } from "@/components/SortableList";
 
 interface Props {
   mod: Module;
@@ -46,6 +47,32 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
       method: "DELETE",
     });
     onRefresh();
+  };
+
+  const reorderQuestions = async (next: Question[]) => {
+    try {
+      const r = await fetch(`/api/school-admin/roadmap/modules/${mod.id}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "questions", ids: next.map((q) => q.id) }),
+      });
+      if (!r.ok) onRefresh(); // snap back
+    } catch {
+      onRefresh();
+    }
+  };
+
+  const reorderContents = async (next: ModuleContent[]) => {
+    try {
+      const r = await fetch(`/api/school-admin/roadmap/modules/${mod.id}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "contents", ids: next.map((c) => c.id) }),
+      });
+      if (!r.ok) onRefresh();
+    } catch {
+      onRefresh();
+    }
   };
 
   const contents = mod.contents ?? [];
@@ -195,10 +222,21 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
               </div>
 
               {contents.length > 0 ? (
-                <div className="rb-content-list">
-                  {contents.map((block) => (
-                    <div key={block.id} className="rb-content-block">
-                      <span className="rb-drag-handle">{Icons.drag}</span>
+                <SortableList
+                  items={contents}
+                  onReorder={reorderContents}
+                  className="rb-content-list"
+                  gap={6}
+                  renderItem={(block, { dragHandleProps }) => (
+                    <div className="rb-content-block">
+                      <span
+                        className="rb-drag-handle"
+                        {...dragHandleProps}
+                        title="اسحب لإعادة الترتيب"
+                        aria-label="Drag to reorder"
+                      >
+                        {Icons.drag}
+                      </span>
                       <span className={`rb-content-type-badge ${block.type}`}>
                         {contentTypeBadgeLabel(block.type)}
                       </span>
@@ -222,8 +260,8 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                />
               ) : (
                 <div className="rb-empty-inline">لا يوجد محتوى بعد</div>
               )}
@@ -265,10 +303,23 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
               </div>
 
               {questions.length > 0 ? (
-                <div className="rb-q-list">
-                  {questions.map((q, idx) => (
-                    <div key={q.id} className="rb-q-item">
-                      <span className="rb-q-num">{idx + 1}</span>
+                <SortableList
+                  items={questions}
+                  onReorder={reorderQuestions}
+                  className="rb-q-list"
+                  gap={7}
+                  renderItem={(q, { index, dragHandleProps }) => (
+                    <div className="rb-q-item">
+                      <span
+                        className="rb-drag-handle"
+                        {...dragHandleProps}
+                        title="اسحب لإعادة الترتيب"
+                        aria-label="Drag to reorder"
+                        style={{ ...dragHandleProps.style, alignSelf: "center" }}
+                      >
+                        {Icons.drag}
+                      </span>
+                      <span className="rb-q-num">{index + 1}</span>
                       <div className="rb-q-body">
                         <span className="rb-q-text" dir="rtl">
                           {q.text}
@@ -301,8 +352,8 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                />
               ) : (
                 <div className="rb-empty-inline">لا توجد أسئلة بعد</div>
               )}

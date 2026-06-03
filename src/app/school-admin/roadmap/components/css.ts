@@ -203,8 +203,16 @@ export const css = `
   transition: all .22s var(--ease);
 }
 .rb-content-block:hover { border-color: rgba(200,169,106,0.35); box-shadow: var(--shadow-xs); transform: translateX(-2px); }
-.rb-drag-handle { color: var(--ink4); cursor: grab; display: flex; align-items: center; flex-shrink: 0; opacity: 0.5; transition: opacity .2s; }
-.rb-content-block:hover .rb-drag-handle { opacity: 1; }
+.rb-drag-handle {
+  color: var(--ink4); display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; opacity: 0.5;
+  width: 22px; height: 26px; border-radius: 6px;
+  transition: opacity .2s, color .15s, background .15s;
+  -webkit-user-select: none; user-select: none;
+}
+.rb-content-block:hover .rb-drag-handle,
+.rb-q-item:hover .rb-drag-handle { opacity: 1; }
+.rb-drag-handle:hover { color: var(--gold); background: rgba(200,169,106,0.10); }
 .rb-content-type-badge {
   font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 6px;
   white-space: nowrap; flex-shrink: 0; letter-spacing: .03em;

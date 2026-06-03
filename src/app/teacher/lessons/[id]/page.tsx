@@ -9,6 +9,7 @@ import { Icons } from "../components/icons";
 import { css } from "../components/css";
 import { TextModal, ImageModal, VideoModal } from "../components/content-modals";
 import { QuestionModal } from "../components/question-modal";
+import { SortableList } from "@/components/SortableList";
 import type {
   LessonFull, LessonContent, LessonQuestion, ClassRef, QuizRef,
 } from "../components/types";
@@ -187,6 +188,38 @@ export default function LessonEditorPage({
     if (!confirm(t.deleteContent)) return;
     await fetch(`/api/teacher/lessons/contents/${cid}`, { method: "DELETE" });
     fetchLesson();
+  };
+
+  // Optimistic reorder — update local state immediately so the UI feels
+  // instant, then persist. On failure we refetch to snap back to truth.
+  const reorderQuestions = async (next: LessonQuestion[]) => {
+    if (!lesson) return;
+    setLesson({ ...lesson, questions: next });
+    try {
+      const r = await fetch(`/api/teacher/lessons/${id}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "questions", ids: next.map((q) => q.id) }),
+      });
+      if (!r.ok) fetchLesson();
+    } catch {
+      fetchLesson();
+    }
+  };
+
+  const reorderContents = async (next: LessonContent[]) => {
+    if (!lesson) return;
+    setLesson({ ...lesson, contents: next });
+    try {
+      const r = await fetch(`/api/teacher/lessons/${id}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "contents", ids: next.map((c) => c.id) }),
+      });
+      if (!r.ok) fetchLesson();
+    } catch {
+      fetchLesson();
+    }
   };
 
   const deleteQuestion = async (qid: string) => {
@@ -387,9 +420,24 @@ export default function LessonEditorPage({
         </div>
         <div className="lb-section-body">
           {contents.length > 0 ? (
-            <div className="lb-content-list">
-              {contents.map((block) => (
-                <div key={block.id} className="lb-content-block">
+            <SortableList
+              items={contents}
+              onReorder={reorderContents}
+              className="lb-content-list"
+              gap={8}
+              renderItem={(block, { dragHandleProps }) => (
+                <div className="lb-content-block">
+                  <span
+                    className="lb-drag-handle"
+                    {...dragHandleProps}
+                    title={lang === "sq" ? "Tërhiq për të riorganizuar" : "اسحب لإعادة الترتيب"}
+                    aria-label="Drag to reorder"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <circle cx="9" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/>
+                      <circle cx="15" cy="6" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="15" cy="18" r="1.4"/>
+                    </svg>
+                  </span>
                   <span className={`lb-content-type-badge ${block.type}`}>
                     {block.type === "TEXT" ? (lang === "sq" ? "Tekst" : "نص")
                       : block.type === "IMAGE" ? (lang === "sq" ? "Imazh" : "صورة")
@@ -401,8 +449,8 @@ export default function LessonEditorPage({
                     <button className="lb-icon-btn danger" onClick={() => deleteContent(block.id)}>{Icons.trash}</button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            />
           ) : (
             <div className="lb-empty-inline">{t.contentEmpty}</div>
           )}
@@ -423,10 +471,25 @@ export default function LessonEditorPage({
         </div>
         <div className="lb-section-body">
           {questions.length > 0 ? (
-            <div className="lb-q-list">
-              {questions.map((q, idx) => (
-                <div key={q.id} className="lb-q-item">
-                  <span className="lb-q-num">{idx + 1}</span>
+            <SortableList
+              items={questions}
+              onReorder={reorderQuestions}
+              className="lb-q-list"
+              gap={8}
+              renderItem={(q, { index, dragHandleProps }) => (
+                <div className="lb-q-item">
+                  <span
+                    className="lb-drag-handle"
+                    {...dragHandleProps}
+                    title={lang === "sq" ? "Tërhiq për të riorganizuar" : "اسحب لإعادة الترتيب"}
+                    aria-label="Drag to reorder"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <circle cx="9" cy="6" r="1.4"/><circle cx="9" cy="12" r="1.4"/><circle cx="9" cy="18" r="1.4"/>
+                      <circle cx="15" cy="6" r="1.4"/><circle cx="15" cy="12" r="1.4"/><circle cx="15" cy="18" r="1.4"/>
+                    </svg>
+                  </span>
+                  <span className="lb-q-num">{index + 1}</span>
                   <div className="lb-q-body">
                     <span className="lb-q-text" dir="auto">{q.text}</span>
                     <div className="lb-q-tags">
@@ -441,8 +504,8 @@ export default function LessonEditorPage({
                     <button className="lb-icon-btn danger" onClick={() => deleteQuestion(q.id)}>{Icons.trash}</button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            />
           ) : (
             <div className="lb-empty-inline">{t.questionEmpty}</div>
           )}
