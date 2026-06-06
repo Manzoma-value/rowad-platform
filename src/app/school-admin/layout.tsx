@@ -3,13 +3,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch } from "@/lib/api-cache";
+import { TenantProvider, useTenant } from "@/lib/tenant-context";
+import { featureForPath, type FeatureKey } from "@/lib/features";
 import {
   LayoutDashboard,
   Users,
@@ -104,12 +106,24 @@ interface NavItem {
   sublabel: string;
   exact: boolean;
   icon: LucideIcon;
+  /** When set, the item is hidden unless the school has this feature enabled. */
+  feature?: FeatureKey;
 }
 
 const COMMUNITY_HREF = "/school-admin/hub";
 
+/* ─── Layout (thin wrapper that provides tenant context) ─── */
 export default function SchoolAdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <TenantProvider>
+      <SchoolAdminLayoutInner>{children}</SchoolAdminLayoutInner>
+    </TenantProvider>
+  );
+}
+
+function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { lang, setLang } = useLang();
   const tr = t[lang];
   const isRtl = lang === "ar";
@@ -153,16 +167,30 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
     {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,
       label: lang === "ar" ? "الخريطة" : lang === "sq" ? "Rruga e Pyetjeve" : "Roadmap",
+      feature: "roadmap",
     },
     {
       href: "/school-admin/reports", sublabel: "Reports", exact: false, icon: BarChart3,
       label: lang === "ar" ? "التقارير" : lang === "sq" ? "Raportet" : "Reports",
+      feature: "reports",
     },
     {
       href: "/school-admin/invites", sublabel: "Invites", exact: false, icon: Mail,
       label: lang === "ar" ? "الدعوات" : lang === "sq" ? "Ftesa" : "Invites",
     },
   ];
+
+  // ── Tenant feature flags ──
+  const { hasFeature, loading: tenantLoading } = useTenant();
+  const visibleNav = navItems.filter((i) => !i.feature || hasFeature(i.feature));
+  const showCommunity = hasFeature("hub");
+
+  // Route guard: bounce away from a module the school disabled.
+  useEffect(() => {
+    if (tenantLoading) return;
+    const feat = featureForPath(pathname) as FeatureKey | null;
+    if (feat && !hasFeature(feat)) router.replace("/school-admin");
+  }, [pathname, tenantLoading, hasFeature, router]);
 
   useEffect(() => {
     // All three layout fetches in parallel + cached so navigation is instant.
@@ -306,7 +334,7 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
 
         {/* Nav */}
         <nav className="sa-nav">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
             return (
@@ -334,35 +362,39 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
             );
           })}
 
-          {/* Community — visually separated */}
-          <div className="sa-nav-sep" aria-hidden="true" />
-          {(() => {
-            const active = isActive(COMMUNITY_HREF, false);
-            return (
-              <Link
-                href={COMMUNITY_HREF}
-                className={`sa-nav-item sa-nav-community ${active ? "active" : ""}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                {active && (
-                  <>
-                    <span className="sa-nav-pill" />
-                    <span className="sa-nav-shimmer" />
-                  </>
-                )}
-                <span className="sa-nav-icon-wrap">
-                  <Globe2 size={17} strokeWidth={1.6} />
-                </span>
-                <span className="sa-nav-labels">
-                  <span className="sa-nav-label-main">
-                    {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
-                  </span>
-                  <span className="sa-nav-label-sub">Community</span>
-                </span>
-                {active && <span className="sa-nav-dot" />}
-              </Link>
-            );
-          })()}
+          {/* Community — visually separated, gated by the hub feature */}
+          {showCommunity && (
+            <>
+              <div className="sa-nav-sep" aria-hidden="true" />
+              {(() => {
+                const active = isActive(COMMUNITY_HREF, false);
+                return (
+                  <Link
+                    href={COMMUNITY_HREF}
+                    className={`sa-nav-item sa-nav-community ${active ? "active" : ""}`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    {active && (
+                      <>
+                        <span className="sa-nav-pill" />
+                        <span className="sa-nav-shimmer" />
+                      </>
+                    )}
+                    <span className="sa-nav-icon-wrap">
+                      <Globe2 size={17} strokeWidth={1.6} />
+                    </span>
+                    <span className="sa-nav-labels">
+                      <span className="sa-nav-label-main">
+                        {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
+                      </span>
+                      <span className="sa-nav-label-sub">Community</span>
+                    </span>
+                    {active && <span className="sa-nav-dot" />}
+                  </Link>
+                );
+              })()}
+            </>
+          )}
 
           <div className="sa-mandala-wrap" aria-hidden="true">
             <Mandala size={172} stroke="rgba(200,169,106,0.32)" />

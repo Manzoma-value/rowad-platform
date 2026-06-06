@@ -10,6 +10,8 @@ import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
+import { TenantProvider, useTenant } from "@/lib/tenant-context";
+import { featureForPath, type FeatureKey } from "@/lib/features";
 import {
   LayoutDashboard,
   Users,
@@ -132,24 +134,34 @@ interface NavItem {
   labelSq?: string;
   labelEn?: string;
   icon: LucideIcon;
+  /** When set, the item is hidden unless the school has this feature enabled. */
+  feature?: FeatureKey;
 }
 
 const navItems: NavItem[] = [
   { key: "dashboard", href: "/student",          exact: true,  sublabel: "Dashboard", icon: LayoutDashboard },
   { key: "myClass",   href: "/student/classes",  exact: false, sublabel: "Classes",   icon: Users },
-  { key: "lessons",   href: "/student/lessons",  exact: false, sublabel: "Lessons",   icon: BookOpen },
-  { key: "quizzes",   href: "/student/quizzes",  exact: false, sublabel: "Quizzes",   icon: ClipboardList },
+  { key: "lessons",   href: "/student/lessons",  exact: false, sublabel: "Lessons",   icon: BookOpen, feature: "lessons" },
+  { key: "quizzes",   href: "/student/quizzes",  exact: false, sublabel: "Quizzes",   icon: ClipboardList, feature: "quizzes" },
   {
     key: "roadmap", href: "/student/roadmap", exact: false, sublabel: "Roadmap",
     labelAr: "الخريطة", labelSq: "Banka e Pyetjeve", labelEn: "Question Bank",
-    icon: MapPin,
+    icon: MapPin, feature: "roadmap",
   },
 ];
 
 const COMMUNITY_HREF = "/student/hub";
 
-/* ─── Layout ─── */
+/* ─── Layout (thin wrapper that provides tenant context) ─── */
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <TenantProvider>
+      <StudentLayoutInner>{children}</StudentLayoutInner>
+    </TenantProvider>
+  );
+}
+
+function StudentLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname  = usePathname();
   const router    = useRouter();
   const { lang, setLang } = useLang();
@@ -171,6 +183,20 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
   const schoolSlugRef   = useRef<string>("");
 
   const showFullNav = SHOW_NAV_STATUSES.includes(onboardingStatus);
+
+  // ── Tenant feature flags ──
+  const { hasFeature, loading: tenantLoading } = useTenant();
+  const visibleNav = navItems.filter((i) => !i.feature || hasFeature(i.feature));
+  const showCommunity = hasFeature("hub");
+
+  // Route guard: bounce away from a module the school disabled. Only relevant
+  // once the student has full nav (CLASS_ASSIGNED); onboarding paths aren't
+  // feature-gated so featureForPath returns null for them anyway.
+  useEffect(() => {
+    if (tenantLoading) return;
+    const feat = featureForPath(pathname) as FeatureKey | null;
+    if (feat && !hasFeature(feat)) router.replace("/student");
+  }, [pathname, tenantLoading, hasFeature, router]);
 
   useEffect(() => {
     cachedFetch<any>("/api/student", 60_000)
@@ -313,7 +339,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
         {/* Nav — only shown when CLASS_ASSIGNED */}
         <nav className="sl-nav">
-          {showFullNav && navItems.map((item) => {
+          {showFullNav && visibleNav.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon   = item.icon;
             return (
@@ -334,8 +360,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             );
           })}
 
-          {/* Community — visually separated */}
-          {showFullNav && (
+          {/* Community — visually separated, gated by the hub feature */}
+          {showFullNav && showCommunity && (
             <>
               <div className="sl-nav-sep" aria-hidden="true" />
               {(() => {
@@ -500,7 +526,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       {/* ═══════════════════ MOBILE BOTTOM TAB BAR ═══════════════════ */}
       {showFullNav && (
         <nav className="sl-bottom-tabs" dir={isRtl ? "rtl" : "ltr"} aria-label="Mobile navigation">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
             return (
@@ -514,7 +540,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
               </Link>
             );
           })}
-          {(() => {
+          {showCommunity && (() => {
             const active = isActive(COMMUNITY_HREF);
             return (
               <Link href={COMMUNITY_HREF} className={`sl-tab-item ${active ? "active" : ""}`}>

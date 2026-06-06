@@ -15,6 +15,16 @@ export async function PUT(
     req.json(),
   ]);
 
+  // ── Tenant guard ──────────────────────────────────────────────────────────
+  // Confirm this question belongs to an assessment owned by THIS admin's
+  // school before editing. Stops cross-school question tampering.
+  const ownsQuestion = await prisma.assessmentQuestion.findFirst({
+    where: { id: qid, assessment: { school_id: auth.school.id } },
+    select: { id: true },
+  });
+  if (!ownsQuestion)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   // Update question + delete old options in parallel
   await Promise.all([
     prisma.assessmentQuestion.update({
@@ -60,6 +70,15 @@ export async function DELETE(
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { qid } = await context.params;
+
+  // ── Tenant guard ── confirm ownership before deleting.
+  const ownsQuestion = await prisma.assessmentQuestion.findFirst({
+    where: { id: qid, assessment: { school_id: auth.school.id } },
+    select: { id: true },
+  });
+  if (!ownsQuestion)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   await prisma.assessmentQuestion.delete({ where: { id: qid } });
   return NextResponse.json({ success: true });
 }

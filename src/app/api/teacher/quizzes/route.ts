@@ -67,6 +67,16 @@ export async function POST(req: Request) {
   if (!name || !classId || !questions?.length)
     return NextResponse.json({ error: "name, classId and questions are required" }, { status: 400 });
 
+  // ── Tenant guard ──────────────────────────────────────────────────────────
+  // The class must belong to this teacher. Without this check a teacher could
+  // attach a quiz to another school's class by passing its id.
+  const ownsClass = await prisma.class.findFirst({
+    where: { id: classId, teacher_id: teacher.id },
+    select: { id: true },
+  });
+  if (!ownsClass)
+    return NextResponse.json({ error: "Class not found or not yours" }, { status: 404 });
+
   const quiz = await prisma.quiz.create({
     data: {
       name,

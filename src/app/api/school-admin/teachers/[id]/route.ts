@@ -37,24 +37,31 @@ export async function DELETE(
   _: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const supabase = createAdminClient();
-    const { id } = await params;
-    const teacher = await prisma.teacher.findUnique({
-      where: { id },
-      include: { profile: true },
-    });
+  // ── Auth ── (was MISSING — this is a destructive admin action that deletes
+  // the underlying auth user, so it MUST require a school admin and verify the
+  // teacher belongs to that admin's school.)
+  const auth = await requireSchoolAdmin();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  try {
+    const { id } = await params;
+
+    // Tenant guard: teacher must belong to THIS admin's school.
+    const teacher = await prisma.teacher.findFirst({
+      where: { id, school_id: auth.school.id },
+      select: { profile_id: true },
+    });
     if (!teacher) {
       return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
     }
 
+    const supabase = createAdminClient();
     // Delete auth user (cascades to profile → teacher)
     await supabase.auth.admin.deleteUser(teacher.profile_id);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(error);
+    console.error("[delete-teacher]", error);
     return NextResponse.json({ error: "Failed to delete teacher" }, { status: 500 });
   }
 }

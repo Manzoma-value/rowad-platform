@@ -25,6 +25,17 @@ export async function PATCH(
   if (!existing)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // ── Tenant guard ── if assigning a teacher, that teacher must also belong
+  // to this school (don't trust the body's teacher_id blindly).
+  if (teacher_id) {
+    const ownsTeacher = await prisma.teacher.findFirst({
+      where: { id: teacher_id, school_id: auth.school.id },
+      select: { id: true },
+    });
+    if (!ownsTeacher)
+      return NextResponse.json({ error: "Teacher not found in your school" }, { status: 404 });
+  }
+
   const cls = await prisma.class.update({
     where: { id },
     data: {

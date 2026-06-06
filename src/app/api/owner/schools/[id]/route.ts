@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { resolveFeatures } from "@/lib/features";
 
 export const revalidate = 60;
 
@@ -31,6 +32,7 @@ export async function GET(
     select: {
       id: true, name: true, slug: true, description: true,
       language: true, color_primary: true, color_secondary: true, color_bg: true,
+      features: true,
       created_at: true,
       admin: { select: { id: true, full_name: true } },
       teachers: {
@@ -58,7 +60,11 @@ export async function GET(
   });
 
   if (!school) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ school });
+  // Return features as a fully-resolved map (all keys present) so the UI can
+  // render every toggle without guessing defaults.
+  return NextResponse.json({
+    school: { ...school, features: resolveFeatures(school.features) },
+  });
 }
 
 export async function PATCH(
@@ -83,6 +89,12 @@ export async function PATCH(
   if (body.color_secondary !== undefined) updateData.color_secondary = body.color_secondary;
   if (body.color_bg        !== undefined) updateData.color_bg        = body.color_bg;
 
+  // Features: sanitize through resolveFeatures so only known keys with boolean
+  // values are persisted (stores the full resolved map — predictable shape).
+  if (body.features !== undefined) {
+    updateData.features = resolveFeatures(body.features);
+  }
+
   if (body.slug !== undefined) {
     const newSlug = body.slug.trim();
     const existing = await prisma.school.findFirst({
@@ -100,9 +112,12 @@ export async function PATCH(
     select: {
       id: true, name: true, slug: true, description: true,
       language: true, color_primary: true, color_secondary: true, color_bg: true,
+      features: true,
       admin: { select: { id: true, full_name: true } },
     },
   });
 
-  return NextResponse.json({ school });
+  return NextResponse.json({
+    school: { ...school, features: resolveFeatures(school.features) },
+  });
 }

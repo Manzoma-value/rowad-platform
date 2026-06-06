@@ -19,6 +19,17 @@ export async function POST(
   if (!type || !text)
     return NextResponse.json({ error: "type and text required" }, { status: 400 });
 
+  // ── Tenant guard ──────────────────────────────────────────────────────────
+  // Confirm the target assessment belongs to THIS admin's school before we
+  // attach a question to it. Without this, an admin could inject questions
+  // into another school's assessment by guessing the assessment id.
+  const ownsAssessment = await prisma.assessment.findFirst({
+    where: { id: assessmentId, school_id: auth.school.id },
+    select: { id: true },
+  });
+  if (!ownsAssessment)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const maxQ = await prisma.assessmentQuestion.findFirst({
     where: { assessment_id: assessmentId },
     orderBy: { order: "desc" },

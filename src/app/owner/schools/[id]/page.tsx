@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { cachedFetch } from "@/lib/api-cache";
+import {
+  FEATURE_DEFS,
+  FEATURE_KEYS,
+  defaultFeatures,
+  type Features,
+  type FeatureKey,
+} from "@/lib/features";
 
 interface SchoolDetail {
   id: string;
@@ -15,6 +22,7 @@ interface SchoolDetail {
   color_primary: string;
   color_secondary: string;
   color_bg: string;
+  features: Features;
   admin: { id: string; full_name: string } | null;
   teachers: {
     id: string;
@@ -83,6 +91,7 @@ export default function OwnerSchoolDetailPage() {
   const [colorPrimary, setColorPrimary] = useState("#C8A96A");
   const [colorSecondary, setColorSecondary] = useState("#E5B93C");
   const [colorBg, setColorBg] = useState("#0B0B0C");
+  const [features, setFeatures] = useState<Features>(defaultFeatures());
 
   useEffect(() => {
     if (!id) return;
@@ -96,10 +105,14 @@ export default function OwnerSchoolDetailPage() {
         setColorPrimary(d.school?.color_primary || "#C8A96A");
         setColorSecondary(d.school?.color_secondary || "#E5B93C");
         setColorBg(d.school?.color_bg || "#0B0B0C");
+        setFeatures(d.school?.features ?? defaultFeatures());
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [id]);
+
+  const toggleFeature = (key: FeatureKey) =>
+    setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
 
   async function saveSettings() {
     setSaving(true);
@@ -115,6 +128,7 @@ export default function OwnerSchoolDetailPage() {
         color_primary: colorPrimary,
         color_secondary: colorSecondary,
         color_bg: colorBg,
+        features,
       }),
     });
     const d = await r.json();
@@ -132,6 +146,7 @@ export default function OwnerSchoolDetailPage() {
               color_primary: d.school.color_primary,
               color_secondary: d.school.color_secondary,
               color_bg: d.school.color_bg,
+              features: d.school.features ?? prev.features,
               admin: d.school.admin,
             }
           : prev,
@@ -711,6 +726,39 @@ export default function OwnerSchoolDetailPage() {
               </div>
             </div>
 
+            {/* ── Feature toggles ── */}
+            <div className="sd-features-section">
+              <div className="sd-features-head">
+                <h3 className="sd-features-title">الوحدات والميزات</h3>
+                <p className="sd-features-sub">
+                  فعّل أو عطّل الوحدات لهذه الجهة. الوحدة المعطّلة تختفي من قوائم
+                  الطلاب والمعلمين والمشرف ولا يمكن الوصول إليها.
+                </p>
+              </div>
+              <div className="sd-features-grid">
+                {FEATURE_KEYS.map((key) => {
+                  const on = features[key];
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`sd-feature-row${on ? " on" : ""}`}
+                      onClick={() => toggleFeature(key)}
+                      aria-pressed={on}
+                    >
+                      <span className="sd-feature-info">
+                        <span className="sd-feature-name">{FEATURE_DEFS[key].labelAr}</span>
+                        <span className="sd-feature-en">{FEATURE_DEFS[key].labelEn}</span>
+                      </span>
+                      <span className="sd-feature-switch" aria-hidden="true">
+                        <span className="sd-feature-knob" />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {saveMsg && (
               <div
                 className={`sd-save-msg ${saveMsg.startsWith("✓") ? "success" : "error"}`}
@@ -876,6 +924,37 @@ const css = `
   .sd-save-msg{font-size:13px;font-weight:600;padding:10px 14px;border-radius:8px}
   .sd-save-msg.success{background:rgba(26,107,60,0.1);color:#1a6b3c;border:1px solid rgba(26,107,60,0.2)}
   .sd-save-msg.error{background:rgba(139,26,26,0.1);color:var(--danger);border:1px solid rgba(139,26,26,0.2)}
+
+  /* ── Feature toggles ── */
+  .sd-features-section{border-top:1px solid var(--border);padding-top:20px;margin-top:4px;display:flex;flex-direction:column;gap:14px}
+  .sd-features-head{display:flex;flex-direction:column;gap:5px}
+  .sd-features-title{font-size:15px;font-weight:800;color:var(--black);margin:0}
+  .sd-features-sub{font-size:12.5px;color:var(--graphite-soft,#8A7B60);line-height:1.65;margin:0}
+  .sd-features-grid{display:flex;flex-direction:column;gap:8px}
+  .sd-feature-row{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--bg-card,#FFFDF8);border:1px solid var(--border);border-radius:12px;
+    padding:13px 16px;cursor:pointer;font-family:'Cairo',sans-serif;text-align:start;
+    transition:border-color 0.18s,background 0.18s;
+  }
+  .sd-feature-row:hover{border-color:rgba(200,169,106,0.35)}
+  .sd-feature-row.on{background:rgba(200,169,106,0.05);border-color:rgba(200,169,106,0.28)}
+  .sd-feature-info{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .sd-feature-name{font-size:13.5px;font-weight:800;color:var(--black)}
+  .sd-feature-en{font-size:11px;color:var(--graphite-soft,#8A7B60);font-weight:600}
+  .sd-feature-switch{
+    position:relative;flex-shrink:0;width:42px;height:24px;border-radius:99px;
+    background:#D8D2C6;transition:background 0.22s cubic-bezier(0.4,0,0.2,1);
+  }
+  .sd-feature-row.on .sd-feature-switch{background:linear-gradient(135deg,#C8A96A,#E5B93C)}
+  .sd-feature-knob{
+    position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.25);
+    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .sd-feature-row.on .sd-feature-knob{transform:translateX(18px)}
+  [dir="rtl"] .sd-feature-knob{left:auto;right:2px}
+  [dir="rtl"] .sd-feature-row.on .sd-feature-knob{transform:translateX(-18px)}
 
   @media(max-width:900px){.sd-ov-grid{grid-template-columns:repeat(2,1fr)}.sd-ov-info-grid{grid-column:1fr}.sd-colors-grid{grid-template-columns:1fr}}
   @media(max-width:600px){.sd-tabs{overflow-x:auto}}

@@ -3,13 +3,15 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch } from "@/lib/api-cache";
+import { TenantProvider, useTenant } from "@/lib/tenant-context";
+import { featureForPath, type FeatureKey } from "@/lib/features";
 import {
   LayoutDashboard,
   Users,
@@ -100,24 +102,50 @@ interface NavItem {
   sublabel: string;
   exact?: boolean;
   icon: LucideIcon;
+  /** When set, the item is hidden unless the school has this feature enabled. */
+  feature?: FeatureKey;
 }
 
 const navItems: NavItem[] = [
   { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
   { href: "/teacher/classes",  key: "myClasses", sublabel: "Classes",   exact: false, icon: Users },
-  { href: "/teacher/lessons",  key: "lessons",   sublabel: "Lessons",   exact: false, icon: BookOpen },
-  { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList },
-  { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3 },
+  { href: "/teacher/lessons",  key: "lessons",   sublabel: "Lessons",   exact: false, icon: BookOpen, feature: "lessons" },
+  { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList, feature: "quizzes" },
+  { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3, feature: "reports" },
 ];
 
 const COMMUNITY_HREF = "/teacher/hub";
 
-/* ─── Layout ─── */
+/* ─── Layout (thin wrapper that provides tenant context) ─── */
 export default function TeacherLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <TenantProvider>
+      <TeacherLayoutInner>{children}</TeacherLayoutInner>
+    </TenantProvider>
+  );
+}
+
+function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
+  const router = useRouter();
   const { lang, setLang } = useLang();
   const tr = t[lang];
   const isRtl = lang === "ar";
+
+  // ── Tenant feature flags ──
+  const { hasFeature, loading: tenantLoading } = useTenant();
+  // Only show nav items whose feature is enabled (or that have no feature gate).
+  const visibleNav = navItems.filter((i) => !i.feature || hasFeature(i.feature));
+  const showCommunity = hasFeature("hub");
+
+  // Route guard: if the user lands on a module their school disabled (e.g. via
+  // a bookmark or direct URL), bounce them back to the dashboard. We wait until
+  // the tenant config has loaded so we never redirect on a stale assumption.
+  useEffect(() => {
+    if (tenantLoading) return;
+    const feat = featureForPath(pathname) as FeatureKey | null;
+    if (feat && !hasFeature(feat)) router.replace("/teacher");
+  }, [pathname, tenantLoading, hasFeature, router]);
 
   const [name, setName] = useState("");
   const [initials, setInitials] = useState("م");
@@ -231,7 +259,7 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
 
         {/* Nav */}
         <nav className="tl-nav">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
             return (
@@ -259,35 +287,39 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
             );
           })}
 
-          {/* Community — visually separated */}
-          <div className="tl-nav-sep" aria-hidden="true" />
-          {(() => {
-            const active = isActive(COMMUNITY_HREF);
-            return (
-              <Link
-                href={COMMUNITY_HREF}
-                className={`tl-nav-item tl-nav-community ${active ? "active" : ""}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                {active && (
-                  <>
-                    <span className="tl-nav-pill" />
-                    <span className="tl-nav-shimmer" />
-                  </>
-                )}
-                <span className="tl-nav-icon-wrap">
-                  <Globe2 size={17} strokeWidth={1.6} />
-                </span>
-                <span className="tl-nav-labels">
-                  <span className="tl-nav-label-main">
-                    {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
-                  </span>
-                  <span className="tl-nav-label-sub">Community</span>
-                </span>
-                {active && <span className="tl-nav-dot" />}
-              </Link>
-            );
-          })()}
+          {/* Community — visually separated, gated by the hub feature */}
+          {showCommunity && (
+            <>
+              <div className="tl-nav-sep" aria-hidden="true" />
+              {(() => {
+                const active = isActive(COMMUNITY_HREF);
+                return (
+                  <Link
+                    href={COMMUNITY_HREF}
+                    className={`tl-nav-item tl-nav-community ${active ? "active" : ""}`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    {active && (
+                      <>
+                        <span className="tl-nav-pill" />
+                        <span className="tl-nav-shimmer" />
+                      </>
+                    )}
+                    <span className="tl-nav-icon-wrap">
+                      <Globe2 size={17} strokeWidth={1.6} />
+                    </span>
+                    <span className="tl-nav-labels">
+                      <span className="tl-nav-label-main">
+                        {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
+                      </span>
+                      <span className="tl-nav-label-sub">Community</span>
+                    </span>
+                    {active && <span className="tl-nav-dot" />}
+                  </Link>
+                );
+              })()}
+            </>
+          )}
 
           <div className="tl-mandala-wrap" aria-hidden="true">
             <Mandala size={172} stroke="rgba(200,169,106,0.32)" />
@@ -427,7 +459,7 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
 
       {/* ═══════════════════ MOBILE BOTTOM TAB BAR ═══════════════════ */}
       <nav className="tl-bottom-tabs" dir={isRtl ? "rtl" : "ltr"} aria-label="Mobile navigation">
-        {navItems.map((item) => {
+        {visibleNav.map((item) => {
           const active = isActive(item.href, item.exact);
           const Icon = item.icon;
           return (
@@ -441,7 +473,7 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
             </Link>
           );
         })}
-        {(() => {
+        {showCommunity && (() => {
           const active = isActive(COMMUNITY_HREF);
           return (
             <Link href={COMMUNITY_HREF} className={`tl-tab-item ${active ? "active" : ""}`}>
