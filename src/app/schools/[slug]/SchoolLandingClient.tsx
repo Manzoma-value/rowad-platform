@@ -50,6 +50,10 @@ export default function SchoolLandingClient({ school }: { school: School }) {
   const router = useRouter();
   const [lang, setLang] = useState<Lang>(school.language === "sq" ? "sq" : "ar");
   const [scrolled, setScrolled] = useState(false);
+  // On a tenant subdomain (rowad-albania.manzoma.sa) we use clean /login & /signup
+  // paths; on the owner host's path-based view (…/schools/<slug>) we keep the
+  // school-scoped paths. Detected once on mount (browser-only).
+  const [onSubdomain, setOnSubdomain] = useState(false);
   const tr = T[lang];
 
   useEffect(() => {
@@ -58,8 +62,18 @@ export default function SchoolLandingClient({ school }: { school: School }) {
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
-  const goLogin  = () => router.push(`/schools/${school.slug}/login`);
-  const goSignup = () => router.push(`/schools/${school.slug}/signup`);
+  useEffect(() => {
+    // If the current path is the clean root (not /schools/...), we're on a
+    // tenant subdomain (the middleware rewrote it). Use clean auth paths.
+    // (Effect, not a render-time initializer, to avoid SSR/client hydration mismatch.)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOnSubdomain(!window.location.pathname.startsWith("/schools/"));
+  }, []);
+
+  const loginPath  = onSubdomain ? "/login"  : `/schools/${school.slug}/login`;
+  const signupPath = onSubdomain ? "/signup" : `/schools/${school.slug}/signup`;
+  const goLogin  = () => router.push(loginPath);
+  const goSignup = () => router.push(signupPath);
 
   // Show the Latin-script name in non-Arabic UIs when available;
   // otherwise fall back to the canonical Arabic name.

@@ -1,14 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { parseHost } from "@/lib/tenant-host";
 
 // ─────────────────────────────────────────────────────────────────────
 // Proxy (Next.js middleware) — runs on EVERY request.
 //
-// Latency budget here is tight. We:
-//   1. Skip the auth roundtrip entirely for genuinely-public paths.
-//   2. Run `getUser()` and the profile lookup in parallel (was sequential).
-//   3. Make only ONE profile SELECT per request (was two for student API
-//      calls + page navigations).
+// Multi-tenant addressing (Phase B):
+//   Each school lives on its own subdomain (<slug>.manzoma.sa). On a tenant
+//   subdomain we REWRITE the public pages to the school-scoped versions:
+//      /         → /schools/<slug>            (school landing)
+//      /login    → /schools/<slug>/login
+//      /signup   → /schools/<slug>/signup
+//   The role apps (/student, /teacher, /school-admin) keep their paths and
+//   read the tenant from the logged-in user's session, so they need no
+//   rewrites.
+//
+//   The owner / main host (rowad.manzoma.sa, the apex, localhost, and Vercel
+//   preview domains) is NOT a tenant — it behaves exactly as before. This
+//   makes the change fully backward-compatible: deploying it changes nothing
+//   until real subdomains are pointed at the app.
+//
+// Latency: getUser() + the profile lookup run in parallel; one profile SELECT
+// per request.
 // ─────────────────────────────────────────────────────────────────────
 
 // Paths that never need an auth check — skip the cookie/network work.
@@ -23,10 +36,28 @@ function isCheapPublicPath(pathname: string): boolean {
   return false;
 }
 
+/** Rewrite the current request to a different internal path, keeping the URL. */
+function rewriteTo(request: NextRequest, pathname: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  return NextResponse.rewrite(url);
+}
+
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // ── Resolve the tenant from the subdomain (cheap, no DB) ──
+  const { slug, isTenant } = parseHost(request.headers.get("host"));
+
+  // On a tenant subdomain, the ROOT is the school's public landing page.
+  // Rewrite before any auth work — the landing is fully public.
+  if (isTenant && slug && pathname === "/") {
+    return rewriteTo(request, `/schools/${slug}`);
+  }
+
   // Cheap public path — bail before any Supabase work.
+  // (login/signup are NOT cheap-public, so tenant rewrites for them happen in
+  //  the logged-out branch below, after we know the auth state.)
   if (isCheapPublicPath(pathname)) {
     return NextResponse.next({ request });
   }
@@ -92,8 +123,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Logged-out + non-dashboard (e.g. /login, /signup, /reset-password, /iceCream) — let through.
-  if (!user) return response;
+  // Logged-out + non-dashboard (e.g. /login, /signup, /reset-password, /iceCream).
+  if (!user) {
+    // On a tenant subdomain, route the bare /login and /signup to the
+    // school-branded pages so the URL stays clean (rowad-albania.manzoma.sa/login).
+    if (isTenant && slug) {
+      if (pathname === "/login")  return rewriteTo(request, `/schools/${slug}/login`);
+      if (pathname === "/signup") return rewriteTo(request, `/schools/${slug}/signup`);
+    }
+    return response;
+  }
 
   // ── Logged-in: one profile SELECT, one optional student SELECT, run in
   //    parallel with the student onboarding lookup when applicable. ──

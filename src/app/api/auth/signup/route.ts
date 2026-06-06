@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "../../../../lib/supabase/server";
 import { prisma } from "../../../../lib/prisma";
+import { requestOrigin } from "@/lib/request-origin";
 import { z } from "zod";
 
 const SignupSchema = z.object({
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = await createClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const siteUrl = requestOrigin(req);
 
     // ── Create auth user ───────────────────────────────────────────────────
     const { data: authData, error: authError } = await supabase.auth.signUp({

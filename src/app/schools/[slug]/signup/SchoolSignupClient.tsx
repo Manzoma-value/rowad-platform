@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 interface School {
   id: string;
@@ -187,6 +187,14 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   const L = STRINGS[lang];
   const dir = L.dir;
 
+  // Clean paths on a tenant subdomain; school-scoped paths on the owner host.
+  const [onSubdomain, setOnSubdomain] = useState(false);
+  useEffect(() => {
+    setOnSubdomain(!window.location.pathname.startsWith("/schools/"));
+  }, []);
+  const loginPath   = onSubdomain ? "/login" : `/schools/${school.slug}/login`;
+  const landingPath = onSubdomain ? "/"      : `/schools/${school.slug}`;
+
   const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
   const showEmailSuccess = emailTouched && isValidEmail(email);
 
@@ -290,7 +298,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
                 <h2 className="sp-confirm-title">{L.emailSentTitle}</h2>
                 <p className="sp-confirm-sub">{L.emailSentSub} <strong className="sp-confirm-email">{email.trim()}</strong></p>
                 <p className="sp-confirm-note">{L.emailSentNote}</p>
-                <Link href={`/schools/${school.slug}/login`} className="sp-btn" style={{ textDecoration: "none" }}>
+                <Link href={loginPath} className="sp-btn" style={{ textDecoration: "none" }}>
                   {L.emailSentLogin}
                 </Link>
               </div>
@@ -471,12 +479,12 @@ export default function SchoolSignupClient({ school }: { school: School }) {
 
             <p className="sp-footer-text">
               {L.haveAccount}{" "}
-              <Link href={`/schools/${school.slug}/login`} className="sp-link">{L.login}</Link>
+              <Link href={loginPath} className="sp-link">{L.login}</Link>
             </p>
 
             <div className="sp-form-ornament" style={{ marginTop: 28 }}><Rule dim /></div>
             <div style={{ textAlign: "center", marginTop: 14 }}>
-              <Link href={`/schools/${school.slug}`} className="sp-back-link">← {L.backTo}</Link>
+              <Link href={landingPath} className="sp-back-link">← {L.backTo}</Link>
             </div>
           </div>
         </div>

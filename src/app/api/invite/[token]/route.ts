@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
+import { requestOrigin } from "@/lib/request-origin";
 import { z } from "zod";
 
 const InviteBodySchema = z.object({
@@ -142,7 +143,7 @@ export async function POST(
 
   // ── Create auth user (sends confirmation email) ───────────────────────
   console.log("[invite] creating auth user for:", email);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = requestOrigin(req);
   const { data: authData, error: authError } = await adminClient.auth.signUp({
     email,
     password,

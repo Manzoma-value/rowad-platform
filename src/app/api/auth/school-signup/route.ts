@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { requestOrigin } from "@/lib/request-origin";
 import { z } from "zod";
 
 const SchoolSignupSchema = z.object({
@@ -43,7 +44,9 @@ export async function POST(req: Request) {
     // signUp() is the only flow that triggers Supabase's confirmation email.
     // admin.createUser() creates the account server-side but never sends the email.
     const supabase = await createClient();
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    // Use the subdomain the user is actually on so the confirmation email
+    // returns them to the same school subdomain (where their cookie belongs).
+    const siteUrl = requestOrigin(req);
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,

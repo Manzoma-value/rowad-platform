@@ -16,6 +16,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { requestOrigin } from "@/lib/request-origin";
 
 const ROLE_ROUTES: Record<string, string> = {
   OWNER: "/owner",
@@ -26,7 +27,9 @@ const ROLE_ROUTES: Record<string, string> = {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? request.nextUrl.origin;
+  // Redirect back onto the SAME subdomain the email link came from, so the
+  // freshly-set session cookie stays on the right tenant host.
+  const origin = requestOrigin(request);
 
   const code       = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");

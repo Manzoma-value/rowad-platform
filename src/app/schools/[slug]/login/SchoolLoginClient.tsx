@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 interface School {
@@ -329,6 +329,14 @@ export default function SchoolLoginClient({ school }: { school: School }) {
   const L = STRINGS[lang];
   const dir = lang === "sq" ? "ltr" : "rtl";
 
+  // Clean paths on a tenant subdomain; school-scoped paths on the owner host.
+  const [onSubdomain, setOnSubdomain] = useState(false);
+  useEffect(() => {
+    setOnSubdomain(!window.location.pathname.startsWith("/schools/"));
+  }, []);
+  const signupPath  = onSubdomain ? "/signup" : `/schools/${school.slug}/signup`;
+  const landingPath = onSubdomain ? "/"       : `/schools/${school.slug}`;
+
   const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
   const showEmailSuccess = emailTouched && isValidEmail(email);
 
@@ -563,7 +571,7 @@ export default function SchoolLoginClient({ school }: { school: School }) {
 
             <p className="lp-footer-text">
               {L.haveAccount}{" "}
-              <Link href={`/schools/${school.slug}/signup`} className="lp-link">
+              <Link href={signupPath} className="lp-link">
                 {L.signup}
               </Link>
             </p>
@@ -573,7 +581,7 @@ export default function SchoolLoginClient({ school }: { school: School }) {
             </div>
 
             <div style={{ textAlign: "center", marginTop: 14 }}>
-              <Link href={`/schools/${school.slug}`} className="lp-back-link">
+              <Link href={landingPath} className="lp-back-link">
                 ← {L.backTo}
               </Link>
             </div>
