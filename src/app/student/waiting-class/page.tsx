@@ -42,6 +42,7 @@ export default function StudentWaitingClassPage() {
 
   const [studentName, setStudentName] = useState("");
   const [schoolName, setSchoolName] = useState("");
+  const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export default function StudentWaitingClassPage() {
         if (cancelled) return;
         if (d.profile?.full_name) setStudentName(d.profile.full_name);
         if (d.school?.name) setSchoolName(d.school.name);
+        setSchoolNameAlt(d.school?.name_alt ?? null);
         // 🔑 If the admin has approved + assigned a class, the student's
         // onboarding_status flips to CLASS_ASSIGNED — navigate them out.
         if (d.onboarding_status === TARGET_STATUS) {
@@ -112,7 +114,7 @@ export default function StudentWaitingClassPage() {
           <div>
             <div className="header-label">{T.headerLabel}</div>
             <div className="header-title">{T.headerTitle}</div>
-            {schoolName && <div className="school-pill">{schoolName}</div>}
+            {schoolName && <div className="school-pill">{lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}</div>}
           </div>
         </div>
 

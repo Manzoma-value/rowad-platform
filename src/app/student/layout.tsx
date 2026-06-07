@@ -171,6 +171,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
   const [name, setName]                   = useState("");
   const [initials, setInitials]           = useState("ط");
   const [schoolName, setSchoolName]       = useState("");
+  const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl]         = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen]     = useState(false);
   const [loggingOut, setLoggingOut]       = useState(false);
@@ -210,6 +211,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
           );
         }
         if (data?.school?.name) setSchoolName(data.school.name);
+        setSchoolNameAlt(data?.school?.name_alt ?? null);
         if (data?.school?.slug) schoolSlugRef.current = data.school.slug;
 
         if (data.school?.language && !langInitialized.current) {
@@ -486,7 +488,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
                   <span className="sl-topbar-initial">{initials}</span>
                 )}
               </div>
-              <span className="sl-topbar-name">{name || schoolName}</span>
+              <span className="sl-topbar-name">{name || (lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName)}</span>
             </div>
           </div>
         </header>

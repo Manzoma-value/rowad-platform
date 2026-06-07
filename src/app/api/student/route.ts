@@ -14,7 +14,7 @@ export async function GET() {
     select: {
       onboarding_status: true,
       profile: { select: { full_name: true } },
-      school: { select: { id: true, name: true, language: true, slug: true } },
+      school: { select: { id: true, name: true, name_alt: true, language: true, slug: true } },
       class: {
         select: {
           id: true,

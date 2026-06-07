@@ -32,7 +32,7 @@ const S = {
 
 interface StudentData {
   profile: { full_name: string };
-  school: { name: string } | null;
+  school: { name: string; name_alt?: string | null } | null;
   class: {
     id: string;
     name: string;
@@ -146,7 +146,7 @@ export default function StudentWelcomePage() {
           <div className="class-label">{T.classLabel}</div>
           <div className="class-name">{student?.class?.name ?? "—"}</div>
           {student?.school && (
-            <div className="class-school">{student.school.name}</div>
+            <div className="class-school">{lang !== "ar" && student.school.name_alt && student.school.name_alt.trim() ? student.school.name_alt : student.school.name}</div>
           )}
         </div>
 

@@ -34,7 +34,7 @@ const S = {
 
 interface StudentData {
   profile: { full_name: string };
-  school: { name: string } | null;
+  school: { name: string; name_alt?: string | null } | null;
 }
 
 interface IntakeAttempt {
@@ -153,7 +153,7 @@ export default function StudentSchoolAssignedPage() {
             </div>
             <div className="school-info">
               <div className="school-label-sm">{T.schoolLabel}</div>
-              <div className="school-name">{student.school.name}</div>
+              <div className="school-name">{lang !== "ar" && student.school.name_alt && student.school.name_alt.trim() ? student.school.name_alt : student.school.name}</div>
             </div>
           </div>
         )}

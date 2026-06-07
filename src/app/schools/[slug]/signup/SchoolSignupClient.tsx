@@ -6,6 +6,7 @@ import { useRef, useState, useEffect } from "react";
 interface School {
   id: string;
   name: string;
+  name_alt: string | null;
   language: string;
   slug: string;
   description: string | null;
@@ -187,6 +188,12 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   const L = STRINGS[lang];
   const dir = L.dir;
 
+  // Latin-script name in non-Arabic UIs when available; else the Arabic name.
+  const displayName =
+    lang !== "ar" && school.name_alt && school.name_alt.trim()
+      ? school.name_alt
+      : school.name;
+
   // Clean paths on a tenant subdomain; school-scoped paths on the owner host.
   const [onSubdomain, setOnSubdomain] = useState(false);
   useEffect(() => {
@@ -274,8 +281,8 @@ export default function SchoolSignupClient({ school }: { school: School }) {
               <Mandala size={200} className="sp-mandala" />
               <div className="sp-brand-text">
                 <Rule />
-                <div className="sp-school-badge">{school.name.charAt(0)}</div>
-                <h2 className="sp-brand-name">{school.name}</h2>
+                <div className="sp-school-badge">{displayName.charAt(0)}</div>
+                <h2 className="sp-brand-name">{displayName}</h2>
                 {school.description && <p className="sp-brand-desc">{school.description}</p>}
                 <Rule />
               </div>
@@ -321,8 +328,8 @@ export default function SchoolSignupClient({ school }: { school: School }) {
             <Mandala size={200} className="sp-mandala" />
             <div className="sp-brand-text">
               <Rule />
-              <div className="sp-school-badge">{school.name.charAt(0)}</div>
-              <h2 className="sp-brand-name">{school.name}</h2>
+              <div className="sp-school-badge">{displayName.charAt(0)}</div>
+              <h2 className="sp-brand-name">{displayName}</h2>
               {school.description && <p className="sp-brand-desc">{school.description}</p>}
               <Rule />
             </div>

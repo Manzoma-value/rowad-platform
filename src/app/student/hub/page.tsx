@@ -20,7 +20,7 @@ interface Post {
 }
 interface Me {
   id: string; name: string; role: string;
-  school: { id: string; name: string; language: string } | null;
+  school: { id: string; name: string; name_alt?: string | null; language: string } | null;
 }
 
 // ─── LOCALIZATION ─────────────────────────────────────────────────────────────
@@ -565,7 +565,7 @@ export default function HubPage() {
       if (!user) return;
       cachedFetch<{
         profile: { full_name: string; role?: string };
-        school: { id: string; name: string; language: string } | null;
+        school: { id: string; name: string; name_alt?: string | null; language: string } | null;
       }>("/api/student", 60_000).then((d) => {
         setMe({
           id: user.id,
@@ -687,7 +687,7 @@ export default function HubPage() {
             </div>
             <div>
               <h1 className="hub-title">{tr.community}</h1>
-              <p className="hub-subtitle">{me.school.name}</p>
+              <p className="hub-subtitle">{lang !== "ar" && me.school.name_alt && me.school.name_alt.trim() ? me.school.name_alt : me.school.name}</p>
             </div>
           </div>
         </div>

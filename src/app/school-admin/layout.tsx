@@ -132,6 +132,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [name, setName] = useState("");
   const [initials, setInitials] = useState("م");
   const [schoolName, setSchoolName] = useState("");
+  const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -210,6 +211,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       .then((d) => {
         if (d?.school) {
           setSchoolName(d.school.name ?? "");
+          setSchoolNameAlt(d.school.name_alt ?? null);
           if (d.school?.slug) schoolSlugRef.current = d.school.slug;
           // Admin layout only supports AR + EN. If the school's default is "sq"
           // we DON'T inherit it — we stick with AR as the default so the toggle
@@ -500,7 +502,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                   <span className="sa-topbar-initial">{initials}</span>
                 )}
               </div>
-              <span className="sa-topbar-name">{name || schoolName}</span>
+              <span className="sa-topbar-name">{name || (lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName)}</span>
             </div>
           </div>
         </header>

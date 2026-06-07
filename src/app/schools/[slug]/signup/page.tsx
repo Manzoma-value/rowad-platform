@@ -13,7 +13,7 @@ export default async function SchoolSignupPage({ params }: Props) {
 
   const school = await prisma.school.findUnique({
     where: { slug },
-    select: { id: true, name: true, slug: true, language: true, description: true },
+    select: { id: true, name: true, name_alt: true, slug: true, language: true, description: true },
   });
 
   if (!school) notFound();

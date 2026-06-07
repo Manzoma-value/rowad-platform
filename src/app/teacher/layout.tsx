@@ -150,6 +150,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const [name, setName] = useState("");
   const [initials, setInitials] = useState("م");
   const [schoolName, setSchoolName] = useState("");
+  const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
@@ -166,6 +167,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
       .then((d) => {
         if (d?.school?.slug) schoolSlugRef.current = d.school.slug;
         if (d?.school?.name) setSchoolName(d.school.name);
+        setSchoolNameAlt(d?.school?.name_alt ?? null);
         if (d?.profile?.full_name) {
           setName(d.profile.full_name);
           setInitials(
@@ -525,7 +527,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                   <span className="tl-topbar-initial">{initials}</span>
                 )}
               </div>
-              <span className="tl-topbar-name">{name || schoolName}</span>
+              <span className="tl-topbar-name">{name || (lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName)}</span>
             </div>
           </div>
         </header>

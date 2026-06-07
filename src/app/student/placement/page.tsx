@@ -74,6 +74,7 @@ interface Assessment {
 interface School {
   id: string;
   name: string;
+  name_alt?: string | null;
 }
 
 export default function StudentPlacementPage() {
@@ -178,7 +179,7 @@ export default function StudentPlacementPage() {
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
                 </svg>
-                {school.name}
+                {lang !== "ar" && school.name_alt && school.name_alt.trim() ? school.name_alt : school.name}
               </div>
             )}
             <div className="p-label">{T.label}</div>

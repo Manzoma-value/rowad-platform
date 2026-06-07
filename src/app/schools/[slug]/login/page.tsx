@@ -13,6 +13,7 @@ export default async function SchoolLoginPage({ params }: Props) {
     select: {
       id: true,
       name: true,
+      name_alt: true,
       language: true,
       slug: true,
       description: true,
