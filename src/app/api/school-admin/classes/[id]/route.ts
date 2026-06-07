@@ -48,6 +48,15 @@ export async function PATCH(
     },
   });
 
+  // Rowad onboarding: assigning a class to a teacher who finished Stage 2 and is
+  // waiting for placement unlocks the normal teacher dashboard (→ ACTIVE).
+  if (teacher_id) {
+    await prisma.teacher.updateMany({
+      where: { id: teacher_id, onboarding_status: "AWAITING_CLASS" },
+      data: { onboarding_status: "ACTIVE" },
+    });
+  }
+
   return NextResponse.json({ class: cls });
 }
 

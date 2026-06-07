@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
+import { seedRowadModel } from "../../../../../prisma/rowad-concepts";
 
 export const revalidate = 60;
 
@@ -80,6 +81,13 @@ export async function POST(req: Request) {
       _count: { select: { teachers: true, students: true, classes: true } },
     },
   });
+
+  // Give every new school its own editable copy of النموذج التعليمي للرواد.
+  try {
+    await seedRowadModel(prisma, school.id);
+  } catch (err) {
+    console.error("[owner/schools] seedRowadModel failed:", err);
+  }
 
   return NextResponse.json({ school }, { status: 201 });
 }

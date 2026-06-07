@@ -14,6 +14,137 @@ enum Maqsad {
   MAL // المال
 }
 
+// ─── النموذج التعليمي للرواد (Rowad Educational Model) ───
+
+enum TeacherOnboardingStatus {
+  STAGE1_PENDING // must do/submit Stage 1 (also the resubmit state after rejection)
+  STAGE1_REVIEW // submitted Stage 1, waiting for admin review
+  STAGE2_PENDING // admin approved Stage 1, must do/submit Stage 2
+  AWAITING_CLASS // submitted Stage 2, waiting for admin to assign a class
+  ACTIVE // assigned to a class → full teacher access
+}
+
+enum RowadStage {
+  STAGE1
+  STAGE2
+}
+
+enum RowadSubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+// One model per school — an editable copy of the 5×5 educational model
+model RowadModel {
+  id         String   @id @default(uuid()) @db.Uuid
+  school_id  String   @unique @db.Uuid
+  title_ar   String   @default("النموذج التعليمي للرواد")
+  title_sq   String?
+  created_at DateTime @default(now())
+
+  school      School            @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  levels      RowadLevel[]
+  concepts    RowadConcept[]
+  submissions RowadSubmission[]
+
+  @@map("rowad_models")
+}
+
+// The 5 rows (المستويات) — editable bilingual labels
+model RowadLevel {
+  id       String  @id @default(uuid()) @db.Uuid
+  model_id String  @db.Uuid
+  order    Int // 1..5
+  name_ar  String
+  name_sq  String?
+
+  model RowadModel @relation(fields: [model_id], references: [id], onDelete: Cascade)
+
+  @@unique([model_id, order])
+  @@map("rowad_levels")
+}
+
+// The 25 concepts. Answer key = (maqsad = correct column) + (level = correct row)
+model RowadConcept {
+  id       String @id @default(uuid()) @db.Uuid
+  model_id String @db.Uuid
+  maqsad   Maqsad // correct column
+  level    Int // correct row 1..5
+  order    Int // order within the level
+
+  // Stage 1 card / concept name
+  name_ar String
+  name_sq String?
+  // المفهوم الاستراتيجي
+  strategic_ar String?
+  strategic_sq String?
+  // الوصف
+  description_ar String?
+  description_sq String?
+  // الواجب
+  duty_ar String?
+  duty_sq String?
+  // الأجر
+  reward_ar String?
+  reward_sq String?
+  // الثمرة
+  fruit_ar String?
+  fruit_sq String?
+  // مؤشر التحقق
+  verification_ar String?
+  verification_sq String?
+
+  created_at DateTime @default(now())
+
+  model      RowadModel       @relation(fields: [model_id], references: [id], onDelete: Cascade)
+  placements RowadPlacement[]
+
+  @@map("rowad_concepts")
+}
+
+model RowadSubmission {
+  id             String                @id @default(uuid()) @db.Uuid
+  model_id       String                @db.Uuid
+  teacher_id     String                @db.Uuid
+  school_id      String                @db.Uuid
+  stage          RowadStage
+  status         RowadSubmissionStatus @default(IN_PROGRESS)
+  score          Int? // admin-only — never sent to the teacher
+  total          Int                   @default(25)
+  reviewer_id    String?               @db.Uuid
+  reviewer_notes String?
+  submitted_at   DateTime?
+  reviewed_at    DateTime?
+  created_at     DateTime              @default(now())
+  updated_at     DateTime              @updatedAt
+
+  model      RowadModel       @relation(fields: [model_id], references: [id], onDelete: Cascade)
+  teacher    Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  school     School           @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  reviewer   Profile?         @relation("RowadReviewedBy", fields: [reviewer_id], references: [id])
+  placements RowadPlacement[]
+
+  @@unique([teacher_id, stage])
+  @@map("rowad_submissions")
+}
+
+model RowadPlacement {
+  id            String  @id @default(uuid()) @db.Uuid
+  submission_id String  @db.Uuid
+  concept_id    String  @db.Uuid
+  placed_maqsad Maqsad
+  placed_level  Int
+  is_correct    Boolean
+
+  submission RowadSubmission @relation(fields: [submission_id], references: [id], onDelete: Cascade)
+  concept    RowadConcept    @relation(fields: [concept_id], references: [id], onDelete: Cascade)
+
+  @@unique([submission_id, concept_id])
+  @@map("rowad_placements")
+}
+
 model Invite {
   id    String     @id @default(uuid()) @db.Uuid
   token String     @unique
@@ -129,6 +260,7 @@ model Profile {
   teacher                      Teacher?
   posts                        Post[]
   post_reactions               PostReaction[]
+  rowadReviews                 RowadSubmission[]   @relation("RowadReviewedBy")
   avatar_url                   String?
   avatar_path                  String?
   created_invites              Invite[]            @relation("InvitesCreatedBy")
@@ -163,6 +295,8 @@ model School {
   quizzes            Quiz[]
   lessons            Lesson[]
   roadmap            Roadmap?
+  rowad_model        RowadModel?
+  rowadSubmissions   RowadSubmission[]
   admin              Profile?            @relation("SchoolAdmin", fields: [admin_id], references: [id])
   students           Student[]
   teachers           Teacher[]
@@ -173,17 +307,19 @@ model School {
 }
 
 model Teacher {
-  id               String            @id @default(uuid()) @db.Uuid
-  created_at       DateTime          @default(now())
-  profile_id       String            @unique @db.Uuid
-  school_id        String            @db.Uuid
-  announcements    Announcement[]
-  classes          Class[]
-  quizzes          Quiz[]
-  lessons          Lesson[]
-  profile          Profile           @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-  school           School            @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  traitAssessments TraitAssessment[]
+  id                String                  @id @default(uuid()) @db.Uuid
+  created_at        DateTime                @default(now())
+  profile_id        String                  @unique @db.Uuid
+  school_id         String                  @db.Uuid
+  onboarding_status TeacherOnboardingStatus @default(STAGE1_PENDING)
+  announcements     Announcement[]
+  classes           Class[]
+  quizzes           Quiz[]
+  lessons           Lesson[]
+  profile           Profile                 @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  school            School                  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  traitAssessments  TraitAssessment[]
+  rowadSubmissions  RowadSubmission[]
 
   @@index([school_id])
   @@map("teachers")

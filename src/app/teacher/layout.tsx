@@ -157,6 +157,8 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   // Users can swap between Arabic and the school's secondary language at any time.
   const [showToggle] = useState(true);
   const [schoolLang, setSchoolLang] = useState("sq");
+  const [onboardingStatus, setOnboardingStatus] = useState<string | null>(null);
+  const [statusLoaded, setStatusLoaded] = useState(false);
   const schoolSlugRef = useRef<string>("");
 
   useEffect(() => {
@@ -181,8 +183,10 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           // If the school IS Arabic, default the secondary to Albanian.
           setSchoolLang(d.school.language === "ar" ? "sq" : d.school.language);
         }
+        setOnboardingStatus(d?.onboarding_status ?? null);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setStatusLoaded(true));
 
     // Cache profile — avatar doesn't change between page navigations.
     cachedFetch<{ profile?: { avatar_url?: string } }>("/api/profile", 600_000)
@@ -198,6 +202,15 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
     window.location.href = slug ? `/schools/${slug}` : "/login";
   }
 
+  // ── Rowad onboarding gate ──
+  // Teachers in onboarding (Stage 1 → admin approval → Stage 2 → class assignment)
+  // are confined to /teacher/model until their status becomes ACTIVE.
+  const gated = statusLoaded && !!onboardingStatus && onboardingStatus !== "ACTIVE";
+  const onModelRoute = pathname.startsWith("/teacher/model");
+  useEffect(() => {
+    if (gated && !onModelRoute) router.replace("/teacher/model");
+  }, [gated, onModelRoute, router]);
+
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
 
@@ -207,6 +220,98 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
     const found = navItems.find((item) => isActive(item.href, item.exact));
     return found ? tr[found.key] : (lang === "ar" ? "الصفحة" : "Faqja");
   })();
+
+  // ── Gated onboarding shell (no sidebar / nav) ──
+  if (gated) {
+    return (
+      <div
+        dir={isRtl ? "rtl" : "ltr"}
+        style={{
+          minHeight: "100vh",
+          background:
+            "radial-gradient(ellipse at 12% 8%, rgba(200,169,106,0.07), transparent 30%), #F6F4EE",
+          display: "flex",
+          flexDirection: "column",
+          fontFamily: "'Cairo','Tajawal',sans-serif",
+        }}
+      >
+        <header
+          style={{
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "0 24px",
+            background: "linear-gradient(180deg,#1E2329,#11151A)",
+            borderBottom: "1px solid rgba(200,169,106,0.18)",
+          }}
+        >
+          <div style={{ position: "relative", width: 132, height: 30, flexShrink: 0 }}>
+            <Image
+              src="/ahlia.png"
+              alt="بناء الأهلية"
+              fill
+              style={{ objectFit: "contain", objectPosition: isRtl ? "right" : "left" }}
+              priority
+            />
+          </div>
+          <div style={{ flex: 1 }} />
+          {showToggle && <LangToggle dark secondaryLang={schoolLang} />}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              color: "rgba(232,220,188,0.9)",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
+          >
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg,#D8C28A,#B89B5E)",
+                color: "#11151A",
+                fontSize: 12,
+                fontWeight: 900,
+              }}
+            >
+              {initials}
+            </span>
+            <span className="rg-name">{name}</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              background: "none",
+              border: "1px solid rgba(200,169,106,0.28)",
+              color: "rgba(232,220,188,0.85)",
+              borderRadius: 9,
+              padding: "7px 13px",
+              fontSize: 12.5,
+              fontWeight: 700,
+              fontFamily: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            {loggingOut ? <div className="tl-spin" /> : <LogOut size={14} strokeWidth={1.8} />}
+            <span>{lang === "ar" ? "تسجيل الخروج" : lang === "sq" ? "Dalje" : "Logout"}</span>
+          </button>
+        </header>
+        <main style={{ flex: 1 }}>{children}</main>
+        <style>{`@media(max-width:520px){.rg-name{display:none}} ${styles}`}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="tl-shell" dir={isRtl ? "rtl" : "ltr"}>

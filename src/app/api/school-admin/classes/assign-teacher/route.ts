@@ -42,6 +42,12 @@ export async function PATCH(req: Request) {
       select: { id: true, name: true, teacher_id: true },
     });
 
+    // Rowad onboarding: assigning a class to a teacher awaiting placement → ACTIVE.
+    await prisma.teacher.updateMany({
+      where: { id: teacherId, onboarding_status: "AWAITING_CLASS" },
+      data: { onboarding_status: "ACTIVE" },
+    });
+
     return NextResponse.json(updatedClass);
   } catch (error) {
     console.error("[assign-teacher]", error);

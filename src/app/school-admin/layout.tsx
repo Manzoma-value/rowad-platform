@@ -22,6 +22,7 @@ import {
   MapPin,
   BarChart3,
   Mail,
+  LayoutGrid,
   Globe2,
   Menu,
   LogOut,
@@ -163,6 +164,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/submissions", sublabel: "Submissions", exact: false, icon: FileStack,
       label: tr.submissions,
+    },
+    {
+      href: "/school-admin/rowad", sublabel: "Rowad Model", exact: false, icon: LayoutGrid,
+      label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
     },
     {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,
