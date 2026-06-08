@@ -13,9 +13,9 @@ type Lang = "ar" | "sq";
 type InviteState =
   | { status: "loading" }
   | { status: "invalid"; reason: string; language: Lang }
-  | { status: "valid"; school_name: string; type: string; language: Lang }
-  | { status: "email_sent"; school_name: string; email: string; type: string; language: Lang }
-  | { status: "success"; school_name: string; language: Lang };
+  | { status: "valid"; school_name: string; school_name_alt: string | null; type: string; language: Lang }
+  | { status: "email_sent"; school_name: string; school_name_alt: string | null; email: string; type: string; language: Lang }
+  | { status: "success"; school_name: string; school_name_alt: string | null; language: Lang };
 
 // ─── BILINGUAL STRINGS ────────────────────────────────────────────────────────
 
@@ -314,6 +314,7 @@ export default function InvitePage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [step, setStep] = useState<1 | 2>(1);
+  const [langOverride, setLangOverride] = useState<Lang | null>(null);
 
   useEffect(() => {
     fetch(`/api/invite/${token}`)
@@ -321,17 +322,25 @@ export default function InvitePage() {
       .then((d) => {
         const lang: Lang = d.language === "sq" ? "sq" : "ar";
         if (d.valid)
-          setInviteState({ status: "valid", school_name: d.school_name, type: d.type, language: lang });
+          setInviteState({ status: "valid", school_name: d.school_name, school_name_alt: d.school_name_alt ?? null, type: d.type, language: lang });
         else
           setInviteState({ status: "invalid", reason: d.reason, language: lang });
       })
       .catch(() => setInviteState({ status: "invalid", reason: "not_found", language: "ar" }));
   }, [token]);
 
-  const lang: Lang = inviteState.status === "loading" ? "ar"
+  const schoolLang: Lang = inviteState.status === "loading" ? "ar"
     : (inviteState as { language?: Lang }).language ?? "ar";
+  const lang: Lang = langOverride ?? schoolLang;
   const T = S[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
+  const altLang: Lang = lang === "ar" ? "sq" : "ar";
+  const toggleLang = () => setLangOverride(altLang);
+
+  // Display school name in the active language
+  const rawName = (inviteState as { school_name?: string }).school_name ?? "";
+  const rawNameAlt = (inviteState as { school_name_alt?: string | null }).school_name_alt ?? null;
+  const displaySchoolName = lang !== "ar" && rawNameAlt?.trim() ? rawNameAlt : rawName;
   const isAdmin = inviteState.status === "valid" && inviteState.type === "ADMIN";
 
   const handleAvatar = (f: File) => {
@@ -391,6 +400,7 @@ export default function InvitePage() {
 
     if (d.success) {
       const school = inviteState.status === "valid" ? inviteState.school_name : "";
+      const schoolAlt = inviteState.status === "valid" ? inviteState.school_name_alt : null;
       const invLang = inviteState.status === "valid" ? inviteState.language : "ar";
       const invType = inviteState.status === "valid" ? inviteState.type : "";
 
@@ -398,12 +408,13 @@ export default function InvitePage() {
         setInviteState({
           status: "email_sent",
           school_name: school,
+          school_name_alt: schoolAlt,
           email: form.email.trim().toLowerCase(),
           type: invType,
           language: invLang,
         });
       } else {
-        setInviteState({ status: "success", school_name: school, language: invLang });
+        setInviteState({ status: "success", school_name: school, school_name_alt: schoolAlt, language: invLang });
       }
     } else {
       setSubmitError(d.error ?? (lang === "ar" ? "حدث خطأ. حاول مجدداً." : "Ndodhi një gabim. Provoni përsëri."));
@@ -435,6 +446,9 @@ export default function InvitePage() {
         <nav className="if-nav">
           <Image src="/ahlia.png" alt="Logo" width={120} height={40}
             style={{ objectFit: "contain", height: 32, width: "auto", opacity: 0.85 }} priority />
+          <button className="if-lang-toggle" onClick={toggleLang}>
+            {altLang === "ar" ? "عربي" : "Shqip"}
+          </button>
         </nav>
         <div className="if-center">
           <div className="if-error-card">
@@ -457,6 +471,9 @@ export default function InvitePage() {
         <nav className="if-nav">
           <Image src="/ahlia.png" alt="Logo" width={120} height={40}
             style={{ objectFit: "contain", height: 32, width: "auto", opacity: 0.85 }} priority />
+          <button className="if-lang-toggle" onClick={toggleLang}>
+            {altLang === "ar" ? "عربي" : "Shqip"}
+          </button>
         </nav>
         <div className="if-center">
           <div className="if-email-sent-card">
@@ -488,6 +505,9 @@ export default function InvitePage() {
         <nav className="if-nav">
           <Image src="/ahlia.png" alt="Logo" width={120} height={40}
             style={{ objectFit: "contain", height: 32, width: "auto", opacity: 0.85 }} priority />
+          <button className="if-lang-toggle" onClick={toggleLang}>
+            {altLang === "ar" ? "عربي" : "Shqip"}
+          </button>
         </nav>
         <div className="if-center">
           <div className="if-success-card">
@@ -503,7 +523,7 @@ export default function InvitePage() {
             </div>
             <h1 className="if-success-title">{T.successTitle}</h1>
             <p className="if-success-sub">
-              {T.successSub(inviteState.school_name)}
+              {T.successSub(displaySchoolName)}
             </p>
             <Link href="/login" className="if-login-btn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -521,16 +541,21 @@ export default function InvitePage() {
 
   // ── VALID — SIGNUP FORM ──
   return (
-    <div className="if-shell">
+    <div className="if-shell" dir={dir}>
       <div className="if-bg-mandala"><MiniMandala /></div>
 
       <nav className="if-nav">
         <Image src="/ahlia.png" alt="Logo" width={120} height={40}
           style={{ objectFit: "contain", height: 32, width: "auto", opacity: 0.85 }} priority />
-        <Link href="/login" className="if-nav-login">{T.haveAccount}</Link>
+        <div className="if-nav-actions">
+          <button className="if-lang-toggle" onClick={toggleLang}>
+            {altLang === "ar" ? "عربي" : "Shqip"}
+          </button>
+          <Link href="/login" className="if-nav-login">{T.haveAccount}</Link>
+        </div>
       </nav>
 
-      <div className="if-center" dir={dir}>
+      <div className="if-center">
         <div className="if-card">
           <div className="if-card-bar" />
 
@@ -543,7 +568,7 @@ export default function InvitePage() {
               </svg>
             </div>
             <div>
-              <p className="if-school-name">{inviteState.school_name}</p>
+              <p className="if-school-name">{displaySchoolName}</p>
               <h1 className="if-card-title">
                 {isAdmin ? T.createAdmin : T.createTeacher}
               </h1>
@@ -599,9 +624,9 @@ export default function InvitePage() {
               />
               <button className="if-next-btn" onClick={goToStep2}>
                 {T.next}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                <svg className="if-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M19 12H5M12 5l-7 7 7 7" />
+                  <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
@@ -611,9 +636,9 @@ export default function InvitePage() {
           {step === 2 && (
             <div className="if-step-body">
               <button className="if-back-step" onClick={() => { setStep(1); setErrors({}); }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                <svg className="if-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
+                  <path d="M19 12H5M12 5l-7 7 7 7" />
                 </svg>
                 {T.back}
               </button>
@@ -674,7 +699,7 @@ const css = `
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes float-m{0%,100%{transform:translate(-50%,-50%) rotate(0deg)}50%{transform:translate(-50%,-50%) rotate(0.5deg)}}
 @keyframes success-pop{from{opacity:0;transform:scale(0.88) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
-@keyframes step-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes step-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 :root{
   --gold:#C8A96A;--gold2:#E5B93C;--gold-l:rgba(200,169,106,0.08);--gold-b:rgba(200,169,106,0.18);
@@ -689,8 +714,11 @@ const css = `
 .if-bg-mandala{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:float-m 14s ease-in-out infinite;z-index:0}
 
 .if-nav{position:sticky;top:0;z-index:20;height:60px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:rgba(245,243,238,0.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(200,169,106,0.12)}
+.if-nav-actions{display:flex;align-items:center;gap:10px}
 .if-nav-login{font-size:13px;font-weight:700;color:var(--text3);text-decoration:none;border:1px solid var(--border);padding:7px 16px;border-radius:9px;transition:all 0.15s}
 .if-nav-login:hover{border-color:var(--gold-b);color:var(--text2)}
+.if-lang-toggle{background:var(--gold-l);border:1px solid var(--gold-b);color:var(--gold);padding:7px 16px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);transition:all 0.15s;letter-spacing:0.02em}
+.if-lang-toggle:hover{background:rgba(200,169,106,0.15);border-color:var(--gold)}
 
 .if-center{flex:1;display:flex;align-items:center;justify-content:center;padding:28px 16px;position:relative;z-index:1}
 
@@ -795,6 +823,10 @@ const css = `
 .if-note{font-size:12px;color:var(--text3);text-align:center;line-height:1.6}
 .if-note-link{color:var(--gold);font-weight:700;text-decoration:none}
 .if-note-link:hover{text-decoration:underline}
+
+/* Arrows: drawn as LTR (→ for next, ← for back). In RTL, mirror them. */
+.if-arrow{transition:transform 0.2s ease}
+[dir="rtl"] .if-arrow{transform:scaleX(-1)}
 
 @media(max-width:520px){
   .if-card{border-radius:0;border-left:none;border-right:none;box-shadow:none}

@@ -27,7 +27,7 @@ const adminClient = createClient(
 
 type InviteState =
   | { valid: false; reason: "not_found" | "disabled" | "expired" | "used" }
-  | { valid: true; invite: { id: string; school_id: string; type: string; school_name: string; school_language: string } };
+  | { valid: true; invite: { id: string; school_id: string; type: string; school_name: string; school_name_alt: string | null; school_language: string } };
 
 async function resolveInvite(token: string): Promise<InviteState> {
   const invite = await prisma.invite.findUnique({
@@ -40,7 +40,7 @@ async function resolveInvite(token: string): Promise<InviteState> {
       max_uses: true,
       expires_at: true,
       school_id: true,
-      school: { select: { name: true, language: true } },
+      school: { select: { name: true, name_alt: true, language: true } },
     },
   });
 
@@ -56,6 +56,7 @@ async function resolveInvite(token: string): Promise<InviteState> {
       school_id: invite.school_id,
       type: invite.type,
       school_name: invite.school.name,
+      school_name_alt: invite.school.name_alt ?? null,
       school_language: invite.school.language,
     },
   };
@@ -78,6 +79,7 @@ export async function GET(
     valid: true,
     type: state.invite.type,
     school_name: state.invite.school_name,
+    school_name_alt: state.invite.school_name_alt,
     language: state.invite.school_language,
   });
 }
