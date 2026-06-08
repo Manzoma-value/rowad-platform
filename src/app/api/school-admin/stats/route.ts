@@ -10,11 +10,17 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const membership = await prisma.schoolAdminMember.findFirst({
-    where: { profile_id: user.id },
-    select: { school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } } },
-  });
-  const school = membership?.school ?? null;
+  let school;
+  try {
+    const membership = await prisma.schoolAdminMember.findFirst({
+      where: { profile_id: user.id },
+      select: { school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } } },
+    });
+    school = membership?.school ?? null;
+  } catch (err) {
+    console.error("[school-admin/stats] DB error:", err);
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
+  }
   if (!school)
     return NextResponse.json({ error: "School not found" }, { status: 404 });
 

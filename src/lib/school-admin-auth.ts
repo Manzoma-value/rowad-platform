@@ -26,16 +26,23 @@ export async function requireSchoolAdmin() {
     return null;
   }
 
-  const membership = await prisma.schoolAdminMember.findFirst({
-    where: { profile_id: profile.id },
-    include: { school: true },
-  });
-  if (!membership) {
-    console.error("[requireSchoolAdmin] FAIL step 4 — no school_admins membership for profile:", profile.id, "(user:", user.id, ")");
+  let school;
+  try {
+    const membership = await prisma.schoolAdminMember.findFirst({
+      where: { profile_id: profile.id },
+      include: { school: true },
+    });
+    if (!membership) {
+      console.error("[requireSchoolAdmin] FAIL step 4 — no school_admins membership for profile:", profile.id, "(user:", user.id, ")");
+      return null;
+    }
+    school = membership.school;
+  } catch (err) {
+    console.error("[requireSchoolAdmin] FAIL step 4 — DB error querying school_admins:", err);
     return null;
   }
 
-  return { profile, school: membership.school };
+  return { profile, school };
 }
 
 /**

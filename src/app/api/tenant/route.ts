@@ -20,15 +20,21 @@ export async function GET() {
 
   // Resolve the user's school via whichever role record they have.
   // A user is exactly one of: student / teacher / school-admin.
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: {
-      role: true,
-      student: { select: { school_id: true } },
-      teacher: { select: { school_id: true } },
-      school_admin_memberships: { select: { school_id: true }, take: 1 }, // school where this profile is an admin
-    },
-  });
+  let profile;
+  try {
+    profile = await prisma.profile.findUnique({
+      where: { id: user.id },
+      select: {
+        role: true,
+        student: { select: { school_id: true } },
+        teacher: { select: { school_id: true } },
+        school_admin_memberships: { take: 1, select: { school_id: true } },
+      },
+    });
+  } catch (err) {
+    console.error("[api/tenant] DB error:", err);
+    return NextResponse.json({ tenant: null });
+  }
 
   if (!profile) {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
