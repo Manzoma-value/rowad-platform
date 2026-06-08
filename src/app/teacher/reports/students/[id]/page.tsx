@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import TraitEvalForm from "@/components/TraitEvalForm";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
@@ -204,8 +205,10 @@ export default function StudentReportPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    fetch(`/api/teacher/reports/students/${studentId}`)
-      .then(r=>r.json()).then(setData).finally(()=>setLoading(false));
+    cachedFetch<StudentDetail>(`/api/teacher/reports/students/${studentId}`, 30_000)
+      .then(setData)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [studentId]);
 
   useEffect(()=>{ load(); },[load]);
@@ -573,7 +576,14 @@ export default function StudentReportPage() {
               moduleId={evalModuleId}
               lang={lang as Lang}
               onClose={()=>setEvalModuleId(null)}
-              onSaved={()=>{ setEvalModuleId(null); load(); }}
+              onSaved={()=>{
+                // The teacher just saved/updated an evaluation — the cached
+                // student detail + class-wide reports list is now stale.
+                invalidateCache(`/api/teacher/reports/students/${studentId}`);
+                invalidateCache("/api/teacher/reports");
+                setEvalModuleId(null);
+                load();
+              }}
             />
           </div>
         </div>

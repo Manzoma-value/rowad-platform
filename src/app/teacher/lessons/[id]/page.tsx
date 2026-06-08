@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
+import { invalidateCache } from "@/lib/api-cache";
 import { Icons } from "../components/icons";
 import { css } from "../components/css";
 import { TextModal, ImageModal, VideoModal } from "../components/content-modals";
@@ -172,6 +173,8 @@ export default function LessonEditorPage({
         if (d.lesson && lesson) {
           setLesson({ ...lesson, ...d.lesson, class: classes.find((c) => c.id === d.lesson.class_id) ?? lesson.class });
         }
+        // List view shows status + class + linked quiz — keep it fresh.
+        invalidateCache("/api/teacher/lessons");
       }
     } finally {
       setSavingMeta(false);
@@ -181,7 +184,10 @@ export default function LessonEditorPage({
   const deleteLesson = async () => {
     if (!confirm(t.deleteConfirm)) return;
     const r = await fetch(`/api/teacher/lessons/${id}`, { method: "DELETE" });
-    if (r.ok) router.push("/teacher/lessons");
+    if (r.ok) {
+      invalidateCache("/api/teacher/lessons");
+      router.push("/teacher/lessons");
+    }
   };
 
   const deleteContent = async (cid: string) => {

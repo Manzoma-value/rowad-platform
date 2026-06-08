@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch } from "@/lib/api-cache";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -128,13 +129,13 @@ export default function TeacherReportsPage() {
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
 
   useEffect(() => {
-    fetch("/api/teacher/reports")
-      .then((r) => r.json())
+    cachedFetch<{ classes: ClassData[] }>("/api/teacher/reports", 60_000)
       .then((d) => {
-        const cls: ClassData[] = d.classes ?? [];
+        const cls: ClassData[] = d?.classes ?? [];
         setClasses(cls);
         if (cls.length > 0) setSelectedClass(cls[0]);
       })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 

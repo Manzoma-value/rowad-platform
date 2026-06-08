@@ -189,7 +189,7 @@ export default function TeacherPage() {
                   </div>
                   <div className="td-students-list">
                     {selectedClass.students.length === 0 ? (
-                      <p className="td-no-students">{lang === "ar" ? "لا يوجد مسفيدين مسجلون" : "Nuk ka nxënës"}</p>
+                      <p className="td-no-students">{lang === "ar" ? "لا يوجد طلاب مسجلون" : "Nuk ka nxënës"}</p>
                     ) : (
                       selectedClass.students.map((s, i) => (
                         <div key={s.id} className="td-student-row" style={{ animationDelay: `${i * 33}ms` }}>
@@ -220,6 +220,13 @@ export default function TeacherPage() {
                   placeholder={lang === "ar" ? "اكتب إعلاناً، تنبيهاً، أو رسالة للطلاب..." : "Shkruaj një njoftim..."}
                   value={newAnnouncement}
                   onChange={(e) => setNewAnnouncement(e.target.value)}
+                  onKeyDown={(e) => {
+                    // Ctrl/Cmd+Enter = quick post
+                    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                      e.preventDefault();
+                      handlePost();
+                    }
+                  }}
                 />
                 <div className="td-compose-foot">
                   <span className="td-char-count">{newAnnouncement.length} {lang === "ar" ? "حرف" : "shkronja"}</span>

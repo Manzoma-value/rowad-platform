@@ -1,27 +1,72 @@
 // api/teacher/quizzes/[id]/route.ts
+//
+// GET — full quiz detail with questions, options, and per-student attempts.
+//       Tenant-guarded: only the owning teacher can read.
+// DELETE — only the owning teacher can delete.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
 
-export async function DELETE(
+export const dynamic = "force-dynamic";
+
+export async function GET(
   _req: Request,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;
 
-  // Verify quiz belongs to this teacher before deleting
-  const teacher = await prisma.teacher.findUnique({
-    where: { profile_id: user.id },
-    select: { id: true },
+  const quiz = await prisma.quiz.findFirst({
+    where: { id, teacher_id: auth.teacher.id }, // tenant guard
+    select: {
+      id: true,
+      name: true,
+      created_at: true,
+      class: { select: { id: true, name: true } },
+      questions: {
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          type: true,
+          text: true,
+          correct_answer: true,
+          order: true,
+          options: {
+            orderBy: { order: "asc" },
+            select: { id: true, text: true, order: true },
+          },
+        },
+      },
+      attempts: {
+        orderBy: { submitted_at: "desc" },
+        select: {
+          id: true,
+          score: true,
+          total: true,
+          submitted_at: true,
+          student: { select: { profile: { select: { full_name: true } } } },
+        },
+      },
+    },
   });
-  if (!teacher) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  if (!quiz) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(quiz);
+}
+
+export async function DELETE(
+  _req: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await context.params;
 
   const quiz = await prisma.quiz.findFirst({
-    where: { id, teacher_id: teacher.id },
+    where: { id, teacher_id: auth.teacher.id },
     select: { id: true },
   });
   if (!quiz) return NextResponse.json({ error: "Not found" }, { status: 404 });

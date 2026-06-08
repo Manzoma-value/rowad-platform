@@ -22,7 +22,15 @@ type Attempt = {
   total: number;
   student: { profile: { full_name: string } };
 };
+// LIST shape — slim, just counts + class ref. Detail is fetched lazily.
 type Quiz = {
+  id: string;
+  name: string;
+  class: { id: string; name: string };
+  _count: { questions: number; attempts: number };
+};
+// DETAIL shape — fetched only when a quiz is expanded.
+type QuizDetail = {
   id: string;
   name: string;
   class: { id: string; name: string };
@@ -42,6 +50,9 @@ export default function TeacherQuizzesPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [expandedQuiz, setExpandedQuiz] = useState<string | null>(null);
+  // Lazy-loaded detail cache: only the expanded quiz's full data lives here.
+  const [detail, setDetail] = useState<QuizDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [quizName, setQuizName] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
@@ -50,11 +61,32 @@ export default function TeacherQuizzesPage() {
   const [formError, setFormError] = useState("");
 
   async function load() {
-    const [qRes, tRes] = await Promise.all([fetch("/api/teacher/quizzes"), fetch("/api/teacher")]);
-    setQuizzes(await qRes.json());
-    const tData = await tRes.json();
-    setClasses(tData.classes ?? []);
+    // Cached: refresh-warm. Teacher data lives 5 min; quiz list 30s
+    // because counts change as students submit.
+    const [qData, tData] = await Promise.all([
+      cachedFetch<Quiz[]>("/api/teacher/quizzes", 30_000),
+      cachedFetch<{ classes: ClassItem[] }>("/api/teacher", 300_000),
+    ]);
+    setQuizzes(qData ?? []);
+    setClasses(tData?.classes ?? []);
     setLoading(false);
+  }
+
+  async function toggleExpand(id: string) {
+    if (expandedQuiz === id) {
+      setExpandedQuiz(null);
+      setDetail(null);
+      return;
+    }
+    setExpandedQuiz(id);
+    setDetail(null);
+    setDetailLoading(true);
+    try {
+      const d = await cachedFetch<QuizDetail>(`/api/teacher/quizzes/${id}`, 30_000);
+      setDetail(d);
+    } finally {
+      setDetailLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, []); // eslint-disable-line
@@ -94,7 +126,9 @@ export default function TeacherQuizzesPage() {
     });
     setSubmitting(false);
     if (!res.ok) { const e = await res.json(); setFormError(e.error ?? tr.saveQuiz); return; }
-    setQuizName(""); setSelectedClass(""); setQuestions([]); setCreating(false); load();
+    setQuizName(""); setSelectedClass(""); setQuestions([]); setCreating(false);
+    invalidateCache("/api/teacher/quizzes");
+    load();
   }
 
   async function handleDelete(id: string) {
@@ -102,12 +136,15 @@ export default function TeacherQuizzesPage() {
     setDeletingId(id);
     await fetch(`/api/teacher/quizzes/${id}`, { method: "DELETE" });
     setDeletingId(null);
+    invalidateCache("/api/teacher/quizzes");
+    invalidateCache(`/api/teacher/quizzes/${id}`);
+    if (expandedQuiz === id) { setExpandedQuiz(null); setDetail(null); }
     load();
   }
 
   if (loading) return <MandalaLoader label={tr.loading} />;
 
-  const totalAttempts = quizzes.reduce((a, q) => a + q.attempts.length, 0);
+  const totalAttempts = quizzes.reduce((a, q) => a + q._count.attempts, 0);
 
   return (
     <div className="tq-shell" dir={dir}>
@@ -236,13 +273,13 @@ export default function TeacherQuizzesPage() {
                   <div className="tq-quiz-meta">
                     <span className="tq-class-tag">{quiz.class.name}</span>
                     <span className="tq-dot-sep" />
-                    <span>{quiz.questions.length} {tr.question}</span>
+                    <span>{quiz._count.questions} {tr.question}</span>
                     <span className="tq-dot-sep" />
-                    <span>{quiz.attempts.length} {tr.attempt}</span>
+                    <span>{quiz._count.attempts} {tr.attempt}</span>
                   </div>
                 </div>
                 <div className="tq-quiz-actions">
-                  <button className="tq-ghost-btn" onClick={() => setExpandedQuiz(expandedQuiz === quiz.id ? null : quiz.id)}>
+                  <button className="tq-ghost-btn" onClick={() => toggleExpand(quiz.id)}>
                     {expandedQuiz === quiz.id ? tr.hideResults : tr.showResults}
                   </button>
                   <button className="tq-del-quiz-btn" onClick={() => handleDelete(quiz.id)} disabled={deletingId === quiz.id}>
@@ -254,11 +291,13 @@ export default function TeacherQuizzesPage() {
               {expandedQuiz === quiz.id && (
                 <div className="tq-results">
                   <p className="tq-results-label">{tr.studentResults}</p>
-                  {quiz.attempts.length === 0 ? (
+                  {detailLoading ? (
+                    <div className="tq-results-empty"><span className="tq-spin" /></div>
+                  ) : !detail || detail.attempts.length === 0 ? (
                     <div className="tq-results-empty">{tr.noAttemptsYet}</div>
                   ) : (
                     <div className="tq-results-list">
-                      {quiz.attempts.map((a) => {
+                      {detail.attempts.map((a) => {
                         const pct = a.total > 0 ? Math.round((a.score / a.total) * 100) : 0;
                         const color = pct >= 70 ? "#2D8A4A" : pct >= 50 ? "#A8863E" : "#B85C38";
                         return (
@@ -373,9 +412,10 @@ const styles = `
   .tq-del-quiz-btn:disabled{opacity:0.4;cursor:not-allowed}
 
   /* Results panel */
-  .tq-results{border-top:1px solid rgba(200,169,106,0.09);padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:rgba(200,169,106,0.03)}
+  .tq-results{border-top:1px solid rgba(200,169,106,0.09);padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:rgba(200,169,106,0.03);animation:fadeUp 0.25s ease}
   .tq-results-label{font-size:11px;font-weight:800;color:#9A8A70;text-transform:uppercase;letter-spacing:1px}
-  .tq-results-empty{font-size:13px;color:#9A8A70;text-align:center;padding:12px 0}
+  .tq-results-empty{font-size:13px;color:#9A8A70;text-align:center;padding:12px 0;display:flex;justify-content:center;align-items:center;gap:8px}
+  .tq-spin{width:16px;height:16px;border:2px solid rgba(200,169,106,0.25);border-top-color:#C8A96A;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block}
   .tq-results-list{display:flex;flex-direction:column;gap:9px}
   .tq-result-row{display:flex;align-items:center;gap:10px}
   .tq-result-av{width:28px;height:28px;border-radius:50%;background:#0B0B0C;border:1px solid rgba(200,169,106,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#C8A96A;flex-shrink:0}

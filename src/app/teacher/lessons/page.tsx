@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { Icons } from "./components/icons";
 import { css } from "./components/css";
 import type { LessonListItem, ClassRef } from "./components/types";
@@ -74,12 +75,13 @@ export default function TeacherLessonsPage() {
 
   const fetchLessons = useCallback(async () => {
     try {
-      const r = await fetch("/api/teacher/lessons");
-      if (!r.ok) { setLoading(false); return; }
-      const d = await r.json();
-      setLessons(d.lessons ?? []);
-      setClasses(d.classes ?? []);
-      if (!newClassId && d.classes?.[0]?.id) setNewClassId(d.classes[0].id);
+      const d = await cachedFetch<{ lessons: LessonListItem[]; classes: ClassRef[] }>(
+        "/api/teacher/lessons",
+        30_000,
+      );
+      setLessons(d?.lessons ?? []);
+      setClasses(d?.classes ?? []);
+      if (!newClassId && d?.classes?.[0]?.id) setNewClassId(d.classes[0].id);
     } finally {
       setLoading(false);
     }
@@ -104,6 +106,7 @@ export default function TeacherLessonsPage() {
       });
       const d = await r.json();
       if (!r.ok) { setCreateError(d.error ?? "Error"); setCreating(false); return; }
+      invalidateCache("/api/teacher/lessons");
       router.push(`/teacher/lessons/${d.lesson.id}`);
     } catch {
       setCreateError("Network error");

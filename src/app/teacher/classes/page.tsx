@@ -207,6 +207,12 @@ export default function TeacherClassesPage() {
                     placeholder={T.announcementPH}
                     value={newAnnouncement}
                     onChange={(e) => setNewAnnouncement(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                        e.preventDefault();
+                        handlePost();
+                      }
+                    }}
                     rows={3}
                     dir={dir}
                   />
