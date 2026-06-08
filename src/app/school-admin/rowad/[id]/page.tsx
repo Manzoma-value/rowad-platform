@@ -15,6 +15,7 @@ type Placement = { concept_id: string; placed_maqsad: Maqsad; placed_level: numb
 type Submission = {
   id: string;
   stage: "STAGE1" | "STAGE2";
+  attempt_number: number;
   status: "SUBMITTED" | "APPROVED" | "REJECTED";
   score: number | null;
   total: number;
@@ -38,30 +39,38 @@ const L = {
     stage1: "المرحلة الأولى", stage2: "المرحلة الثانية",
     score: "الدرجة", correct: "صحيحة", wrong: "خاطئة",
     teacherAnswer: "إجابة المعلم", correctAnswer: "الإجابة الصحيحة",
-    approve: "الموافقة للمرحلة الثانية", reject: "رفض / إعادة المحاولة",
+    approveStage1: "الموافقة وفتح المرحلة الثانية",
+    approveStage2: "الموافقة وإحالته لتعيين الفصل",
+    reject: "رفض / إعادة المحاولة",
     notes: "ملاحظات (اختياري)", notesPh: "ملاحظة للمعلم أو لسجل المراجعة...",
     approved: "تمت الموافقة", rejected: "مرفوضة", submitted: "بانتظار المراجعة",
     reviewedBy: "روجعت بواسطة", legend: "المفتاح",
     maqsadHdr: "المقصد", levelHdr: "المستوى", transform: "التحول الاستراتيجي في المنظومة",
-    empty: "—", email: "البريد", classNote: "لفتح المرحلة الثانية يتم تعيين المعلم إلى فصل من صفحة الفصول.",
-    stage2Note: "هذه المرحلة الثانية. لإكمال التأهيل، عيّن المعلّم إلى فصل من صفحة الفصول.",
+    empty: "—", email: "البريد",
+    stage1Note: "بعد الموافقة على هذه المحاولة سيتمكّن المعلم من الانتقال إلى المرحلة الثانية.",
+    stage2Note: "بعد الموافقة على المرحلة الثانية، عيّن المعلم إلى فصل من صفحة الفصول.",
     confirmReject: "رفض هذه المحاولة وإعادتها للمعلم؟",
     saving: "جارٍ الحفظ...", goClasses: "صفحة الفصول",
+    attempt: (n: number) => `المحاولة #${n}`,
   },
   en: {
     back: "Back",
     stage1: "Stage 1", stage2: "Stage 2",
     score: "Score", correct: "Correct", wrong: "Wrong",
     teacherAnswer: "Teacher's answer", correctAnswer: "Correct answer",
-    approve: "Approve for Stage 2", reject: "Reject / retry",
+    approveStage1: "Approve & unlock Stage 2",
+    approveStage2: "Approve & send for class assignment",
+    reject: "Reject / retry",
     notes: "Notes (optional)", notesPh: "A note for the teacher or the review log...",
     approved: "Approved", rejected: "Rejected", submitted: "Awaiting review",
     reviewedBy: "Reviewed by", legend: "Legend",
     maqsadHdr: "Maqsad", levelHdr: "Level", transform: "Strategic transformation in the system",
-    empty: "—", email: "Email", classNote: "Stage 2 unlocks; assign the teacher to a class from the Classes page.",
-    stage2Note: "This is Stage 2. To finish qualification, assign the teacher to a class from the Classes page.",
+    empty: "—", email: "Email",
+    stage1Note: "Approving this attempt unlocks Stage 2 for the teacher.",
+    stage2Note: "After approving Stage 2, assign the teacher to a class from the Classes page.",
     confirmReject: "Reject this attempt and send it back to the teacher?",
     saving: "Saving...", goClasses: "Classes page",
+    attempt: (n: number) => `Attempt #${n}`,
   },
 } as const;
 
@@ -137,7 +146,9 @@ export default function SchoolAdminRowadDetailPage() {
   const levels = [...sub.model.levels].sort((a, b) => a.order - b.order);
   const correctCount = sub.placements.filter((p) => p.is_correct).length;
   const wrongCount = sub.placements.length - correctCount;
-  const canReview = sub.stage === "STAGE1" && sub.status === "SUBMITTED";
+  const canReview = sub.status === "SUBMITTED";
+  const approveLabel = sub.stage === "STAGE1" ? tr.approveStage1 : tr.approveStage2;
+  const noteHint = sub.stage === "STAGE1" ? tr.stage1Note : tr.stage2Note;
 
   function renderRow(lvl: Level) {
     return (
@@ -184,7 +195,10 @@ export default function SchoolAdminRowadDetailPage() {
             {sub.teacher.profile.email && (
               <p className="sd-email">{tr.email}: {sub.teacher.profile.email}</p>
             )}
-            <span className="sd-stage-tag">{sub.stage === "STAGE1" ? tr.stage1 : tr.stage2}</span>
+            <div className="sd-tag-row">
+              <span className="sd-stage-tag">{sub.stage === "STAGE1" ? tr.stage1 : tr.stage2}</span>
+              <span className="sd-attempt-tag">{tr.attempt(sub.attempt_number)}</span>
+            </div>
           </div>
         </div>
         <div className="sd-scorebox">
@@ -232,13 +246,13 @@ export default function SchoolAdminRowadDetailPage() {
           />
           <div className="sd-actions">
             <button className="sd-btn sd-approve" disabled={busy} onClick={() => review("approve")}>
-              {busy ? tr.saving : tr.approve}
+              {busy ? tr.saving : approveLabel}
             </button>
             <button className="sd-btn sd-reject" disabled={busy} onClick={() => review("reject")}>
               {tr.reject}
             </button>
           </div>
-          <p className="sd-hint">{tr.classNote}</p>
+          <p className="sd-hint">{noteHint}</p>
         </div>
       ) : (
         <div className="sd-status-card">
@@ -247,7 +261,7 @@ export default function SchoolAdminRowadDetailPage() {
           </span>
           {sub.reviewer && <span className="sd-reviewed-by">{tr.reviewedBy}: {sub.reviewer.full_name}</span>}
           {sub.reviewer_notes && <p className="sd-saved-notes">{sub.reviewer_notes}</p>}
-          {sub.stage === "STAGE2" && (
+          {sub.status === "APPROVED" && sub.stage === "STAGE2" && (
             <p className="sd-hint">
               {tr.stage2Note}{" "}
               <Link href="/school-admin/classes" className="sd-classes-link">{tr.goClasses}</Link>
@@ -265,7 +279,9 @@ export default function SchoolAdminRowadDetailPage() {
         .sd-av{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,#D8C28A,#B89B5E);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#11151A}
         .sd-name{font-size:19px;font-weight:900;color:#0B0B0C;margin:0}
         .sd-email{font-size:12px;color:#8A7B60;margin:2px 0 6px}
+        .sd-tag-row{display:flex;gap:6px;flex-wrap:wrap}
         .sd-stage-tag{display:inline-block;font-size:11px;font-weight:800;color:#9a6d12;background:rgba(229,185,60,.14);padding:3px 11px;border-radius:99px}
+        .sd-attempt-tag{display:inline-block;font-size:11px;font-weight:800;color:#0B0B0C;background:rgba(11,11,12,0.06);border:1px solid rgba(11,11,12,0.10);padding:3px 11px;border-radius:99px;font-variant-numeric:tabular-nums}
         .sd-scorebox{text-align:center;background:#FBF8F1;border:1px solid #EFE7D8;border-radius:14px;padding:12px 22px}
         .sd-score-val{font-size:30px;font-weight:900;color:#0B0B0C;font-variant-numeric:tabular-nums}
         .sd-score-total{font-size:16px;color:#B89B5E}

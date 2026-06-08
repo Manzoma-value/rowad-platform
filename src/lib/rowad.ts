@@ -24,6 +24,15 @@ export function stageForStatus(
   return null;
 }
 
+/** Which stage the teacher last submitted (for surfacing rejection notes). */
+export function reviewStageForStatus(
+  status: TeacherOnboardingStatus,
+): RowadStage | null {
+  if (status === "STAGE1_REVIEW") return "STAGE1";
+  if (status === "STAGE2_REVIEW") return "STAGE2";
+  return null;
+}
+
 /** Fisher–Yates shuffle (returns a new array). */
 export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];

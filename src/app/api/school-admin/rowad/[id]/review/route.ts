@@ -1,5 +1,14 @@
-// api/school-admin/rowad/[id]/review/route.ts — approve/reject a Stage 1 submission.
-// Approve → unlocks Stage 2. Reject → teacher resubmits Stage 1.
+// api/school-admin/rowad/[id]/review/route.ts — approve / reject a submission.
+//
+// Stage 1 review:
+//   approve → teacher → STAGE2_PENDING (unlocks Stage 2)
+//   reject  → teacher → STAGE1_PENDING (retry; previous attempt kept as history)
+//
+// Stage 2 review:
+//   approve → teacher → AWAITING_CLASS (admin can now assign a class)
+//   reject  → teacher → STAGE2_PENDING (retry)
+//
+// Rejection notes are surfaced back to the teacher on their next attempt.
 import { NextResponse } from "next/server";
 import { requireSchoolAdmin } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -28,21 +37,23 @@ export async function POST(
   if (!submission)
     return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Only Stage 1 has an explicit approve/reject gate.
-  if (submission.stage !== "STAGE1") {
-    return NextResponse.json(
-      { error: "تتم مراجعة المرحلة الأولى فقط هنا. المرحلة الثانية تُفتح بتعيين المعلّم إلى فصل." },
-      { status: 409 },
-    );
-  }
   if (submission.status !== "SUBMITTED") {
     return NextResponse.json(
-      { error: "هذه المرحلة ليست بانتظار المراجعة." },
+      { error: "هذه المحاولة ليست بانتظار المراجعة." },
       { status: 409 },
     );
   }
 
   const approve = action === "approve";
+
+  // What state does the teacher land in after this decision?
+  let nextTeacherStatus: "STAGE1_PENDING" | "STAGE2_PENDING" | "AWAITING_CLASS";
+  if (submission.stage === "STAGE1") {
+    nextTeacherStatus = approve ? "STAGE2_PENDING" : "STAGE1_PENDING";
+  } else {
+    // STAGE2
+    nextTeacherStatus = approve ? "AWAITING_CLASS" : "STAGE2_PENDING";
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.rowadSubmission.update({
@@ -56,7 +67,7 @@ export async function POST(
     });
     await tx.teacher.update({
       where: { id: submission.teacher_id },
-      data: { onboarding_status: approve ? "STAGE2_PENDING" : "STAGE1_PENDING" },
+      data: { onboarding_status: nextTeacherStatus },
     });
   });
 

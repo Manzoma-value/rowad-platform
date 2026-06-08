@@ -1,5 +1,8 @@
 // api/teacher/model/draft/route.ts — autosave partial progress (status IN_PROGRESS)
 // so a teacher can leave and resume before final submission. No score is returned.
+//
+// Multi-attempt model: the draft belongs to the *current* attempt for this stage.
+// After a rejection a new attempt row is created on the first save.
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
@@ -65,25 +68,43 @@ export async function POST(req: Request) {
   }
 
   await prisma.$transaction(async (tx) => {
-    const submission = await tx.rowadSubmission.upsert({
-      where: { teacher_id_stage: { teacher_id: teacher.id, stage } },
-      update: { status: "IN_PROGRESS" },
-      create: {
-        model_id: model.id,
-        teacher_id: teacher.id,
-        school_id: teacher.school_id,
-        stage,
-        status: "IN_PROGRESS",
-      },
-      select: { id: true, status: true },
+    // Find the open draft (IN_PROGRESS) for this (teacher, stage).
+    const draft = await tx.rowadSubmission.findFirst({
+      where: { teacher_id: teacher.id, stage, status: "IN_PROGRESS" },
+      select: { id: true },
+      orderBy: { created_at: "desc" },
     });
-    if (submission.status === "IN_PROGRESS") {
-      await tx.rowadPlacement.deleteMany({ where: { submission_id: submission.id } });
-      if (rows.length > 0) {
-        await tx.rowadPlacement.createMany({
-          data: rows.map((r) => ({ ...r, submission_id: submission.id })),
-        });
-      }
+
+    let submissionId: string;
+    if (draft) {
+      submissionId = draft.id;
+    } else {
+      // No open draft → this is the first save of a new attempt
+      // (either the very first, or a retry after rejection).
+      const last = await tx.rowadSubmission.findFirst({
+        where: { teacher_id: teacher.id, stage },
+        orderBy: { attempt_number: "desc" },
+        select: { attempt_number: true },
+      });
+      const created = await tx.rowadSubmission.create({
+        data: {
+          model_id: model.id,
+          teacher_id: teacher.id,
+          school_id: teacher.school_id,
+          stage,
+          attempt_number: (last?.attempt_number ?? 0) + 1,
+          status: "IN_PROGRESS",
+        },
+        select: { id: true },
+      });
+      submissionId = created.id;
+    }
+
+    await tx.rowadPlacement.deleteMany({ where: { submission_id: submissionId } });
+    if (rows.length > 0) {
+      await tx.rowadPlacement.createMany({
+        data: rows.map((r) => ({ ...r, submission_id: submissionId })),
+      });
     }
   });
 

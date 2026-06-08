@@ -1,5 +1,10 @@
 // api/teacher/model/submit/route.ts — final submission of a stage.
 // Computes is_correct + score SERVER-SIDE. The response carries NO score.
+//
+// Multi-attempt model:
+//   - Reuses the open IN_PROGRESS draft for this (teacher, stage) if it exists.
+//   - Otherwise creates a fresh attempt row with attempt_number = max + 1
+//     (used after a rejection — previous attempt's row is preserved as history).
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
@@ -91,36 +96,61 @@ export async function POST(req: Request) {
   }
 
   const score = rows.filter((r) => r.is_correct).length;
-  const nextStatus = stage === "STAGE1" ? "STAGE1_REVIEW" : "AWAITING_CLASS";
+  // Stage 1 → STAGE1_REVIEW. Stage 2 → STAGE2_REVIEW (admin must approve before AWAITING_CLASS).
+  const nextStatus = stage === "STAGE1" ? "STAGE1_REVIEW" : "STAGE2_REVIEW";
 
   await prisma.$transaction(async (tx) => {
-    const submission = await tx.rowadSubmission.upsert({
-      where: { teacher_id_stage: { teacher_id: teacher.id, stage } },
-      update: {
-        status: "SUBMITTED",
-        score,
-        total: TOTAL_CELLS,
-        submitted_at: new Date(),
-        reviewer_id: null,
-        reviewer_notes: null,
-        reviewed_at: null,
-      },
-      create: {
-        model_id: model.id,
-        teacher_id: teacher.id,
-        school_id: teacher.school_id,
-        stage,
-        status: "SUBMITTED",
-        score,
-        total: TOTAL_CELLS,
-        submitted_at: new Date(),
-      },
+    // Find the open draft for this (teacher, stage), if any.
+    const draft = await tx.rowadSubmission.findFirst({
+      where: { teacher_id: teacher.id, stage, status: "IN_PROGRESS" },
       select: { id: true },
+      orderBy: { created_at: "desc" },
     });
 
-    await tx.rowadPlacement.deleteMany({ where: { submission_id: submission.id } });
+    let submissionId: string;
+    if (draft) {
+      // Reuse the in-progress row — this is still the same attempt.
+      const updated = await tx.rowadSubmission.update({
+        where: { id: draft.id },
+        data: {
+          status: "SUBMITTED",
+          score,
+          total: TOTAL_CELLS,
+          submitted_at: new Date(),
+          reviewer_id: null,
+          reviewer_notes: null,
+          reviewed_at: null,
+        },
+        select: { id: true },
+      });
+      submissionId = updated.id;
+    } else {
+      // No draft — direct submit. Pick the next attempt_number.
+      const last = await tx.rowadSubmission.findFirst({
+        where: { teacher_id: teacher.id, stage },
+        orderBy: { attempt_number: "desc" },
+        select: { attempt_number: true },
+      });
+      const created = await tx.rowadSubmission.create({
+        data: {
+          model_id: model.id,
+          teacher_id: teacher.id,
+          school_id: teacher.school_id,
+          stage,
+          attempt_number: (last?.attempt_number ?? 0) + 1,
+          status: "SUBMITTED",
+          score,
+          total: TOTAL_CELLS,
+          submitted_at: new Date(),
+        },
+        select: { id: true },
+      });
+      submissionId = created.id;
+    }
+
+    await tx.rowadPlacement.deleteMany({ where: { submission_id: submissionId } });
     await tx.rowadPlacement.createMany({
-      data: rows.map((r) => ({ ...r, submission_id: submission.id })),
+      data: rows.map((r) => ({ ...r, submission_id: submissionId })),
     });
 
     await tx.teacher.update({

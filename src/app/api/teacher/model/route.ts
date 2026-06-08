@@ -29,6 +29,32 @@ export async function GET() {
     },
   });
 
+  // ── Surface the most recent rejection notes for the stage the teacher
+  // is currently working on (after a REJECTED attempt) — so they can see
+  // why and what to fix. Never includes the score.
+  const lastRejection = stage
+    ? await prisma.rowadSubmission.findFirst({
+        where: {
+          teacher_id: teacher.id,
+          stage,
+          status: "REJECTED",
+        },
+        orderBy: { reviewed_at: "desc" },
+        select: {
+          attempt_number: true,
+          reviewed_at: true,
+          reviewer_notes: true,
+        },
+      })
+    : null;
+
+  // How many attempts has this teacher used at this stage so far?
+  const previousAttempts = stage
+    ? await prisma.rowadSubmission.count({
+        where: { teacher_id: teacher.id, stage },
+      })
+    : 0;
+
   // Base payload (used for waiting/active screens too)
   const base = {
     onboarding_status: status,
@@ -36,6 +62,8 @@ export async function GET() {
     title_ar: model?.title_ar ?? "النموذج التعليمي للرواد",
     title_sq: model?.title_sq ?? null,
     levels: model?.levels ?? [],
+    last_rejection: lastRejection,
+    previous_attempts: previousAttempts,
   };
 
   // Only hand out cards when a board is actually fillable
@@ -73,11 +101,17 @@ export async function GET() {
 
   const cards = shuffle(concepts);
 
-  // Resume any in-progress draft for this stage (teacher's own placements only)
-  const draft = await prisma.rowadSubmission.findUnique({
-    where: { teacher_id_stage: { teacher_id: teacher.id, stage } },
+  // Resume the in-progress draft for the current (teacher, stage) — the
+  // most recent IN_PROGRESS row. After a rejection the previous attempt
+  // is REJECTED, so this finds nothing and the teacher starts blank.
+  const draft = await prisma.rowadSubmission.findFirst({
+    where: {
+      teacher_id: teacher.id,
+      stage,
+      status: "IN_PROGRESS",
+    },
+    orderBy: { created_at: "desc" },
     select: {
-      status: true,
       placements: {
         select: {
           concept_id: true,
@@ -88,14 +122,13 @@ export async function GET() {
     },
   });
 
-  const placements =
-    draft && draft.status === "IN_PROGRESS"
-      ? draft.placements.map((p) => ({
-          concept_id: p.concept_id,
-          maqsad: p.placed_maqsad,
-          level: p.placed_level,
-        }))
-      : [];
+  const placements = draft
+    ? draft.placements.map((p) => ({
+        concept_id: p.concept_id,
+        maqsad: p.placed_maqsad,
+        level: p.placed_level,
+      }))
+    : [];
 
   return NextResponse.json({ ...base, cards, placements });
 }

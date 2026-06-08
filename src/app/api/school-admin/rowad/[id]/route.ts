@@ -20,6 +20,7 @@ export async function GET(
     select: {
       id: true,
       stage: true,
+      attempt_number: true,
       status: true,
       score: true,
       total: true,

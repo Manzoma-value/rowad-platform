@@ -9,11 +9,17 @@ import MandalaLoader from "@/components/MandalaLoader";
 import RowadBoard, { type Card, type Placement } from "./RowadBoard";
 
 type LevelRow = { order: number; name_ar: string; name_sq: string | null };
+type LastRejection = {
+  attempt_number: number;
+  reviewed_at: string | null;
+  reviewer_notes: string | null;
+} | null;
 type ModelData = {
   onboarding_status:
     | "STAGE1_PENDING"
     | "STAGE1_REVIEW"
     | "STAGE2_PENDING"
+    | "STAGE2_REVIEW"
     | "AWAITING_CLASS"
     | "ACTIVE";
   stage: "STAGE1" | "STAGE2" | null;
@@ -22,32 +28,50 @@ type ModelData = {
   levels: LevelRow[];
   cards: Card[];
   placements: Placement[];
+  last_rejection: LastRejection;
+  previous_attempts: number;
 };
 
 const WAIT = {
   ar: {
     stage1Review:
       "تم إرسال المرحلة الأولى بنجاح، وهي الآن في انتظار مراجعة الإدارة والموافقة للانتقال إلى المرحلة الثانية.",
+    stage2Review:
+      "تم إرسال المرحلة الثانية بنجاح، وهي الآن في انتظار مراجعة الإدارة.",
     awaitingClass:
-      "تم إرسال المرحلة الثانية بنجاح. أنت الآن في انتظار قيام إدارة المدرسة بتعيينك إلى فصل لبدء مهامك كمعلم.",
+      "تمت الموافقة على محاولتك للمرحلة الثانية. أنت الآن في انتظار قيام إدارة المدرسة بتعيينك إلى فصل لبدء مهامك كمعلم.",
     underReview: "قيد المراجعة",
     almostThere: "أوشكت على الانتهاء",
     stage1Badge: "المرحلة الأولى",
     stage2Badge: "المرحلة الثانية",
     loadError: "تعذر تحميل النموذج التعليمي.",
     submitError: "تعذر إرسال النموذج، حاول مرة أخرى.",
+    rejectedTitle: "تم رفض المحاولة السابقة",
+    rejectedBody: (n: number) =>
+      `لم تتم الموافقة على محاولتك رقم ${n}. يمكنك إعادة المحاولة الآن.`,
+    rejectedNotesLabel: "ملاحظات المراجع",
+    rejectedNoNotes: "لم تترك الإدارة ملاحظات.",
+    retryHint: "ابدأ محاولة جديدة بعقل صافٍ — هذه المحاولة ستُحفظ مستقلة عن السابقة.",
   },
   sq: {
     stage1Review:
       "Faza e parë u dërgua me sukses dhe po pret shqyrtimin e administratës për të kaluar në fazën e dytë.",
+    stage2Review:
+      "Faza e dytë u dërgua me sukses dhe po pret shqyrtimin e administratës.",
     awaitingClass:
-      "Faza e dytë u dërgua me sukses. Tani po pritet që administrata t'ju caktojë në një klasë.",
+      "Faza e dytë u miratua. Tani po pritet që administrata t'ju caktojë në një klasë.",
     underReview: "Në shqyrtim",
     almostThere: "Gati përfunduat",
     stage1Badge: "Faza e parë",
     stage2Badge: "Faza e dytë",
     loadError: "Modeli nuk u ngarkua.",
     submitError: "Dërgimi dështoi, provo përsëri.",
+    rejectedTitle: "Tentativa e mëparshme u refuzua",
+    rejectedBody: (n: number) =>
+      `Tentativa juaj nr. ${n} nuk u miratua. Mund të provoni përsëri.`,
+    rejectedNotesLabel: "Shënimet e shqyrtuesit",
+    rejectedNoNotes: "Administrata nuk la shënime.",
+    retryHint: "Filloni një tentativë të re — kjo do të ruhet veçmas nga e mëparshmja.",
   },
 } as const;
 
@@ -192,6 +216,11 @@ export default function TeacherModelPage() {
       <WaitingScreen lang={lang} badge={w.stage1Badge} title={w.underReview} message={w.stage1Review} />
     );
   }
+  if (data.onboarding_status === "STAGE2_REVIEW") {
+    return (
+      <WaitingScreen lang={lang} badge={w.stage2Badge} title={w.underReview} message={w.stage2Review} />
+    );
+  }
   if (data.onboarding_status === "AWAITING_CLASS") {
     return (
       <WaitingScreen lang={lang} badge={w.stage2Badge} title={w.almostThere} message={w.awaitingClass} />
@@ -199,8 +228,51 @@ export default function TeacherModelPage() {
   }
 
   if (data.stage === "STAGE1" || data.stage === "STAGE2") {
+    const rejection = data.last_rejection;
     return (
       <div style={{ position: "relative" }}>
+        {rejection && (
+          <div className="rw-reject-banner" dir={lang === "ar" ? "rtl" : "ltr"}>
+            <div className="rw-reject-head">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4m0 4h.01" />
+              </svg>
+              <span className="rw-reject-title">{w.rejectedTitle}</span>
+            </div>
+            <p className="rw-reject-body">{w.rejectedBody(rejection.attempt_number)}</p>
+            <div className="rw-reject-notes-block">
+              <div className="rw-reject-notes-label">{w.rejectedNotesLabel}</div>
+              <div className={`rw-reject-notes${rejection.reviewer_notes ? "" : " rw-reject-notes--empty"}`}>
+                {rejection.reviewer_notes || w.rejectedNoNotes}
+              </div>
+            </div>
+            <p className="rw-reject-hint">{w.retryHint}</p>
+            <style>{`
+              .rw-reject-banner {
+                max-width: 760px; margin: 0 auto 20px;
+                background: linear-gradient(165deg, #FFF4E5 0%, #FBEDD2 100%);
+                border: 1.5px solid rgba(122,30,30,0.32);
+                border-radius: 16px; padding: 18px 22px;
+                box-shadow: 0 8px 24px rgba(122,30,30,0.10);
+                color: #5A1818;
+                font-family: 'Cairo', 'Tajawal', sans-serif;
+              }
+              .rw-reject-head { display: flex; align-items: center; gap: 10px; }
+              .rw-reject-head svg { color: #7A1E1E; flex-shrink: 0; }
+              .rw-reject-title { font-size: 15.5px; font-weight: 900; }
+              .rw-reject-body { font-size: 13.5px; font-weight: 600; color: #6F2A2A; margin: 8px 0 12px; line-height: 1.7; }
+              .rw-reject-notes-block { background: #FFF8EC; border: 1px solid rgba(122,30,30,0.20); border-radius: 11px; padding: 12px 14px; }
+              .rw-reject-notes-label {
+                font-size: 11px; font-weight: 800; color: #8B6915;
+                letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 6px;
+              }
+              .rw-reject-notes { font-size: 13.5px; color: #2E1A0F; line-height: 1.8; font-weight: 600; white-space: pre-wrap; }
+              .rw-reject-notes--empty { color: #8A7B60; font-style: italic; font-weight: 500; }
+              .rw-reject-hint { font-size: 12.5px; color: #7A6440; margin: 12px 0 0; line-height: 1.7; font-weight: 600; }
+            `}</style>
+          </div>
+        )}
         {error && (
           <div
             style={{

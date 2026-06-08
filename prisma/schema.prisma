@@ -19,8 +19,9 @@ enum Maqsad {
 enum TeacherOnboardingStatus {
   STAGE1_PENDING // must do/submit Stage 1 (also the resubmit state after rejection)
   STAGE1_REVIEW // submitted Stage 1, waiting for admin review
-  STAGE2_PENDING // admin approved Stage 1, must do/submit Stage 2
-  AWAITING_CLASS // submitted Stage 2, waiting for admin to assign a class
+  STAGE2_PENDING // admin approved Stage 1, must do/submit Stage 2 (also resubmit after Stage 2 rejection)
+  STAGE2_REVIEW // submitted Stage 2, waiting for admin review
+  AWAITING_CLASS // Stage 2 approved, waiting for admin to assign a class
   ACTIVE // assigned to a class → full teacher access
 }
 
@@ -110,6 +111,7 @@ model RowadSubmission {
   teacher_id     String                @db.Uuid
   school_id      String                @db.Uuid
   stage          RowadStage
+  attempt_number Int                   @default(1) // 1-indexed; increments on every retry per (teacher, stage)
   status         RowadSubmissionStatus @default(IN_PROGRESS)
   score          Int? // admin-only — never sent to the teacher
   total          Int                   @default(25)
@@ -126,7 +128,8 @@ model RowadSubmission {
   reviewer   Profile?         @relation("RowadReviewedBy", fields: [reviewer_id], references: [id])
   placements RowadPlacement[]
 
-  @@unique([teacher_id, stage])
+  @@index([teacher_id, stage, created_at(sort: Desc)])
+  @@index([school_id, status])
   @@map("rowad_submissions")
 }
 
