@@ -194,10 +194,11 @@ export async function POST(
       }
 
       if (isAdminInvite) {
-        // Assign this profile as the school admin
-        await tx.school.update({
-          where: { id: state.invite.school_id },
-          data:  { admin_id: userId },
+        // Add this profile as a school admin (upsert so re-inviting is safe)
+        await tx.schoolAdminMember.upsert({
+          where: { school_id_profile_id: { school_id: state.invite.school_id, profile_id: userId } },
+          create: { school_id: state.invite.school_id, profile_id: userId },
+          update: {},
         });
       }
 

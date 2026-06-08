@@ -17,7 +17,7 @@ interface School {
   color_primary: string;
   color_secondary: string;
   color_bg: string;
-  admin: { id: string; full_name: string } | null;
+  admins: { profile: { id: string; full_name: string; is_active: boolean } }[];
   _count: { teachers: number; students: number; classes: number };
 }
 
@@ -78,7 +78,7 @@ export default function OwnerSchoolsPage() {
   const filtered = schools.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
-      (s.admin?.full_name ?? "").toLowerCase().includes(search.toLowerCase()),
+      s.admins.some((a) => a.profile.full_name.toLowerCase().includes(search.toLowerCase())),
   );
 
   const totalStudents = schools.reduce(
@@ -437,9 +437,9 @@ export default function OwnerSchoolsPage() {
                   <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
-                {school.admin ? (
+                {school.admins.length > 0 ? (
                   <span className="card-admin-name">
-                    {school.admin.full_name}
+                    {school.admins.map((a) => a.profile.full_name).join(" · ")}
                   </span>
                 ) : (
                   <span className="card-no-admin">لم يُعيَّن مدير</span>

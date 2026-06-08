@@ -23,7 +23,7 @@ interface SchoolDetail {
   color_secondary: string;
   color_bg: string;
   features: Features;
-  admin: { id: string; full_name: string } | null;
+  admins: { profile: { id: string; full_name: string; is_active: boolean } }[];
   teachers: {
     id: string;
     profile: { full_name: string };
@@ -147,7 +147,7 @@ export default function OwnerSchoolDetailPage() {
               color_secondary: d.school.color_secondary,
               color_bg: d.school.color_bg,
               features: d.school.features ?? prev.features,
-              admin: d.school.admin,
+              admins: d.school.admins,
             }
           : prev,
       );
@@ -215,9 +215,9 @@ export default function OwnerSchoolDetailPage() {
           <div className="sd-title-body">
             <h1 className="sd-title">{school.name}</h1>
             <p className="sd-sub">
-              المدير:{" "}
-              {school.admin ? (
-                <strong>{school.admin.full_name}</strong>
+              المديرون:{" "}
+              {school.admins.length > 0 ? (
+                <strong>{school.admins.map((a) => a.profile.full_name).join(" · ")}</strong>
               ) : (
                 <span className="sd-no-admin">غير معيَّن</span>
               )}

@@ -26,13 +26,17 @@ export async function GET() {
       name: true,
       slug: true,
       language: true,
-      admin: {
+      admins: {
         select: {
-          id: true,
-          full_name: true,
-          email: true,
-          is_active: true,
-          created_at: true,
+          profile: {
+            select: {
+              id: true,
+              full_name: true,
+              email: true,
+              is_active: true,
+              created_at: true,
+            },
+          },
         },
       },
     },

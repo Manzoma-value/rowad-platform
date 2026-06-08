@@ -50,8 +50,8 @@ export async function DELETE(
       where: { profile_id: profile.id, school_id: post.school_id },
       select: { id: true },
     });
-    const admin = await prisma.school.findFirst({
-      where: { id: post.school_id, admin_id: profile.id },
+    const admin = await prisma.schoolAdminMember.findFirst({
+      where: { school_id: post.school_id, profile_id: profile.id },
       select: { id: true },
     });
     if (!teacher && !admin)

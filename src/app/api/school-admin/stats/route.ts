@@ -10,10 +10,11 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const school = await prisma.school.findFirst({
-    where: { admin_id: user.id },
-    select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true },
+  const membership = await prisma.schoolAdminMember.findFirst({
+    where: { profile_id: user.id },
+    select: { school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } } },
   });
+  const school = membership?.school ?? null;
   if (!school)
     return NextResponse.json({ error: "School not found" }, { status: 404 });
 

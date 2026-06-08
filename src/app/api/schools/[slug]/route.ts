@@ -16,7 +16,7 @@ export async function GET(
       description: true,
       language: true,
       created_at: true,
-      admin: { select: { full_name: true } },
+      admins: { select: { profile: { select: { full_name: true } } } },
       _count: { select: { teachers: true, students: true, classes: true } },
     },
   });

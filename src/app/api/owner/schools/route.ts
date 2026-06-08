@@ -37,7 +37,7 @@ export async function GET() {
       id: true, name: true, slug: true, description: true,
       created_at: true, language: true, is_active: true,
       color_primary: true, color_secondary: true, color_bg: true,
-      admin: { select: { id: true, full_name: true } },
+      admins: { select: { profile_id: true, profile: { select: { id: true, full_name: true, is_active: true } } } },
       _count: { select: { teachers: true, students: true, classes: true } },
     },
     orderBy: { created_at: "desc" },
@@ -71,13 +71,16 @@ export async function POST(req: Request) {
       color_primary: body.color_primary || "#C8A96A",
       color_secondary: body.color_secondary || "#E5B93C",
       color_bg: body.color_bg || "#0B0B0C",
-      ...(admin_id ? { admin_id } : {}),
+      // If an admin_id is provided at creation time, add a membership row
+      ...(admin_id ? {
+        admins: { create: { profile_id: admin_id } },
+      } : {}),
     },
     select: {
       id: true, name: true, slug: true, description: true,
       created_at: true, language: true,
       color_primary: true, color_secondary: true, color_bg: true,
-      admin: { select: { id: true, full_name: true } },
+      admins: { select: { profile: { select: { id: true, full_name: true, is_active: true } } } },
       _count: { select: { teachers: true, students: true, classes: true } },
     },
   });

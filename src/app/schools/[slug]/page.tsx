@@ -15,7 +15,7 @@ export default async function SchoolLandingPage({ params }: Props) {
   const school = await prisma.school.findUnique({
     where: { slug },
     include: {
-      admin: { select: { full_name: true } },
+      admins: { select: { profile: { select: { full_name: true } } } },
       _count: { select: { teachers: true, students: true, classes: true } },
     },
   });
@@ -41,7 +41,7 @@ export default async function SchoolLandingPage({ params }: Props) {
         slug: school.slug,
         description: school.description ?? null,
         language: school.language ?? "ar",
-        admin_name: school.admin?.full_name ?? null,
+        admin_name: school.admins[0]?.profile?.full_name ?? null,
         student_count: school._count.students,
         teacher_count: school._count.teachers,
         class_count: school._count.classes,

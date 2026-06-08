@@ -255,7 +255,7 @@ model Profile {
   is_active                    Boolean             @default(true)
   role                         Role
   reviewed_assessment_attempts AssessmentAttempt[] @relation("AssessmentReviewedBy")
-  managed_school               School?             @relation("SchoolAdmin")
+  school_admin_memberships     SchoolAdminMember[]
   student                      Student?
   teacher                      Teacher?
   posts                        Post[]
@@ -276,7 +276,6 @@ model School {
   /// Optional Latin-script name shown when the UI language is Albanian/English.
   /// Falls back to `name` if null.
   name_alt           String?
-  admin_id           String?             @unique @db.Uuid
   created_at         DateTime            @default(now())
   language           String              @default("ar")
   description        String?
@@ -300,13 +299,26 @@ model School {
   roadmap            Roadmap?
   rowad_model        RowadModel?
   rowadSubmissions   RowadSubmission[]
-  admin              Profile?            @relation("SchoolAdmin", fields: [admin_id], references: [id])
+  admins             SchoolAdminMember[]
   students           Student[]
   teachers           Teacher[]
   posts              Post[]
   invites            Invite[]
 
   @@map("schools")
+}
+
+/// Join table: a school can have many admins, an admin can manage many schools.
+model SchoolAdminMember {
+  id         String   @id @default(uuid()) @db.Uuid
+  school_id  String   @db.Uuid
+  profile_id String   @db.Uuid
+  created_at DateTime @default(now())
+  school     School   @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  profile    Profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@unique([school_id, profile_id])
+  @@map("school_admins")
 }
 
 model Teacher {

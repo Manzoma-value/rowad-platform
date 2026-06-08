@@ -42,20 +42,20 @@ export async function GET() {
     return NextResponse.json({ ok: false, failedAt: "step3_deactivated", steps });
   }
 
-  // Step 4 — School lookup
-  const school = await prisma.school.findFirst({
-    where: { admin_id: profile.id },
-    select: { id: true, name: true, admin_id: true },
+  // Step 4 — School membership lookup
+  const membership = await prisma.schoolAdminMember.findFirst({
+    where: { profile_id: profile.id },
+    select: { school: { select: { id: true, name: true } } },
   });
-  steps.step4_school = school ?? "NOT FOUND";
+  steps.step4_school = membership?.school ?? "NOT FOUND";
 
-  // Also list every school so we can see which one the admin should be linked to
-  const allSchools = await prisma.school.findMany({
-    select: { id: true, name: true, admin_id: true },
+  // Also list every school_admins row for diagnostics
+  const allMemberships = await prisma.schoolAdminMember.findMany({
+    select: { profile_id: true, school: { select: { id: true, name: true } } },
   });
-  steps.all_schools = allSchools;
+  steps.all_memberships = allMemberships;
 
-  if (!school) {
+  if (!membership?.school) {
     return NextResponse.json({ ok: false, failedAt: "step4_no_school_for_admin", steps });
   }
 

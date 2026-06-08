@@ -34,7 +34,7 @@ export async function GET(
       language: true, color_primary: true, color_secondary: true, color_bg: true,
       features: true, is_active: true,
       created_at: true,
-      admin: { select: { id: true, full_name: true } },
+      admins: { select: { profile: { select: { id: true, full_name: true, is_active: true } } } },
       teachers: {
         select: {
           id: true,
@@ -84,7 +84,6 @@ export async function PATCH(
   if (body.language        !== undefined) updateData.language        = body.language;
   if (body.description     !== undefined) updateData.description     = body.description?.trim() || null;
   if (body.name            !== undefined) updateData.name            = body.name.trim();
-  if (body.admin_id        !== undefined) updateData.admin_id        = body.admin_id || null;
   if (body.color_primary   !== undefined) updateData.color_primary   = body.color_primary;
   if (body.color_secondary !== undefined) updateData.color_secondary = body.color_secondary;
   if (body.color_bg        !== undefined) updateData.color_bg        = body.color_bg;
@@ -107,6 +106,20 @@ export async function PATCH(
     updateData.slug = newSlug;
   }
 
+  // Handle admin membership changes independently from main update
+  if (body.add_admin_id) {
+    await prisma.schoolAdminMember.upsert({
+      where: { school_id_profile_id: { school_id: id, profile_id: body.add_admin_id } },
+      create: { school_id: id, profile_id: body.add_admin_id },
+      update: {},
+    });
+  }
+  if (body.remove_admin_id) {
+    await prisma.schoolAdminMember.deleteMany({
+      where: { school_id: id, profile_id: body.remove_admin_id },
+    });
+  }
+
   const school = await prisma.school.update({
     where: { id },
     data: updateData,
@@ -114,7 +127,7 @@ export async function PATCH(
       id: true, name: true, slug: true, description: true,
       language: true, color_primary: true, color_secondary: true, color_bg: true,
       features: true, is_active: true,
-      admin: { select: { id: true, full_name: true } },
+      admins: { select: { profile: { select: { id: true, full_name: true, is_active: true } } } },
     },
   });
 

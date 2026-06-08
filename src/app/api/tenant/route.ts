@@ -26,7 +26,7 @@ export async function GET() {
       role: true,
       student: { select: { school_id: true } },
       teacher: { select: { school_id: true } },
-      managed_school: { select: { id: true } }, // school where this profile is the admin
+      school_admin_memberships: { select: { school_id: true }, take: 1 }, // school where this profile is an admin
     },
   });
 
@@ -35,7 +35,7 @@ export async function GET() {
   }
 
   const schoolId =
-    profile.managed_school?.id ??
+    profile.school_admin_memberships[0]?.school_id ??
     profile.teacher?.school_id ??
     profile.student?.school_id ??
     null;

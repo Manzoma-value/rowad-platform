@@ -144,7 +144,7 @@ interface SchoolWithAdmin {
   name: string;
   slug: string;
   language: string;
-  admin: AdminProfile | null;
+  admins: { profile: AdminProfile }[];
 }
 interface AdminInvite {
   id: string;
@@ -239,11 +239,14 @@ export default function OwnerAdminsPage() {
       const d = await r.json();
       if (!r.ok) { setError(d.error ?? t.errGeneric); return; }
       setSchools((prev) =>
-        prev.map((school) =>
-          school.admin?.id === profileId
-            ? { ...school, admin: { ...school.admin!, is_active: !currentActive } }
-            : school,
-        ),
+        prev.map((school) => ({
+          ...school,
+          admins: school.admins.map((a) =>
+            a.profile.id === profileId
+              ? { ...a, profile: { ...a.profile, is_active: !currentActive } }
+              : a,
+          ),
+        })),
       );
     } catch {
       setError(t.errNet);
@@ -306,16 +309,16 @@ export default function OwnerAdminsPage() {
   };
 
   /* ── Derived ── */
-  const schoolsWithAdmin    = schools.filter((s) => s.admin);
-  const schoolsWithoutAdmin = schools.filter((s) => !s.admin);
-  const activeCount         = schoolsWithAdmin.filter((s) => s.admin!.is_active).length;
-  const deactivatedCount    = schoolsWithAdmin.filter((s) => !s.admin!.is_active).length;
+  const schoolsWithAdmin    = schools.filter((s) => s.admins.length > 0);
+  const schoolsWithoutAdmin = schools.filter((s) => s.admins.length === 0);
+  const allAdmins           = schools.flatMap((s) => s.admins.map((a) => a.profile));
+  const activeCount         = allAdmins.filter((a) => a.is_active).length;
+  const deactivatedCount    = allAdmins.filter((a) => !a.is_active).length;
   const activeInvites       = invites.filter((i) => i.is_active && (!i.expires_at || new Date(i.expires_at) > new Date()));
   const historyInvites      = invites.filter((i) => !activeInvites.includes(i));
 
-  // Schools available for new invites: those without an admin AND without an active invite
+  // All schools can receive invites (multiple admins allowed)
   const schoolIdsWithActiveInvite = new Set(activeInvites.map((i) => i.school?.id).filter(Boolean) as string[]);
-  const inviteCandidateSchools = schoolsWithoutAdmin.filter((s) => !schoolIdsWithActiveInvite.has(s.id));
 
   /* ──────────── Render ──────────── */
   return (
@@ -493,42 +496,43 @@ export default function OwnerAdminsPage() {
                 <div className="ad-section">
                   <div className="ad-section-title">{t.secWithAdmin}</div>
                   <div className="ad-list">
-                    {schoolsWithAdmin.map((school) => {
-                      const admin = school.admin!;
-                      const active = admin.is_active;
-                      const isToggling = toggling === admin.id;
-                      return (
-                        <div key={school.id} className={`ad-card ${active ? "" : "ad-card--inactive"}`}>
-                          <div className="ad-school-badge">{school.name.charAt(0)}</div>
-                          <div className="ad-card-info">
-                            <div className="ad-card-name">{admin.full_name}</div>
-                            <div className="ad-card-school">{school.name}</div>
-                            {admin.email && <div className="ad-card-email" dir="ltr">{admin.email}</div>}
-                            <div className="ad-card-meta">{t.joinedAt} {fmtDate(admin.created_at, lang)}</div>
+                    {schoolsWithAdmin.flatMap((school) =>
+                      school.admins.map(({ profile: admin }) => {
+                        const active = admin.is_active;
+                        const isToggling = toggling === admin.id;
+                        return (
+                          <div key={`${school.id}-${admin.id}`} className={`ad-card ${active ? "" : "ad-card--inactive"}`}>
+                            <div className="ad-school-badge">{school.name.charAt(0)}</div>
+                            <div className="ad-card-info">
+                              <div className="ad-card-name">{admin.full_name}</div>
+                              <div className="ad-card-school">{school.name}</div>
+                              {admin.email && <div className="ad-card-email" dir="ltr">{admin.email}</div>}
+                              <div className="ad-card-meta">{t.joinedAt} {fmtDate(admin.created_at, lang)}</div>
+                            </div>
+                            <div className={`ad-status-badge ${active ? "ad-status-badge--active" : "ad-status-badge--inactive"}`}>
+                              {active ? t.statusActive : t.statusInactive}
+                            </div>
+                            <button
+                              className={`ad-toggle-btn ${active ? "ad-toggle-btn--deactivate" : "ad-toggle-btn--activate"}`}
+                              onClick={() => toggleAdmin(admin.id, active)}
+                              disabled={isToggling}
+                            >
+                              {isToggling ? (
+                                <span className="ad-spin ad-spin--sm" />
+                              ) : active ? (
+                                <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <circle cx="12" cy="12" r="10" /><path d="M8 12h8" />
+                                </svg>{t.actDeactivate}</>
+                              ) : (
+                                <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <circle cx="12" cy="12" r="10" /><path d="M12 8v8m-4-4h8" />
+                                </svg>{t.actActivate}</>
+                              )}
+                            </button>
                           </div>
-                          <div className={`ad-status-badge ${active ? "ad-status-badge--active" : "ad-status-badge--inactive"}`}>
-                            {active ? t.statusActive : t.statusInactive}
-                          </div>
-                          <button
-                            className={`ad-toggle-btn ${active ? "ad-toggle-btn--deactivate" : "ad-toggle-btn--activate"}`}
-                            onClick={() => toggleAdmin(admin.id, active)}
-                            disabled={isToggling}
-                          >
-                            {isToggling ? (
-                              <span className="ad-spin ad-spin--sm" />
-                            ) : active ? (
-                              <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <circle cx="12" cy="12" r="10" /><path d="M8 12h8" />
-                              </svg>{t.actDeactivate}</>
-                            ) : (
-                              <><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <circle cx="12" cy="12" r="10" /><path d="M12 8v8m-4-4h8" />
-                              </svg>{t.actActivate}</>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               )}
@@ -706,7 +710,7 @@ export default function OwnerAdminsPage() {
                     </svg>
                   </div>
                   <p>{t.emptyNoInvites}</p>
-                  {inviteCandidateSchools.length > 0 && (
+                  {schools.length > 0 && (
                     <button
                       className="ad-primary-btn"
                       style={{ marginTop: 12 }}
@@ -749,7 +753,7 @@ export default function OwnerAdminsPage() {
                 <option value="">{t.modalPlaceholder}</option>
                 {schools.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name}{s.admin ? (lang === "ar" ? " (لديها مدير)" : " (has admin)") : ""}
+                    {s.name}{s.admins.length > 0 ? (lang === "ar" ? " (لديها مدير)" : " (has admin)") : ""}
                   </option>
                 ))}
               </select>
