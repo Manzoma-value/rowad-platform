@@ -349,7 +349,7 @@ export default function OwnerAdminsPage() {
             >AR</button>
           </div>
 
-          {tab === "invites" && inviteCandidateSchools.length > 0 && (
+          {tab === "invites" && schools.length > 0 && (
             <button className="ad-primary-btn" onClick={() => setShowCreateModal(true)}>
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path d="M12 5v14M5 12h14" />
@@ -747,13 +747,12 @@ export default function OwnerAdminsPage() {
                 autoFocus
               >
                 <option value="">{t.modalPlaceholder}</option>
-                {inviteCandidateSchools.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
+                {schools.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}{s.admin ? (lang === "ar" ? " (لديها مدير)" : " (has admin)") : ""}
+                  </option>
                 ))}
               </select>
-              {inviteCandidateSchools.length === 0 && (
-                <p className="ad-modal-hint">{t.modalHint}</p>
-              )}
             </div>
             {error && <div className="ad-error" style={{ marginTop: 0 }}>{error}</div>}
             <div className="ad-modal-actions">

@@ -35,7 +35,7 @@ export async function GET() {
   const schools = await prisma.school.findMany({
     select: {
       id: true, name: true, slug: true, description: true,
-      created_at: true, language: true,
+      created_at: true, language: true, is_active: true,
       color_primary: true, color_secondary: true, color_bg: true,
       admin: { select: { id: true, full_name: true } },
       _count: { select: { teachers: true, students: true, classes: true } },

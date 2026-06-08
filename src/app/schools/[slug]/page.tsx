@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SchoolLandingClient from "./SchoolLandingClient";
+import SchoolDeactivatedClient from "./SchoolDeactivatedClient";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,16 @@ export default async function SchoolLandingPage({ params }: Props) {
   });
 
   if (!school) notFound();
+
+  if (!school.is_active) {
+    return (
+      <SchoolDeactivatedClient
+        schoolName={school.name}
+        schoolNameAlt={school.name_alt ?? null}
+        schoolLang={school.language ?? "ar"}
+      />
+    );
+  }
 
   return (
     <SchoolLandingClient

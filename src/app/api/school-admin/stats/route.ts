@@ -12,10 +12,13 @@ export async function GET() {
 
   const school = await prisma.school.findFirst({
     where: { admin_id: user.id },
-    select: { id: true, name: true, name_alt: true, language: true, slug: true },
+    select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true },
   });
   if (!school)
     return NextResponse.json({ error: "School not found" }, { status: 404 });
+
+  if (!school.is_active)
+    return NextResponse.json({ error: "school_deactivated", school });
 
   // Batch 1 — counts
   const [teacherCount, studentCount, classCount, pendingPlacements] =

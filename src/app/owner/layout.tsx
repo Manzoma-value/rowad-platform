@@ -13,7 +13,6 @@ import {
   FileStack,
   Menu,
   LogOut,
-  Bell,
   Sparkles,
   ShieldCheck,
   LucideIcon,
@@ -540,15 +539,6 @@ export default function OwnerLayout({
           {/* Right-side actions */}
           <div className="ow-topbar-actions">
             <div className="ow-topbar-divider" />
-
-            {/* Bell */}
-            <button
-              type="button"
-              className="ow-bell-btn"
-              aria-label="الإشعارات"
-            >
-              <Bell size={15} strokeWidth={1.7} />
-            </button>
 
             {/* User pill */}
             <Link href="/owner/profile" className="ow-topbar-user-pill">

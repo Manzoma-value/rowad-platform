@@ -17,7 +17,7 @@ export async function GET() {
       school_id: true,
       onboarding_status: true,
       profile: { select: { full_name: true } },
-      school: { select: { id: true, name: true, name_alt: true, language: true, slug: true } },
+      school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } },
       classes: {
         select: {
           id: true,
@@ -34,6 +34,9 @@ export async function GET() {
   });
 
   if (!teacher) return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
+
+  if (!teacher.school?.is_active)
+    return NextResponse.json({ error: "school_deactivated", school: teacher.school });
 
   return NextResponse.json({
     profile: teacher.profile,

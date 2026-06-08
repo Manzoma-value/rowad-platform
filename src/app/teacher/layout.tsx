@@ -166,6 +166,10 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   useEffect(() => {
     cachedFetch<any>("/api/teacher", 300_000)
       .then((d) => {
+        if (d?.error === "school_deactivated" && d?.school?.slug) {
+          window.location.href = `/schools/${d.school.slug}`;
+          return;
+        }
         if (d?.school?.slug) {
           schoolSlugRef.current = d.school.slug;
           enforceTenantSubdomain(d.school.slug);

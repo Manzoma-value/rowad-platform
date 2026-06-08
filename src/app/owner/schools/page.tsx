@@ -13,6 +13,7 @@ interface School {
   description: string | null;
   created_at: string;
   language: string;
+  is_active: boolean;
   color_primary: string;
   color_secondary: string;
   color_bg: string;
@@ -54,6 +55,9 @@ export default function OwnerSchoolsPage() {
   const [newColorBg, setNewColorBg] = useState("#0B0B0C");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [toggling, setToggling] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   function autoSlug(name: string) {
     return name
@@ -129,6 +133,38 @@ export default function OwnerSchoolsPage() {
     } finally {
       setCreating(false);
     }
+  }
+
+  async function handleToggleActive(schoolId: string, currentActive: boolean) {
+    setToggling(schoolId);
+    try {
+      const r = await fetch(`/api/owner/schools/${schoolId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: !currentActive }),
+      });
+      if (r.ok) {
+        invalidateCache("/api/owner/schools");
+        setSchools((prev) =>
+          prev.map((s) => (s.id === schoolId ? { ...s, is_active: !currentActive } : s)),
+        );
+      }
+    } catch { /* silent */ }
+    setToggling(null);
+  }
+
+  async function handleDelete(schoolId: string) {
+    setDeleting(schoolId);
+    try {
+      const r = await fetch(`/api/owner/schools/${schoolId}`, { method: "DELETE" });
+      if (r.ok) {
+        invalidateCache("/api/owner/schools");
+        invalidateCache("/api/owner/stats");
+        setSchools((prev) => prev.filter((s) => s.id !== schoolId));
+        setConfirmDelete(null);
+      }
+    } catch { /* silent */ }
+    setDeleting(null);
   }
 
   return (
@@ -342,7 +378,7 @@ export default function OwnerSchoolsPage() {
           {filtered.map((school, idx) => (
             <div
               key={school.id}
-              className="school-card"
+              className={`school-card${school.is_active ? "" : " inactive-card"}`}
               style={{ animationDelay: `${idx * 40}ms` }}
             >
               {/* Card top accent line using school's primary color */}
@@ -423,6 +459,35 @@ export default function OwnerSchoolsPage() {
                     <span className="stat-lab">{s.lab}</span>
                   </div>
                 ))}
+              </div>
+
+              {/* Active/inactive badge */}
+              <div className="card-status-row">
+                <span className={`card-status-badge ${school.is_active ? "active" : "inactive"}`}>
+                  {school.is_active ? "نشطة" : "معطّلة"}
+                </span>
+                <div className="card-status-actions">
+                  <button
+                    className={`btn-toggle ${school.is_active ? "deactivate" : "activate"}`}
+                    onClick={() => handleToggleActive(school.id, school.is_active)}
+                    disabled={toggling === school.id}
+                    title={school.is_active ? "تعطيل الجهة" : "تفعيل الجهة"}
+                  >
+                    {toggling === school.id ? "..." : school.is_active ? "تعطيل" : "تفعيل"}
+                  </button>
+                  {confirmDelete === school.id ? (
+                    <span className="confirm-delete-row">
+                      <button className="btn-delete-confirm" onClick={() => handleDelete(school.id)} disabled={deleting === school.id}>
+                        {deleting === school.id ? "..." : "تأكيد الحذف"}
+                      </button>
+                      <button className="btn-delete-cancel" onClick={() => setConfirmDelete(null)}>إلغاء</button>
+                    </span>
+                  ) : (
+                    <button className="btn-delete" onClick={() => setConfirmDelete(school.id)} title="حذف الجهة">
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="card-actions">
@@ -721,4 +786,76 @@ const css = `
   }
   .btn-view:hover { color: var(--gold); }
 
+  /* ── Status & actions ── */
+  .card-status-row { display: flex; align-items: center; justify-content: space-between; padding: 0 20px 12px; gap: 8px; }
+  .card-status-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 99px; }
+  .card-status-badge.active { background: rgba(45,138,74,0.10); color: #2D8A4A; border: 1px solid rgba(45,138,74,0.20); }
+  .card-status-badge.inactive { background: rgba(139,26,26,0.08); color: #8b1a1a; border: 1px solid rgba(139,26,26,0.18); }
+  .card-status-actions { display: flex; align-items: center; gap: 6px; }
+  .btn-toggle {
+    font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 7px;
+    cursor: pointer; font-family: 'Cairo', sans-serif; border: 1px solid;
+    transition: all 0.15s;
+  }
+  .btn-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-toggle.deactivate { background: rgba(139,26,26,0.07); color: #8b1a1a; border-color: rgba(139,26,26,0.20); }
+  .btn-toggle.deactivate:hover:not(:disabled) { background: rgba(139,26,26,0.14); }
+  .btn-toggle.activate { background: rgba(45,138,74,0.08); color: #2D8A4A; border-color: rgba(45,138,74,0.20); }
+  .btn-toggle.activate:hover:not(:disabled) { background: rgba(45,138,74,0.15); }
+  .btn-delete {
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 7px;
+    background: rgba(139,26,26,0.06); border: 1px solid rgba(139,26,26,0.15);
+    color: #8b1a1a; cursor: pointer; transition: all 0.15s;
+  }
+  .btn-delete:hover { background: rgba(139,26,26,0.14); }
+  .confirm-delete-row { display: flex; align-items: center; gap: 4px; }
+  .btn-delete-confirm {
+    font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 7px;
+    background: #8b1a1a; color: #fff; border: none; cursor: pointer;
+    font-family: 'Cairo', sans-serif; transition: opacity 0.15s;
+  }
+  .btn-delete-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-delete-cancel {
+    font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 7px;
+    background: none; border: 1px solid var(--border2); color: var(--text3);
+    cursor: pointer; font-family: 'Cairo', sans-serif;
+  }
+
+  /* Inactive card style */
+  .school-card.inactive-card { opacity: 0.70; }
+  .school-card.inactive-card .card-accent { opacity: 0.4; }
+
+  /* ── Mobile responsive ── */
+  @media (max-width: 768px) {
+    .pg { padding: 20px 16px 80px; gap: 20px; }
+    .pg-head { flex-direction: column; align-items: stretch; gap: 12px; }
+    .pg-title { font-size: 22px; }
+    .btn-create { width: 100%; justify-content: center; }
+    .create-panel { padding: 20px 16px; }
+    .create-grid { grid-template-columns: 1fr; }
+    .cf-full { grid-column: 1; }
+    .summary { grid-template-columns: 1fr; }
+    .summary-item { padding: 14px; flex-direction: row; gap: 10px; border-left: none; border-bottom: 1px solid var(--border); }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-num { font-size: 22px; }
+    .schools-grid { grid-template-columns: 1fr; }
+    .card-actions { flex-direction: column; }
+    .btn-manage { width: 100%; justify-content: center; text-align: center; }
+    .theme-presets { gap: 6px; }
+    .theme-preset { padding: 5px 10px; font-size: 11px; }
+  }
+  @media (max-width: 480px) {
+    .pg { padding: 16px 12px 60px; }
+    .pg-title { font-size: 20px; }
+    .pg-eyebrow { font-size: 9px; letter-spacing: 1.5px; }
+    .card-head { padding: 14px 14px 10px; }
+    .card-name { padding: 0 14px 4px; font-size: 15px; }
+    .card-desc { padding: 0 14px 6px; }
+    .card-admin { padding: 0 14px 12px; }
+    .card-rule { margin: 0 14px; }
+    .card-stats { padding: 12px 14px; }
+    .card-actions { padding: 10px 14px 14px; }
+    .stat-val { font-size: 16px; }
+  }
 `;

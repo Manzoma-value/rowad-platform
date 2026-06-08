@@ -210,6 +210,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
     cachedFetch<any>("/api/school-admin/stats", 60_000)
       .then((d) => {
+        if (d?.error === "school_deactivated" && d?.school?.slug) {
+          window.location.href = `/schools/${d.school.slug}`;
+          return;
+        }
         if (d?.school) {
           setSchoolName(d.school.name ?? "");
           setSchoolNameAlt(d.school.name_alt ?? null);

@@ -32,7 +32,7 @@ export async function GET(
     select: {
       id: true, name: true, slug: true, description: true,
       language: true, color_primary: true, color_secondary: true, color_bg: true,
-      features: true,
+      features: true, is_active: true,
       created_at: true,
       admin: { select: { id: true, full_name: true } },
       teachers: {
@@ -88,6 +88,7 @@ export async function PATCH(
   if (body.color_primary   !== undefined) updateData.color_primary   = body.color_primary;
   if (body.color_secondary !== undefined) updateData.color_secondary = body.color_secondary;
   if (body.color_bg        !== undefined) updateData.color_bg        = body.color_bg;
+  if (body.is_active       !== undefined) updateData.is_active       = Boolean(body.is_active);
 
   // Features: sanitize through resolveFeatures so only known keys with boolean
   // values are persisted (stores the full resolved map — predictable shape).
@@ -112,7 +113,7 @@ export async function PATCH(
     select: {
       id: true, name: true, slug: true, description: true,
       language: true, color_primary: true, color_secondary: true, color_bg: true,
-      features: true,
+      features: true, is_active: true,
       admin: { select: { id: true, full_name: true } },
     },
   });
@@ -120,4 +121,78 @@ export async function PATCH(
   return NextResponse.json({
     school: { ...school, features: resolveFeatures(school.features) },
   });
+}
+
+export async function DELETE(
+  _req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  const owner = await requireOwner();
+  if (!owner) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { id } = await context.params;
+
+  // Verify school exists
+  const school = await prisma.school.findUnique({
+    where: { id },
+    select: { id: true, name: true },
+  });
+  if (!school) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Delete all related data in the correct order (children first)
+  // Prisma doesn't cascade by default for non-relation deletes.
+  await prisma.$transaction(async (tx) => {
+    // 1. Quiz/lesson/assessment answers & attempts (deepest children)
+    await tx.quizAnswer.deleteMany({ where: { attempt: { quiz: { school_id: id } } } });
+    await tx.quizAttempt.deleteMany({ where: { quiz: { school_id: id } } });
+    await tx.quizOption.deleteMany({ where: { question: { quiz: { school_id: id } } } });
+    await tx.quizQuestion.deleteMany({ where: { quiz: { school_id: id } } });
+    await tx.quiz.deleteMany({ where: { school_id: id } });
+
+    await tx.lessonAnswer.deleteMany({ where: { attempt: { lesson: { school_id: id } } } });
+    await tx.lessonAttempt.deleteMany({ where: { lesson: { school_id: id } } });
+    await tx.lessonMatchingPair.deleteMany({ where: { question: { lesson: { school_id: id } } } });
+    await tx.lessonQuestionOption.deleteMany({ where: { question: { lesson: { school_id: id } } } });
+    await tx.lessonQuestion.deleteMany({ where: { lesson: { school_id: id } } });
+    await tx.lessonContent.deleteMany({ where: { lesson: { school_id: id } } });
+    await tx.lesson.deleteMany({ where: { school_id: id } });
+
+    await tx.assessmentAnswer.deleteMany({ where: { attempt: { assessment: { school_id: id } } } });
+    await tx.assessmentAttempt.deleteMany({ where: { assessment: { school_id: id } } });
+    await tx.assessmentOption.deleteMany({ where: { question: { assessment: { school_id: id } } } });
+    await tx.assessmentQuestion.deleteMany({ where: { assessment: { school_id: id } } });
+    await tx.assessment.deleteMany({ where: { school_id: id } });
+
+    await tx.postReaction.deleteMany({ where: { post: { school_id: id } } });
+    await tx.post.deleteMany({ where: { school_id: id } });
+
+    await tx.announcement.deleteMany({ where: { school_id: id } });
+    await tx.invite.deleteMany({ where: { school_id: id } });
+
+    // Students & teachers (remove from classes first)
+    await tx.student.deleteMany({ where: { school_id: id } });
+    await tx.teacher.deleteMany({ where: { school_id: id } });
+    await tx.class.deleteMany({ where: { school_id: id } });
+
+    // Roadmap chain
+    const roadmap = await tx.roadmap.findUnique({ where: { school_id: id }, select: { id: true } });
+    if (roadmap) {
+      await tx.moduleAnswer.deleteMany({ where: { attempt: { module: { stage: { roadmap_id: roadmap.id } } } } });
+      await tx.moduleAttempt.deleteMany({ where: { module: { stage: { roadmap_id: roadmap.id } } } });
+      await tx.matchingPair.deleteMany({ where: { question: { module: { stage: { roadmap_id: roadmap.id } } } } });
+      await tx.roadmapQuestionOption.deleteMany({ where: { question: { module: { stage: { roadmap_id: roadmap.id } } } } });
+      await tx.roadmapQuestion.deleteMany({ where: { module: { stage: { roadmap_id: roadmap.id } } } });
+      await tx.moduleContent.deleteMany({ where: { module: { stage: { roadmap_id: roadmap.id } } } });
+      await tx.roadmapModule.deleteMany({ where: { stage: { roadmap_id: roadmap.id } } });
+      await tx.traitElement.deleteMany({ where: { trait: { stage: { roadmap_id: roadmap.id } } } });
+      await tx.stageTrait.deleteMany({ where: { stage: { roadmap_id: roadmap.id } } });
+      await tx.roadmapStage.deleteMany({ where: { roadmap_id: roadmap.id } });
+      await tx.roadmap.delete({ where: { id: roadmap.id } });
+    }
+
+    // Finally the school
+    await tx.school.delete({ where: { id } });
+  });
+
+  return NextResponse.json({ success: true });
 }

@@ -203,6 +203,10 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     cachedFetch<any>("/api/student", 60_000)
       .then((data) => {
+        if (data.error === "school_deactivated" && data.school?.slug) {
+          window.location.href = `/schools/${data.school.slug}`;
+          return;
+        }
         if (data.error) { router.push("/login"); return; }
 
         if (data?.profile?.full_name) {

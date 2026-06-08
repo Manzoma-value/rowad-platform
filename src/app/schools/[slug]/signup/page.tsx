@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SchoolSignupClient from "./SchoolSignupClient";
+import SchoolDeactivatedClient from "../SchoolDeactivatedClient";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +14,20 @@ export default async function SchoolSignupPage({ params }: Props) {
 
   const school = await prisma.school.findUnique({
     where: { slug },
-    select: { id: true, name: true, name_alt: true, slug: true, language: true, description: true },
+    select: { id: true, name: true, name_alt: true, slug: true, language: true, description: true, is_active: true },
   });
 
   if (!school) notFound();
+
+  if (!school.is_active) {
+    return (
+      <SchoolDeactivatedClient
+        schoolName={school.name}
+        schoolNameAlt={school.name_alt ?? null}
+        schoolLang={school.language ?? "ar"}
+      />
+    );
+  }
 
   return <SchoolSignupClient school={school} />;
 }

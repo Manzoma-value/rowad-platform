@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SchoolLoginClient from "./SchoolLoginClient";
+import SchoolDeactivatedClient from "../SchoolDeactivatedClient";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -17,9 +18,19 @@ export default async function SchoolLoginPage({ params }: Props) {
       language: true,
       slug: true,
       description: true,
+      is_active: true,
     },
   });
   if (!school) notFound();
+  if (!school.is_active) {
+    return (
+      <SchoolDeactivatedClient
+        schoolName={school.name}
+        schoolNameAlt={school.name_alt ?? null}
+        schoolLang={school.language ?? "ar"}
+      />
+    );
+  }
   return <SchoolLoginClient school={school} />;
 }
 

@@ -1,6 +1,7 @@
 ﻿"use client";
 export const dynamic = "force-dynamic";
 import MandalaLoader from "@/components/MandalaLoader";
+import { SortableList } from "@/components/SortableList";
 import { useEffect, useState } from "react";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
@@ -200,6 +201,20 @@ export default function OwnerIntakeAssessmentPage() {
     setDeleting(null);
   }
 
+  async function handleReorder(next: AssessmentQuestion[]) {
+    if (!assessment) return;
+    setAssessment((a) => (a ? { ...a, questions: next } : a));
+    invalidateCache("/api/owner/intake-assessment");
+    await fetch(
+      `/api/owner/intake-assessment/${assessment.id}/questions/reorder`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: next.map((q) => q.id) }),
+      },
+    );
+  }
+
   const addOption = () =>
     setForm((f) => ({ ...f, options: [...f.options, { text: "" }] }));
   const removeOption = (i: number) =>
@@ -357,97 +372,115 @@ export default function OwnerIntakeAssessmentPage() {
             <p>لا توجد أسئلة بعد. أضف سؤالك الأول باستخدام الزر أعلاه.</p>
           </div>
         )}
-        {assessment.questions.map((q, idx) => (
-          <div key={q.id} className="ia-q-card">
-            <div className="ia-q-head">
-              <div className="ia-q-num">س{idx + 1}</div>
-              <div className={`ia-q-type type-${q.type.toLowerCase()}`}>
-                {TYPE_LABELS[q.type]}
-              </div>
-              <div className="ia-q-actions">
-                <button className="ia-icon-btn" onClick={() => openEdit(q)}>
-                  <svg
-                    width="13"
-                    height="13"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                  </svg>
-                </button>
-                <button
-                  className="ia-icon-btn danger"
-                  onClick={() => handleDeleteQuestion(q.id)}
-                  disabled={deleting === q.id}
-                >
-                  <svg
-                    width="13"
-                    height="13"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14H6L5 6" />
-                    <path d="M10 11v6M14 11v6M9 6V4h6v2" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <p className="ia-q-text">{q.text}</p>
-            {q.type === "MCQ" && q.options.length > 0 && (
-              <div className="ia-q-options">
-                {q.options.map((o) => (
-                  <div
-                    key={o.id}
-                    className={`ia-q-opt ${o.text === q.correct_answer ? "correct" : ""}`}
-                  >
-                    {o.text === q.correct_answer && (
+        {assessment.questions.length > 0 && (
+          <SortableList
+            items={assessment.questions}
+            onReorder={handleReorder}
+            gap={10}
+            renderItem={(q, { index: idx, dragHandleProps }) => (
+              <div className="ia-q-card">
+                <div className="ia-q-head">
+                  {/* Drag handle */}
+                  <div className="ia-drag-handle" {...dragHandleProps}>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="9" cy="5" r="1.2" fill="currentColor" stroke="none" />
+                      <circle cx="15" cy="5" r="1.2" fill="currentColor" stroke="none" />
+                      <circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none" />
+                      <circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none" />
+                      <circle cx="9" cy="19" r="1.2" fill="currentColor" stroke="none" />
+                      <circle cx="15" cy="19" r="1.2" fill="currentColor" stroke="none" />
+                    </svg>
+                  </div>
+                  <div className="ia-q-num">س{idx + 1}</div>
+                  <div className={`ia-q-type type-${q.type.toLowerCase()}`}>
+                    {TYPE_LABELS[q.type]}
+                  </div>
+                  <div className="ia-q-actions">
+                    <button className="ia-icon-btn" onClick={() => openEdit(q)}>
                       <svg
-                        width="10"
-                        height="10"
+                        width="13"
+                        height="13"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        strokeWidth={3}
+                        strokeWidth={2}
                       >
-                        <polyline points="20 6 9 17 4 12" />
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
-                    )}
-                    {o.text}
+                    </button>
+                    <button
+                      className="ia-icon-btn danger"
+                      onClick={() => handleDeleteQuestion(q.id)}
+                      disabled={deleting === q.id}
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14H6L5 6" />
+                        <path d="M10 11v6M14 11v6M9 6V4h6v2" />
+                      </svg>
+                    </button>
                   </div>
-                ))}
+                </div>
+                <p className="ia-q-text">{q.text}</p>
+                {q.type === "MCQ" && q.options.length > 0 && (
+                  <div className="ia-q-options">
+                    {q.options.map((o) => (
+                      <div
+                        key={o.id}
+                        className={`ia-q-opt ${o.text === q.correct_answer ? "correct" : ""}`}
+                      >
+                        {o.text === q.correct_answer && (
+                          <svg
+                            width="10"
+                            height="10"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={3}
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                        {o.text}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {q.type === "TF" && (
+                  <div className="ia-q-tf">
+                    الإجابة الصحيحة:{" "}
+                    <strong>
+                      {q.correct_answer === "true" ? "صح ✓" : "خطأ ✗"}
+                    </strong>
+                  </div>
+                )}
+                {q.type === "WRITTEN" && (
+                  <div className="ia-q-written-note">
+                    <svg
+                      width="11"
+                      height="11"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    يتم تصحيح هذا السؤال يدوياً من قِبل المالك
+                  </div>
+                )}
               </div>
             )}
-            {q.type === "TF" && (
-              <div className="ia-q-tf">
-                الإجابة الصحيحة:{" "}
-                <strong>
-                  {q.correct_answer === "true" ? "صح ✓" : "خطأ ✗"}
-                </strong>
-              </div>
-            )}
-            {q.type === "WRITTEN" && (
-              <div className="ia-q-written-note">
-                <svg
-                  width="11"
-                  height="11"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-                يتم تصحيح هذا السؤال يدوياً من قِبل المالك
-              </div>
-            )}
-          </div>
-        ))}
+          />
+        )}
       </div>
 
       {assessment.questions.length > 0 && (
@@ -715,6 +748,8 @@ const css = `
   .ia-q-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--text3);padding:48px;background:var(--surface);border:1px dashed var(--gold-border);border-radius:10px;font-size:13.5px;line-height:1.6}
   .ia-q-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow-sm);transition:border-color 0.15s}
   .ia-q-card:hover{border-color:var(--gold-border)}
+  .ia-drag-handle{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;color:var(--text3);flex-shrink:0;transition:all 0.15s}
+  .ia-drag-handle:hover{color:var(--gold);background:var(--gold-muted)}
   .ia-q-head{display:flex;align-items:center;gap:10px}
   .ia-q-num{font-size:11px;font-weight:800;color:var(--gold);font-family:'IBM Plex Mono',monospace;background:var(--gold-muted);padding:3px 9px;border-radius:5px;border:1px solid var(--gold-border)}
   .ia-q-type{font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px}
