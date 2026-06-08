@@ -23,7 +23,7 @@ function getInitials(name: string) {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("ar-SA", {
+  return new Date(d).toLocaleDateString("en-GB", {
     year: "numeric",
     month: "long",
     day: "numeric",

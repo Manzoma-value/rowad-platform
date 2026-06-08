@@ -18,18 +18,49 @@ import type { PrismaClient, Maqsad } from "@prisma/client";
 export const COLUMN_ORDER: Maqsad[] = ["DEEN", "NAFS", "AQL", "NASL", "MAL"];
 
 export const DEFAULT_LEVELS: { order: number; name_ar: string; name_sq: string | null }[] = [
-  { order: 1, name_ar: "المستوى الأول — الاتباع", name_sq: null },
-  { order: 2, name_ar: "المستوى الثاني — الاستبانة", name_sq: null },
-  { order: 3, name_ar: "المستوى الثالث — القيادة", name_sq: null },
-  { order: 4, name_ar: "المستوى الرابع — التمكين", name_sq: null },
-  { order: 5, name_ar: "المستوى الخامس — الريادة", name_sq: null },
+  { order: 1, name_ar: "المستوى الأول — الاتباع", name_sq: "Niveli i Parë — Ndjekja" },
+  { order: 2, name_ar: "المستوى الثاني — الاستبانة", name_sq: "Niveli i Dytë — Sqarimi" },
+  { order: 3, name_ar: "المستوى الثالث — القيادة", name_sq: "Niveli i Tretë — Lidershipi" },
+  { order: 4, name_ar: "المستوى الرابع — التمكين", name_sq: "Niveli i Katërt — Fuqizimi" },
+  { order: 5, name_ar: "المستوى الخامس — الريادة", name_sq: "Niveli i Pestë — Pionierizmi" },
 ];
+
+/** Per-concept Albanian short names, keyed by Arabic name_ar.
+ *  Used both at seed time and by the backfill migration. */
+export const CONCEPT_SQ_BY_AR: Record<string, string> = {
+  "النية المثمرة": "Qëllimi i Frytshëm",
+  "مسار الزمن": "Rrjedha e Kohës",
+  "المآلات": "Pasojat",
+  "التفكير الاستراتيجي": "Mendimi Strategjik",
+  "الهياكل الاجتماعية": "Strukturat Shoqërore",
+  "قواعد التنمية الشرعية": "Parimet e Zhvillimit Sheriatik",
+  "الماضي والحاضر والمستقبل — نفسي": "E shkuara, e tashmja & e ardhmja — Psikologjike",
+  "تدبير أمر الأمة / المجلة": "Qeverisja e Umetit / Mexhella",
+  "آليات كسب المال": "Mekanizmat e Fitimit",
+  "الماضي والحاضر والمستقبل — عقلي": "E shkuara, e tashmja & e ardhmja — Intelektuale",
+  "الطاقة الروحية": "Energjia Shpirtërore",
+  "الحاجات للإنسان": "Nevojat Njerëzore",
+  "برنامج تأهيل إداري وسياسي": "Kualifikim Administrativ & Politik",
+  "طرق تكوين المنظمات": "Metodat e Formimit të Organizatave",
+  "التفكير التشغيلي": "Mendimi Operacional",
+  "التصاحب": "Shoqërimi",
+  "خطط، أنجز، ادرس، أنفذ": "Plano, Realizo, Studio, Zbato",
+  "القيادة": "Lidershipi",
+  "تنويع المؤثرات الحيوية": "Diversifikimi i Faktorëve Vitalë",
+  "أصبح كل مقصد في الآخر": "Çdo qëllim i ndërthurur me të tjerët",
+  "القياس التنموي": "Matja e Zhvillimit",
+  "المسار / الهدف / الوصف": "Rrugëtimi / Synimi / Përshkrimi",
+  "التوعية بالفرص والتهديدات": "Ndërgjegjësimi për Mundësitë & Kërcënimet",
+  "الاستراتيجية الوطنية": "Strategjia Kombëtare",
+  "التدبير الاقتصادي": "Qeverisja Ekonomike",
+};
 
 export type ConceptSeed = {
   level: number;
   maqsad: Maqsad;
   order: number;
   name_ar: string;
+  name_sq?: string;
   strategic_ar: string;
   duty_ar: string;
   reward_ar: string;
@@ -303,7 +334,11 @@ export async function seedRowadModel(
   });
   if (conceptCount === 0) {
     await prisma.rowadConcept.createMany({
-      data: DEFAULT_CONCEPTS.map((c) => ({ ...c, model_id: model.id })),
+      data: DEFAULT_CONCEPTS.map((c) => ({
+        ...c,
+        name_sq: c.name_sq ?? CONCEPT_SQ_BY_AR[c.name_ar] ?? null,
+        model_id: model.id,
+      })),
     });
   }
 

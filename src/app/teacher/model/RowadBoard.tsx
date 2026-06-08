@@ -34,7 +34,6 @@ const loc = (lang: Lang, ar?: string | null, sq?: string | null) =>
 const STR = {
   ar: {
     brand: "بناء الأهلية",
-    brandSub: "مقياس التوجه الإيجابي",
     sub: "جيل الرواد",
     instructions:
       "اسحب كل بطاقة إلى مكانها الصحيح في النموذج، أو اضغط البطاقة ثم اضغط الخانة. يجب وضع ٢٥ بطاقة.",
@@ -56,10 +55,10 @@ const STR = {
     reward: "الأجر",
     fruit: "الثمرة",
     verification: "مؤشر التحقق",
+    levelFallback: (n: number) => `المستوى ${n}`,
   },
   sq: {
     brand: "Bina Al-Ahlia",
-    brandSub: "Matësi i orientimit pozitiv",
     sub: "Brezi i Pionierëve",
     instructions:
       "Tërhiq çdo kartë në vendin e saj, ose kliko kartën pastaj kliko qelizën. Duhen vendosur 25 karta.",
@@ -81,6 +80,7 @@ const STR = {
     reward: "Shpërblimi",
     fruit: "Fryti",
     verification: "Treguesi i verifikimit",
+    levelFallback: (n: number) => `Niveli ${n}`,
   },
 } as const;
 
@@ -207,9 +207,22 @@ export default function RowadBoard({
 
   const sortedLevels = [...levels].sort((a, b) => a.order - b.order);
 
+  // Resolve a level's label in the active language. Falls back to "Niveli N"
+  // / "المستوى N" when the alt-language name hasn't been filled in the DB.
+  function levelLabel(lvl: LevelRow): string {
+    if (lang === "sq" && lvl.name_sq?.trim()) return lvl.name_sq;
+    if (lvl.name_ar?.trim()) return lang === "sq" ? (lvl.name_sq?.trim() || lvl.name_ar) : lvl.name_ar;
+    return tr.levelFallback(lvl.order);
+  }
+
   function renderRow(lvl: LevelRow) {
     return (
       <div className="rbx-row" key={lvl.order}>
+        {/* Level label FIRST — sits at the row-start side in both LTR & RTL. */}
+        <div className="rbx-rowlabel">
+          <span className="rbx-rowlabel-num">{lvl.order}</span>
+          <span className="rbx-rowlabel-text">{levelLabel(lvl)}</span>
+        </div>
         {COLUMN_ORDER.map((mq) => {
           const occ = conceptInCell[cellKey(lvl.order, mq)];
           const card = occ ? cardById[occ] : null;
@@ -225,7 +238,8 @@ export default function RowadBoard({
               onClick={() => onCellClick(lvl.order, mq)}
             >
               <div className={`rbx-cell${card ? " filled" : ""}${isOver ? " over" : ""}${selected && !card ? " target" : ""}`}>
-                <span className="rbx-cell-dot" />
+                <span className="rbx-cell-corner rbx-cell-corner--tr" aria-hidden />
+                <span className="rbx-cell-corner rbx-cell-corner--bl" aria-hidden />
                 {card ? (
                   <div
                     className={`rbx-chip${selected === card.id ? " sel" : ""}`}
@@ -244,7 +258,6 @@ export default function RowadBoard({
             </div>
           );
         })}
-        <div className="rbx-rowlabel">{loc(lang, lvl.name_ar, lvl.name_sq)}</div>
       </div>
     );
   }
@@ -263,12 +276,23 @@ export default function RowadBoard({
               <span className="rbx-tray-empty">{tr.allPlaced}</span>
             ) : (
               tray.map((c) => (
-                <div key={c.id} className={`rbx-card${selected === c.id ? " sel" : ""}`}
-                  draggable onDragStart={(e) => onDragStart(e, c.id)} onClick={() => onCardClick(c.id)}>
+                <div
+                  key={c.id}
+                  className={`rbx-card${selected === c.id ? " sel" : ""}`}
+                  draggable
+                  onDragStart={(e) => onDragStart(e, c.id)}
+                  onClick={() => onCardClick(c.id)}
+                >
+                  <span className="rbx-card-emblem" aria-hidden />
                   <span className="rbx-card-text">{loc(lang, c.name_ar, c.name_sq)}</span>
                   {detailed && (
-                    <button type="button" className="rbx-card-i"
-                      onClick={(e) => { e.stopPropagation(); setDetailCard(c); }}>{tr.details}</button>
+                    <button
+                      type="button"
+                      className="rbx-card-i"
+                      onClick={(e) => { e.stopPropagation(); setDetailCard(c); }}
+                    >
+                      {tr.details}
+                    </button>
                   )}
                 </div>
               ))
@@ -284,7 +308,7 @@ export default function RowadBoard({
           <div className="rbx-header">
             <div className="rbx-brand">
               <div className="rbx-brand-emblem" aria-hidden>
-                <svg width="34" height="34" viewBox="0 0 40 40">
+                <svg width="36" height="36" viewBox="0 0 40 40">
                   <circle cx="20" cy="20" r="18" fill="#2b2417" />
                   <circle cx="20" cy="20" r="18" fill="url(#rbxg)" />
                   <defs>
@@ -297,7 +321,6 @@ export default function RowadBoard({
               </div>
               <div className="rbx-brand-text">
                 <span className="rbx-brand-name">{tr.brand}</span>
-                <span className="rbx-brand-sub">{tr.brandSub}</span>
               </div>
             </div>
             <div className="rbx-titleblock">
@@ -311,23 +334,23 @@ export default function RowadBoard({
             <div className="rbx-header-spacer" />
           </div>
 
-          {/* Axis labels */}
+          {/* Axis labels — level column sits first */}
           <div className="rbx-axis">
+            <div className="rbx-axis-level">{tr.level}</div>
             <div className="rbx-axis-maqsad">
               <span className="rbx-axis-dash" /><span className="rbx-axis-maqsad-text">{tr.maqsad}</span><span className="rbx-axis-dash" />
             </div>
-            <div className="rbx-axis-level">{tr.level}</div>
           </div>
 
-          {/* Column names */}
+          {/* Column names — leading slot is the level header pad */}
           <div className="rbx-colnames">
+            <div className="rbx-colname-pad" />
             {COLUMN_ORDER.map((mq) => (
               <div key={mq} className="rbx-colname">
                 {COLUMN_LABELS[mq][lang === "sq" ? "sq" : "ar"]}
                 <span className="rbx-colname-dot" />
               </div>
             ))}
-            <div className="rbx-colname-pad" />
           </div>
 
           {/* Rows 1–2 */}
@@ -398,23 +421,28 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-const COLS_TEMPLATE = "repeat(5,1fr) 104px";
+/* Grid layout: level column FIRST, then five maqsad columns. In RTL the
+   visual start side (right) is naturally the level column; in LTR it's
+   the left — exactly what the user asked for. */
+const COLS_TEMPLATE = "128px repeat(5, minmax(0, 1fr))";
+const COLS_TEMPLATE_SM = "78px repeat(5, minmax(0, 1fr))";
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=El+Messiri:wght@500;600;700;800&display=swap');
   @keyframes rbx-spin{to{transform:rotate(360deg)}}
   @keyframes rbx-chipin{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+  @keyframes rbx-pulse{0%,100%{box-shadow:0 0 0 0 rgba(194,160,89,0.0)}50%{box-shadow:0 0 0 6px rgba(194,160,89,0.18)}}
 
   .rbx-wrap{
     --cream-0:#F6EEDC;--cream-1:#EFE6D1;--cream-2:#E7DDC4;
-    --gold:#C2A059;--gold-soft:#D8C49A;--gold-line:#C0A063;
+    --gold:#C2A059;--gold-soft:#D8C49A;--gold-line:#C0A063;--gold-deep:#9A7833;
     --ink:#3B2F1C;--brown:#5A4A30;--brown-soft:#7A6440;--label:#A9863F;--level:#7C5A38;
     position:relative;min-height:100%;font-family:'Cairo','Tajawal',sans-serif;color:var(--ink);
     background:
       radial-gradient(ellipse at 50% 12%, #F8F1E0 0%, transparent 55%),
       linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%);
   }
-  .rbx-inner{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:26px 16px 50px}
+  .rbx-inner{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:26px 16px 50px}
 
   /* ── Tray ── */
   .rbx-tray{background:rgba(255,253,247,0.7);border:1.5px dashed var(--gold-soft);border-radius:14px;
@@ -423,20 +451,51 @@ const styles = `
   .rbx-tray-title{font-size:12px;font-weight:800;color:var(--brown);letter-spacing:1px}
   .rbx-tray-count{font-size:11px;font-weight:700;color:var(--label);background:rgba(194,160,89,0.12);
     padding:3px 12px;border-radius:99px;border:1px solid rgba(194,160,89,0.25)}
-  .rbx-tray-cards{display:flex;flex-wrap:wrap;gap:8px;min-height:46px}
+  .rbx-tray-cards{display:flex;flex-wrap:wrap;gap:10px;min-height:46px}
   .rbx-tray-empty{font-size:13px;color:#3f8a4f;font-weight:700;padding:8px 0}
-  .rbx-card{display:inline-flex;align-items:center;gap:7px;cursor:grab;user-select:none;
-    background:linear-gradient(180deg,#FFFDF8,#F4ECD9);border:1.5px solid var(--gold-soft);border-radius:10px;
-    padding:8px 14px;font-size:12.5px;font-weight:700;color:var(--brown);transition:all .15s;
-    box-shadow:0 1px 3px rgba(150,115,50,0.08)}
-  .rbx-card:hover{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 4px 12px rgba(194,160,89,0.2)}
-  .rbx-card.sel{border-color:#B8963A;background:#FFF6DF;box-shadow:0 0 0 3px rgba(194,160,89,0.22)}
-  .rbx-card-i{flex-shrink:0;font-size:9.5px;font-weight:800;color:var(--label);cursor:pointer;
-    background:rgba(194,160,89,0.14);border:1px solid rgba(194,160,89,0.25);border-radius:6px;padding:2px 8px}
-  .rbx-card-i:hover{background:rgba(194,160,89,0.3)}
+
+  /* ── Tray cards — modern, refined ── */
+  .rbx-card{
+    position:relative;display:inline-flex;align-items:center;gap:9px;
+    cursor:grab;user-select:none;
+    background:linear-gradient(160deg,#FFFCF1 0%,#F7EDD3 100%);
+    border:1.5px solid var(--gold-soft);
+    border-radius:14px;
+    padding:10px 16px 10px 14px;
+    font-size:13px;font-weight:700;color:var(--brown);
+    transition:transform .18s var(--rbx-ease,cubic-bezier(.22,1,.36,1)), box-shadow .18s, border-color .18s;
+    box-shadow:
+      0 1px 3px rgba(150,115,50,0.10),
+      inset 0 1px 0 rgba(255,255,255,0.55);
+    overflow:hidden;
+  }
+  .rbx-card::before{
+    content:''; position:absolute; inset-inline-start:0; top:8px; bottom:8px; width:3px; border-radius:0 2px 2px 0;
+    background:linear-gradient(180deg,var(--gold),var(--gold-deep));
+    opacity:.9;
+  }
+  [dir="rtl"] .rbx-card::before{border-radius:2px 0 0 2px}
+  .rbx-card-emblem{
+    width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    background:radial-gradient(circle at 35% 30%, #E5C57F 0%, var(--gold) 55%, var(--gold-deep) 100%);
+    box-shadow:0 0 0 2px rgba(255,253,247,0.95), 0 0 0 3px rgba(194,160,89,0.45);
+  }
+  .rbx-card-text{flex:1;line-height:1.35}
+  .rbx-card:hover{border-color:var(--gold);transform:translateY(-1px);
+    box-shadow:0 6px 18px rgba(194,160,89,0.24), inset 0 1px 0 rgba(255,255,255,0.6)}
+  .rbx-card.sel{
+    border-color:var(--gold-deep);
+    background:linear-gradient(160deg,#FFF6E0 0%,#F4E6BD 100%);
+    box-shadow:0 0 0 3px rgba(194,160,89,0.28), 0 6px 18px rgba(194,160,89,0.22);
+    animation:rbx-pulse 1.6s ease-in-out infinite;
+  }
+  .rbx-card-i{flex-shrink:0;font-size:10px;font-weight:800;color:var(--label);cursor:pointer;
+    background:rgba(194,160,89,0.16);border:1px solid rgba(194,160,89,0.3);border-radius:7px;padding:3px 9px;
+    transition:background .14s}
+  .rbx-card-i:hover{background:rgba(194,160,89,0.32)}
 
   /* ── Framed document ── */
-  .rbx-frame{position:relative;border-radius:14px;padding:22px 26px 26px;overflow:hidden;
+  .rbx-frame{position:relative;border-radius:16px;padding:24px 28px 28px;overflow:hidden;
     background:
       radial-gradient(ellipse at 50% 0%, #F8F1E1 0%, transparent 60%),
       linear-gradient(160deg,#F4ECD9 0%,#EDE3CC 100%);
@@ -450,67 +509,95 @@ const styles = `
   /* Header */
   .rbx-header{display:flex;align-items:flex-start;gap:14px;margin-bottom:6px}
   .rbx-brand{display:flex;align-items:center;gap:10px;min-width:150px}
-  .rbx-brand-emblem{width:34px;height:34px;flex-shrink:0;border-radius:50%;overflow:hidden;
+  .rbx-brand-emblem{width:36px;height:36px;flex-shrink:0;border-radius:50%;overflow:hidden;
     box-shadow:0 2px 6px rgba(0,0,0,0.18)}
   .rbx-brand-text{display:flex;flex-direction:column;line-height:1.25}
-  .rbx-brand-name{font-size:12.5px;font-weight:900;color:var(--ink)}
-  .rbx-brand-sub{font-size:8.5px;font-weight:700;color:var(--brown-soft)}
+  .rbx-brand-name{font-size:13px;font-weight:900;color:var(--ink)}
   .rbx-titleblock{flex:1;text-align:center}
-  .rbx-title{font-size:30px;font-weight:900;color:var(--ink);margin:0;letter-spacing:-0.3px;line-height:1.2}
+  .rbx-title{font-family:'El Messiri','Cairo',sans-serif;font-size:32px;font-weight:800;color:var(--ink);margin:0;letter-spacing:-0.3px;line-height:1.2}
   .rbx-subrow{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:6px}
-  .rbx-subline{height:1px;width:42px;background:linear-gradient(90deg,transparent,var(--gold))}
+  .rbx-subline{height:1px;width:54px;background:linear-gradient(90deg,transparent,var(--gold))}
   .rbx-subrow .rbx-subline:last-child{background:linear-gradient(90deg,var(--gold),transparent)}
-  .rbx-subtext{font-size:12px;font-weight:700;color:var(--brown-soft);letter-spacing:1px}
+  .rbx-subtext{font-size:12.5px;font-weight:700;color:var(--brown-soft);letter-spacing:1.2px}
   .rbx-header-spacer{min-width:150px}
   @media(max-width:700px){.rbx-brand,.rbx-header-spacer{min-width:0}.rbx-brand-text{display:none}}
 
-  /* Axis labels */
-  .rbx-axis{display:grid;grid-template-columns:${COLS_TEMPLATE};align-items:center;margin-top:14px}
-  .rbx-axis-maqsad{grid-column:1 / span 5;display:flex;align-items:center;justify-content:center;gap:10px}
-  .rbx-axis-dash{height:1px;width:70px;background:repeating-linear-gradient(90deg,rgba(169,134,63,0.5) 0 5px,transparent 5px 10px)}
-  .rbx-axis-maqsad-text{font-size:12.5px;font-weight:800;color:var(--label);letter-spacing:2px}
-  .rbx-axis-level{grid-column:6;text-align:center;font-size:12.5px;font-weight:800;color:var(--label);letter-spacing:1px}
+  /* Axis labels — leading column = level */
+  .rbx-axis{display:grid;grid-template-columns:${COLS_TEMPLATE};align-items:center;margin-top:18px}
+  .rbx-axis-level{grid-column:1;text-align:center;font-size:13px;font-weight:800;color:var(--label);letter-spacing:1.5px}
+  .rbx-axis-maqsad{grid-column:2 / span 5;display:flex;align-items:center;justify-content:center;gap:10px}
+  .rbx-axis-dash{height:1px;width:80px;background:repeating-linear-gradient(90deg,rgba(169,134,63,0.5) 0 5px,transparent 5px 10px)}
+  .rbx-axis-maqsad-text{font-size:13px;font-weight:800;color:var(--label);letter-spacing:2px}
 
-  /* Column names */
-  .rbx-colnames{display:grid;grid-template-columns:${COLS_TEMPLATE};margin-top:10px;margin-bottom:6px}
-  .rbx-colname{text-align:center;font-size:14.5px;font-weight:800;color:var(--brown);position:relative;padding-bottom:10px}
-  .rbx-colname-dot{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;
-    background:var(--gold);opacity:0.7}
+  /* Column names — leading slot is empty (above the level labels) */
+  .rbx-colnames{display:grid;grid-template-columns:${COLS_TEMPLATE};margin-top:10px;margin-bottom:8px}
   .rbx-colname-pad{}
+  .rbx-colname{text-align:center;font-size:15px;font-weight:800;color:var(--brown);position:relative;padding-bottom:11px}
+  .rbx-colname-dot{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:6px;height:6px;border-radius:50%;
+    background:var(--gold);opacity:0.75;box-shadow:0 0 0 3px rgba(194,160,89,0.12)}
 
   /* Rows */
   .rbx-section{}
   .rbx-row{display:grid;grid-template-columns:${COLS_TEMPLATE};align-items:stretch;gap:0}
-  .rbx-cellwrap{padding:7px;cursor:pointer}
-  .rbx-rowlabel{display:flex;align-items:center;justify-content:flex-start;padding:7px 12px 7px 4px;
-    font-size:12.5px;font-weight:800;color:var(--level)}
-  .rbx-cell{position:relative;min-height:62px;display:flex;align-items:center;justify-content:center;padding:8px 10px;
-    border:1.5px solid var(--gold-soft);border-radius:12px;
+
+  /* Row label sits BEFORE the cells → start-side in both RTL and LTR */
+  .rbx-rowlabel{
+    display:flex;align-items:center;gap:9px;
+    padding:8px 14px;
+    font-size:13px;font-weight:800;color:var(--level);line-height:1.3;
+    text-align:start;
+  }
+  .rbx-rowlabel-num{
+    flex-shrink:0;width:26px;height:26px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'El Messiri','Cairo',sans-serif;font-weight:800;font-size:13px;
+    color:var(--gold-deep);
+    background:linear-gradient(160deg,#FBF2D9,#F2E2B5);
+    border:1px solid rgba(194,160,89,0.45);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.65), 0 1px 2px rgba(150,115,50,0.10);
+  }
+  .rbx-rowlabel-text{flex:1;min-width:0;overflow-wrap:break-word}
+
+  .rbx-cellwrap{padding:8px;cursor:pointer}
+  .rbx-cell{position:relative;min-height:88px;display:flex;align-items:center;justify-content:center;
+    padding:10px 12px;
+    border:1.5px solid var(--gold-soft);border-radius:14px;
     background:linear-gradient(180deg,#FCF8EE,#F3EAD6);
-    box-shadow:inset 0 1px 2px rgba(255,255,255,0.6),0 1px 2px rgba(150,115,50,0.06);transition:all .14s}
-  .rbx-cell-dot{position:absolute;top:8px;inset-inline-end:10px;width:5px;height:5px;border-radius:50%;
-    background:var(--gold);opacity:0.45}
+    box-shadow:inset 0 1px 2px rgba(255,255,255,0.6),0 1px 2px rgba(150,115,50,0.06);
+    transition:all .14s var(--rbx-ease,cubic-bezier(.22,1,.36,1))}
+  .rbx-cell-corner{position:absolute;width:10px;height:10px;border:1px solid rgba(169,134,63,0.45);opacity:.7}
+  .rbx-cell-corner--tr{top:6px;inset-inline-end:6px;border-inline-start:none;border-bottom:none;border-radius:0 4px 0 0}
+  .rbx-cell-corner--bl{bottom:6px;inset-inline-start:6px;border-inline-end:none;border-top:none;border-radius:0 0 0 4px}
   .rbx-cell.target{border-color:var(--gold);background:#FBF3DF}
   .rbx-cell.over{border-color:#B8963A;background:#FBF1D6;box-shadow:0 0 0 3px rgba(194,160,89,0.25)}
-  .rbx-cell.filled{border-color:var(--gold);background:linear-gradient(180deg,#FFFBF0,#F7EFDB)}
+  .rbx-cell.filled{
+    border-color:var(--gold);
+    background:linear-gradient(180deg,#FFFBF0,#F6EDD6);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.6), 0 4px 14px rgba(194,160,89,0.14);
+  }
 
-  .rbx-chip{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;cursor:grab;user-select:none;
-    font-size:12px;font-weight:800;color:var(--ink);line-height:1.35;text-align:center;animation:rbx-chipin .18s ease}
+  .rbx-chip{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+    cursor:grab;user-select:none;
+    font-size:13px;font-weight:800;color:var(--ink);line-height:1.4;text-align:center;
+    padding:6px 8px;
+    animation:rbx-chipin .18s ease;
+  }
   .rbx-chip.sel{color:#7a5a14}
   .rbx-chip-text{flex:1}
-  .rbx-chip-i{flex-shrink:0;width:17px;height:17px;font-size:10px;font-weight:800;color:var(--label);cursor:pointer;
-    background:rgba(194,160,89,0.16);border:1px solid rgba(194,160,89,0.3);border-radius:5px;line-height:1}
+  .rbx-chip-i{flex-shrink:0;width:19px;height:19px;font-size:10.5px;font-weight:800;color:var(--label);cursor:pointer;
+    background:rgba(194,160,89,0.16);border:1px solid rgba(194,160,89,0.3);border-radius:6px;line-height:1}
   .rbx-chip-i:hover{background:rgba(194,160,89,0.32)}
 
   /* Transform band */
-  .rbx-band{display:flex;align-items:center;justify-content:center;gap:14px;padding:6px 0 8px;margin:6px 0 2px}
-  .rbx-band-line{height:1px;flex:1;max-width:230px}
+  .rbx-band{display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 0 10px;margin:8px 0 4px}
+  .rbx-band-line{height:1px;flex:1;max-width:260px}
   .rbx-band-line.s{background:repeating-linear-gradient(90deg,rgba(169,134,63,0.5) 0 4px,transparent 4px 9px)}
   .rbx-band-line.e{background:repeating-linear-gradient(90deg,rgba(169,134,63,0.5) 0 4px,transparent 4px 9px)}
-  .rbx-band-text{font-size:12.5px;font-weight:800;color:var(--brown-soft);letter-spacing:1.5px;white-space:nowrap}
+  .rbx-band-text{font-size:13px;font-weight:800;color:var(--brown-soft);letter-spacing:1.5px;white-space:nowrap;text-align:center}
 
   /* Instructions */
-  .rbx-instructions{font-size:12.5px;color:var(--brown-soft);text-align:center;padding:16px 0 0;margin:0;line-height:1.7}
+  .rbx-instructions{font-size:13px;color:var(--brown-soft);text-align:center;padding:18px 0 0;margin:0;line-height:1.7}
 
   /* Footer */
   .rbx-footer{display:flex;align-items:center;gap:20px;margin-top:18px;flex-wrap:wrap;justify-content:space-between}
@@ -548,10 +635,32 @@ const styles = `
     background:rgba(194,160,89,0.12);border:1px solid rgba(194,160,89,0.25);padding:3px 11px;border-radius:7px;margin-bottom:6px}
   .rbx-detail-value{font-size:13.5px;color:var(--brown);line-height:1.75;margin:0}
 
-  @media(max-width:700px){
-    .rbx-axis,.rbx-colnames,.rbx-row{grid-template-columns:repeat(5,1fr) 64px}
-    .rbx-title{font-size:21px}.rbx-colname{font-size:11px}.rbx-rowlabel{font-size:9.5px;padding:6px 4px}
-    .rbx-cell{min-height:52px;padding:5px}.rbx-chip{font-size:10px}.rbx-cellwrap{padding:4px}
-    .rbx-band-text{font-size:10px;letter-spacing:.5px}.rbx-frame{padding:16px 12px 18px}
+  /* ── Responsive ── */
+  @media(max-width:900px){
+    .rbx-axis,.rbx-colnames,.rbx-row{grid-template-columns:${COLS_TEMPLATE_SM}}
+    .rbx-title{font-size:24px}
+    .rbx-colname{font-size:12px;padding-bottom:9px}
+    .rbx-rowlabel{font-size:11.5px;padding:6px 8px;gap:7px}
+    .rbx-rowlabel-num{width:22px;height:22px;font-size:11.5px;border-radius:7px}
+    .rbx-cell{min-height:72px;padding:8px}
+    .rbx-chip{font-size:11.5px}
+    .rbx-cellwrap{padding:5px}
+    .rbx-band-text{font-size:11px;letter-spacing:.8px}
+    .rbx-frame{padding:18px 14px 20px}
+    .rbx-axis-dash{width:40px}
+  }
+  @media(max-width:560px){
+    .rbx-inner{padding:18px 10px 36px}
+    .rbx-axis,.rbx-colnames,.rbx-row{grid-template-columns:62px repeat(5,minmax(0,1fr))}
+    .rbx-title{font-size:20px}
+    .rbx-colname{font-size:10.5px}
+    .rbx-rowlabel{flex-direction:column;gap:4px;padding:4px;text-align:center;font-size:10px}
+    .rbx-rowlabel-num{width:20px;height:20px;font-size:10.5px}
+    .rbx-rowlabel-text{font-size:10px;line-height:1.2}
+    .rbx-cell{min-height:62px;padding:5px 4px;border-radius:11px}
+    .rbx-chip{font-size:10.5px;gap:5px}
+    .rbx-cellwrap{padding:3px}
+    .rbx-card{padding:9px 13px;font-size:12px}
+    .rbx-card::before{top:6px;bottom:6px}
   }
 `;
