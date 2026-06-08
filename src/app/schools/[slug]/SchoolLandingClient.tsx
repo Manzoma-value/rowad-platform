@@ -89,18 +89,6 @@ export default function SchoolLandingClient({ school }: { school: School }) {
 
         {/* ══ NAVBAR ══ */}
         <nav className={`lp-nav${scrolled ? " lp-scrolled" : ""}`}>
-          {/* Logo */}
-          <div className="lp-logo-wrap">
-            <Image
-              src="/ahlia.png"
-              alt="Al Rowad"
-              fill
-              sizes="160px"
-              style={{ objectFit: "contain", objectPosition: tr.dir === "rtl" ? "right center" : "left center" }}
-              priority
-            />
-          </div>
-
           {/* School name centred */}
           <span className="lp-nav-name">{displayName}</span>
 
@@ -240,10 +228,6 @@ html{scroll-behavior:smooth;}
   background:linear-gradient(90deg,transparent,rgba(200,169,106,0.18),transparent)!important;
 }
 
-/* Logo */
-.lp-logo-wrap{
-  position:relative;width:160px;height:56px;flex-shrink:0;
-}
 
 /* School name (centred) */
 .lp-nav-name{
@@ -424,7 +408,6 @@ html{scroll-behavior:smooth;}
 ════════════════ */
 @media(max-width:760px){
   .lp-nav{padding:0 14px;height:60px;gap:8px;}
-  .lp-logo-wrap{width:106px;height:40px;}
   .lp-nav-name{display:none;}
   .lp-ghost{display:none;}
   .lp-gold{padding:7px 14px;font-size:12.5px;}
@@ -470,7 +453,6 @@ html{scroll-behavior:smooth;}
 
 @media(max-width:400px){
   .lp-nav{padding:0 10px;height:56px;}
-  .lp-logo-wrap{width:92px;height:36px;}
   .lp-gold{padding:6px 12px;font-size:11.5px;}
   .lp-hero-body{padding:84px 14px 68px;}
   .lp-stat{padding:11px 12px;}

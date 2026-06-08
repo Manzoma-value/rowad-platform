@@ -53,27 +53,6 @@ const STATUS_LABELS: Record<string, string> = {
 
 type Tab = "overview" | "teachers" | "students" | "classes" | "settings";
 
-const PRESET_THEMES = [
-  {
-    name: "الهوية الرئيسية",
-    primary: "#C8A96A",
-    secondary: "#E5B93C",
-    bg: "#0B0B0C",
-  },
-  { name: "الشباب", primary: "#E5B93C", secondary: "#C8A96A", bg: "#0B0B0C" },
-  { name: "القيم", primary: "#C8A96A", secondary: "#E5B93C", bg: "#7A1E1E" },
-  {
-    name: "أزرق ليلي",
-    primary: "#60A5FA",
-    secondary: "#93C5FD",
-    bg: "#0F172A",
-  },
-  { name: "زمرد", primary: "#34D399", secondary: "#6EE7B7", bg: "#064E3B" },
-  { name: "بنفسجي", primary: "#A78BFA", secondary: "#C4B5FD", bg: "#1E1B4B" },
-  { name: "وردي", primary: "#F472B6", secondary: "#FBCFE8", bg: "#1A0A14" },
-  { name: "برتقالي", primary: "#FB923C", secondary: "#FED7AA", bg: "#1A0A00" },
-];
-
 export default function OwnerSchoolDetailPage() {
   const params = useParams();
   const id = params.id as string;
@@ -88,9 +67,6 @@ export default function OwnerSchoolDetailPage() {
   const [settingsSlug, setSettingsSlug] = useState("");
   const [settingsDesc, setSettingsDesc] = useState("");
   const [settingsLang, setSettingsLang] = useState("ar");
-  const [colorPrimary, setColorPrimary] = useState("#C8A96A");
-  const [colorSecondary, setColorSecondary] = useState("#E5B93C");
-  const [colorBg, setColorBg] = useState("#0B0B0C");
   const [features, setFeatures] = useState<Features>(defaultFeatures());
 
   useEffect(() => {
@@ -102,9 +78,6 @@ export default function OwnerSchoolDetailPage() {
         setSettingsSlug(d.school?.slug ?? "");
         setSettingsDesc(d.school?.description ?? "");
         setSettingsLang(d.school?.language ?? "ar");
-        setColorPrimary(d.school?.color_primary || "#C8A96A");
-        setColorSecondary(d.school?.color_secondary || "#E5B93C");
-        setColorBg(d.school?.color_bg || "#0B0B0C");
         setFeatures(d.school?.features ?? defaultFeatures());
         setLoading(false);
       })
@@ -125,9 +98,6 @@ export default function OwnerSchoolDetailPage() {
         slug: settingsSlug,
         description: settingsDesc,
         language: settingsLang,
-        color_primary: colorPrimary,
-        color_secondary: colorSecondary,
-        color_bg: colorBg,
         features,
       }),
     });
@@ -229,25 +199,6 @@ export default function OwnerSchoolDetailPage() {
               })}
             </p>
           </div>
-          {/* Color preview dots */}
-          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-            {[
-              school.color_bg,
-              school.color_primary,
-              school.color_secondary,
-            ].map((c, i) => (
-              <div
-                key={i}
-                style={{
-                  width: 14,
-                  height: 14,
-                  borderRadius: "50%",
-                  background: c || "#C8A96A",
-                  border: "1.5px solid rgba(0,0,0,0.15)",
-                }}
-              />
-            ))}
-          </div>
           <a
             href={`/schools/${school.slug}`}
             target="_blank"
@@ -300,8 +251,8 @@ export default function OwnerSchoolDetailPage() {
               { label: "مستفيدين", value: school.students.length, icon: "🎓" },
               { label: "الفصول", value: school.classes.length, icon: "📚" },
               {
-                label: "تاريخ الإنشاء",
-                value: new Date(school.created_at).toLocaleDateString("ar-SA", {
+                label: "Created",
+                value: new Date(school.created_at).toLocaleDateString("en-US", {
                   year: "numeric",
                   month: "short",
                 }),
@@ -563,167 +514,6 @@ export default function OwnerSchoolDetailPage() {
                 <option value="sq">🇦🇱 Shqip — الألبانية</option>
                 <option value="en">🇬🇧 English</option>
               </select>
-            </div>
-
-            {/* ── COLOR THEME ── */}
-            <div className="sd-divider" />
-
-            <div className="sd-field">
-              <label className="sd-field-label">قوالب ألوان جاهزة</label>
-              <div className="sd-presets">
-                {PRESET_THEMES.map((theme, i) => (
-                  <button
-                    key={i}
-                    className="sd-preset-btn"
-                    onClick={() => {
-                      setColorPrimary(theme.primary);
-                      setColorSecondary(theme.secondary);
-                      setColorBg(theme.bg);
-                    }}
-                  >
-                    <div className="sd-preset-dots">
-                      <div style={{ background: theme.bg }} />
-                      <div style={{ background: theme.primary }} />
-                      <div style={{ background: theme.secondary }} />
-                    </div>
-                    {theme.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="sd-field">
-              <label className="sd-field-label">ألوان مخصصة</label>
-              <div className="sd-colors-grid">
-                {[
-                  {
-                    label: "اللون الرئيسي",
-                    hint: "الأزرار والعناوين والأيقونة",
-                    value: colorPrimary,
-                    setter: setColorPrimary,
-                  },
-                  {
-                    label: "اللون الثانوي",
-                    hint: "الزخارف والتفاصيل الهندسية",
-                    value: colorSecondary,
-                    setter: setColorSecondary,
-                  },
-                  {
-                    label: "لون الخلفية",
-                    hint: "خلفية صفحة الجهة",
-                    value: colorBg,
-                    setter: setColorBg,
-                  },
-                ].map((c, i) => (
-                  <div key={i} className="sd-color-field">
-                    <div className="sd-color-label">{c.label}</div>
-                    <div className="sd-color-input-wrap">
-                      <input
-                        type="color"
-                        value={c.value}
-                        onChange={(e) => c.setter(e.target.value)}
-                        className="sd-color-picker"
-                      />
-                      <input
-                        type="text"
-                        value={c.value}
-                        onChange={(e) => c.setter(e.target.value)}
-                        className="sd-color-hex"
-                        maxLength={7}
-                        placeholder="#000000"
-                        dir="ltr"
-                      />
-                    </div>
-                    <div className="sd-color-hint">{c.hint}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Live preview */}
-            <div className="sd-field">
-              <label className="sd-field-label">معاينة مباشرة</label>
-              <div className="sd-preview" style={{ background: colorBg }}>
-                <div
-                  className="sd-preview-header"
-                  style={{ borderBottom: `1px solid rgba(255,255,255,0.08)` }}
-                >
-                  <div
-                    className="sd-preview-logo"
-                    style={{ background: colorPrimary, color: colorBg }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z" fill="currentColor" />
-                    </svg>
-                  </div>
-                  <span
-                    style={{
-                      color: colorPrimary,
-                      fontSize: 12,
-                      fontWeight: 800,
-                    }}
-                  >
-                    بناء الأهلية
-                  </span>
-                  <div
-                    className="sd-preview-btn"
-                    style={{ background: colorPrimary, color: colorBg }}
-                  >
-                    دخول
-                  </div>
-                </div>
-                <div className="sd-preview-body">
-                  <div
-                    className="sd-preview-ring"
-                    style={{
-                      border: `1.5px solid ${colorSecondary}`,
-                      borderRadius: "50%",
-                      width: 40,
-                      height: 40,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: "50%",
-                        background: colorPrimary,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 10,
-                        fontWeight: 900,
-                        color: colorBg,
-                      }}
-                    >
-                      {settingsName.charAt(0) || "م"}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      color: "white",
-                      fontSize: 13,
-                      fontWeight: 800,
-                      marginTop: 8,
-                    }}
-                  >
-                    {settingsName || "اسم الجهة"}
-                  </div>
-                  <div
-                    style={{
-                      color: colorPrimary,
-                      fontSize: 9,
-                      opacity: 0.6,
-                      marginTop: 4,
-                    }}
-                  >
-                    المنصة التعليمية
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* ── Feature toggles ── */}

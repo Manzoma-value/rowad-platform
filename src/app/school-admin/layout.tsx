@@ -9,7 +9,7 @@ import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
-import { cachedFetch } from "@/lib/api-cache";
+import { cachedFetch, clearCache } from "@/lib/api-cache";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
@@ -246,6 +246,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   async function handleLogout() {
     setLoggingOut(true);
+    clearCache();
     const supabase = createClient();
     await supabase.auth.signOut();
     const slug = schoolSlugRef.current;
@@ -510,7 +511,16 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                   <span className="sa-topbar-initial">{initials}</span>
                 )}
               </div>
-              <span className="sa-topbar-name">{name || (lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName)}</span>
+              <div className="sa-topbar-id">
+                <span className="sa-topbar-name">{name || (lang === "ar" ? "المدير" : "Admin")}</span>
+                {(schoolName || schoolNameAlt) && (
+                  <span className="sa-topbar-sub">
+                    {lang === "ar"
+                      ? `مدير في ${schoolName || schoolNameAlt}`
+                      : `Admin of ${schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}`}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -855,7 +865,9 @@ const styles = `
     background: linear-gradient(135deg, var(--sa-gold-soft), var(--sa-gold-deep));
   }
   .sa-topbar-initial { font-size: 11px; font-weight: 900; color: var(--sa-graphite); font-family: var(--sa-font-heading); }
-  .sa-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--sa-graphite); white-space: nowrap; padding-inline-start: 2px; }
+  .sa-topbar-id      { display: flex; flex-direction: column; gap: 1px; padding-inline-start: 4px; padding-inline-end: 2px; line-height: 1.15; }
+  .sa-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--sa-graphite); white-space: nowrap; }
+  .sa-topbar-sub     { font-size: 10px; font-weight: 600; color: var(--sa-gold-deep); white-space: nowrap; letter-spacing: 0.02em; opacity: 0.85; }
 
   /* Content */
   .sa-content { position: relative; flex: 1; padding: 28px 20px; animation: sa-slidein 0.42s var(--sa-ease-out); }

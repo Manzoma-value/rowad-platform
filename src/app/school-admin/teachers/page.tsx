@@ -124,9 +124,10 @@ export function SchoolAdminTeachersPage() {
                 <div className="te-name">{teacher.profile.full_name}</div>
                 <div className="te-classes">
                   {teacher.classes.length > 0 ? (
-                    teacher.classes
-                      .map((c) => c.name)
-                      .join(lang === "ar" ? " · " : " · ")
+                    <>
+                      <span className="te-prefix">{lang === "ar" ? "الفصل:" : "Class:"}</span>{" "}
+                      {teacher.classes.map((c) => c.name).join(" · ")}
+                    </>
                   ) : (
                     <span className="te-no-class">{tr.noAssignedClasses}</span>
                   )}
@@ -267,6 +268,7 @@ export function SchoolAdminTeachersPage() {
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .te-no-class { color: var(--border); font-style: italic; }
+        .te-prefix { color: var(--gold-deep, #B89B5E); font-weight: 700; }
 
         .te-badge-wrap { flex-shrink: 0; }
         .te-badge {

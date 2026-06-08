@@ -560,50 +560,6 @@ export default function OwnerProfilePage() {
             </div>
           </div>
 
-          {/* Security */}
-          <div className="pf-info-card">
-            <div className="pf-card-topline" />
-            <div className="pf-card-header">
-              <div className="pf-card-icon">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
-              </div>
-              <span className="pf-card-title">الأمان</span>
-            </div>
-
-            <div className="pf-security-row">
-              <div className="pf-security-icon">
-                <svg
-                  width="17"
-                  height="17"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
-              </div>
-              <div className="pf-security-body">
-                <span className="pf-security-title">كلمة المرور</span>
-                <span className="pf-security-dots">••••••••••••</span>
-              </div>
-              <button className="pf-btn-outline-sm">تغيير</button>
-            </div>
-          </div>
-
           {/* Stats */}
           <div className="pf-stats-card">
             <div className="pf-card-topline" />

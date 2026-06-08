@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
-import { cachedFetch } from "@/lib/api-cache";
+import { cachedFetch, clearCache } from "@/lib/api-cache";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -353,7 +353,7 @@ export default function OwnerLayout({
   const pathname = usePathname();
   const router = useRouter();
 
-  const [ownerName, setOwnerName] = useState("المالك");
+  const [ownerName, setOwnerName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -370,6 +370,7 @@ export default function OwnerLayout({
   }, []);
 
   const handleLogout = async () => {
+    clearCache();
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
@@ -379,7 +380,8 @@ export default function OwnerLayout({
     item.exact ? pathname === item.href : pathname.startsWith(item.href);
 
   const current = navItems.find(isActive);
-  const initial = ownerName.charAt(0);
+  const displayName = ownerName || "المالك";
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <div className="ow-shell" dir="rtl">
@@ -473,7 +475,7 @@ export default function OwnerLayout({
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
-                  alt={ownerName}
+                  alt={displayName}
                   width={40}
                   height={40}
                   style={{
@@ -488,7 +490,7 @@ export default function OwnerLayout({
               )}
             </div>
             <div className="ow-user-info">
-              <span className="ow-user-name">{ownerName}</span>
+              <span className="ow-user-name">{displayName}</span>
               <span className="ow-user-role">مالك النظام</span>
             </div>
             <button
@@ -546,7 +548,7 @@ export default function OwnerLayout({
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
-                    alt={ownerName}
+                    alt={displayName}
                     width={28}
                     height={28}
                     style={{
@@ -560,7 +562,7 @@ export default function OwnerLayout({
                   <span className="ow-topbar-initial">{initial}</span>
                 )}
               </div>
-              <span className="ow-topbar-name">{ownerName}</span>
+              <span className="ow-topbar-name">{displayName}</span>
             </Link>
           </div>
         </header>

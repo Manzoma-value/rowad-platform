@@ -9,7 +9,7 @@ import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
-import { cachedFetch } from "@/lib/api-cache";
+import { cachedFetch, clearCache } from "@/lib/api-cache";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
@@ -206,6 +206,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
   async function handleLogout() {
     setLoggingOut(true);
+    clearCache();
     const supabase = createClient();
     await supabase.auth.signOut();
     const slug = schoolSlugRef.current;
@@ -535,7 +536,16 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                   <span className="tl-topbar-initial">{initials}</span>
                 )}
               </div>
-              <span className="tl-topbar-name">{name || (lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName)}</span>
+              <div className="tl-topbar-id">
+                <span className="tl-topbar-name">{name || (lang === "ar" ? "المعلم" : "Teacher")}</span>
+                {(schoolName || schoolNameAlt) && (
+                  <span className="tl-topbar-sub">
+                    {lang === "ar"
+                      ? `معلم في ${schoolName || schoolNameAlt}`
+                      : `Teacher of ${schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}`}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -924,7 +934,9 @@ const styles = `
     background: linear-gradient(135deg, var(--tl-gold-soft), var(--tl-gold-deep));
   }
   .tl-topbar-initial { font-size: 11px; font-weight: 900; color: var(--tl-graphite); font-family: var(--tl-font-heading); }
-  .tl-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--tl-graphite); white-space: nowrap; padding-inline-start: 2px; }
+  .tl-topbar-id      { display: flex; flex-direction: column; gap: 1px; padding-inline-start: 4px; padding-inline-end: 2px; line-height: 1.15; }
+  .tl-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--tl-graphite); white-space: nowrap; }
+  .tl-topbar-sub     { font-size: 10px; font-weight: 600; color: var(--tl-gold-deep, #B89B5E); white-space: nowrap; letter-spacing: 0.02em; opacity: 0.85; }
 
   /* Content */
   .tl-content { position: relative; flex: 1; padding: 28px 20px; animation: tl-slidein 0.42s var(--tl-ease-out); }

@@ -412,7 +412,7 @@ export default function OwnerSchoolsPage() {
                     {school.language === "sq" ? "🇦🇱 Shqip" : "🇸🇦 عربي"}
                   </span>
                   <span className="card-date">
-                    {new Date(school.created_at).toLocaleDateString("ar-SA", {
+                    {new Date(school.created_at).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                     })}

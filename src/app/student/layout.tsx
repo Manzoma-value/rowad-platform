@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { cachedFetch } from "@/lib/api-cache";
+import { cachedFetch, clearCache } from "@/lib/api-cache";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -267,6 +267,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
 
   async function handleLogout() {
     setLoggingOut(true);
+    clearCache();
     const supabase = createClient();
     await supabase.auth.signOut();
     const slug = schoolSlugRef.current;
