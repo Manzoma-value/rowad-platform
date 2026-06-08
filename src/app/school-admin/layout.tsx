@@ -712,6 +712,10 @@ const styles = `
     text-decoration: none; border: 1px solid transparent;
     color: rgba(232, 220, 188, 0.70);
     transition: all 0.2s var(--sa-ease-out); overflow: hidden;
+    /* Never let parent flex pressure collapse the row. With many nav
+       items + a short viewport, omitting these caused labels to overlap. */
+    flex-shrink: 0;
+    min-height: 52px;
   }
   .sa-nav-item:hover {
     background: rgba(232, 220, 188, 0.06);
@@ -750,8 +754,11 @@ const styles = `
   }
 
   .sa-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-  .sa-nav-label-main { font-size: 13.5px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
-  .sa-nav-label-sub  { font-family: var(--sa-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; line-height: 1.2; }
+  /* display:block defensively forces a fresh block for each label so
+     the two never share a baseline — protects against parent flex
+     overrides from compromising vertical stacking. */
+  .sa-nav-label-main { display: block; font-size: 13.5px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
+  .sa-nav-label-sub  { display: block; font-family: var(--sa-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; line-height: 1.2; }
   .sa-nav-dot        { width: 6px; height: 6px; border-radius: 50%; background: var(--sa-gold); box-shadow: 0 0 8px rgba(200,169,106,0.6); flex-shrink: 0; }
 
   .sa-mandala-wrap { margin-top: auto; display: flex; align-items: center; justify-content: center; padding: 20px 0 10px; opacity: 0.70; }

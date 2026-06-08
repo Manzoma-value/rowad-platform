@@ -247,9 +247,9 @@ export default function OwnerSchoolDetailPage() {
         <div className="sd-ov">
           <div className="sd-ov-grid">
             {[
-              { label: "المشرفون", value: school.teachers.length, icon: "👨‍🏫" },
-              { label: "مستفيدين", value: school.students.length, icon: "🎓" },
-              { label: "الفصول", value: school.classes.length, icon: "📚" },
+              { label: "المشرفون", value: school.teachers.length, icon: "👨‍🏫", tab: "teachers" as Tab },
+              { label: "مستفيدين", value: school.students.length, icon: "🎓", tab: "students" as Tab },
+              { label: "الفصول", value: school.classes.length, icon: "📚", tab: "classes" as Tab },
               {
                 label: "Created",
                 value: new Date(school.created_at).toLocaleDateString("en-US", {
@@ -257,14 +257,27 @@ export default function OwnerSchoolDetailPage() {
                   month: "short",
                 }),
                 icon: "📅",
+                tab: undefined,
               },
-            ].map((s) => (
-              <div key={s.label} className="sd-ov-card">
-                <div className="sd-ov-icon">{s.icon}</div>
-                <div className="sd-ov-val">{s.value}</div>
-                <div className="sd-ov-lab">{s.label}</div>
-              </div>
-            ))}
+            ].map((s) =>
+              s.tab ? (
+                <button
+                  key={s.label}
+                  className="sd-ov-card sd-ov-card-btn"
+                  onClick={() => { setTab(s.tab!); setSearch(""); }}
+                >
+                  <div className="sd-ov-icon">{s.icon}</div>
+                  <div className="sd-ov-val">{s.value}</div>
+                  <div className="sd-ov-lab">{s.label}</div>
+                </button>
+              ) : (
+                <div key={s.label} className="sd-ov-card">
+                  <div className="sd-ov-icon">{s.icon}</div>
+                  <div className="sd-ov-val">{s.value}</div>
+                  <div className="sd-ov-lab">{s.label}</div>
+                </div>
+              )
+            )}
           </div>
           <div className="sd-ov-info-grid">
             {[
@@ -358,6 +371,7 @@ export default function OwnerSchoolDetailPage() {
                 <div className="sd-row-body">
                   <div className="sd-row-name">{t.profile.full_name}</div>
                   <div className="sd-row-sub">
+                    <span className="sd-row-sub-label">الفصول:</span>{" "}
                     {t.classes.length > 0
                       ? t.classes.map((c) => c.name).join("، ")
                       : "لا توجد فصول مُعيَّنة"}
@@ -408,6 +422,7 @@ export default function OwnerSchoolDetailPage() {
                 <div className="sd-row-body">
                   <div className="sd-row-name">{s.profile.full_name}</div>
                   <div className="sd-row-sub">
+                    <span className="sd-row-sub-label">الفصل:</span>{" "}
                     {s.class?.name ?? "لم يُعيَّن فصل"}
                   </div>
                 </div>
@@ -439,6 +454,7 @@ export default function OwnerSchoolDetailPage() {
                 <div className="sd-row-body">
                   <div className="sd-row-name">{c.name}</div>
                   <div className="sd-row-sub">
+                    <span className="sd-row-sub-label">المشرف:</span>{" "}
                     {c.teacher?.profile.full_name ?? "لم يُعيَّن مشرف"}
                   </div>
                 </div>
@@ -638,6 +654,8 @@ const css = `
   .sd-ov{display:flex;flex-direction:column;gap:14px}
   .sd-ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   .sd-ov-card{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--gold);border-radius:var(--radius);padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;box-shadow:var(--shadow-sm)}
+  .sd-ov-card-btn{cursor:pointer;font-family:'Cairo',sans-serif;transition:border-color 0.15s,transform 0.15s,box-shadow 0.15s}
+  .sd-ov-card-btn:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 6px 18px rgba(200,169,106,0.18)}
   .sd-ov-icon{font-size:24px}
   .sd-ov-val{font-size:26px;font-weight:900;font-family:'IBM Plex Mono',monospace;color:var(--gold);letter-spacing:-1px}
   .sd-ov-lab{font-size:12px;color:var(--text3);font-weight:700}
@@ -665,6 +683,7 @@ const css = `
   .sd-row-body{flex:1;min-width:0}
   .sd-row-name{font-size:14px;font-weight:700;color:var(--black)}
   .sd-row-sub{font-size:12px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sd-row-sub-label{font-weight:700;color:var(--text2)}
   .sd-tag{font-size:12px;font-weight:700;color:var(--text2);background:var(--surface2);border:1px solid var(--border);padding:4px 12px;border-radius:20px;white-space:nowrap;flex-shrink:0}
   .sd-status-chip{font-size:11px;font-weight:700;white-space:nowrap;padding:4px 11px;border-radius:20px;flex-shrink:0}
 

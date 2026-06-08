@@ -796,6 +796,8 @@ const styles = `
 
   .ow-nav-item {
     position: relative;
+    flex-shrink: 0;
+    min-height: 54px;
     display: flex; align-items: center; gap: 12px;
     padding: 11px 13px;
     border-radius: 16px;
@@ -853,12 +855,14 @@ const styles = `
     flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0;
   }
   .ow-nav-label-ar {
+    display: block;
     font-size: 13.5px; font-weight: 700; line-height: 1.25;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .ow-nav-label-en {
+    display: block;
     font-family: var(--font-mono);
-    font-size: 9.5px; font-weight: 500;
+    font-size: 9.5px; font-weight: 500; line-height: 1.2;
     letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.60;
   }
 

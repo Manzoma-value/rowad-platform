@@ -1,4 +1,11 @@
 // src/app/api/invite/[token]/route.ts
+//
+// Invite redemption — creates the auth user, the profile row, and the role
+// record (teacher OR school-admin membership). Marks the invite as used.
+//
+// If the form ships an avatar file, we upload it to Supabase storage and
+// link it on the profile. A failed avatar upload does NOT block account
+// creation — the user just ends up without a picture.
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
@@ -10,6 +17,8 @@ const InviteBodySchema = z.object({
   email:     z.string().trim().email("بريد إلكتروني غير صالح"),
   password:  z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
 });
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
 
 // ── Admin client using service role key ────────────────────────────────────
 const adminClient = createClient(
@@ -27,7 +36,17 @@ const adminClient = createClient(
 
 type InviteState =
   | { valid: false; reason: "not_found" | "disabled" | "expired" | "used" }
-  | { valid: true; invite: { id: string; school_id: string; type: string; school_name: string; school_name_alt: string | null; school_language: string } };
+  | {
+      valid: true;
+      invite: {
+        id: string;
+        school_id: string;
+        type: string;
+        school_name: string;
+        school_name_alt: string | null;
+        school_language: string;
+      };
+    };
 
 async function resolveInvite(token: string): Promise<InviteState> {
   const invite = await prisma.invite.findUnique({
@@ -84,6 +103,39 @@ export async function GET(
   });
 }
 
+// ── Helper: upload avatar (best-effort) ────────────────────────────────────
+//
+// Returns { url, path } on success, null on any failure. We never throw —
+// avatar issues should never block account creation.
+async function uploadAvatar(
+  userId: string,
+  avatar: File,
+): Promise<{ url: string; path: string } | null> {
+  try {
+    if (!avatar.type.startsWith("image/")) return null;
+    if (avatar.size > MAX_AVATAR_BYTES) return null;
+
+    const ext = (avatar.name.split(".").pop() || "jpg").toLowerCase();
+    const path = `profiles/${userId}/avatar-${Date.now()}.${ext}`;
+
+    const { error: upErr } = await adminClient.storage
+      .from("avatars")
+      .upload(path, avatar, { contentType: avatar.type, upsert: true });
+    if (upErr) {
+      console.warn("[invite] avatar upload failed:", upErr.message);
+      return null;
+    }
+
+    const { data } = adminClient.storage.from("avatars").getPublicUrl(path);
+    if (!data?.publicUrl) return null;
+
+    return { url: data.publicUrl, path };
+  } catch (err) {
+    console.warn("[invite] avatar upload threw:", err);
+    return null;
+  }
+}
+
 // ── POST /api/invite/[token] ───────────────────────────────────────────────
 
 export async function POST(
@@ -103,10 +155,11 @@ export async function POST(
     return NextResponse.json({ error: messages[state.reason] }, { status: 410 });
   }
 
-  // ── Parse body ────────────────────────────────────────────────────────
+  // ── Parse body (JSON or multipart) ────────────────────────────────────
   let rawFullName: string | undefined;
   let rawEmail: string | undefined;
   let rawPassword: string | undefined;
+  let avatarFile: File | null = null;
 
   const contentType = req.headers.get("content-type") ?? "";
 
@@ -116,6 +169,8 @@ export async function POST(
       rawFullName = (form.get("full_name") as string | null) ?? undefined;
       rawEmail    = (form.get("email")     as string | null) ?? undefined;
       rawPassword = (form.get("password")  as string | null) ?? undefined;
+      const a = form.get("avatar");
+      if (a instanceof File && a.size > 0) avatarFile = a;
     } catch {
       return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
     }
@@ -156,8 +211,9 @@ export async function POST(
 
   if (authError || !authData?.user) {
     console.error("[invite] auth.signUp failed:", authError);
-    const isAlreadyExists = authError?.message?.toLowerCase().includes("already registered")
-      || authError?.message?.toLowerCase().includes("already exists");
+    const isAlreadyExists =
+      authError?.message?.toLowerCase().includes("already registered") ||
+      authError?.message?.toLowerCase().includes("already exists");
     const msg = isAlreadyExists
       ? "يوجد حساب مسجّل بهذا البريد الإلكتروني مسبقاً."
       : `فشل إنشاء الحساب: ${authError?.message ?? "خطأ غير معروف"}`;
@@ -166,6 +222,11 @@ export async function POST(
 
   const userId = authData.user.id;
   console.log("[invite] auth user created:", userId);
+
+  // ── Best-effort avatar upload BEFORE the transaction ──────────────────
+  // Doing this before the transaction means a slow upload doesn't hold
+  // open a DB transaction. If it fails we fall back to no avatar.
+  const avatar = avatarFile ? await uploadAvatar(userId, avatarFile) : null;
 
   // ── Create Profile + role-specific record + mark invite ─────────────
   const isAdminInvite   = state.invite.type === "ADMIN";
@@ -177,10 +238,12 @@ export async function POST(
 
       await tx.profile.create({
         data: {
-          id:        userId,
-          full_name: full_name,
-          email:     email,
+          id:         userId,
+          full_name:  full_name,
+          email:      email,
           role,
+          avatar_url:  avatar?.url ?? null,
+          avatar_path: avatar?.path ?? null,
         },
       });
 
@@ -215,7 +278,14 @@ export async function POST(
 
     console.log("[invite] transaction complete for user:", userId);
   } catch (err) {
-    await adminClient.auth.admin.deleteUser(userId);
+    // Rollback: clean up auth user + avatar if we got that far.
+    await adminClient.auth.admin.deleteUser(userId).catch(() => {});
+    if (avatar?.path) {
+      await adminClient.storage
+        .from("avatars")
+        .remove([avatar.path])
+        .catch(() => {});
+    }
     console.error("[invite] transaction failed:", err);
     const message = err instanceof Error ? err.message : "خطأ غير معروف";
     return NextResponse.json(

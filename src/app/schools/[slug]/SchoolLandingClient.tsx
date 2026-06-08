@@ -123,21 +123,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
             <p className="lp-tagline a3">{tr.vision}</p>
             <p className="lp-sub    a4">{tr.sub}</p>
 
-            {/* Live stats */}
-            <div className="lp-stats a4">
-              {[
-                { n: school.student_count, l: tr.students },
-                { n: school.teacher_count, l: tr.teachers },
-                { n: school.class_count,   l: tr.classes  },
-              ].map(({ n, l }, i) => (
-                <div key={i} className="lp-stat">
-                  <span className="lp-sn">{n}</span>
-                  <span className="lp-sl">{l}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="lp-cta a5">
+<div className="lp-cta a5">
               <button className="lp-cta-outline" onClick={goLogin}>{tr.loginBtn}</button>
               <button className="lp-cta-gold"    onClick={goSignup}>{tr.signupBtn}</button>
             </div>
@@ -314,17 +300,6 @@ html{scroll-behavior:smooth;}
   font-weight:400;max-width:460px;line-height:1.95;margin-bottom:46px;
 }
 
-/* Stats */
-.lp-stats{
-  display:flex;
-  border:1px solid rgba(200,169,106,.14);border-radius:18px;overflow:hidden;
-  background:rgba(8,11,12,.50);backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);margin-bottom:38px;
-}
-.lp-stat{padding:18px 34px;display:flex;flex-direction:column;align-items:center;gap:4px;}
-.lp-stat+.lp-stat{border-inline-start:1px solid rgba(200,169,106,.10);}
-.lp-sn{font-size:28px;font-weight:900;color:var(--gold);line-height:1;font-family:var(--font-h);}
-.lp-sl{font-size:10.5px;color:rgba(200,169,106,.45);font-weight:600;letter-spacing:.05em;}
 
 /* CTA row */
 .lp-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
@@ -421,19 +396,7 @@ html{scroll-behavior:smooth;}
   .lp-tagline{font-size:15px;margin-bottom:8px;}
   .lp-sub{font-size:13px;line-height:1.85;margin-bottom:34px;max-width:380px;}
 
-  .lp-stats{
-    flex-wrap:wrap;border-radius:14px;
-    margin-bottom:32px;width:100%;max-width:340px;
-  }
-  .lp-stat{
-    padding:13px 16px;flex:1 1 calc(33% - 1px);min-width:30%;
-    gap:3px;
-  }
-  .lp-stat+.lp-stat{border-inline-start:1px solid rgba(200,169,106,.10);}
-  .lp-sn{font-size:21px;}
-  .lp-sl{font-size:9.5px;letter-spacing:.04em;}
-
-  .lp-cta{flex-direction:column;align-items:stretch;width:100%;max-width:300px;margin:0 auto;}
+.lp-cta{flex-direction:column;align-items:stretch;width:100%;max-width:300px;margin:0 auto;}
   .lp-cta-outline,.lp-cta-gold{width:100%;padding:13px 22px;font-size:13.5px;}
 
   .lp-strip{flex-direction:column;}
@@ -455,8 +418,6 @@ html{scroll-behavior:smooth;}
   .lp-nav{padding:0 10px;height:56px;}
   .lp-gold{padding:6px 12px;font-size:11.5px;}
   .lp-hero-body{padding:84px 14px 68px;}
-  .lp-stat{padding:11px 12px;}
-  .lp-sn{font-size:19px;}
-  .lp-num-n{font-size:38px;}
+.lp-num-n{font-size:38px;}
 }
 `;
