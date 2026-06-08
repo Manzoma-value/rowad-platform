@@ -78,19 +78,27 @@ function WaitingScreen({
         <div className="rw-wait-dots"><span /><span /><span /></div>
       </div>
       <style>{`
-        .rw-wait{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:'Cairo','Tajawal',sans-serif}
-        .rw-wait-card{max-width:520px;text-align:center;background:linear-gradient(180deg,#FFFDF8,#F3ECDD);
-          border:1.5px solid #D8C9A6;border-radius:20px;padding:44px 36px;box-shadow:0 10px 40px rgba(0,0,0,.06)}
-        .rw-wait-icon{width:84px;height:84px;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;
-          background:rgba(200,169,106,.12);color:#C8A96A;border:1.5px solid rgba(200,169,106,.3)}
-        .rw-wait-badge{display:inline-block;font-size:12px;font-weight:800;color:#C8A96A;background:rgba(200,169,106,.14);
-          padding:4px 14px;border-radius:99px;margin-bottom:12px}
-        .rw-wait-title{font-size:21px;font-weight:900;color:#2b2417;margin:0 0 12px}
-        .rw-wait-msg{font-size:14.5px;color:#7a6c4d;line-height:1.8;margin:0 0 18px}
-        .rw-wait-dots{display:flex;gap:6px;justify-content:center}
-        .rw-wait-dots span{width:8px;height:8px;border-radius:50%;background:#C8A96A;animation:rwpulse 1.4s ease-in-out infinite}
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+        .rw-wait{min-height:78vh;display:flex;align-items:center;justify-content:center;padding:24px;
+          font-family:'Cairo','Tajawal',sans-serif;position:relative;overflow:hidden;
+          background:
+            radial-gradient(ellipse at 50% 10%, #F8F1E0 0%, transparent 55%),
+            linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%)}
+        .rw-wait-card{max-width:520px;text-align:center;
+          background:linear-gradient(160deg,#F8F1E1,#EFE5CE);
+          border:1.5px solid #C0A063;border-radius:22px;padding:50px 42px;
+          box-shadow:0 10px 40px rgba(150,115,50,0.12),inset 0 0 0 5px #EFE6D1,inset 0 0 0 6.5px rgba(194,160,89,0.4)}
+        .rw-wait-icon{width:88px;height:88px;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;
+          background:rgba(194,160,89,0.1);color:#A9863F;border:1.5px solid rgba(194,160,89,0.4);
+          box-shadow:0 4px 18px rgba(150,115,50,0.12)}
+        .rw-wait-badge{display:inline-block;font-size:12px;font-weight:800;color:#A9863F;background:rgba(194,160,89,.12);
+          padding:4px 16px;border-radius:99px;margin-bottom:14px;border:1px solid rgba(194,160,89,0.3);letter-spacing:1px}
+        .rw-wait-title{font-size:22px;font-weight:900;color:#3B2F1C;margin:0 0 14px}
+        .rw-wait-msg{font-size:14.5px;color:#7A6440;line-height:1.9;margin:0 0 22px}
+        .rw-wait-dots{display:flex;gap:8px;justify-content:center}
+        .rw-wait-dots span{width:8px;height:8px;border-radius:50%;background:#C2A059;animation:rwpulse 1.5s ease-in-out infinite}
         .rw-wait-dots span:nth-child(2){animation-delay:.2s}.rw-wait-dots span:nth-child(3){animation-delay:.4s}
-        @keyframes rwpulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+        @keyframes rwpulse{0%,100%{opacity:.25;transform:scale(.75)}50%{opacity:1;transform:scale(1)}}
       `}</style>
     </div>
   );
@@ -192,20 +200,26 @@ export default function TeacherModelPage() {
 
   if (data.stage === "STAGE1" || data.stage === "STAGE2") {
     return (
-      <div style={{ padding: "12px 8px 48px" }}>
+      <div style={{ position: "relative" }}>
         {error && (
           <div
             style={{
-              maxWidth: 1100,
-              margin: "0 auto 12px",
-              background: "rgba(139,26,26,.06)",
-              border: "1px solid rgba(139,26,26,.2)",
-              color: "#8b1a1a",
+              position: "absolute",
+              top: 12,
+              left: "50%",
+              transform: "translateX(-50%)",
+              zIndex: 50,
+              maxWidth: 600,
+              width: "calc(100% - 32px)",
+              background: "rgba(139,26,26,.92)",
+              border: "1px solid rgba(229,185,60,.35)",
+              color: "#FFF0D6",
               padding: "11px 16px",
-              borderRadius: 9,
+              borderRadius: 10,
               fontSize: 13,
-              fontWeight: 600,
+              fontWeight: 700,
               textAlign: "center",
+              boxShadow: "0 8px 30px rgba(0,0,0,.4)",
             }}
           >
             {error}

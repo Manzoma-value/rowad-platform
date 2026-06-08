@@ -10,6 +10,7 @@ import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch } from "@/lib/api-cache";
+import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import {
@@ -165,7 +166,10 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   useEffect(() => {
     cachedFetch<any>("/api/teacher", 300_000)
       .then((d) => {
-        if (d?.school?.slug) schoolSlugRef.current = d.school.slug;
+        if (d?.school?.slug) {
+          schoolSlugRef.current = d.school.slug;
+          enforceTenantSubdomain(d.school.slug);
+        }
         if (d?.school?.name) setSchoolName(d.school.name);
         setSchoolNameAlt(d?.school?.name_alt ?? null);
         if (d?.profile?.full_name) {
@@ -231,7 +235,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
         style={{
           minHeight: "100vh",
           background:
-            "radial-gradient(ellipse at 12% 8%, rgba(200,169,106,0.07), transparent 30%), #F6F4EE",
+            "radial-gradient(ellipse at 50% 8%, #F8F1E0, transparent 45%), linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%)",
           display: "flex",
           flexDirection: "column",
           fontFamily: "'Cairo','Tajawal',sans-serif",

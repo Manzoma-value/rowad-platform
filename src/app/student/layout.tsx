@@ -2,6 +2,7 @@
 "use client";
 
 import { cachedFetch } from "@/lib/api-cache";
+import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -212,7 +213,10 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
         }
         if (data?.school?.name) setSchoolName(data.school.name);
         setSchoolNameAlt(data?.school?.name_alt ?? null);
-        if (data?.school?.slug) schoolSlugRef.current = data.school.slug;
+        if (data?.school?.slug) {
+          schoolSlugRef.current = data.school.slug;
+          enforceTenantSubdomain(data.school.slug);
+        }
 
         if (data.school?.language && !langInitialized.current) {
           langInitialized.current = true;

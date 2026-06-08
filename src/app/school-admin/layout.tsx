@@ -10,6 +10,7 @@ import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch } from "@/lib/api-cache";
+import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import {
@@ -212,7 +213,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         if (d?.school) {
           setSchoolName(d.school.name ?? "");
           setSchoolNameAlt(d.school.name_alt ?? null);
-          if (d.school?.slug) schoolSlugRef.current = d.school.slug;
+          if (d.school?.slug) {
+            schoolSlugRef.current = d.school.slug;
+            enforceTenantSubdomain(d.school.slug);
+          }
           // Admin layout only supports AR + EN. If the school's default is "sq"
           // we DON'T inherit it — we stick with AR as the default so the toggle
           // stays in sync with what's actually rendered.
