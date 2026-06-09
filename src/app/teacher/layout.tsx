@@ -25,6 +25,9 @@ import {
   LogOut,
   Bell,
   Sparkles,
+  Gamepad2,
+  ArrowLeft,
+  ArrowRight,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -216,12 +219,15 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
   // ── Rowad onboarding gate ──
   // Teachers in onboarding (Stage 1 → admin approval → Stage 2 → class assignment)
-  // are confined to /teacher/model until their status becomes ACTIVE.
+  // are confined to /teacher/model — plus the educational games hub at
+  // /teacher/games — until their status becomes ACTIVE.
   const gated = statusLoaded && !!onboardingStatus && onboardingStatus !== "ACTIVE";
   const onModelRoute = pathname.startsWith("/teacher/model");
+  const onGamesRoute = pathname.startsWith("/teacher/games");
+  const allowedDuringOnboarding = onModelRoute || onGamesRoute;
   useEffect(() => {
-    if (gated && !onModelRoute) router.replace("/teacher/model");
-  }, [gated, onModelRoute, router]);
+    if (gated && !allowedDuringOnboarding) router.replace("/teacher/model");
+  }, [gated, allowedDuringOnboarding, router]);
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -276,42 +282,35 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           style={{
             height: 64,
             display: "flex",
-            alignItems: "stretch",
+            alignItems: "center",
             gap: 12,
-            paddingInlineEnd: 24,
+            padding: "0 24px",
             background: "linear-gradient(180deg,#1E2329,#11151A)",
             borderBottom: "1px solid rgba(200,169,106,0.18)",
           }}
         >
-          {/* Logo fills the full header height — flush to the start edge.
-              The asset has its own transparent padding, so we scale it up
-              and crop the overflow so the emblem visually touches the top
-              and bottom borders. */}
-          <div
-            style={{
-              position: "relative",
-              height: "100%",
-              width: 240,
-              flexShrink: 0,
-              overflow: "hidden",
-            }}
-          >
-            <Image
-              src="/ahlia.png"
-              alt="بناء الأهلية"
-              fill
-              sizes="240px"
-              style={{
-                objectFit: "contain",
-                objectPosition: isRtl ? "right center" : "left center",
-                transform: "scale(1.55)",
-                transformOrigin: isRtl ? "right center" : "left center",
-              }}
-              priority
-            />
-          </div>
-          <div style={{ width: 16, flexShrink: 0 }} aria-hidden />
           <div style={{ flex: 1 }} />
+          {/* Games shortcut — visible on /teacher/model, swaps to a "back to
+              model" cue once the teacher is on the games page itself. */}
+          <Link
+            href={onGamesRoute ? "/teacher/model" : "/teacher/games"}
+            className="rg-games-btn"
+            aria-label={onGamesRoute
+              ? (lang === "ar" ? "العودة للنموذج" : lang === "sq" ? "Kthehu te modeli" : "Back to model")
+              : (lang === "ar" ? "جرّب الألعاب" : lang === "sq" ? "Provo lojërat" : "Try the games")
+            }
+          >
+            {onGamesRoute
+              ? (isRtl ? <ArrowRight size={14} strokeWidth={2.2} /> : <ArrowLeft size={14} strokeWidth={2.2} />)
+              : <Gamepad2 size={14} strokeWidth={2} />
+            }
+            <span className="rg-games-btn-label">
+              {onGamesRoute
+                ? (lang === "ar" ? "النموذج" : lang === "sq" ? "Modeli" : "Model")
+                : (lang === "ar" ? "جرّب الألعاب" : lang === "sq" ? "Provo lojërat" : "Try the games")
+              }
+            </span>
+          </Link>
           {showToggle && <LangToggle dark secondaryLang={schoolLang} />}
           <div
             style={{
@@ -364,7 +363,34 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           </button>
         </header>
         <main style={{ flex: 1 }}>{children}</main>
-        <style>{`@media(max-width:520px){.rg-name{display:none}} ${styles}`}</style>
+        <style>{`
+          .rg-games-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 14px; border-radius: 999px;
+            background: linear-gradient(135deg, rgba(200,169,106,0.18), rgba(200,169,106,0.08));
+            border: 1px solid rgba(200,169,106,0.45);
+            color: #E0C277;
+            font-family: 'Cairo', 'Tajawal', sans-serif;
+            font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em;
+            text-decoration: none;
+            transition: all 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+            box-shadow: 0 4px 12px rgba(200,169,106,0.10);
+            white-space: nowrap;
+          }
+          .rg-games-btn:hover {
+            background: linear-gradient(135deg, rgba(229,185,60,0.28), rgba(200,169,106,0.14));
+            border-color: rgba(229,185,60,0.65);
+            color: #F0D690;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(200,169,106,0.22);
+          }
+          @media(max-width:520px){
+            .rg-name{display:none}
+            .rg-games-btn{padding:6px 11px}
+            .rg-games-btn-label{display:none}
+          }
+          ${styles}
+        `}</style>
       </div>
     );
   }
