@@ -10,6 +10,7 @@ import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch, clearCache } from "@/lib/api-cache";
+import MandalaLoader from "@/components/MandalaLoader";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
@@ -232,6 +233,31 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
     return found ? tr[found.key] : (lang === "ar" ? "الصفحة" : "Faqja");
   })();
 
+  // ── Pre-status loader ──
+  // Until /api/teacher resolves, we don't yet know whether this teacher is
+  // onboarding (no nav) or active (full nav). Showing the full sidebar+topbar
+  // shell and then collapsing it to the gated shell once status lands is
+  // jarring — especially for a brand-new teacher who only ever sees the
+  // onboarding view. Render a clean full-screen mandala loader instead.
+  if (!statusLoaded) {
+    return (
+      <div
+        dir={isRtl ? "rtl" : "ltr"}
+        style={{
+          minHeight: "100vh",
+          background:
+            "radial-gradient(ellipse at 50% 8%, #F8F1E0, transparent 45%), linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "'Cairo','Tajawal',sans-serif",
+        }}
+      >
+        <MandalaLoader />
+      </div>
+    );
+  }
+
   // ── Gated onboarding shell (no sidebar / nav) ──
   if (gated) {
     return (
@@ -250,22 +276,41 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           style={{
             height: 64,
             display: "flex",
-            alignItems: "center",
+            alignItems: "stretch",
             gap: 12,
-            padding: "0 24px",
+            paddingInlineEnd: 24,
             background: "linear-gradient(180deg,#1E2329,#11151A)",
             borderBottom: "1px solid rgba(200,169,106,0.18)",
           }}
         >
-          <div style={{ position: "relative", width: 132, height: 30, flexShrink: 0 }}>
+          {/* Logo fills the full header height — flush to the start edge.
+              The asset has its own transparent padding, so we scale it up
+              and crop the overflow so the emblem visually touches the top
+              and bottom borders. */}
+          <div
+            style={{
+              position: "relative",
+              height: "100%",
+              width: 240,
+              flexShrink: 0,
+              overflow: "hidden",
+            }}
+          >
             <Image
               src="/ahlia.png"
               alt="بناء الأهلية"
               fill
-              style={{ objectFit: "contain", objectPosition: isRtl ? "right" : "left" }}
+              sizes="240px"
+              style={{
+                objectFit: "contain",
+                objectPosition: isRtl ? "right center" : "left center",
+                transform: "scale(1.55)",
+                transformOrigin: isRtl ? "right center" : "left center",
+              }}
               priority
             />
           </div>
+          <div style={{ width: 16, flexShrink: 0 }} aria-hidden />
           <div style={{ flex: 1 }} />
           {showToggle && <LangToggle dark secondaryLang={schoolLang} />}
           <div
