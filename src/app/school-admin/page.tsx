@@ -14,29 +14,12 @@ interface Stats {
   classCount: number;
   pendingPlacements: number;
   hasPlacementAssessment: boolean;
-  studentsByStatus: { status: string; count: number }[];
 }
-
-const STATUS_COLORS: Record<string, string> = {
-  PENDING_INTAKE: "#C8A96A",
-  INTAKE_SUBMITTED: "#B8935A",
-  SCHOOL_ASSIGNED: "#9A7840",
-  SCHOOL_PLACEMENT_SUBMITTED: "#7A5C2C",
-  CLASS_ASSIGNED: "#5A4020",
-};
 
 export default function SchoolAdminDashboard() {
   const { lang } = useLang();
   const tr = t[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
-
-  const STATUS_LABELS: Record<string, string> = {
-    PENDING_INTAKE: tr.waitingClass,
-    INTAKE_SUBMITTED: tr.waitingReview,
-    SCHOOL_ASSIGNED: tr.schoolAssigned,
-    SCHOOL_PLACEMENT_SUBMITTED: tr.placementAssessment,
-    CLASS_ASSIGNED: tr.classAssigned,
-  };
 
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -278,45 +261,6 @@ export default function SchoolAdminDashboard() {
           </Link>
         ))}
       </div>
-
-      {/* Status pipeline */}
-      {stats.studentsByStatus.length > 0 && (
-        <div className="pipeline-section">
-          <div className="section-header">
-            <h2 className="section-title">{tr.studentsByStatus}</h2>
-            <div className="section-rule" />
-          </div>
-          <div className="pipeline-card">
-            {stats.studentsByStatus.map((s, i) => (
-              <div
-                key={s.status}
-                className="pipe-row"
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                <div
-                  className="pipe-dot"
-                  style={{ background: STATUS_COLORS[s.status] ?? "#C8A96A" }}
-                />
-                <div className="pipe-label">
-                  {STATUS_LABELS[s.status] ?? s.status}
-                </div>
-                <div className="pipe-track">
-                  <div
-                    className="pipe-fill"
-                    style={{
-                      width: stats.studentCount
-                        ? `${(s.count / stats.studentCount) * 100}%`
-                        : "0%",
-                      background: STATUS_COLORS[s.status] ?? "#C8A96A",
-                    }}
-                  />
-                </div>
-                <div className="pipe-count">{s.count}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <style>{css}</style>
     </div>
