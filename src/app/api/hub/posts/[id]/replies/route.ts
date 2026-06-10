@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
+import { profileSchoolId } from "@/lib/hub-auth";
 
 function adminSupabase() {
   return createSupabaseAdmin(
@@ -32,6 +33,19 @@ export async function GET(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: postId } = await context.params;
+
+  // Tenant guard: only return replies if the caller is in the parent
+  // post's school. One join takes care of both checks.
+  const parent = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { school_id: true },
+  });
+  if (!parent) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const callerSchoolId = await profileSchoolId(user.id);
+  if (callerSchoolId !== parent.school_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const replies = await prisma.post.findMany({
     where: { reply_to_id: postId },
@@ -67,6 +81,12 @@ export async function POST(
 
   if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!parentPost) return NextResponse.json({ error: "Post not found" }, { status: 404 });
+
+  // Tenant guard: you cannot reply on another school's wall.
+  const callerSchoolId = await profileSchoolId(profile.id);
+  if (callerSchoolId !== parentPost.school_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const contentType = req.headers.get("content-type") ?? "";
   let content: string | null = null;

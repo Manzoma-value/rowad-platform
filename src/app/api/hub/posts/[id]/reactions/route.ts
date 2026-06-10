@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { profileSchoolId } from "@/lib/hub-auth";
 
 type ReactionType = "LIKE" | "LOVE" | "DISLIKE" | "HAHA" | "SAD";
 const VALID: ReactionType[] = ["LIKE", "LOVE", "DISLIKE", "HAHA", "SAD"];
@@ -27,6 +28,19 @@ export async function POST(
   const { type } = body as { type: ReactionType };
   if (!VALID.includes(type))
     return NextResponse.json({ error: "Invalid reaction type" }, { status: 400 });
+
+  // Tenant guard: only react if you're in the post's school. Cheap one-row
+  // lookup on a unique index — won't move the latency needle.
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: { school_id: true },
+  });
+  if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const callerSchoolId = await profileSchoolId(user.id);
+  if (callerSchoolId !== post.school_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const existing = await prisma.postReaction.findUnique({
     where: { post_id_author_id: { post_id: postId, author_id: user.id } },

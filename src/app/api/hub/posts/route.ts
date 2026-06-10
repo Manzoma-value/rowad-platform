@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
+import { profileSchoolId } from "@/lib/hub-auth";
 
 function adminSupabase() {
   return createSupabaseAdmin(
@@ -35,6 +36,12 @@ export async function GET(req: Request) {
 
   if (!school_id)
     return NextResponse.json({ error: "school_id required" }, { status: 400 });
+
+  // Tenant guard: the caller must belong to the school they're asking about.
+  const callerSchoolId = await profileSchoolId(user.id);
+  if (callerSchoolId !== school_id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const posts = await prisma.post.findMany({
     where: {
@@ -100,6 +107,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "school_id required" }, { status: 400 });
   if (!content && !image_url)
     return NextResponse.json({ error: "content or image required" }, { status: 400 });
+
+  // Tenant guard: a user cannot post to another school's wall.
+  const callerSchoolId = await profileSchoolId(profile.id);
+  if (callerSchoolId !== school_id) {
+    // Best-effort cleanup of any image we just uploaded under the wrong path.
+    if (image_path) {
+      await adminSupabase().storage.from("hub-images").remove([image_path]).catch(() => {});
+    }
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const post = await prisma.post.create({
     data: {
