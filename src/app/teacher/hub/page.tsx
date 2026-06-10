@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cachedFetch } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -229,6 +230,7 @@ function Replies({ postId, me, lang, onReact }: {
   postId: string; me: Me; lang: Lang;
   onReact: (pid: string, type: ReactionType) => void;
 }) {
+  const confirm = useConfirm();
   const [replies, setReplies] = useState<Post[]>([]);
   const [busy, setBusy]       = useState(true);
   const [text, setText]       = useState("");
@@ -270,6 +272,10 @@ function Replies({ postId, me, lang, onReact }: {
   };
 
   const del = async (id: string) => {
+    const ok = await confirm({
+      message: lang === "ar" ? "حذف هذا الرد؟" : "Fshi këtë përgjigje?",
+    });
+    if (!ok) return;
     await fetch(`/api/hub/posts/${id}`, { method: "DELETE" });
     setReplies((p) => p.filter((r) => r.id !== id));
   };

@@ -1,6 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 import { useEffect, useState, useCallback } from "react";
 import { useLang } from "@/lib/language-context";
@@ -27,6 +28,7 @@ export default function TeacherPage() {
   const { lang } = useLang();
   const tr = t[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
+  const confirm = useConfirm();
 
   const [data, setData] = useState<TeacherData | null>(null);
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
@@ -74,6 +76,10 @@ export default function TeacherPage() {
   };
 
   const handleDelete = async (id: string) => {
+    const ok = await confirm({
+      message: lang === "ar" ? "حذف هذا الإعلان؟" : "Fshi këtë njoftim?",
+    });
+    if (!ok) return;
     setDeletingId(id);
     await fetch(`/api/teacher/announcements?id=${id}`, { method: "DELETE" });
     invalidateCache(`/api/teacher/announcements?classId=${selectedClass?.id}`);

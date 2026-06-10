@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 interface School {
   id: string;
@@ -41,6 +42,7 @@ const PRESET_THEMES = [
 ];
 
 export default function OwnerSchoolsPage() {
+  const confirm = useConfirm();
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -136,6 +138,17 @@ export default function OwnerSchoolsPage() {
   }
 
   async function handleToggleActive(schoolId: string, currentActive: boolean) {
+    if (currentActive) {
+      // Deactivating a school cuts off all its users. Confirm explicitly.
+      const ok = await confirm({
+        title: "تعطيل الجهة",
+        message: "سيتم تعطيل هذه الجهة وحجب وصول جميع مديريها ومعلميها وطلابها فوراً.",
+        variant: "warning",
+        confirmText: "تعطيل",
+        irreversible: false,
+      });
+      if (!ok) return;
+    }
     setToggling(schoolId);
     try {
       const r = await fetch(`/api/owner/schools/${schoolId}`, {

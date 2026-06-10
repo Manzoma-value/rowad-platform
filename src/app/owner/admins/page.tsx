@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 /* ───── i18n ───── */
 const T = {
@@ -187,6 +188,7 @@ export default function OwnerAdminsPage() {
   const lang: "ar" | "en" = globalLang === "en" ? "en" : "ar";
   const t = T[lang];
   const dir = t.dir;
+  const confirm = useConfirm();
 
   const [tab, setTab] = useState<Tab>("admins");
 
@@ -228,6 +230,18 @@ export default function OwnerAdminsPage() {
 
   /* ── Admins actions ── */
   const toggleAdmin = async (profileId: string, currentActive: boolean) => {
+    if (currentActive) {
+      const ok = await confirm({
+        title: lang === "ar" ? "تعطيل حساب المدير" : "Deactivate admin account",
+        message: lang === "ar"
+          ? "سيتم تعطيل وصول هذا المدير إلى لوحته فوراً."
+          : "This admin will lose access to their dashboard immediately.",
+        variant: "warning",
+        confirmText: lang === "ar" ? "تعطيل" : "Deactivate",
+        irreversible: false,
+      });
+      if (!ok) return;
+    }
     setToggling(profileId);
     setError("");
     try {

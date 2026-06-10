@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/language-context";
+import { ConfirmProvider } from "@/lib/confirm-dialog";
 
 export const metadata: Metadata = {
   title: "منصة الرواد التعليمية",
@@ -25,7 +26,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <ConfirmProvider>{children}</ConfirmProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

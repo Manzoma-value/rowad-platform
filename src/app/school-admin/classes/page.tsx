@@ -7,6 +7,7 @@ import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 interface ClassItem {
   id: string;
@@ -22,6 +23,7 @@ interface Teacher {
 export default function SchoolAdminClassesPage() {
   const { lang } = useLang();
   const tr = t[lang];
+  const confirm = useConfirm();
 
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -74,7 +76,7 @@ export default function SchoolAdminClassesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm(tr.deleteClassConfirm)) return;
+    if (!(await confirm({ message: tr.deleteClassConfirm }))) return;
     await fetch(`/api/school-admin/classes/${id}`, { method: "DELETE" });
     invalidateCache("/api/school-admin/classes");
     load();

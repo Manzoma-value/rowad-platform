@@ -5,6 +5,7 @@ import { Icons } from "./icons";
 import type { Stage } from "./types";
 import { ModuleCard } from "./module-card";
 import { StageTraitsPanel } from "./stage-traits-panel";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 interface Props {
   stage: Stage;
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function StageCard({ stage, stageIndex, onRefresh }: Props) {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(true);
   const [moduleName, setModuleName] = useState("");
   const [adding, setAdding] = useState(false);
@@ -25,12 +27,10 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
   );
 
   const deleteStage = async () => {
-    if (
-      !confirm(
-        "هل أنت متأكد من حذف هذه المرحلة؟ سيتم حذف جميع مستوياتها وأسئلتها.",
-      )
-    )
-      return;
+    if (!(await confirm({
+      title: "حذف المرحلة",
+      message: "هل أنت متأكد من حذف هذه المرحلة؟ سيتم حذف جميع مستوياتها وأسئلتها ومحاولات الطلاب فيها.",
+    }))) return;
     await fetch(`/api/school-admin/roadmap/stages/${stage.id}`, {
       method: "DELETE",
     });

@@ -4,6 +4,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import { SortableList } from "@/components/SortableList";
 import { useEffect, useState } from "react";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 interface AssessmentOption {
   id: string;
@@ -40,6 +41,7 @@ const EMPTY_FORM = {
 };
 
 export default function OwnerIntakeAssessmentPage() {
+  const confirm = useConfirm();
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -96,6 +98,17 @@ export default function OwnerIntakeAssessmentPage() {
 
   async function handleToggleActive() {
     if (!assessment) return;
+    // Deactivating the intake stops new students from taking it — confirm.
+    if (assessment.is_active) {
+      const ok = await confirm({
+        title: "تعطيل اختبار القبول",
+        message: "سيتوقف عرض الاختبار للمستفيدين الجدد. هل أنت متأكد؟",
+        variant: "warning",
+        confirmText: "تعطيل",
+        irreversible: false,
+      });
+      if (!ok) return;
+    }
     await fetch(`/api/owner/intake-assessment/${assessment.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -188,7 +201,9 @@ export default function OwnerIntakeAssessmentPage() {
   }
 
   async function handleDeleteQuestion(qid: string) {
-    if (!confirm("هل أنت متأكد من حذف هذا السؤال؟")) return;
+    if (!(await confirm({
+      message: "هل أنت متأكد من حذف هذا السؤال؟",
+    }))) return;
     setDeleting(qid);
     await fetch(
       `/api/owner/intake-assessment/${assessment?.id}/questions/${qid}`,

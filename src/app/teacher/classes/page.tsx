@@ -4,6 +4,7 @@ import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 import { useEffect, useState, useCallback } from "react";
 import { useLang } from "@/lib/language-context";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 const S = {
   ar: {
@@ -56,6 +57,7 @@ export default function TeacherClassesPage() {
   const { lang } = useLang();
   const T = S[lang === "sq" ? "sq" : "ar"];
   const dir = lang === "sq" ? "ltr" : "rtl";
+  const confirm = useConfirm();
 
   const [data, setData] = useState<TeacherData | null>(null);
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
@@ -101,6 +103,10 @@ export default function TeacherClassesPage() {
   }
 
   async function handleDelete(id: string) {
+    const ok = await confirm({
+      message: lang === "ar" ? "حذف هذا الإعلان؟" : "Fshi këtë njoftim?",
+    });
+    if (!ok) return;
     setDeletingId(id);
     await fetch(`/api/teacher/announcements?id=${id}`, { method: "DELETE" });
     invalidateCache(`/api/teacher/announcements?classId=${selectedClass?.id}`);

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { invalidateCache } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 import { Icons } from "../components/icons";
 import { css } from "../components/css";
 import { TextModal, ImageModal, VideoModal } from "../components/content-modals";
@@ -100,6 +101,7 @@ export default function LessonEditorPage({
   const { lang } = useLang();
   const t = T[lang === "sq" ? "sq" : "ar"];
   const dir = lang === "sq" ? "ltr" : "rtl";
+  const confirm = useConfirm();
 
   const [lesson, setLesson] = useState<LessonFull | null>(null);
   const [classes, setClasses] = useState<ClassRef[]>([]);
@@ -182,7 +184,7 @@ export default function LessonEditorPage({
   };
 
   const deleteLesson = async () => {
-    if (!confirm(t.deleteConfirm)) return;
+    if (!(await confirm({ message: t.deleteConfirm }))) return;
     const r = await fetch(`/api/teacher/lessons/${id}`, { method: "DELETE" });
     if (r.ok) {
       invalidateCache("/api/teacher/lessons");
@@ -191,7 +193,7 @@ export default function LessonEditorPage({
   };
 
   const deleteContent = async (cid: string) => {
-    if (!confirm(t.deleteContent)) return;
+    if (!(await confirm({ message: t.deleteContent }))) return;
     await fetch(`/api/teacher/lessons/contents/${cid}`, { method: "DELETE" });
     fetchLesson();
   };
@@ -229,7 +231,7 @@ export default function LessonEditorPage({
   };
 
   const deleteQuestion = async (qid: string) => {
-    if (!confirm(t.deleteQuestion)) return;
+    if (!(await confirm({ message: t.deleteQuestion }))) return;
     await fetch(`/api/teacher/lessons/questions/${qid}`, { method: "DELETE" });
     fetchLesson();
   };

@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 interface Teacher {
   id: string;
@@ -19,6 +20,7 @@ export function SchoolAdminTeachersPage() {
   const { lang } = useLang();
   const tr = t[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
+  const confirm = useConfirm();
 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -33,6 +35,20 @@ export function SchoolAdminTeachersPage() {
   }, []);
 
   const toggleTeacher = async (teacherId: string, currentActive: boolean) => {
+    if (currentActive) {
+      const ok = await confirm({
+        title: lang === "ar" ? "تعطيل المعلم" : lang === "sq" ? "Çaktivizo mësuesin" : "Deactivate teacher",
+        message: lang === "ar"
+          ? "سيتم تعطيل وصول هذا المعلم إلى لوحته فوراً. لن يتمكن من الدخول حتى تعيد تفعيله."
+          : lang === "sq"
+            ? "Ky mësues do të humbasë qasjen menjëherë. Nuk do të mund të hyjë derisa ta riaktivizoni."
+            : "This teacher will lose access immediately. They won't be able to log in until you reactivate them.",
+        variant: "warning",
+        confirmText: lang === "ar" ? "تعطيل" : lang === "sq" ? "Çaktivizo" : "Deactivate",
+        irreversible: false,
+      });
+      if (!ok) return;
+    }
     setToggling(teacherId);
     setToggleError("");
     try {

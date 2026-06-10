@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -458,6 +459,7 @@ function StudentCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function SchoolAdminStudentsPage() {
+  const confirm = useConfirm();
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -482,6 +484,16 @@ export default function SchoolAdminStudentsPage() {
   }, []);
 
   async function handleToggle(studentId: string, currentActive: boolean) {
+    if (currentActive) {
+      const ok = await confirm({
+        title: "تعطيل حساب الطالب",
+        message: "سيتم تعطيل وصول هذا الطالب فوراً. لن يتمكن من الدخول حتى تعيد تفعيله.",
+        variant: "warning",
+        confirmText: "تعطيل",
+        irreversible: false,
+      });
+      if (!ok) return;
+    }
     setToggling(studentId);
     setToggleError("");
     try {

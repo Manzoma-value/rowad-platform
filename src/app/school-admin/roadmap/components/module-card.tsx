@@ -7,6 +7,7 @@ import { TextModal, ImageModal, VideoModal } from "./content-modals";
 import { QuestionModal } from "./question-modal";
 import { ModuleMainTraitSelector } from "./module-main-trait-selector";
 import { SortableList } from "@/components/SortableList";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 interface Props {
   mod: Module;
@@ -17,6 +18,7 @@ interface Props {
 type AddingContent = "TEXT" | "IMAGE" | "VIDEO" | null;
 
 export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [addingContent, setAddingContent] = useState<AddingContent>(null);
   const [editingContent, setEditingContent] = useState<ModuleContent | null>(
@@ -26,7 +28,10 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
   const deleteModule = async () => {
-    if (!confirm("هل أنت متأكد من حذف هذا المستوى؟")) return;
+    if (!(await confirm({
+      message: "سيتم حذف هذا المستوى وكل ما يحتويه من محتوى وأسئلة ومحاولات الطلاب فيه.",
+      title: "حذف المستوى",
+    }))) return;
     await fetch(`/api/school-admin/roadmap/modules/${mod.id}`, {
       method: "DELETE",
     });
@@ -34,7 +39,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   };
 
   const deleteContent = async (contentId: string) => {
-    if (!confirm("هل تريد حذف هذا المحتوى؟")) return;
+    if (!(await confirm({ message: "هل تريد حذف هذا المحتوى؟" }))) return;
     await fetch(`/api/school-admin/roadmap/contents/${contentId}`, {
       method: "DELETE",
     });
@@ -42,7 +47,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   };
 
   const deleteQuestion = async (questionId: string) => {
-    if (!confirm("هل تريد حذف هذا السؤال؟")) return;
+    if (!(await confirm({ message: "هل تريد حذف هذا السؤال؟" }))) return;
     await fetch(`/api/school-admin/roadmap/questions/${questionId}`, {
       method: "DELETE",
     });

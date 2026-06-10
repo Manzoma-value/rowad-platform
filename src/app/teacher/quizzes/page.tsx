@@ -6,6 +6,7 @@ import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 type Option = { id: string; text: string; order: number };
 type Question = {
@@ -43,6 +44,7 @@ type NewQuestion = { type: "MCQ" | "TF"; text: string; options: string[]; correc
 export default function TeacherQuizzesPage() {
   const { lang } = useLang();
   const tr = t[lang];
+  const confirm = useConfirm();
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -132,7 +134,7 @@ export default function TeacherQuizzesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm(tr.deleteQuizConfirm)) return;
+    if (!(await confirm({ message: tr.deleteQuizConfirm }))) return;
     setDeletingId(id);
     await fetch(`/api/teacher/quizzes/${id}`, { method: "DELETE" });
     setDeletingId(null);

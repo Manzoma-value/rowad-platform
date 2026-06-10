@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
+import { useConfirm } from "@/lib/confirm-dialog";
 import { COLUMN_ORDER, COLUMN_LABELS } from "@/lib/rowad";
 import type { Maqsad } from "@prisma/client";
 
@@ -83,6 +84,7 @@ export default function SchoolAdminRowadDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const confirm = useConfirm();
 
   const [sub, setSub] = useState<Submission | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +111,7 @@ export default function SchoolAdminRowadDetailPage() {
   }, [load]);
 
   async function review(action: "approve" | "reject") {
-    if (action === "reject" && !confirm(tr.confirmReject)) return;
+    if (action === "reject" && !(await confirm({ message: tr.confirmReject, variant: "warning", irreversible: false }))) return;
     setBusy(true);
     setError("");
     try {

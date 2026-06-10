@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 type QuestionType = "MCQ" | "TF" | "WRITTEN";
 interface Option { id: string; text: string; order: number; }
@@ -28,6 +29,7 @@ const EMPTY_FORM = {
 export default function PlacementAssessmentPage() {
   const { lang } = useLang();
   const tr = t[lang];
+  const confirm = useConfirm();
 
   const TYPE_LABELS: Record<QuestionType, string> = {
     MCQ: tr.mcq, TF: tr.tf, WRITTEN: tr.written,
@@ -141,7 +143,8 @@ export default function PlacementAssessmentPage() {
   }
 
   async function handleDelete(qid: string) {
-    if (!assessment || !confirm(tr.deleteQuestionConfirm)) return;
+    if (!assessment) return;
+    if (!(await confirm({ message: tr.deleteQuestionConfirm }))) return;
     setDeleting(qid);
     await fetch(
       `/api/school-admin/placement-assessment/${assessment.id}/questions/${qid}`,

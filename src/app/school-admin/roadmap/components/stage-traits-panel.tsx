@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { StageTrait, Maqsad } from "./types";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 const MAQASID: { value: Maqsad; label: string; color: string; bg: string }[] = [
   {
@@ -48,6 +49,7 @@ interface TraitFormState {
 }
 
 export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -116,7 +118,10 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
 
   // ── Delete trait ──
   async function handleDeleteTrait(traitId: string) {
-    if (!confirm("هل تريد حذف هذه السمة؟ سيتم إلغاء ربطها بأي مستوى.")) return;
+    if (!(await confirm({
+      title: "حذف السمة",
+      message: "هل تريد حذف هذه السمة؟ سيتم إلغاء ربطها بأي مستوى يستخدمها.",
+    }))) return;
     await fetch(`/api/school-admin/roadmap/traits/${traitId}`, {
       method: "DELETE",
     });
@@ -176,6 +181,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
 
   // ── Delete element ──
   async function handleDeleteElement(elementId: string) {
+    if (!(await confirm({ message: "حذف هذا العنصر؟" }))) return;
     await fetch(`/api/school-admin/roadmap/elements/${elementId}`, {
       method: "DELETE",
     });
