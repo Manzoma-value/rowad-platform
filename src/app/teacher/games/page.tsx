@@ -66,6 +66,28 @@ const STR = {
     colWinSub: "جمعت ٥ عناصر صحيحة في الوقت المناسب",
     colLose: "لا بأس، حاول مرة أخرى",
     colLoseSub: "ركّز على العناصر المرتبطة بالمقصد المطلوب فقط",
+    // Hint card — generic labels
+    howToTitle: "كيفية اللعب",
+    whatYouLearnTitle: "الفائدة التعليمية",
+    hintToggle: "كيف ألعب؟",
+    hintCloseLabel: "إخفاء التعليمات",
+    // Per-game hints
+    memHowTo:
+      "اضغط على كارت لقلبه. أظهر كارتين متطابقتين في كل دور (مثل: «المستوى الأول» مع «الاتباع»، أو «الدين» مع «حفظ الإيمان»). إذا تطابقتا تبقيان مكشوفتين، وإلا تنقلبان من جديد.",
+    memLearn:
+      "تثبّت في ذاكرتك أسماء المستويات الخمسة وأرقامها، ومعاني المقاصد الأساسية، حتى تستحضر هيكل النموذج بسرعة بمجرد رؤية أي جزء منه.",
+    hunHowTo:
+      "تظهر بطاقة فيها مفهوم من الخمسة والعشرين مفهوماً. اختر بين الأزرار الخمسة المقصد الذي يخدمه هذا المفهوم. لك ٣ محاولات، و١٠ إجابات صحيحة تعني الفوز.",
+    hunLearn:
+      "تدرّبك على الربط الفوري بين كل مفهوم ومقصده، فترسّخ المكان الصحيح للمفهوم في النموذج وتتعرّف على المنطق وراء كل تصنيف.",
+    spdHowTo:
+      "تظهر كلمة من قاموس النموذج. اضغط «مقصد» إذا كانت أحد المقاصد الخمسة، أو «مستوى» إذا كانت أحد المستويات الخمسة. ٣٠ ثانية فقط، والسلسلة الطويلة تضاعف نقاطك.",
+    spdLearn:
+      "تختبر سرعتك في التمييز بين المقاصد والمستويات — الفئتين الأساسيتين اللتين يبنى عليهما النموذج كله — فتصبح هذه الأسماء بديهية لديك.",
+    colHowTo:
+      "تحرّك باللاعب باستخدام الأسهم على لوحة المفاتيح أو الأزرار. التقط فقط المفاهيم التي تخدم المقصد المطلوب في الأعلى. ٥ مفاهيم صحيحة تعني الفوز، و٣ أخطاء تعني خسارة الجولة.",
+    colLearn:
+      "تعزّز التمييز السريع بين المفاهيم التي تنتمي لمقصد معيّن وبقية المفاهيم، فتصبح خريطة النموذج واضحة في ذهنك وتختار الصواب بثقة.",
     // Common
     seconds: "ث",
     yourScore: "نقاطك",
@@ -121,6 +143,28 @@ const STR = {
     colWinSub: "Mblodhe 5 elemente të sakta në kohë",
     colLose: "S'ka problem, provo sërish",
     colLoseSub: "Fokusohu vetëm te elementet që i përkasin qëllimit të kërkuar",
+    // Hint card — generic labels
+    howToTitle: "Si të luash",
+    whatYouLearnTitle: "Çfarë mëson",
+    hintToggle: "Si luaj?",
+    hintCloseLabel: "Fshih udhëzimet",
+    // Per-game hints
+    memHowTo:
+      "Kliko një kartë për ta kthyer. Në çdo lëvizje shfaq dy karta dhe gjej çiftin që përputhet (p.sh.: «Niveli i Parë» me «Ndjekja», ose «Feja» me «Ruajtja e besimit»). Nëse përputhen mbeten të kthyera, përndryshe rikthehen.",
+    memLearn:
+      "Të ngulit në kujtesë emrat e pesë niveleve me numrat e tyre dhe kuptimet e qëllimeve kryesore, që ta sjellësh ndërmend strukturën e modelit sa herë sheh një pjesë të saj.",
+    hunHowTo:
+      "Shfaqet një kartë me një nga 25 konceptet. Mes pesë butonave zgjidh qëllimin që i shërben këtij koncepti. Ke 3 tentativa; 10 përgjigje të sakta = fitore.",
+    hunLearn:
+      "Të ushtron lidhjen e shpejtë mes çdo koncepti dhe qëllimit të tij, duke forcuar pozicionin e saktë të konceptit në model dhe logjikën që qëndron pas tij.",
+    spdHowTo:
+      "Shfaqet një fjalë nga fjalori i modelit. Kliko «Qëllim» nëse është një nga pesë qëllimet, ose «Nivel» nëse është një nga pesë nivelet. Vetëm 30 sekonda — vargu i gjatë i shumëfishon pikët.",
+    spdLearn:
+      "Mat shpejtësinë e dallimit mes qëllimeve dhe niveleve — dy kategorive bazë mbi të cilat ndërtohet i gjithë modeli — duke i bërë këto emra intuitivë.",
+    colHowTo:
+      "Lëviz lojtarin me shigjetat e tastierës ose me butonat. Kap vetëm konceptet që i shërbejnë qëllimit të kërkuar lart. 5 koncepte të sakta = fitore, 3 të gabuara = humbje.",
+    colLearn:
+      "Forcon dallimin e shpejtë midis koncepteve të një qëllimi të caktuar dhe pjesës tjetër, duke e bërë hartën e modelit të qartë në mendje dhe duke të ndihmuar të zgjedhësh me besim.",
     // Common
     seconds: "s",
     yourScore: "Pikët",
@@ -348,12 +392,18 @@ function GameFrame({
   title,
   onBack,
   onRestart,
+  hintKey,
+  howToPlay,
+  whatYouLearn,
   children,
 }: {
   T: typeof STR.ar;
   title: string;
   onBack: () => void;
   onRestart: () => void;
+  hintKey?: string;
+  howToPlay?: string;
+  whatYouLearn?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -373,7 +423,105 @@ function GameFrame({
           <span>{T.restart}</span>
         </button>
       </div>
+      {hintKey && howToPlay && whatYouLearn && (
+        <GameHint T={T} storageKey={hintKey} howToPlay={howToPlay} whatYouLearn={whatYouLearn} />
+      )}
       {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   GameHint — collapsible "how to play / what you learn" card.
+   Defaults open the first time the user enters a game; remembers the
+   collapse state per game for the rest of the session.
+   ───────────────────────────────────────────────────────────────────── */
+
+function GameHint({
+  T,
+  storageKey,
+  howToPlay,
+  whatYouLearn,
+}: {
+  T: typeof STR.ar;
+  storageKey: string;
+  howToPlay: string;
+  whatYouLearn: string;
+}) {
+  const ssKey = `gmHint:${storageKey}`;
+
+  // Default open until the user explicitly closes it (then remember per game).
+  const [open, setOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return window.sessionStorage.getItem(ssKey) !== "closed";
+    } catch {
+      return true;
+    }
+  });
+
+  function setOpenPersist(v: boolean) {
+    setOpen(v);
+    try {
+      window.sessionStorage.setItem(ssKey, v ? "open" : "closed");
+    } catch { /* sessionStorage may be unavailable */ }
+  }
+
+  if (!open) {
+    return (
+      <button
+        className="gm-hint-pill"
+        onClick={() => setOpenPersist(true)}
+        type="button"
+        aria-expanded="false"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4M12 8h.01" />
+        </svg>
+        <span>{T.hintToggle}</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="gm-hint-card" role="note">
+      <button
+        className="gm-hint-close"
+        onClick={() => setOpenPersist(false)}
+        aria-label={T.hintCloseLabel}
+        type="button"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div className="gm-hint-section">
+        <div className="gm-hint-title">
+          <span className="gm-hint-ico" aria-hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+          </span>
+          {T.howToTitle}
+        </div>
+        <p className="gm-hint-body">{howToPlay}</p>
+      </div>
+
+      <div className="gm-hint-divider" aria-hidden />
+
+      <div className="gm-hint-section">
+        <div className="gm-hint-title">
+          <span className="gm-hint-ico" aria-hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2v.3h6V17c0-.8.4-1.5 1-2A7 7 0 0 0 12 2Z" />
+            </svg>
+          </span>
+          {T.whatYouLearnTitle}
+        </div>
+        <p className="gm-hint-body">{whatYouLearn}</p>
+      </div>
     </div>
   );
 }
@@ -458,7 +606,15 @@ function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
   const stars = won ? (moves <= 12 ? 3 : moves <= 16 ? 2 : 1) : 0;
 
   return (
-    <GameFrame T={T} title={T.memTitle} onBack={onBack} onRestart={restart}>
+    <GameFrame
+      T={T}
+      title={T.memTitle}
+      onBack={onBack}
+      onRestart={restart}
+      hintKey="memory"
+      howToPlay={T.memHowTo}
+      whatYouLearn={T.memLearn}
+    >
       <div className="gm-stat-row">
         <Stat label={T.memMoves} value={String(moves)} />
         <Stat label={T.memTime} value={fmtTime(time)} mono />
@@ -581,7 +737,15 @@ function HunterGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
   }
 
   return (
-    <GameFrame T={T} title={T.hunTitle} onBack={onBack} onRestart={restart}>
+    <GameFrame
+      T={T}
+      title={T.hunTitle}
+      onBack={onBack}
+      onRestart={restart}
+      hintKey="hunter"
+      howToPlay={T.hunHowTo}
+      whatYouLearn={T.hunLearn}
+    >
       <div className="gm-stat-row">
         <Stat label={T.hunScore} value={String(score)} mono />
         <div className="gm-stat">
@@ -713,7 +877,15 @@ function SpeedGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: 
   const mult = combo >= 9 ? 5 : combo >= 4 ? 3 : combo >= 1 ? 2 : 1;
 
   return (
-    <GameFrame T={T} title={T.spdTitle} onBack={onBack} onRestart={restart}>
+    <GameFrame
+      T={T}
+      title={T.spdTitle}
+      onBack={onBack}
+      onRestart={restart}
+      hintKey="speed"
+      howToPlay={T.spdHowTo}
+      whatYouLearn={T.spdLearn}
+    >
       <div className="gm-stat-row">
         <Stat label={T.spdScore} value={String(score)} mono />
         <div className="gm-stat">
@@ -1010,7 +1182,15 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
   };
 
   return (
-    <GameFrame T={T} title={T.colTitle} onBack={onBack} onRestart={restart}>
+    <GameFrame
+      T={T}
+      title={T.colTitle}
+      onBack={onBack}
+      onRestart={restart}
+      hintKey="collector"
+      howToPlay={T.colHowTo}
+      whatYouLearn={T.colLearn}
+    >
       <div className="gm-stat-row">
         <div className="gm-stat">
           <span className="gm-stat-label">{T.colTargetLabel}</span>
@@ -1235,6 +1415,70 @@ const styles = `
   flex:1;text-align:center;margin:0;
   font-family:'El Messiri','Cairo',serif;
   font-size:22px;font-weight:800;color:#2b2417;
+}
+
+/* ── HINT CARD ── */
+.gm-hint-card{
+  position:relative;
+  background:
+    radial-gradient(ellipse at 0% 0%, rgba(229,185,60,0.10), transparent 55%),
+    linear-gradient(160deg,#FFFCF1 0%,#F4ECD9 100%);
+  border:1.5px solid rgba(200,169,106,0.42);
+  border-radius:16px;
+  padding:16px 20px 14px;
+  margin-bottom:18px;
+  box-shadow:0 6px 18px rgba(150,115,50,0.10), inset 0 1px 0 rgba(255,255,255,0.55);
+  animation:gm-fade .3s ease;
+}
+.gm-hint-close{
+  position:absolute;top:8px;inset-inline-end:8px;
+  display:flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(255,253,247,0.7);
+  border:1px solid rgba(200,169,106,0.30);
+  color:#7A6440;cursor:pointer;transition:all .15s;
+  padding:0;
+}
+.gm-hint-close:hover{background:#FFFCF1;border-color:#C2A059;color:#2b2417}
+.gm-hint-close:focus-visible{outline:2px solid #C2A059;outline-offset:2px}
+
+.gm-hint-section{display:flex;flex-direction:column;gap:6px}
+.gm-hint-title{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'El Messiri','Cairo',serif;
+  font-size:14px;font-weight:800;color:#2b2417;letter-spacing:.2px;
+}
+.gm-hint-ico{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:7px;flex-shrink:0;
+  background:linear-gradient(135deg,#2b2417,#3a2e1a);color:#E0C277;
+  border:1px solid rgba(224,194,119,0.40);
+}
+.gm-hint-body{
+  margin:0;padding-inline-start:30px;
+  font-size:13.5px;line-height:1.85;color:#5A4A30;font-weight:500;
+}
+.gm-hint-divider{
+  height:1px;margin:10px 0;
+  background:linear-gradient(90deg,transparent,rgba(200,169,106,0.30),transparent);
+}
+
+.gm-hint-pill{
+  display:inline-flex;align-items:center;gap:7px;align-self:flex-start;
+  padding:7px 14px;border-radius:99px;cursor:pointer;
+  background:rgba(255,253,247,0.82);
+  border:1.5px solid rgba(200,169,106,0.42);
+  color:#7A6440;font-family:inherit;font-size:12.5px;font-weight:800;
+  margin-bottom:16px;
+  transition:all .15s;
+}
+.gm-hint-pill:hover{background:#FFFCF1;border-color:#C2A059;color:#2b2417;transform:translateY(-1px);box-shadow:0 4px 12px rgba(150,115,50,0.12)}
+.gm-hint-pill:focus-visible{outline:2px solid #C2A059;outline-offset:2px}
+
+@media(max-width:520px){
+  .gm-hint-card{padding:14px 16px 12px;border-radius:14px}
+  .gm-hint-body{font-size:12.5px;padding-inline-start:0;margin-top:2px}
+  .gm-hint-title{font-size:13px}
 }
 
 /* ── STAT ROW ── */

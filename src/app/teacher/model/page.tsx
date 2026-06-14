@@ -7,6 +7,7 @@ import { useLang } from "@/lib/language-context";
 import { invalidateCache } from "@/lib/api-cache";
 import MandalaLoader from "@/components/MandalaLoader";
 import RowadBoard, { type Card, type Placement } from "./RowadBoard";
+import ModelIntro from "./ModelIntro";
 
 type LevelRow = { order: number; name_ar: string; name_sq: string | null };
 type LastRejection = {
@@ -137,6 +138,10 @@ export default function TeacherModelPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  // Which stage's intro the teacher has dismissed THIS visit. Keyed by stage
+  // so passing Stage 1 automatically re-arms the intro for Stage 2 — and the
+  // Stage-1 intro keeps appearing on every visit until Stage 1 is passed.
+  const [introDoneFor, setIntroDoneFor] = useState<"STAGE1" | "STAGE2" | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -228,6 +233,19 @@ export default function TeacherModelPage() {
   }
 
   if (data.stage === "STAGE1" || data.stage === "STAGE2") {
+    // ── Animated intro — shown before the board on every visit until the
+    //    teacher passes the stage. Stage 2 gets its own fresh intro. Skipped
+    //    on retries after a rejection (the rejection notes matter more then).
+    if (introDoneFor !== data.stage && !data.last_rejection) {
+      return (
+        <ModelIntro
+          stage={data.stage}
+          lang={lang}
+          onStart={() => setIntroDoneFor(data.stage as "STAGE1" | "STAGE2")}
+        />
+      );
+    }
+
     const rejection = data.last_rejection;
     return (
       <div style={{ position: "relative" }}>
