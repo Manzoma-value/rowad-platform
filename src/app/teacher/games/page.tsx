@@ -309,7 +309,7 @@ const localize = <T extends { ar: string; sq: string }>(item: T, lang: Lang) =>
    Page shell
    ───────────────────────────────────────────────────────────────────── */
 
-export default function GamesPage() {
+export default function GamesPage({ cardBase = "/teacher/games/card" }: { cardBase?: string }) {
   const { lang } = useLang();
   const L: Lang = lang === "sq" ? "sq" : "ar";
   const T = STR[L];
@@ -319,7 +319,7 @@ export default function GamesPage() {
 
   return (
     <div className="gm-shell" dir={dir}>
-      {game === "hub"       && <Hub T={T} onPlay={setGame} />}
+      {game === "hub"       && <Hub T={T} onPlay={setGame} cardBase={cardBase} lang={L} />}
       {game === "memory"    && <MemoryGame    T={T} lang={L} onBack={() => setGame("hub")} />}
       {game === "hunter"    && <HunterGame    T={T} lang={L} onBack={() => setGame("hub")} />}
       {game === "speed"     && <SpeedGame     T={T} lang={L} onBack={() => setGame("hub")} />}
@@ -336,15 +336,42 @@ export default function GamesPage() {
 function Hub({
   T,
   onPlay,
+  cardBase,
+  lang,
 }: {
   T: typeof STR.ar;
   onPlay: (g: GameId) => void;
+  cardBase: string;
+  lang: Lang;
 }) {
   const tiles: { id: Exclude<GameId, "hub">; title: string; desc: string; emoji: string; hue: string }[] = [
     { id: "memory",    title: T.memTitle, desc: T.memDesc, emoji: "🧠",  hue: "rgba(200,169,106,0.18)" },
     { id: "hunter",    title: T.hunTitle, desc: T.hunDesc, emoji: "🎯",  hue: "rgba(122,30,30,0.10)" },
     { id: "speed",     title: T.spdTitle, desc: T.spdDesc, emoji: "⚡",  hue: "rgba(45,138,74,0.10)" },
     { id: "collector", title: T.colTitle, desc: T.colDesc, emoji: "🧭",  hue: "rgba(20,80,140,0.10)" },
+  ];
+
+  const cardTiles = [
+    {
+      stage: "STAGE1",
+      title: lang === "ar" ? "لعبة البطاقات (1)" : "Loja e kartave (1)",
+      desc:
+        lang === "ar"
+          ? "رتّب الـ25 مفهوماً في النموذج التعليمي حسب المقصد والمستوى الصحيح. النتيجة تظهر فور الإرسال."
+          : "Rendit 25 konceptet në model sipas qëllimit dhe nivelit të duhur. Rezultati shfaqet pas dërgimit.",
+      emoji: "🃏",
+      hue: "rgba(184,155,94,0.16)",
+    },
+    {
+      stage: "STAGE2",
+      title: lang === "ar" ? "لعبة البطاقات (2)" : "Loja e kartave (2)",
+      desc:
+        lang === "ar"
+          ? "نسخة موسّعة: بطاقات تحتوي تفاصيل المفهوم (الوصف، الواجب، الأجر، الثمرة، مؤشر التحقق)."
+          : "Versioni i zgjeruar: kartat përmbajnë detajet (përshkrim, detyrë, shpërblim, fryt, tregues).",
+      emoji: "🎴",
+      hue: "rgba(122,30,30,0.10)",
+    },
   ];
 
   return (
@@ -356,12 +383,34 @@ function Hub({
       </header>
 
       <div className="gm-tiles">
+        {cardTiles.map((c, i) => (
+          <a
+            key={c.stage}
+            href={`${cardBase}/${c.stage}`}
+            className="gm-tile gm-tile-card"
+            style={{ animationDelay: `${0.08 * i}s`, "--tile-tint": c.hue } as React.CSSProperties}
+          >
+            <div className="gm-tile-emblem" aria-hidden>
+              <span className="gm-tile-emoji">{c.emoji}</span>
+            </div>
+            <div className="gm-tile-body">
+              <h2 className="gm-tile-title">{c.title}</h2>
+              <p className="gm-tile-desc">{c.desc}</p>
+            </div>
+            <div className="gm-tile-cta">
+              <span>{T.playBtn}</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                <polyline points="9 6 15 12 9 18" />
+              </svg>
+            </div>
+          </a>
+        ))}
         {tiles.map((t, i) => (
           <button
             key={t.id}
             className="gm-tile"
             onClick={() => onPlay(t.id)}
-            style={{ animationDelay: `${0.08 * i}s`, "--tile-tint": t.hue } as React.CSSProperties}
+            style={{ animationDelay: `${0.08 * (i + 2)}s`, "--tile-tint": t.hue } as React.CSSProperties}
           >
             <div className="gm-tile-emblem" aria-hidden>
               <span className="gm-tile-emoji">{t.emoji}</span>

@@ -1,0 +1,99 @@
+"use client";
+export const dynamic = "force-dynamic";
+
+import { useEffect, useState } from "react";
+import { useLang } from "@/lib/language-context";
+
+const COPY = {
+  ar: {
+    badge: "نتيجة المراجعة",
+    title: "لم تتم الموافقة على طلبك",
+    body: "نشكرك على التقديم. يبدو أن طلبك لم يتم اعتماده في هذه المرحلة من قبل إدارة المدرسة. لأي استفسار يرجى التواصل مع الإدارة مباشرة.",
+    notesLabel: "ملاحظات المراجع",
+    noNotes: "لم تترك الإدارة ملاحظات.",
+  },
+  sq: {
+    badge: "Rezultati i shqyrtimit",
+    title: "Aplikimi yt nuk u miratua",
+    body: "Të falënderojmë për aplikimin. Aplikimi yt nuk u miratua në këtë fazë nga administrata e shkollës. Për çdo paqartësi të lutem kontakto drejtpërdrejt administratën.",
+    notesLabel: "Shënimet e shqyrtuesit",
+    noNotes: "Administrata nuk la shënime.",
+  },
+} as const;
+
+export default function RejectedPage() {
+  const { lang } = useLang();
+  const L = lang === "sq" ? "sq" : "ar";
+  const C = COPY[L];
+  const [notes, setNotes] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/teacher/application", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setNotes(d?.application?.reviewer_notes ?? null))
+      .catch(() => {});
+  }, []);
+
+  return (
+    <div dir={L === "ar" ? "rtl" : "ltr"} className="rj-wrap">
+      <div className="rj-card">
+        <div className="rj-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4M12 16h.01" />
+          </svg>
+        </div>
+        <span className="rj-badge">{C.badge}</span>
+        <h1 className="rj-title">{C.title}</h1>
+        <p className="rj-body">{C.body}</p>
+        <div className="rj-notes-block">
+          <div className="rj-notes-label">{C.notesLabel}</div>
+          <div className={`rj-notes${notes ? "" : " empty"}`}>{notes || C.noNotes}</div>
+        </div>
+      </div>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+        .rj-wrap {
+          min-height: 78vh; display:flex; align-items:center; justify-content:center;
+          padding: 24px; font-family:'Cairo','Tajawal',sans-serif;
+          background:
+            radial-gradient(ellipse at 50% 10%, #F8E0DE 0%, transparent 55%),
+            linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%);
+        }
+        .rj-card {
+          max-width: 560px; text-align:center;
+          background: linear-gradient(160deg,#FFF4E5 0%,#FBEDD2 100%);
+          border: 1.5px solid rgba(122,30,30,0.32); border-radius: 22px;
+          padding: 48px 40px;
+          box-shadow: 0 10px 40px rgba(122,30,30,0.10),
+            inset 0 0 0 5px rgba(255,248,236,0.55);
+          color: #5A1818;
+        }
+        .rj-icon {
+          width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 18px;
+          display:flex; align-items:center; justify-content:center;
+          background: rgba(122,30,30,0.10); color: #7A1E1E;
+          border: 1.5px solid rgba(122,30,30,0.32);
+        }
+        .rj-badge {
+          display:inline-block; font-size:11.5px; font-weight:800; color:#7A1E1E;
+          background:rgba(122,30,30,.10); padding:4px 16px; border-radius:99px;
+          margin-bottom:14px; letter-spacing:1.5px; text-transform:uppercase;
+          border:1px solid rgba(122,30,30,0.30);
+        }
+        .rj-title { font-size:22px; font-weight:900; color:#5A1818; margin:0 0 14px; }
+        .rj-body  { font-size:14px; color:#6F2A2A; line-height:1.9; margin:0 0 22px; }
+        .rj-notes-block {
+          background: #FFF8EC; border:1px solid rgba(122,30,30,0.20);
+          border-radius:12px; padding:14px 16px; text-align:start;
+        }
+        .rj-notes-label {
+          font-size: 11px; font-weight:800; color:#8B6915;
+          letter-spacing:1.2px; text-transform:uppercase; margin-bottom:6px;
+        }
+        .rj-notes       { font-size:13.5px; color:#2E1A0F; line-height:1.85; font-weight:600; white-space:pre-wrap; }
+        .rj-notes.empty { color:#8A7B60; font-style:italic; font-weight:500; }
+      `}</style>
+    </div>
+  );
+}

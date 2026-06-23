@@ -1,5 +1,6 @@
 // Shared constants + helpers for النموذج التعليمي للرواد.
-import type { Maqsad, RowadStage, TeacherOnboardingStatus } from "@prisma/client";
+// Now used purely for the card-game (no onboarding gating).
+import type { Maqsad, RowadStage } from "@prisma/client";
 
 // Column order matches the printed template (RTL: الدين first → المال last)
 export const COLUMN_ORDER: Maqsad[] = ["DEEN", "NAFS", "AQL", "NASL", "MAL"];
@@ -15,21 +16,8 @@ export const COLUMN_LABELS: Record<Maqsad, { ar: string; sq: string }> = {
 export const LEVEL_COUNT = 5;
 export const TOTAL_CELLS = 25;
 
-/** Which stage (if any) the teacher is currently allowed to fill. */
-export function stageForStatus(
-  status: TeacherOnboardingStatus,
-): RowadStage | null {
-  if (status === "STAGE1_PENDING") return "STAGE1";
-  if (status === "STAGE2_PENDING") return "STAGE2";
-  return null;
-}
-
-/** Which stage the teacher last submitted (for surfacing rejection notes). */
-export function reviewStageForStatus(
-  status: TeacherOnboardingStatus,
-): RowadStage | null {
-  if (status === "STAGE1_REVIEW") return "STAGE1";
-  if (status === "STAGE2_REVIEW") return "STAGE2";
+export function parseStage(raw: string | null | undefined): RowadStage | null {
+  if (raw === "STAGE1" || raw === "STAGE2") return raw;
   return null;
 }
 

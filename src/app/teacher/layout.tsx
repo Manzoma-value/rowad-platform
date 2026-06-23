@@ -26,8 +26,6 @@ import {
   Bell,
   Sparkles,
   Gamepad2,
-  ArrowLeft,
-  ArrowRight,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -111,12 +109,26 @@ interface NavItem {
   feature?: FeatureKey;
 }
 
-const navItems: NavItem[] = [
+interface NavItem2 extends Omit<NavItem, "key"> {
+  key: NavItem["key"] | "games";
+  labelAr?: string;
+  labelSq?: string;
+  labelEn?: string;
+}
+
+const navItems: NavItem2[] = [
   { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
   { href: "/teacher/classes",  key: "myClasses", sublabel: "Classes",   exact: false, icon: Users },
   { href: "/teacher/lessons",  key: "lessons",   sublabel: "Lessons",   exact: false, icon: BookOpen, feature: "lessons" },
   { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList, feature: "quizzes" },
   { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3, feature: "reports" },
+  {
+    href: "/teacher/games", key: "games", sublabel: "Learning Tools", exact: false,
+    icon: Gamepad2,
+    labelAr: "أدوات وألعاب التعلم",
+    labelSq: "Mjete dhe lojëra mësimore",
+    labelEn: "Learning Tools & Games",
+  },
 ];
 
 const COMMUNITY_HREF = "/teacher/hub";
@@ -217,26 +229,40 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
     window.location.href = slug ? `/schools/${slug}` : "/login";
   }
 
-  // ── Rowad onboarding gate ──
-  // Teachers in onboarding (Stage 1 → admin approval → Stage 2 → class assignment)
-  // are confined to /teacher/model — plus the educational games hub at
-  // /teacher/games — until their status becomes ACTIVE.
-  const gated = statusLoaded && !!onboardingStatus && onboardingStatus !== "ACTIVE";
-  const onModelRoute = pathname.startsWith("/teacher/model");
-  const onGamesRoute = pathname.startsWith("/teacher/games");
-  const allowedDuringOnboarding = onModelRoute || onGamesRoute;
+  // ── Application onboarding gate ──
+  // PENDING_APPLICATION → /teacher/application
+  // UNDER_REVIEW        → /teacher/under-review
+  // REJECTED            → /teacher/rejected
+  // ACTIVE              → full dashboard
+  const gatedTo = (() => {
+    if (!statusLoaded || !onboardingStatus) return null;
+    if (onboardingStatus === "PENDING_APPLICATION") return "/teacher/application";
+    if (onboardingStatus === "UNDER_REVIEW")        return "/teacher/under-review";
+    if (onboardingStatus === "REJECTED")            return "/teacher/rejected";
+    return null;
+  })();
+  const gated = gatedTo !== null;
   useEffect(() => {
-    if (gated && !allowedDuringOnboarding) router.replace("/teacher/model");
-  }, [gated, allowedDuringOnboarding, router]);
+    if (gatedTo && pathname !== gatedTo) router.replace(gatedTo);
+  }, [gatedTo, pathname, router]);
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
+
+  const navLabel = (item: NavItem2) => {
+    if (item.labelAr) {
+      if (lang === "ar") return item.labelAr;
+      if (lang === "sq") return item.labelSq!;
+      return item.labelEn ?? item.labelAr;
+    }
+    return tr[item.key as Exclude<NavItem2["key"], "games">];
+  };
 
   const currentLabel = (() => {
     if (isActive(COMMUNITY_HREF))
       return lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community";
     const found = navItems.find((item) => isActive(item.href, item.exact));
-    return found ? tr[found.key] : (lang === "ar" ? "الصفحة" : "Faqja");
+    return found ? navLabel(found) : (lang === "ar" ? "الصفحة" : "Faqja");
   })();
 
   // ── Pre-status loader ──
@@ -290,27 +316,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           }}
         >
           <div style={{ flex: 1 }} />
-          {/* Games shortcut — visible on /teacher/model, swaps to a "back to
-              model" cue once the teacher is on the games page itself. */}
-          <Link
-            href={onGamesRoute ? "/teacher/model" : "/teacher/games"}
-            className="rg-games-btn"
-            aria-label={onGamesRoute
-              ? (lang === "ar" ? "العودة للنموذج" : lang === "sq" ? "Kthehu te modeli" : "Back to model")
-              : (lang === "ar" ? "جرّب الألعاب" : lang === "sq" ? "Provo lojërat" : "Try the games")
-            }
-          >
-            {onGamesRoute
-              ? (isRtl ? <ArrowRight size={14} strokeWidth={2.2} /> : <ArrowLeft size={14} strokeWidth={2.2} />)
-              : <Gamepad2 size={14} strokeWidth={2} />
-            }
-            <span className="rg-games-btn-label">
-              {onGamesRoute
-                ? (lang === "ar" ? "النموذج" : lang === "sq" ? "Modeli" : "Model")
-                : (lang === "ar" ? "جرّب الألعاب" : lang === "sq" ? "Provo lojërat" : "Try the games")
-              }
-            </span>
-          </Link>
           {showToggle && <LangToggle dark secondaryLang={schoolLang} />}
           <div
             style={{
@@ -466,7 +471,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                   <Icon size={17} strokeWidth={1.6} />
                 </span>
                 <span className="tl-nav-labels">
-                  <span className="tl-nav-label-main">{tr[item.key]}</span>
+                  <span className="tl-nav-label-main">{navLabel(item)}</span>
                   <span className="tl-nav-label-sub">{item.sublabel}</span>
                 </span>
                 {active && <span className="tl-nav-dot" />}
@@ -665,7 +670,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
               className={`tl-tab-item ${active ? "active" : ""}`}
             >
               <span className="tl-tab-icon"><Icon size={22} strokeWidth={1.6} /></span>
-              <span className="tl-tab-label">{tr[item.key]}</span>
+              <span className="tl-tab-label">{navLabel(item)}</span>
             </Link>
           );
         })}

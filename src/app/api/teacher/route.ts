@@ -1,9 +1,9 @@
-// api/teacher/route.ts
+// api/teacher/route.ts — base teacher dashboard payload + onboarding status.
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 300;
+export const revalidate = 60;
 
 export async function GET() {
   const supabase = await createClient();
@@ -17,17 +17,27 @@ export async function GET() {
       school_id: true,
       onboarding_status: true,
       profile: { select: { full_name: true } },
-      school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } },
+      school: {
+        select: {
+          id: true, name: true, name_alt: true,
+          language: true, slug: true, is_active: true,
+        },
+      },
       classes: {
         select: {
           id: true,
           name: true,
           students: {
-            select: {
-              id: true,
-              profile: { select: { full_name: true } },
-            },
+            select: { id: true, profile: { select: { full_name: true } } },
           },
+        },
+      },
+      application: {
+        select: {
+          id: true,
+          submitted_at: true,
+          reviewed_at: true,
+          reviewer_notes: true,
         },
       },
     },
@@ -43,5 +53,6 @@ export async function GET() {
     school: teacher.school,
     classes: teacher.classes,
     onboarding_status: teacher.onboarding_status,
+    application: teacher.application,
   });
 }

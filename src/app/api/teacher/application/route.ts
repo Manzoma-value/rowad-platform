@@ -1,0 +1,195 @@
+// api/teacher/application
+//   GET  → returns the teacher's application (if any) + onboarding status
+//   POST → creates the application and flips the teacher to UNDER_REVIEW.
+//          One application per teacher (unique on teacher_id). Refuses if
+//          the teacher is already past PENDING_APPLICATION.
+import { NextResponse } from "next/server";
+import { requireTeacher } from "@/lib/teacher-auth";
+import { prisma } from "@/lib/prisma";
+import {
+  APP_GENDERS,
+  APP_CURRENT_ROLES,
+  APP_QUALIFICATIONS,
+  APP_EXPERIENCE_RANGES,
+  APP_ACHIEVEMENT_SCOPES,
+  APP_EXPERIENCE_AREAS,
+  APP_TARGET_GROUPS,
+  APP_CONTRIBUTIONS,
+  APP_LANGUAGES,
+  APP_LANG_LEVELS,
+  APP_ATTACHMENTS,
+} from "@/lib/teacher-application";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const app = await prisma.teacherApplication.findUnique({
+    where: { teacher_id: auth.teacher.id },
+  });
+
+  return NextResponse.json({
+    onboarding_status: auth.teacher.onboarding_status,
+    application: app,
+  });
+}
+
+function pickEnum<T extends readonly string[]>(
+  raw: unknown,
+  allowed: T,
+): T[number] | null {
+  return typeof raw === "string" && (allowed as readonly string[]).includes(raw)
+    ? (raw as T[number])
+    : null;
+}
+
+function pickEnumArray<T extends readonly string[]>(
+  raw: unknown,
+  allowed: T,
+): T[number][] {
+  if (!Array.isArray(raw)) return [];
+  const set = new Set<string>(allowed);
+  return Array.from(
+    new Set(raw.filter((v): v is string => typeof v === "string" && set.has(v))),
+  ) as T[number][];
+}
+
+function pickString(raw: unknown, min = 1, max = 500): string | null {
+  if (typeof raw !== "string") return null;
+  const t = raw.trim();
+  if (t.length < min || t.length > max) return null;
+  return t;
+}
+
+function optionalString(raw: unknown, max = 500): string | null {
+  if (raw == null) return null;
+  if (typeof raw !== "string") return null;
+  const t = raw.trim();
+  if (!t) return null;
+  if (t.length > max) return t.slice(0, max);
+  return t;
+}
+
+export async function POST(req: Request) {
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { teacher } = auth;
+
+  if (teacher.onboarding_status !== "PENDING_APPLICATION") {
+    return NextResponse.json(
+      { error: "application_already_submitted" },
+      { status: 409 },
+    );
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await req.json()) as Record<string, unknown>;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  // Required scalars
+  const full_name = pickString(body.full_name, 2, 200);
+  const country = pickString(body.country, 2, 100);
+  const city = pickString(body.city, 1, 100);
+  const phone = pickString(body.phone, 4, 40);
+  const email = pickString(body.email, 4, 200);
+  const specialization = pickString(body.specialization, 2, 200);
+  const graduation_institution = pickString(body.graduation_institution, 2, 200);
+  const age = typeof body.age === "number" && body.age >= 16 && body.age <= 120
+    ? Math.floor(body.age)
+    : null;
+  const gender = pickEnum(body.gender, APP_GENDERS);
+  const current_role = pickEnum(body.current_role, APP_CURRENT_ROLES);
+  const qualification = pickEnum(body.qualification, APP_QUALIFICATIONS);
+  const years_of_experience = pickEnum(body.years_of_experience, APP_EXPERIENCE_RANGES);
+
+  const required = {
+    full_name, country, city, phone, email, age, gender,
+    current_role, qualification, specialization, graduation_institution,
+    years_of_experience,
+  };
+  for (const [k, v] of Object.entries(required)) {
+    if (v == null) {
+      return NextResponse.json(
+        { error: "missing_field", field: k },
+        { status: 400 },
+      );
+    }
+  }
+
+  const experience_areas = pickEnumArray(body.experience_areas, APP_EXPERIENCE_AREAS);
+  const target_groups = pickEnumArray(body.target_groups, APP_TARGET_GROUPS);
+  const contributions = pickEnumArray(body.contributions, APP_CONTRIBUTIONS);
+  const attachments = pickEnumArray(body.attachments, APP_ATTACHMENTS);
+
+  const has_achievements = body.has_achievements === true;
+  const achievements_scope = has_achievements
+    ? pickEnum(body.achievements_scope, APP_ACHIEVEMENT_SCOPES)
+    : null;
+
+  // Languages — JSON array of { lang, level }
+  const langSet = new Set<string>(APP_LANGUAGES);
+  const lvlSet = new Set<string>(APP_LANG_LEVELS);
+  const languages = Array.isArray(body.languages)
+    ? body.languages
+        .filter(
+          (e): e is { lang: string; level: string } =>
+            !!e &&
+            typeof e === "object" &&
+            "lang" in e &&
+            "level" in e &&
+            typeof (e as Record<string, unknown>).lang === "string" &&
+            typeof (e as Record<string, unknown>).level === "string" &&
+            langSet.has((e as Record<string, string>).lang) &&
+            lvlSet.has((e as Record<string, string>).level),
+        )
+        .map((e) => ({ lang: e.lang, level: e.level }))
+    : [];
+
+  await prisma.$transaction(async (tx) => {
+    await tx.teacherApplication.create({
+      data: {
+        teacher_id: teacher.id,
+        school_id: teacher.school_id,
+        full_name: full_name!,
+        age: age!,
+        country: country!,
+        city: city!,
+        phone: phone!,
+        email: email!,
+        gender: gender!,
+        nominating_entity: optionalString(body.nominating_entity, 200),
+        nominator_name: optionalString(body.nominator_name, 200),
+        nominator_role: optionalString(body.nominator_role, 200),
+        current_role: current_role!,
+        current_role_other: optionalString(body.current_role_other, 200),
+        qualification: qualification!,
+        specialization: specialization!,
+        graduation_institution: graduation_institution!,
+        experience_areas,
+        experience_areas_other: optionalString(body.experience_areas_other, 200),
+        years_of_experience: years_of_experience!,
+        target_groups,
+        target_groups_other: optionalString(body.target_groups_other, 200),
+        contributions,
+        has_achievements,
+        achievements_scope,
+        languages,
+        languages_other: optionalString(body.languages_other, 200),
+        attachments,
+        notes: optionalString(body.notes, 2000),
+      },
+    });
+
+    await tx.teacher.update({
+      where: { id: teacher.id },
+      data: { onboarding_status: "UNDER_REVIEW" },
+    });
+  }, { timeout: 30000, maxWait: 10000 });
+
+  return NextResponse.json({ success: true, status: "UNDER_REVIEW" });
+}

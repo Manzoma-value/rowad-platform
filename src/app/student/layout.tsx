@@ -19,6 +19,7 @@ import {
   ClipboardList,
   BookOpen,
   MapPin,
+  Gamepad2,
   Globe2,
   Menu,
   LogOut,
@@ -119,6 +120,7 @@ const ALLOWED_PAGES: Record<string, string[]> = {
     "/student/announcements",
     "/student/roadmap",
     "/student/hub",
+    "/student/games",
     "/student/profile",
   ],
 };
@@ -127,7 +129,7 @@ const SHOW_NAV_STATUSES = ["CLASS_ASSIGNED"];
 
 /* ─── Nav ─── */
 interface NavItem {
-  key: "dashboard" | "myClass" | "lessons" | "quizzes" | "roadmap";
+  key: "dashboard" | "myClass" | "lessons" | "quizzes" | "roadmap" | "games";
   href: string;
   exact: boolean;
   sublabel: string;
@@ -148,6 +150,13 @@ const navItems: NavItem[] = [
     key: "roadmap", href: "/student/roadmap", exact: false, sublabel: "Roadmap",
     labelAr: "الخريطة", labelSq: "Banka e Pyetjeve", labelEn: "Question Bank",
     icon: MapPin, feature: "roadmap",
+  },
+  {
+    key: "games", href: "/student/games", exact: false, sublabel: "Learning Tools",
+    labelAr: "أدوات وألعاب التعلم",
+    labelSq: "Mjete dhe lojëra mësimore",
+    labelEn: "Learning Tools & Games",
+    icon: Gamepad2,
   },
 ];
 

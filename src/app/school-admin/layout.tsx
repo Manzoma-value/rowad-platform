@@ -168,8 +168,8 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       label: tr.submissions,
     },
     {
-      href: "/school-admin/rowad", sublabel: "Rowad Model", exact: false, icon: LayoutGrid,
-      label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
+      href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
+      label: lang === "ar" ? "طلبات المعلمين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
     },
     {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,

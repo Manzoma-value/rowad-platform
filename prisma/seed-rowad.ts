@@ -3,7 +3,7 @@
 //
 // 1. Ensures every school has its own Rowad model (levels + 25 concepts).
 // 2. Sets all existing teachers to ACTIVE (so the current demo keeps working).
-// 3. Creates/resets one test teacher in STAGE1_PENDING with known credentials
+// 3. Creates/resets one test teacher in PENDING_APPLICATION with known credentials
 //    so the staged flow can be exercised end-to-end.
 //
 // Intentionally separate from prisma/seed.ts.
@@ -80,17 +80,15 @@ async function main() {
     });
     await prisma.teacher.upsert({
       where: { profile_id: userId },
-      update: { onboarding_status: "STAGE1_PENDING", school_id: targetSchool.id },
+      update: { onboarding_status: "PENDING_APPLICATION", school_id: targetSchool.id },
       create: {
         profile_id: userId,
         school_id: targetSchool.id,
-        onboarding_status: "STAGE1_PENDING",
+        onboarding_status: "PENDING_APPLICATION",
       },
     });
-    const t = await prisma.teacher.findUnique({ where: { profile_id: userId }, select: { id: true } });
-    if (t) await prisma.rowadSubmission.deleteMany({ where: { teacher_id: t.id } });
-
-    console.log(`\n  ✅ test teacher ready in "${targetSchool.name}" (STAGE1_PENDING)`);
+    // Note: rowadSubmission/rowadPlacement tables no longer exist (game mode).
+    console.log(`\n  ✅ test teacher ready in "${targetSchool.name}" (PENDING_APPLICATION)`);
     console.log(`     email:    ${TEST_TEACHER_EMAIL}`);
     console.log(`     password: ${TEST_TEACHER_PASSWORD}`);
   }
