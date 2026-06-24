@@ -172,6 +172,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       label: lang === "ar" ? "طلبات المعلمين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
     },
     {
+      href: "/school-admin/review-queue", sublabel: "Review queue", exact: false, icon: ClipboardCheck,
+      label: lang === "ar" ? "قائمة المراجعة" : lang === "sq" ? "Lista e shqyrtimit" : "Review Queue",
+    },
+    {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,
       label: lang === "ar" ? "الخريطة" : lang === "sq" ? "Rruga e Pyetjeve" : "Roadmap",
       feature: "roadmap",

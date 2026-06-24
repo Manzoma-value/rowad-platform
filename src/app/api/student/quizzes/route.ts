@@ -1,25 +1,37 @@
-// api/student/quizzes/route.ts
+// api/student/quizzes/route.ts — only APPROVED quizzes attached to the
+// student's CURRENT concept.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireStudent } from "@/lib/student-auth";
 import { prisma } from "@/lib/prisma";
+import { resolveStudentRoadmapState } from "@/lib/concept-progress";
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireStudent();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Get student + class_id in one minimal query
-  const student = await prisma.student.findUnique({
-    where: { profile_id: user.id },
-    select: { id: true, class_id: true },
+  const { student } = auth;
+  if (!student.class_id || !student.school_id) {
+    return NextResponse.json({ quizzes: [], studentId: student.id, current_concept: null });
+  }
+
+  const state = await resolveStudentRoadmapState({
+    student_id: student.id,
+    class_id: student.class_id,
+    school_id: student.school_id,
   });
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
-  if (!student.class_id) return NextResponse.json({ quizzes: [], studentId: student.id });
+  if (!state.current) {
+    return NextResponse.json({ quizzes: [], studentId: student.id, current_concept: null, finished_all: true });
+  }
 
   const quizzes = await prisma.quiz.findMany({
-    where: { class_id: student.class_id },
+    where: {
+      class_id: student.class_id,
+      module_id: state.current.module_id,
+      review_status: "APPROVED",
+      is_legacy: false,
+    },
     select: {
       id: true,
       name: true,
@@ -42,5 +54,13 @@ export async function GET() {
     orderBy: { created_at: "desc" },
   });
 
-  return NextResponse.json({ quizzes, studentId: student.id });
+  return NextResponse.json({
+    quizzes,
+    studentId: student.id,
+    current_concept: {
+      module_id: state.current.module_id,
+      title: state.current.title,
+      stage_title: state.current.stage_title,
+    },
+  });
 }

@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
+import StudentConceptBanner from "@/components/StudentConceptBanner";
 
 interface LessonListItem {
   id: string;
@@ -78,6 +79,7 @@ export default function StudentLessonsPage() {
   return (
     <div className="sll-page" dir={dir}>
       <style>{css}</style>
+      <StudentConceptBanner />
 
       {/* Header */}
       <div className="sll-hd">

@@ -26,6 +26,7 @@ import {
   Bell,
   Sparkles,
   Gamepad2,
+  MapPin,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -101,7 +102,7 @@ function GeoMark({ size = 22, color = "var(--tl-gold)" }: { size?: number; color
 /* ─── Nav ─── */
 interface NavItem {
   href: string;
-  key: "dashboard" | "myClasses" | "lessons" | "quizzes" | "reports";
+  key: "dashboard" | "myClasses" | "lessons" | "quizzes" | "reports" | "roadmap";
   sublabel: string;
   exact?: boolean;
   icon: LucideIcon;
@@ -119,6 +120,13 @@ interface NavItem2 extends Omit<NavItem, "key"> {
 const navItems: NavItem2[] = [
   { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
   { href: "/teacher/classes",  key: "myClasses", sublabel: "Classes",   exact: false, icon: Users },
+  {
+    href: "/teacher/roadmap",  key: "roadmap",   sublabel: "Roadmap",   exact: false, icon: MapPin,
+    feature: "roadmap",
+    labelAr: "الخريطة التعليمية",
+    labelSq: "Harta Edukative",
+    labelEn: "Roadmap",
+  },
   { href: "/teacher/lessons",  key: "lessons",   sublabel: "Lessons",   exact: false, icon: BookOpen, feature: "lessons" },
   { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList, feature: "quizzes" },
   { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3, feature: "reports" },
@@ -255,7 +263,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
       if (lang === "sq") return item.labelSq!;
       return item.labelEn ?? item.labelAr;
     }
-    return tr[item.key as Exclude<NavItem2["key"], "games">];
+    return tr[item.key as Exclude<NavItem2["key"], "games" | "roadmap">];
   };
 
   const currentLabel = (() => {

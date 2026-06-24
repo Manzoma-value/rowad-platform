@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import StudentConceptBanner from "@/components/StudentConceptBanner";
 
 type Option = { id: string; text: string; order: number };
 type Question = {
@@ -212,6 +213,7 @@ export default function StudentQuizzesPage() {
 
   return (
     <div className="qs-shell list-shell" dir={dir} style={{ opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(12px)", transition: "opacity 0.4s ease, transform 0.4s ease" }}>
+      <StudentConceptBanner />
 
       {/* Header */}
       <div className="list-header">

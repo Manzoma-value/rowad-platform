@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
+import StudentConceptBanner from "@/components/StudentConceptBanner";
 import { cachedFetch } from "@/lib/api-cache";
 
 type Announcement = {
@@ -62,6 +63,9 @@ export default function StudentPage() {
   return (
     <div className="sd-shell" dir={dir}>
       <main className="sd-main">
+
+        {/* ── Current concept (sequential gating) ── */}
+        <StudentConceptBanner />
 
         {/* ── Welcome Banner ── */}
         <div className="sd-welcome">

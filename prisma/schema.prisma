@@ -321,6 +321,8 @@ model Profile {
   posts                        Post[]
   post_reactions               PostReaction[]
   reviewedTeacherApplications  TeacherApplication[] @relation("TeacherAppReviewedBy")
+  reviewedLessons              Lesson[]             @relation("LessonReviewedBy")
+  reviewedQuizzes              Quiz[]               @relation("QuizReviewedBy")
   avatar_url                   String?
   avatar_path                  String?
   created_invites              Invite[]            @relation("InvitesCreatedBy")
@@ -459,22 +461,51 @@ model Announcement {
   @@map("announcements")
 }
 
+// ─── Content review status (lessons + quizzes) ───
+// DRAFT → teacher is editing.
+// PENDING_REVIEW → teacher submitted, admin must approve.
+// APPROVED → visible to students.
+// REJECTED → goes back to DRAFT-like (editable) with reviewer_notes; teacher
+//            can resubmit (transitions to PENDING_REVIEW again).
+enum ContentReviewStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
 model Quiz {
   id         String         @id @default(uuid()) @db.Uuid
   name       String
   school_id  String         @db.Uuid
   class_id   String         @db.Uuid
   teacher_id String         @db.Uuid
+  // Concept (RoadmapModule) the quiz is tied to. Required for NEW quizzes —
+  // existing ones backfilled to NULL + is_legacy=true.
+  module_id  String?        @db.Uuid
+  // Review pipeline
+  review_status  ContentReviewStatus @default(DRAFT)
+  reviewer_id    String?             @db.Uuid
+  reviewer_notes String?
+  submitted_at   DateTime?
+  reviewed_at    DateTime?
+  // Pre-milestone quizzes (no concept link). Hidden from students; visible to
+  // teacher as read-only "Legacy" entries that can be cloned into a concept.
+  is_legacy  Boolean        @default(false)
   created_at DateTime       @default(now())
   attempts   QuizAttempt[]
   questions  QuizQuestion[]
   class      Class          @relation(fields: [class_id], references: [id], onDelete: Cascade)
   school     School         @relation(fields: [school_id], references: [id], onDelete: Cascade)
   teacher    Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  module     RoadmapModule? @relation("ModuleQuizzes", fields: [module_id], references: [id], onDelete: SetNull)
+  reviewer   Profile?       @relation("QuizReviewedBy", fields: [reviewer_id], references: [id])
   linked_from_lessons Lesson[]
 
   @@index([teacher_id, created_at])
   @@index([class_id])
+  @@index([module_id, review_status])
+  @@index([school_id, review_status])
   @@map("quizzes")
 }
 
@@ -646,6 +677,9 @@ model RoadmapModule {
   main_trait_id    String?           @db.Uuid
   main_trait       StageTrait?       @relation("ModuleMainTrait", fields: [main_trait_id], references: [id])
   traitAssessments TraitAssessment[]
+  // Teacher-authored content tied to this concept
+  lessons          Lesson[]          @relation("ModuleLessons")
+  quizzes          Quiz[]            @relation("ModuleQuizzes")
 
   @@map("roadmap_modules")
 }
@@ -781,9 +815,21 @@ model Lesson {
   teacher_id     String           @db.Uuid
   school_id      String           @db.Uuid
   class_id       String           @db.Uuid
+  // Concept (RoadmapModule) the lesson is tied to. Required for NEW lessons.
+  // Existing pre-milestone lessons are backfilled to NULL + is_legacy=true.
+  module_id      String?          @db.Uuid
   title          String
   description    String?
+  // Kept for backwards compat; new visibility is review_status==APPROVED.
   is_published   Boolean          @default(false)
+  // Review pipeline
+  review_status  ContentReviewStatus @default(DRAFT)
+  reviewer_id    String?             @db.Uuid
+  reviewer_notes String?
+  submitted_at   DateTime?
+  reviewed_at    DateTime?
+  // Pre-milestone lessons hidden from students; teacher sees as read-only.
+  is_legacy      Boolean          @default(false)
   // true  = graded mode (one attempt, score recorded)
   // false = practice mode (instant feedback, retryable, no grade)
   is_graded      Boolean          @default(true)
@@ -795,6 +841,8 @@ model Lesson {
   teacher        Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   school         School           @relation(fields: [school_id], references: [id], onDelete: Cascade)
   class          Class            @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  module         RoadmapModule?   @relation("ModuleLessons", fields: [module_id], references: [id], onDelete: SetNull)
+  reviewer       Profile?         @relation("LessonReviewedBy", fields: [reviewer_id], references: [id])
   linked_quiz    Quiz?            @relation(fields: [linked_quiz_id], references: [id], onDelete: SetNull)
   contents       LessonContent[]
   questions      LessonQuestion[]
@@ -802,6 +850,8 @@ model Lesson {
 
   @@index([teacher_id])
   @@index([class_id, is_published])
+  @@index([module_id, review_status])
+  @@index([school_id, review_status])
   @@map("lessons")
 }
 

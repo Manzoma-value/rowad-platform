@@ -26,6 +26,19 @@ export async function GET() {
       id: true,
       name: true,
       created_at: true,
+      is_legacy: true,
+      review_status: true,
+      reviewer_notes: true,
+      submitted_at: true,
+      reviewed_at: true,
+      module_id: true,
+      module: {
+        select: {
+          id: true,
+          title: true,
+          stage: { select: { id: true, title: true, order: true } },
+        },
+      },
       class: { select: { id: true, name: true } },
       _count: { select: { questions: true, attempts: true } },
     },
@@ -40,10 +53,15 @@ export async function POST(req: Request) {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { name, classId, questions } = body;
+  const { name, classId, moduleId, questions } = body;
   if (!name || !classId || !questions?.length)
     return NextResponse.json(
       { error: "name, classId and questions are required" },
+      { status: 400 },
+    );
+  if (!moduleId)
+    return NextResponse.json(
+      { error: "moduleId required — quizzes must be tied to a concept" },
       { status: 400 },
     );
 
@@ -55,10 +73,20 @@ export async function POST(req: Request) {
   if (!ownsClass)
     return NextResponse.json({ error: "Class not found or not yours" }, { status: 404 });
 
+  // Concept must be in this school's roadmap
+  const mod = await prisma.roadmapModule.findFirst({
+    where: { id: moduleId, stage: { roadmap: { school_id: auth.teacher.school_id } } },
+    select: { id: true },
+  });
+  if (!mod)
+    return NextResponse.json({ error: "Concept not found in this school's roadmap" }, { status: 404 });
+
   const quiz = await prisma.quiz.create({
     data: {
       name,
       class_id: classId,
+      module_id: moduleId,
+      review_status: "DRAFT",
       teacher_id: auth.teacher.id,
       school_id: auth.teacher.school_id,
       questions: {

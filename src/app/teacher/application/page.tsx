@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
+import { invalidateCache } from "@/lib/api-cache";
 import MandalaLoader from "@/components/MandalaLoader";
 import {
   APP_UI,
@@ -179,7 +180,12 @@ export default function TeacherApplicationPage() {
         setSubmitting(false);
         return;
       }
-      router.replace("/teacher/under-review");
+      // Bust the layout's cached /api/teacher response (5-min TTL) so the
+      // layout sees UNDER_REVIEW immediately on the next render. Without
+      // this the layout's gatedTo stays "PENDING_APPLICATION" and bounces
+      // the user back to /teacher/application, causing a flicker.
+      invalidateCache("/api/teacher");
+      window.location.replace("/teacher/under-review");
     } catch {
       setError(T.serverError);
       setSubmitting(false);
