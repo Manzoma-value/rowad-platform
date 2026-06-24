@@ -168,7 +168,7 @@ export default function ReviewQueuePage() {
       message: action === "approve" ? T.confirmApprove : T.confirmReject,
       confirmText: action === "approve" ? T.approve : T.reject,
       cancelText: T.cancel,
-      variant: action === "approve" ? "default" : "danger",
+      variant: action === "approve" ? "normal" : "danger",
     });
     if (!ok) return;
     setNotes("");
