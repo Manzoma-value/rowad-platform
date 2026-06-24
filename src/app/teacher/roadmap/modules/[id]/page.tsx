@@ -426,7 +426,7 @@ function ContentCard({
   review_status: ReviewStatus;
   reviewer_notes: string | null;
   is_legacy: boolean;
-  T: typeof UI.ar;
+  T: typeof UI.ar | typeof UI.sq;
   onSubmit: () => void;
   submitting: boolean;
 }) {
