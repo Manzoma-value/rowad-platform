@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const includeAll = url.searchParams.get("include") === "all";
   const statusFilter = includeAll
     ? undefined
-    : { in: ["PENDING_REVIEW"] as const };
+    : { in: ["PENDING_REVIEW" as const] };
 
   const [lessons, quizzes] = await Promise.all([
     prisma.lesson.findMany({
