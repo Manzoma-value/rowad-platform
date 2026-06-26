@@ -1,6 +1,6 @@
 // api/school-admin/students/[id]/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";

@@ -5,6 +5,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
+import { useViewOnly } from "@/lib/view-only-context";
 import {
   pickLang,
   GENDER_L,
@@ -134,6 +135,7 @@ export default function ApplicationDetailPage({
   const { id } = use(params);
   const router = useRouter();
   const { lang } = useLang();
+  const viewOnly = useViewOnly();
   const L = pickLang(lang);
   const T = UI[L];
   const dir = L === "ar" ? "rtl" : "ltr";
@@ -331,14 +333,16 @@ export default function ApplicationDetailPage({
               onChange={(e) => setNotes(e.target.value)}
             />
             {error && <div className="ad-err">{error}</div>}
-            <div className="ad-actions">
-              <button className="ad-btn approve" onClick={() => decide("approve")} disabled={saving}>
-                ✓ {saving ? T.saving : T.approve}
-              </button>
-              <button className="ad-btn reject" onClick={() => decide("reject")} disabled={saving}>
-                ✕ {saving ? T.saving : T.reject}
-              </button>
-            </div>
+            {!viewOnly && (
+              <div className="ad-actions">
+                <button className="ad-btn approve" onClick={() => decide("approve")} disabled={saving}>
+                  ✓ {saving ? T.saving : T.approve}
+                </button>
+                <button className="ad-btn reject" onClick={() => decide("reject")} disabled={saving}>
+                  ✕ {saving ? T.saving : T.reject}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </Section>

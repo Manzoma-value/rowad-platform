@@ -3,7 +3,7 @@
 // Stamps reviewer/notes on the application and flips the teacher's
 // onboarding_status to ACTIVE or REJECTED.
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";

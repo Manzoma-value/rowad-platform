@@ -10,6 +10,7 @@ import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch, clearCache } from "@/lib/api-cache";
+import { ViewOnlyProvider } from "@/lib/view-only-context";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
@@ -24,6 +25,7 @@ import {
   BarChart3,
   Mail,
   LayoutGrid,
+  Gamepad2,
   Globe2,
   Menu,
   LogOut,
@@ -140,6 +142,8 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   // Always show the language toggle — both options remain visible.
   const [showToggle] = useState(true);
   const [deactivated, setDeactivated] = useState(false);
+  const [viewOnly, setViewOnly] = useState(false);
+  const [schoolLang, setSchoolLang] = useState<"ar" | "sq" | "en">("sq");
   const schoolSlugRef = useRef<string>("");
 
   const navItems: NavItem[] = [
@@ -176,6 +180,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       label: lang === "ar" ? "قائمة المراجعة" : lang === "sq" ? "Lista e shqyrtimit" : "Review Queue",
     },
     {
+      href: "/school-admin/game-scores", sublabel: "Model game scores", exact: false, icon: Gamepad2,
+      label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
+    },
+    {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,
       label: lang === "ar" ? "الخريطة" : lang === "sq" ? "Rruga e Pyetjeve" : "Roadmap",
       feature: "roadmap",
@@ -208,8 +216,11 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     // /me — 10 min TTL (activation rarely changes in a session)
     // /stats — 60s TTL (the dashboard sometimes refreshes counts)
     // /profile — 10 min TTL (avatar doesn't change between page views)
-    cachedFetch<{ status?: string }>("/api/school-admin/me", 600_000)
-      .then((d) => { if (d?.status === "deactivated") setDeactivated(true); })
+    cachedFetch<{ status?: string; is_view_only?: boolean }>("/api/school-admin/me", 600_000)
+      .then((d) => {
+        if (d?.status === "deactivated") setDeactivated(true);
+        if (d?.is_view_only) setViewOnly(true);
+      })
       .catch(() => {});
 
     cachedFetch<any>("/api/school-admin/stats", 60_000)
@@ -225,14 +236,15 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
             schoolSlugRef.current = d.school.slug;
             enforceTenantSubdomain(d.school.slug);
           }
-          // Admin layout only supports AR + EN. If the school's default is "sq"
-          // we DON'T inherit it — we stick with AR as the default so the toggle
-          // stays in sync with what's actually rendered.
+          // Inherit the school's default language so the admin sees the
+          // same locale teachers + students see (AR for ar-schools, SQ for
+          // albanian-schools). Stored choice in localStorage wins.
           if (d.school.language) {
             const savedLang = localStorage.getItem("lang");
-            const schoolLang = d.school.language;
-            if (!savedLang && (schoolLang === "ar" || schoolLang === "en")) {
-              setLang(schoolLang as "ar" | "en");
+            const sl = d.school.language;
+            if (sl === "ar" || sl === "sq" || sl === "en") {
+              setSchoolLang(sl);
+              if (!savedLang) setLang(sl);
             }
           }
         }
@@ -348,7 +360,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         {showToggle && (
           <div style={{ padding: "0 14px 10px" }}>
             {/* Admin pages are always AR + EN (not the school's display language) */}
-            <LangToggle dark secondaryLang="en" />
+            <LangToggle dark secondaryLang={schoolLang === "ar" ? "sq" : schoolLang} />
           </div>
         )}
 
@@ -534,7 +546,24 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
           <div className="sa-watermark" aria-hidden="true">
             <Mandala size={260} stroke="var(--sa-graphite)" />
           </div>
-          <div className="sa-content-inner">{children}</div>
+          <div className="sa-content-inner">
+            {viewOnly && (
+              <div className="sa-view-only-banner" role="status">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                </svg>
+                <span className="sa-view-only-text">
+                  {lang === "ar"
+                    ? "هذا حساب للعرض فقط — يمكنك تصفّح كل صفحات الإدارة، لكن لا يمكن تعديل أو حذف أي بيانات."
+                    : lang === "sq"
+                      ? "Kjo është një llogari vetëm për shikim — mund të shfletoni çdo faqe administrimi, por nuk mund të modifikoni ose fshini asnjë të dhënë."
+                      : "This is a view-only account — you can browse every admin page, but no edits or deletions are allowed."}
+                </span>
+              </div>
+            )}
+            <ViewOnlyProvider value={viewOnly}>{children}</ViewOnlyProvider>
+          </div>
         </main>
 
         {/* Bottom band */}
@@ -886,6 +915,24 @@ const styles = `
   .sa-content--hub { padding: 0 !important; }
   .sa-watermark    { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
   .sa-content-inner { position: relative; z-index: 10; }
+
+  /* ── view-only banner (investor demo) ── */
+  .sa-view-only-banner {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, #FFF4D2, #FCE9A8);
+    border: 1.5px solid rgba(194,160,89,0.55);
+    color: #5E4A20;
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.6;
+    box-shadow: 0 6px 18px rgba(150,115,50,0.08);
+  }
+  .sa-view-only-banner svg { color: #B89B5E; flex-shrink: 0; }
+  .sa-view-only-text { flex: 1; }
 
   /* Bottom band */
   .sa-bottom-band {

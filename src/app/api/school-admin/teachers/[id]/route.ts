@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { z } from "zod";
 
 // ── PATCH /api/school-admin/teachers/[id] — activate or deactivate a teacher ──

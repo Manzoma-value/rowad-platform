@@ -3,7 +3,7 @@
 // PATCH — reorder questions or content blocks of a roadmap module.
 // Body: { kind: "questions" | "contents", ids: string[] }
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(

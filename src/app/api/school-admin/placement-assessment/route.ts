@@ -1,6 +1,6 @@
 // api/school-admin/placement-assessment/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 120;

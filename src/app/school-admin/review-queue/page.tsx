@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { useConfirm } from "@/lib/confirm-dialog";
+import { useViewOnly } from "@/lib/view-only-context";
 import MandalaLoader from "@/components/MandalaLoader";
 
 type ReviewStatus = "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
@@ -88,6 +89,7 @@ export default function ReviewQueuePage() {
   const T = UI[L];
   const dir = L === "ar" ? "rtl" : "ltr";
   const confirm = useConfirm();
+  const viewOnly = useViewOnly();
 
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -255,7 +257,7 @@ export default function ReviewQueuePage() {
               )}
               <div className="rq-card-actions">
                 <Link href={r.detail_href} className="rq-open">{T.open}</Link>
-                {r.review_status === "PENDING_REVIEW" && (
+                {r.review_status === "PENDING_REVIEW" && !viewOnly && (
                   <div className="rq-decide">
                     <button className="rq-reject" onClick={() => openDecision(r, "reject")}>{T.reject}</button>
                     <button className="rq-approve" onClick={() => openDecision(r, "approve")}>{T.approve}</button>

@@ -1,6 +1,6 @@
 // api/school-admin/roadmap/elements/[id]/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 async function verifyElement(elementId: string, schoolId: string) {

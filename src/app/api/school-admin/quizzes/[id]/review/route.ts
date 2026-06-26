@@ -1,7 +1,7 @@
 // POST /api/school-admin/quizzes/[id]/review — same pipeline as lessons.
 // Body: { action: "approve" | "reject", notes?: string }
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";

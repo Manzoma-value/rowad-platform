@@ -1,6 +1,6 @@
 // api/school-admin/roadmap/modules/[id]/contents/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 

@@ -1,6 +1,6 @@
 // api/school-admin/roadmap/traits/[id]/elements/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 async function verifyTrait(traitId: string, schoolId: string) {

@@ -138,6 +138,26 @@ enum RowadStage {
   STAGE2
 }
 
+// Per-session score for the card games. Game mode only — no admin
+// approval, no gating. Owner sees per-user history; teacher/student
+// also see their own best score in localStorage.
+model RowadGameSubmission {
+  id         String     @id @default(uuid()) @db.Uuid
+  school_id  String     @db.Uuid
+  profile_id String     @db.Uuid
+  stage      RowadStage
+  score      Int
+  total      Int        @default(25)
+  created_at DateTime   @default(now())
+
+  school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([school_id, created_at(sort: Desc)])
+  @@index([profile_id, stage, score(sort: Desc)])
+  @@map("rowad_game_submissions")
+}
+
 // One model per school — an editable copy of the 5×5 educational model.
 // Used by the card-game (STAGE1 / STAGE2) — read-only for players.
 model RowadModel {
@@ -313,6 +333,10 @@ model Profile {
   full_name                    String
   email                        String?             @unique
   is_active                    Boolean             @default(true)
+  // True for read-only demo accounts (e.g. an investor account on the admin
+  // role). The auth helpers refuse to authorise any write endpoint when this
+  // is set; UI hides mutating buttons.
+  is_view_only                 Boolean             @default(false)
   role                         Role
   reviewed_assessment_attempts AssessmentAttempt[] @relation("AssessmentReviewedBy")
   school_admin_memberships     SchoolAdminMember[]
@@ -323,6 +347,7 @@ model Profile {
   reviewedTeacherApplications  TeacherApplication[] @relation("TeacherAppReviewedBy")
   reviewedLessons              Lesson[]             @relation("LessonReviewedBy")
   reviewedQuizzes              Quiz[]               @relation("QuizReviewedBy")
+  rowadGameSubmissions         RowadGameSubmission[]
   avatar_url                   String?
   avatar_path                  String?
   created_invites              Invite[]            @relation("InvitesCreatedBy")
@@ -366,6 +391,7 @@ model School {
   teacher_applications TeacherApplication[]
   posts              Post[]
   invites            Invite[]
+  rowadGameSubmissions RowadGameSubmission[]
 
   @@map("schools")
 }

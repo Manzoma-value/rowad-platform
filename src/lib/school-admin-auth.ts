@@ -46,6 +46,23 @@ export async function requireSchoolAdmin() {
 }
 
 /**
+ * Like requireSchoolAdmin() but ALSO refuses if the admin is view-only
+ * (e.g. an investor demo account). Use on every write endpoint
+ * (POST/PATCH/PUT/DELETE) under /api/school-admin.
+ *
+ * Returns null on any failure — the route should respond 403.
+ */
+export async function requireSchoolAdminWriter() {
+  const auth = await requireSchoolAdmin();
+  if (!auth) return null;
+  if (auth.profile.is_view_only) {
+    console.error("[requireSchoolAdminWriter] BLOCKED — view-only profile attempted write:", auth.profile.id);
+    return null;
+  }
+  return auth;
+}
+
+/**
  * Returns the raw activation status so the layout can distinguish
  * "deactivated" (show deactivated page) from "unauthorized" (redirect).
  */

@@ -1,6 +1,6 @@
 // api/school-admin/roadmap/modules/[id]/main-trait/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 // PATCH /api/school-admin/roadmap/modules/[id]/main-trait
