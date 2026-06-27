@@ -260,6 +260,74 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  // ── Defence-in-depth: when this is a view-only session, monkey-patch
+  //    window.fetch so any non-GET request to /api/school-admin/* is
+  //    intercepted before it leaves the browser. The server already refuses
+  //    these, but blocking client-side means a stray button click never
+  //    even hits the wire.
+  useEffect(() => {
+    if (!viewOnly) return;
+    const realFetch = window.fetch.bind(window);
+    const isWriteAdminCall = (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = (init?.method ?? "GET").toUpperCase();
+      if (method === "GET" || method === "HEAD" || method === "OPTIONS") return false;
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      try {
+        const u = new URL(url, window.location.origin);
+        return u.pathname.startsWith("/api/school-admin/");
+      } catch { return false; }
+    };
+    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+      if (isWriteAdminCall(input, init)) {
+        console.warn("[view-only] blocked write call to", input);
+        showViewOnlyToast();
+        return Promise.resolve(new Response(
+          JSON.stringify({ error: "view_only", message: "This demo account is read-only." }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        ));
+      }
+      return realFetch(input, init);
+    };
+
+    // Tiny one-off toast injector — appended to <body>, fades after 2.4s.
+    function showViewOnlyToast() {
+      const id = "sa-view-only-toast";
+      let el = document.getElementById(id);
+      if (!el) {
+        el = document.createElement("div");
+        el.id = id;
+        el.style.cssText = `
+          position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+          background: linear-gradient(165deg,#1E2329,#11151A); color:#E5B93C;
+          padding: 12px 22px; border-radius: 12px;
+          font-family: 'Cairo','Tajawal',sans-serif; font-size: 13.5px; font-weight: 800;
+          box-shadow: 0 10px 30px rgba(0,0,0,.35);
+          border:1px solid rgba(229,185,60,0.5); z-index: 9999;
+          opacity: 0; transition: opacity 0.18s ease;
+          max-width: 92vw; text-align: center;
+        `;
+        document.body.appendChild(el);
+      }
+      el.textContent = lang === "ar"
+        ? "هذا حساب للعرض فقط — لا يمكن تنفيذ هذا الإجراء."
+        : lang === "sq"
+          ? "Llogari vetëm për shikim — ky veprim është i çaktivizuar."
+          : "View-only account — this action is disabled.";
+      // force reflow + fade in/out
+      requestAnimationFrame(() => { if (el) el.style.opacity = "1"; });
+      window.clearTimeout((el as HTMLElement & { _t?: number })._t);
+      (el as HTMLElement & { _t?: number })._t = window.setTimeout(() => {
+        if (el) el.style.opacity = "0";
+      }, 2400);
+    }
+
+    return () => {
+      window.fetch = realFetch;
+      const toast = document.getElementById("sa-view-only-toast");
+      if (toast) toast.remove();
+    };
+  }, [viewOnly, lang]);
+
   async function handleLogout() {
     setLoggingOut(true);
     clearCache();
@@ -315,7 +383,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="sa-shell" dir={isRtl ? "rtl" : "ltr"}>
+    <div className={`sa-shell${viewOnly ? " sa-shell--view-only" : ""}`} dir={isRtl ? "rtl" : "ltr"}>
       {sidebarOpen && (
         <div className="sa-overlay" onClick={() => setSidebarOpen(false)} />
       )}
@@ -933,6 +1001,17 @@ const styles = `
   }
   .sa-view-only-banner svg { color: #B89B5E; flex-shrink: 0; }
   .sa-view-only-text { flex: 1; }
+
+  /* ── Safety net: every mutating control inside the admin shell must be
+       tagged with data-write="true" (or live inside an element that is).
+       When the shell is in view-only mode, all such controls disappear. */
+  .sa-shell--view-only [data-write="true"] { display: none !important; }
+  .sa-shell--view-only [data-write-area="true"] { display: none !important; }
+  /* Forms and form controls submitting data are also locked. */
+  .sa-shell--view-only form[data-write="true"] input,
+  .sa-shell--view-only form[data-write="true"] textarea,
+  .sa-shell--view-only form[data-write="true"] select,
+  .sa-shell--view-only form[data-write="true"] button { pointer-events: none; opacity: 0.4; }
 
   /* Bottom band */
   .sa-bottom-band {

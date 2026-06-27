@@ -169,6 +169,7 @@ export function SchoolAdminTeachersPage() {
 
               {/* Activate / Deactivate toggle */}
               <button
+                data-write="true"
                 className={`te-toggle ${teacher.profile.is_active ? "te-toggle--off" : "te-toggle--on"}`}
                 onClick={() => toggleTeacher(teacher.id, teacher.profile.is_active)}
                 disabled={toggling === teacher.id}

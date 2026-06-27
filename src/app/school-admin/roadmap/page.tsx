@@ -90,6 +90,7 @@ export default function RoadmapPage() {
             والمستويات
           </p>
           <button
+            data-write="true"
             className="rb-btn-primary lg"
             onClick={createRoadmap}
             disabled={creating}
@@ -178,7 +179,7 @@ export default function RoadmapPage() {
             </div>
 
             {/* Add stage bar */}
-            <div className="rb-add-stage-bar">
+            <div className="rb-add-stage-bar" data-write-area="true">
               <div className="rb-add-stage-icon">{Icons.plus}</div>
               <div className="rb-input-wrap">
                 <input

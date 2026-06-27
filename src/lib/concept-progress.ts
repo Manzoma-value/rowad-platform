@@ -174,13 +174,23 @@ export async function resolveStudentRoadmapState(args: {
     };
   }
 
+  // A module is "actionable" only if there's something for the student to
+  // actually do — admin questions, approved teacher lessons, or approved
+  // teacher quizzes. Empty/draft modules (admin hasn't populated them yet)
+  // are skipped entirely so progress reflects real work, not setup state.
+  const isActionable = (p: ConceptProgress) =>
+    p.admin_total_questions > 0 || p.lessons_total > 0 || p.quizzes_total > 0;
+
   const completed_module_ids: string[] = [];
   const upcoming_module_ids: string[] = [];
   let current: ConceptProgress | null = null;
+  let total_actionable = 0;
 
   for (const stage of roadmap.stages) {
     for (const m of stage.modules) {
       const prog = buildProgress(stage, m);
+      if (!isActionable(prog)) continue;
+      total_actionable++;
       if (prog.is_complete) {
         completed_module_ids.push(m.id);
       } else if (!current) {
@@ -195,7 +205,7 @@ export async function resolveStudentRoadmapState(args: {
     current,
     completed_module_ids,
     upcoming_module_ids,
-    total_modules: moduleIds.length,
+    total_modules: total_actionable,
     completed_count: completed_module_ids.length,
   };
 }

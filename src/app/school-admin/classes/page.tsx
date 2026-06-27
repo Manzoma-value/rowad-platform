@@ -118,7 +118,7 @@ export default function SchoolAdminClassesPage() {
         <p className="create-label">
           {lang === "ar" ? "إضافة فصل جديد" : "Shto klasë të re"}
         </p>
-        <div className="create-row">
+        <div className="create-row" data-write-area="true">
           <input
             className="cl-input"
             placeholder={tr.newClassName}
@@ -127,7 +127,7 @@ export default function SchoolAdminClassesPage() {
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             dir={dir}
           />
-          <button className="cl-btn" onClick={handleCreate} disabled={creating}>
+          <button data-write="true" className="cl-btn" onClick={handleCreate} disabled={creating}>
             {creating ? (
               <>
                 <div className="btn-spin" /> {tr.creating}
@@ -225,6 +225,7 @@ export default function SchoolAdminClassesPage() {
                   </div>
                 </div>
                 <button
+                  data-write="true"
                   className="delete-btn"
                   onClick={() => handleDelete(cls.id)}
                   title={tr.deleteClassConfirm}

@@ -391,18 +391,9 @@ export default function LessonEditorPage({
           </select>
         </div>
 
+        {/* The "visible to students" toggle is gone — visibility is now
+            controlled by admin approval (review_status = APPROVED). */}
         <div className="lb-toggles">
-          <div
-            className={`lb-toggle-card${isPublished ? " on green" : ""}`}
-            onClick={() => { setIsPublished(!isPublished); saveMeta({ is_published: !isPublished }); }}
-            role="button" tabIndex={0}
-          >
-            <div className="lb-toggle-switch" />
-            <div className="lb-toggle-info">
-              <div className="lb-toggle-title">{isPublished ? t.publishOn : t.publishOff}</div>
-              <div className="lb-toggle-sub">{isPublished ? t.publishOnSub : t.publishOffSub}</div>
-            </div>
-          </div>
           <div
             className={`lb-toggle-card${isGraded ? " on" : ""}`}
             onClick={() => { setIsGraded(!isGraded); saveMeta({ is_graded: !isGraded }); }}

@@ -301,6 +301,7 @@ function StudentCard({
 
         {/* Activate / Deactivate toggle */}
         <button
+          data-write="true"
           className={`sc-toggle-btn ${student.profile.is_active ? "sc-toggle-btn--off" : "sc-toggle-btn--on"}`}
           onClick={(e) => { e.stopPropagation(); onToggle(student.id, student.profile.is_active); }}
           disabled={toggling}

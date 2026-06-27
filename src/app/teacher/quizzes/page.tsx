@@ -158,12 +158,12 @@ export default function TeacherQuizzesPage() {
           <h1 className="tq-title">{tr.quizzes}</h1>
           <p className="tq-sub">{quizzes.length} {lang === "ar" ? "اختبار" : "teste"} · {totalAttempts} {tr.attempt}</p>
         </div>
-        {!creating && (
-          <button className="tq-btn-primary" onClick={() => setCreating(true)}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            {tr.newQuiz}
-          </button>
-        )}
+        {/* Creation must start from a concept on the roadmap. */}
+        <a href="/teacher/roadmap" className="tq-btn-primary">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {lang === "ar" ? "أنشئ من الخريطة" : lang === "sq" ? "Krijo nga harta" : "Create from roadmap"}
+        </a>
+        {creating && null}
       </div>
 
       {/* ── Create form ── */}
@@ -257,8 +257,16 @@ export default function TeacherQuizzesPage() {
             </svg>
           </div>
           <h3>{tr.noQuizzesTeacher}</h3>
-          <p>{tr.createFirstQuiz}</p>
-          <button className="tq-btn-primary" onClick={() => setCreating(true)}>{tr.createQuizBtn}</button>
+          <p>
+            {lang === "ar"
+              ? "ابدأ من الخريطة التعليمية — افتح أي مفهوم وأضف اختبارك من هناك."
+              : lang === "sq"
+                ? "Fillo nga harta — hap çdo koncept dhe shto kuizin tënd prej andej."
+                : "Start from the roadmap — open any concept and add your quiz from there."}
+          </p>
+          <a className="tq-btn-primary" href="/teacher/roadmap">
+            {lang === "ar" ? "افتح الخريطة" : lang === "sq" ? "Hap hartën" : "Open roadmap"}
+          </a>
         </div>
       ) : (
         <div className="tq-list">

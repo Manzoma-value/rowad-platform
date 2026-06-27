@@ -250,8 +250,9 @@ function InviteCard({
 
       {/* Actions */}
       {isLive && (
-        <div className="inv-actions">
+        <div className="inv-actions" data-write-area="true">
           <button
+            data-write="true"
             className="inv-disable-btn"
             onClick={handleDisable}
             disabled={disabling}
@@ -334,6 +335,7 @@ export default function InvitesPage() {
           <h1 className="inv-title">دعوات المعلمين</h1>
         </div>
         <button
+          data-write="true"
           className="inv-create-btn"
           onClick={createInvite}
           disabled={creating}
@@ -438,6 +440,7 @@ export default function InvitesPage() {
           <h3>لا توجد دعوات بعد</h3>
           <p>أنشئ دعوة أولى لإضافة معلم إلى مدرستك</p>
           <button
+            data-write="true"
             className="inv-create-btn"
             onClick={createInvite}
             disabled={creating}

@@ -136,11 +136,12 @@ export default function TeacherLessonsPage() {
             <p className="lb-list-sub">{t.sub(lessons.length)}</p>
           </div>
         </div>
-        {classes.length > 0 && (
-          <button className="lb-btn-primary" onClick={() => setShowCreate(true)}>
-            {Icons.plus} {t.create}
-          </button>
-        )}
+        {/* Creation is now done from the roadmap → concept page, since every
+            lesson MUST be tied to a concept. The standalone Create button is
+            replaced with a link to the roadmap. */}
+        <Link href="/teacher/roadmap" className="lb-btn-primary lb-roadmap-cta">
+          {Icons.plus} {lang === "ar" ? "أنشئ من الخريطة" : lang === "sq" ? "Krijo nga harta" : "Create from roadmap"}
+        </Link>
       </div>
 
       {/* Body */}
@@ -154,10 +155,16 @@ export default function TeacherLessonsPage() {
         <div className="lb-empty">
           <div className="lb-empty-icon">{Icons.book}</div>
           <h2 className="lb-empty-title">{t.emptyTitle}</h2>
-          <p className="lb-empty-sub">{t.emptySub}</p>
-          <button className="lb-btn-primary" onClick={() => setShowCreate(true)}>
-            {Icons.plus} {t.create}
-          </button>
+          <p className="lb-empty-sub">
+            {lang === "ar"
+              ? "ابدأ من الخريطة التعليمية — افتح أي مفهوم وأضف درسك من هناك."
+              : lang === "sq"
+                ? "Fillo nga harta edukative — hap çdo koncept dhe shto mësimin tënd prej andej."
+                : "Start from the roadmap — open any concept and add your lesson from there."}
+          </p>
+          <Link href="/teacher/roadmap" className="lb-btn-primary lb-roadmap-cta">
+            {Icons.plus} {lang === "ar" ? "افتح الخريطة" : lang === "sq" ? "Hap hartën" : "Open roadmap"}
+          </Link>
         </div>
       ) : (
         <div className="lb-list-grid">
