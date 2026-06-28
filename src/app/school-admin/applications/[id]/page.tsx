@@ -150,7 +150,20 @@ export default function ApplicationDetailPage({
     setLoading(true);
     fetch(`/api/school-admin/applications/${id}`, { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setTeacher(d?.teacher ?? null))
+      .then((d) => {
+        // Defensive: JSON columns can deserialize as null. Coerce every
+        // array-shaped field so the render never throws on `.length`/`.map`.
+        const t = d?.teacher;
+        if (t?.application) {
+          const a = t.application;
+          a.experience_areas = Array.isArray(a.experience_areas) ? a.experience_areas : [];
+          a.target_groups    = Array.isArray(a.target_groups)    ? a.target_groups    : [];
+          a.contributions    = Array.isArray(a.contributions)    ? a.contributions    : [];
+          a.languages        = Array.isArray(a.languages)        ? a.languages        : [];
+          a.attachments      = Array.isArray(a.attachments)      ? a.attachments      : [];
+        }
+        setTeacher(t ?? null);
+      })
       .catch(() => setTeacher(null))
       .finally(() => setLoading(false));
   }, [id]);
