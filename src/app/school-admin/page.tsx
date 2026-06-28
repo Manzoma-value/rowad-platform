@@ -7,6 +7,7 @@ import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import { cachedFetch } from "@/lib/api-cache";
+import { useViewOnly } from "@/lib/view-only-context";
 interface Stats {
   school: { name: string };
   teacherCount: number;
@@ -18,6 +19,7 @@ interface Stats {
 
 export default function SchoolAdminDashboard() {
   const { lang } = useLang();
+  const viewOnly = useViewOnly();
   const tr = t[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
 
@@ -100,7 +102,10 @@ export default function SchoolAdminDashboard() {
         </svg>
       ),
     },
-    {
+    // Hidden in view-only mode — the awaiting-placement card links into
+    // the placement-assessment / submissions area which view-only admins
+    // shouldn't see.
+    ...(viewOnly ? [] : [{
       label: tr.awaitingPlacement,
       value: stats.pendingPlacements,
       href: "/school-admin/submissions",
@@ -118,7 +123,7 @@ export default function SchoolAdminDashboard() {
           <path d="M12 6v6l4 2" />
         </svg>
       ),
-    },
+    }]),
   ];
 
   return (
@@ -195,7 +200,7 @@ export default function SchoolAdminDashboard() {
         </div>
       )}
 
-      {stats.pendingPlacements > 0 && (
+      {stats.pendingPlacements > 0 && !viewOnly && (
         <div className="alert-banner alert-warn">
           <div className="alert-icon-wrap">
             <svg

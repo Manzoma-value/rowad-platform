@@ -112,6 +112,8 @@ interface NavItem {
   icon: LucideIcon;
   /** When set, the item is hidden unless the school has this feature enabled. */
   feature?: FeatureKey;
+  /** When true, the item is hidden for view-only (investor demo) accounts. */
+  hideForViewOnly?: boolean;
 }
 
 const COMMUNITY_HREF = "/school-admin/hub";
@@ -166,18 +168,22 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/placement-assessment", sublabel: "Assessment", exact: false, icon: ClipboardCheck,
       label: tr.placementAssessment,
+      hideForViewOnly: true,
     },
     {
       href: "/school-admin/submissions", sublabel: "Submissions", exact: false, icon: FileStack,
       label: tr.submissions,
+      hideForViewOnly: true,
     },
     {
       href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
       label: lang === "ar" ? "طلبات المعلمين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
+      hideForViewOnly: true,
     },
     {
       href: "/school-admin/review-queue", sublabel: "Review queue", exact: false, icon: ClipboardCheck,
       label: lang === "ar" ? "قائمة المراجعة" : lang === "sq" ? "Lista e shqyrtimit" : "Review Queue",
+      hideForViewOnly: true,
     },
     {
       href: "/school-admin/game-scores", sublabel: "Model game scores", exact: false, icon: Gamepad2,
@@ -196,12 +202,17 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/invites", sublabel: "Invites", exact: false, icon: Mail,
       label: lang === "ar" ? "الدعوات" : lang === "sq" ? "Ftesa" : "Invites",
+      hideForViewOnly: true,
     },
   ];
 
   // ── Tenant feature flags ──
   const { hasFeature, loading: tenantLoading } = useTenant();
-  const visibleNav = navItems.filter((i) => !i.feature || hasFeature(i.feature));
+  const visibleNav = navItems.filter((i) => {
+    if (i.feature && !hasFeature(i.feature)) return false;
+    if (viewOnly && i.hideForViewOnly) return false;
+    return true;
+  });
   const showCommunity = hasFeature("hub");
 
   // Route guard: bounce away from a module the school disabled.

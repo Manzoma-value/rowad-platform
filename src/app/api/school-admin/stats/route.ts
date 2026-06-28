@@ -11,12 +11,17 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let school;
+  let adminName: string | null = null;
   try {
     const membership = await prisma.schoolAdminMember.findFirst({
       where: { profile_id: user.id },
-      select: { school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } } },
+      select: {
+        school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } },
+        profile: { select: { full_name: true } },
+      },
     });
     school = membership?.school ?? null;
+    adminName = membership?.profile?.full_name ?? null;
   } catch (err) {
     console.error("[school-admin/stats] DB error:", err);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -58,6 +63,7 @@ export async function GET() {
 
   return NextResponse.json({
     school,
+    adminName,
     teacherCount,
     studentCount,
     classCount,
