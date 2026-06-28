@@ -276,7 +276,7 @@ function Replies({ postId, me, canDelete, lang, onReact }: {
   };
 
   const byDay: { day: string; items: Post[] }[] = [];
-  replies.forEach((r) => {
+  [...replies].forEach((r) => {
     const day = getDayLabel(r.created_at, lang);
     const last = byDay[byDay.length - 1];
     if (!last || last.day !== day) byDay.push({ day, items: [r] });
@@ -592,6 +592,15 @@ export default function HubPage() {
       .then((d) => { setPosts(d.posts ?? []); setCursor(d.nextCursor ?? null); setLoading(false); });
   }, [me?.school?.id]);
 
+  /* scroll-to-bottom-on-load */
+  useEffect(() => {
+    if (loading) return;
+    const el = feedRef.current;
+    if (!el) return;
+    // Run on next frame so the DOM is laid out.
+    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+  }, [loading]);
+
   useEffect(() => {
     if (!me?.school?.id) return;
     const ch = supabase.channel(`hub:${me.school.id}`)
@@ -599,8 +608,21 @@ export default function HubPage() {
         event: "INSERT", schema: "public", table: "posts",
         filter: `school_id=eq.${me.school.id}`,
       }, (payload) => {
-        const p = payload.new as Post;
-        if (!p.reply_to_id && p.author?.id !== me.id) setNewCount((c) => c + 1);
+        const p = payload.new as { reply_to_id: string | null; author_id: string };
+        if (p.reply_to_id || p.author_id === me.id) return;
+        // Re-fetch the freshest top-level so we get author + reactions populated.
+        fetch(`/api/hub/posts?school_id=${me.school!.id}&limit=1`)
+          .then((r) => r.json())
+          .then((d) => {
+            const fresh = (d.posts ?? [])[0];
+            if (!fresh) return;
+            setPosts((prev) => prev.some((q) => q.id === fresh.id) ? prev : [fresh, ...prev]);
+            requestAnimationFrame(() => {
+              const el = feedRef.current;
+              if (el) el.scrollTop = el.scrollHeight;
+            });
+          })
+          .catch(() => {});
       }).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [me?.school?.id, me?.id]);
@@ -622,7 +644,10 @@ export default function HubPage() {
 
   const handlePosted = (p: Post) => {
     setPosts((prev) => [p, ...prev]);
-    setTimeout(() => feedRef.current?.scrollTo({ top: 0, behavior: "smooth" }), 80);
+    setTimeout(() => {
+      const el = feedRef.current;
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }, 80);
   };
   const handleDelete = (id: string) => setPosts((prev) => prev.filter((p) => p.id !== id));
   const handleReact = async (pid: string, type: ReactionType) => {
@@ -639,7 +664,8 @@ export default function HubPage() {
   const tr    = T[lang];
 
   const byDay: { day: string; items: Post[] }[] = [];
-  posts.forEach((p) => {
+  // Reverse the desc-from-API list so chat reads oldest → newest top-to-bottom.
+  [...posts].reverse().forEach((p) => {
     const day = getDayLabel(p.created_at, lang);
     const last = byDay[byDay.length - 1];
     if (!last || last.day !== day) byDay.push({ day, items: [p] });
@@ -699,14 +725,7 @@ export default function HubPage() {
         </div>
       </header>
 
-      {newCount > 0 && (
-        <button className="new-posts-banner" onClick={refresh}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <polyline points="18 15 12 9 6 15" />
-          </svg>
-          {tr.newMsg(newCount)}
-        </button>
-      )}
+      {/* new-posts banner removed — posts auto-append */}
 
       <div className="hub-feed" ref={feedRef}>
         {cursor && (
@@ -755,7 +774,21 @@ export default function HubPage() {
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 
-const css = `
+const css = `/* hub-viral-pack */
+@keyframes hubBlob{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.07)}66%{transform:translate(-30px,30px) scale(.94)}}
+@keyframes hubBlob2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,40px) scale(1.1)}}
+@keyframes burstFloat{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:1;transform:translateY(-20px) scale(1.3)}100%{opacity:0;transform:translateY(-70px) scale(.9)}}
+@keyframes liveDot{0%,100%{box-shadow:0 0 0 0 rgba(82,196,26,.5)}70%{box-shadow:0 0 0 10px rgba(82,196,26,0)}}
+.hub-bg-pattern::before,.hub-bg-pattern::after{content:'';position:absolute;border-radius:50%;filter:blur(80px);opacity:.45;pointer-events:none;}
+.hub-bg-pattern::before{width:520px;height:520px;background:radial-gradient(circle,#E5B93C 0%,transparent 70%);top:-120px;inset-inline-end:-120px;animation:hubBlob 18s ease-in-out infinite;}
+.hub-bg-pattern::after{width:460px;height:460px;background:radial-gradient(circle,#7A1E1E 0%,transparent 70%);bottom:-140px;inset-inline-start:-100px;animation:hubBlob2 22s ease-in-out infinite;opacity:.22;}
+.chat-bubble-staff{position:relative;overflow:visible;}
+.chat-bubble-staff::after{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(135deg,rgba(229,185,60,.55),rgba(200,169,106,0) 50%,rgba(229,185,60,.45));z-index:-1;}
+.hub-live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#52C41A;margin-inline-end:6px;animation:liveDot 2s infinite;vertical-align:middle;}
+.rx-burst{position:absolute;font-size:22px;pointer-events:none;animation:burstFloat .9s ease-out forwards;left:50%;top:0;transform-origin:center;}
+.composer{background:linear-gradient(135deg,#fff,#FBF8F2)!important;}
+.composer-focused{background:#fff!important;}
+
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
