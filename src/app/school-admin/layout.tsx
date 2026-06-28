@@ -31,6 +31,7 @@ import {
   LogOut,
   Bell,
   Sparkles,
+  FileText,
   X,
   LucideIcon,
 } from "lucide-react";
@@ -188,6 +189,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/game-scores", sublabel: "Model game scores", exact: false, icon: Gamepad2,
       label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
+    },
+    {
+      href: "/school-admin/owner-reports", sublabel: "Owner Reports", exact: false, icon: FileText,
+      label: lang === "ar" ? "تقارير المالك" : lang === "sq" ? "Raportet e pronarit" : "Owner Reports",
     },
     {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,

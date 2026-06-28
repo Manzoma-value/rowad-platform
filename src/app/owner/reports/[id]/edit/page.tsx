@@ -440,7 +440,7 @@ function BlockEditor({
   block, T, onChange, onRemove, onMoveUp, onMoveDown,
 }: {
   block: ReportBlock;
-  T: typeof UI.ar;
+  T: typeof UI.ar | typeof UI.sq;
   onChange: (b: ReportBlock) => void;
   onRemove: () => void;
   onMoveUp?: () => void;

@@ -15,6 +15,7 @@ import {
   LogOut,
   Sparkles,
   ShieldCheck,
+  FileText,
   LucideIcon,
 } from "lucide-react";
 
@@ -339,6 +340,12 @@ const navItems: NavItem[] = [
     label: "المدراء والدعوات",
     sublabel: "Admins & Invites",
     icon: ShieldCheck,
+  },
+  {
+    href: "/owner/reports",
+    label: "التقارير الرسمية",
+    sublabel: "Reports",
+    icon: FileText,
   },
 ];
 
