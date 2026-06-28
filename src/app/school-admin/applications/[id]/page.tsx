@@ -228,13 +228,17 @@ export default function ApplicationDetailPage({
         </Grid>
       </Section>
 
-      <Section title={T.sectionNomination}>
-        <Grid>
-          <Item label={L === "ar" ? "الجهة" : "Institucioni"} value={a.nominating_entity || T.none} />
-          <Item label={L === "ar" ? "الاسم" : "Emri"} value={a.nominator_name || T.none} />
-          <Item label={L === "ar" ? "الصفة" : "Roli"} value={a.nominator_role || T.none} />
-        </Grid>
-      </Section>
+      {/* Nomination section retained only if a legacy application carried
+          one of those fields; new applications never populate them. */}
+      {(a.nominating_entity || a.nominator_name || a.nominator_role) && (
+        <Section title={T.sectionNomination}>
+          <Grid>
+            <Item label={L === "ar" ? "الجهة" : "Institucioni"} value={a.nominating_entity || T.none} />
+            <Item label={L === "ar" ? "الاسم" : "Emri"} value={a.nominator_name || T.none} />
+            <Item label={L === "ar" ? "الصفة" : "Roli"} value={a.nominator_role || T.none} />
+          </Grid>
+        </Section>
+      )}
 
       <Section title={T.sectionRole}>
         <Item
@@ -305,12 +309,21 @@ export default function ApplicationDetailPage({
         )}
       </Section>
 
-      <Section title={T.sectionAtt}>
-        <Item label="" value={
-          a.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("، ") || T.none
-        } />
+      {/* "About the candidate" — replaces the old attachments checklist.
+          Legacy applications might still have attachments[]; show them only
+          when present. The free-form notes field is the headline now. */}
+      <Section title={L === "ar" ? "نبذة عن المرشّح" : "Rreth kandidatit"}>
         {a.notes && (
           <Item label={L === "ar" ? "ملاحظات" : "Shënime"} value={a.notes} />
+        )}
+        {a.attachments && a.attachments.length > 0 && (
+          <Item
+            label={L === "ar" ? "مرفقات (قديم)" : "Bashkëngjitje (të vjetra)"}
+            value={a.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("، ")}
+          />
+        )}
+        {!a.notes && (!a.attachments || a.attachments.length === 0) && (
+          <Item label="" value={T.none} />
         )}
       </Section>
 

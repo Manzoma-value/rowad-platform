@@ -127,11 +127,15 @@ export default function PrintPage({ params }: { params: Promise<{ id: string }> 
         <KV label={labels.genderL} value={GENDER_L[app.gender][L]} />
       </Section>
 
-      <Section title={labels.s2}>
-        <KV label={labels.nomEntity} value={app.nominating_entity || labels.none} />
-        <KV label={labels.nomName} value={app.nominator_name || labels.none} />
-        <KV label={labels.nomRole} value={app.nominator_role || labels.none} />
-      </Section>
+      {/* Nomination section only printed for legacy applications that
+          carried those fields; new applications never populate them. */}
+      {(app.nominating_entity || app.nominator_name || app.nominator_role) && (
+        <Section title={labels.s2}>
+          <KV label={labels.nomEntity} value={app.nominating_entity || labels.none} />
+          <KV label={labels.nomName} value={app.nominator_name || labels.none} />
+          <KV label={labels.nomRole} value={app.nominator_role || labels.none} />
+        </Section>
+      )}
 
       <Section title={labels.s3}>
         <KV
@@ -192,9 +196,19 @@ export default function PrintPage({ params }: { params: Promise<{ id: string }> 
         {app.languages_other && <KV label={labels.other} value={app.languages_other} />}
       </Section>
 
-      <Section title={labels.s11}>
-        <p className="pr-list">{app.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("، ") || labels.none}</p>
+      {/* "About the candidate" — free-form notes (new applications) or
+          legacy attachments checklist if present on older records. */}
+      <Section title={L === "ar" ? "نبذة عن المرشّح" : "Rreth kandidatit"}>
         {app.notes && <KV label={labels.notes} value={app.notes} />}
+        {app.attachments && app.attachments.length > 0 && (
+          <KV
+            label={L === "ar" ? "مرفقات (قديم)" : "Bashkëngjitje (të vjetra)"}
+            value={app.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("، ")}
+          />
+        )}
+        {!app.notes && (!app.attachments || app.attachments.length === 0) && (
+          <p className="pr-list">{labels.none}</p>
+        )}
       </Section>
 
       <Section title={labels.s12}>

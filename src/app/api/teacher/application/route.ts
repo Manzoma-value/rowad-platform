@@ -17,7 +17,6 @@ import {
   APP_CONTRIBUTIONS,
   APP_LANGUAGES,
   APP_LANG_LEVELS,
-  APP_ATTACHMENTS,
 } from "@/lib/teacher-application";
 
 export const dynamic = "force-dynamic";
@@ -124,7 +123,6 @@ export async function POST(req: Request) {
   const experience_areas = pickEnumArray(body.experience_areas, APP_EXPERIENCE_AREAS);
   const target_groups = pickEnumArray(body.target_groups, APP_TARGET_GROUPS);
   const contributions = pickEnumArray(body.contributions, APP_CONTRIBUTIONS);
-  const attachments = pickEnumArray(body.attachments, APP_ATTACHMENTS);
 
   const has_achievements = body.has_achievements === true;
   const achievements_scope = has_achievements
@@ -162,9 +160,11 @@ export async function POST(req: Request) {
         phone: phone!,
         email: email!,
         gender: gender!,
-        nominating_entity: optionalString(body.nominating_entity, 200),
-        nominator_name: optionalString(body.nominator_name, 200),
-        nominator_role: optionalString(body.nominator_role, 200),
+        // Nomination fields were removed from the form; DB columns kept for
+        // historical applications, written as NULL for new ones.
+        nominating_entity: null,
+        nominator_name: null,
+        nominator_role: null,
         current_role: current_role!,
         current_role_other: optionalString(body.current_role_other, 200),
         qualification: qualification!,
@@ -180,7 +180,10 @@ export async function POST(req: Request) {
         achievements_scope,
         languages,
         languages_other: optionalString(body.languages_other, 200),
-        attachments,
+        // Attachments checklist removed; column kept but always empty for
+        // new applications. The free-form "tell us about yourself" lives
+        // in `notes`.
+        attachments: [],
         notes: optionalString(body.notes, 2000),
       },
     });

@@ -138,6 +138,45 @@ enum RowadStage {
   STAGE2
 }
 
+// ─── Owner Reports — formal institutional reports the platform owner
+//     authors and assigns to a specific school. School admins of that
+//     school can view (read-only). DRAFT → PUBLISHED. ───
+enum OwnerReportStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model OwnerReport {
+  id           String            @id @default(uuid()) @db.Uuid
+  school_id    String            @db.Uuid
+  created_by   String            @db.Uuid
+  title        String
+  subtitle     String?
+  description  String?
+  report_date  DateTime?
+  introduction String?
+  closing_note String?
+  status       OwnerReportStatus @default(DRAFT)
+  // Ordered content blocks: [{ id, type: "TEXT"|"HEADING"|"HIGHLIGHT"|"BULLET_LIST", title?, body?, items?: string[] }]
+  blocks       Json              @default("[]")
+  // Image gallery: [{ url, path, caption? }]
+  images       Json              @default("[]")
+  // Downloadable files: [{ url, path, name, size?, mime? }]
+  attachments  Json              @default("[]")
+  // External links: [{ title, description?, url }]
+  links        Json              @default("[]")
+  created_at   DateTime          @default(now())
+  updated_at   DateTime          @updatedAt
+  published_at DateTime?
+
+  school School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author Profile @relation("OwnerReportAuthor", fields: [created_by], references: [id])
+
+  @@index([school_id, status, published_at(sort: Desc)])
+  @@index([status, updated_at(sort: Desc)])
+  @@map("owner_reports")
+}
+
 // Per-session score for the card games. Game mode only — no admin
 // approval, no gating. Owner sees per-user history; teacher/student
 // also see their own best score in localStorage.
@@ -348,6 +387,7 @@ model Profile {
   reviewedLessons              Lesson[]             @relation("LessonReviewedBy")
   reviewedQuizzes              Quiz[]               @relation("QuizReviewedBy")
   rowadGameSubmissions         RowadGameSubmission[]
+  authoredOwnerReports         OwnerReport[]        @relation("OwnerReportAuthor")
   avatar_url                   String?
   avatar_path                  String?
   created_invites              Invite[]            @relation("InvitesCreatedBy")
@@ -392,6 +432,7 @@ model School {
   posts              Post[]
   invites            Invite[]
   rowadGameSubmissions RowadGameSubmission[]
+  owner_reports      OwnerReport[]
 
   @@map("schools")
 }

@@ -279,7 +279,9 @@ export const APP_UI = {
     languages: "ما اللغات التي تجيدها؟ وما مستوى الإتقان لكل لغة؟",
     languagesOther: "اللغة الأخرى",
     attachments: "المرفقات المهنية",
-    notes: "ملاحظات أو روابط إضافية",
+    notes: "أخبرنا عن نفسك",
+    notesPlaceholder:
+      "شاركنا ما يميّزك، أو رابط بروفايلك على LinkedIn، أو أي شيء تود إضافته…",
     submitBtn: "إرسال الطلب",
     submitting: "جاري الإرسال…",
     requiredFields: "هناك حقول مطلوبة لم تُملأ بعد",
@@ -331,7 +333,9 @@ export const APP_UI = {
     languages: "Cilat gjuhë i njeh dhe në çfarë niveli?",
     languagesOther: "Gjuhë tjetër",
     attachments: "Bashkëngjitjet profesionale",
-    notes: "Shënime ose lidhje shtesë",
+    notes: "Na trego diçka për ty",
+    notesPlaceholder:
+      "Ndaje çfarë të bën të veçantë, lidhjen e LinkedIn-it, ose çdo gjë që do shtosh…",
     submitBtn: "Dërgo aplikimin",
     submitting: "Po dërgohet…",
     requiredFields: "Disa fusha të detyrueshme nuk janë plotësuar",

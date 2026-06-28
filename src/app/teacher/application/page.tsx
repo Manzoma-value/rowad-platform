@@ -18,7 +18,6 @@ import {
   APP_CONTRIBUTIONS,
   APP_LANGUAGES,
   APP_LANG_LEVELS,
-  APP_ATTACHMENTS,
   GENDER_L,
   CURRENT_ROLE_L,
   QUALIFICATION_L,
@@ -29,7 +28,6 @@ import {
   CONTRIBUTION_L,
   LANGUAGE_L,
   LANG_LEVEL_L,
-  ATTACHMENT_L,
   type AppLanguage,
   type LangLevel,
 } from "@/lib/teacher-application";
@@ -42,9 +40,6 @@ type Form = {
   phone: string;
   email: string;
   gender: "MALE" | "FEMALE" | "";
-  nominating_entity: string;
-  nominator_name: string;
-  nominator_role: string;
   current_role: string;
   current_role_other: string;
   qualification: string;
@@ -60,14 +55,12 @@ type Form = {
   achievements_scope: string;
   languages: { lang: AppLanguage; level: LangLevel }[];
   languages_other: string;
-  attachments: string[];
   notes: string;
 };
 
 const EMPTY: Form = {
   full_name: "", age: "", country: "", city: "", phone: "", email: "",
   gender: "",
-  nominating_entity: "", nominator_name: "", nominator_role: "",
   current_role: "", current_role_other: "",
   qualification: "", specialization: "", graduation_institution: "",
   experience_areas: [], experience_areas_other: "",
@@ -76,7 +69,7 @@ const EMPTY: Form = {
   contributions: [],
   has_achievements: false, achievements_scope: "",
   languages: [], languages_other: "",
-  attachments: [], notes: "",
+  notes: "",
 };
 
 export default function TeacherApplicationPage() {
@@ -118,7 +111,7 @@ export default function TeacherApplicationPage() {
     });
   }, []);
 
-  function toggle(field: "experience_areas" | "target_groups" | "contributions" | "attachments", code: string) {
+  function toggle(field: "experience_areas" | "target_groups" | "contributions", code: string) {
     setForm((f) => {
       const cur = f[field];
       const next = cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code];
@@ -247,14 +240,7 @@ export default function TeacherApplicationPage() {
           </Field>
         </Section>
 
-        {/* Nomination */}
-        <Section title={T.sectionNomination}>
-          <Grid>
-            <Field label={T.nominatingEntity} optional><input value={form.nominating_entity} onChange={(e) => set("nominating_entity", e.target.value)} className="ta-input" /></Field>
-            <Field label={T.nominatorName} optional><input value={form.nominator_name} onChange={(e) => set("nominator_name", e.target.value)} className="ta-input" /></Field>
-            <Field label={T.nominatorRole} optional><input value={form.nominator_role} onChange={(e) => set("nominator_role", e.target.value)} className="ta-input" /></Field>
-          </Grid>
-        </Section>
+        {/* (Nomination section removed — wasn't carrying its weight.) */}
 
         {/* Current role */}
         <Section title={T.sectionCurrentRole}>
@@ -414,21 +400,17 @@ export default function TeacherApplicationPage() {
           )}
         </Section>
 
-        {/* Attachments */}
-        <Section title={T.sectionAttachments}>
-          <p className="ta-hint">{T.attachments}</p>
-          <CheckboxGrid
-            mode="multi"
-            value={form.attachments}
-            onToggle={(c) => toggle("attachments", c)}
-            options={APP_ATTACHMENTS.map((c) => ({ code: c, label: ATTACHMENT_L[c][L] }))}
-          />
-          <Field label={T.notes} optional>
+        {/* About you — the old attachments checklist is gone; this is a
+            free-form text box where the candidate can tell us more about
+            themselves (LinkedIn, portfolio, anything they want to share). */}
+        <Section title={T.notes}>
+          <Field label="" optional>
             <textarea
               value={form.notes}
               onChange={(e) => set("notes", e.target.value)}
               className="ta-input ta-textarea"
-              rows={4}
+              rows={5}
+              placeholder={T.notesPlaceholder}
             />
           </Field>
         </Section>
