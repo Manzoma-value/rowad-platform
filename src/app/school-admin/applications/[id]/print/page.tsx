@@ -124,7 +124,7 @@ export default function PrintPage({ params }: { params: Promise<{ id: string }> 
         <KV label={labels.cityL} value={app.city} />
         <KV label={labels.phoneL} value={app.phone} />
         <KV label={labels.emailL} value={app.email} />
-        <KV label={labels.genderL} value={GENDER_L[app.gender][L]} />
+        <KV label={labels.genderL} value={GENDER_L[app.gender as keyof typeof GENDER_L]?.[L] ?? "—"} />
       </Section>
 
       {/* Nomination section only printed for legacy applications that

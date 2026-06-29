@@ -26,7 +26,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 const UI = {
   ar: {
     back: "← العودة للقائمة",
-    print: "تصدير PDF",
+    print: "تنزيل PDF",
     approve: "موافقة",
     reject: "رفض",
     underReview: "قيد المراجعة",
@@ -56,7 +56,7 @@ const UI = {
   },
   sq: {
     back: "← Kthehu te lista",
-    print: "Eksporto PDF",
+    print: "Shkarko PDF",
     approve: "Mirato",
     reject: "Refuzo",
     underReview: "Në shqyrtim",
@@ -237,7 +237,7 @@ export default function ApplicationDetailPage({
           <Item label={L === "ar" ? "العمر" : "Mosha"} value={String(a.age)} />
           <Item label={L === "ar" ? "الدولة" : "Shteti"} value={a.country} />
           <Item label={L === "ar" ? "المدينة" : "Qyteti"} value={a.city} />
-          <Item label={L === "ar" ? "الجنس" : "Gjinia"} value={GENDER_L[a.gender][L]} />
+          <Item label={L === "ar" ? "الجنس" : "Gjinia"} value={GENDER_L[a.gender as keyof typeof GENDER_L]?.[L] ?? T.none} />
         </Grid>
       </Section>
 
