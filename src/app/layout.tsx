@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/language-context";
 import { ConfirmProvider } from "@/lib/confirm-dialog";
@@ -29,6 +30,7 @@ export default function RootLayout({
         <LanguageProvider>
           <ConfirmProvider>{children}</ConfirmProvider>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
