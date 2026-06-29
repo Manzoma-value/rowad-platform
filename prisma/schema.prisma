@@ -389,6 +389,7 @@ model Profile {
   rowadGameSubmissions         RowadGameSubmission[]
   authoredOwnerReports         OwnerReport[]        @relation("OwnerReportAuthor")
   authoredTeacherGroups        TeacherGroup[]       @relation("TeacherGroupAuthor")
+  teacherGroupAnnouncements    TeacherGroupAnnouncement[]
   avatar_url                   String?
   avatar_path                  String?
   created_invites              Invite[]            @relation("InvitesCreatedBy")
@@ -435,6 +436,7 @@ model School {
   rowadGameSubmissions RowadGameSubmission[]
   owner_reports      OwnerReport[]
   teacher_groups     TeacherGroup[]
+  teacher_group_announcements TeacherGroupAnnouncement[]
 
   @@map("schools")
 }
@@ -486,6 +488,7 @@ model TeacherGroup {
   school  School               @relation(fields: [school_id], references: [id], onDelete: Cascade)
   author  Profile              @relation("TeacherGroupAuthor", fields: [created_by], references: [id])
   members TeacherGroupMember[]
+  announcements TeacherGroupAnnouncement[]
 
   @@index([school_id, updated_at(sort: Desc)])
   @@map("teacher_groups")
@@ -502,6 +505,25 @@ model TeacherGroupMember {
   @@id([group_id, teacher_id])
   @@index([teacher_id])
   @@map("teacher_group_members")
+}
+
+// Private announcement feed inside a teacher group. Authors can be school
+// admins or teacher members; visibility is enforced by the API routes.
+model TeacherGroupAnnouncement {
+  id         String   @id @default(uuid()) @db.Uuid
+  group_id   String   @db.Uuid
+  school_id  String   @db.Uuid
+  author_id  String   @db.Uuid
+  content    String
+  created_at DateTime @default(now())
+
+  group  TeacherGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  school School       @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author Profile      @relation(fields: [author_id], references: [id], onDelete: Cascade)
+
+  @@index([group_id, created_at(sort: Desc)])
+  @@index([author_id])
+  @@map("teacher_group_announcements")
 }
 
 model Student {

@@ -38,6 +38,14 @@ type GroupDetail = {
   members: Member[];
 };
 
+type GroupAnnouncement = {
+  id: string;
+  content: string;
+  created_at: string;
+  author_id: string;
+  author: { id: string; full_name: string; role: string };
+};
+
 type Eligible = {
   id: string;
   profile: { id: string; full_name: string; email: string | null };
@@ -117,6 +125,18 @@ export default function TeacherGroupsPage() {
   const L = lang === "sq" ? "sq" : "ar";
   const T = UI[L];
   const dir = L === "ar" ? "rtl" : "ltr";
+  const A = {
+    announcements: L === "ar" ? "إعلانات المجموعة" : "Njoftimet e grupit",
+    announcementPh: L === "ar"
+      ? "اكتب إعلاناً أو تعليقاً لهذه المجموعة..."
+      : "Shkruaj një njoftim ose koment për këtë grup...",
+    post: L === "ar" ? "نشر" : "Posto",
+    posting: L === "ar" ? "جاري النشر..." : "Duke postuar...",
+    noAnnouncements: L === "ar"
+      ? "لم تتم إضافة إعلانات لهذه المجموعة بعد."
+      : "Nuk ka njoftime për këtë grup ende.",
+    delete: L === "ar" ? "حذف" : "Fshi",
+  };
   const viewOnly = useViewOnly();
   const confirm = useConfirm();
 
@@ -125,6 +145,11 @@ export default function TeacherGroupsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [announcements, setAnnouncements] = useState<GroupAnnouncement[]>([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState("");
+  const [postingAnnouncement, setPostingAnnouncement] = useState(false);
+  const [deletingAnnouncementId, setDeletingAnnouncementId] = useState<string | null>(null);
 
   // create dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -163,8 +188,24 @@ export default function TeacherGroupsPage() {
     } finally { setLoadingDetail(false); }
   }, []);
 
+  const loadAnnouncements = useCallback(async (id: string) => {
+    setLoadingAnnouncements(true);
+    try {
+      const r = await fetch(`/api/school-admin/teacher-groups/${id}/announcements`, { cache: "no-store" });
+      const d = await r.json();
+      setAnnouncements(Array.isArray(d?.announcements) ? d.announcements : []);
+    } finally { setLoadingAnnouncements(false); }
+  }, []);
+
   useEffect(() => { loadList(); }, [loadList]);
-  useEffect(() => { if (selectedId) loadDetail(selectedId); }, [selectedId, loadDetail]);
+  useEffect(() => {
+    if (!selectedId) {
+      setAnnouncements([]);
+      return;
+    }
+    loadDetail(selectedId);
+    loadAnnouncements(selectedId);
+  }, [selectedId, loadDetail, loadAnnouncements]);
 
   // ── eligible-teacher fetch (debounced)
   useEffect(() => {
@@ -249,6 +290,34 @@ export default function TeacherGroupsPage() {
       loadDetail(selectedId);
       loadList();
     }
+  }
+
+  async function postAnnouncement() {
+    if (!selectedId || !newAnnouncement.trim()) return;
+    setPostingAnnouncement(true);
+    try {
+      const r = await fetch(`/api/school-admin/teacher-groups/${selectedId}/announcements`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newAnnouncement }),
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+      setAnnouncements((current) => [d.announcement, ...current]);
+      setNewAnnouncement("");
+    } finally { setPostingAnnouncement(false); }
+  }
+
+  async function deleteAnnouncement(announcementId: string) {
+    if (!selectedId) return;
+    setDeletingAnnouncementId(announcementId);
+    try {
+      const r = await fetch(
+        `/api/school-admin/teacher-groups/${selectedId}/announcements?announcement_id=${encodeURIComponent(announcementId)}`,
+        { method: "DELETE" },
+      );
+      if (r.ok) setAnnouncements((current) => current.filter((a) => a.id !== announcementId));
+    } finally { setDeletingAnnouncementId(null); }
   }
 
   const visibleGroups = useMemo(() => groups, [groups]);
@@ -354,6 +423,66 @@ export default function TeacherGroupsPage() {
                     )}
                   </div>
                 ))}
+              </div>
+
+              <div className="tg-ann-section">
+                <h3 className="tg-ann-title">{A.announcements}</h3>
+                {!viewOnly && (
+                  <div className="tg-ann-composer" data-write="true">
+                    <textarea
+                      value={newAnnouncement}
+                      onChange={(e) => setNewAnnouncement(e.target.value)}
+                      onKeyDown={(e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                          e.preventDefault();
+                          postAnnouncement();
+                        }
+                      }}
+                      placeholder={A.announcementPh}
+                      rows={3}
+                    />
+                    <button
+                      onClick={postAnnouncement}
+                      disabled={postingAnnouncement || !newAnnouncement.trim()}
+                      data-write="true"
+                    >
+                      {postingAnnouncement ? A.posting : A.post}
+                    </button>
+                  </div>
+                )}
+                {loadingAnnouncements ? (
+                  <div className="tg-ann-empty"><MandalaLoader /></div>
+                ) : announcements.length === 0 ? (
+                  <div className="tg-ann-empty">{A.noAnnouncements}</div>
+                ) : (
+                  <div className="tg-ann-list">
+                    {announcements.map((announcement) => (
+                      <article key={announcement.id} className="tg-ann">
+                        <div className="tg-ann-avatar">
+                          {announcement.author.full_name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                        </div>
+                        <div className="tg-ann-body">
+                          <div className="tg-ann-meta">
+                            <strong>{announcement.author.full_name}</strong>
+                            <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" })}</span>
+                          </div>
+                          <p>{announcement.content}</p>
+                        </div>
+                        {!viewOnly && (
+                          <button
+                            className="tg-ann-delete"
+                            onClick={() => deleteAnnouncement(announcement.id)}
+                            disabled={deletingAnnouncementId === announcement.id}
+                            title={A.delete}
+                            data-write="true"
+                          >
+                            x
+                          </button>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -470,6 +599,25 @@ export default function TeacherGroupsPage() {
         .tg-member-meta strong { font-weight: 800; color: #1B1810; }
         .tg-mini-x { background: rgba(139,26,26,0.10); border: 1px solid rgba(139,26,26,0.32); color: #7A1E1E; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; font-weight: 800; flex-shrink: 0; }
         .tg-mini-x:hover { background: rgba(139,26,26,0.18); }
+
+        .tg-ann-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(8,11,12,0.07); }
+        .tg-ann-title { margin: 0 0 10px; font-size: 15px; font-weight: 900; color: #6B4F1E; }
+        .tg-ann-composer { display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 12px; border-radius: 12px; background: rgba(194,160,89,0.05); border: 1px solid rgba(194,160,89,0.16); }
+        .tg-ann-composer textarea { width: 100%; border: 1.5px solid rgba(194,160,89,0.24); border-radius: 10px; background: #FFF; padding: 10px 12px; font-family: inherit; font-size: 13px; line-height: 1.7; resize: vertical; outline: none; }
+        .tg-ann-composer textarea:focus { border-color: #B89B5E; box-shadow: 0 0 0 3px rgba(194,160,89,0.08); }
+        .tg-ann-composer button { align-self: flex-end; border: 0; border-radius: 10px; padding: 8px 16px; background: #0B0B0C; color: #E5B93C; font-family: inherit; font-size: 12.5px; font-weight: 900; cursor: pointer; }
+        .tg-ann-composer button:disabled { opacity: 0.45; cursor: not-allowed; }
+        .tg-ann-empty { min-height: 110px; display: flex; align-items: center; justify-content: center; text-align: center; border: 1px dashed rgba(184,155,94,0.32); border-radius: 12px; color: #8A8478; font-size: 13px; font-weight: 800; padding: 22px; background: rgba(194,160,89,0.04); }
+        .tg-ann-list { display: flex; flex-direction: column; gap: 8px; }
+        .tg-ann { display: flex; gap: 10px; padding: 12px; border: 1px solid rgba(194,160,89,0.18); border-radius: 12px; background: #FFF; }
+        .tg-ann-avatar { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #0B0B0C; color: #C8A96A; font-size: 10px; font-weight: 900; }
+        .tg-ann-body { flex: 1; min-width: 0; }
+        .tg-ann-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
+        .tg-ann-meta strong { font-size: 13px; color: #1B1810; }
+        .tg-ann-meta span { font-size: 11.5px; color: #8A7B60; font-weight: 800; }
+        .tg-ann p { margin: 0; color: #2E2210; font-size: 13px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .tg-ann-delete { width: 28px; height: 28px; border-radius: 9px; border: 1px solid rgba(139,26,26,0.22); background: rgba(139,26,26,0.08); color: #7A1E1E; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-weight: 900; }
+        .tg-ann-delete:disabled { opacity: 0.45; cursor: not-allowed; }
 
         .tg-empty { padding: 30px 16px; text-align: center; color: #8A8478; font-weight: 700; font-size: 13px; line-height: 1.7; }
 

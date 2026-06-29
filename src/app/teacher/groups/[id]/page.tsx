@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Languages, MapPin, Network, UserRound, Users } from "lucide-react";
+import { ArrowLeft, Languages, MapPin, Network, Send, Trash2, UserRound, Users } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 
@@ -33,6 +33,13 @@ type GroupDetail = {
   updated_at: string;
   members: Member[];
 };
+type GroupAnnouncement = {
+  id: string;
+  content: string;
+  created_at: string;
+  author_id: string;
+  author: { id: string; full_name: string; role: string };
+};
 
 const UI = {
   ar: {
@@ -40,7 +47,11 @@ const UI = {
     members: "الأعضاء",
     overview: "نظرة عامة",
     activities: "أنشطة المجموعة",
-    emptyActivities: "لم تتم إضافة أنشطة لهذه المجموعة بعد.",
+    announcementPlaceholder: "اكتب إعلاناً أو تعليقاً لهذه المجموعة...",
+    post: "نشر",
+    posting: "جاري النشر...",
+    emptyActivities: "لم تتم إضافة إعلانات لهذه المجموعة بعد.",
+    delete: "حذف",
     noMembers: "لا يوجد أعضاء في هذه المجموعة بعد.",
     qualification: "المؤهل",
     specialization: "التخصص",
@@ -55,7 +66,11 @@ const UI = {
     members: "Anëtarët",
     overview: "Përmbledhje",
     activities: "Aktivitetet e grupit",
-    emptyActivities: "Nuk ka aktivitete të shtuara për këtë grup ende.",
+    announcementPlaceholder: "Shkruaj një njoftim ose koment për këtë grup...",
+    post: "Posto",
+    posting: "Duke postuar...",
+    emptyActivities: "Nuk ka njoftime të shtuara për këtë grup ende.",
+    delete: "Fshi",
     noMembers: "Ky grup nuk ka anëtarë ende.",
     qualification: "Kualifikimi",
     specialization: "Specializimi",
@@ -98,7 +113,13 @@ export default function TeacherGroupDetailPage() {
   const dir = L === "ar" ? "rtl" : "ltr";
 
   const [group, setGroup] = useState<GroupDetail | null>(null);
+  const [announcements, setAnnouncements] = useState<GroupAnnouncement[]>([]);
+  const [newAnnouncement, setNewAnnouncement] = useState("");
   const [loading, setLoading] = useState(true);
+  const [annLoading, setAnnLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -113,6 +134,58 @@ export default function TeacherGroupDetailPage() {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [params?.id]);
+
+  useEffect(() => {
+    const id = params?.id;
+    if (!id) return;
+    setAnnLoading(true);
+    fetch(`/api/teacher/groups/${id}/announcements`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        setAnnouncements(Array.isArray(d?.announcements) ? d.announcements : []);
+        setCurrentProfileId(typeof d?.current_profile_id === "string" ? d.current_profile_id : null);
+      })
+      .catch(() => {
+        setAnnouncements([]);
+        setCurrentProfileId(null);
+      })
+      .finally(() => setAnnLoading(false));
+  }, [params?.id]);
+
+  async function postAnnouncement() {
+    const id = params?.id;
+    if (!id || !newAnnouncement.trim()) return;
+    setPosting(true);
+    try {
+      const r = await fetch(`/api/teacher/groups/${id}/announcements`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newAnnouncement }),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        setAnnouncements((current) => [d.announcement, ...current]);
+        setNewAnnouncement("");
+      }
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function deleteAnnouncement(announcementId: string) {
+    const id = params?.id;
+    if (!id) return;
+    setDeletingId(announcementId);
+    try {
+      const r = await fetch(
+        `/api/teacher/groups/${id}/announcements?announcement_id=${encodeURIComponent(announcementId)}`,
+        { method: "DELETE" },
+      );
+      if (r.ok) setAnnouncements((current) => current.filter((a) => a.id !== announcementId));
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const memberCount = group?.members.length ?? 0;
   const initials = useMemo(() => {
@@ -201,7 +274,57 @@ export default function TeacherGroupDetailPage() {
           <Network size={18} strokeWidth={1.7} />
           <h2>{T.activities}</h2>
         </div>
-        <div className="gd-activities-empty">{T.emptyActivities}</div>
+        <div className="gd-composer">
+          <textarea
+            value={newAnnouncement}
+            onChange={(e) => setNewAnnouncement(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                postAnnouncement();
+              }
+            }}
+            placeholder={T.announcementPlaceholder}
+            rows={3}
+          />
+          <button onClick={postAnnouncement} disabled={posting || !newAnnouncement.trim()}>
+            <Send size={14} strokeWidth={2} />
+            {posting ? T.posting : T.post}
+          </button>
+        </div>
+
+        {annLoading ? (
+          <div className="gd-activities-empty"><MandalaLoader /></div>
+        ) : announcements.length === 0 ? (
+          <div className="gd-activities-empty">{T.emptyActivities}</div>
+        ) : (
+          <div className="gd-ann-list">
+            {announcements.map((announcement) => (
+              <article key={announcement.id} className="gd-ann">
+                <div className="gd-ann-avatar">
+                  {announcement.author.full_name.split(" ").map((w) => w[0]).slice(0, 2).join("")}
+                </div>
+                <div className="gd-ann-body">
+                  <div className="gd-ann-meta">
+                    <strong>{announcement.author.full_name}</strong>
+                    <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" })}</span>
+                  </div>
+                  <p>{announcement.content}</p>
+                </div>
+                {announcement.author_id === currentProfileId && (
+                  <button
+                    className="gd-ann-delete"
+                    onClick={() => deleteAnnouncement(announcement.id)}
+                    disabled={deletingId === announcement.id}
+                    title={T.delete}
+                  >
+                    <Trash2 size={14} strokeWidth={1.8} />
+                  </button>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <style>{styles}</style>
@@ -282,6 +405,21 @@ const styles = `
     border: 1px dashed rgba(184,155,94,0.32); border-radius: 12px; color: #8A8478; font-size: 13.5px; font-weight: 800; padding: 24px;
   }
   .gd-activities-empty { min-height: 150px; background: rgba(194,160,89,0.04); }
+  .gd-composer { display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 14px; border-radius: 12px; background: rgba(194,160,89,0.04); border: 1px solid rgba(194,160,89,0.16); }
+  .gd-composer textarea { width: 100%; border: 1.5px solid rgba(194,160,89,0.20); border-radius: 10px; background: #FFF; padding: 11px 13px; font-family: inherit; font-size: 13.5px; line-height: 1.7; resize: vertical; outline: none; }
+  .gd-composer textarea:focus { border-color: #B89B5E; box-shadow: 0 0 0 3px rgba(194,160,89,0.08); }
+  .gd-composer button { align-self: flex-end; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 10px; padding: 9px 16px; background: #0B0B0C; color: #C8A96A; font-family: inherit; font-size: 13px; font-weight: 900; cursor: pointer; }
+  .gd-composer button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .gd-ann-list { display: flex; flex-direction: column; gap: 9px; }
+  .gd-ann { display: flex; gap: 11px; padding: 13px; border: 1px solid rgba(194,160,89,0.18); border-radius: 12px; background: #FFF; }
+  .gd-ann-avatar { width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #0B0B0C; color: #C8A96A; font-size: 10px; font-weight: 900; }
+  .gd-ann-body { flex: 1; min-width: 0; }
+  .gd-ann-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
+  .gd-ann-meta strong { font-size: 13px; color: #1B1810; }
+  .gd-ann-meta span { font-size: 11.5px; color: #8A7B60; font-weight: 800; }
+  .gd-ann p { margin: 0; color: #2E2210; font-size: 13.5px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .gd-ann-delete { width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(139,26,26,0.20); background: rgba(139,26,26,0.06); color: #7A1E1E; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .gd-ann-delete:disabled { opacity: 0.45; cursor: not-allowed; }
   @media (max-width: 640px) {
     .gd-page { padding: 16px; }
     .gd-head { padding: 18px; }
