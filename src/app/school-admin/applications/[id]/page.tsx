@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { use, useEffect, useState } from "react";
+import { Component, type ReactNode, use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
@@ -127,7 +127,43 @@ type Teacher = {
   application: App | null;
 };
 
-export default function ApplicationDetailPage({
+// Tiny error boundary so a render-time crash in any sub-section surfaces
+// as a readable message instead of an empty page. Logs the error to the
+// console so we can grab the stack from the user's DevTools.
+class DetailBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
+  state = { err: null as Error | null };
+  static getDerivedStateFromError(err: Error) { return { err }; }
+  componentDidCatch(err: Error, info: { componentStack?: string }) {
+    console.error("[application detail render]", err, info);
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{ padding: 40, maxWidth: 720, margin: "0 auto", fontFamily: "'Cairo',sans-serif" }}>
+          <div style={{ background: "rgba(139,26,26,0.06)", border: "1.5px solid rgba(139,26,26,0.32)", borderRadius: 12, padding: 18, color: "#5A1818" }}>
+            <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 6 }}>
+              تعذر عرض هذا الطلب · This application could not be rendered
+            </div>
+            <code style={{ display: "block", fontSize: 12, opacity: 0.85, whiteSpace: "pre-wrap", direction: "ltr", textAlign: "left" }}>
+              {String(this.state.err?.message ?? this.state.err)}
+            </code>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function ApplicationDetailPage(props: { params: Promise<{ id: string }> }) {
+  return (
+    <DetailBoundary>
+      <ApplicationDetailPageInner {...props} />
+    </DetailBoundary>
+  );
+}
+
+function ApplicationDetailPageInner({
   params,
 }: {
   params: Promise<{ id: string }>;
