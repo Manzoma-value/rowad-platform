@@ -1,0 +1,497 @@
+"use client";
+export const dynamic = "force-dynamic";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLang } from "@/lib/language-context";
+import { useViewOnly } from "@/lib/view-only-context";
+import { useConfirm } from "@/lib/confirm-dialog";
+import MandalaLoader from "@/components/MandalaLoader";
+
+type GroupRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  updated_at: string;
+  _count: { members: number };
+};
+
+type Member = {
+  joined_at: string;
+  teacher: {
+    id: string;
+    profile: { id: string; full_name: string; email: string | null };
+    application: {
+      country: string;
+      city: string;
+      qualification: string;
+      specialization: string;
+      years_of_experience: string;
+      languages: unknown;
+    } | null;
+  };
+};
+
+type GroupDetail = {
+  id: string;
+  name: string;
+  description: string | null;
+  members: Member[];
+};
+
+type Eligible = {
+  id: string;
+  profile: { id: string; full_name: string; email: string | null };
+  application: {
+    country: string;
+    city: string;
+    specialization: string;
+    years_of_experience: string;
+  } | null;
+};
+
+const UI = {
+  ar: {
+    title: "مجموعات المعلمين",
+    sub: "نظِّم المعلمين المقبولين في مجموعات عمل وتدريب ومجتمع خاصة.",
+    create: "+ مجموعة جديدة",
+    empty: "لا توجد مجموعات بعد. أنشئ أول مجموعة لتنظيم معلميك.",
+    members: "أعضاء",
+    pickOne: "اختر مجموعة لعرض أعضائها",
+    rename: "تعديل الاسم والوصف",
+    name: "اسم المجموعة",
+    desc: "الوصف",
+    save: "حفظ",
+    saving: "جارٍ الحفظ…",
+    deleteGroup: "حذف المجموعة",
+    confirmDelete: "هل تريد حذف هذه المجموعة؟ سيتم إلغاء عضوية كل المعلمين.",
+    addMembers: "+ إضافة أعضاء",
+    searchPh: "ابحث بالاسم أو البريد…",
+    noEligible: "لا يوجد معلمون متاحون للإضافة.",
+    add: "إضافة",
+    remove: "إزالة",
+    confirmRemove: "إزالة هذا المعلم من المجموعة؟",
+    cancel: "إلغاء",
+    yearsExp: "سنوات الخبرة",
+    spec: "التخصص",
+    location: "الموقع",
+    close: "إغلاق",
+    newGroupTitle: "إنشاء مجموعة جديدة",
+    namePh: "مثال: مجموعة معلمي القرآن",
+    descPh: "وصف اختياري للمجموعة وأهدافها…",
+    creating: "جارٍ الإنشاء…",
+  },
+  sq: {
+    title: "Grupet e mësuesve",
+    sub: "Organizo mësuesit e pranuar në grupe pune, trajnimi dhe komunitete private.",
+    create: "+ Grup i ri",
+    empty: "Nuk ka grupe ende. Krijo grupin e parë.",
+    members: "anëtarë",
+    pickOne: "Zgjidh një grup për të parë anëtarët",
+    rename: "Redakto emrin dhe përshkrimin",
+    name: "Emri i grupit",
+    desc: "Përshkrimi",
+    save: "Ruaj",
+    saving: "Po ruhet…",
+    deleteGroup: "Fshi grupin",
+    confirmDelete: "Të fshihet ky grup? Të gjithë anëtarët do hiqen.",
+    addMembers: "+ Shto anëtarë",
+    searchPh: "Kërko sipas emrit ose email-it…",
+    noEligible: "Nuk ka mësues të disponueshëm.",
+    add: "Shto",
+    remove: "Hiq",
+    confirmRemove: "Të hiqet ky mësues nga grupi?",
+    cancel: "Anulo",
+    yearsExp: "Vitet e përvojës",
+    spec: "Specializimi",
+    location: "Vendndodhja",
+    close: "Mbyll",
+    newGroupTitle: "Krijo grup të ri",
+    namePh: "Shembull: Mësuesit e Kuranit",
+    descPh: "Përshkrim opsional…",
+    creating: "Po krijohet…",
+  },
+} as const;
+
+export default function TeacherGroupsPage() {
+  const { lang } = useLang();
+  const L = lang === "sq" ? "sq" : "ar";
+  const T = UI[L];
+  const dir = L === "ar" ? "rtl" : "ltr";
+  const viewOnly = useViewOnly();
+  const confirm = useConfirm();
+
+  const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<GroupDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  // create dialog
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: "", description: "" });
+  const [creating, setCreating] = useState(false);
+
+  // add-members dialog
+  const [addOpen, setAddOpen] = useState(false);
+  const [searchQ, setSearchQ] = useState("");
+  const [eligible, setEligible] = useState<Eligible[]>([]);
+  const [loadingEligible, setLoadingEligible] = useState(false);
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+
+  // edit-meta state
+  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [savingMeta, setSavingMeta] = useState(false);
+
+  const loadList = useCallback(async () => {
+    setLoadingList(true);
+    try {
+      const r = await fetch("/api/school-admin/teacher-groups", { cache: "no-store" });
+      const d = await r.json();
+      setGroups(d?.groups ?? []);
+    } finally { setLoadingList(false); }
+  }, []);
+
+  const loadDetail = useCallback(async (id: string) => {
+    setLoadingDetail(true);
+    setDetail(null);
+    try {
+      const r = await fetch(`/api/school-admin/teacher-groups/${id}`, { cache: "no-store" });
+      if (!r.ok) { setDetail(null); return; }
+      const d = await r.json();
+      setDetail(d?.group ?? null);
+      setEditForm({ name: d?.group?.name ?? "", description: d?.group?.description ?? "" });
+    } finally { setLoadingDetail(false); }
+  }, []);
+
+  useEffect(() => { loadList(); }, [loadList]);
+  useEffect(() => { if (selectedId) loadDetail(selectedId); }, [selectedId, loadDetail]);
+
+  // ── eligible-teacher fetch (debounced)
+  useEffect(() => {
+    if (!addOpen || !selectedId) return;
+    const t = setTimeout(async () => {
+      setLoadingEligible(true);
+      try {
+        const url = new URL(`/api/school-admin/teacher-groups/${selectedId}/eligible`, window.location.origin);
+        if (searchQ.trim()) url.searchParams.set("q", searchQ.trim());
+        const r = await fetch(url.toString(), { cache: "no-store" });
+        const d = await r.json();
+        setEligible(d?.teachers ?? []);
+      } finally { setLoadingEligible(false); }
+    }, 220);
+    return () => clearTimeout(t);
+  }, [addOpen, selectedId, searchQ]);
+
+  async function createGroup() {
+    if (!createForm.name.trim()) return;
+    setCreating(true);
+    try {
+      const r = await fetch("/api/school-admin/teacher-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm),
+      });
+      if (!r.ok) return;
+      const d = await r.json();
+      setCreateOpen(false);
+      setCreateForm({ name: "", description: "" });
+      await loadList();
+      setSelectedId(d?.group?.id ?? null);
+    } finally { setCreating(false); }
+  }
+
+  async function saveMeta() {
+    if (!selectedId) return;
+    setSavingMeta(true);
+    try {
+      const r = await fetch(`/api/school-admin/teacher-groups/${selectedId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editForm.name, description: editForm.description }),
+      });
+      if (r.ok) {
+        await Promise.all([loadList(), loadDetail(selectedId)]);
+      }
+    } finally { setSavingMeta(false); }
+  }
+
+  async function deleteGroup() {
+    if (!selectedId) return;
+    const ok = await confirm({ title: T.deleteGroup, message: T.confirmDelete, confirmText: T.deleteGroup, cancelText: T.cancel, variant: "danger" });
+    if (!ok) return;
+    const r = await fetch(`/api/school-admin/teacher-groups/${selectedId}`, { method: "DELETE" });
+    if (r.ok) {
+      setSelectedId(null);
+      setDetail(null);
+      loadList();
+    }
+  }
+
+  async function removeMember(teacherId: string) {
+    if (!selectedId) return;
+    const ok = await confirm({ title: T.remove, message: T.confirmRemove, confirmText: T.remove, cancelText: T.cancel, variant: "warning" });
+    if (!ok) return;
+    const r = await fetch(`/api/school-admin/teacher-groups/${selectedId}/members?teacher_id=${encodeURIComponent(teacherId)}`, { method: "DELETE" });
+    if (r.ok) { loadDetail(selectedId); loadList(); }
+  }
+
+  async function addPicked() {
+    if (!selectedId || picked.size === 0) return;
+    const r = await fetch(`/api/school-admin/teacher-groups/${selectedId}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teacher_ids: Array.from(picked) }),
+    });
+    if (r.ok) {
+      setAddOpen(false);
+      setPicked(new Set());
+      setSearchQ("");
+      loadDetail(selectedId);
+      loadList();
+    }
+  }
+
+  const visibleGroups = useMemo(() => groups, [groups]);
+
+  return (
+    <div className="tg" dir={dir}>
+      <header className="tg-hero">
+        <div>
+          <h1 className="tg-title">{T.title}</h1>
+          <p className="tg-sub">{T.sub}</p>
+        </div>
+        {!viewOnly && (
+          <button className="tg-new" onClick={() => setCreateOpen(true)} data-write="true">
+            {T.create}
+          </button>
+        )}
+      </header>
+
+      <div className="tg-layout">
+        <aside className="tg-side">
+          {loadingList ? <MandalaLoader /> : visibleGroups.length === 0 ? (
+            <div className="tg-empty">{T.empty}</div>
+          ) : (
+            <ul className="tg-list">
+              {visibleGroups.map((g) => (
+                <li key={g.id}>
+                  <button
+                    className={`tg-list-item${selectedId === g.id ? " active" : ""}`}
+                    onClick={() => setSelectedId(g.id)}
+                  >
+                    <span className="tg-list-name">{g.name}</span>
+                    <span className="tg-list-meta">
+                      {g._count.members} {T.members}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </aside>
+
+        <section className="tg-detail">
+          {!selectedId ? (
+            <div className="tg-detail-empty">{T.pickOne}</div>
+          ) : loadingDetail || !detail ? (
+            <MandalaLoader />
+          ) : (
+            <>
+              <div className="tg-detail-head">
+                <input
+                  className="tg-meta-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  disabled={viewOnly}
+                  data-write={viewOnly ? undefined : "true"}
+                />
+                <textarea
+                  className="tg-meta-desc"
+                  placeholder={T.descPh}
+                  rows={2}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  disabled={viewOnly}
+                  data-write={viewOnly ? undefined : "true"}
+                />
+                {!viewOnly && (
+                  <div className="tg-meta-actions">
+                    <button className="tg-btn" onClick={saveMeta} disabled={savingMeta || !editForm.name.trim()} data-write="true">
+                      {savingMeta ? T.saving : T.save}
+                    </button>
+                    <button className="tg-btn tg-btn-danger" onClick={deleteGroup} data-write="true">
+                      {T.deleteGroup}
+                    </button>
+                    <span className="tg-spacer" />
+                    <button className="tg-btn tg-btn-primary" onClick={() => { setAddOpen(true); setPicked(new Set()); setSearchQ(""); }} data-write="true">
+                      {T.addMembers}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="tg-members">
+                {detail.members.length === 0 ? (
+                  <div className="tg-members-empty">—</div>
+                ) : detail.members.map((m) => (
+                  <div key={m.teacher.id} className="tg-member">
+                    <div className="tg-member-main">
+                      <div className="tg-member-name">{m.teacher.profile.full_name}</div>
+                      {m.teacher.profile.email && <div className="tg-member-email">{m.teacher.profile.email}</div>}
+                      {m.teacher.application && (
+                        <div className="tg-member-meta">
+                          {m.teacher.application.specialization && (
+                            <span>{T.spec}: <strong>{m.teacher.application.specialization}</strong></span>
+                          )}
+                          {(m.teacher.application.country || m.teacher.application.city) && (
+                            <span>{T.location}: <strong>{m.teacher.application.country}{m.teacher.application.city ? " · " + m.teacher.application.city : ""}</strong></span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {!viewOnly && (
+                      <button className="tg-mini-x" onClick={() => removeMember(m.teacher.id)} data-write="true" title={T.remove}>×</button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+
+      {/* Create dialog */}
+      {createOpen && !viewOnly && (
+        <div className="tg-overlay" onClick={() => !creating && setCreateOpen(false)}>
+          <div className="tg-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3 className="tg-dlg-title">{T.newGroupTitle}</h3>
+            <label className="tg-lbl">{T.name}</label>
+            <input className="tg-input" placeholder={T.namePh} value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} autoFocus />
+            <label className="tg-lbl">{T.desc}</label>
+            <textarea className="tg-input" rows={3} placeholder={T.descPh} value={createForm.description} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} />
+            <div className="tg-dlg-actions">
+              <button className="tg-btn" onClick={() => setCreateOpen(false)} disabled={creating}>{T.cancel}</button>
+              <button className="tg-btn tg-btn-primary" onClick={createGroup} disabled={creating || !createForm.name.trim()}>
+                {creating ? T.creating : T.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add-members dialog */}
+      {addOpen && !viewOnly && selectedId && (
+        <div className="tg-overlay" onClick={() => setAddOpen(false)}>
+          <div className="tg-dialog tg-dialog-wide" onClick={(e) => e.stopPropagation()}>
+            <h3 className="tg-dlg-title">{T.addMembers}</h3>
+            <input
+              className="tg-input"
+              placeholder={T.searchPh}
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              autoFocus
+            />
+            <div className="tg-eligible">
+              {loadingEligible ? <div className="tg-mini-load">…</div>
+                : eligible.length === 0 ? <div className="tg-empty">{T.noEligible}</div>
+                : eligible.map((t) => {
+                  const on = picked.has(t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      className={`tg-elig${on ? " on" : ""}`}
+                      onClick={() => {
+                        const next = new Set(picked);
+                        if (on) next.delete(t.id); else next.add(t.id);
+                        setPicked(next);
+                      }}
+                    >
+                      <div className="tg-elig-name">{t.profile.full_name}</div>
+                      {t.application && (
+                        <div className="tg-elig-meta">
+                          {t.application.specialization && <span>{t.application.specialization}</span>}
+                          {t.application.country && <span>· {t.application.country}{t.application.city ? " · " + t.application.city : ""}</span>}
+                        </div>
+                      )}
+                      <span className="tg-elig-tick">{on ? "✓" : "+"}</span>
+                    </button>
+                  );
+                })}
+            </div>
+            <div className="tg-dlg-actions">
+              <button className="tg-btn" onClick={() => setAddOpen(false)}>{T.cancel}</button>
+              <button className="tg-btn tg-btn-primary" onClick={addPicked} disabled={picked.size === 0}>
+                {T.add} ({picked.size})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+        .tg { font-family: 'Cairo', sans-serif; }
+        .tg-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+        .tg-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
+        .tg-sub { font-size: 13.5px; color: #5E5A52; max-width: 680px; line-height: 1.85; margin: 0; }
+        .tg-new { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border: none; padding: 10px 18px; border-radius: 11px; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+
+        .tg-layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
+        @media (max-width: 880px) { .tg-layout { grid-template-columns: 1fr; } }
+
+        .tg-side { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 10px; min-height: 200px; }
+        .tg-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+        .tg-list-item { width: 100%; text-align: start; background: transparent; border: 1px solid transparent; padding: 11px 14px; border-radius: 10px; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; gap: 4px; transition: background .15s; }
+        .tg-list-item:hover { background: rgba(194,160,89,0.10); }
+        .tg-list-item.active { background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border-color: #B89B5E; }
+        .tg-list-name { font-size: 13.5px; font-weight: 800; color: #1B1810; }
+        .tg-list-meta { font-size: 11.5px; color: #8B6915; font-weight: 700; }
+
+        .tg-detail { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 18px; min-height: 320px; }
+        .tg-detail-empty { padding: 60px 20px; text-align: center; color: #8A8478; font-weight: 700; }
+        .tg-detail-head { padding-bottom: 14px; border-bottom: 1px solid rgba(8,11,12,0.07); margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .tg-meta-name { font-family: inherit; font-size: 19px; font-weight: 900; color: #1B1810; border: 1px solid transparent; background: transparent; padding: 6px 8px; border-radius: 8px; outline: none; }
+        .tg-meta-name:focus { border-color: rgba(194,160,89,0.5); background: #FFF; }
+        .tg-meta-desc { font-family: inherit; font-size: 13px; color: #5E4A20; border: 1px solid transparent; background: transparent; padding: 6px 8px; border-radius: 8px; outline: none; resize: vertical; line-height: 1.7; }
+        .tg-meta-desc:focus { border-color: rgba(194,160,89,0.5); background: #FFF; }
+        .tg-meta-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+        .tg-spacer { flex: 1; }
+        .tg-btn { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 7px 13px; border-radius: 9px; font-family: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+        .tg-btn-primary { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
+        .tg-btn-danger  { background: linear-gradient(180deg,#A33333,#7A1E1E); color: #FFF; border-color: transparent; }
+
+        .tg-members { display: flex; flex-direction: column; gap: 8px; }
+        .tg-members-empty { padding: 30px; text-align: center; color: #BFB6A8; font-weight: 700; }
+        .tg-member { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid rgba(194,160,89,0.25); border-radius: 11px; background: linear-gradient(165deg,#FFFFFF,#FFFDF8); }
+        .tg-member-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .tg-member-name { font-size: 14px; font-weight: 800; color: #1B1810; }
+        .tg-member-email { font-size: 11.5px; color: #8B6915; }
+        .tg-member-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: #5E4A20; margin-top: 2px; }
+        .tg-member-meta strong { font-weight: 800; color: #1B1810; }
+        .tg-mini-x { background: rgba(139,26,26,0.10); border: 1px solid rgba(139,26,26,0.32); color: #7A1E1E; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+        .tg-mini-x:hover { background: rgba(139,26,26,0.18); }
+
+        .tg-empty { padding: 30px 16px; text-align: center; color: #8A8478; font-weight: 700; font-size: 13px; line-height: 1.7; }
+
+        .tg-overlay { position: fixed; inset: 0; background: rgba(8,11,12,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+        .tg-dialog { background: #FFFDF8; border-radius: 16px; padding: 22px; max-width: 460px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .tg-dialog-wide { max-width: 560px; }
+        .tg-dlg-title { font-size: 17px; font-weight: 900; color: #1B1810; margin: 0 0 14px; }
+        .tg-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B4F1E; margin: 10px 0 4px; }
+        .tg-input { width: 100%; padding: 10px 13px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; resize: vertical; }
+        .tg-input:focus { border-color: #B89B5E; }
+        .tg-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+        .tg-eligible { margin-top: 10px; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .tg-elig { width: 100%; text-align: start; background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 10px; padding: 10px 14px; font-family: inherit; cursor: pointer; position: relative; transition: all .15s; }
+        .tg-elig:hover { border-color: #B89B5E; }
+        .tg-elig.on { background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border-color: #B89B5E; }
+        .tg-elig-name { font-size: 13.5px; font-weight: 800; color: #1B1810; }
+        .tg-elig-meta { font-size: 11.5px; color: #5E4A20; display: flex; gap: 8px; margin-top: 3px; flex-wrap: wrap; }
+        .tg-elig-tick { position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; background: #B89B5E; color: #1E1605; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12.5px; }
+        .tg-elig:not(.on) .tg-elig-tick { background: rgba(194,160,89,0.18); color: #8B6915; }
+        .tg-mini-load { padding: 20px; text-align: center; color: #8B6915; font-weight: 700; }
+      `}</style>
+    </div>
+  );
+}

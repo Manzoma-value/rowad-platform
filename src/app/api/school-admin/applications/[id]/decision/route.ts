@@ -3,7 +3,7 @@
 // Stamps reviewer/notes on the application and flips the teacher's
 // onboarding_status to ACTIVE or REJECTED.
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -12,11 +12,11 @@ export async function POST(
   req: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await context.params;
 
-  let body: { action?: string; notes?: string };
+  let body: { action?: string; notes?: string; group_ids?: string[] };
   try {
     body = await req.json();
   } catch {
@@ -28,6 +28,12 @@ export async function POST(
   if (!approve && !reject) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
+
+  // Optional group assignment alongside approval. Group IDs are validated
+  // against this school + dedup'd; unknown IDs are silently dropped.
+  const requestedGroupIds = approve && Array.isArray(body.group_ids)
+    ? Array.from(new Set(body.group_ids.filter((s): s is string => typeof s === "string")))
+    : [];
 
   const teacher = await prisma.teacher.findFirst({
     where: { id, school_id: auth.school.id },
@@ -57,6 +63,21 @@ export async function POST(
       where: { id: teacher.id },
       data: { onboarding_status: nextStatus },
     });
+
+    // On approve: attach the teacher to any pre-selected groups. We re-check
+    // the IDs are real groups in THIS school to enforce tenant isolation.
+    if (approve && requestedGroupIds.length > 0) {
+      const groups = await tx.teacherGroup.findMany({
+        where: { id: { in: requestedGroupIds }, school_id: auth.school.id },
+        select: { id: true },
+      });
+      if (groups.length > 0) {
+        await tx.teacherGroupMember.createMany({
+          data: groups.map((g) => ({ group_id: g.id, teacher_id: teacher.id })),
+          skipDuplicates: true,
+        });
+      }
+    }
   }, { timeout: 30000, maxWait: 10000 });
 
   return NextResponse.json({ success: true, status: nextStatus });

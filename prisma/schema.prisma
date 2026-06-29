@@ -388,6 +388,7 @@ model Profile {
   reviewedQuizzes              Quiz[]               @relation("QuizReviewedBy")
   rowadGameSubmissions         RowadGameSubmission[]
   authoredOwnerReports         OwnerReport[]        @relation("OwnerReportAuthor")
+  authoredTeacherGroups        TeacherGroup[]       @relation("TeacherGroupAuthor")
   avatar_url                   String?
   avatar_path                  String?
   created_invites              Invite[]            @relation("InvitesCreatedBy")
@@ -433,6 +434,7 @@ model School {
   invites            Invite[]
   rowadGameSubmissions RowadGameSubmission[]
   owner_reports      OwnerReport[]
+  teacher_groups     TeacherGroup[]
 
   @@map("schools")
 }
@@ -464,9 +466,42 @@ model Teacher {
   school            School                  @relation(fields: [school_id], references: [id], onDelete: Cascade)
   traitAssessments  TraitAssessment[]
   application       TeacherApplication?
+  group_memberships TeacherGroupMember[]
 
   @@index([school_id])
   @@map("teachers")
+}
+
+// ─── Teacher Groups — private teacher communities organized by admin.
+//     A teacher can belong to many groups; a group has many teachers. ───
+model TeacherGroup {
+  id          String   @id @default(uuid()) @db.Uuid
+  school_id   String   @db.Uuid
+  name        String
+  description String?
+  created_by  String   @db.Uuid
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  school  School               @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author  Profile              @relation("TeacherGroupAuthor", fields: [created_by], references: [id])
+  members TeacherGroupMember[]
+
+  @@index([school_id, updated_at(sort: Desc)])
+  @@map("teacher_groups")
+}
+
+model TeacherGroupMember {
+  group_id   String   @db.Uuid
+  teacher_id String   @db.Uuid
+  joined_at  DateTime @default(now())
+
+  group   TeacherGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  teacher Teacher      @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@id([group_id, teacher_id])
+  @@index([teacher_id])
+  @@map("teacher_group_members")
 }
 
 model Student {

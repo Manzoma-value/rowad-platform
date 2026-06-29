@@ -20,6 +20,7 @@ import {
   ClipboardList,
   BarChart3,
   BookOpen,
+  Network,
   Globe2,
   Menu,
   LogOut,
@@ -111,7 +112,7 @@ interface NavItem {
 }
 
 interface NavItem2 extends Omit<NavItem, "key"> {
-  key: NavItem["key"] | "games";
+  key: NavItem["key"] | "games" | "groups";
   labelAr?: string;
   labelSq?: string;
   labelEn?: string;
@@ -120,6 +121,12 @@ interface NavItem2 extends Omit<NavItem, "key"> {
 const navItems: NavItem2[] = [
   { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
   { href: "/teacher/classes",  key: "myClasses", sublabel: "Classes",   exact: false, icon: Users },
+  {
+    href: "/teacher/groups",   key: "groups",    sublabel: "My Groups", exact: false, icon: Network,
+    labelAr: "مجموعاتي",
+    labelSq: "Grupet e mia",
+    labelEn: "My Groups",
+  },
   {
     href: "/teacher/roadmap",  key: "roadmap",   sublabel: "Roadmap",   exact: false, icon: MapPin,
     feature: "roadmap",
@@ -263,7 +270,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
       if (lang === "sq") return item.labelSq!;
       return item.labelEn ?? item.labelAr;
     }
-    return tr[item.key as Exclude<NavItem2["key"], "games" | "roadmap">];
+    return tr[item.key as Exclude<NavItem2["key"], "games" | "roadmap" | "groups">];
   };
 
   const currentLabel = (() => {

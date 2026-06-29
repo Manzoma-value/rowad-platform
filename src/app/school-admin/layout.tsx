@@ -163,6 +163,11 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       label: tr.teachers,
     },
     {
+      href: "/school-admin/teacher-groups", sublabel: "Teacher Groups", exact: false, icon: Users,
+      label: lang === "ar" ? "مجموعات المعلمين" : lang === "sq" ? "Grupet e mësuesve" : "Teacher Groups",
+      hideForViewOnly: true,
+    },
+    {
       href: "/school-admin/classes", sublabel: "Classes", exact: false, icon: BookOpen,
       label: tr.classes,
     },

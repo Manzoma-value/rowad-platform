@@ -53,6 +53,9 @@ const UI = {
     submittedAt: "تاريخ التقديم",
     reviewedAt: "تاريخ المراجعة",
     submitting: "جاري الإرسال…",
+    assignGroups: "مجموعات المعلمين (اختياري)",
+    assignGroupsHint: "يمكنك إضافة المعلم إلى مجموعة أو أكثر الآن، أو تنظيمه لاحقاً من صفحة مجموعات المعلمين.",
+    noTeacherGroups: "لا توجد مجموعات معلمين بعد.",
   },
   sq: {
     back: "← Kthehu te lista",
@@ -83,6 +86,9 @@ const UI = {
     submittedAt: "Data e dërgimit",
     reviewedAt: "Data e shqyrtimit",
     submitting: "Po dërgohet…",
+    assignGroups: "Grupet e mësuesve (opsionale)",
+    assignGroupsHint: "Mund ta shtosh mësuesin në një ose më shumë grupe tani, ose ta organizosh më vonë.",
+    noTeacherGroups: "Nuk ka grupe mësuesish ende.",
   },
 } as const;
 
@@ -126,6 +132,7 @@ type Teacher = {
   profile: { full_name: string; email: string | null };
   application: App | null;
 };
+type GroupOption = { id: string; name: string; description: string | null; _count: { members: number } };
 
 // Tiny error boundary so a render-time crash in any sub-section surfaces
 // as a readable message instead of an empty page. Logs the error to the
@@ -181,9 +188,10 @@ function ApplicationDetailPageInner({
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [groupOptions, setGroupOptions] = useState<GroupOption[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
 
   useEffect(() => {
-    setLoading(true);
     fetch(`/api/school-admin/applications/${id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
@@ -204,6 +212,21 @@ function ApplicationDetailPageInner({
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    fetch("/api/school-admin/teacher-groups", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setGroupOptions(Array.isArray(d?.groups) ? d.groups : []))
+      .catch(() => setGroupOptions([]));
+  }, []);
+
+  function toggleGroup(groupId: string) {
+    setSelectedGroupIds((current) =>
+      current.includes(groupId)
+        ? current.filter((id) => id !== groupId)
+        : [...current, groupId],
+    );
+  }
+
   async function decide(action: "approve" | "reject") {
     const confirmMsg = action === "approve" ? T.confirmApprove : T.confirmReject;
     if (!window.confirm(confirmMsg)) return;
@@ -213,7 +236,11 @@ function ApplicationDetailPageInner({
       const r = await fetch(`/api/school-admin/applications/${id}/decision`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, notes: notes || undefined }),
+        body: JSON.stringify({
+          action,
+          notes: notes || undefined,
+          group_ids: action === "approve" ? selectedGroupIds : undefined,
+        }),
       });
       if (!r.ok) {
         setError(T.saveError);
@@ -387,6 +414,36 @@ function ApplicationDetailPageInner({
 
         {!isDecided && (
           <div className="ad-decision">
+            <div className="ad-group-pick">
+              <div className="ad-group-pick-head">
+                <span className="ad-notes-label">{T.assignGroups}</span>
+                <p>{T.assignGroupsHint}</p>
+              </div>
+              {groupOptions.length === 0 ? (
+                <div className="ad-group-empty">{T.noTeacherGroups}</div>
+              ) : (
+                <div className="ad-group-options">
+                  {groupOptions.map((group) => {
+                    const checked = selectedGroupIds.includes(group.id);
+                    return (
+                      <button
+                        key={group.id}
+                        type="button"
+                        className={`ad-group-option${checked ? " selected" : ""}`}
+                        onClick={() => toggleGroup(group.id)}
+                        disabled={viewOnly || saving}
+                      >
+                        <span className="ad-group-check">{checked ? "✓" : "+"}</span>
+                        <span className="ad-group-info">
+                          <strong>{group.name}</strong>
+                          <small>{group._count.members} {L === "ar" ? "أعضاء" : "anëtarë"}</small>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             <label className="ad-notes-label">{T.notes}</label>
             <textarea
               className="ad-notes"
@@ -455,6 +512,30 @@ function ApplicationDetailPageInner({
         .ad-langs { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #2E2210; }
 
         .ad-decision { margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(194,160,89,0.32); }
+        .ad-group-pick { margin-bottom: 14px; }
+        .ad-group-pick-head p { margin: -2px 0 10px; color: #8A7B60; font-size: 12.5px; line-height: 1.7; }
+        .ad-group-empty {
+          padding: 12px; border-radius: 10px; border: 1px dashed rgba(194,160,89,0.32);
+          color: #8A7B60; font-size: 12.5px; font-weight: 800; background: rgba(194,160,89,0.04);
+        }
+        .ad-group-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin-bottom: 8px; }
+        .ad-group-option {
+          display: flex; align-items: center; gap: 10px; text-align: start;
+          padding: 10px 12px; border-radius: 11px; border: 1.5px solid rgba(194,160,89,0.28);
+          background: #FFF; cursor: pointer; font-family: inherit; transition: border-color .15s, background .15s;
+        }
+        .ad-group-option:hover:not(:disabled), .ad-group-option.selected {
+          border-color: #B89B5E; background: linear-gradient(165deg,#FCF6E6,#F4EBD3);
+        }
+        .ad-group-option:disabled { opacity: 0.6; cursor: not-allowed; }
+        .ad-group-check {
+          width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+          background: rgba(194,160,89,0.14); color: #8B6915; font-weight: 900; flex-shrink: 0;
+        }
+        .ad-group-option.selected .ad-group-check { background: #B89B5E; color: #1E1605; }
+        .ad-group-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .ad-group-info strong { color: #1B1810; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+        .ad-group-info small { color: #8A7B60; font-size: 11.5px; font-weight: 800; }
         .ad-notes-label { display: block; font-size: 12.5px; font-weight: 800; color: #6B4F1E; margin-bottom: 6px; }
         .ad-notes {
           width: 100%; padding: 10px 12px; font-family: inherit; font-size: 13.5px;
