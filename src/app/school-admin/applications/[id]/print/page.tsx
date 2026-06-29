@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { use, useEffect, useState } from "react";
+import { Component, type ReactNode, use, useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import {
   pickLang,
@@ -35,7 +35,43 @@ type App = {
   submitted_at: string; reviewed_at: string | null; reviewer_notes: string | null;
 };
 
-export default function PrintPage({ params }: { params: Promise<{ id: string }> }) {
+// Same boundary pattern as the detail page — surfaces render errors as a
+// visible message + console log instead of an empty page that swallows the
+// auto-print trigger.
+class PrintBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
+  state = { err: null as Error | null };
+  static getDerivedStateFromError(err: Error) { return { err }; }
+  componentDidCatch(err: Error, info: { componentStack?: string }) {
+    console.error("[application print render]", err, info);
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{ padding: 40, maxWidth: 720, margin: "0 auto", fontFamily: "'Cairo',sans-serif" }}>
+          <div style={{ background: "rgba(139,26,26,0.06)", border: "1.5px solid rgba(139,26,26,0.32)", borderRadius: 12, padding: 18, color: "#5A1818" }}>
+            <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 6 }}>
+              تعذر تجهيز الطلب للطباعة · Cannot render this application for print
+            </div>
+            <code style={{ display: "block", fontSize: 12, opacity: 0.85, whiteSpace: "pre-wrap", direction: "ltr", textAlign: "left" }}>
+              {String(this.state.err?.message ?? this.state.err)}
+            </code>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function PrintPage(props: { params: Promise<{ id: string }> }) {
+  return (
+    <PrintBoundary>
+      <PrintPageInner {...props} />
+    </PrintBoundary>
+  );
+}
+
+function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { lang } = useLang();
   const L = pickLang(lang);
@@ -48,7 +84,17 @@ export default function PrintPage({ params }: { params: Promise<{ id: string }> 
     fetch(`/api/school-admin/applications/${id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        setApp(d?.teacher?.application ?? null);
+        // Defensive: JSON columns can deserialize as null. Coerce to []
+        // so render never throws on .length / .map.
+        const a = d?.teacher?.application;
+        if (a) {
+          a.experience_areas = Array.isArray(a.experience_areas) ? a.experience_areas : [];
+          a.target_groups    = Array.isArray(a.target_groups)    ? a.target_groups    : [];
+          a.contributions    = Array.isArray(a.contributions)    ? a.contributions    : [];
+          a.languages        = Array.isArray(a.languages)        ? a.languages        : [];
+          a.attachments      = Array.isArray(a.attachments)      ? a.attachments      : [];
+        }
+        setApp(a ?? null);
         setName(d?.teacher?.profile?.full_name ?? "");
       })
       .catch(() => {});
