@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cachedFetch } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
+import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -119,6 +120,12 @@ function applyReaction(reactions: Reaction[], myId: string, type: ReactionType):
     rxs.push({ id: "opt", type, author_id: myId });
   }
   return rxs;
+}
+
+function canDeleteCommunityPost(me: Me, author: Author) {
+  if (author.id === me.id) return true;
+  if (me.role === "SCHOOL_ADMIN") return true;
+  return me.role === "TEACHER" && author.role === "STUDENT";
 }
 
 // ─── AVATAR ──────────────────────────────────────────────────────────────────
@@ -278,7 +285,8 @@ function Replies({ postId, me, lang }: {
       message: lang === "ar" ? "حذف هذا الرد؟" : "Fshi këtë përgjigje?",
     });
     if (!ok) return;
-    await fetch(`/api/hub/posts/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/hub/posts/${id}`, { method: "DELETE" });
+    if (!res.ok) return;
     setReplies((p) => p.filter((r) => r.id !== id));
   };
 
@@ -302,9 +310,10 @@ function Replies({ postId, me, lang }: {
               {group.items.map((r) => {
                 const isMe    = r.author.id === me.id;
                 const isStaff = r.author.role === "TEACHER" || r.author.role === "SCHOOL_ADMIN";
+                const canDeleteReply = canDeleteCommunityPost(me, r.author);
                 return (
                   <div key={r.id} className={`msg-row ${isMe ? "msg-mine" : "msg-theirs"}`}>
-                    {!isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} />}
+                    {!isMe && <ProfileAvatar author={r.author} size={32} lang={lang} />}
                     <div className="msg-col">
                       {!isMe && (
                         <div className="msg-sender">
@@ -325,18 +334,19 @@ function Replies({ postId, me, lang }: {
                         <span className="bubble-time">{formatDate(r.created_at, lang)}</span>
                       </div>
                       <div className={`msg-meta ${isMe ? "msg-meta-mine" : ""}`}>
-                        {/* Teacher can always delete replies */}
-                        <button className="del-micro" onClick={() => del(r.id)} title={tr.del}>
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-                          </svg>
-                        </button>
+                        {canDeleteReply && (
+                          <button className="del-micro" onClick={() => del(r.id)} title={tr.del}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                            </svg>
+                          </button>
+                        )}
                         <RxBar postId={r.id} reactions={r.reactions} myId={me.id} lang={lang}
                           onReact={handleReplyReact} compact alignEnd={isMe} />
                       </div>
                     </div>
-                    {isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} />}
+                    {isMe && <ProfileAvatar author={r.author} size={32} lang={lang} alignEnd />}
                   </div>
                 );
               })}
@@ -383,7 +393,7 @@ function Replies({ postId, me, lang }: {
   );
 }
 
-// ─── POST CARD (teacher: always-visible delete, two-step confirm) ─────────────
+// ─── POST CARD (teacher moderation, two-step confirm) ─────────────────────────
 
 function PostCard({ post, me, lang, onDelete, onReact, index }: {
   post: Post; me: Me; lang: Lang;
@@ -398,6 +408,7 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
   const isMe    = post.author.id === me.id;
   const isStaff = post.author.role === "TEACHER" || post.author.role === "SCHOOL_ADMIN";
   const isAdmin = post.author.role === "SCHOOL_ADMIN";
+  const canDeletePost = canDeleteCommunityPost(me, post.author);
   const tr = T[lang];
 
   // Two-step delete confirm
@@ -407,7 +418,8 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
       setTimeout(() => setDelConfirm(false), 3000);
       return;
     }
-    await fetch(`/api/hub/posts/${post.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/hub/posts/${post.id}`, { method: "DELETE" });
+    if (!res.ok) return;
     onDelete(post.id);
   };
 
@@ -416,7 +428,7 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
       style={{ animationDelay: `${index * 0.04}s` }}>
       {!isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} />
+          <ProfileAvatar author={post.author} size={42} lang={lang} alignEnd />
         </div>
       )}
 
@@ -433,23 +445,24 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
         )}
 
         <div className={`chat-bubble ${isMe ? "chat-bubble-mine" : "chat-bubble-theirs"} ${isStaff && !isMe ? "chat-bubble-staff" : ""}`}>
-          {/* Teacher: always-visible delete with two-step confirm */}
-          <button
-            className={`bubble-del teacher-del ${delConfirm ? "bubble-del-confirm" : ""}`}
-            onClick={del}
-            title={delConfirm ? tr.delConfirmTip : tr.del}>
-            {delConfirm ? (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-                <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
-              </svg>
-            )}
-          </button>
+          {canDeletePost && (
+            <button
+              className={`bubble-del teacher-del ${delConfirm ? "bubble-del-confirm" : ""}`}
+              onClick={del}
+              title={delConfirm ? tr.delConfirmTip : tr.del}>
+              {delConfirm ? (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+                </svg>
+              )}
+            </button>
+          )}
 
           {post.content && <p className="chat-text" dir="auto">{post.content}</p>}
 
@@ -504,7 +517,7 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
 
       {isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} />
+          <ProfileAvatar author={post.author} size={42} lang={lang} />
         </div>
       )}
     </div>

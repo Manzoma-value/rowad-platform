@@ -12,7 +12,8 @@ function adminSupabase() {
 }
 
 // DELETE /api/hub/posts/[id]
-// Students can delete their own posts. Teachers can delete any post in their school.
+// Authors can delete their own posts. Admins can delete any school post.
+// Teachers can moderate student posts only.
 export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string }> },
@@ -30,33 +31,39 @@ export async function DELETE(
     }),
     prisma.post.findUnique({
       where: { id },
-      select: { id: true, author_id: true, school_id: true, image_path: true },
+      select: {
+        id: true,
+        author_id: true,
+        school_id: true,
+        image_path: true,
+        author: { select: { role: true } },
+      },
     }),
   ]);
 
   if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Permission: own post OR teacher in the same school
   const isOwn = post.author_id === profile.id;
-  const isTeacher = profile.role === "TEACHER" || profile.role === "SCHOOL_ADMIN";
+  let canDelete = isOwn;
 
-  if (!isOwn && !isTeacher)
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
-  // If teacher, verify same school
-  if (!isOwn && isTeacher) {
-    const teacher = await prisma.teacher.findFirst({
-      where: { profile_id: profile.id, school_id: post.school_id },
-      select: { id: true },
-    });
+  if (!canDelete && profile.role === "SCHOOL_ADMIN") {
     const admin = await prisma.schoolAdminMember.findFirst({
       where: { school_id: post.school_id, profile_id: profile.id },
       select: { id: true },
     });
-    if (!teacher && !admin)
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    canDelete = Boolean(admin);
   }
+
+  if (!canDelete && profile.role === "TEACHER" && post.author.role === "STUDENT") {
+    const teacher = await prisma.teacher.findFirst({
+      where: { profile_id: profile.id, school_id: post.school_id },
+      select: { id: true },
+    });
+    canDelete = Boolean(teacher);
+  }
+
+  if (!canDelete) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   // Delete image from storage if exists
   if (post.image_path) {

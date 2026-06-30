@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cachedFetch } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
+import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -311,7 +312,7 @@ function Replies({ postId, me, lang }: {
                 const isStaff = r.author.role === "TEACHER" || isAdmin;
                 return (
                   <div key={r.id} className={`msg-row ${isMe ? "msg-mine" : "msg-theirs"}`}>
-                    {!isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} />}
+                    {!isMe && <ProfileAvatar author={r.author} size={32} lang={lang} />}
                     <div className="msg-col">
                       {!isMe && (
                         <div className="msg-sender">
@@ -343,7 +344,7 @@ function Replies({ postId, me, lang }: {
                           onReact={handleReplyReact} compact alignEnd={isMe} />
                       </div>
                     </div>
-                    {isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} isAdminSelf />}
+                    {isMe && <ProfileAvatar author={r.author} size={32} lang={lang} isAdminSelf alignEnd />}
                   </div>
                 );
               })}
@@ -422,7 +423,7 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
       style={{ animationDelay: `${index * 0.04}s` }}>
       {!isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} />
+          <ProfileAvatar author={post.author} size={42} lang={lang} />
         </div>
       )}
 
@@ -519,7 +520,7 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
 
       {isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} isAdminSelf />
+          <ProfileAvatar author={post.author} size={42} lang={lang} isAdminSelf alignEnd />
         </div>
       )}
     </div>

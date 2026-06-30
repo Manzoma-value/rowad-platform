@@ -6,6 +6,7 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cachedFetch } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
+import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -116,6 +117,12 @@ function applyReaction(reactions: Reaction[], myId: string, type: ReactionType):
   return rxs;
 }
 
+function canDeleteCommunityPost(me: Me, author: Author) {
+  if (author.id === me.id) return true;
+  if (me.role === "SCHOOL_ADMIN") return true;
+  return me.role === "TEACHER" && author.role === "STUDENT";
+}
+
 // ─── AVATAR ──────────────────────────────────────────────────────────────────
 
 const AV_COLORS = [
@@ -224,8 +231,8 @@ function DateDivider({ label }: { label: string }) {
 
 // ─── REPLIES ──────────────────────────────────────────────────────────────────
 
-function Replies({ postId, me, canDelete, lang }: {
-  postId: string; me: Me; canDelete: boolean; lang: Lang;
+function Replies({ postId, me, lang }: {
+  postId: string; me: Me; lang: Lang;
 }) {
   const confirm = useConfirm();
   const [replies, setReplies] = useState<Post[]>([]);
@@ -273,7 +280,8 @@ function Replies({ postId, me, canDelete, lang }: {
       message: lang === "ar" ? "حذف هذا الرد؟" : "Fshi këtë përgjigje?",
     });
     if (!ok) return;
-    await fetch(`/api/hub/posts/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/hub/posts/${id}`, { method: "DELETE" });
+    if (!res.ok) return;
     setReplies((p) => p.filter((r) => r.id !== id));
   };
 
@@ -297,9 +305,10 @@ function Replies({ postId, me, canDelete, lang }: {
               {group.items.map((r) => {
                 const isMe    = r.author.id === me.id;
                 const isStaff = r.author.role === "TEACHER" || r.author.role === "SCHOOL_ADMIN";
+                const canDeleteReply = canDeleteCommunityPost(me, r.author);
                 return (
                   <div key={r.id} className={`msg-row ${isMe ? "msg-mine" : "msg-theirs"}`}>
-                    {!isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} />}
+                    {!isMe && <ProfileAvatar author={r.author} size={32} lang={lang} />}
                     <div className="msg-col">
                       {!isMe && (
                         <div className="msg-sender">
@@ -320,7 +329,7 @@ function Replies({ postId, me, canDelete, lang }: {
                         <span className="bubble-time">{formatDate(r.created_at, lang)}</span>
                       </div>
                       <div className={`msg-meta ${isMe ? "msg-meta-mine" : ""}`}>
-                        {(canDelete || r.author.id === me.id) && (
+                        {canDeleteReply && (
                           <button className="del-micro" onClick={() => del(r.id)} title={tr.del}>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                               <polyline points="3 6 5 6 21 6" />
@@ -332,7 +341,7 @@ function Replies({ postId, me, canDelete, lang }: {
                           onReact={handleReplyReact} compact alignEnd={isMe} />
                       </div>
                     </div>
-                    {isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} />}
+                    {isMe && <ProfileAvatar author={r.author} size={32} lang={lang} alignEnd />}
                   </div>
                 );
               })}
@@ -381,8 +390,8 @@ function Replies({ postId, me, canDelete, lang }: {
 
 // ─── POST CARD ────────────────────────────────────────────────────────────────
 
-function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
-  post: Post; me: Me; canDelete: boolean; lang: Lang;
+function PostCard({ post, me, lang, onDelete, onReact, index }: {
+  post: Post; me: Me; lang: Lang;
   onDelete: (id: string) => void;
   onReact: (pid: string, type: ReactionType) => void;
   index: number;
@@ -393,10 +402,12 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
   const isMe    = post.author.id === me.id;
   const isStaff = post.author.role === "TEACHER" || post.author.role === "SCHOOL_ADMIN";
   const isAdmin = post.author.role === "SCHOOL_ADMIN";
+  const canDeletePost = canDeleteCommunityPost(me, post.author);
   const tr = T[lang];
 
   const del = async () => {
-    await fetch(`/api/hub/posts/${post.id}`, { method: "DELETE" });
+    const res = await fetch(`/api/hub/posts/${post.id}`, { method: "DELETE" });
+    if (!res.ok) return;
     onDelete(post.id);
   };
 
@@ -405,7 +416,7 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
       style={{ animationDelay: `${index * 0.04}s` }}>
       {!isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} />
+          <ProfileAvatar author={post.author} size={42} lang={lang} alignEnd />
         </div>
       )}
 
@@ -422,7 +433,7 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
         )}
 
         <div className={`chat-bubble ${isMe ? "chat-bubble-mine" : "chat-bubble-theirs"} ${isStaff && !isMe ? "chat-bubble-staff" : ""}`}>
-          {(canDelete || isMe) && (
+          {canDeletePost && (
             <button className="bubble-del" onClick={del} title={tr.del}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                 <polyline points="3 6 5 6 21 6" />
@@ -466,14 +477,14 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
 
         {showReplies && (
           <div className="replies-container">
-            <Replies postId={post.id} me={me} canDelete={canDelete} lang={lang} />
+            <Replies postId={post.id} me={me} lang={lang} />
           </div>
         )}
       </div>
 
       {isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} />
+          <ProfileAvatar author={post.author} size={42} lang={lang} />
         </div>
       )}
     </div>
@@ -562,7 +573,6 @@ export default function HubPage() {
   const [loading, setLoading]     = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [cursor, setCursor]       = useState<string | null>(null);
-  const [canDelete, setCanDelete] = useState(false);
   const supabase = createClient();
   const topRef   = useRef<HTMLDivElement>(null);
   const feedRef  = useRef<HTMLDivElement>(null);
@@ -580,8 +590,6 @@ export default function HubPage() {
           role: "STUDENT",
           school: d.school ?? null,
         });
-        const role = d.profile?.role ?? "STUDENT";
-        setCanDelete(role === "TEACHER" || role === "SCHOOL_ADMIN");
       });
     });
   }, []);
@@ -749,7 +757,7 @@ export default function HubPage() {
             <div key={group.day}>
               <DateDivider label={group.day} />
               {group.items.map((p, i) => (
-                <PostCard key={p.id} post={p} me={me} canDelete={canDelete} lang={lang}
+                <PostCard key={p.id} post={p} me={me} lang={lang}
                   onDelete={handleDelete} onReact={handleReact} index={i} />
               ))}
             </div>

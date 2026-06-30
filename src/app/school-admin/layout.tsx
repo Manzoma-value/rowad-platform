@@ -655,28 +655,33 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </main>
 
-        {/* Bottom band */}
-        <div className="sa-bottom-band" aria-hidden="true">
-          <svg viewBox="0 0 1200 80" preserveAspectRatio="none" width="100%" height="100%">
-            <line x1="0" y1="40" x2="1200" y2="40" stroke="rgba(200,169,106,0.25)" strokeWidth="0.5" />
-            {Array.from({ length: 36 }).map((_, i) => (
-              <circle key={i} cx={(i + 0.5) * (1200 / 36)} cy="40" r="1.2" fill="rgba(200,169,106,0.45)" />
-            ))}
-            <circle cx="600" cy="40" r="6" fill="none" stroke="rgba(200,169,106,0.55)" strokeWidth="0.7" />
-            <circle cx="600" cy="40" r="14" fill="none" stroke="rgba(200,169,106,0.30)" strokeWidth="0.5" />
-          </svg>
-        </div>
+        {/* Bottom band + footer — hidden on the community page so the
+            chat-style feed reaches the bottom of the viewport. */}
+        {pathname !== "/school-admin/hub" && (
+          <>
+            <div className="sa-bottom-band" aria-hidden="true">
+              <svg viewBox="0 0 1200 80" preserveAspectRatio="none" width="100%" height="100%">
+                <line x1="0" y1="40" x2="1200" y2="40" stroke="rgba(200,169,106,0.25)" strokeWidth="0.5" />
+                {Array.from({ length: 36 }).map((_, i) => (
+                  <circle key={i} cx={(i + 0.5) * (1200 / 36)} cy="40" r="1.2" fill="rgba(200,169,106,0.45)" />
+                ))}
+                <circle cx="600" cy="40" r="6" fill="none" stroke="rgba(200,169,106,0.55)" strokeWidth="0.7" />
+                <circle cx="600" cy="40" r="14" fill="none" stroke="rgba(200,169,106,0.30)" strokeWidth="0.5" />
+              </svg>
+            </div>
 
-        <div className="sa-footer-caption">
-          <Sparkles size={11} className="sa-footer-sparkle" />
-          <span className="sa-footer-text">
-            {lang === "ar"
-              ? "جميع الحقوق محفوظة © منظومة - 2026"
-              : lang === "sq"
-                ? "Të gjitha të drejtat e rezervuara © Manzoma - 2026"
-                : "All rights reserved © Manzoma - 2026"}
-          </span>
-        </div>
+            <div className="sa-footer-caption">
+              <Sparkles size={11} className="sa-footer-sparkle" />
+              <span className="sa-footer-text">
+                {lang === "ar"
+                  ? "جميع الحقوق محفوظة © منظومة - 2026"
+                  : lang === "sq"
+                    ? "Të gjitha të drejtat e rezervuara © Manzoma - 2026"
+                    : "All rights reserved © Manzoma - 2026"}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       <style>{styles}</style>
