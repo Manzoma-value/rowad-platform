@@ -13,7 +13,7 @@ type ReactionType = "LIKE" | "LOVE" | "DISLIKE" | "HAHA" | "SAD";
 type Lang = "ar" | "sq";
 
 interface Reaction { id: string; type: ReactionType; author_id: string; }
-interface Author   { id: string; full_name: string; role: string; }
+interface Author   { id: string; full_name: string; role: string; avatar_url: string | null; }
 interface Post {
   id: string; content: string | null; image_url: string | null;
   created_at: string; reply_to_id: string | null;
@@ -132,12 +132,15 @@ function getAvColor(name: string, isStaff: boolean) {
   return AV_COLORS[Math.abs(h) % AV_COLORS.length];
 }
 
-function Av({ name, role, size = 40 }: { name: string; role: string; size?: number }) {
+function Av({ name, role, avatarUrl, size = 40 }: { name: string; role: string; avatarUrl?: string | null; size?: number }) {
   const isStaff = role === "TEACHER" || role === "SCHOOL_ADMIN";
   const col = getAvColor(name, isStaff);
   return (
     <div className="av" style={{ width: size, height: size, minWidth: size, fontSize: size * 0.36, background: col.bg, color: col.text }}>
-      {initials(name)}
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="av-img" src={avatarUrl} alt="" />
+      ) : initials(name)}
       {isStaff && <span className="av-badge">✦</span>}
     </div>
   );
@@ -296,7 +299,7 @@ function Replies({ postId, me, canDelete, lang }: {
                 const isStaff = r.author.role === "TEACHER" || r.author.role === "SCHOOL_ADMIN";
                 return (
                   <div key={r.id} className={`msg-row ${isMe ? "msg-mine" : "msg-theirs"}`}>
-                    {!isMe && <Av name={r.author.full_name} role={r.author.role} size={32} />}
+                    {!isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} />}
                     <div className="msg-col">
                       {!isMe && (
                         <div className="msg-sender">
@@ -329,7 +332,7 @@ function Replies({ postId, me, canDelete, lang }: {
                           onReact={handleReplyReact} compact alignEnd={isMe} />
                       </div>
                     </div>
-                    {isMe && <Av name={r.author.full_name} role={r.author.role} size={32} />}
+                    {isMe && <Av name={r.author.full_name} role={r.author.role} avatarUrl={r.author.avatar_url} size={32} />}
                   </div>
                 );
               })}
@@ -402,7 +405,7 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
       style={{ animationDelay: `${index * 0.04}s` }}>
       {!isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} size={42} />
+          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} />
         </div>
       )}
 
@@ -470,7 +473,7 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
 
       {isMe && (
         <div className="chat-av-wrap">
-          <Av name={post.author.full_name} role={post.author.role} size={42} />
+          <Av name={post.author.full_name} role={post.author.role} avatarUrl={post.author.avatar_url} size={42} />
         </div>
       )}
     </div>
@@ -711,10 +714,6 @@ export default function HubPage() {
             <div>
               <h1 className="hub-title">{tr.community}</h1>
               <p className="hub-subtitle">{lang !== "ar" && me.school.name_alt && me.school.name_alt.trim() ? me.school.name_alt : me.school.name}</p>
-              <div className="hub-room-meta">
-                <span className="hub-live-dot" />
-                <span>{lang === "ar" ? "مجتمع مباشر" : "Live community"}</span>
-              </div>
             </div>
           </div>
         </div>
@@ -773,13 +772,11 @@ const css = `/* hub-viral-pack */
 @keyframes hubBlob{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.07)}66%{transform:translate(-30px,30px) scale(.94)}}
 @keyframes hubBlob2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,40px) scale(1.1)}}
 @keyframes burstFloat{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:1;transform:translateY(-20px) scale(1.3)}100%{opacity:0;transform:translateY(-70px) scale(.9)}}
-@keyframes liveDot{0%,100%{box-shadow:0 0 0 0 rgba(82,196,26,.5)}70%{box-shadow:0 0 0 10px rgba(82,196,26,0)}}
 .hub-bg-pattern::before,.hub-bg-pattern::after{content:'';position:absolute;border-radius:50%;filter:blur(80px);opacity:.45;pointer-events:none;}
 .hub-bg-pattern::before{width:520px;height:520px;background:radial-gradient(circle,#E5B93C 0%,transparent 70%);top:-120px;inset-inline-end:-120px;animation:hubBlob 18s ease-in-out infinite;}
 .hub-bg-pattern::after{width:460px;height:460px;background:radial-gradient(circle,#7A1E1E 0%,transparent 70%);bottom:-140px;inset-inline-start:-100px;animation:hubBlob2 22s ease-in-out infinite;opacity:.22;}
 .chat-bubble-staff{position:relative;overflow:visible;}
 .chat-bubble-staff::after{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(135deg,rgba(229,185,60,.55),rgba(200,169,106,0) 50%,rgba(229,185,60,.45));z-index:-1;}
-.hub-live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#52C41A;margin-inline-end:6px;animation:liveDot 2s infinite;vertical-align:middle;}
 .rx-burst{position:absolute;font-size:22px;pointer-events:none;animation:burstFloat .9s ease-out forwards;left:50%;top:0;transform-origin:center;}
 .composer{background:linear-gradient(135deg,#fff,#FBF8F2)!important;}
 .composer-focused{background:#fff!important;}
@@ -934,6 +931,7 @@ const css = `/* hub-viral-pack */
 /* avatar */
 .av{border-radius:50%;flex-shrink:0;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15),0 0 0 2px rgba(255,255,255,.8);transition:transform .2s var(--ease-b);}
 .av:hover{transform:scale(1.07);}
+.av-img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block;}
 .av-badge{position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid #fff;font-size:6px;font-weight:900;color:var(--graphite);display:flex;align-items:center;justify-content:center;}
 
 /* reactions */
@@ -1030,8 +1028,6 @@ const css = `/* hub-viral-pack */
 .hub-brand-icon{border-radius:16px;background:linear-gradient(145deg,rgba(200,169,106,.22),rgba(200,169,106,.08));}
 .hub-title{font-size:18px;letter-spacing:0;}
 .hub-subtitle{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(247,237,216,.78);}
-.hub-room-meta{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11px;font-weight:800;color:rgba(200,169,106,.86);}
-.hub-live-dot{width:8px;height:8px;border-radius:50%;background:#62D26F;box-shadow:0 0 0 4px rgba(98,210,111,.13);}
 .hub-feed{max-width:980px;padding:22px 22px 16px;}
 @media(min-width:900px){
   .hub-feed{background:rgba(255,253,248,.42);border-inline:1px solid rgba(184,155,94,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
@@ -1055,7 +1051,6 @@ const css = `/* hub-viral-pack */
   .hub{height:100svh;}
   .hub-header-inner{padding:11px 12px;}
   .hub-title{font-size:15px;}
-  .hub-room-meta{font-size:10.5px;}
   .hub-feed{padding:14px 8px 8px;}
   .chat-row{gap:7px;margin-bottom:10px;}
   .chat-av-wrap .av,.msg-row .av{transform:scale(.92);}
@@ -1070,5 +1065,55 @@ const css = `/* hub-viral-pack */
   .composer{border-radius:22px;padding:7px 7px 7px 12px;}
   .composer-img-btn{width:40px;height:40px;}
   .composer-send-btn{width:44px;height:44px;}
+}
+
+/* community UX polish v2 */
+.hub{background:
+  radial-gradient(circle at 12% 8%,rgba(229,185,60,.18),transparent 30%),
+  radial-gradient(circle at 88% 10%,rgba(84,61,30,.16),transparent 28%),
+  linear-gradient(180deg,#F8F1E6 0%,#EFE2D0 46%,#E7DACB 100%);
+}
+.hub-bg-pattern{opacity:.34;background-size:26px 26px;}
+.hub-header{background:linear-gradient(135deg,rgba(15,16,18,.98),rgba(45,35,20,.96));border-bottom:1px solid rgba(229,185,60,.22);box-shadow:0 18px 46px rgba(17,17,18,.28);}
+.hub-header-stripe{height:3px;background:linear-gradient(90deg,transparent 0%,#C8A96A 16%,#F0CE70 48%,#C8A96A 82%,transparent 100%);}
+.hub-header-inner{max-width:1040px;padding:15px clamp(14px,3vw,30px);}
+.hub-brand{min-width:0;gap:13px;}
+.hub-brand-icon{width:50px;height:50px;border-radius:19px;background:linear-gradient(145deg,rgba(240,206,112,.28),rgba(200,169,106,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 12px 28px rgba(0,0,0,.24);}
+.hub-title{font-size:clamp(17px,2vw,22px);line-height:1.2;}
+.hub-subtitle{font-size:12px;color:rgba(247,237,216,.72);}
+.hub-feed{max-width:1040px;padding:26px clamp(10px,3vw,28px) 18px;}
+@media(min-width:940px){
+  .hub-feed{width:calc(100% - 32px);margin-top:14px;border-radius:30px 30px 0 0;background:linear-gradient(180deg,rgba(255,253,248,.58),rgba(255,253,248,.30));border:1px solid rgba(184,155,94,.16);border-bottom:0;box-shadow:0 -10px 34px rgba(75,52,25,.08),inset 0 1px 0 rgba(255,255,255,.74);}
+}
+.date-divider-label{background:rgba(255,255,255,.78);border:1px solid rgba(184,155,94,.18);box-shadow:0 8px 24px rgba(42,26,10,.08);backdrop-filter:blur(14px);}
+.chat-row{margin-bottom:15px;gap:13px;}
+.chat-av-wrap{padding-top:4px;}
+.chat-col{max-width:min(70%,700px);}
+.chat-bubble{border-radius:24px;padding:13px 16px;box-shadow:0 12px 30px rgba(42,26,10,.10);transition:transform .18s ease,box-shadow .18s ease;}
+.chat-bubble:hover{transform:translateY(-1px);box-shadow:0 16px 34px rgba(42,26,10,.13);}
+.chat-bubble-mine{background:linear-gradient(135deg,#F0CD72 0%,#C8A96A 100%);border:1px solid rgba(122,84,18,.12);box-shadow:0 14px 30px rgba(157,116,44,.22);}
+.chat-bubble-theirs{background:rgba(255,255,255,.90);border:1px solid rgba(91,65,27,.08);backdrop-filter:blur(16px);}
+.chat-bubble-staff{background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(255,248,227,.92));}
+.chat-author-name{font-size:12.5px;letter-spacing:.01em;}
+.chat-text{font-size:15.75px;line-height:1.8;}
+.chat-time{font-size:10.5px;}
+.replies-container{border-radius:19px;background:rgba(255,255,255,.64);box-shadow:0 12px 28px rgba(42,26,10,.08);}
+.hub-composer-wrap{padding:14px clamp(10px,3vw,20px) max(16px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(246,240,230,.55),rgba(246,240,230,.92));border-top:1px solid rgba(184,155,94,.22);}
+.composer{max-width:1040px;border-radius:30px;border:1px solid rgba(184,155,94,.30);background:rgba(255,255,255,.94)!important;box-shadow:0 18px 42px rgba(42,26,10,.15);}
+.composer-ta{line-height:1.65;}
+.composer-send-btn{background:linear-gradient(135deg,#171716,#3D2D14);box-shadow:0 10px 22px rgba(28,20,8,.22);}
+@media(max-width:640px){
+  .hub-header-inner{padding:10px 12px;}
+  .hub-brand{gap:10px;}
+  .hub-brand-icon{width:42px;height:42px;border-radius:16px;}
+  .hub-title{font-size:16px;}
+  .hub-subtitle{max-width:230px;font-size:11px;}
+  .hub-feed{padding:12px 7px 8px;}
+  .chat-row{gap:8px;margin-bottom:12px;}
+  .chat-col{max-width:88%;}
+  .chat-bubble{border-radius:20px;padding:11px 13px;}
+  .chat-text{font-size:15.25px;line-height:1.72;}
+  .hub-composer-wrap{padding:8px 8px max(10px,env(safe-area-inset-bottom));}
+  .composer{border-radius:25px;padding:7px 7px 7px 12px;}
 }
 `;

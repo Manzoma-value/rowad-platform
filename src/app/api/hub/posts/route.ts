@@ -18,7 +18,7 @@ const POST_SELECT = {
   image_url: true,
   created_at: true,
   reply_to_id: true,
-  author: { select: { id: true, full_name: true, role: true } },
+  author: { select: { id: true, full_name: true, role: true, avatar_url: true } },
   reactions: { select: { id: true, type: true, author_id: true } },
   _count: { select: { replies: true } },
 } as const;
