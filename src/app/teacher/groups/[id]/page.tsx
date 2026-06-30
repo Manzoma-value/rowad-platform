@@ -60,6 +60,11 @@ const UI = {
     location: "الموقع",
     unavailable: "غير متوفر",
     notFound: "تعذر فتح هذه المجموعة.",
+    assessments: "تقييمات الرواد",
+    assessmentsEmpty: "لا توجد تقييمات نشطة لهذه المجموعة.",
+    assessmentOpen: "افتح التقييم",
+    assessmentClosed: "مغلق",
+    assessmentOpenStatus: "مفتوح",
   },
   sq: {
     back: "Kthehu te grupet",
@@ -79,6 +84,11 @@ const UI = {
     location: "Vendndodhja",
     unavailable: "Nuk disponohet",
     notFound: "Ky grup nuk mund të hapet.",
+    assessments: "Vlerësimet e Rowad",
+    assessmentsEmpty: "Nuk ka vlerësime aktive për këtë grup.",
+    assessmentOpen: "Hap vlerësimin",
+    assessmentClosed: "I mbyllur",
+    assessmentOpenStatus: "I hapur",
   },
 } as const;
 
@@ -121,6 +131,8 @@ export default function TeacherGroupDetailPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  type AssessmentRow = { id: string; title: string; status: "OPEN" | "CLOSED"; created_at: string; closed_at: string | null };
+  const [assessments, setAssessments] = useState<AssessmentRow[]>([]);
 
   useEffect(() => {
     const id = params?.id;
@@ -133,6 +145,10 @@ export default function TeacherGroupDetailPage() {
       .then((d) => setGroup(d?.group ?? null))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
+    fetch(`/api/teacher/groups/${id}/assessments`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setAssessments(Array.isArray(d?.assessments) ? d.assessments : []))
+      .catch(() => setAssessments([]));
   }, [params?.id]);
 
   useEffect(() => {
@@ -272,6 +288,33 @@ export default function TeacherGroupDetailPage() {
       <section className="gd-section">
         <div className="gd-section-head">
           <Network size={18} strokeWidth={1.7} />
+          <h2>{T.assessments}</h2>
+        </div>
+        {assessments.length === 0 ? (
+          <div className="gd-muted">{T.assessmentsEmpty}</div>
+        ) : (
+          <ul className="gd-assess-list">
+            {assessments.map((a) => (
+              <li key={a.id}>
+                <Link href={`/teacher/groups/${params?.id}/assessments/${a.id}`} className="gd-assess-card">
+                  <div className="gd-assess-meta">
+                    <span className={`gd-assess-tag gd-assess-${a.status}`}>
+                      {a.status === "OPEN" ? T.assessmentOpenStatus : T.assessmentClosed}
+                    </span>
+                    <span className="gd-assess-date">{new Date(a.created_at).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL")}</span>
+                  </div>
+                  <h3 className="gd-assess-title">{a.title}</h3>
+                  <span className="gd-assess-open">{T.assessmentOpen} →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="gd-section">
+        <div className="gd-section-head">
+          <Network size={18} strokeWidth={1.7} />
           <h2>{T.activities}</h2>
         </div>
         <div className="gd-composer">
@@ -405,6 +448,16 @@ const styles = `
     border: 1px dashed rgba(184,155,94,0.32); border-radius: 12px; color: #8A8478; font-size: 13.5px; font-weight: 800; padding: 24px;
   }
   .gd-activities-empty { min-height: 150px; background: rgba(194,160,89,0.04); }
+  .gd-assess-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+  .gd-assess-card { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border: 1.5px solid rgba(184,155,94,0.40); border-radius: 13px; text-decoration: none; color: inherit; transition: all .18s; }
+  .gd-assess-card:hover { transform: translateY(-2px); border-color: #B89B5E; box-shadow: 0 10px 26px rgba(150,115,50,0.16); }
+  .gd-assess-meta { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .gd-assess-tag { font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 99px; letter-spacing: .04em; }
+  .gd-assess-OPEN   { background: rgba(76,107,60,0.14); color: #4C6B3C; }
+  .gd-assess-CLOSED { background: rgba(8,11,12,0.08);  color: #5E5A52; }
+  .gd-assess-date { font-size: 11.5px; color: #8B6915; font-weight: 700; }
+  .gd-assess-title { font-size: 15px; font-weight: 900; color: #1B1810; margin: 0; line-height: 1.4; }
+  .gd-assess-open { font-size: 12px; font-weight: 800; color: #6B4F1E; margin-top: auto; padding-top: 4px; }
   .gd-composer { display: flex; flex-direction: column; gap: 10px; padding: 12px; margin-bottom: 14px; border-radius: 12px; background: rgba(194,160,89,0.04); border: 1px solid rgba(194,160,89,0.16); }
   .gd-composer textarea { width: 100%; border: 1.5px solid rgba(194,160,89,0.20); border-radius: 10px; background: #FFF; padding: 11px 13px; font-family: inherit; font-size: 13.5px; line-height: 1.7; resize: vertical; outline: none; }
   .gd-composer textarea:focus { border-color: #B89B5E; box-shadow: 0 0 0 3px rgba(194,160,89,0.08); }

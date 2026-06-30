@@ -389,6 +389,7 @@ model Profile {
   rowadGameSubmissions         RowadGameSubmission[]
   authoredOwnerReports         OwnerReport[]        @relation("OwnerReportAuthor")
   authoredTeacherGroups        TeacherGroup[]       @relation("TeacherGroupAuthor")
+  authoredGroupAssessments     GroupAssessment[]    @relation("GroupAssessmentAuthor")
   teacherGroupAnnouncements    TeacherGroupAnnouncement[]
   avatar_url                   String?
   avatar_path                  String?
@@ -469,6 +470,8 @@ model Teacher {
   traitAssessments  TraitAssessment[]
   application       TeacherApplication?
   group_memberships TeacherGroupMember[]
+  ratings_given     AssessmentRating[]   @relation("AssessmentRater")
+  ratings_received  AssessmentRating[]   @relation("AssessmentTarget")
 
   @@index([school_id])
   @@map("teachers")
@@ -485,9 +488,10 @@ model TeacherGroup {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  school  School               @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  author  Profile              @relation("TeacherGroupAuthor", fields: [created_by], references: [id])
-  members TeacherGroupMember[]
+  school      School               @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author      Profile              @relation("TeacherGroupAuthor", fields: [created_by], references: [id])
+  members     TeacherGroupMember[]
+  assessments GroupAssessment[]
   announcements TeacherGroupAnnouncement[]
 
   @@index([school_id, updated_at(sort: Desc)])
@@ -505,6 +509,58 @@ model TeacherGroupMember {
   @@id([group_id, teacher_id])
   @@index([teacher_id])
   @@map("teacher_group_members")
+}
+
+// ─── Rowad First-Stage Assessment — peer scoring inside a teacher group.
+//     Each member distributes 100 points across the 5 fixed trait statements
+//     for every group member (including themselves). Always-live updates;
+//     admin can close to lock the snapshot. ───
+enum GroupAssessmentStatus {
+  OPEN
+  CLOSED
+}
+
+model GroupAssessment {
+  id         String                @id @default(uuid()) @db.Uuid
+  group_id   String                @db.Uuid
+  school_id  String                @db.Uuid
+  created_by String                @db.Uuid
+  title      String
+  status     GroupAssessmentStatus @default(OPEN)
+  created_at DateTime              @default(now())
+  updated_at DateTime              @updatedAt
+  closed_at  DateTime?
+
+  group   TeacherGroup       @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  author  Profile            @relation("GroupAssessmentAuthor", fields: [created_by], references: [id])
+  ratings AssessmentRating[]
+
+  @@index([group_id, created_at(sort: Desc)])
+  @@index([school_id])
+  @@map("group_assessments")
+}
+
+model AssessmentRating {
+  assessment_id     String   @db.Uuid
+  rater_teacher_id  String   @db.Uuid
+  target_teacher_id String   @db.Uuid
+  // The five trait scores in canonical order — sum must equal 100. Stored
+  // as small ints to keep the matrix queries cheap.
+  s_lineage   Int
+  s_atonement Int
+  s_awareness Int
+  s_zeal      Int
+  s_distinct  Int
+  updated_at  DateTime @updatedAt
+
+  assessment GroupAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  rater      Teacher         @relation("AssessmentRater", fields: [rater_teacher_id], references: [id], onDelete: Cascade)
+  target     Teacher         @relation("AssessmentTarget", fields: [target_teacher_id], references: [id], onDelete: Cascade)
+
+  @@id([assessment_id, rater_teacher_id, target_teacher_id])
+  @@index([assessment_id, target_teacher_id])
+  @@index([assessment_id, rater_teacher_id])
+  @@map("assessment_ratings")
 }
 
 // Private announcement feed inside a teacher group. Authors can be school

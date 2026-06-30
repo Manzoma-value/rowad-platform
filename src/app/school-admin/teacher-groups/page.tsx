@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
@@ -70,6 +71,7 @@ const UI = {
     desc: "الوصف",
     save: "حفظ",
     saving: "جارٍ الحفظ…",
+    assessments: "تقييمات الرواد",
     deleteGroup: "حذف المجموعة",
     confirmDelete: "هل تريد حذف هذه المجموعة؟ سيتم إلغاء عضوية كل المعلمين.",
     addMembers: "+ إضافة أعضاء",
@@ -100,6 +102,7 @@ const UI = {
     desc: "Përshkrimi",
     save: "Ruaj",
     saving: "Po ruhet…",
+    assessments: "Vlerësimet e Rowad",
     deleteGroup: "Fshi grupin",
     confirmDelete: "Të fshihet ky grup? Të gjithë anëtarët do hiqen.",
     addMembers: "+ Shto anëtarë",
@@ -383,20 +386,27 @@ export default function TeacherGroupsPage() {
                   disabled={viewOnly}
                   data-write={viewOnly ? undefined : "true"}
                 />
-                {!viewOnly && (
-                  <div className="tg-meta-actions">
-                    <button className="tg-btn" onClick={saveMeta} disabled={savingMeta || !editForm.name.trim()} data-write="true">
-                      {savingMeta ? T.saving : T.save}
-                    </button>
-                    <button className="tg-btn tg-btn-danger" onClick={deleteGroup} data-write="true">
-                      {T.deleteGroup}
-                    </button>
-                    <span className="tg-spacer" />
+                <div className="tg-meta-actions">
+                  {!viewOnly && (
+                    <>
+                      <button className="tg-btn" onClick={saveMeta} disabled={savingMeta || !editForm.name.trim()} data-write="true">
+                        {savingMeta ? T.saving : T.save}
+                      </button>
+                      <button className="tg-btn tg-btn-danger" onClick={deleteGroup} data-write="true">
+                        {T.deleteGroup}
+                      </button>
+                    </>
+                  )}
+                  <Link className="tg-btn" href={`/school-admin/teacher-groups/${detail.id}/assessments`}>
+                    {T.assessments} →
+                  </Link>
+                  <span className="tg-spacer" />
+                  {!viewOnly && (
                     <button className="tg-btn tg-btn-primary" onClick={() => { setAddOpen(true); setPicked(new Set()); setSearchQ(""); }} data-write="true">
                       {T.addMembers}
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
 
               <div className="tg-members">
