@@ -157,13 +157,6 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
   useEffect(() => { loadList(); }, [loadList]);
   useEffect(() => { if (selectedId) loadDetail(selectedId); }, [selectedId, loadDetail]);
 
-  // Live refresh of the detail while open (admin sees ratings stream in).
-  useEffect(() => {
-    if (!selectedId || detail?.status === "CLOSED") return;
-    const i = setInterval(() => { loadDetail(selectedId); }, 8000);
-    return () => clearInterval(i);
-  }, [selectedId, detail?.status, loadDetail]);
-
   async function createAssessment() {
     if (!form.title.trim()) return;
     setCreating(true);

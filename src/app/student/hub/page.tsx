@@ -2,7 +2,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cachedFetch } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
@@ -221,9 +221,8 @@ function DateDivider({ label }: { label: string }) {
 
 // ─── REPLIES ──────────────────────────────────────────────────────────────────
 
-function Replies({ postId, me, canDelete, lang, onReact }: {
+function Replies({ postId, me, canDelete, lang }: {
   postId: string; me: Me; canDelete: boolean; lang: Lang;
-  onReact: (pid: string, type: ReactionType) => void;
 }) {
   const confirm = useConfirm();
   const [replies, setReplies] = useState<Post[]>([]);
@@ -464,7 +463,7 @@ function PostCard({ post, me, canDelete, lang, onDelete, onReact, index }: {
 
         {showReplies && (
           <div className="replies-container">
-            <Replies postId={post.id} me={me} canDelete={canDelete} lang={lang} onReact={onReact} />
+            <Replies postId={post.id} me={me} canDelete={canDelete} lang={lang} />
           </div>
         )}
       </div>
@@ -560,7 +559,6 @@ export default function HubPage() {
   const [loading, setLoading]     = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [cursor, setCursor]       = useState<string | null>(null);
-  const [newCount, setNewCount]   = useState(0);
   const [canDelete, setCanDelete] = useState(false);
   const supabase = createClient();
   const topRef   = useRef<HTMLDivElement>(null);
@@ -626,13 +624,6 @@ export default function HubPage() {
       }).subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [me?.school?.id, me?.id]);
-
-  const refresh = useCallback(async () => {
-    if (!me?.school?.id) return;
-    const d = await fetch(`/api/hub/posts?school_id=${me.school.id}&limit=30`).then((r) => r.json());
-    setPosts(d.posts ?? []); setCursor(d.nextCursor ?? null); setNewCount(0);
-    topRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [me?.school?.id]);
 
   const loadMore = async () => {
     if (!cursor || !me?.school?.id) return;
@@ -720,6 +711,10 @@ export default function HubPage() {
             <div>
               <h1 className="hub-title">{tr.community}</h1>
               <p className="hub-subtitle">{lang !== "ar" && me.school.name_alt && me.school.name_alt.trim() ? me.school.name_alt : me.school.name}</p>
+              <div className="hub-room-meta">
+                <span className="hub-live-dot" />
+                <span>{lang === "ar" ? "مجتمع مباشر" : "Live community"}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1023,5 +1018,57 @@ const css = `/* hub-viral-pack */
   .hub-subtitle{display:none;}
   .chat-text{font-size:14px;}
   .composer{padding:5px 5px 5px 10px;}
+}
+
+/* community UX refresh */
+.hub{background:
+  radial-gradient(circle at 18% 0%,rgba(200,169,106,.18),transparent 28%),
+  linear-gradient(180deg,#F6F0E6 0%,#EEE4D6 100%);
+}
+.hub-header{background:rgba(11,11,12,.96);backdrop-filter:blur(18px);box-shadow:0 14px 38px rgba(11,11,12,.24);}
+.hub-header-inner{max-width:980px;padding:14px 22px;}
+.hub-brand-icon{border-radius:16px;background:linear-gradient(145deg,rgba(200,169,106,.22),rgba(200,169,106,.08));}
+.hub-title{font-size:18px;letter-spacing:0;}
+.hub-subtitle{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(247,237,216,.78);}
+.hub-room-meta{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:11px;font-weight:800;color:rgba(200,169,106,.86);}
+.hub-live-dot{width:8px;height:8px;border-radius:50%;background:#62D26F;box-shadow:0 0 0 4px rgba(98,210,111,.13);}
+.hub-feed{max-width:980px;padding:22px 22px 16px;}
+@media(min-width:900px){
+  .hub-feed{background:rgba(255,253,248,.42);border-inline:1px solid rgba(184,155,94,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
+}
+.chat-row{margin-bottom:12px;gap:12px;}
+.chat-col{max-width:min(72%,680px);}
+.chat-bubble{padding:11px 14px;border-radius:20px;box-shadow:0 8px 22px rgba(42,26,10,.08);}
+.chat-bubble-mine{background:linear-gradient(145deg,#D8B777,#C8A96A);box-shadow:0 10px 24px rgba(157,116,44,.22);}
+.chat-bubble-theirs{background:rgba(255,255,255,.94);border-color:rgba(42,26,10,.06);}
+.chat-text{font-size:15.5px;line-height:1.78;}
+.chat-actions{opacity:.78;transition:opacity .18s ease;}
+.chat-row:hover .chat-actions{opacity:1;}
+.reply-toggle-btn,.rx-btn,.rx-pill{min-height:30px;border-color:rgba(42,26,10,.08);background:rgba(255,255,255,.72);}
+.replies-container{width:min(540px,100%);background:rgba(255,255,255,.46);backdrop-filter:blur(14px);border-color:rgba(184,155,94,.18);}
+.replies-scroll{max-height:360px;}
+.hub-composer-wrap{padding:12px 18px max(14px,env(safe-area-inset-bottom));background:rgba(246,240,230,.82);backdrop-filter:blur(24px);border-top:1px solid rgba(184,155,94,.20);}
+.composer{max-width:980px;border-radius:24px;border-color:rgba(184,155,94,.24);box-shadow:0 14px 36px rgba(42,26,10,.13);padding:9px 10px 9px 16px;}
+.composer-focused{box-shadow:0 18px 44px rgba(42,26,10,.16),0 0 0 4px rgba(200,169,106,.12);}
+.composer-send-btn,.reply-send-btn{min-width:42px;min-height:42px;}
+@media(max-width:640px){
+  .hub{height:100svh;}
+  .hub-header-inner{padding:11px 12px;}
+  .hub-title{font-size:15px;}
+  .hub-room-meta{font-size:10.5px;}
+  .hub-feed{padding:14px 8px 8px;}
+  .chat-row{gap:7px;margin-bottom:10px;}
+  .chat-av-wrap .av,.msg-row .av{transform:scale(.92);}
+  .chat-col{max-width:86%;}
+  .chat-bubble{padding:10px 12px;border-radius:18px;}
+  .chat-text{font-size:15px;line-height:1.68;}
+  .chat-actions{opacity:1;}
+  .rx-picker{position:fixed;left:10px;right:10px;bottom:82px;inset-inline-start:10px;inset-inline-end:10px;justify-content:space-around;}
+  .rx-picker-end{inset-inline-start:10px;inset-inline-end:10px;}
+  .rx-pick-btn{padding:8px 6px;}
+  .hub-composer-wrap{padding:8px 8px max(10px,env(safe-area-inset-bottom));}
+  .composer{border-radius:22px;padding:7px 7px 7px 12px;}
+  .composer-img-btn{width:40px;height:40px;}
+  .composer-send-btn{width:44px;height:44px;}
 }
 `;

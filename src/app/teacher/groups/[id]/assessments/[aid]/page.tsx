@@ -71,6 +71,15 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
   const L = pickAssessLang(lang);
   const T = UI[L];
   const AT = ASSESS_UI[L];
+  const UX = {
+    readyToSave: L === "ar" ? "جاهز للحفظ - اترك المؤشر أو اخرج من الرقم" : "Gati per ruajtje - lesho rreshqitesin ose dil nga numri",
+    progressTitle: L === "ar" ? "تقدمك في التقييم" : "Progresi yt",
+    completed: L === "ar" ? "مكتمل" : "Te plota",
+    pending: L === "ar" ? "متبقي" : "Te mbetura",
+    receivedCount: L === "ar" ? "تقييمات وصلتك" : "Vleresime te marra",
+    coreNow: L === "ar" ? "القراءة الحالية" : "Leximi aktual",
+    noCoreYet: L === "ar" ? "لا توجد قراءة بعد" : "Ende pa lexim",
+  };
   const dir = L === "ar" ? "rtl" : "ltr";
 
   const [data, setData] = useState<AssessmentData | null>(null);
@@ -108,23 +117,6 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => { reload(); }, [reload]);
 
-  // Light polling so live updates from others arrive into "my received" panel.
-  useEffect(() => {
-    if (!data || data.status === "CLOSED") return;
-    const i = setInterval(async () => {
-      try {
-        const r = await fetch(`/api/teacher/groups/${id}/assessments/${aid}`, { cache: "no-store" });
-        if (!r.ok) return;
-        const d = await r.json();
-        const a: AssessmentData = d?.assessment;
-        if (!a) return;
-        // Only swap in what the user is NOT actively editing.
-        setData((prev) => prev ? { ...prev, status: a.status, my_ratings_received: a.my_ratings_received } : a);
-      } catch { /* ignore */ }
-    }, 8000);
-    return () => clearInterval(i);
-  }, [data?.status, id, aid]);
-
   function onChange(targetId: string, next: ScoresTuple) {
     setScoresByTarget((prev) => ({ ...prev, [targetId]: next }));
     setSaveState((prev) => ({ ...prev, [targetId]: "dirty" }));
@@ -155,10 +147,18 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
   }, [id, aid]);
 
   // ── My received panel: compute average across all rows, then derive.
-  const received = data?.my_ratings_received ?? [];
-  const receivedTuples: ScoresTuple[] = received.map((r) => [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct]);
-  const avg = useMemo(() => averageTuples(receivedTuples), [received]);
+  const received = useMemo(() => data?.my_ratings_received ?? [], [data?.my_ratings_received]);
+  const avg = useMemo(
+    () => averageTuples(received.map((r) => [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct])),
+    [received],
+  );
   const avgDerive = avg ? derive(avg) : null;
+  const completedCount = useMemo(() => {
+    if (!data) return 0;
+    return data.members.filter((m) => saveState[m.teacher_id] === "saved").length;
+  }, [data, saveState]);
+  const memberCount = data?.members.length ?? 0;
+  const completionPct = memberCount > 0 ? Math.round((completedCount / memberCount) * 100) : 0;
 
   if (loading) return <MandalaLoader />;
   if (!data) {
@@ -183,12 +183,39 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         {locked && <div className="ap-locked">{T.locked}</div>}
       </header>
 
+      <section className="ap-overview" aria-label={UX.progressTitle}>
+        <div className="ap-progress-card ap-progress-main">
+          <div>
+            <span className="ap-card-kicker">{UX.progressTitle}</span>
+            <strong>{completionPct}%</strong>
+          </div>
+          <div className="ap-progress-track">
+            <span style={{ width: `${completionPct}%` }} />
+          </div>
+        </div>
+        <div className="ap-progress-card">
+          <span className="ap-card-kicker">{UX.completed}</span>
+          <strong>{completedCount}</strong>
+          <small>/ {memberCount}</small>
+        </div>
+        <div className="ap-progress-card">
+          <span className="ap-card-kicker">{UX.pending}</span>
+          <strong>{Math.max(0, memberCount - completedCount)}</strong>
+          <small>/ {memberCount}</small>
+        </div>
+        <div className="ap-progress-card">
+          <span className="ap-card-kicker">{UX.receivedCount}</span>
+          <strong>{received.length}</strong>
+          <small>{avg && avgDerive ? UX.coreNow : UX.noCoreYet}</small>
+        </div>
+      </section>
+
       <section className="ap-section">
         <h2 className="ap-section-h">{T.sectionRate}</h2>
         <p className="ap-section-sub">{T.sectionRateSub}</p>
 
         <div className="ap-grid">
-          {data.members.map((m) => {
+          {data.members.map((m, idx) => {
             const scores = scoresByTarget[m.teacher_id] ?? [...EMPTY_SCORES];
             const state = saveState[m.teacher_id];
             const total = scores[0] + scores[1] + scores[2] + scores[3] + scores[4];
@@ -196,6 +223,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               <div key={m.teacher_id} className="ap-target">
                 <header className="ap-target-head">
                   <div className="ap-target-name">
+                    <span className="ap-target-step">{idx + 1}</span>
                     {m.profile.full_name}
                     {m.is_self && <span className="ap-self-tag">{T.targetSelf}</span>}
                   </div>
@@ -203,7 +231,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                     {state === "saving" ? T.saving
                       : state === "err" ? T.saveErr
                       : state === "saved" ? T.saved
-                      : total === 100 ? T.saved
+                      : total === 100 ? UX.readyToSave
                       : T.notSavedYet}
                   </div>
                 </header>
@@ -232,6 +260,16 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               <div className="ap-avg-card">
                 <div className="ap-avg-head">
                   <span className="ap-avg-label">{T.averageOf(received.length)}</span>
+                </div>
+                <div className="ap-result-hero">
+                  <div className="ap-result-chip ap-result-core">
+                    <span>{AT.coreLabel}</span>
+                    <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? TRAITS[avgDerive.coreIdx][L] : AT.noCore}</strong>
+                  </div>
+                  <div className="ap-result-chip ap-result-coll">
+                    <span>{AT.collectiveLabel}</span>
+                    <strong>{TRAITS[avgDerive.collectiveIdx][L]}</strong>
+                  </div>
                 </div>
                 <div className="ap-bars">
                   {TRAITS.map((t, i) => {
@@ -300,6 +338,24 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0; line-height: 1.3; }
         .ap-locked { background: rgba(8,11,12,0.08); color: #5E5A52; padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 800; }
 
+        .ap-overview { display: grid; grid-template-columns: 1.35fr repeat(3, minmax(130px, .65fr)); gap: 12px; margin: 0 0 22px; }
+        @media (max-width: 900px) { .ap-overview { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+        @media (max-width: 560px) { .ap-overview { grid-template-columns: 1fr; } }
+        .ap-progress-card {
+          min-height: 104px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+          padding: 16px; border-radius: 16px; background: linear-gradient(150deg,#FFFDF8,#F7EFD9);
+          border: 1px solid rgba(184,155,94,0.34); box-shadow: 0 14px 30px rgba(91,64,18,0.07);
+        }
+        .ap-progress-main { background: linear-gradient(135deg,#11151A,#2D2414); color: #F8E8B8; border-color: rgba(229,185,60,0.24); }
+        .ap-card-kicker { display: block; font-size: 11px; font-weight: 900; color: #8B6915; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 4px; }
+        .ap-progress-main .ap-card-kicker { color: rgba(248,232,184,.72); }
+        .ap-progress-card strong { font-size: 34px; line-height: 1; font-weight: 900; color: #1B1810; }
+        .ap-progress-main strong { color: #E5B93C; }
+        .ap-progress-card small { color: #6B6256; font-size: 12px; font-weight: 800; }
+        .ap-progress-main small { color: rgba(248,232,184,.72); }
+        .ap-progress-track { height: 10px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.12); }
+        .ap-progress-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#E5B93C,#FFF2B9); transition: width .35s ease; }
+
         .ap-section { margin-top: 28px; }
         .ap-section-h { font-size: 18px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
         .ap-section-sub { font-size: 13px; color: #5E5A52; margin: 0 0 14px; line-height: 1.85; }
@@ -307,8 +363,9 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px,1fr)); gap: 16px; }
         @media (max-width: 760px) { .ap-grid { grid-template-columns: 1fr; } }
         .ap-target { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 14px; }
-        .ap-target-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .ap-target-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; position: sticky; top: 0; z-index: 2; background: rgba(255,253,248,.92); backdrop-filter: blur(8px); padding: 2px 0 8px; }
         .ap-target-name { font-size: 14.5px; font-weight: 900; color: #1B1810; display: flex; align-items: center; gap: 8px; }
+        .ap-target-step { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: #0B0B0C; color: #E5B93C; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 900; }
         .ap-self-tag { font-size: 10.5px; padding: 2px 10px; background: rgba(122,30,30,0.10); color: #7A1E1E; border-radius: 99px; font-weight: 800; }
         .ap-save { font-size: 11.5px; font-weight: 800; padding: 4px 10px; border-radius: 99px; }
         .ap-save-saved  { background: rgba(76,107,60,0.14); color: #4C6B3C; }
@@ -321,6 +378,15 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-avg-card { background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border: 1.5px solid rgba(184,155,94,0.40); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
         .ap-avg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .ap-avg-label { font-size: 12px; font-weight: 800; color: #6B4F1E; letter-spacing: .04em; text-transform: uppercase; }
+        .ap-result-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        @media (max-width: 620px) { .ap-result-hero { grid-template-columns: 1fr; } }
+        .ap-result-chip { border-radius: 14px; padding: 14px; background: #FFFDF8; border: 1.5px solid rgba(184,155,94,.30); }
+        .ap-result-chip span { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 5px; }
+        .ap-result-chip strong { display: block; font-size: 18px; font-weight: 900; color: #1B1810; line-height: 1.4; }
+        .ap-result-core { border-color: rgba(122,30,30,.34); background: linear-gradient(160deg,rgba(122,30,30,.08),#FFFDF8); }
+        .ap-result-core span { color: #7A1E1E; }
+        .ap-result-coll { border-color: rgba(199,154,61,.46); background: linear-gradient(160deg,rgba(199,154,61,.16),#FFFDF8); }
+        .ap-result-coll span { color: #8E6C36; }
         .ap-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
         .ap-bar { display: grid; grid-template-columns: 110px 1fr 50px; align-items: center; gap: 10px; }
         @media (max-width: 540px) { .ap-bar { grid-template-columns: 90px 1fr 44px; gap: 6px; } }
