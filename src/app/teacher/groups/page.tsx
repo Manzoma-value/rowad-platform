@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Network, Users, ArrowUpRight } from "lucide-react";
 import { useLang } from "@/lib/language-context";
@@ -23,6 +23,8 @@ const UI = {
     count: "مجموعة",
     members: "أعضاء",
     open: "فتح المجموعة",
+    search: "ابحث في المجموعات...",
+    noResults: "لا توجد مجموعات مطابقة للبحث.",
     emptyTitle: "لا توجد مجموعات بعد",
     emptySub: "عندما يضيفك مدير المدرسة إلى مجموعة، ستظهر هنا.",
   },
@@ -32,6 +34,8 @@ const UI = {
     count: "grupe",
     members: "anëtarë",
     open: "Hap grupin",
+    search: "Kërko në grupe...",
+    noResults: "Nuk ka grupe që përputhen me kërkimin.",
     emptyTitle: "Nuk ka grupe ende",
     emptySub: "Kur administratori ju shton në një grup, ai do të shfaqet këtu.",
   },
@@ -45,6 +49,7 @@ export default function TeacherGroupsPage() {
 
   const [groups, setGroups] = useState<TeacherGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     fetch("/api/teacher/groups", { cache: "no-store" })
@@ -53,6 +58,14 @@ export default function TeacherGroupsPage() {
       .catch(() => setGroups([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const visibleGroups = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return groups;
+    return groups.filter((group) =>
+      [group.name, group.description ?? ""].some((value) => value.toLowerCase().includes(q)),
+    );
+  }, [groups, query]);
 
   if (loading) {
     return (
@@ -79,15 +92,26 @@ export default function TeacherGroupsPage() {
         </div>
       </header>
 
+      {groups.length > 0 && (
+        <div className="tg-filter">
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={T.search} />
+        </div>
+      )}
+
       {groups.length === 0 ? (
         <section className="tg-empty">
           <Network size={34} strokeWidth={1.4} />
           <h2>{T.emptyTitle}</h2>
           <p>{T.emptySub}</p>
         </section>
+      ) : visibleGroups.length === 0 ? (
+        <section className="tg-empty">
+          <Network size={34} strokeWidth={1.4} />
+          <h2>{T.noResults}</h2>
+        </section>
       ) : (
         <section className="tg-grid">
-          {groups.map((group) => (
+          {visibleGroups.map((group) => (
             <Link key={group.id} href={`/teacher/groups/${group.id}`} className="tg-card">
               <div className="tg-card-top">
                 <span className="tg-card-icon"><Users size={17} strokeWidth={1.7} /></span>
@@ -131,6 +155,13 @@ const styles = `
   }
   .tg-count strong { font-size: 25px; line-height: 1; color: #C8A96A; }
   .tg-count span { font-size: 11.5px; font-weight: 700; color: rgba(232,220,188,0.64); }
+  .tg-filter { margin: 0 0 16px; }
+  .tg-filter input {
+    width: min(520px, 100%); border: 1.5px solid rgba(184,155,94,0.24); border-radius: 14px;
+    background: #FFFDF8; padding: 12px 15px; font: inherit; font-size: 14px; outline: none;
+    box-shadow: 0 10px 24px rgba(8,11,12,0.04);
+  }
+  .tg-filter input:focus { border-color: rgba(184,155,94,0.62); box-shadow: 0 0 0 4px rgba(184,155,94,0.10); }
   .tg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
   .tg-card {
     display: flex; flex-direction: column; min-height: 190px; padding: 17px; text-decoration: none;

@@ -76,6 +76,10 @@ const UI = {
     confirmDelete: "هل تريد حذف هذه المجموعة؟ سيتم إلغاء عضوية كل المعلمين.",
     addMembers: "+ إضافة أعضاء",
     searchPh: "ابحث بالاسم أو البريد…",
+    groupSearchPh: "ابحث في المجموعات…",
+    memberSearchPh: "ابحث في أعضاء المجموعة…",
+    noGroupResults: "لا توجد مجموعات مطابقة.",
+    noMemberResults: "لا يوجد أعضاء مطابقون للبحث.",
     noEligible: "لا يوجد معلمون متاحون للإضافة.",
     add: "إضافة",
     remove: "إزالة",
@@ -107,6 +111,10 @@ const UI = {
     confirmDelete: "Të fshihet ky grup? Të gjithë anëtarët do hiqen.",
     addMembers: "+ Shto anëtarë",
     searchPh: "Kërko sipas emrit ose email-it…",
+    groupSearchPh: "Kërko në grupe…",
+    memberSearchPh: "Kërko në anëtarët e grupit…",
+    noGroupResults: "Nuk ka grupe që përputhen.",
+    noMemberResults: "Nuk ka anëtarë që përputhen.",
     noEligible: "Nuk ka mësues të disponueshëm.",
     add: "Shto",
     remove: "Hiq",
@@ -144,6 +152,7 @@ export default function TeacherGroupsPage() {
   const confirm = useConfirm();
 
   const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [groupQuery, setGroupQuery] = useState("");
   const [loadingList, setLoadingList] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<GroupDetail | null>(null);
@@ -169,6 +178,7 @@ export default function TeacherGroupsPage() {
   // edit-meta state
   const [editForm, setEditForm] = useState({ name: "", description: "" });
   const [savingMeta, setSavingMeta] = useState(false);
+  const [memberQuery, setMemberQuery] = useState("");
 
   const loadList = useCallback(async () => {
     setLoadingList(true);
@@ -323,7 +333,31 @@ export default function TeacherGroupsPage() {
     } finally { setDeletingAnnouncementId(null); }
   }
 
-  const visibleGroups = useMemo(() => groups, [groups]);
+  const visibleGroups = useMemo(() => {
+    const q = groupQuery.trim().toLowerCase();
+    if (!q) return groups;
+    return groups.filter((g) => [g.name, g.description ?? ""].some((v) => v.toLowerCase().includes(q)));
+  }, [groups, groupQuery]);
+
+  const visibleMembers = useMemo(() => {
+    const q = memberQuery.trim().toLowerCase();
+    const members = detail?.members ?? [];
+    if (!q) return members;
+    return members.filter((m) => {
+      const app = m.teacher.application;
+      const haystack = [
+        m.teacher.profile.full_name,
+        m.teacher.profile.email,
+        app?.country,
+        app?.city,
+        app?.specialization,
+        app?.qualification,
+        app?.years_of_experience,
+        Array.isArray(app?.languages) ? JSON.stringify(app?.languages) : "",
+      ].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [detail?.members, memberQuery]);
 
   return (
     <div className="tg" dir={dir}>
@@ -341,8 +375,16 @@ export default function TeacherGroupsPage() {
 
       <div className="tg-layout">
         <aside className="tg-side">
+          {groups.length > 0 && (
+            <input
+              className="tg-side-search"
+              value={groupQuery}
+              onChange={(e) => setGroupQuery(e.target.value)}
+              placeholder={T.groupSearchPh}
+            />
+          )}
           {loadingList ? <MandalaLoader /> : visibleGroups.length === 0 ? (
-            <div className="tg-empty">{T.empty}</div>
+            <div className="tg-empty">{groups.length === 0 ? T.empty : T.noGroupResults}</div>
           ) : (
             <ul className="tg-list">
               {visibleGroups.map((g) => (
@@ -409,10 +451,22 @@ export default function TeacherGroupsPage() {
                 </div>
               </div>
 
+              {detail.members.length > 0 && (
+                <div className="tg-member-filter">
+                  <input
+                    value={memberQuery}
+                    onChange={(e) => setMemberQuery(e.target.value)}
+                    placeholder={T.memberSearchPh}
+                  />
+                  <span>{visibleMembers.length} / {detail.members.length}</span>
+                </div>
+              )}
               <div className="tg-members">
                 {detail.members.length === 0 ? (
                   <div className="tg-members-empty">—</div>
-                ) : detail.members.map((m) => (
+                ) : visibleMembers.length === 0 ? (
+                  <div className="tg-members-empty">{T.noMemberResults}</div>
+                ) : visibleMembers.map((m) => (
                   <div key={m.teacher.id} className="tg-member">
                     <div className="tg-member-main">
                       <div className="tg-member-name">{m.teacher.profile.full_name}</div>
@@ -579,6 +633,9 @@ export default function TeacherGroupsPage() {
         @media (max-width: 880px) { .tg-layout { grid-template-columns: 1fr; } }
 
         .tg-side { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 10px; min-height: 200px; }
+        .tg-side-search, .tg-member-filter input { width: 100%; border: 1.5px solid rgba(194,160,89,0.26); border-radius: 10px; background: #FFF; padding: 9px 12px; font: inherit; font-size: 13px; outline: none; }
+        .tg-side-search { margin-bottom: 10px; }
+        .tg-side-search:focus, .tg-member-filter input:focus { border-color: #B89B5E; box-shadow: 0 0 0 3px rgba(194,160,89,0.10); }
         .tg-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
         .tg-list-item { width: 100%; text-align: start; background: transparent; border: 1px solid transparent; padding: 11px 14px; border-radius: 10px; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; gap: 4px; transition: background .15s; }
         .tg-list-item:hover { background: rgba(194,160,89,0.10); }
@@ -600,6 +657,9 @@ export default function TeacherGroupsPage() {
         .tg-btn-danger  { background: linear-gradient(180deg,#A33333,#7A1E1E); color: #FFF; border-color: transparent; }
 
         .tg-members { display: flex; flex-direction: column; gap: 8px; }
+        .tg-member-filter { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .tg-member-filter input { flex: 1; min-width: 0; }
+        .tg-member-filter span { color: #8B6915; font-size: 12px; font-weight: 900; white-space: nowrap; }
         .tg-members-empty { padding: 30px; text-align: center; color: #BFB6A8; font-weight: 700; }
         .tg-member { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid rgba(194,160,89,0.25); border-radius: 11px; background: linear-gradient(165deg,#FFFFFF,#FFFDF8); }
         .tg-member-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }

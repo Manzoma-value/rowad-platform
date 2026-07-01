@@ -53,6 +53,8 @@ const UI = {
     emptyActivities: "لم تتم إضافة إعلانات لهذه المجموعة بعد.",
     delete: "حذف",
     noMembers: "لا يوجد أعضاء في هذه المجموعة بعد.",
+    memberSearch: "ابحث بالاسم، الموقع، التخصص أو اللغة...",
+    noMemberResults: "لا يوجد أعضاء مطابقون للبحث.",
     qualification: "المؤهل",
     specialization: "التخصص",
     experience: "الخبرة",
@@ -79,6 +81,8 @@ const UI = {
     emptyActivities: "Nuk ka njoftime të shtuara për këtë grup ende.",
     delete: "Fshi",
     noMembers: "Ky grup nuk ka anëtarë ende.",
+    memberSearch: "Kërko sipas emrit, vendit, specializimit ose gjuhës...",
+    noMemberResults: "Nuk ka anëtarë që përputhen me kërkimin.",
     qualification: "Kualifikimi",
     specialization: "Specializimi",
     experience: "Përvoja",
@@ -135,6 +139,7 @@ export default function TeacherGroupDetailPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  const [memberQuery, setMemberQuery] = useState("");
   type AssessmentRow = { id: string; title: string; status: "OPEN" | "CLOSED"; created_at: string; closed_at: string | null };
   const [assessments, setAssessments] = useState<AssessmentRow[]>([]);
 
@@ -208,6 +213,24 @@ export default function TeacherGroupDetailPage() {
   }
 
   const memberCount = group?.members.length ?? 0;
+  const visibleMembers = useMemo(() => {
+    const q = memberQuery.trim().toLowerCase();
+    const members = group?.members ?? [];
+    if (!q) return members;
+    return members.filter((member) => {
+      const app = member.teacher.application;
+      const haystack = [
+        member.teacher.profile.full_name,
+        app?.country,
+        app?.city,
+        app?.specialization,
+        app?.qualification,
+        app?.years_of_experience,
+        normalizeLanguages(app?.languages, L),
+      ].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [group?.members, memberQuery, L]);
   const initials = useMemo(() => {
     const out = new Map<string, string>();
     for (const member of group?.members ?? []) {
@@ -265,17 +288,27 @@ export default function TeacherGroupDetailPage() {
         {group.members.length === 0 ? (
           <div className="gd-muted">{T.noMembers}</div>
         ) : (
-          <div className="gd-members">
-            {group.members.map((member) => (
-              <MemberCard
-                key={member.teacher.id}
-                member={member}
-                T={T}
-                L={L}
-                initial={initials.get(member.teacher.id) ?? null}
-              />
-            ))}
-          </div>
+          <>
+            <div className="gd-filter">
+              <input value={memberQuery} onChange={(e) => setMemberQuery(e.target.value)} placeholder={T.memberSearch} />
+              <span>{visibleMembers.length} / {group.members.length}</span>
+            </div>
+            {visibleMembers.length === 0 ? (
+              <div className="gd-muted">{T.noMemberResults}</div>
+            ) : (
+              <div className="gd-members">
+                {visibleMembers.map((member) => (
+                  <MemberCard
+                    key={member.teacher.id}
+                    member={member}
+                    T={T}
+                    L={L}
+                    initial={initials.get(member.teacher.id) ?? null}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </section>
 
@@ -463,6 +496,13 @@ const styles = `
   .gd-section { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
   .gd-section-head { display: flex; align-items: center; gap: 9px; padding-bottom: 11px; margin-bottom: 14px; border-bottom: 1px solid rgba(194,160,89,0.18); color: #6B4F1E; }
   .gd-section-head h2 { margin: 0; font-size: 15px; font-weight: 900; color: #6B4F1E; }
+  .gd-filter { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
+  .gd-filter input {
+    flex: 1; min-width: 0; border: 1.5px solid rgba(194,160,89,0.24); border-radius: 12px;
+    background: #FFF; padding: 10px 13px; font: inherit; font-size: 13px; outline: none;
+  }
+  .gd-filter input:focus { border-color: #B89B5E; box-shadow: 0 0 0 3px rgba(194,160,89,0.10); }
+  .gd-filter span { color: #8B6915; font-size: 12px; font-weight: 900; white-space: nowrap; }
   .gd-members { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
   .gd-member { display: flex; gap: 12px; padding: 14px; border: 1px solid rgba(194,160,89,0.22); border-radius: 12px; background: linear-gradient(165deg,#FFFFFF,#FFFDF8); }
   .gd-avatar {

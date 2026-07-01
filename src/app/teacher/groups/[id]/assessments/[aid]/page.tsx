@@ -273,7 +273,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               ))}
             </div>
 
-            {/* Two-column focus view: distributor + my-results sidebar */}
+            {/* Full-width focus view so completing the current evaluation stays visible. */}
             <div className="ap-focus">
               <div className="ap-focus-main">
                 <RowadDistributor
@@ -284,55 +284,55 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                   onCommit={(next) => persist(current.teacher_id, next)}
                 />
               </div>
-
-              <aside className="ap-focus-side">
-                <h3 className="ap-side-h">{T.sectionMine}</h3>
-                {received.length === 0 ? (
-                  <div className="ap-side-empty">{T.mineEmpty}</div>
-                ) : avg && avgDerive ? (
-                  <>
-                    <div className="ap-side-hero">
-                      <div className="ap-side-chip ap-side-core">
-                        <span>{AT.coreLabel}</span>
-                        <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? TRAITS[avgDerive.coreIdx][L] : AT.noCore}</strong>
-                      </div>
-                      <div className="ap-side-chip ap-side-coll">
-                        <span>{AT.collectiveLabel}</span>
-                        <strong>{TRAITS[avgDerive.collectiveIdx][L]}</strong>
-                      </div>
-                    </div>
-                    <div className="ap-side-bars">
-                      {TRAITS.map((t, i) => {
-                        const v = avg[i];
-                        const isCore = avgDerive.coreIdx === i && avgDerive.hasCore;
-                        const isColl = avgDerive.collectiveIdx === i;
-                        return (
-                          <div key={t.key} className={`ap-side-bar ${isCore ? "core" : isColl ? "coll" : ""}`}>
-                            <span className="ap-side-bar-n">{t[L]}</span>
-                            <div className="ap-side-bar-track"><div className="ap-side-bar-fill" style={{ width: `${Math.min(100, v)}%`, background: t.color }} /></div>
-                            <span className="ap-side-bar-v">{v.toFixed(1)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="ap-side-count">
-                      {T.averageOf(received.length)}
-                    </div>
-                  </>
-                ) : null}
-              </aside>
             </div>
           </section>
         );
       })()}
 
       {/* Per-rater breakdown — kept below the carousel for anyone who wants
-          to see each rater's individual scores. Aggregate lives in the
-          sidebar. Hidden entirely when nothing has arrived yet. */}
+          to see each rater's individual scores. Aggregate lives here too,
+          below the active scoring flow so it never blocks completion. */}
       {received.length > 0 && (
         <section className="ap-section">
           <h2 className="ap-section-h">{T.sectionMine}</h2>
           <p className="ap-section-sub">{T.tableHelp}</p>
+          {avg && avgDerive && (
+            <div className="ap-avg-card">
+              <div className="ap-avg-head">
+                <span className="ap-avg-label">{T.average}</span>
+                <strong>{T.averageOf(received.length)}</strong>
+              </div>
+              <div className="ap-result-hero">
+                <div className="ap-result-chip ap-result-core">
+                  <span>{AT.coreLabel}</span>
+                  <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? TRAITS[avgDerive.coreIdx][L] : AT.noCore}</strong>
+                </div>
+                <div className="ap-result-chip ap-result-coll">
+                  <span>{AT.collectiveLabel}</span>
+                  <strong>{TRAITS[avgDerive.collectiveIdx][L]} · {avg[avgDerive.collectiveIdx].toFixed(1)}</strong>
+                </div>
+              </div>
+              <div className="ap-bars ap-bars-compact">
+                {TRAITS.map((t, i) => {
+                  const v = avg[i];
+                  const isCore = avgDerive.coreIdx === i && avgDerive.hasCore;
+                  const isCollective = avgDerive.collectiveIdx === i;
+                  return (
+                    <div key={t.key} className={`ap-bar ${isCore ? "ap-core" : isCollective ? "ap-coll" : ""}`}>
+                      <span className="ap-bar-name">{t[L]}</span>
+                      <div className="ap-bar-track">
+                        <span className="ap-bar-fill" style={{ width: `${Math.min(100, v)}%`, background: t.color }} />
+                      </div>
+                      <span className="ap-bar-val">{v.toFixed(1)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="ap-avg-derived">
+                <span><strong>{AT.supportingLabel}:</strong> {avgDerive.supportingIdxs.map((i) => TRAITS[i][L]).join(L === "ar" ? "، " : ", ")}</span>
+              </div>
+            </div>
+          )}
           <div className="ap-table-wrap">
             <table className="ap-table">
               <thead>
@@ -435,8 +435,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-dot.self { border-color: rgba(122,30,30,0.35); color: #7A1E1E; }
         .ap-dot.self.on { background: #7A1E1E; color: #FFFDF8; }
 
-        .ap-focus { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 14px; }
-        @media (max-width: 980px) { .ap-focus { grid-template-columns: 1fr; } }
+        .ap-focus { display: block; }
         .ap-focus-main { min-width: 0; }
 
         .ap-focus-side {
@@ -481,8 +480,9 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
 
         .ap-empty { padding: 40px; text-align: center; color: #8A8478; font-weight: 700; background: rgba(194,160,89,0.04); border: 1px dashed rgba(184,155,94,0.32); border-radius: 12px; }
 
-        .ap-avg-card { background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border: 1.5px solid rgba(184,155,94,0.40); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+        .ap-avg-card { background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border: 1.5px solid rgba(184,155,94,0.40); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
         .ap-avg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .ap-avg-head strong { color: #1B1810; font-size: 13px; font-weight: 900; }
         .ap-avg-label { font-size: 12px; font-weight: 800; color: #6B4F1E; letter-spacing: .04em; text-transform: uppercase; }
         .ap-result-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
         @media (max-width: 620px) { .ap-result-hero { grid-template-columns: 1fr; } }
@@ -494,6 +494,8 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-result-coll { border-color: rgba(199,154,61,.46); background: linear-gradient(160deg,rgba(199,154,61,.16),#FFFDF8); }
         .ap-result-coll span { color: #8E6C36; }
         .ap-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+        .ap-bars-compact { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
+        @media (max-width: 760px) { .ap-bars-compact { grid-template-columns: 1fr; } }
         .ap-bar { display: grid; grid-template-columns: 110px 1fr 50px; align-items: center; gap: 10px; }
         @media (max-width: 540px) { .ap-bar { grid-template-columns: 90px 1fr 44px; gap: 6px; } }
         .ap-bar-name { font-size: 13px; font-weight: 700; color: #1B1810; }
