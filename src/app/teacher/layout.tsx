@@ -493,11 +493,12 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
             const isSub = !!item.parent;
+            const hasChildren = visibleNav.some((child) => child.parent === item.key);
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`tl-nav-item ${active ? "active" : ""} ${isSub ? "tl-nav-sub" : ""}`}
+                className={`tl-nav-item ${active ? "active" : ""} ${isSub ? "tl-nav-sub" : ""} ${hasChildren ? "tl-nav-parent" : ""}`}
                 onClick={() => setSidebarOpen(false)}
               >
                 {active && (
@@ -894,25 +895,54 @@ const styles = `
     background: linear-gradient(90deg, transparent, rgba(200,169,106,0.15), transparent);
   }
 
-  /* Sub-items (lessons/quizzes/reports nested under My Classes). Slight
-     indent, smaller label + icon, and a hairline "tree branch" on the
-     leading edge so the hierarchy reads at a glance. */
+  .tl-nav-item.tl-nav-parent {
+    margin-bottom: 2px;
+    border-color: rgba(200,169,106,0.18);
+    background: rgba(232,220,188,0.045);
+  }
+  .tl-nav-item.tl-nav-parent::after {
+    content: ''; position: absolute;
+    inset-inline-start: 30px; bottom: -18px;
+    width: 2px; height: 18px;
+    background: linear-gradient(180deg, rgba(200,169,106,0.52), rgba(200,169,106,0.20));
+    border-radius: 99px;
+  }
+  .tl-nav-item.tl-nav-parent.active::after {
+    background: linear-gradient(180deg, rgba(245,229,188,0.72), rgba(200,169,106,0.28));
+  }
+
+  /* Sub-items (lessons/quizzes/reports nested under My Classes). */
   .tl-nav-item.tl-nav-sub {
-    margin-inline-start: 22px;
+    margin-inline-start: 34px;
+    margin-inline-end: 6px;
     padding-block: 7px;
+    min-height: 46px;
     position: relative;
+    border-color: rgba(200,169,106,0.10);
+    background: rgba(8,11,12,0.10);
+    color: rgba(232,220,188,0.62);
   }
   .tl-nav-item.tl-nav-sub::before {
     content: ''; position: absolute;
-    inset-inline-start: -10px; top: 50%;
-    width: 8px; height: 1px;
-    background: rgba(200,169,106,0.35);
+    inset-inline-start: -18px; top: 50%;
+    width: 16px; height: 2px;
+    background: rgba(200,169,106,0.42);
+    border-radius: 99px;
   }
   .tl-nav-item.tl-nav-sub::after {
     content: ''; position: absolute;
-    inset-inline-start: -10px; top: 0; bottom: 50%;
-    width: 1px;
-    background: rgba(200,169,106,0.28);
+    inset-inline-start: -18px; top: -8px; bottom: 50%;
+    width: 2px;
+    background: rgba(200,169,106,0.30);
+    border-radius: 99px;
+  }
+  .tl-nav-item.tl-nav-sub:hover {
+    background: rgba(232,220,188,0.075);
+    border-color: rgba(200,169,106,0.22);
+  }
+  .tl-nav-item.tl-nav-sub.active {
+    background: linear-gradient(180deg, rgba(200,169,106,0.16), rgba(200,169,106,0.07));
+    border-color: rgba(200,169,106,0.34);
   }
   .tl-nav-item.tl-nav-sub .tl-nav-icon-wrap { width: 28px; height: 28px; }
   .tl-nav-item.tl-nav-sub .tl-nav-label-main { font-size: 12.5px; }
