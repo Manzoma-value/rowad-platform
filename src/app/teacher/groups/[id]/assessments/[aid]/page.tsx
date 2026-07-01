@@ -500,7 +500,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         @media (max-width: 540px) { .ap-bar { grid-template-columns: 90px 1fr 44px; gap: 6px; } }
         .ap-bar-name { font-size: 13px; font-weight: 700; color: #1B1810; }
         .ap-bar-track { height: 10px; background: rgba(194,160,89,0.18); border-radius: 99px; overflow: hidden; }
-        .ap-bar-fill { height: 100%; border-radius: 99px; transition: width .25s; }
+        .ap-bar-fill { display: block; height: 100%; border-radius: 99px; transition: width .25s; }
         .ap-bar-val { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; font-weight: 800; text-align: center; color: #1B1810; }
         .ap-core .ap-bar-name { color: #7A1E1E; font-weight: 900; }
         .ap-coll .ap-bar-name { color: #8E6C36; font-weight: 900; }
