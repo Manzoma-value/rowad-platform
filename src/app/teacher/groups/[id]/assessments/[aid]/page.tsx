@@ -65,6 +65,14 @@ const UI = {
 
 const EMPTY_SCORES: ScoresTuple = [20, 20, 20, 20, 20];
 
+/** Reorder members so the "self" entry is always first (matches the
+ *  methodology: the supervisor rates themselves before their colleagues). */
+function membersSelfFirst<T extends { is_self: boolean }>(list: T[]): T[] {
+  const self = list.find((m) => m.is_self);
+  const others = list.filter((m) => !m.is_self);
+  return self ? [self, ...others] : list;
+}
+
 export default function AssessmentPage({ params }: { params: Promise<{ id: string; aid: string }> }) {
   const { id, aid } = use(params);
   const { lang } = useLang();
@@ -79,11 +87,16 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
     receivedCount: L === "ar" ? "تقييمات وصلتك" : "Vleresime te marra",
     coreNow: L === "ar" ? "القراءة الحالية" : "Leximi aktual",
     noCoreYet: L === "ar" ? "لا توجد قراءة بعد" : "Ende pa lexim",
+    prev:      L === "ar" ? "السابق" : "Prapa",
+    next:      L === "ar" ? "التالي" : "Tjetri",
+    memberOf:  (i: number, n: number) => L === "ar" ? `${i} من ${n}` : `${i} nga ${n}`,
   };
   const dir = L === "ar" ? "rtl" : "ltr";
 
   const [data, setData] = useState<AssessmentData | null>(null);
   const [loading, setLoading] = useState(true);
+  // One-target-at-a-time carousel — self first.
+  const [currentIdx, setCurrentIdx] = useState(0);
   const [scoresByTarget, setScoresByTarget] = useState<Record<string, ScoresTuple>>({});
   const [saveState, setSaveState] = useState<Record<string, "saved" | "saving" | "err" | "dirty">>({});
   const lastSaved = useRef<Record<string, string>>({});
@@ -210,123 +223,147 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         </div>
       </section>
 
-      <section className="ap-section">
-        <h2 className="ap-section-h">{T.sectionRate}</h2>
-        <p className="ap-section-sub">{T.sectionRateSub}</p>
+      {/* ── Focused carousel — one target at a time, self ("انا") first. ── */}
+      {(() => {
+        const orderedMembers = membersSelfFirst(data.members);
+        const safeIdx = Math.min(Math.max(0, currentIdx), Math.max(0, orderedMembers.length - 1));
+        const current = orderedMembers[safeIdx];
+        if (!current) return null;
+        const scores = scoresByTarget[current.teacher_id] ?? [...EMPTY_SCORES];
+        const state = saveState[current.teacher_id];
+        const total = scores[0] + scores[1] + scores[2] + scores[3] + scores[4];
+        const goPrev = () => setCurrentIdx((i) => Math.max(0, i - 1));
+        const goNext = () => setCurrentIdx((i) => Math.min(orderedMembers.length - 1, i + 1));
+        return (
+          <section className="ap-section ap-carousel-section">
+            <h2 className="ap-section-h">{T.sectionRate}</h2>
+            <p className="ap-section-sub">{T.sectionRateSub}</p>
 
-        <div className="ap-grid">
-          {data.members.map((m, idx) => {
-            const scores = scoresByTarget[m.teacher_id] ?? [...EMPTY_SCORES];
-            const state = saveState[m.teacher_id];
-            const total = scores[0] + scores[1] + scores[2] + scores[3] + scores[4];
-            return (
-              <div key={m.teacher_id} className="ap-target">
-                <header className="ap-target-head">
-                  <div className="ap-target-name">
-                    <span className="ap-target-step">{idx + 1}</span>
-                    {m.profile.full_name}
-                    {m.is_self && <span className="ap-self-tag">{T.targetSelf}</span>}
-                  </div>
-                  <div className={`ap-save ap-save-${state ?? "dirty"}`}>
-                    {state === "saving" ? T.saving
-                      : state === "err" ? T.saveErr
-                      : state === "saved" ? T.saved
-                      : total === 100 ? UX.readyToSave
-                      : T.notSavedYet}
-                  </div>
-                </header>
+            <div className="ap-carousel-nav">
+              <button className="ap-cbtn" onClick={goPrev} disabled={safeIdx === 0} aria-label={UX.prev}>‹</button>
+              <div className="ap-cur-card">
+                <div className="ap-cur-name">
+                  {current.profile.full_name}
+                  {current.is_self && <span className="ap-self-tag">{T.targetSelf}</span>}
+                </div>
+                <div className="ap-cur-sub">{UX.memberOf(safeIdx + 1, orderedMembers.length)}</div>
+                <div className={`ap-save ap-save-${state ?? "dirty"}`}>
+                  {state === "saving" ? T.saving
+                    : state === "err" ? T.saveErr
+                    : state === "saved" ? T.saved
+                    : total === 100 ? UX.readyToSave
+                    : T.notSavedYet}
+                </div>
+              </div>
+              <button className="ap-cbtn" onClick={goNext} disabled={safeIdx === orderedMembers.length - 1} aria-label={UX.next}>›</button>
+            </div>
+
+            {/* Dots to jump between members — compact, one row */}
+            <div className="ap-dots">
+              {orderedMembers.map((m, i) => (
+                <button
+                  key={m.teacher_id}
+                  className={`ap-dot ${i === safeIdx ? "on" : ""} ${saveState[m.teacher_id] === "saved" ? "done" : ""} ${m.is_self ? "self" : ""}`}
+                  onClick={() => setCurrentIdx(i)}
+                  title={m.profile.full_name}
+                  aria-label={m.profile.full_name}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+
+            {/* Two-column focus view: distributor + my-results sidebar */}
+            <div className="ap-focus">
+              <div className="ap-focus-main">
                 <RowadDistributor
                   value={scores}
                   lang={L}
                   disabled={locked}
-                  onChange={(next) => onChange(m.teacher_id, next)}
-                  onCommit={(next) => persist(m.teacher_id, next)}
+                  onChange={(next) => onChange(current.teacher_id, next)}
+                  onCommit={(next) => persist(current.teacher_id, next)}
                 />
               </div>
-            );
-          })}
-        </div>
-      </section>
 
-      <section className="ap-section">
-        <h2 className="ap-section-h">{T.sectionMine}</h2>
-        <p className="ap-section-sub">{T.tableHelp}</p>
-
-        {received.length === 0 ? (
-          <div className="ap-empty">{T.mineEmpty}</div>
-        ) : (
-          <div className="ap-mine">
-            {avg && avgDerive && (
-              <div className="ap-avg-card">
-                <div className="ap-avg-head">
-                  <span className="ap-avg-label">{T.averageOf(received.length)}</span>
-                </div>
-                <div className="ap-result-hero">
-                  <div className="ap-result-chip ap-result-core">
-                    <span>{AT.coreLabel}</span>
-                    <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? TRAITS[avgDerive.coreIdx][L] : AT.noCore}</strong>
-                  </div>
-                  <div className="ap-result-chip ap-result-coll">
-                    <span>{AT.collectiveLabel}</span>
-                    <strong>{TRAITS[avgDerive.collectiveIdx][L]}</strong>
-                  </div>
-                </div>
-                <div className="ap-bars">
-                  {TRAITS.map((t, i) => {
-                    const v = avg[i];
-                    const isCore = avgDerive.coreIdx === i && avgDerive.hasCore;
-                    const isCollective = avgDerive.collectiveIdx === i;
-                    return (
-                      <div key={t.key} className={`ap-bar ${isCore ? "ap-core" : isCollective ? "ap-coll" : ""}`}>
-                        <span className="ap-bar-name">{t[L]}</span>
-                        <div className="ap-bar-track">
-                          <div className="ap-bar-fill" style={{ width: `${Math.min(100, v)}%`, background: t.color }} />
-                        </div>
-                        <span className="ap-bar-val">{v.toFixed(1)}</span>
+              <aside className="ap-focus-side">
+                <h3 className="ap-side-h">{T.sectionMine}</h3>
+                {received.length === 0 ? (
+                  <div className="ap-side-empty">{T.mineEmpty}</div>
+                ) : avg && avgDerive ? (
+                  <>
+                    <div className="ap-side-hero">
+                      <div className="ap-side-chip ap-side-core">
+                        <span>{AT.coreLabel}</span>
+                        <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? TRAITS[avgDerive.coreIdx][L] : AT.noCore}</strong>
                       </div>
-                    );
-                  })}
-                </div>
-                <div className="ap-avg-derived">
-                  <div><strong>{AT.coreLabel}:</strong> {avgDerive.hasCore && avgDerive.coreIdx !== null ? TRAITS[avgDerive.coreIdx][L] : AT.noCore}</div>
-                  <div><strong>{AT.collectiveLabel}:</strong> {TRAITS[avgDerive.collectiveIdx][L]}</div>
-                  <div><strong>{AT.supportingLabel}:</strong> {avgDerive.supportingIdxs.map((i) => TRAITS[i][L]).join(L === "ar" ? "، " : ", ")}</div>
-                </div>
-              </div>
-            )}
-
-            <div className="ap-table-wrap">
-              <table className="ap-table">
-                <thead>
-                  <tr>
-                    <th>{T.raterCol}</th>
-                    {TRAITS.map((t) => <th key={t.key}>{t[L]}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {received.map((r) => {
-                    const tuple: ScoresTuple = [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct];
-                    const d = derive(tuple);
-                    return (
-                      <tr key={r.rater_teacher_id}>
-                        <td className="ap-rater-cell">
-                          {r.is_self ? <span className="ap-self-row">{AT.selfBy(r.rater_name)}</span> : r.rater_name}
-                        </td>
-                        {tuple.map((v, i) => {
-                          const isCore = d.coreIdx === i && d.hasCore;
-                          const isCollective = d.collectiveIdx === i;
-                          const cls = isCore ? "ap-cell-core" : isCollective ? "ap-cell-coll" : "";
-                          return <td key={i} className={cls}>{v}</td>;
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      <div className="ap-side-chip ap-side-coll">
+                        <span>{AT.collectiveLabel}</span>
+                        <strong>{TRAITS[avgDerive.collectiveIdx][L]}</strong>
+                      </div>
+                    </div>
+                    <div className="ap-side-bars">
+                      {TRAITS.map((t, i) => {
+                        const v = avg[i];
+                        const isCore = avgDerive.coreIdx === i && avgDerive.hasCore;
+                        const isColl = avgDerive.collectiveIdx === i;
+                        return (
+                          <div key={t.key} className={`ap-side-bar ${isCore ? "core" : isColl ? "coll" : ""}`}>
+                            <span className="ap-side-bar-n">{t[L]}</span>
+                            <div className="ap-side-bar-track"><div className="ap-side-bar-fill" style={{ width: `${Math.min(100, v)}%`, background: t.color }} /></div>
+                            <span className="ap-side-bar-v">{v.toFixed(1)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="ap-side-count">
+                      {T.averageOf(received.length)}
+                    </div>
+                  </>
+                ) : null}
+              </aside>
             </div>
+          </section>
+        );
+      })()}
+
+      {/* Per-rater breakdown — kept below the carousel for anyone who wants
+          to see each rater's individual scores. Aggregate lives in the
+          sidebar. Hidden entirely when nothing has arrived yet. */}
+      {received.length > 0 && (
+        <section className="ap-section">
+          <h2 className="ap-section-h">{T.sectionMine}</h2>
+          <p className="ap-section-sub">{T.tableHelp}</p>
+          <div className="ap-table-wrap">
+            <table className="ap-table">
+              <thead>
+                <tr>
+                  <th>{T.raterCol}</th>
+                  {TRAITS.map((t) => <th key={t.key}>{t[L]}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {received.map((r) => {
+                  const tuple: ScoresTuple = [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct];
+                  const d = derive(tuple);
+                  return (
+                    <tr key={r.rater_teacher_id}>
+                      <td className="ap-rater-cell">
+                        {r.is_self ? <span className="ap-self-row">{AT.selfBy(r.rater_name)}</span> : r.rater_name}
+                      </td>
+                      {tuple.map((v, i) => {
+                        const isCore = d.coreIdx === i && d.hasCore;
+                        const isCollective = d.collectiveIdx === i;
+                        const cls = isCore ? "ap-cell-core" : isCollective ? "ap-cell-coll" : "";
+                        return <td key={i} className={cls}>{v}</td>;
+                      })}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
@@ -360,6 +397,75 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-section-h { font-size: 18px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
         .ap-section-sub { font-size: 13px; color: #5E5A52; margin: 0 0 14px; line-height: 1.85; }
 
+        /* ─── Focused carousel (one target at a time) ─── */
+        .ap-carousel-section { margin-top: 16px; }
+        .ap-carousel-nav {
+          display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 10px;
+          margin: 8px 0 10px;
+        }
+        .ap-cbtn {
+          height: 56px; border-radius: 14px;
+          background: #FFFDF8; border: 1.5px solid rgba(184,155,94,0.40);
+          color: #6B4F1E; font-size: 28px; font-weight: 900; cursor: pointer;
+          transition: all .15s;
+        }
+        .ap-cbtn:hover:not(:disabled) { background: #FBF4E0; transform: scale(1.03); }
+        .ap-cbtn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .ap-cur-card {
+          background: linear-gradient(165deg,#FCF6E6,#F4EBD3);
+          border: 1.5px solid rgba(184,155,94,0.40);
+          border-radius: 14px; padding: 10px 16px;
+          display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px;
+        }
+        .ap-cur-name { font-size: 17px; font-weight: 900; color: #1B1810; display: flex; align-items: center; gap: 8px; }
+        .ap-cur-sub { font-size: 11.5px; color: #8B6915; font-weight: 700; grid-column: 1; }
+        .ap-cur-card .ap-save { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+
+        .ap-dots { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
+        .ap-dot {
+          min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px;
+          background: #FFF; border: 1.5px solid rgba(184,155,94,0.32);
+          color: #6B4F1E; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 800; cursor: pointer;
+          transition: all .15s;
+        }
+        .ap-dot:hover { border-color: #B89B5E; }
+        .ap-dot.on { background: #0B0B0C; color: #E5B93C; border-color: transparent; transform: scale(1.05); }
+        .ap-dot.done { background: rgba(76,107,60,0.14); color: #4C6B3C; border-color: rgba(76,107,60,0.32); }
+        .ap-dot.done.on { background: #4C6B3C; color: #FFFDF8; }
+        .ap-dot.self { border-color: rgba(122,30,30,0.35); color: #7A1E1E; }
+        .ap-dot.self.on { background: #7A1E1E; color: #FFFDF8; }
+
+        .ap-focus { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); gap: 14px; }
+        @media (max-width: 980px) { .ap-focus { grid-template-columns: 1fr; } }
+        .ap-focus-main { min-width: 0; }
+
+        .ap-focus-side {
+          background: #FFFDF8; border: 1px solid rgba(184,155,94,0.28); border-radius: 14px;
+          padding: 14px;
+          display: flex; flex-direction: column; gap: 10px;
+          align-self: start; position: sticky; top: 12px;
+        }
+        .ap-side-h { font-size: 13px; font-weight: 900; color: #1B1810; margin: 0; letter-spacing: .02em; }
+        .ap-side-empty { padding: 22px; text-align: center; color: #8A8478; font-weight: 700; font-size: 12px; background: rgba(194,160,89,0.04); border: 1px dashed rgba(184,155,94,0.32); border-radius: 10px; }
+        .ap-side-hero { display: grid; grid-template-columns: 1fr; gap: 6px; }
+        .ap-side-chip { background: #FFF; border: 1.5px solid rgba(184,155,94,0.28); border-radius: 10px; padding: 8px 12px; }
+        .ap-side-chip span { display: block; font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #6B4F1E; margin-bottom: 3px; }
+        .ap-side-chip strong { display: block; font-size: 14px; font-weight: 900; color: #1B1810; }
+        .ap-side-core { border-color: rgba(122,30,30,0.35); background: linear-gradient(160deg,rgba(122,30,30,0.08),#FFF); }
+        .ap-side-core span { color: #7A1E1E; }
+        .ap-side-coll { border-color: rgba(199,154,61,0.46); background: linear-gradient(160deg,rgba(199,154,61,0.14),#FFF); }
+        .ap-side-coll span { color: #8E6C36; }
+        .ap-side-bars { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; border-top: 1px dashed rgba(184,155,94,0.32); }
+        .ap-side-bar { display: grid; grid-template-columns: 78px 1fr 34px; align-items: center; gap: 6px; }
+        .ap-side-bar-n { font-size: 11px; font-weight: 700; color: #2E2210; }
+        .ap-side-bar.core .ap-side-bar-n { color: #7A1E1E; font-weight: 900; }
+        .ap-side-bar.coll .ap-side-bar-n { color: #8E6C36; font-weight: 900; }
+        .ap-side-bar-track { height: 6px; background: rgba(194,160,89,0.18); border-radius: 99px; overflow: hidden; }
+        .ap-side-bar-fill { height: 100%; border-radius: 99px; transition: width .25s; }
+        .ap-side-bar-v { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 800; color: #1B1810; text-align: center; }
+        .ap-side-count { font-size: 11px; color: #8B6915; font-weight: 700; text-align: center; padding-top: 4px; border-top: 1px dashed rgba(184,155,94,0.32); }
+
+        /* legacy grid — retained for print/backup only */
         .ap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px,1fr)); gap: 16px; }
         @media (max-width: 760px) { .ap-grid { grid-template-columns: 1fr; } }
         .ap-target { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 14px; }

@@ -40,7 +40,7 @@ type AssessmentFull = {
 const UI = {
   ar: {
     back: "← العودة للمجموعة",
-    title: "تقييمات الرواد",
+    title: "نماذج القياس",
     sub: "تتبَّع كل التقييمات داخل هذه المجموعة. أنشئ تقييماً جديداً، أو افتح أحدها لرؤية المصفوفة الكاملة.",
     create: "+ تقييم جديد",
     creating: "جارٍ الإنشاء…",
@@ -51,7 +51,7 @@ const UI = {
     ratingsCount: "تقييمات",
     newDlgTitle: "أنشئ تقييماً جديداً",
     titleLbl: "عنوان التقييم",
-    titlePh: "مثال: تقييم المرحلة الأولى — مارس 2026",
+    titlePh: "مثال: نموذج قياس السمات (المرحلة الأولى) — مارس 2026",
     cancel: "إلغاء",
     submit: "إنشاء",
     matrixOf: (n: number, m: number) => `${n} مُقَيِّم × ${m} هدف`,
@@ -76,7 +76,7 @@ const UI = {
   },
   sq: {
     back: "← Kthehu te grupi",
-    title: "Vlerësimet e Rowad",
+    title: "Modelet e Matjes",
     sub: "Ndiq të gjitha vlerësimet brenda këtij grupi. Krijo një të ri, ose hap një për të parë matricën e plotë.",
     create: "+ Vlerësim i ri",
     creating: "Po krijohet…",
@@ -87,7 +87,7 @@ const UI = {
     ratingsCount: "vlerësime",
     newDlgTitle: "Krijo një vlerësim të ri",
     titleLbl: "Titulli",
-    titlePh: "Shembull: Vlerësimi i Fazës së Parë — Mars 2026",
+    titlePh: "Shembull: Modeli i Matjes së Tipareve (Faza 1) — Mars 2026",
     cancel: "Anulo",
     submit: "Krijo",
     matrixOf: (n: number, m: number) => `${n} vlerësues × ${m} synim`,

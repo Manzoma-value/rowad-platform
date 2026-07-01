@@ -46,7 +46,7 @@ const UI = {
     back: "العودة للمجموعات",
     members: "الأعضاء",
     overview: "نظرة عامة",
-    activities: "أنشطة المجموعة",
+    activities: "مجتمع المجموعة",
     announcementPlaceholder: "اكتب إعلاناً أو تعليقاً لهذه المجموعة...",
     post: "نشر",
     posting: "جاري النشر...",
@@ -60,17 +60,19 @@ const UI = {
     location: "الموقع",
     unavailable: "غير متوفر",
     notFound: "تعذر فتح هذه المجموعة.",
-    assessments: "تقييمات الرواد",
+    assessments: "نماذج القياس",
     assessmentsEmpty: "لا توجد تقييمات نشطة لهذه المجموعة.",
     assessmentOpen: "افتح التقييم",
     assessmentClosed: "مغلق",
     assessmentOpenStatus: "مفتوح",
+    showMore: "المزيد ↓",
+    showLess: "أقل ↑",
   },
   sq: {
     back: "Kthehu te grupet",
     members: "Anëtarët",
     overview: "Përmbledhje",
-    activities: "Aktivitetet e grupit",
+    activities: "Komuniteti i grupit",
     announcementPlaceholder: "Shkruaj një njoftim ose koment për këtë grup...",
     post: "Posto",
     posting: "Duke postuar...",
@@ -84,11 +86,13 @@ const UI = {
     location: "Vendndodhja",
     unavailable: "Nuk disponohet",
     notFound: "Ky grup nuk mund të hapet.",
-    assessments: "Vlerësimet e Rowad",
+    assessments: "Modelet e Matjes",
     assessmentsEmpty: "Nuk ka vlerësime aktive për këtë grup.",
     assessmentOpen: "Hap vlerësimin",
     assessmentClosed: "I mbyllur",
     assessmentOpenStatus: "I hapur",
+    showMore: "Më shumë ↓",
+    showLess: "Më pak ↑",
   },
 } as const;
 
@@ -262,25 +266,15 @@ export default function TeacherGroupDetailPage() {
           <div className="gd-muted">{T.noMembers}</div>
         ) : (
           <div className="gd-members">
-            {group.members.map((member) => {
-              const app = member.teacher.application;
-              const languages = normalizeLanguages(app?.languages, L);
-              return (
-                <article key={member.teacher.id} className="gd-member">
-                  <div className="gd-avatar">{initials.get(member.teacher.id) || <UserRound size={18} />}</div>
-                  <div className="gd-member-body">
-                    <h3>{member.teacher.profile.full_name}</h3>
-                    <div className="gd-facts">
-                      <Fact icon={<MapPin size={14} />} label={T.location} value={app ? joinParts([app.country, app.city]) : T.unavailable} />
-                      <Fact label={T.specialization} value={app?.specialization || T.unavailable} />
-                      <Fact label={T.qualification} value={labelFor(QUAL, app?.qualification, L, T.unavailable)} />
-                      <Fact label={T.experience} value={labelFor(EXP, app?.years_of_experience, L, T.unavailable)} />
-                      <Fact icon={<Languages size={14} />} label={T.languages} value={languages || T.unavailable} />
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+            {group.members.map((member) => (
+              <MemberCard
+                key={member.teacher.id}
+                member={member}
+                T={T}
+                L={L}
+                initial={initials.get(member.teacher.id) ?? null}
+              />
+            ))}
           </div>
         )}
       </section>
@@ -375,6 +369,44 @@ export default function TeacherGroupDetailPage() {
   );
 }
 
+/** Group-member card. Shows only name + location + specialization by default;
+ *  the rest (qualification, experience, languages) is behind Show More. */
+function MemberCard({
+  member, T, L, initial,
+}: {
+  member: Member;
+  T: typeof UI.ar | typeof UI.sq;
+  L: "ar" | "sq";
+  initial: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const app = member.teacher.application;
+  const location = app ? joinParts([app.country, app.city]) : T.unavailable;
+  const specialization = app?.specialization || T.unavailable;
+  return (
+    <article className={`gd-member ${open ? "gd-member--open" : ""}`}>
+      <div className="gd-avatar">{initial || <UserRound size={18} />}</div>
+      <div className="gd-member-body">
+        <h3>{member.teacher.profile.full_name}</h3>
+        <div className="gd-facts">
+          <Fact icon={<MapPin size={14} />} label={T.location} value={location} />
+          <Fact label={T.specialization} value={specialization} />
+          {open && (
+            <>
+              <Fact label={T.qualification} value={labelFor(QUAL, app?.qualification, L, T.unavailable)} />
+              <Fact label={T.experience} value={labelFor(EXP, app?.years_of_experience, L, T.unavailable)} />
+              <Fact icon={<Languages size={14} />} label={T.languages} value={normalizeLanguages(app?.languages, L) || T.unavailable} />
+            </>
+          )}
+        </div>
+        <button className="gd-more" onClick={() => setOpen((v) => !v)} type="button">
+          {open ? T.showLess : T.showMore}
+        </button>
+      </div>
+    </article>
+  );
+}
+
 function Fact({ icon, label, value }: { icon?: ReactNode; label: string; value: string }) {
   return (
     <div className="gd-fact">
@@ -443,6 +475,13 @@ const styles = `
   .gd-fact { display: grid; gap: 2px; }
   .gd-fact-label { display: inline-flex; align-items: center; gap: 5px; color: #8A7B60; font-size: 11px; font-weight: 900; text-transform: uppercase; }
   .gd-fact-value { color: #2E2210; font-size: 12.5px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
+  .gd-more {
+    margin-top: 10px; padding: 5px 12px; border-radius: 99px;
+    background: rgba(194,160,89,0.10); border: 1px solid rgba(184,155,94,0.32);
+    color: #6B4F1E; font-family: inherit; font-size: 11px; font-weight: 800; cursor: pointer;
+    transition: background .15s;
+  }
+  .gd-more:hover { background: rgba(194,160,89,0.20); }
   .gd-muted, .gd-activities-empty, .gd-empty {
     min-height: 120px; display: flex; align-items: center; justify-content: center; text-align: center;
     border: 1px dashed rgba(184,155,94,0.32); border-radius: 12px; color: #8A8478; font-size: 13.5px; font-weight: 800; padding: 24px;
