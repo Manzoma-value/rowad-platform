@@ -60,6 +60,7 @@ function getAvColor(name: string, role: string) {
 const L10N = {
   ar: {
     close: "إغلاق",
+    openProfile: (name: string) => `فتح ملف ${name}`,
     roleAdmin: "مشرف",
     roleTeacher: "معلم",
     roleStudent: "طالب",
@@ -73,6 +74,7 @@ const L10N = {
   },
   sq: {
     close: "Mbyll",
+    openProfile: (name: string) => `Hap profilin e ${name}`,
     roleAdmin: "Drejtori",
     roleTeacher: "Mësues",
     roleStudent: "Nxënës",
@@ -155,7 +157,7 @@ export function ProfileAvatar({
       <button
         type="button"
         onClick={handleOpen}
-        aria-label={`Open ${author.full_name} profile`}
+        aria-label={t.openProfile(author.full_name)}
         className="hpa-trigger"
         style={{ padding: 0, border: 0, background: "transparent", cursor: "pointer", borderRadius: "999px", display: "inline-flex", flexShrink: 0 }}
       >

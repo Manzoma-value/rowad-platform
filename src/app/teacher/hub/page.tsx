@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cachedFetch } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
+import { useLang } from "@/lib/language-context";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -72,10 +73,6 @@ const RX: { type: ReactionType; emoji: string; label: Record<Lang, string> }[] =
 ];
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
-
-function getLang(school: Me["school"]): Lang {
-  return school?.language === "ar" ? "ar" : "sq";
-}
 
 function formatDate(d: string, lang: Lang) {
   const date = new Date(d);
@@ -601,6 +598,7 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function TeacherHubPage() {
+  const { lang: uiLang } = useLang();
   const [me, setMe]               = useState<Me | null>(null);
   const [posts, setPosts]         = useState<Post[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -693,7 +691,7 @@ export default function TeacherHubPage() {
     });
   };
 
-  const lang  = getLang(me?.school ?? null);
+  const lang: Lang = uiLang === "ar" ? "ar" : "sq";
   const isRtl = lang === "ar";
   const dir   = isRtl ? "rtl" : "ltr";
   const tr    = T[lang];
