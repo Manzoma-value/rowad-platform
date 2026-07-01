@@ -116,6 +116,10 @@ interface NavItem2 extends Omit<NavItem, "key"> {
   labelAr?: string;
   labelSq?: string;
   labelEn?: string;
+  /** When set, this item renders as an indented sub-item under the matching
+   *  parent key in the sidebar (used for lessons/quizzes/reports under
+   *  "My Classes"). */
+  parent?: NavItem["key"];
 }
 
 const navItems: NavItem2[] = [
@@ -134,15 +138,21 @@ const navItems: NavItem2[] = [
     labelSq: "Harta Edukative",
     labelEn: "Roadmap",
   },
-  { href: "/teacher/lessons",  key: "lessons",   sublabel: "Lessons",   exact: false, icon: BookOpen, feature: "lessons" },
-  { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList, feature: "quizzes" },
-  { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3, feature: "reports" },
+  // Lessons + Quizzes + Reports are children of "My Classes" — rendered
+  // indented directly under it so the sidebar reads:
+  //   الفصول
+  //     └ الدروس
+  //     └ الاختبارات
+  //     └ التقارير
+  { href: "/teacher/lessons",  key: "lessons",   sublabel: "Lessons",   exact: false, icon: BookOpen,       feature: "lessons",  parent: "myClasses" },
+  { href: "/teacher/quizzes",  key: "quizzes",   sublabel: "Quizzes",   exact: false, icon: ClipboardList,  feature: "quizzes",  parent: "myClasses" },
+  { href: "/teacher/reports",  key: "reports",   sublabel: "Reports",   exact: false, icon: BarChart3,      feature: "reports",  parent: "myClasses" },
   {
     href: "/teacher/games", key: "games", sublabel: "Learning Tools", exact: false,
     icon: Gamepad2,
-    labelAr: "أدوات وألعاب التعلم",
-    labelSq: "Mjete dhe lojëra mësimore",
-    labelEn: "Learning Tools & Games",
+    labelAr: "أدوات ونماذج التعلم",
+    labelSq: "Mjete dhe modele mësimore",
+    labelEn: "Learning Tools & Models",
   },
 ];
 
@@ -166,8 +176,21 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
   // ── Tenant feature flags ──
   const { hasFeature, loading: tenantLoading } = useTenant();
-  // Only show nav items whose feature is enabled (or that have no feature gate).
-  const visibleNav = navItems.filter((i) => !i.feature || hasFeature(i.feature));
+  // Filter by feature flag, then reorder so parent -> children appear
+  // together in the sidebar (lessons/quizzes/reports directly under My Classes).
+  const visibleNav = (() => {
+    const raw = navItems.filter((i) => !i.feature || hasFeature(i.feature));
+    const parents = raw.filter((i) => !i.parent);
+    const children = raw.filter((i) => i.parent);
+    const ordered: NavItem2[] = [];
+    for (const p of parents) {
+      ordered.push(p);
+      for (const c of children) if (c.parent === p.key) ordered.push(c);
+    }
+    // Orphaned children whose parent got filtered out — append at the end
+    for (const c of children) if (!parents.some((p) => p.key === c.parent) && !ordered.includes(c)) ordered.push(c);
+    return ordered;
+  })();
   const showCommunity = hasFeature("hub");
 
   // Route guard: if the user lands on a module their school disabled (e.g. via
@@ -469,11 +492,12 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           {visibleNav.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
+            const isSub = !!item.parent;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`tl-nav-item ${active ? "active" : ""}`}
+                className={`tl-nav-item ${active ? "active" : ""} ${isSub ? "tl-nav-sub" : ""}`}
                 onClick={() => setSidebarOpen(false)}
               >
                 {active && (
@@ -869,6 +893,30 @@ const styles = `
     height: 1px; margin: 8px 8px;
     background: linear-gradient(90deg, transparent, rgba(200,169,106,0.15), transparent);
   }
+
+  /* Sub-items (lessons/quizzes/reports nested under My Classes). Slight
+     indent, smaller label + icon, and a hairline "tree branch" on the
+     leading edge so the hierarchy reads at a glance. */
+  .tl-nav-item.tl-nav-sub {
+    margin-inline-start: 22px;
+    padding-block: 7px;
+    position: relative;
+  }
+  .tl-nav-item.tl-nav-sub::before {
+    content: ''; position: absolute;
+    inset-inline-start: -10px; top: 50%;
+    width: 8px; height: 1px;
+    background: rgba(200,169,106,0.35);
+  }
+  .tl-nav-item.tl-nav-sub::after {
+    content: ''; position: absolute;
+    inset-inline-start: -10px; top: 0; bottom: 50%;
+    width: 1px;
+    background: rgba(200,169,106,0.28);
+  }
+  .tl-nav-item.tl-nav-sub .tl-nav-icon-wrap { width: 28px; height: 28px; }
+  .tl-nav-item.tl-nav-sub .tl-nav-label-main { font-size: 12.5px; }
+  .tl-nav-item.tl-nav-sub .tl-nav-label-sub  { font-size: 9.5px; opacity: 0.7; }
 
   .tl-nav-item {
     position: relative; display: flex; align-items: center; gap: 11px;

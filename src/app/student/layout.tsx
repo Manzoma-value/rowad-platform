@@ -153,9 +153,9 @@ const navItems: NavItem[] = [
   },
   {
     key: "games", href: "/student/games", exact: false, sublabel: "Learning Tools",
-    labelAr: "أدوات وألعاب التعلم",
-    labelSq: "Mjete dhe lojëra mësimore",
-    labelEn: "Learning Tools & Games",
+    labelAr: "أدوات ونماذج التعلم",
+    labelSq: "Mjete dhe modele mësimore",
+    labelEn: "Learning Tools & Models",
     icon: Gamepad2,
   },
 ];

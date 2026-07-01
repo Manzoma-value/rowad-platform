@@ -351,28 +351,19 @@ function Hub({
     { id: "collector", title: T.colTitle, desc: T.colDesc, emoji: "🧭",  hue: "rgba(20,80,140,0.10)" },
   ];
 
-  const cardTiles = [
-    {
-      stage: "STAGE1",
-      title: lang === "ar" ? "لعبة البطاقات (1)" : "Loja e kartave (1)",
-      desc:
-        lang === "ar"
-          ? "رتّب الـ25 مفهوماً في النموذج التعليمي حسب المقصد والمستوى الصحيح. النتيجة تظهر فور الإرسال."
-          : "Rendit 25 konceptet në model sipas qëllimit dhe nivelit të duhur. Rezultati shfaqet pas dërgimit.",
-      emoji: "🃏",
-      hue: "rgba(184,155,94,0.16)",
-    },
-    {
-      stage: "STAGE2",
-      title: lang === "ar" ? "لعبة البطاقات (2)" : "Loja e kartave (2)",
-      desc:
-        lang === "ar"
-          ? "نسخة موسّعة: بطاقات تحتوي تفاصيل المفهوم (الوصف، الواجب، الأجر، الثمرة، مؤشر التحقق)."
-          : "Versioni i zgjeruar: kartat përmbajnë detajet (përshkrim, detyrë, shpërblim, fryt, tregues).",
-      emoji: "🎴",
-      hue: "rgba(122,30,30,0.10)",
-    },
-  ];
+  // "نموذج التعلم" is now the single featured entry point that runs both
+  // stages back-to-back. The old per-stage tiles are collapsed into this
+  // hero card. Direct routes /card/STAGE1 and /card/STAGE2 still work.
+  const modelHref = cardBase.replace(/\/card$/, "") + "/model";
+  const modelHero = {
+    title:  lang === "ar" ? "نموذج التعلم" : "Modeli i Mësimit",
+    tagline: lang === "ar" ? "الأهم في مسارك التعليمي" : "Më i rëndësishmi në rrugën tënde",
+    desc:
+      lang === "ar"
+        ? "مرحلتان متتابعتان لاختبار فهمك للنموذج الرواد كاملاً — البطاقة الأساسية ثم النسخة الموسّعة. لا حد للمحاولات، ومن يبرز يظهر في قائمة المتصدرين."
+        : "Dy faza radhazi për të testuar kuptimin tënd të plotë të Modelit Rowad — karta bazë pastaj versioni i zgjeruar. Pa kufi provash, dhe kryesuesit renditen për të gjithë.",
+    cta: lang === "ar" ? "ابدأ نموذج التعلم" : "Fillo Modelin",
+  };
 
   return (
     <div className="gm-inner">
@@ -382,29 +373,27 @@ function Hub({
         <p className="gm-hero-sub">{T.sub}</p>
       </header>
 
+      {/* Hero: نموذج التعلم — the flagship two-stage flow. */}
+      <a href={modelHref} className="gm-model-hero">
+        <div className="gm-model-hero-band">
+          <span className="gm-model-hero-pin">✦ {modelHero.tagline}</span>
+        </div>
+        <div className="gm-model-hero-body">
+          <div className="gm-model-hero-icon" aria-hidden>🎴</div>
+          <div className="gm-model-hero-text">
+            <h2 className="gm-model-hero-title">{modelHero.title}</h2>
+            <p className="gm-model-hero-desc">{modelHero.desc}</p>
+          </div>
+          <div className="gm-model-hero-cta">
+            <span>{modelHero.cta}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+              <polyline points="9 6 15 12 9 18" />
+            </svg>
+          </div>
+        </div>
+      </a>
+
       <div className="gm-tiles">
-        {cardTiles.map((c, i) => (
-          <a
-            key={c.stage}
-            href={`${cardBase}/${c.stage}`}
-            className="gm-tile gm-tile-card"
-            style={{ animationDelay: `${0.08 * i}s`, "--tile-tint": c.hue } as React.CSSProperties}
-          >
-            <div className="gm-tile-emblem" aria-hidden>
-              <span className="gm-tile-emoji">{c.emoji}</span>
-            </div>
-            <div className="gm-tile-body">
-              <h2 className="gm-tile-title">{c.title}</h2>
-              <p className="gm-tile-desc">{c.desc}</p>
-            </div>
-            <div className="gm-tile-cta">
-              <span>{T.playBtn}</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                <polyline points="9 6 15 12 9 18" />
-              </svg>
-            </div>
-          </a>
-        ))}
         {tiles.map((t, i) => (
           <button
             key={t.id}
@@ -1399,6 +1388,33 @@ const styles = `
 /* ── TILES ── */
 .gm-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 @media(max-width:880px){.gm-tiles{grid-template-columns:1fr}}
+
+/* Featured Learning Model hero — the flagship of the tools page. */
+.gm-model-hero{
+  display:block; text-decoration:none; color:inherit;
+  margin-bottom:20px; border-radius:20px; overflow:hidden;
+  background:linear-gradient(165deg,#FCF6E6 0%,#F4EBD3 100%);
+  border:1.5px solid #C0A063;
+  box-shadow:0 10px 30px rgba(150,115,50,0.14), inset 0 0 0 4px #EFE6D1, inset 0 0 0 5.5px rgba(194,160,89,0.4);
+  transition:transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s;
+}
+.gm-model-hero:hover{ transform:translateY(-3px); box-shadow:0 18px 44px rgba(150,115,50,0.22), inset 0 0 0 4px #EFE6D1, inset 0 0 0 5.5px rgba(194,160,89,0.55); }
+.gm-model-hero-band{ background:linear-gradient(135deg,#171716,#4B3718); padding:9px 20px; }
+.gm-model-hero-pin{ display:inline-block; color:#E5B93C; font-size:11.5px; font-weight:900; letter-spacing:0.16em; text-transform:uppercase; }
+.gm-model-hero-body{ display:grid; grid-template-columns:auto 1fr auto; gap:18px; align-items:center; padding:20px 24px; }
+@media(max-width:640px){ .gm-model-hero-body{ grid-template-columns:1fr; text-align:center; } }
+.gm-model-hero-icon{ font-size:48px; line-height:1; }
+.gm-model-hero-text{ min-width:0; }
+.gm-model-hero-title{ font-family:'El Messiri','Cairo',serif; font-size:24px; font-weight:700; color:#1B1810; margin:0 0 6px; letter-spacing:-0.01em; }
+.gm-model-hero-desc{ font-size:13px; color:#5E4A20; line-height:1.85; margin:0; }
+.gm-model-hero-cta{
+  display:inline-flex; align-items:center; gap:8px;
+  background:linear-gradient(180deg,#1E2329,#11151A);
+  color:#E5B93C; padding:11px 20px; border-radius:12px;
+  font-size:13.5px; font-weight:900; white-space:nowrap;
+  box-shadow:0 4px 12px rgba(0,0,0,0.20);
+}
+[dir="rtl"] .gm-model-hero-cta svg{ transform:scaleX(-1); }
 
 .gm-tile{
   position:relative;text-align:start;
