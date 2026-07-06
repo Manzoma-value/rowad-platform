@@ -20,6 +20,7 @@ import {
   GraduationCap,
   BookOpen,
   ClipboardCheck,
+  QrCode,
   FileStack,
   MapPin,
   BarChart3,
@@ -166,6 +167,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       href: "/school-admin/teacher-groups", sublabel: "Teacher Groups", exact: false, icon: Users,
       label: lang === "ar" ? "مجموعات المعلمين" : lang === "sq" ? "Grupet e mësuesve" : "Teacher Groups",
       hideForViewOnly: true,
+    },
+    {
+      href: "/school-admin/workshops", sublabel: "Workshops", exact: false, icon: QrCode,
+      label: lang === "ar" ? "الورش التدريبية" : lang === "sq" ? "Punëtoritë" : "Workshops",
     },
     {
       href: "/school-admin/classes", sublabel: "Classes", exact: false, icon: BookOpen,

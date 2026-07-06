@@ -20,20 +20,31 @@ export default function DashboardShell({
   children,
 }: DashboardShellProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_12%_8%,rgba(200,169,106,0.08),transparent_32%),radial-gradient(ellipse_at_88%_86%,rgba(122,30,30,0.04),transparent_34%),#F6F4EE] text-[#080B0C]">
       <div className="flex min-h-screen">
         <Sidebar title={sidebarTitle} items={sidebarItems} />
 
         <div className="flex flex-1 flex-col">
           <Header title={title} />
 
-          <main className="flex-1 p-6">
-            <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <main className="relative flex-1 overflow-hidden p-4 sm:p-6 lg:p-10">
+            <div
+              className="pointer-events-none absolute left-8 top-8 h-72 w-72 rounded-full border border-[#C8A96A]/10 opacity-40"
+              aria-hidden="true"
+            />
+            <div className="relative mx-auto max-w-7xl animate-[dashIn_.42s_cubic-bezier(.22,1,.36,1)_both] rounded-[18px] border border-black/10 bg-[#FFFDF8]/92 p-4 shadow-[0_18px_50px_rgba(8,11,12,0.08)] backdrop-blur sm:p-6 lg:p-8">
+              <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-[#C8A96A]/60 to-transparent" />
               {children}
             </div>
           </main>
         </div>
       </div>
+      <style>{`
+        @keyframes dashIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

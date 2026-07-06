@@ -530,7 +530,7 @@ html{scroll-behavior:smooth;}
 
 /* ════════════ HERO ════════════ */
 .gl-hero{
-  position:relative;min-height:100vh;
+  position:relative;min-height:92vh;
   display:flex;align-items:center;justify-content:center;
   background:url('/generallanding.png') center/cover no-repeat,linear-gradient(180deg,#F5EFE0 0%,#EDE4CC 100%);
   overflow:hidden;
@@ -551,7 +551,7 @@ html{scroll-behavior:smooth;}
 .gl-hero-body{
   position:relative;z-index:2;
   display:flex;flex-direction:column;align-items:center;
-  text-align:center;padding:120px 32px 100px;
+  text-align:center;padding:118px 32px 74px;
   max-width:860px;margin:0 auto;width:100%;
 }
 
@@ -828,7 +828,8 @@ html{scroll-behavior:smooth;}
   .gl-stat:nth-child(even){border-inline-start:1px solid rgba(168,134,62,.16);}
   .gl-sn{font-size:23px;}
 
-  .gl-hero-body{padding:96px 20px 84px;}
+  .gl-hero{min-height:88vh;}
+  .gl-hero-body{padding:88px 20px 62px;}
   .gl-section{padding:64px 20px;}
   .gl-sec-head{margin-bottom:42px;}
   .gl-cta{flex-direction:column;align-items:stretch;width:100%;max-width:300px;margin:0 auto;}

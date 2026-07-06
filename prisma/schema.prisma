@@ -390,6 +390,8 @@ model Profile {
   authoredOwnerReports         OwnerReport[]        @relation("OwnerReportAuthor")
   authoredTeacherGroups        TeacherGroup[]       @relation("TeacherGroupAuthor")
   authoredGroupAssessments     GroupAssessment[]    @relation("GroupAssessmentAuthor")
+  authoredWorkshops            Workshop[]           @relation("WorkshopAuthor")
+  authoredAttendanceCodes      WorkshopAttendanceCode[] @relation("WorkshopAttendanceCodeAuthor")
   teacherGroupAnnouncements    TeacherGroupAnnouncement[]
   avatar_url                   String?
   avatar_path                  String?
@@ -437,6 +439,7 @@ model School {
   rowadGameSubmissions RowadGameSubmission[]
   owner_reports      OwnerReport[]
   teacher_groups     TeacherGroup[]
+  workshops          Workshop[]
   teacher_group_announcements TeacherGroupAnnouncement[]
 
   @@map("schools")
@@ -456,11 +459,16 @@ model SchoolAdminMember {
 }
 
 model Teacher {
-  id                String                  @id @default(uuid()) @db.Uuid
-  created_at        DateTime                @default(now())
-  profile_id        String                  @unique @db.Uuid
-  school_id         String                  @db.Uuid
-  onboarding_status TeacherOnboardingStatus @default(PENDING_APPLICATION)
+  id                 String                  @id @default(uuid()) @db.Uuid
+  created_at         DateTime                @default(now())
+  profile_id         String                  @unique @db.Uuid
+  school_id          String                  @db.Uuid
+  onboarding_status  TeacherOnboardingStatus @default(PENDING_APPLICATION)
+  // Workshop the teacher signed up via, if any (nullable — teachers can
+  // still sign up outside of a workshop through the classic flow).
+  workshop_signup_id String?                 @db.Uuid
+  workshop_signup    Workshop?               @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
+  workshop_attendance WorkshopAttendance[]
   announcements     Announcement[]
   classes           Class[]
   quizzes           Quiz[]
@@ -1165,4 +1173,71 @@ enum AssessmentType {
 enum AssessmentReviewStatus {
   PENDING
   REVIEWED
+}
+
+// ─── Workshops — in-person training sessions with:
+//     (1) a permanent signup QR that teachers scan to create an account
+//     (2) a fresh attendance QR per day that teachers scan to check in.
+enum WorkshopStatus {
+  OPEN
+  CLOSED
+}
+
+model Workshop {
+  id            String         @id @default(uuid()) @db.Uuid
+  school_id     String         @db.Uuid
+  title         String
+  description   String?
+  start_date    DateTime?      @db.Date
+  end_date      DateTime?      @db.Date
+  status        WorkshopStatus @default(OPEN)
+  // Public random slug used in the signup URL and encoded in the signup QR.
+  // Kept unique globally so /workshop/[token] doesn't need the school in the URL.
+  signup_token  String         @unique
+  created_by    String         @db.Uuid
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+
+  school           School                   @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author           Profile                  @relation("WorkshopAuthor", fields: [created_by], references: [id])
+  signed_up_teachers Teacher[]              @relation("WorkshopSignedUpTeachers")
+  attendance       WorkshopAttendance[]
+  attendance_codes WorkshopAttendanceCode[]
+
+  @@index([school_id, created_at(sort: Desc)])
+  @@map("workshops")
+}
+
+model WorkshopAttendance {
+  id            String   @id @default(uuid()) @db.Uuid
+  workshop_id   String   @db.Uuid
+  teacher_id    String   @db.Uuid
+  day_date      DateTime @db.Date
+  checked_in_at DateTime @default(now())
+
+  workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  // Same teacher can only be marked present once per day per workshop.
+  @@unique([workshop_id, teacher_id, day_date])
+  @@index([workshop_id, day_date])
+  @@map("workshop_attendance")
+}
+
+// Rotating attendance code — admin generates one per day, teachers scan to
+// check in. Kept as a table (not a computed value) so the admin can audit
+// which codes were live on which day.
+model WorkshopAttendanceCode {
+  id          String   @id @default(uuid()) @db.Uuid
+  workshop_id String   @db.Uuid
+  code        String   @unique
+  day_date    DateTime @db.Date
+  created_by  String   @db.Uuid
+  created_at  DateTime @default(now())
+
+  workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  author   Profile  @relation("WorkshopAttendanceCodeAuthor", fields: [created_by], references: [id])
+
+  @@index([workshop_id, day_date(sort: Desc)])
+  @@map("workshop_attendance_codes")
 }

@@ -1,0 +1,67 @@
+// /api/school-admin/workshops
+//   GET  — list all workshops for this school (most recent first).
+//   POST — create a new workshop with a fresh signup_token.
+import { NextResponse } from "next/server";
+import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
+import { prisma } from "@/lib/prisma";
+import { newSignupToken } from "@/lib/workshop-tokens";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const auth = await requireSchoolAdmin();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const workshops = await prisma.workshop.findMany({
+    where: { school_id: auth.school.id },
+    orderBy: [{ created_at: "desc" }],
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      start_date: true,
+      end_date: true,
+      status: true,
+      signup_token: true,
+      created_at: true,
+      _count: {
+        select: {
+          signed_up_teachers: true,
+          attendance: true,
+        },
+      },
+    },
+  });
+  return NextResponse.json({ workshops });
+}
+
+export async function POST(req: Request) {
+  const auth = await requireSchoolAdminWriter();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  let body: { title?: string; description?: string; start_date?: string; end_date?: string };
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
+  const title = body.title?.trim();
+  if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
+
+  // Retry on the (extremely rare) signup_token collision.
+  let workshop = null;
+  for (let attempt = 0; attempt < 3 && !workshop; attempt++) {
+    try {
+      workshop = await prisma.workshop.create({
+        data: {
+          school_id: auth.school.id,
+          created_by: auth.profile.id,
+          title: title.slice(0, 200),
+          description: body.description?.toString().trim().slice(0, 1000) || null,
+          start_date: body.start_date ? new Date(body.start_date) : null,
+          end_date: body.end_date ? new Date(body.end_date) : null,
+          signup_token: newSignupToken(),
+        },
+        select: { id: true, signup_token: true },
+      });
+    } catch { /* collision or transient error — retry with a new token */ }
+  }
+  if (!workshop) return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+  return NextResponse.json({ workshop }, { status: 201 });
+}

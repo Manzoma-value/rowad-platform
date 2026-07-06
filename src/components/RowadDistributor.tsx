@@ -21,13 +21,19 @@ import {
 } from "@/lib/rowad-assessment";
 
 export default function RowadDistributor({
-  value, onChange, lang, disabled, onCommit,
+  value, onChange, lang, disabled, onCommit, hideReadout, compact,
 }: {
   value: ScoresTuple;
   onChange: (next: ScoresTuple) => void;
   lang: AssessLang;
   disabled?: boolean;
   onCommit?: (next: ScoresTuple) => void;
+  /** Hide the Core/Collective/Supporting readout block at the bottom
+   *  (the rating page renders that on the sidebar instead so the form
+   *  fits on one screen). */
+  hideReadout?: boolean;
+  /** Tighten row spacing/font so all 5 sliders + status fit above the fold. */
+  compact?: boolean;
 }) {
   const T = ASSESS_UI[lang];
   const total = value[0] + value[1] + value[2] + value[3] + value[4];
