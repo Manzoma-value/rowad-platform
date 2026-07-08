@@ -1,20 +1,23 @@
 ﻿"use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import { cachedFetch } from "@/lib/api-cache";
 import { useViewOnly } from "@/lib/view-only-context";
+
 interface Stats {
-  school: { name: string };
+  school: { name: string; name_alt?: string | null };
+  adminName?: string | null;
   teacherCount: number;
   studentCount: number;
   classCount: number;
   pendingPlacements: number;
   hasPlacementAssessment: boolean;
+  studentsByStatus?: { status: string; count: number }[];
 }
 
 export default function SchoolAdminDashboard() {
@@ -27,6 +30,19 @@ export default function SchoolAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const labels = {
+    eyebrow: lang === "ar" ? "مركز القيادة المدرسي" : lang === "sq" ? "Qendra e drejtimit" : "School Command Center",
+    welcome: lang === "ar" ? "لوحة تحكم الإدارة" : lang === "sq" ? "Paneli i administrimit" : "Administration dashboard",
+    subtitle: lang === "ar" ? "نظرة تنفيذية على المعلمين، الطلاب، الفصول، التقييمات والمجتمع من مكان واحد." : lang === "sq" ? "Pamje ekzekutive për mësuesit, nxënësit, klasat, vlerësimet dhe komunitetin." : "An executive view of teachers, students, classes, assessments and community work.",
+    urgent: lang === "ar" ? "الأولويات الآن" : lang === "sq" ? "Prioritetet tani" : "Priorities now",
+    ecosystem: lang === "ar" ? "خريطة المنصة" : lang === "sq" ? "Harta e platformës" : "Platform map",
+    open: lang === "ar" ? "فتح" : lang === "sq" ? "Hap" : "Open",
+    healthy: lang === "ar" ? "مستقر" : lang === "sq" ? "Në rregull" : "Healthy",
+    setupNeeded: lang === "ar" ? "يحتاج إعداد" : lang === "sq" ? "Kërkon konfigurim" : "Setup needed",
+    pending: lang === "ar" ? "قيد المراجعة" : lang === "sq" ? "Në shqyrtim" : "Pending",
+    noUrgent: lang === "ar" ? "لا توجد مهام عاجلة الآن." : lang === "sq" ? "Nuk ka detyra urgjente tani." : "No urgent work right now.",
+  };
+
   useEffect(() => {
     cachedFetch<Stats>("/api/school-admin/stats", 60_000)
       .then((d) => {
@@ -37,565 +53,122 @@ export default function SchoolAdminDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <MandalaLoader label={tr.loading} />;
-  if (error || !stats)
-    return (
-      <>
-        <div className="dash-error">{tr.failedLoad}</div>
-        <style>{css}</style>
-      </>
-    );
+  const studentStatus = useMemo(() => {
+    const rows = stats?.studentsByStatus ?? [];
+    const total = Math.max(stats?.studentCount ?? 0, 1);
+    return rows.map((row) => ({ ...row, pct: Math.round((row.count / total) * 100) }));
+  }, [stats]);
 
-  const statCards = [
-    {
-      label: tr.teachers,
-      value: stats.teacherCount,
-      href: "/school-admin/teachers",
-      icon: (
-        <svg
-          width="18"
-          height="18"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-        >
-          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-        </svg>
-      ),
-    },
-    {
-      label: tr.students,
-      value: stats.studentCount,
-      href: "/school-admin/students",
-      icon: (
-        <svg
-          width="18"
-          height="18"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-        >
-          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-          <path d="M6 12v5c3 3 9 3 12 0v-5" />
-        </svg>
-      ),
-    },
-    {
-      label: tr.classes,
-      value: stats.classCount,
-      href: "/school-admin/classes",
-      icon: (
-        <svg
-          width="18"
-          height="18"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-        >
-          <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-        </svg>
-      ),
-    },
-    // Hidden in view-only mode — the awaiting-placement card links into
-    // the placement-assessment / submissions area which view-only admins
-    // shouldn't see.
-    ...(viewOnly ? [] : [{
-      label: tr.awaitingPlacement,
-      value: stats.pendingPlacements,
-      href: "/school-admin/submissions",
-      alert: stats.pendingPlacements > 0,
-      icon: (
-        <svg
-          width="18"
-          height="18"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 6v6l4 2" />
-        </svg>
-      ),
-    }]),
+  if (loading) return <MandalaLoader label={tr.loading} />;
+  if (error || !stats) return <div className="ad-error">{tr.failedLoad}</div>;
+
+  const schoolName = lang === "ar" ? stats.school.name : stats.school.name_alt || stats.school.name;
+  const kpis = [
+    { label: tr.teachers, value: stats.teacherCount, href: "/school-admin/teachers", tone: "gold" },
+    { label: tr.students, value: stats.studentCount, href: "/school-admin/students", tone: "blue" },
+    { label: tr.classes, value: stats.classCount, href: "/school-admin/classes", tone: "green" },
+    { label: tr.awaitingPlacement, value: stats.pendingPlacements, href: "/school-admin/submissions?status=PENDING", tone: stats.pendingPlacements > 0 ? "red" : "gold", hidden: viewOnly },
+  ].filter((card) => !card.hidden);
+
+  const priorities = [
+    !stats.hasPlacementAssessment
+      ? { title: tr.noAssessmentWarning, href: "/school-admin/placement-assessment", tone: "red", action: tr.createNow }
+      : null,
+    stats.pendingPlacements > 0 && !viewOnly
+      ? { title: `${stats.pendingPlacements} ${tr.pendingPlacementsWarning}`, href: "/school-admin/submissions?status=PENDING", tone: "gold", action: tr.reviewNow }
+      : null,
+  ].filter(Boolean) as { title: string; href: string; tone: string; action: string }[];
+
+  const modules = [
+    { title: lang === "ar" ? "المعلمون والتأهيل" : lang === "sq" ? "Mësuesit" : "Teachers", desc: lang === "ar" ? "المعلمون، المجموعات، الطلبات والورش." : lang === "sq" ? "Mësuesit, grupet, aplikimet dhe punëtoritë." : "Teachers, groups, applications and workshops.", href: "/school-admin/teachers", links: [[tr.teachers, "/school-admin/teachers"], [lang === "ar" ? "المجموعات" : "Groups", "/school-admin/teacher-groups"], [lang === "ar" ? "الطلبات" : "Applications", "/school-admin/applications"], [lang === "ar" ? "الورش" : "Workshops", "/school-admin/workshops"]] },
+    { title: lang === "ar" ? "الطلاب والفصول" : lang === "sq" ? "Nxënësit dhe klasat" : "Students and classes", desc: lang === "ar" ? "الطلاب، الفصول، الفرز، والمراجعة التعليمية." : lang === "sq" ? "Nxënësit, klasat, vendosja dhe shqyrtimi." : "Students, classes, placement and learning review.", href: "/school-admin/students", links: [[tr.students, "/school-admin/students"], [tr.classes, "/school-admin/classes"], [tr.submissions, "/school-admin/submissions"], [lang === "ar" ? "المراجعة" : "Review", "/school-admin/review-queue"]] },
+    { title: lang === "ar" ? "التقارير والقياس" : lang === "sq" ? "Raporte dhe matje" : "Reports and measurement", desc: lang === "ar" ? "تقارير المدرسة، تقارير المالك، ونتائج النموذج." : lang === "sq" ? "Raportet, raportet e pronarit dhe modeli edukativ." : "School reports, owner reports and model scores.", href: "/school-admin/reports", links: [[tr.reports ?? "Reports", "/school-admin/reports"], [lang === "ar" ? "تقارير المالك" : "Owner Reports", "/school-admin/owner-reports"], [lang === "ar" ? "النموذج" : "Model", "/school-admin/game-scores"]] },
+    { title: lang === "ar" ? "المجتمع والتواصل" : lang === "sq" ? "Komuniteti" : "Community", desc: lang === "ar" ? "المجتمع، الإعلانات، الدعوات والتواصل." : lang === "sq" ? "Komuniteti, njoftimet, ftesat dhe komunikimi." : "Community, announcements, invites and communication.", href: "/school-admin/hub", links: [[lang === "ar" ? "المجتمع" : "Community", "/school-admin/hub"], [lang === "ar" ? "الدعوات" : "Invites", "/school-admin/invites"]] },
   ];
 
   return (
-    <div className="dash" dir={dir}>
-      {/* Page header */}
-      <div className="dash-header">
-        <div className="dash-header-left">
-          <p className="dash-eyebrow">{tr.schoolAdminDashboard}</p>
-          <h1 className="dash-title">{stats.school?.name ?? ""}</h1>
+    <div className="ad-page" dir={dir}>
+      <section className="ad-hero">
+        <div className="ad-hero-copy">
+          <span>{labels.eyebrow}</span>
+          <h1>{schoolName}</h1>
+          <p>{labels.subtitle}</p>
         </div>
-        {!stats.hasPlacementAssessment && (
-          <Link href="/school-admin/placement-assessment" className="dash-cta">
-            <svg
-              width="13"
-              height="13"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            {tr.createAssessment}
-          </Link>
-        )}
-      </div>
-
-      {/* Hairline separator */}
-      <div className="dash-rule">
-        <div className="dash-rule-line" />
-        <div className="dash-rule-diamond" />
-        <div className="dash-rule-line" />
-      </div>
-
-      {/* Alert banners */}
-      {!stats.hasPlacementAssessment && (
-        <div className="alert-banner alert-critical">
-          <div className="alert-icon-wrap">
-            <svg
-              width="13"
-              height="13"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-              <path d="M12 9v4M12 17h.01" />
-            </svg>
-          </div>
-          <span className="alert-text">{tr.noAssessmentWarning}</span>
-          <Link
-            href="/school-admin/placement-assessment"
-            className="alert-action"
-          >
-            {tr.createNow}
-            <svg
-              width="11"
-              height="11"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                d="M9 18l6-6-6-6"
-                style={{
-                  transform: dir === "rtl" ? "rotate(180deg)" : "none",
-                  transformOrigin: "center",
-                }}
-              />
-            </svg>
-          </Link>
+        <div className="ad-hero-side">
+          <strong>{labels.welcome}</strong>
+          <span>{stats.adminName ?? "Admin"}</span>
         </div>
-      )}
+      </section>
 
-      {stats.pendingPlacements > 0 && !viewOnly && (
-        <div className="alert-banner alert-warn">
-          <div className="alert-icon-wrap">
-            <svg
-              width="13"
-              height="13"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4m0 4h.01" />
-            </svg>
-          </div>
-          <span className="alert-text">
-            {stats.pendingPlacements} {tr.pendingPlacementsWarning}
-          </span>
-          <Link
-            href="/school-admin/submissions?status=PENDING"
-            className="alert-action"
-          >
-            {tr.reviewNow}
-            <svg
-              width="11"
-              height="11"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </Link>
-        </div>
-      )}
-
-      {/* KPI cards */}
-      <div className="kpi-grid">
-        {statCards.map((card, i) => (
-          <Link
-            key={i}
-            href={card.href}
-            className={`kpi-card ${card.alert ? "kpi-alert" : ""}`}
-          >
-            <div className="kpi-top">
-              <div className="kpi-icon">{card.icon}</div>
-              {card.alert && <div className="kpi-badge" />}
-            </div>
-            <div className="kpi-val">{card.value}</div>
-            <div className="kpi-label">{card.label}</div>
-            <div className="kpi-arrow">
-              <svg
-                width="11"
-                height="11"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </div>
+      <section className="ad-kpis">
+        {kpis.map((card) => (
+          <Link key={card.href} href={card.href} className={`ad-kpi ${card.tone}`}>
+            <span>{card.label}</span>
+            <strong>{card.value}</strong>
+            <em>{labels.open}</em>
           </Link>
         ))}
-      </div>
+      </section>
 
-      <style>{css}</style>
+      <section className="ad-grid">
+        <div className="ad-panel ad-priorities">
+          <div className="ad-panel-head">
+            <h2>{labels.urgent}</h2>
+            <span>{priorities.length > 0 ? labels.pending : labels.healthy}</span>
+          </div>
+          {priorities.length > 0 ? priorities.map((item) => (
+            <Link key={item.href} href={item.href} className={`ad-priority ${item.tone}`}>
+              <strong>{item.title}</strong>
+              <span>{item.action}</span>
+            </Link>
+          )) : <p className="ad-calm">{labels.noUrgent}</p>}
+        </div>
+
+        <div className="ad-panel ad-status">
+          <div className="ad-panel-head">
+            <h2>{lang === "ar" ? "حالة الطلاب" : lang === "sq" ? "Statusi i nxënësve" : "Student status"}</h2>
+            <span>{stats.studentCount}</span>
+          </div>
+          {studentStatus.length > 0 ? studentStatus.map((row) => (
+            <div key={row.status} className="ad-status-row">
+              <div><strong>{row.status.replaceAll("_", " ")}</strong><span>{row.count}</span></div>
+              <div className="ad-track"><i style={{ width: `${row.pct}%` }} /></div>
+            </div>
+          )) : <p className="ad-calm">{lang === "ar" ? "لا توجد بيانات حالة بعد." : "No status data yet."}</p>}
+        </div>
+      </section>
+
+      <section className="ad-modules">
+        <div className="ad-section-title"><h2>{labels.ecosystem}</h2></div>
+        <div className="ad-module-grid">
+          {modules.map((module) => (
+            <article key={module.title} className="ad-module">
+              <h3>{module.title}</h3>
+              <p>{module.desc}</p>
+              <div>
+                {module.links.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <style>{styles}</style>
     </div>
   );
 }
 
-const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-
-  @keyframes fadeUp { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:translateY(0) } }
-  @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:0.25} }
-  @keyframes fillIn { from { width: 0 } }
-
-  :root {
-    --gold:        #C8A96A;
-    --gold-bright: #E5B93C;
-    --gold-pale:   rgba(200,169,106,0.08);
-    --gold-border: rgba(200,169,106,0.18);
-    --black:       #0B0B0C;
-    --off-white:   #F5F3EE;
-    --text:        #0B0B0C;
-    --text2:       #3D3526;
-    --text3:       #8A7B60;
-    --surface:     #FFFFFF;
-    --border:      #E4DDD0;
-    --font:        'Cairo', sans-serif;
-  }
-
-  .dash {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    font-family: var(--font);
-    color: var(--text);
-    animation: fadeUp 0.35s ease;
-  }
-
-  .dash-error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 180px;
-    color: var(--text3);
-    font-size: 14px;
-    font-family: var(--font);
-  }
-
-  /* Header */
-  .dash-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .dash-eyebrow {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 5px;
-  }
-  .dash-title {
-    font-size: 26px;
-    font-weight: 900;
-    color: var(--black);
-    letter-spacing: -0.5px;
-    line-height: 1.1;
-  }
-  .dash-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: var(--black);
-    color: var(--gold);
-    padding: 10px 20px;
-    border-radius: 7px;
-    text-decoration: none;
-    font-size: 12.5px;
-    font-weight: 700;
-    transition: background 0.15s;
-    white-space: nowrap;
-    font-family: var(--font);
-    letter-spacing: 0.1px;
-  }
-  .dash-cta:hover { background: #1A1A1E; }
-
-  /* Ornamental rule */
-  .dash-rule {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .dash-rule-line {
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-  .dash-rule-diamond {
-    width: 5px; height: 5px;
-    background: var(--gold);
-    transform: rotate(45deg);
-    opacity: 0.5;
-    flex-shrink: 0;
-  }
-
-  /* Alert banners */
-  .alert-banner {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    border: 1px solid;
-  }
-  .alert-critical {
-    background: rgba(180,40,40,0.05);
-    border-color: rgba(180,40,40,0.15);
-    color: #8B2020;
-  }
-  .alert-warn {
-    background: rgba(200,169,106,0.07);
-    border-color: rgba(200,169,106,0.2);
-    color: #6B4E18;
-  }
-  .alert-icon-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px; height: 28px;
-    border-radius: 6px;
-    background: currentColor;
-    color: inherit;
-    opacity: 0.12;
-    flex-shrink: 0;
-    position: relative;
-  }
-  .alert-icon-wrap svg {
-    position: absolute;
-    opacity: 8;
-    color: inherit;
-  }
-  .alert-text { flex: 1; }
-  .alert-action {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    color: inherit;
-    font-weight: 800;
-    text-decoration: none;
-    font-size: 12.5px;
-    white-space: nowrap;
-    padding: 5px 11px;
-    border-radius: 5px;
-    border: 1px solid currentColor;
-    opacity: 0.75;
-    transition: opacity 0.15s;
-  }
-  .alert-action:hover { opacity: 1; }
-
-  /* KPI Grid */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-  }
-  .kpi-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 18px 16px;
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-  }
-  /* Top gold accent stripe */
-  .kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.3) 50%, transparent);
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .kpi-card:hover {
-    border-color: rgba(200,169,106,0.5);
-    box-shadow: 0 10px 28px rgba(11,11,12,0.07), 0 2px 6px rgba(200,169,106,0.10);
-    transform: translateY(-3px);
-  }
-  .kpi-card:hover::before { opacity: 1; }
-  .kpi-card:active { transform: translateY(-1px); transition: transform 0.05s; }
-  .kpi-card.kpi-alert { border-color: rgba(200,169,106,0.3); }
-
-  .kpi-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 4px;
-  }
-  .kpi-icon {
-    width: 38px; height: 38px;
-    border-radius: 8px;
-    background: var(--black);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--gold);
-  }
-  .kpi-badge {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--gold-bright);
-    animation: pulse 2s infinite;
-  }
-  .kpi-val {
-    font-size: 32px;
-    font-weight: 900;
-    color: var(--black);
-    letter-spacing: -1px;
-    line-height: 1;
-  }
-  .kpi-label {
-    font-size: 11.5px;
-    color: var(--text3);
-    font-weight: 600;
-  }
-  .kpi-arrow {
-    position: absolute;
-    bottom: 16px;
-    inset-inline-end: 16px;
-    color: rgba(200,169,106,0.25);
-    transition: color 0.15s;
-  }
-  .kpi-card:hover .kpi-arrow { color: var(--gold); }
-
-  /* Pipeline */
-  .pipeline-section { display: flex; flex-direction: column; gap: 14px; }
-  .section-header { display: flex; align-items: center; gap: 14px; }
-  .section-title {
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--text);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .section-rule { flex: 1; height: 1px; background: var(--border); }
-
-  .pipeline-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .pipe-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 8px;
-    margin: 0 -8px;
-    border-radius: 8px;
-    animation: fadeUp 0.4s ease both;
-    transition: background 0.18s;
-  }
-  .pipe-row:hover { background: rgba(200,169,106,0.05); }
-  .pipe-dot {
-    width: 9px; height: 9px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 3px rgba(255,255,255,1), 0 0 0 4px currentColor;
-    color: rgba(200,169,106,0.1);
-    transition: color 0.18s;
-  }
-  .pipe-row:hover .pipe-dot { color: rgba(200,169,106,0.25); }
-  .pipe-label {
-    font-size: 12px;
-    color: var(--text2);
-    width: 210px;
-    flex-shrink: 0;
-    font-weight: 500;
-  }
-  .pipe-track {
-    flex: 1;
-    height: 4px;
-    background: var(--border);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .pipe-fill {
-    height: 100%;
-    border-radius: 99px;
-    animation: fillIn 0.8s ease both;
-  }
-  .pipe-count {
-    font-size: 12px;
-    font-weight: 800;
-    color: var(--text);
-    width: 28px;
-    text-align: start;
-    font-variant-numeric: tabular-nums;
-  }
-
-  @media (max-width: 800px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .pipe-label { width: 140px; }
-  }
-  @media (max-width: 600px) {
-    .dash-page { gap: 16px; }
-    .dash-title { font-size: 22px; }
-    .dash-sub { font-size: 12.5px; }
-    .pipe-label { width: 100px; font-size: 11px; }
-    .kpi-card { padding: 16px; }
-    .kpi-num { font-size: 24px; }
-    .kpi-label { font-size: 11px; }
-  }
-  @media (max-width: 480px) {
-    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .dash-title { font-size: 20px; }
-    .kpi-card { padding: 14px; }
-    .kpi-num { font-size: 22px; }
-  }
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .ad-page{font-family:'Cairo',sans-serif;display:flex;flex-direction:column;gap:18px;color:#0B0B0C;animation:rise .35s ease both}
+  .ad-error{padding:40px;text-align:center;color:#8A7B60;font-family:'Cairo',sans-serif}
+  .ad-hero{position:relative;overflow:hidden;border-radius:28px;padding:30px;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:22px;align-items:end;background:radial-gradient(circle at 12% 12%,rgba(229,185,60,.22),transparent 30%),linear-gradient(135deg,#08111B,#0B0B0C 62%,#1A160E);border:1px solid rgba(200,169,106,.24);box-shadow:0 18px 50px rgba(8,11,12,.14)}
+  .ad-hero:after{content:"";position:absolute;inset-inline-end:-120px;top:-140px;width:360px;height:360px;border-radius:999px;border:1px solid rgba(200,169,106,.16);box-shadow:inset 0 0 80px rgba(200,169,106,.08)}
+  .ad-hero-copy,.ad-hero-side{position:relative;z-index:1}.ad-hero-copy span{display:block;color:#D9BC78;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.ad-hero h1{margin:7px 0 8px;color:#fff;font-size:34px;font-weight:900;letter-spacing:-.6px}.ad-hero p{max-width:720px;margin:0;color:rgba(255,255,255,.72);font-size:14px;line-height:1.8}.ad-hero-side{padding:18px;border-radius:20px;background:rgba(255,255,255,.07);border:1px solid rgba(200,169,106,.18);backdrop-filter:blur(10px)}.ad-hero-side strong{display:block;color:#E5B93C;font-size:13px}.ad-hero-side span{display:block;margin-top:6px;color:#fff;font-size:18px;font-weight:900}
+  .ad-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ad-kpi{position:relative;overflow:hidden;min-height:128px;border-radius:22px;padding:18px;background:#FFFDF8;border:1px solid rgba(200,169,106,.18);text-decoration:none;color:#0B0B0C;box-shadow:0 10px 28px rgba(8,11,12,.055);transition:.2s ease}.ad-kpi:hover{transform:translateY(-3px);border-color:rgba(200,169,106,.45);box-shadow:0 16px 34px rgba(8,11,12,.08)}.ad-kpi:before{content:"";position:absolute;inset-inline-end:-34px;bottom:-42px;width:120px;height:120px;border-radius:999px;background:rgba(200,169,106,.12)}.ad-kpi span{display:block;color:#7B6B52;font-size:12px;font-weight:900}.ad-kpi strong{display:block;margin-top:14px;font-size:38px;line-height:1;font-weight:900}.ad-kpi em{position:absolute;bottom:16px;inset-inline-start:18px;color:#A8863E;font-size:11px;font-style:normal;font-weight:900}.ad-kpi.red:before{background:rgba(139,26,26,.10)}.ad-kpi.blue:before{background:rgba(57,101,126,.12)}.ad-kpi.green:before{background:rgba(45,138,74,.10)}
+  .ad-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}.ad-panel{border-radius:24px;background:#FFFDF8;border:1px solid rgba(200,169,106,.16);padding:18px;box-shadow:0 10px 28px rgba(8,11,12,.045)}.ad-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.ad-panel-head h2{margin:0;font-size:16px;font-weight:900}.ad-panel-head span{padding:4px 10px;border-radius:999px;background:rgba(200,169,106,.10);color:#8A6523;font-size:11px;font-weight:900}.ad-priority{display:flex;justify-content:space-between;gap:12px;padding:13px 14px;border-radius:16px;text-decoration:none;background:rgba(200,169,106,.08);border:1px solid rgba(200,169,106,.18);color:#4B3511;margin-top:9px}.ad-priority.red{background:rgba(139,26,26,.06);border-color:rgba(139,26,26,.16);color:#8b1a1a}.ad-priority strong{font-size:12.5px}.ad-priority span{font-size:12px;font-weight:900}.ad-calm{margin:0;padding:22px;border-radius:18px;background:rgba(45,138,74,.07);color:#2D744A;font-size:13px;font-weight:900;text-align:center}.ad-status-row{display:flex;flex-direction:column;gap:7px;margin-top:10px}.ad-status-row>div:first-child{display:flex;justify-content:space-between;gap:12px;color:#3D3526;font-size:12px;font-weight:900}.ad-status-row span{color:#8A7B60}.ad-track{height:8px;border-radius:99px;background:#EFE6D4;overflow:hidden}.ad-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#C8A96A,#E5B93C)}
+  .ad-modules{display:flex;flex-direction:column;gap:12px}.ad-section-title h2{margin:0;font-size:18px;font-weight:900}.ad-module-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.ad-module{min-height:220px;border-radius:24px;padding:18px;background:linear-gradient(180deg,#FFFDF8,#F8F1E5);border:1px solid rgba(200,169,106,.17);box-shadow:0 10px 28px rgba(8,11,12,.045)}.ad-module h3{margin:0;color:#0B0B0C;font-size:16px;font-weight:900}.ad-module p{margin:8px 0 16px;color:#7D6E55;font-size:12.5px;line-height:1.75;font-weight:700}.ad-module div{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.ad-module a{display:inline-flex;padding:8px 10px;border-radius:999px;text-decoration:none;background:#0B1118;color:#D9BC78;font-size:11px;font-weight:900;border:1px solid rgba(200,169,106,.18)}
+  @media(max-width:1100px){.ad-hero,.ad-grid{grid-template-columns:1fr}.ad-kpis,.ad-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:640px){.ad-page{gap:14px}.ad-hero{padding:22px;border-radius:22px}.ad-hero h1{font-size:26px}.ad-kpis,.ad-module-grid{grid-template-columns:1fr}.ad-kpi{min-height:112px}.ad-grid{gap:12px}.ad-panel,.ad-module{border-radius:20px}}
 `;

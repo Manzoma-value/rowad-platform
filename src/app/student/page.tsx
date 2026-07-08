@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
@@ -15,9 +15,11 @@ type Announcement = {
   created_at: string;
   teacher: { profile: { full_name: string } };
 };
+
 type StudentData = {
   profile: { full_name: string };
-  school: { name: string } | null;
+  school: { name: string; name_alt?: string | null } | null;
+  onboarding_status?: string;
   class: {
     id: string;
     name: string;
@@ -35,189 +37,152 @@ export default function StudentPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const labels = {
+    learning: lang === "ar" ? "مساحتي التعليمية" : lang === "sq" ? "Hapësira ime" : "My learning space",
+    subtitle: lang === "ar" ? "كل ما تحتاجه اليوم: دروسك، مجتمعك، زملاؤك، وإعلانات معلمك." : lang === "sq" ? "Gjithçka për sot: mësimet, komuniteti, shokët dhe njoftimet." : "Everything for today: lessons, community, classmates and teacher announcements.",
+    overview: lang === "ar" ? "نظرة سريعة" : lang === "sq" ? "Pamje e shpejtë" : "Quick overview",
+    teacher: lang === "ar" ? "المعلم" : lang === "sq" ? "Mësuesi" : "Teacher",
+    classmates: tr.classmates,
+    announcements: tr.announcements,
+    community: lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community",
+    continue: lang === "ar" ? "متابعة" : lang === "sq" ? "Vazhdo" : "Continue",
+    status: lang === "ar" ? "الحالة" : lang === "sq" ? "Statusi" : "Status",
+    noTeacher: lang === "ar" ? "لم يحدد بعد" : lang === "sq" ? "Ende pa mësues" : "Not assigned yet",
+    latest: lang === "ar" ? "أحدث الإعلانات" : lang === "sq" ? "Njoftimet e fundit" : "Latest announcements",
+    actions: lang === "ar" ? "أين أذهب الآن؟" : lang === "sq" ? "Ku të shkoj tani?" : "Where to go next?",
+  };
+
   useEffect(() => {
     cachedFetch<StudentData>("/api/student", 60_000)
-      .then(async (d) => {
-        setData(d);
-        if (d.class) {
-          const ann = await cachedFetch<Announcement[]>(
-            `/api/student/announcements?classId=${d.class.id}`,
-            30_000,
-          );
+      .then(async (student) => {
+        setData(student);
+        if (student.class) {
+          const ann = await cachedFetch<Announcement[]>(`/api/student/announcements?classId=${student.class.id}`, 30_000);
           setAnnouncements(Array.isArray(ann) ? ann : []);
         }
       })
       .finally(() => setLoading(false));
   }, []);
 
+  const initials = useMemo(() => {
+    const name = data?.profile?.full_name ?? "طالب";
+    return name.split(" ").map((word) => word[0]).slice(0, 2).join("");
+  }, [data?.profile?.full_name]);
+
   if (loading) return <MandalaLoader label={tr.loading} />;
 
-  const initials = data?.profile?.full_name
-    ? data.profile.full_name
-        .split(" ")
-        .map((w) => w[0])
-        .slice(0, 2)
-        .join("")
-    : "ط";
+  const classmatesCount = Math.max((data?.class?.students.length ?? 0) - 1, 0);
+  const schoolName = lang === "ar" ? data?.school?.name : data?.school?.name_alt || data?.school?.name;
+
+  const overview = [
+    { label: tr.myClass, value: data?.class?.name ?? tr.noClass },
+    { label: labels.teacher, value: data?.class?.teacher?.profile.full_name ?? labels.noTeacher },
+    { label: labels.classmates, value: classmatesCount.toString() },
+    { label: labels.announcements, value: announcements.length.toString() },
+  ];
+
+  const actions = [
+    { href: "/student/roadmap", title: tr.questionBank, sub: tr.questionBankSub },
+    { href: "/student/quizzes", title: tr.quizzes, sub: tr.quizzesActionSub },
+    { href: "/student/classes", title: tr.myClass, sub: tr.myClassActionSub },
+    { href: "/student/hub", title: labels.community, sub: lang === "ar" ? "شارك وتابع مجتمع المدرسة." : lang === "sq" ? "Merr pjesë në komunitet." : "Join the school community." },
+  ];
 
   return (
     <div className="sd-shell" dir={dir}>
       <main className="sd-main">
-
-        {/* ── Current concept (sequential gating) ── */}
         <StudentConceptBanner />
 
-        {/* ── Welcome Banner ── */}
-        <div className="sd-welcome">
-          <div className="sd-welcome-text">
-            <p className="sd-greeting">{tr.welcome}</p>
-            <h1 className="sd-name">{data?.profile?.full_name}</h1>
-            {data?.class ? (
-              <div className="sd-chips">
-                <span className="sd-chip">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
-                  {data.class.name}
-                </span>
-                {data.class.teacher && (
-                  <span className="sd-chip">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    {data.class.teacher.profile.full_name}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <span className="sd-chip muted">{tr.noClass}</span>
-            )}
+        <section className="sd-hero">
+          <div className="sd-hero-copy">
+            <span>{labels.learning}</span>
+            <h1>{tr.welcome}، {data?.profile?.full_name}</h1>
+            <p>{labels.subtitle}</p>
+            <div className="sd-hero-tags">
+              {schoolName && <em>{schoolName}</em>}
+              <em>{labels.status}: {(data?.onboarding_status ?? "ACTIVE").replaceAll("_", " ")}</em>
+            </div>
           </div>
           <div className="sd-avatar">{initials}</div>
-        </div>
+        </section>
 
-        {/* ── No class state ── */}
         {!data?.class ? (
-          <div className="sd-empty-state">
-            <div className="sd-empty-icon">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-                <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/>
-                <path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
-              </svg>
-            </div>
-            <h2 className="sd-empty-title">{tr.noClass}</h2>
-            <p className="sd-empty-sub">{tr.noClassContact}</p>
-          </div>
+          <section className="sd-empty-state">
+            <div className="sd-empty-icon">◇</div>
+            <h2>{tr.noClass}</h2>
+            <p>{tr.noClassContact}</p>
+          </section>
         ) : (
-
-          /* ── Main grid ── */
-          <div className="sd-grid">
-
-            {/* Announcements */}
-            <div className="sd-card">
-              <div className="sd-card-head">
-                <div className="sd-card-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 01-3.46 0"/>
-                  </svg>
-                </div>
-                <span className="sd-card-title">{tr.announcements}</span>
-                <span className="sd-badge">{announcements.length}</span>
-              </div>
-
-              <div className="sd-ann-list">
-                {announcements.length === 0 ? (
-                  <div className="sd-void">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-                      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                      <path d="M13.73 21a2 2 0 01-3.46 0"/>
-                    </svg>
-                    <p>{tr.noAnnouncements}</p>
+          <>
+            <section className="sd-overview">
+              <div className="sd-section-title"><h2>{labels.overview}</h2></div>
+              <div className="sd-overview-grid">
+                {overview.map((item) => (
+                  <div key={item.label} className="sd-stat">
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
                   </div>
-                ) : (
-                  announcements.map((a, i) => (
-                    <div key={a.id} className="sd-ann-item" style={{ animationDelay: `${i * 55}ms` }}>
-                      <div className="sd-ann-bar" />
-                      <div className="sd-ann-body">
-                        <p className="sd-ann-text">{a.content}</p>
-                        <div className="sd-ann-meta">
-                          <span className="sd-ann-author">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            {a.teacher.profile.full_name}
-                          </span>
-                          <span className="sd-ann-date">
-                            {new Date(a.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" })}
-                          </span>
-                        </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="sd-grid">
+              <article className="sd-card sd-ann-card">
+                <div className="sd-card-head">
+                  <strong>{labels.latest}</strong>
+                  <span>{announcements.length}</span>
+                </div>
+                <div className="sd-ann-list">
+                  {announcements.length === 0 ? (
+                    <div className="sd-void"><p>{tr.noAnnouncements}</p></div>
+                  ) : announcements.slice(0, 5).map((announcement, index) => (
+                    <div key={announcement.id} className="sd-ann-item" style={{ animationDelay: `${index * 45}ms` }}>
+                      <p>{announcement.content}</p>
+                      <div>
+                        <span>{announcement.teacher.profile.full_name}</span>
+                        <span>{new Date(announcement.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" })}</span>
                       </div>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Classmates */}
-            <div className="sd-card">
-              <div className="sd-card-head">
-                <div className="sd-card-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-                  </svg>
+                  ))}
                 </div>
-                <span className="sd-card-title">{tr.classmates}</span>
-                <span className="sd-badge">{data.class.students.length}</span>
-              </div>
+              </article>
 
-              <div className="sd-roster">
-                {data.class.students.map((s, i) => {
-                  const isMe = s.profile.full_name === data.profile.full_name;
-                  return (
-                    <div key={s.id} className={`sd-roster-row ${isMe ? "is-me" : ""}`} style={{ animationDelay: `${i * 38}ms` }}>
-                      <div className="sd-roster-av">{s.profile.full_name.charAt(0)}</div>
-                      <span className="sd-roster-name">{s.profile.full_name}</span>
-                      {isMe && <span className="sd-you">{tr.youBadge}</span>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+              <article className="sd-card sd-class-card">
+                <div className="sd-card-head">
+                  <strong>{labels.classmates}</strong>
+                  <span>{data.class.students.length}</span>
+                </div>
+                <div className="sd-roster">
+                  {data.class.students.slice(0, 10).map((student, index) => {
+                    const isMe = student.profile.full_name === data.profile.full_name;
+                    return (
+                      <div key={student.id} className={`sd-roster-row ${isMe ? "is-me" : ""}`} style={{ animationDelay: `${index * 35}ms` }}>
+                        <div>{student.profile.full_name.charAt(0)}</div>
+                        <span>{student.profile.full_name}</span>
+                        {isMe && <em>{tr.youBadge}</em>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            </section>
+          </>
         )}
 
-        {/* ── Quick Actions ── */}
-        <div className="sd-actions">
-          {[
-            {
-              href: "/student/quizzes",
-              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>,
-              title: tr.quizzes,
-              sub: tr.quizzesActionSub,
-            },
-            {
-              href: "/student/roadmap",
-              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg>,
-              title: tr.questionBank,
-              sub: tr.questionBankSub,
-            },
-            {
-              href: "/student/classes",
-              icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>,
-              title: tr.myClass,
-              sub: tr.myClassActionSub,
-            },
-          ].map(({ href, icon, title, sub }, idx) => (
-            <Link key={href} href={href} className="sd-action" style={{ animationDelay: `${idx * 60}ms` }}>
-              <div className="sd-action-icon">{icon}</div>
-              <div className="sd-action-body">
-                <div className="sd-action-title">{title}</div>
-                <div className="sd-action-sub">{sub}</div>
-              </div>
-              <svg className="sd-action-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: dir === "rtl" ? "rotate(180deg)" : "none" }}>
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
-            </Link>
-          ))}
-        </div>
-
+        <section className="sd-actions-wrap">
+          <div className="sd-section-title"><h2>{labels.actions}</h2></div>
+          <div className="sd-actions">
+            {actions.map((action, index) => (
+              <Link key={action.href} href={action.href} className="sd-action" style={{ animationDelay: `${index * 55}ms` }}>
+                <div>
+                  <strong>{action.title}</strong>
+                  <span>{action.sub}</span>
+                </div>
+                <em>{labels.continue}</em>
+              </Link>
+            ))}
+          </div>
+        </section>
       </main>
       <style>{styles}</style>
     </div>
@@ -226,160 +191,10 @@ export default function StudentPage() {
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-  .sd-shell{min-height:100%;width:100%;background:#F6F4EE;font-family:'Cairo',Tajawal,sans-serif}
-  .sd-main{padding:28px 24px;display:flex;flex-direction:column;gap:18px;width:100%;max-width:1200px;margin-inline:auto}
-
-  /* ── Banner ── */
-  .sd-welcome{
-    background:#0B0B0C;border-radius:22px;padding:28px 32px;
-    display:flex;align-items:center;justify-content:space-between;gap:20px;
-    position:relative;overflow:hidden;
-    border:1px solid rgba(200,169,106,0.12);
-    animation:fadeUp 0.45s ease both;
-  }
-  .sd-welcome::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,transparent,#C8A96A 30%,#E5B93C 60%,transparent);
-  }
-  .sd-welcome::after{
-    content:'';position:absolute;top:-80px;right:-80px;width:260px;height:260px;
-    border-radius:50%;background:radial-gradient(circle,rgba(200,169,106,0.07) 0%,transparent 70%);
-    pointer-events:none;
-  }
-  .sd-welcome-text{position:relative;z-index:1}
-  .sd-greeting{font-size:12px;color:rgba(200,169,106,0.55);font-weight:600;letter-spacing:0.4px;margin-bottom:5px}
-  .sd-name{font-size:27px;font-weight:900;color:#FFFFFF;letter-spacing:-0.4px;line-height:1.15}
-  .sd-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
-  .sd-chip{
-    display:inline-flex;align-items:center;gap:6px;
-    background:rgba(200,169,106,0.1);border:1px solid rgba(200,169,106,0.2);
-    color:rgba(200,169,106,0.9);font-size:11.5px;font-weight:600;
-    padding:5px 12px;border-radius:99px;
-  }
-  .sd-chip.muted{color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.07);margin-top:11px}
-  .sd-avatar{
-    width:66px;height:66px;border-radius:50%;flex-shrink:0;
-    background:linear-gradient(135deg, rgba(200,169,106,0.18), rgba(229,185,60,0.10));
-    border:2px solid rgba(200,169,106,0.38);
-    display:flex;align-items:center;justify-content:center;
-    font-size:23px;font-weight:900;color:#E5B93C;
-    position:relative;z-index:1;
-    box-shadow:0 4px 18px rgba(200,169,106,0.18), inset 0 1px 0 rgba(255,255,255,0.06);
-  }
-
-  /* ── Empty state ── */
-  .sd-empty-state{
-    background:#FFFDF8;border:1px solid rgba(200,169,106,0.15);border-radius:18px;
-    padding:54px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;
-    animation:fadeUp 0.4s ease both;
-  }
-  .sd-empty-icon{color:rgba(200,169,106,0.35)}
-  .sd-empty-title{font-size:17px;font-weight:800;color:#0B0B0C}
-  .sd-empty-sub{font-size:13px;color:#9A8A70}
-
-  /* ── Grid ── */
-  .sd-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
-  @media(max-width:740px){.sd-grid{grid-template-columns:1fr}}
-
-  /* ── Card ── */
-  .sd-card{
-    background:#FFFDF8;border:1px solid rgba(200,169,106,0.14);border-radius:18px;
-    overflow:hidden;animation:fadeUp 0.4s ease both;animation-delay:0.05s;
-  }
-  .sd-card-head{
-    display:flex;align-items:center;gap:10px;padding:14px 18px;
-    border-bottom:1px solid rgba(200,169,106,0.09);background:rgba(200,169,106,0.03);
-  }
-  .sd-card-icon{
-    width:30px;height:30px;border-radius:8px;flex-shrink:0;
-    background:#0B0B0C;border:1px solid rgba(200,169,106,0.18);
-    display:flex;align-items:center;justify-content:center;color:#C8A96A;
-  }
-  .sd-card-title{font-size:13.5px;font-weight:800;color:#0B0B0C;flex:1}
-  .sd-badge{
-    font-size:11px;font-weight:800;color:#A8863E;
-    background:rgba(200,169,106,0.12);border:1px solid rgba(200,169,106,0.22);
-    padding:2px 9px;border-radius:99px;
-  }
-
-  /* ── Announcement list ── */
-  .sd-ann-list{padding:6px 10px;display:flex;flex-direction:column;gap:0;max-height:420px;overflow-y:auto}
-  .sd-ann-item{
-    display:flex;gap:12px;padding:13px 8px;border-bottom:1px solid rgba(200,169,106,0.07);
-    animation:fadeUp 0.3s ease both;border-radius:10px;
-    transition:background 0.2s, transform 0.2s;
-  }
-  .sd-ann-item:hover{background:rgba(200,169,106,0.04); transform:translateX(0)}
-  [dir="rtl"] .sd-ann-item:hover{transform:translateX(-2px)}
-  [dir="ltr"] .sd-ann-item:hover{transform:translateX(2px)}
-  .sd-ann-item:last-child{border-bottom:none}
-  .sd-ann-bar{width:3px;min-height:36px;background:linear-gradient(180deg,#C8A96A,#E5B93C);border-radius:99px;flex-shrink:0;margin:2px 0}
-  .sd-ann-body{flex:1}
-  .sd-ann-text{font-size:13.5px;color:#1A1208;line-height:1.65;margin-bottom:8px}
-  .sd-ann-meta{display:flex;align-items:center;justify-content:space-between}
-  .sd-ann-author{display:flex;align-items:center;gap:5px;font-size:11px;color:#A8863E;font-weight:600}
-  .sd-ann-date{font-size:11px;color:#9A8A70}
-  .sd-void{padding:40px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;color:rgba(200,169,106,0.3)}
-  .sd-void p{font-size:13px;color:#9A8A70}
-
-  /* ── Roster ── */
-  .sd-roster{padding:8px 10px;display:flex;flex-direction:column;gap:2px;max-height:360px;overflow-y:auto}
-  .sd-roster-row{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:10px;transition:background 0.14s;animation:fadeUp 0.25s ease both}
-  .sd-roster-row:hover{background:rgba(200,169,106,0.06)}
-  .sd-roster-row.is-me{background:#0B0B0C}
-  .sd-roster-row.is-me:hover{background:#141008}
-  .sd-roster-av{
-    width:30px;height:30px;border-radius:50%;flex-shrink:0;
-    background:rgba(200,169,106,0.1);border:1.5px solid rgba(200,169,106,0.18);
-    display:flex;align-items:center;justify-content:center;
-    font-size:11px;font-weight:800;color:#A8863E;
-  }
-  .sd-roster-row.is-me .sd-roster-av{background:rgba(200,169,106,0.14);border-color:rgba(200,169,106,0.28);color:#C8A96A}
-  .sd-roster-name{flex:1;font-size:12.5px;font-weight:600;color:#1A1208}
-  .sd-roster-row.is-me .sd-roster-name{color:#FFFFFF}
-  .sd-you{font-size:10px;font-weight:800;color:#C8A96A;background:rgba(200,169,106,0.14);border:1px solid rgba(200,169,106,0.24);padding:2px 8px;border-radius:99px}
-
-  /* ── Quick actions ── */
-  .sd-actions{display:flex;gap:12px;flex-wrap:wrap}
-  .sd-action{
-    display:flex;align-items:center;gap:13px;
-    background:#FFFDF8;border:1px solid rgba(200,169,106,0.14);
-    border-radius:16px;padding:15px 18px;text-decoration:none;
-    color:#0B0B0C;flex:1;min-width:178px;
-    transition:all 0.2s cubic-bezier(0.22,1,0.36,1);
-    animation:fadeUp 0.45s ease both;
-  }
-  .sd-action:hover{border-color:rgba(200,169,106,0.35);transform:translateY(-2px);box-shadow:0 8px 22px rgba(8,11,12,0.09)}
-  .sd-action-icon{
-    width:42px;height:42px;border-radius:12px;flex-shrink:0;
-    background:#0B0B0C;border:1px solid rgba(200,169,106,0.15);
-    display:flex;align-items:center;justify-content:center;color:#C8A96A;
-  }
-  .sd-action-body{flex:1}
-  .sd-action-title{font-size:13.5px;font-weight:800;color:#0B0B0C}
-  .sd-action-sub{font-size:11.5px;color:#7A6540;margin-top:2px}
-  .sd-action-arrow{color:rgba(200,169,106,0.38);flex-shrink:0;transition:color 0.15s}
-  .sd-action:hover .sd-action-arrow{color:#C8A96A}
-
-  @media(max-width:600px){
-    .sd-main{padding:16px;gap:14px}
-    .sd-welcome{padding:20px}
-    .sd-name{font-size:21px}
-    .sd-avatar{width:50px;height:50px;font-size:17px}
-    .sd-empty-state{padding:36px 24px}
-    .sd-actions{gap:10px}
-    .sd-action{min-width:0;flex-basis:100%}
-  }
-  @media(max-width:400px){
-    .sd-welcome{padding:16px}
-    .sd-name{font-size:18px}
-    .sd-greeting{font-size:11px}
-    .sd-avatar{display:none}
-    .sd-empty-state{padding:28px 16px}
-    .sd-empty-title{font-size:15px}
-    .sd-empty-sub{font-size:12px}
-  }
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  .sd-shell{min-height:100%;width:100%;background:#F6F4EE;font-family:'Cairo',Tajawal,sans-serif;color:#0B0B0C}.sd-main{padding:26px 22px;display:flex;flex-direction:column;gap:18px;width:100%;max-width:1220px;margin-inline:auto}.sd-hero{position:relative;overflow:hidden;border-radius:28px;padding:30px;display:flex;justify-content:space-between;gap:22px;align-items:center;background:radial-gradient(circle at 18% 15%,rgba(229,185,60,.20),transparent 30%),linear-gradient(135deg,#07111B,#0B0B0C 66%,#1A160D);border:1px solid rgba(200,169,106,.24);box-shadow:0 18px 45px rgba(8,11,12,.13);animation:rise .35s ease both}.sd-hero:after{content:"";position:absolute;inset-inline-end:-110px;top:-120px;width:330px;height:330px;border-radius:999px;border:1px solid rgba(200,169,106,.14);box-shadow:inset 0 0 80px rgba(200,169,106,.08)}.sd-hero-copy{position:relative;z-index:1}.sd-hero-copy>span{display:block;color:#D9BC78;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.sd-hero h1{margin:7px 0 8px;color:#fff;font-size:30px;font-weight:900;letter-spacing:-.5px}.sd-hero p{max-width:680px;margin:0;color:rgba(255,255,255,.72);font-size:13.5px;line-height:1.8}.sd-hero-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}.sd-hero-tags em{font-style:normal;color:#D9BC78;background:rgba(200,169,106,.10);border:1px solid rgba(200,169,106,.20);border-radius:999px;padding:5px 11px;font-size:11px;font-weight:900}.sd-avatar{position:relative;z-index:1;width:78px;height:78px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border:1px solid rgba(200,169,106,.32);color:#E5B93C;font-size:24px;font-weight:900;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+  .sd-section-title h2{margin:0;font-size:17px;font-weight:900}.sd-overview,.sd-actions-wrap{display:flex;flex-direction:column;gap:10px}.sd-overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.sd-stat{min-height:112px;border-radius:22px;padding:17px;background:#FFFDF8;border:1px solid rgba(200,169,106,.16);box-shadow:0 10px 28px rgba(8,11,12,.045)}.sd-stat span{display:block;color:#8A7B60;font-size:11.5px;font-weight:900}.sd-stat strong{display:block;margin-top:15px;font-size:21px;font-weight:900;color:#0B0B0C;line-height:1.25;word-break:break-word}.sd-grid{display:grid;grid-template-columns:1.35fr .85fr;gap:14px}.sd-card{border-radius:24px;background:#FFFDF8;border:1px solid rgba(200,169,106,.16);box-shadow:0 10px 28px rgba(8,11,12,.045);overflow:hidden;animation:rise .35s ease both}.sd-card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 18px;border-bottom:1px solid rgba(200,169,106,.10);background:rgba(200,169,106,.035)}.sd-card-head strong{font-size:14px;font-weight:900}.sd-card-head span{border-radius:999px;padding:3px 10px;background:rgba(200,169,106,.12);color:#A8863E;font-size:11px;font-weight:900}.sd-ann-list{display:flex;flex-direction:column;gap:0;padding:8px 12px;max-height:390px;overflow:auto}.sd-ann-item{padding:14px 8px;border-bottom:1px solid rgba(200,169,106,.08);animation:rise .3s ease both}.sd-ann-item:last-child{border-bottom:0}.sd-ann-item p{margin:0;color:#1A1208;font-size:13.5px;line-height:1.75}.sd-ann-item div{display:flex;justify-content:space-between;gap:12px;margin-top:8px;color:#A8863E;font-size:11px;font-weight:800}.sd-void{padding:36px;text-align:center;color:#9A8A70;font-size:13px;font-weight:800}.sd-roster{padding:10px;display:flex;flex-direction:column;gap:5px;max-height:390px;overflow:auto}.sd-roster-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:14px;animation:rise .25s ease both}.sd-roster-row:hover{background:rgba(200,169,106,.06)}.sd-roster-row.is-me{background:#0B1118;color:#fff}.sd-roster-row div{width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(200,169,106,.10);border:1px solid rgba(200,169,106,.18);color:#A8863E;font-weight:900}.sd-roster-row.is-me div{color:#E5B93C}.sd-roster-row span{flex:1;font-size:12.5px;font-weight:800}.sd-roster-row em{font-style:normal;color:#D9BC78;background:rgba(200,169,106,.12);border:1px solid rgba(200,169,106,.20);border-radius:999px;padding:2px 8px;font-size:10px;font-weight:900}
+  .sd-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.sd-action{min-height:138px;display:flex;flex-direction:column;justify-content:space-between;gap:14px;padding:17px;border-radius:22px;background:linear-gradient(180deg,#FFFDF8,#F8F1E5);border:1px solid rgba(200,169,106,.16);box-shadow:0 10px 28px rgba(8,11,12,.045);text-decoration:none;color:#0B0B0C;transition:.2s ease;animation:rise .35s ease both}.sd-action:hover{transform:translateY(-3px);border-color:rgba(200,169,106,.42);box-shadow:0 16px 34px rgba(8,11,12,.075)}.sd-action strong{display:block;font-size:15px;font-weight:900}.sd-action span{display:block;margin-top:6px;color:#7A6540;font-size:12px;line-height:1.65;font-weight:700}.sd-action em{align-self:flex-start;font-style:normal;background:#0B1118;color:#D9BC78;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900}.sd-empty-state{background:#FFFDF8;border:1px solid rgba(200,169,106,.15);border-radius:22px;padding:54px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;animation:rise .35s ease both}.sd-empty-icon{font-size:38px;color:rgba(200,169,106,.45)}.sd-empty-state h2{margin:0;font-size:18px;font-weight:900}.sd-empty-state p{margin:0;color:#9A8A70;font-size:13px;font-weight:700}
+  @media(max-width:980px){.sd-overview-grid,.sd-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.sd-grid{grid-template-columns:1fr}.sd-hero{align-items:flex-start}.sd-avatar{width:62px;height:62px;border-radius:20px}}
+  @media(max-width:600px){.sd-main{padding:16px;gap:14px}.sd-hero{padding:20px;border-radius:22px}.sd-hero h1{font-size:23px}.sd-hero p{font-size:12.5px}.sd-avatar{display:none}.sd-overview-grid,.sd-actions{grid-template-columns:1fr}.sd-stat,.sd-action{min-height:auto}.sd-card,.sd-stat,.sd-action{border-radius:18px}.sd-empty-state{padding:34px 18px}}
 `;

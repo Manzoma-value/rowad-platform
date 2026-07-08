@@ -112,6 +112,7 @@ interface NavItem {
   sublabel: string;
   exact: boolean;
   icon: LucideIcon;
+  group?: "teachers" | "learning" | "reports" | "operations";
   /** When set, the item is hidden unless the school has this feature enabled. */
   feature?: FeatureKey;
   /** When true, the item is hidden for view-only (investor demo) accounts. */
@@ -148,6 +149,12 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [deactivated, setDeactivated] = useState(false);
   const [viewOnly, setViewOnly] = useState(false);
   const [schoolLang, setSchoolLang] = useState<"ar" | "sq" | "en">("sq");
+  const [openNavGroups, setOpenNavGroups] = useState<Record<string, boolean>>({
+    teachers: true,
+    learning: true,
+    reports: true,
+    operations: true,
+  });
   const schoolSlugRef = useRef<string>("");
 
   const navItems: NavItem[] = [
@@ -158,66 +165,80 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/students", sublabel: "Students", exact: false, icon: Users,
       label: tr.students,
+      group: "learning",
     },
     {
       href: "/school-admin/teachers", sublabel: "Teachers", exact: false, icon: GraduationCap,
       label: tr.teachers,
+      group: "teachers",
     },
     {
       href: "/school-admin/teacher-groups", sublabel: "Teacher Groups", exact: false, icon: Users,
       label: lang === "ar" ? "مجموعات المعلمين" : lang === "sq" ? "Grupet e mësuesve" : "Teacher Groups",
       hideForViewOnly: true,
+      group: "teachers",
     },
     {
       href: "/school-admin/workshops", sublabel: "Workshops", exact: false, icon: QrCode,
       label: lang === "ar" ? "الورش التدريبية" : lang === "sq" ? "Punëtoritë" : "Workshops",
+      group: "teachers",
     },
     {
       href: "/school-admin/classes", sublabel: "Classes", exact: false, icon: BookOpen,
       label: tr.classes,
+      group: "learning",
     },
     {
       href: "/school-admin/placement-assessment", sublabel: "Assessment", exact: false, icon: ClipboardCheck,
       label: tr.placementAssessment,
       hideForViewOnly: true,
+      group: "learning",
     },
     {
       href: "/school-admin/submissions", sublabel: "Submissions", exact: false, icon: FileStack,
       label: tr.submissions,
       hideForViewOnly: true,
+      group: "learning",
     },
     {
       href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
       label: lang === "ar" ? "طلبات المعلمين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
       hideForViewOnly: true,
+      group: "teachers",
     },
     {
       href: "/school-admin/review-queue", sublabel: "Review queue", exact: false, icon: ClipboardCheck,
       label: lang === "ar" ? "قائمة المراجعة" : lang === "sq" ? "Lista e shqyrtimit" : "Review Queue",
       hideForViewOnly: true,
+      group: "learning",
     },
     {
       href: "/school-admin/game-scores", sublabel: "Model game scores", exact: false, icon: Gamepad2,
       label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
+      group: "learning",
     },
     {
       href: "/school-admin/owner-reports", sublabel: "Owner Reports", exact: false, icon: FileText,
       label: lang === "ar" ? "تقارير المالك" : lang === "sq" ? "Raportet e pronarit" : "Owner Reports",
+      group: "reports",
     },
     {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,
       label: lang === "ar" ? "الخريطة" : lang === "sq" ? "Rruga e Pyetjeve" : "Roadmap",
       feature: "roadmap",
+      group: "learning",
     },
     {
       href: "/school-admin/reports", sublabel: "Reports", exact: false, icon: BarChart3,
       label: lang === "ar" ? "التقارير" : lang === "sq" ? "Raportet" : "Reports",
       feature: "reports",
+      group: "reports",
     },
     {
       href: "/school-admin/invites", sublabel: "Invites", exact: false, icon: Mail,
       label: lang === "ar" ? "الدعوات" : lang === "sq" ? "Ftesa" : "Invites",
       hideForViewOnly: true,
+      group: "operations",
     },
   ];
 
@@ -373,6 +394,57 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     return found?.label ?? (lang === "ar" ? "الصفحة" : "Faqja");
   })();
 
+  const navGroups = [
+    {
+      key: "teachers",
+      label: lang === "ar" ? "المعلمون" : lang === "sq" ? "Mësuesit" : "Teachers",
+      sublabel: "Teachers",
+    },
+    {
+      key: "learning",
+      label: lang === "ar" ? "التعلم والفصول" : lang === "sq" ? "Mësimi" : "Learning",
+      sublabel: "Classes",
+    },
+    {
+      key: "reports",
+      label: lang === "ar" ? "التقارير والقياس" : lang === "sq" ? "Raportet" : "Reports",
+      sublabel: "Reports",
+    },
+    {
+      key: "operations",
+      label: lang === "ar" ? "الإدارة" : lang === "sq" ? "Administrimi" : "Operations",
+      sublabel: "Admin",
+    },
+  ] as const;
+
+  const renderNavItem = (item: NavItem, child = false) => {
+    const active = isActive(item.href, item.exact);
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={`sa-nav-item ${child ? "sa-nav-child" : ""} ${active ? "active" : ""}`}
+        onClick={() => setSidebarOpen(false)}
+      >
+        {active && (
+          <>
+            <span className="sa-nav-pill" />
+            <span className="sa-nav-shimmer" />
+          </>
+        )}
+        <span className="sa-nav-icon-wrap">
+          <Icon size={17} strokeWidth={1.6} />
+        </span>
+        <span className="sa-nav-labels">
+          <span className="sa-nav-label-main">{item.label}</span>
+          <span className="sa-nav-label-sub">{item.sublabel}</span>
+        </span>
+        {active && <span className="sa-nav-dot" />}
+      </Link>
+    );
+  };
+
   // ── Deactivated wall — replaces the entire UI ─────────────────────────────
   if (deactivated) {
     return (
@@ -460,31 +532,30 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Nav */}
         <nav className="sa-nav">
-          {visibleNav.map((item) => {
-            const active = isActive(item.href, item.exact);
-            const Icon = item.icon;
+          {visibleNav.filter((item) => !item.group).map((item) => renderNavItem(item))}
+
+          {navGroups.map((group) => {
+            const items = visibleNav.filter((item) => item.group === group.key);
+            if (items.length === 0) return null;
+            const isOpen = openNavGroups[group.key] ?? true;
+            const hasActive = items.some((item) => isActive(item.href, item.exact));
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`sa-nav-item ${active ? "active" : ""}`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                {active && (
-                  <>
-                    <span className="sa-nav-pill" />
-                    <span className="sa-nav-shimmer" />
-                  </>
-                )}
-                <span className="sa-nav-icon-wrap">
-                  <Icon size={17} strokeWidth={1.6} />
-                </span>
-                <span className="sa-nav-labels">
-                  <span className="sa-nav-label-main">{item.label}</span>
-                  <span className="sa-nav-label-sub">{item.sublabel}</span>
-                </span>
-                {active && <span className="sa-nav-dot" />}
-              </Link>
+              <div key={group.key} className={`sa-nav-group ${hasActive ? "active" : ""}`}>
+                <button
+                  type="button"
+                  className="sa-nav-group-head"
+                  onClick={() =>
+                    setOpenNavGroups((prev) => ({ ...prev, [group.key]: !(prev[group.key] ?? true) }))
+                  }
+                >
+                  <span>
+                    <span className="sa-nav-group-title">{group.label}</span>
+                    <span className="sa-nav-group-sub">{group.sublabel}</span>
+                  </span>
+                  <span className={`sa-nav-group-chev ${isOpen ? "open" : ""}`}>⌄</span>
+                </button>
+                {isOpen && <div className="sa-nav-group-items">{items.map((item) => renderNavItem(item, true))}</div>}
+              </div>
             );
           })}
 
@@ -836,6 +907,86 @@ const styles = `
   .sa-nav-sep {
     height: 1px; margin: 8px 8px;
     background: linear-gradient(90deg, transparent, rgba(200,169,106,0.15), transparent);
+  }
+
+  .sa-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 5px 0;
+    padding: 6px;
+    border: 1px solid rgba(200,169,106,0.08);
+    border-radius: 18px;
+    background: rgba(255,255,255,0.018);
+    flex-shrink: 0;
+  }
+  .sa-nav-group.active {
+    border-color: rgba(200,169,106,0.22);
+    background: rgba(200,169,106,0.035);
+  }
+  .sa-nav-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 13px;
+    background: transparent;
+    color: rgba(245,229,188,0.88);
+    cursor: pointer;
+    text-align: start;
+    font-family: var(--sa-font);
+    transition: background 0.18s var(--sa-ease-out), color 0.18s var(--sa-ease-out);
+  }
+  .sa-nav-group-head:hover {
+    background: rgba(232, 220, 188, 0.055);
+    color: #F5E5BC;
+  }
+  .sa-nav-group-title {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 900;
+    line-height: 1.25;
+  }
+  .sa-nav-group-sub {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--sa-font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(232,220,188,0.42);
+  }
+  .sa-nav-group-chev {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 8px;
+    border: 1px solid rgba(200,169,106,0.14);
+    color: var(--sa-gold-soft);
+    transition: transform 0.18s var(--sa-ease-out), background 0.18s var(--sa-ease-out);
+  }
+  .sa-nav-group-chev.open { transform: rotate(180deg); }
+  .sa-nav-group-head:hover .sa-nav-group-chev { background: rgba(200,169,106,0.10); }
+  .sa-nav-group-items {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sa-nav-child {
+    min-height: 46px;
+    padding: 8px 10px;
+    border-radius: 13px;
+  }
+  .sa-nav-child .sa-nav-icon-wrap {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
   }
 
   .sa-nav-item {
