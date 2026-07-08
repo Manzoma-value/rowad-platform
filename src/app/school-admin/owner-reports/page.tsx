@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
@@ -18,22 +18,22 @@ type Row = {
 
 const UI = {
   ar: {
-    title: "ØªÙ‚Ø§Ø±ÙŠØ± Ø§Ù„Ù…Ø§Ù„Ùƒ",
-    sub: "ØªÙ‚Ø§Ø±ÙŠØ± Ø±Ø³Ù…ÙŠØ© Ù…ÙØµØ¯ÙŽØ±Ø© Ù…Ù† Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù…Ù†ØµØ© ÙˆÙ…ÙˆØ¬ÙŽÙ‘Ù‡Ø© Ù„Ù…Ø¯Ø±Ø³ØªÙƒ.",
-    empty: "Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚Ø§Ø±ÙŠØ± Ù…Ù†Ø´ÙˆØ±Ø© Ø¨Ø¹Ø¯.",
-    formal: "ØªÙ‚Ø±ÙŠØ± Ø±Ø³Ù…ÙŠ",
-    open: "Ø§ÙØªØ­ Ø§Ù„ØªÙ‚Ø±ÙŠØ±",
-    issuedBy: "Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ù…Ù†ØµØ©",
-    publishedOn: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ù†Ø´Ø±",
+    title: "تقارير المالك",
+    sub: "تقارير رسمية مُصدَرة من إدارة المنصة وموجَّهة لمدرستك.",
+    empty: "لا توجد تقارير منشورة بعد.",
+    formal: "تقرير رسمي",
+    open: "افتح التقرير",
+    issuedBy: "إدارة المنصة",
+    publishedOn: "تاريخ النشر",
   },
   sq: {
     title: "Raportet e pronarit",
-    sub: "Raporte zyrtare tÃ« lÃ«shuara nga administrata e platformÃ«s pÃ«r shkollÃ«n tuaj.",
-    empty: "Nuk ka raporte tÃ« publikuara.",
+    sub: "Raporte zyrtare të lëshuara nga administrata e platformës për shkollën tuaj.",
+    empty: "Nuk ka raporte të publikuara.",
     formal: "Raport zyrtar",
     open: "Hap raportin",
-    issuedBy: "Administrata e platformÃ«s",
-    publishedOn: "Publikuar mÃ«",
+    issuedBy: "Administrata e platformës",
+    publishedOn: "Publikuar më",
   },
 } as const;
 
@@ -93,7 +93,7 @@ export default function AdminOwnerReportsListPage() {
                 <span><strong>{T.publishedOn}:</strong> {fmt(r.published_at)}</span>
                 <span className="aor-issuer">{T.issuedBy}</span>
               </div>
-              <span className="aor-open">{T.open} â†’</span>
+              <span className="aor-open">{T.open} →</span>
             </Link>
           ))}
         </div>
@@ -107,7 +107,7 @@ export default function AdminOwnerReportsListPage() {
         .aor-sub { font-size:13.5px; color:#5E5A52; max-width:680px; line-height:1.85; margin:0; }
 
         .aor-empty { padding:80px 24px; text-align:center; background:linear-gradient(165deg,#FCF6E6,#F4EBD3); border:1.5px solid rgba(194,160,89,0.32); border-radius:18px; color:#8B6915; }
-        .aor-empty-mark { color:#B8A082; display:inline-flex; margin-bottom:14px; opacity:0.7; }
+        .aor-empty-mark { color:#C8A96A; display:inline-flex; margin-bottom:14px; opacity:0.7; }
         .aor-empty p { font-weight:700; font-size:14px; margin:0; }
 
         .aor-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:16px; }
@@ -141,4 +141,3 @@ export default function AdminOwnerReportsListPage() {
     </div>
   );
 }
-

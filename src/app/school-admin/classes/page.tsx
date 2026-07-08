@@ -277,7 +277,7 @@ export default function SchoolAdminClassesPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @keyframes sp{to{transform:rotate(360deg)}}
-        :root{--gold:#B8A082;--gold-pale:rgba(184,160,130,0.07);--gold-border:rgba(184,160,130,0.18);--black:#1A1A1A;--off-white:#EFEAE0;--text:#1A1A1A;--text2:#3D3526;--text3:#8A7B60;--surface:#FFFFFF;--border:#E4DDD0;--border2:#D4CAB8;--font:'Cairo',sans-serif}
+        :root{--gold:#C8A96A;--gold-pale:rgba(200,169,106,0.07);--gold-border:rgba(200,169,106,0.18);--black:#0B0B0C;--off-white:#F5F3EE;--text:#0B0B0C;--text2:#3D3526;--text3:#8A7B60;--surface:#FFFFFF;--border:#E4DDD0;--border2:#D4CAB8;--font:'Cairo',sans-serif}
         .cl-page{display:flex;flex-direction:column;gap:20px;font-family:var(--font);animation:fadeUp 0.3s ease}
         .cl-header{display:flex;align-items:flex-start;justify-content:space-between}
         .cl-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
@@ -290,18 +290,18 @@ export default function SchoolAdminClassesPage() {
         .create-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase}
         .create-row{display:flex;gap:10px}
         .cl-input{flex:1;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);color:var(--text);outline:none;transition:border-color 0.15s}
-        .cl-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,160,130,0.1)}
+        .cl-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,169,106,0.1)}
         .cl-btn{display:inline-flex;align-items:center;gap:7px;background:var(--black);color:var(--gold);padding:10px 20px;border:none;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:background 0.15s}
         .cl-btn:hover:not(:disabled){background:#1A1A1E}
         .cl-btn:disabled{opacity:0.5;cursor:not-allowed}
-        .btn-spin{width:12px;height:12px;border:2px solid rgba(184,160,130,0.2);border-top-color:var(--gold);border-radius:50%;animation:sp 0.7s linear infinite}
+        .btn-spin{width:12px;height:12px;border:2px solid rgba(200,169,106,0.2);border-top-color:var(--gold);border-radius:50%;animation:sp 0.7s linear infinite}
         .cl-error{display:flex;align-items:center;gap:6px;font-size:12px;color:#8B2020;background:rgba(180,40,40,0.05);border:1px solid rgba(180,40,40,0.15);padding:8px 12px;border-radius:6px}
         .cl-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:64px 20px;color:var(--text3);font-size:13px;font-weight:500}
         .cl-empty-icon{width:64px;height:64px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);opacity:0.6}
         .cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
         .cl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:13px;position:relative;overflow:hidden;transition:border-color 0.15s,box-shadow 0.15s;animation:fadeUp 0.4s ease both}
-        .cl-card:hover{border-color:rgba(184,160,130,0.35);box-shadow:0 4px 16px rgba(184,160,130,0.08)}
-        .cl-card-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.3) 50%,transparent)}
+        .cl-card:hover{border-color:rgba(200,169,106,0.35);box-shadow:0 4px 16px rgba(200,169,106,0.08)}
+        .cl-card-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.3) 50%,transparent)}
         .cl-card-head{display:flex;align-items:center;gap:11px}
         .cl-card-icon{width:38px;height:38px;border-radius:8px;background:var(--black);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
         .cl-card-body{flex:1}
@@ -327,4 +327,3 @@ export default function SchoolAdminClassesPage() {
     </div>
   );
 }
-

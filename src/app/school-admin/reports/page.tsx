@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useRef } from "react";
 
-// â”€â”€â”€ TYPES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TYPES ────────────────────────────────────────────────────────────────────
 
 interface StudentStat {
   student_id: string;
@@ -92,27 +92,27 @@ interface StudentTraitDetail {
   average: number;
 }
 
-// â”€â”€â”€ CONSTANTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
 const MAQSAD_LABELS: Record<string, string> = {
-  DEEN: "Ø§Ù„Ø¯ÙŠÙ†",
-  AQL: "Ø§Ù„Ø¹Ù‚Ù„",
-  NAFS: "Ø§Ù„Ù†ÙØ³",
-  NASL: "Ø§Ù„Ù†Ø³Ù„",
-  MAL: "Ø§Ù„Ù…Ø§Ù„",
+  DEEN: "الدين",
+  AQL: "العقل",
+  NAFS: "النفس",
+  NASL: "النسل",
+  MAL: "المال",
 };
 const MAQSAD_COLORS: Record<
   string,
   { color: string; bg: string; fill: string }
 > = {
-  DEEN: { color: "#78590A", bg: "rgba(217,201,176,0.12)", fill: "#D9C9B0" },
+  DEEN: { color: "#78590A", bg: "rgba(229,185,60,0.12)", fill: "#E5B93C" },
   AQL: { color: "#4A2595", bg: "rgba(91,53,160,0.10)", fill: "#7C4DFF" },
   NAFS: { color: "#115C35", bg: "rgba(26,107,66,0.10)", fill: "#1DB85A" },
   NASL: { color: "#7A1818", bg: "rgba(139,30,30,0.10)", fill: "#E03535" },
   MAL: { color: "#5C3D08", bg: "rgba(154,98,0,0.10)", fill: "#C47F0A" },
 };
 
-// â”€â”€â”€ SMALL COMPONENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── SMALL COMPONENTS ─────────────────────────────────────────────────────────
 
 function AnimatedNumber({
   value,
@@ -172,11 +172,11 @@ function RingChart({
         }}
       >
         <span style={{ fontSize: 11, color: "var(--dim)", fontWeight: 700 }}>
-          â€”
+          —
         </span>
       </div>
     );
-  const color = pct >= 75 ? "#4ADE80" : pct >= 50 ? "#B8A082" : "#EF4444";
+  const color = pct >= 75 ? "#4ADE80" : pct >= 50 ? "#C8A96A" : "#EF4444";
   const offset = circ - (Math.min(animated, 100) / 100) * circ;
   return (
     <div
@@ -225,7 +225,7 @@ function RingChart({
 
 function SparkBar({ data }: { data: number[] }) {
   const max = Math.max(...data, 1);
-  const colors = ["#EF4444", "#B8A082", "#D9C9B0", "#4ADE80"];
+  const colors = ["#EF4444", "#C8A96A", "#E5B93C", "#4ADE80"];
   return (
     <div
       style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 32 }}
@@ -248,8 +248,8 @@ function SparkBar({ data }: { data: number[] }) {
 
 function DistBar({ data }: { data: DistributionItem[] }) {
   const max = Math.max(...data.map((d) => d.count), 1);
-  const colors = ["#EF4444", "#B8A082", "#D9C9B0", "#4ADE80"];
-  const labels = ["0â€“25%", "26â€“50%", "51â€“75%", "76â€“100%"];
+  const colors = ["#EF4444", "#C8A96A", "#E5B93C", "#4ADE80"];
+  const labels = ["0–25%", "26–50%", "51–75%", "76–100%"];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {data.map((item, i) => (
@@ -304,7 +304,7 @@ function DistBar({ data }: { data: DistributionItem[] }) {
 
 function Sparkline({ points }: { points: number[] }) {
   if (points.length < 2)
-    return <span style={{ fontSize: 11, color: "var(--dim)" }}>â€”</span>;
+    return <span style={{ fontSize: 11, color: "var(--dim)" }}>—</span>;
   const w = 90,
     h = 30,
     pad = 3;
@@ -319,7 +319,7 @@ function Sparkline({ points }: { points: number[] }) {
     .map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${ys[i].toFixed(1)}`)
     .join(" ");
   const last = points[points.length - 1];
-  const color = last >= 75 ? "#4ADE80" : last >= 50 ? "#B8A082" : "#EF4444";
+  const color = last >= 75 ? "#4ADE80" : last >= 50 ? "#C8A96A" : "#EF4444";
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
       <path
@@ -358,7 +358,7 @@ function Heatmap({
           padding: "24px 0",
         }}
       >
-        Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ø¨Ø¹Ø¯
+        لا توجد بيانات بعد
       </div>
     );
   const getColor = (v: number | null) =>
@@ -367,7 +367,7 @@ function Heatmap({
       : v >= 75
         ? "rgba(74,222,128,0.18)"
         : v >= 50
-          ? "rgba(184,160,130,0.28)"
+          ? "rgba(200,169,106,0.28)"
           : "rgba(239,68,68,0.18)";
   const getTextColor = (v: number | null) =>
     v === null
@@ -395,12 +395,12 @@ function Heatmap({
                   fontSize: 10,
                 }}
               >
-                Ø§Ù„Ø·Ø§Ù„Ø¨
+                الطالب
               </th>
               {modules.map((m) => (
                 <th
                   key={m.id}
-                  title={`${m.stage} â€” ${m.title}`}
+                  title={`${m.stage} — ${m.title}`}
                   style={{
                     textAlign: "center",
                     padding: "6px 4px 10px",
@@ -456,7 +456,7 @@ function Heatmap({
                         color: getTextColor(score),
                       }}
                     >
-                      {score !== null ? score : "Â·"}
+                      {score !== null ? score : "·"}
                     </div>
                   </td>
                 ))}
@@ -469,7 +469,7 @@ function Heatmap({
   );
 }
 
-// â”€â”€â”€ TRAIT RADAR CHART â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TRAIT RADAR CHART ────────────────────────────────────────────────────────
 
 function TraitRadar({
   data,
@@ -488,7 +488,7 @@ function TraitRadar({
           padding: 20,
         }}
       >
-        Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ø³Ù…Ø§Øª
+        لا توجد بيانات سمات
       </div>
     );
   const n = data.length;
@@ -534,8 +534,8 @@ function TraitRadar({
       ))}
       <polygon
         points={pts}
-        fill="rgba(184,160,130,0.12)"
-        stroke="#B8A082"
+        fill="rgba(200,169,106,0.12)"
+        stroke="#C8A96A"
         strokeWidth="2"
       />
       {data.map((d, i) => {
@@ -546,7 +546,7 @@ function TraitRadar({
         const cfg = MAQSAD_COLORS[d.maqsad];
         return (
           <g key={i}>
-            <circle cx={x} cy={y} r="4" fill={cfg?.fill ?? "#B8A082"} />
+            <circle cx={x} cy={y} r="4" fill={cfg?.fill ?? "#C8A96A"} />
             <text
               x={lx}
               y={ly}
@@ -565,7 +565,7 @@ function TraitRadar({
   );
 }
 
-// â”€â”€â”€ TRAIT BARS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TRAIT BARS ───────────────────────────────────────────────────────────────
 
 function TraitBars({
   traits,
@@ -588,7 +588,7 @@ function TraitBars({
           padding: 16,
         }}
       >
-        Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø³Ù…Ø§Øª Ø¨Ø¹Ø¯
+        لا توجد تقييمات سمات بعد
       </div>
     );
   return (
@@ -607,7 +607,7 @@ function TraitBars({
                 fontWeight: 800,
                 padding: "2px 8px",
                 borderRadius: 5,
-                background: cfg?.bg ?? "rgba(184,160,130,0.1)",
+                background: cfg?.bg ?? "rgba(200,169,106,0.1)",
                 color: cfg?.color ?? "#8B6914",
                 flexShrink: 0,
                 minWidth: 44,
@@ -640,7 +640,7 @@ function TraitBars({
                 style={{
                   height: "100%",
                   width: `${val}%`,
-                  background: cfg?.fill ?? "#B8A082",
+                  background: cfg?.fill ?? "#C8A96A",
                   borderRadius: 99,
                   transition: "width 0.8s cubic-bezier(0.34,1.56,0.64,1)",
                 }}
@@ -666,7 +666,7 @@ function TraitBars({
   );
 }
 
-// â”€â”€â”€ MAIN PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function SchoolAdminReportsPage() {
   const [classes, setClasses] = useState<ClassData[]>([]);
@@ -758,7 +758,7 @@ export default function SchoolAdminReportsPage() {
       <div className="rp-page" dir="rtl">
         <div className="rp-loading">
           <div className="rp-spinner" />
-          <span>Ø¬Ø§Ø±Ù ØªØ­Ù…ÙŠÙ„ Ø§Ù„ØªÙ‚Ø§Ø±ÙŠØ±...</span>
+          <span>جارٍ تحميل التقارير...</span>
         </div>
         <style>{css}</style>
       </div>
@@ -766,16 +766,16 @@ export default function SchoolAdminReportsPage() {
 
   return (
     <div className="rp-page" dir="rtl">
-      {/* â”€â”€ MASTHEAD â”€â”€ */}
+      {/* ── MASTHEAD ── */}
       <div className="rp-masthead">
         <div className="rp-masthead-left">
           <div className="rp-eyebrow">
             <span className="rp-eyebrow-dot" />
-            Ù„ÙˆØ­Ø© Ø§Ù„ØªØ­Ù„ÙŠÙ„Ø§Øª
+            لوحة التحليلات
           </div>
-          <h1 className="rp-headline">ØªÙ‚Ø§Ø±ÙŠØ± Ø§Ù„Ø£Ø¯Ø§Ø¡</h1>
+          <h1 className="rp-headline">تقارير الأداء</h1>
           <p className="rp-subline">
-            Ù…Ø±Ø§Ù‚Ø¨Ø© Ø´Ø§Ù…Ù„Ø© Ù„Ø£Ø¯Ø§Ø¡ Ø§Ù„ÙØµÙˆÙ„ ÙˆØ§Ù„Ø·Ù„Ø§Ø¨ ÙˆØ§Ù„Ø³Ù…Ø§Øª
+            مراقبة شاملة لأداء الفصول والطلاب والسمات
           </p>
         </div>
         <div className="rp-masthead-badge">
@@ -795,36 +795,36 @@ export default function SchoolAdminReportsPage() {
         </div>
       </div>
 
-      {/* â”€â”€ KPIs â”€â”€ */}
+      {/* ── KPIs ── */}
       <div className="rp-kpi-strip">
         {[
           {
-            label: "Ø§Ù„ÙØµÙˆÙ„",
+            label: "الفصول",
             value: classes.length,
             suffix: "",
-            accent: "#B8A082",
-            icon: "ðŸ›",
+            accent: "#C8A96A",
+            icon: "🏛",
           },
           {
-            label: "Ø§Ù„Ø·Ù„Ø§Ø¨",
+            label: "الطلاب",
             value: totalStudents,
             suffix: "",
-            accent: "#D9C9B0",
-            icon: "ðŸ‘¤",
+            accent: "#E5B93C",
+            icon: "👤",
           },
           {
-            label: "Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø§Øª",
+            label: "المحاولات",
             value: totalAttempts,
             suffix: "",
             accent: "#A78BFA",
-            icon: "ðŸ“",
+            icon: "📝",
           },
           {
-            label: "Ù…ØªÙˆØ³Ø· Ø§Ù„Ù…Ø¯Ø±Ø³Ø©",
+            label: "متوسط المدرسة",
             value: schoolAvg ?? 0,
             suffix: "%",
             accent: "#4ADE80",
-            icon: "â—Ž",
+            icon: "◎",
           },
         ].map((k, i) => (
           <div
@@ -837,8 +837,8 @@ export default function SchoolAdminReportsPage() {
               <span className="rp-kpi-label">{k.label}</span>
             </div>
             <div className="rp-kpi-value" style={{ color: k.accent }}>
-              {schoolAvg === null && k.label === "Ù…ØªÙˆØ³Ø· Ø§Ù„Ù…Ø¯Ø±Ø³Ø©" ? (
-                "â€”"
+              {schoolAvg === null && k.label === "متوسط المدرسة" ? (
+                "—"
               ) : (
                 <AnimatedNumber value={k.value} suffix={k.suffix} />
               )}
@@ -853,16 +853,16 @@ export default function SchoolAdminReportsPage() {
         ))}
       </div>
 
-      {/* â”€â”€ CLASSES â”€â”€ */}
+      {/* ── CLASSES ── */}
       <div className="rp-section-head">
         <div className="rp-sh-line" />
-        <span className="rp-sh-label">Ø§Ù„ÙØµÙˆÙ„ Ø§Ù„Ø¯Ø±Ø§Ø³ÙŠØ©</span>
+        <span className="rp-sh-label">الفصول الدراسية</span>
         <div className="rp-sh-count">{classes.length}</div>
         <div className="rp-sh-line" />
       </div>
 
       {classes.length === 0 ? (
-        <div className="rp-empty">Ù„Ø§ ØªÙˆØ¬Ø¯ ÙØµÙˆÙ„ Ø¨Ø¹Ø¯</div>
+        <div className="rp-empty">لا توجد فصول بعد</div>
       ) : (
         <div className="rp-classes-grid">
           {classes.map((cls, i) => {
@@ -880,18 +880,18 @@ export default function SchoolAdminReportsPage() {
                     <div className="rp-cc-teacher">{cls.teacher_name}</div>
                   )}
                   <div className={`rp-cc-status ${active ? "open" : ""}`}>
-                    {active ? "â–²" : "â–¼"}
+                    {active ? "▲" : "▼"}
                   </div>
                 </div>
                 <div className="rp-cc-stats">
                   <div className="rp-cc-stat">
                     <div className="rp-cc-stat-num">{cls.student_count}</div>
-                    <div className="rp-cc-stat-lbl">Ø·Ø§Ù„Ø¨</div>
+                    <div className="rp-cc-stat-lbl">طالب</div>
                   </div>
                   <div className="rp-cc-divider" />
                   <div className="rp-cc-stat">
                     <div className="rp-cc-stat-num">{cls.total_attempts}</div>
-                    <div className="rp-cc-stat-lbl">Ù…Ø­Ø§ÙˆÙ„Ø©</div>
+                    <div className="rp-cc-stat-lbl">محاولة</div>
                   </div>
                   <div className="rp-cc-divider" />
                   <div className="rp-cc-stat" style={{ flex: "none" }}>
@@ -911,14 +911,14 @@ export default function SchoolAdminReportsPage() {
         </div>
       )}
 
-      {/* â”€â”€ CLASS DETAIL â”€â”€ */}
+      {/* ── CLASS DETAIL ── */}
       {selectedClass && (
         <div className="rp-detail-panel">
           <div className="rp-dp-header">
             <div>
               <div className="rp-eyebrow">
                 <span className="rp-eyebrow-dot" />
-                ØªÙØ§ØµÙŠÙ„ Ø§Ù„ÙØµÙ„
+                تفاصيل الفصل
               </div>
               <h2 className="rp-dp-title">{selectedClass.name}</h2>
             </div>
@@ -953,13 +953,13 @@ export default function SchoolAdminReportsPage() {
               className={`rp-tab ${activeTab === "performance" ? "active" : ""}`}
               onClick={() => setActiveTab("performance")}
             >
-              Ø§Ù„Ø£Ø¯Ø§Ø¡ Ø§Ù„Ø£ÙƒØ§Ø¯ÙŠÙ…ÙŠ
+              الأداء الأكاديمي
             </button>
             <button
               className={`rp-tab ${activeTab === "traits" ? "active" : ""}`}
               onClick={() => setActiveTab("traits")}
             >
-              Ø§Ù„Ø³Ù…Ø§Øª ÙˆØ§Ù„Ù…Ù‚Ø§ØµØ¯
+              السمات والمقاصد
               {traitData && traitData.class_radar.length > 0 && (
                 <span className="rp-tab-badge">
                   {traitData.class_radar.length}
@@ -974,17 +974,17 @@ export default function SchoolAdminReportsPage() {
             </div>
           ) : (
             <>
-              {/* â”€â”€ PERFORMANCE TAB â”€â”€ */}
+              {/* ── PERFORMANCE TAB ── */}
               {activeTab === "performance" && detail && (
                 <>
                   <div className="rp-charts-row">
                     <div className="rp-panel">
-                      <div className="rp-panel-label">ØªÙˆØ²ÙŠØ¹ Ø§Ù„Ø¯Ø±Ø¬Ø§Øª</div>
+                      <div className="rp-panel-label">توزيع الدرجات</div>
                       <DistBar data={detail.distribution} />
                     </div>
                     <div className="rp-panel" style={{ flex: 2 }}>
                       <div className="rp-panel-label">
-                        Ø®Ø±ÙŠØ·Ø© Ø§Ù„Ø£Ø¯Ø§Ø¡ Â· Ø·Ø§Ù„Ø¨ Ã— ÙˆØ­Ø¯Ø©
+                        خريطة الأداء · طالب × وحدة
                       </div>
                       <Heatmap data={detail.heatmap} modules={detail.modules} />
                     </div>
@@ -992,7 +992,7 @@ export default function SchoolAdminReportsPage() {
 
                   {/* Students table */}
                   <div className="rp-panel">
-                    <div className="rp-panel-label">Ø£Ø¯Ø§Ø¡ Ø§Ù„Ø·Ù„Ø§Ø¨ Ø§Ù„ÙØ±Ø¯ÙŠ</div>
+                    <div className="rp-panel-label">أداء الطلاب الفردي</div>
                     {detail.students?.length === 0 ? (
                       <div
                         style={{
@@ -1002,16 +1002,16 @@ export default function SchoolAdminReportsPage() {
                           padding: "20px 0",
                         }}
                       >
-                        Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ø·Ù„Ø§Ø¨ ÙÙŠ Ù‡Ø°Ø§ Ø§Ù„ÙØµÙ„
+                        لا يوجد طلاب في هذا الفصل
                       </div>
                     ) : (
                       <div className="rp-table">
                         <div className="rp-table-head">
-                          <span>Ø§Ù„Ø·Ø§Ù„Ø¨</span>
-                          <span>Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø§Øª</span>
-                          <span>Ø§Ù„Ù†Ø§Ø¬Ø­Ø©</span>
-                          <span>Ø§Ù„Ù…ØªÙˆØ³Ø·</span>
-                          <span>Ù…Ù†Ø­Ù†Ù‰ Ø§Ù„Ø£Ø¯Ø§Ø¡</span>
+                          <span>الطالب</span>
+                          <span>المحاولات</span>
+                          <span>الناجحة</span>
+                          <span>المتوسط</span>
+                          <span>منحنى الأداء</span>
                         </div>
                         {detail.students?.map((s, i) => (
                           <div
@@ -1066,7 +1066,7 @@ export default function SchoolAdminReportsPage() {
                           alignItems: "center",
                         }}
                       >
-                        <span>Ø³Ø¬Ù„ {currentStudent.full_name}</span>
+                        <span>سجل {currentStudent.full_name}</span>
                         <button
                           className="rp-close-sm"
                           onClick={() => {
@@ -1074,7 +1074,7 @@ export default function SchoolAdminReportsPage() {
                             setStudentTraits(null);
                           }}
                         >
-                          âœ•
+                          ✕
                         </button>
                       </div>
 
@@ -1094,7 +1094,7 @@ export default function SchoolAdminReportsPage() {
                             className="rp-panel-label"
                             style={{ marginBottom: 12 }}
                           >
-                            Ø§Ù„Ù…Ø³Ø§Ø± Ø§Ù„Ø£ÙƒØ§Ø¯ÙŠÙ…ÙŠ
+                            المسار الأكاديمي
                           </div>
                           {currentStudent.timeline?.length === 0 ? (
                             <div
@@ -1105,7 +1105,7 @@ export default function SchoolAdminReportsPage() {
                                 padding: "20px 0",
                               }}
                             >
-                              Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø­Ø§ÙˆÙ„Ø§Øª Ø¨Ø¹Ø¯
+                              لا توجد محاولات بعد
                             </div>
                           ) : (
                             <div className="rp-timeline">
@@ -1114,7 +1114,7 @@ export default function SchoolAdminReportsPage() {
                                   item.score_pct >= 75
                                     ? "#4ADE80"
                                     : item.score_pct >= 50
-                                      ? "#B8A082"
+                                      ? "#C8A96A"
                                       : "#EF4444";
                                 return (
                                   <div
@@ -1168,7 +1168,7 @@ export default function SchoolAdminReportsPage() {
                               className="rp-panel-label"
                               style={{ marginBottom: 12 }}
                             >
-                              Ø§Ù„Ø³Ù…Ø§Øª Ø§Ù„Ø´Ø®ØµÙŠØ©
+                              السمات الشخصية
                             </div>
                             <div
                               style={{
@@ -1206,7 +1206,7 @@ export default function SchoolAdminReportsPage() {
                               padding: 20,
                             }}
                           >
-                            Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø³Ù…Ø§Øª Ø¨Ø¹Ø¯
+                            لا توجد تقييمات سمات بعد
                           </div>
                         )}
                       </div>
@@ -1215,7 +1215,7 @@ export default function SchoolAdminReportsPage() {
                 </>
               )}
 
-              {/* â”€â”€ TRAITS TAB â”€â”€ */}
+              {/* ── TRAITS TAB ── */}
               {activeTab === "traits" && (
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 16 }}
@@ -1252,10 +1252,10 @@ export default function SchoolAdminReportsPage() {
                             marginBottom: 6,
                           }}
                         >
-                          Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø³Ù…Ø§Øª Ø¨Ø¹Ø¯
+                          لا توجد تقييمات سمات بعد
                         </div>
                         <div style={{ fontSize: 12 }}>
-                          Ù‚Ù… Ø¨ØªÙ‚ÙŠÙŠÙ… Ø³Ù…Ø§Øª Ø§Ù„Ø·Ù„Ø§Ø¨ Ù…Ù† Ù„ÙˆØ­Ø© Ø§Ù„Ù…Ø¹Ù„Ù…
+                          قم بتقييم سمات الطلاب من لوحة المعلم
                         </div>
                       </div>
                     </div>
@@ -1268,7 +1268,7 @@ export default function SchoolAdminReportsPage() {
                           style={{ alignItems: "center" }}
                         >
                           <div className="rp-panel-label">
-                            Ø±Ø§Ø¯Ø§Ø± Ø§Ù„Ø³Ù…Ø§Øª Â· Ù…ØªÙˆØ³Ø· Ø§Ù„ÙØµÙ„
+                            رادار السمات · متوسط الفصل
                           </div>
                           <TraitRadar
                             data={traitData.class_radar.map((r) => ({
@@ -1281,7 +1281,7 @@ export default function SchoolAdminReportsPage() {
                         </div>
                         <div className="rp-panel" style={{ flex: 2 }}>
                           <div className="rp-panel-label">
-                            Ù…ØªÙˆØ³Ø· Ø§Ù„Ø³Ù…Ø§Øª Â· Ù…Ù‚Ø§Ø±Ù†Ø© Ø§Ù„ÙØµÙ„
+                            متوسط السمات · مقارنة الفصل
                           </div>
                           <TraitBars
                             traits={traitData.class_radar.map((r) => ({
@@ -1295,13 +1295,13 @@ export default function SchoolAdminReportsPage() {
                             className="rp-panel-label"
                             style={{ marginTop: 8 }}
                           >
-                            Ø¨Ù†Ø§Ø¡Ù‹ Ø¹Ù„Ù‰{" "}
+                            بناءً على{" "}
                             {
                               traitData.students.filter(
                                 (s) => s.assessments_count > 0,
                               ).length
                             }{" "}
-                            Ø·Ø§Ù„Ø¨ ØªÙ… ØªÙ‚ÙŠÙŠÙ…Ù‡Ù…
+                            طالب تم تقييمهم
                           </div>
                         </div>
                       </div>
@@ -1309,7 +1309,7 @@ export default function SchoolAdminReportsPage() {
                       {/* Per-student trait table */}
                       <div className="rp-panel">
                         <div className="rp-panel-label">
-                          Ø§Ù„Ø³Ù…Ø§Øª Ø§Ù„ÙØ±Ø¯ÙŠØ© Â· ÙƒÙ„ Ø·Ø§Ù„Ø¨
+                          السمات الفردية · كل طالب
                         </div>
                         {traitData.students.map((s, i) => (
                           <div
@@ -1337,7 +1337,7 @@ export default function SchoolAdminReportsPage() {
                                     marginTop: 1,
                                   }}
                                 >
-                                  {s.assessments_count} ØªÙ‚ÙŠÙŠÙ… Ù…ÙƒØªÙ…Ù„
+                                  {s.assessments_count} تقييم مكتمل
                                 </div>
                               </div>
                               {s.assessments_count === 0 && (
@@ -1348,7 +1348,7 @@ export default function SchoolAdminReportsPage() {
                                     fontStyle: "italic",
                                   }}
                                 >
-                                  Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚ÙŠÙŠÙ…Ø§Øª
+                                  لا توجد تقييمات
                                 </span>
                               )}
                             </div>
@@ -1400,7 +1400,7 @@ export default function SchoolAdminReportsPage() {
                                             left: `${classAvg}%`,
                                             zIndex: 2,
                                           }}
-                                          title={`Ù…ØªÙˆØ³Ø· Ø§Ù„ÙØµÙ„: ${classAvg}%`}
+                                          title={`متوسط الفصل: ${classAvg}%`}
                                         />
                                         <div
                                           style={{
@@ -1410,7 +1410,7 @@ export default function SchoolAdminReportsPage() {
                                               t.average >= 75
                                                 ? "#1DB85A"
                                                 : t.average >= 50
-                                                  ? "#B8A082"
+                                                  ? "#C8A96A"
                                                   : "#E03535",
                                             borderRadius: 99,
                                             transition: "width 0.8s ease",
@@ -1456,7 +1456,7 @@ export default function SchoolAdminReportsPage() {
   );
 }
 
-// â”€â”€â”€ CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CSS ──────────────────────────────────────────────────────────────────────
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
@@ -1468,17 +1468,17 @@ const css = `
 @keyframes glow{0%,100%{opacity:0.4}50%{opacity:0.8}}
 
 :root{
-  --bg:#EFEAE0;--surface:#FFFFFF;--surface2:#FAF8F4;
-  --border:rgba(184,160,130,0.18);--border2:rgba(0,0,0,0.07);
+  --bg:#F5F3EE;--surface:#FFFFFF;--surface2:#FAF8F4;
+  --border:rgba(200,169,106,0.18);--border2:rgba(0,0,0,0.07);
   --text:#16120C;--text2:#42392A;--text3:#8A7A5A;--dim:#8A7A5A;
-  --gold:#B8A082;--gold-b:#D9C9B0;
+  --gold:#C8A96A;--gold-b:#E5B93C;
   --font:'Cairo',sans-serif;
 }
 
 .rp-page{display:flex;flex-direction:column;gap:28px;font-family:var(--font);color:var(--text);background:var(--bg);min-height:100vh;padding:32px 36px 60px;animation:fadeIn 0.4s ease}
 
 .rp-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:200px;color:var(--dim);font-size:14px}
-.rp-spinner{width:24px;height:24px;border:2.5px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
+.rp-spinner{width:24px;height:24px;border:2.5px solid rgba(200,169,106,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
 .rp-empty{text-align:center;color:var(--dim);font-size:14px;padding:48px;border:1px dashed var(--border);border-radius:12px}
 
 /* Masthead */
@@ -1506,13 +1506,13 @@ const css = `
 .rp-section-head{display:flex;align-items:center;gap:14px}
 .rp-sh-line{flex:1;height:1px;background:var(--border)}
 .rp-sh-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--dim);white-space:nowrap}
-.rp-sh-count{width:22px;height:22px;border-radius:6px;background:var(--gold);color:#1A1A1A;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rp-sh-count{width:22px;height:22px;border-radius:6px;background:var(--gold);color:#0B0B0C;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 /* Class cards */
 .rp-classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .rp-class-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;cursor:pointer;text-align:right;display:flex;flex-direction:column;gap:14px;font-family:var(--font);transition:all 0.2s cubic-bezier(0.4,0,0.2,1);animation:fadeUp 0.5s ease backwards;position:relative;overflow:hidden}
 .rp-class-card:hover{border-color:var(--border);transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,0.08)}
-.rp-class-card.active{border-color:rgba(184,160,130,0.4);box-shadow:0 0 0 1px rgba(184,160,130,0.2),0 12px 40px rgba(0,0,0,0.08)}
+.rp-class-card.active{border-color:rgba(200,169,106,0.4);box-shadow:0 0 0 1px rgba(200,169,106,0.2),0 12px 40px rgba(0,0,0,0.08)}
 .rp-cc-header{display:flex;flex-direction:column;gap:3px;position:relative}
 .rp-cc-name{font-size:16px;font-weight:800;color:var(--text)}
 .rp-cc-teacher{font-size:12px;color:var(--dim);font-weight:500}
@@ -1540,7 +1540,7 @@ const css = `
 .rp-tab{padding:9px 18px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;color:var(--dim);transition:all 0.15s;display:flex;align-items:center;gap:7px;margin-bottom:-1px}
 .rp-tab:hover{color:var(--text)}
 .rp-tab.active{color:var(--text);border-bottom-color:var(--gold);font-weight:800}
-.rp-tab-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(184,160,130,0.15);color:#78590A;border:1px solid rgba(184,160,130,0.25)}
+.rp-tab-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(200,169,106,0.15);color:#78590A;border:1px solid rgba(200,169,106,0.25)}
 
 /* Charts row */
 .rp-charts-row{display:grid;grid-template-columns:1fr 2fr;gap:14px;align-items:start}
@@ -1553,11 +1553,11 @@ const css = `
 .rp-table{display:flex;flex-direction:column;gap:2px}
 .rp-table-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr;gap:8px;padding:6px 12px;font-size:9px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
 .rp-table-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr;gap:8px;padding:10px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.15s;align-items:center;animation:fadeUp 0.4s ease backwards}
-.rp-table-row:hover{background:rgba(184,160,130,0.05);border-color:var(--border)}
-.rp-table-row.active{background:rgba(184,160,130,0.08);border-color:rgba(184,160,130,0.2)}
+.rp-table-row:hover{background:rgba(200,169,106,0.05);border-color:var(--border)}
+.rp-table-row.active{background:rgba(200,169,106,0.08);border-color:rgba(200,169,106,0.2)}
 .rp-td-name{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--text)}
 .rp-td-num{font-size:14px;font-weight:700;color:var(--text2);display:flex;align-items:center}
-.rp-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-b));color:#1A1A1A;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rp-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-b));color:#0B0B0C;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 /* Timeline */
 .rp-close-sm{background:none;border:none;cursor:pointer;color:var(--dim);font-size:14px;padding:2px 6px;border-radius:4px;transition:color 0.15s}
@@ -1602,4 +1602,3 @@ const css = `
   .rp-headline{font-size:19px}
 }
 `;
-

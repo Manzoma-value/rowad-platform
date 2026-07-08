@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import type { StageTrait, Maqsad } from "./types";
@@ -7,29 +7,29 @@ import { useConfirm } from "@/lib/confirm-dialog";
 const MAQASID: { value: Maqsad; label: string; color: string; bg: string }[] = [
   {
     value: "DEEN",
-    label: "Ø§Ù„Ø¯ÙŠÙ†",
+    label: "الدين",
     color: "#7A6020",
-    bg: "rgba(217,201,176,0.10)",
+    bg: "rgba(229,185,60,0.10)",
   },
   {
     value: "AQL",
-    label: "Ø§Ù„Ø¹Ù‚Ù„",
+    label: "العقل",
     color: "#4A2080",
     bg: "rgba(74,32,128,0.08)",
   },
   {
     value: "NAFS",
-    label: "Ø§Ù„Ù†ÙØ³",
+    label: "النفس",
     color: "#1A5C3A",
     bg: "rgba(26,92,58,0.09)",
   },
   {
     value: "NASL",
-    label: "Ø§Ù„Ù†Ø³Ù„",
+    label: "النسل",
     color: "#7A1E1E",
     bg: "rgba(122,30,30,0.08)",
   },
-  { value: "MAL", label: "Ø§Ù„Ù…Ø§Ù„", color: "#5A4A10", bg: "rgba(154,98,0,0.09)" },
+  { value: "MAL", label: "المال", color: "#5A4A10", bg: "rgba(154,98,0,0.09)" },
 ];
 
 function getMaqsadMeta(m: Maqsad) {
@@ -78,10 +78,10 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
   const usedMaqasid = new Set(traits.map((t) => t.maqsad));
   const availableMaqasid = MAQASID.filter((m) => !usedMaqasid.has(m.value));
 
-  // â”€â”€ Add trait â”€â”€
+  // ── Add trait ──
   async function handleAddTrait() {
     if (!form.name.trim()) {
-      setFormError("Ø§Ø³Ù… Ø§Ù„Ø³Ù…Ø© Ù…Ø·Ù„ÙˆØ¨");
+      setFormError("اسم السمة مطلوب");
       return;
     }
     setSaving(true);
@@ -101,7 +101,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
       );
       const data = await res.json();
       if (!res.ok) {
-        setFormError(data.error ?? "ÙØ´Ù„ Ø§Ù„Ø­ÙØ¸");
+        setFormError(data.error ?? "فشل الحفظ");
         return;
       }
       setForm({
@@ -116,11 +116,11 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
     }
   }
 
-  // â”€â”€ Delete trait â”€â”€
+  // ── Delete trait ──
   async function handleDeleteTrait(traitId: string) {
     if (!(await confirm({
-      title: "Ø­Ø°Ù Ø§Ù„Ø³Ù…Ø©",
-      message: "Ù‡Ù„ ØªØ±ÙŠØ¯ Ø­Ø°Ù Ù‡Ø°Ù‡ Ø§Ù„Ø³Ù…Ø©ØŸ Ø³ÙŠØªÙ… Ø¥Ù„ØºØ§Ø¡ Ø±Ø¨Ø·Ù‡Ø§ Ø¨Ø£ÙŠ Ù…Ø³ØªÙˆÙ‰ ÙŠØ³ØªØ®Ø¯Ù…Ù‡Ø§.",
+      title: "حذف السمة",
+      message: "هل تريد حذف هذه السمة؟ سيتم إلغاء ربطها بأي مستوى يستخدمها.",
     }))) return;
     await fetch(`/api/school-admin/roadmap/traits/${traitId}`, {
       method: "DELETE",
@@ -128,7 +128,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
     onRefresh();
   }
 
-  // â”€â”€ Edit trait save â”€â”€
+  // ── Edit trait save ──
   async function handleSaveEdit(traitId: string) {
     if (!editForm.name.trim()) return;
     setEditSaving(true);
@@ -148,7 +148,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
     }
   }
 
-  // â”€â”€ Add element â”€â”€
+  // ── Add element ──
   async function handleAddElement(traitId: string) {
     if (!elementText.trim()) return;
     setElementSaving(true);
@@ -166,7 +166,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
     }
   }
 
-  // â”€â”€ Edit element â”€â”€
+  // ── Edit element ──
   async function handleSaveElement(elementId: string) {
     if (!editElementText.trim()) return;
     await fetch(`/api/school-admin/roadmap/elements/${elementId}`, {
@@ -179,9 +179,9 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
     onRefresh();
   }
 
-  // â”€â”€ Delete element â”€â”€
+  // ── Delete element ──
   async function handleDeleteElement(elementId: string) {
-    if (!(await confirm({ message: "Ø­Ø°Ù Ù‡Ø°Ø§ Ø§Ù„Ø¹Ù†ØµØ±ØŸ" }))) return;
+    if (!(await confirm({ message: "حذف هذا العنصر؟" }))) return;
     await fetch(`/api/school-admin/roadmap/elements/${elementId}`, {
       method: "DELETE",
     });
@@ -207,7 +207,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
           </div>
-          <span className="traits-toggle-label">Ø§Ù„Ø³Ù…Ø§Øª</span>
+          <span className="traits-toggle-label">السمات</span>
           <span className="traits-count-pill">{traits.length} / 5</span>
         </div>
         <svg
@@ -253,7 +253,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                     <span className="maqsad-chip-name">{linked.name}</span>
                   )}
                   {!linked && (
-                    <span className="maqsad-chip-empty">ØºÙŠØ± Ù…Ø±ØªØ¨Ø·</span>
+                    <span className="maqsad-chip-empty">غير مرتبط</span>
                   )}
                 </div>
               );
@@ -290,7 +290,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                 name: e.target.value,
                               }))
                             }
-                            placeholder="Ø§Ø³Ù… Ø§Ù„Ø³Ù…Ø©"
+                            placeholder="اسم السمة"
                             dir="rtl"
                           />
                           <input
@@ -302,7 +302,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                 definition: e.target.value,
                               }))
                             }
-                            placeholder="Ø§Ù„ØªØ¹Ø±ÙŠÙ (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)"
+                            placeholder="التعريف (اختياري)"
                             dir="rtl"
                           />
                           <div className="trait-edit-actions">
@@ -312,14 +312,14 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               onClick={() => handleSaveEdit(trait.id)}
                               disabled={editSaving}
                             >
-                              {editSaving ? "..." : "Ø­ÙØ¸"}
+                              {editSaving ? "..." : "حفظ"}
                             </button>
                             <button
                               className="rb-btn-ghost"
                               style={{ padding: "7px 14px", fontSize: 12 }}
                               onClick={() => setEditingTrait(null)}
                             >
-                              Ø¥Ù„ØºØ§Ø¡
+                              إلغاء
                             </button>
                           </div>
                         </div>
@@ -342,7 +342,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                       {!isEditing && (
                         <div className="trait-card-actions">
                           <span className="trait-elements-count">
-                            {trait.elements.length} Ø¹Ù†Ø§ØµØ±
+                            {trait.elements.length} عناصر
                           </span>
                           <button
                             className="rb-icon-btn"
@@ -354,7 +354,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               });
                               setExpandedTrait(trait.id);
                             }}
-                            title="ØªØ¹Ø¯ÙŠÙ„"
+                            title="تعديل"
                           >
                             <svg
                               width="13"
@@ -372,7 +372,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                           <button
                             className="rb-icon-btn danger"
                             onClick={() => handleDeleteTrait(trait.id)}
-                            title="Ø­Ø°Ù"
+                            title="حذف"
                           >
                             <svg
                               width="13"
@@ -392,7 +392,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                             onClick={() =>
                               setExpandedTrait(isExpanded ? null : trait.id)
                             }
-                            title="Ø¹Ù†Ø§ØµØ± Ø§Ù„ØªÙ‚ÙŠÙŠÙ…"
+                            title="عناصر التقييم"
                           >
                             <svg
                               width="13"
@@ -432,13 +432,13 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                             <polyline points="9 11 12 14 22 4" />
                             <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
                           </svg>
-                          Ø¹Ù†Ø§ØµØ± Ø§Ù„ØªÙ‚ÙŠÙŠÙ…
+                          عناصر التقييم
                         </div>
 
                         {trait.elements.length === 0 ? (
                           <div className="elements-empty">
-                            Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¹Ù†Ø§ØµØ± Ø¨Ø¹Ø¯ â€” Ø£Ø¶Ù Ù…Ø¹Ø§ÙŠÙŠØ± ØªØ³Ø§Ø¹Ø¯ Ø§Ù„Ù…Ø¹Ù„Ù… Ø¹Ù„Ù‰
-                            Ø§Ù„ØªÙ‚ÙŠÙŠÙ…
+                            لا توجد عناصر بعد — أضف معايير تساعد المعلم على
+                            التقييم
                           </div>
                         ) : (
                           <div className="elements-list">
@@ -470,7 +470,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                       }}
                                       onClick={() => handleSaveElement(el.id)}
                                     >
-                                      Ø­ÙØ¸
+                                      حفظ
                                     </button>
                                     <button
                                       className="rb-btn-ghost"
@@ -480,7 +480,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                       }}
                                       onClick={() => setEditingElement(null)}
                                     >
-                                      Ø¥Ù„ØºØ§Ø¡
+                                      إلغاء
                                     </button>
                                   </div>
                                 ) : (
@@ -542,7 +542,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               className="rb-input"
                               value={elementText}
                               onChange={(e) => setElementText(e.target.value)}
-                              placeholder="Ø§ÙƒØªØ¨ Ø¹Ù†ØµØ± Ø§Ù„ØªÙ‚ÙŠÙŠÙ…..."
+                              placeholder="اكتب عنصر التقييم..."
                               dir="rtl"
                               autoFocus
                               onKeyDown={(e) => {
@@ -560,7 +560,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               onClick={() => handleAddElement(trait.id)}
                               disabled={elementSaving}
                             >
-                              {elementSaving ? "..." : "Ø¥Ø¶Ø§ÙØ©"}
+                              {elementSaving ? "..." : "إضافة"}
                             </button>
                             <button
                               className="rb-btn-ghost"
@@ -570,7 +570,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                 setElementText("");
                               }}
                             >
-                              Ø¥Ù„ØºØ§Ø¡
+                              إلغاء
                             </button>
                           </div>
                         ) : (
@@ -593,7 +593,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               <line x1="12" y1="5" x2="12" y2="19" />
                               <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
-                            Ø¥Ø¶Ø§ÙØ© Ø¹Ù†ØµØ± ØªÙ‚ÙŠÙŠÙ…
+                            إضافة عنصر تقييم
                           </button>
                         )}
                       </div>
@@ -609,11 +609,11 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
             <>
               {adding ? (
                 <div className="trait-add-form">
-                  <div className="trait-add-form-title">Ø¥Ø¶Ø§ÙØ© Ø³Ù…Ø© Ø¬Ø¯ÙŠØ¯Ø©</div>
+                  <div className="trait-add-form-title">إضافة سمة جديدة</div>
 
                   {/* Maqsad selector */}
                   <div className="rb-field">
-                    <label className="rb-label">Ø§Ù„Ù…Ù‚ØµØ¯</label>
+                    <label className="rb-label">المقصد</label>
                     <div className="maqsad-selector">
                       {availableMaqasid.map((m) => (
                         <button
@@ -640,10 +640,10 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                   </div>
 
                   <div className="rb-field">
-                    <label className="rb-label">Ø§Ø³Ù… Ø§Ù„Ø³Ù…Ø©</label>
+                    <label className="rb-label">اسم السمة</label>
                     <input
                       className="rb-input"
-                      placeholder="Ù…Ø«Ø§Ù„: Ø§Ù„Ø¯Ø±Ø§ÙŠØ©"
+                      placeholder="مثال: الدراية"
                       value={form.name}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, name: e.target.value }))
@@ -655,12 +655,12 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
 
                   <div className="rb-field">
                     <label className="rb-label">
-                      Ø§Ù„ØªØ¹Ø±ÙŠÙ
-                      <span className="rb-label-hint">(Ø§Ø®ØªÙŠØ§Ø±ÙŠ)</span>
+                      التعريف
+                      <span className="rb-label-hint">(اختياري)</span>
                     </label>
                     <textarea
                       className="rb-textarea"
-                      placeholder="Ù…Ø«Ø§Ù„: Ù‚Ø¯Ø±Ø© Ø§Ù„Ø·Ø§Ù„Ø¨ Ø¹Ù„Ù‰ ÙÙ‡Ù… Ø³Ø¨Ø¨ Ø§Ù„ÙØ¹Ù„ ÙˆØ¯ÙˆØ±Ù‡ ÙˆÙˆØ§Ø¬Ø¨Ù‡"
+                      placeholder="مثال: قدرة الطالب على فهم سبب الفعل ودوره وواجبه"
                       value={form.definition}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, definition: e.target.value }))
@@ -679,7 +679,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                       onClick={handleAddTrait}
                       disabled={saving}
                     >
-                      {saving ? "Ø¬Ø§Ø±Ù Ø§Ù„Ø­ÙØ¸..." : "Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ø³Ù…Ø©"}
+                      {saving ? "جارٍ الحفظ..." : "إضافة السمة"}
                     </button>
                     <button
                       className="rb-btn-ghost"
@@ -688,7 +688,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                         setFormError("");
                       }}
                     >
-                      Ø¥Ù„ØºØ§Ø¡
+                      إلغاء
                     </button>
                   </div>
                 </div>
@@ -715,9 +715,9 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                     <line x1="12" y1="5" x2="12" y2="19" />
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
-                  Ø¥Ø¶Ø§ÙØ© Ø³Ù…Ø©{" "}
+                  إضافة سمة{" "}
                   {availableMaqasid.length < 5
-                    ? `(${5 - traits.length} Ù…ØªØ¨Ù‚ÙŠØ©)`
+                    ? `(${5 - traits.length} متبقية)`
                     : ""}
                 </button>
               )}
@@ -737,7 +737,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              Ø§ÙƒØªÙ…Ù„Øª Ø§Ù„Ø³Ù…Ø§Øª Ø§Ù„Ø®Ù…Ø³ Ù„Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø±Ø­Ù„Ø©
+              اكتملت السمات الخمس لهذه المرحلة
             </div>
           )}
         </div>
@@ -750,7 +750,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
 
 const traitsCSS = `
 .traits-panel {
-  border-top: 1px solid rgba(217,201,176,0.15);
+  border-top: 1px solid rgba(229,185,60,0.15);
   background: rgba(11,11,12,0.97);
 }
 
@@ -766,7 +766,7 @@ const traitsCSS = `
   font-family: 'Tajawal', sans-serif;
   transition: background 0.15s;
 }
-.traits-toggle:hover { background: rgba(217,201,176,0.04); }
+.traits-toggle:hover { background: rgba(229,185,60,0.04); }
 
 .traits-toggle-left {
   display: flex;
@@ -776,9 +776,9 @@ const traitsCSS = `
 .traits-icon-wrap {
   width: 28px; height: 28px;
   border-radius: 8px;
-  background: rgba(217,201,176,0.10);
+  background: rgba(229,185,60,0.10);
   display: flex; align-items: center; justify-content: center;
-  color: #D9C9B0;
+  color: #E5B93C;
   flex-shrink: 0;
 }
 .traits-toggle-label {
@@ -789,11 +789,11 @@ const traitsCSS = `
 .traits-count-pill {
   font-size: 10px;
   font-weight: 700;
-  background: rgba(217,201,176,0.12);
-  color: #B8A082;
+  background: rgba(229,185,60,0.12);
+  color: #C8A96A;
   padding: 2px 8px;
   border-radius: 100px;
-  border: 1px solid rgba(217,201,176,0.2);
+  border: 1px solid rgba(229,185,60,0.2);
 }
 
 .traits-body {
@@ -853,7 +853,7 @@ const traitsCSS = `
   overflow: hidden;
   transition: border-color 0.15s;
 }
-.trait-card:hover { border-color: rgba(217,201,176,0.2); }
+.trait-card:hover { border-color: rgba(229,185,60,0.2); }
 
 .trait-card-head {
   display: flex;
@@ -931,7 +931,7 @@ const traitsCSS = `
 .elements-label {
   font-size: 10px;
   font-weight: 800;
-  color: rgba(184,160,130,0.5);
+  color: rgba(200,169,106,0.5);
   text-transform: uppercase;
   letter-spacing: 1px;
   display: flex;
@@ -959,12 +959,12 @@ const traitsCSS = `
   border: 1px solid transparent;
   transition: border-color 0.13s;
 }
-.element-row:hover { border-color: rgba(217,201,176,0.15); }
+.element-row:hover { border-color: rgba(229,185,60,0.15); }
 .element-num {
   width: 18px; height: 18px;
   border-radius: 5px;
-  background: rgba(217,201,176,0.1);
-  color: #B8A082;
+  background: rgba(229,185,60,0.1);
+  color: #C8A96A;
   font-size: 10px;
   font-weight: 800;
   display: flex; align-items: center; justify-content: center;
@@ -998,10 +998,10 @@ const traitsCSS = `
 }
 .element-add-btn {
   width: 100%;
-  border: 1.5px dashed rgba(217,201,176,0.2);
+  border: 1.5px dashed rgba(229,185,60,0.2);
   border-radius: 7px;
-  background: rgba(217,201,176,0.04);
-  color: rgba(184,160,130,0.5);
+  background: rgba(229,185,60,0.04);
+  color: rgba(200,169,106,0.5);
   font-size: 11.5px;
   font-weight: 700;
   font-family: 'Tajawal', sans-serif;
@@ -1014,15 +1014,15 @@ const traitsCSS = `
   transition: all 0.15s;
 }
 .element-add-btn:hover {
-  border-color: rgba(217,201,176,0.4);
-  color: #B8A082;
-  background: rgba(217,201,176,0.07);
+  border-color: rgba(229,185,60,0.4);
+  color: #C8A96A;
+  background: rgba(229,185,60,0.07);
 }
 
 /* Add trait form */
 .trait-add-form {
   background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(217,201,176,0.15);
+  border: 1px solid rgba(229,185,60,0.15);
   border-radius: 10px;
   padding: 16px;
   display: flex;
@@ -1051,15 +1051,15 @@ const traitsCSS = `
   cursor: pointer;
   transition: all 0.15s;
 }
-.maqsad-option:hover { border-color: rgba(217,201,176,0.3); color: rgba(255,255,255,0.7); }
+.maqsad-option:hover { border-color: rgba(229,185,60,0.3); color: rgba(255,255,255,0.7); }
 .maqsad-option.active { font-weight: 800; }
 
 .trait-add-trigger {
   width: 100%;
-  border: 2px dashed rgba(217,201,176,0.2);
+  border: 2px dashed rgba(229,185,60,0.2);
   border-radius: 9px;
-  background: rgba(217,201,176,0.04);
-  color: rgba(184,160,130,0.5);
+  background: rgba(229,185,60,0.04);
+  color: rgba(200,169,106,0.5);
   font-size: 12.5px;
   font-weight: 700;
   font-family: 'Tajawal', sans-serif;
@@ -1072,9 +1072,9 @@ const traitsCSS = `
   transition: all 0.15s;
 }
 .trait-add-trigger:hover {
-  border-color: rgba(217,201,176,0.45);
-  color: #B8A082;
-  background: rgba(217,201,176,0.07);
+  border-color: rgba(229,185,60,0.45);
+  color: #C8A96A;
+  background: rgba(229,185,60,0.07);
 }
 
 .traits-complete {
@@ -1103,8 +1103,8 @@ const traitsCSS = `
 }
 .traits-panel .rb-input:focus,
 .traits-panel .rb-textarea:focus {
-  border-color: rgba(217,201,176,0.5);
-  box-shadow: 0 0 0 3px rgba(217,201,176,0.08);
+  border-color: rgba(229,185,60,0.5);
+  box-shadow: 0 0 0 3px rgba(229,185,60,0.08);
 }
 .traits-panel .rb-label {
   color: rgba(255,255,255,0.45);
@@ -1132,4 +1132,3 @@ const traitsCSS = `
   border-color: rgba(122,30,30,0.3);
 }
 `;
-

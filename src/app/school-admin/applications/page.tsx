@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
@@ -39,51 +39,51 @@ type Row = {
 
 const UI = {
   ar: {
-    title: "Ø·Ù„Ø¨Ø§Øª Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ†",
-    sub: "Ø±Ø§Ø¬Ø¹ Ø·Ù„Ø¨Ø§Øª Ø§Ù„ØªÙ‚Ø¯ÙŠÙ… ÙˆØ­Ø¯Ø¯ Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø£Ùˆ Ø§Ù„Ø±ÙØ¶. ÙŠÙ…ÙƒÙ†Ùƒ ØªØµÙÙŠØ© Ø§Ù„Ù‚Ø§Ø¦Ù…Ø© ÙˆØªØµØ¯ÙŠØ± ÙƒÙ„ Ø·Ù„Ø¨ ÙƒÙ…Ù„Ù PDF.",
-    search: "Ø¨Ø­Ø« Ø¨Ø§Ù„Ø§Ø³Ù…ØŒ Ø§Ù„Ø¨Ø±ÙŠØ¯ØŒ Ø§Ù„Ø¬ÙˆØ§Ù„ Ø£Ùˆ Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©",
-    filters: "ØªØµÙÙŠØ©",
-    statusUnderReview: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
-    statusActive: "Ù…ÙØ¹Ù‘Ù„",
-    statusRejected: "Ù…Ø±ÙÙˆØ¶",
-    statusAll: "Ø§Ù„ÙƒÙ„",
-    allRoles: "ÙƒÙ„ Ø§Ù„Ø£Ø¯ÙˆØ§Ø±",
-    allQualifications: "ÙƒÙ„ Ø§Ù„Ù…Ø¤Ù‡Ù„Ø§Øª",
-    allYears: "ÙƒÙ„ Ø³Ù†ÙˆØ§Øª Ø§Ù„Ø®Ø¨Ø±Ø©",
-    allGenders: "Ø§Ù„Ø¬Ù†Ø³",
-    country: "Ø§Ù„Ø¯ÙˆÙ„Ø©",
-    empty: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø·Ù„Ø¨Ø§Øª Ù…Ø·Ø§Ø¨Ù‚Ø©.",
-    name: "Ø§Ù„Ø§Ø³Ù…",
-    role: "Ø§Ù„Ø¯ÙˆØ±",
-    qualification: "Ø§Ù„Ù…Ø¤Ù‡Ù„",
-    years: "Ø§Ù„Ø®Ø¨Ø±Ø©",
-    countryCol: "Ø§Ù„Ø¯ÙˆÙ„Ø©/Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©",
-    submittedAt: "ØªØ§Ø±ÙŠØ® Ø§Ù„ØªÙ‚Ø¯ÙŠÙ…",
-    statusCol: "Ø§Ù„Ø­Ø§Ù„Ø©",
-    view: "Ø¹Ø±Ø¶ Ø§Ù„Ø·Ù„Ø¨",
-    yetToApply: "(Ù„Ù… ÙŠÙ‚Ø¯Ù… Ø¨Ø¹Ø¯)",
+    title: "طلبات المعلمين",
+    sub: "راجع طلبات التقديم وحدد الموافقة أو الرفض. يمكنك تصفية القائمة وتصدير كل طلب كملف PDF.",
+    search: "بحث بالاسم، البريد، الجوال أو المدينة",
+    filters: "تصفية",
+    statusUnderReview: "قيد المراجعة",
+    statusActive: "مفعّل",
+    statusRejected: "مرفوض",
+    statusAll: "الكل",
+    allRoles: "كل الأدوار",
+    allQualifications: "كل المؤهلات",
+    allYears: "كل سنوات الخبرة",
+    allGenders: "الجنس",
+    country: "الدولة",
+    empty: "لا توجد طلبات مطابقة.",
+    name: "الاسم",
+    role: "الدور",
+    qualification: "المؤهل",
+    years: "الخبرة",
+    countryCol: "الدولة/المدينة",
+    submittedAt: "تاريخ التقديم",
+    statusCol: "الحالة",
+    view: "عرض الطلب",
+    yetToApply: "(لم يقدم بعد)",
   },
   sq: {
-    title: "Aplikimet e mÃ«suesve",
-    sub: "Shqyrto aplikimet dhe vendos miratim ose refuzim. Mund tÃ« filtrosh listÃ«n dhe tÃ« eksportosh Ã§do aplikim si PDF.",
-    search: "KÃ«rko sipas emrit, e-mail, telefonit ose qytetit",
+    title: "Aplikimet e mësuesve",
+    sub: "Shqyrto aplikimet dhe vendos miratim ose refuzim. Mund të filtrosh listën dhe të eksportosh çdo aplikim si PDF.",
+    search: "Kërko sipas emrit, e-mail, telefonit ose qytetit",
     filters: "Filtra",
-    statusUnderReview: "NÃ« shqyrtim",
+    statusUnderReview: "Në shqyrtim",
     statusActive: "Aktiv",
     statusRejected: "Refuzuar",
-    statusAll: "TÃ« gjitha",
-    allRoles: "TÃ« gjithÃ« rolet",
-    allQualifications: "TÃ« gjitha kualifikimet",
-    allYears: "TÃ« gjitha vitet",
+    statusAll: "Të gjitha",
+    allRoles: "Të gjithë rolet",
+    allQualifications: "Të gjitha kualifikimet",
+    allYears: "Të gjitha vitet",
     allGenders: "Gjinia",
     country: "Shteti",
-    empty: "AsnjÃ« aplikim nuk u gjet.",
+    empty: "Asnjë aplikim nuk u gjet.",
     name: "Emri",
     role: "Roli",
     qualification: "Kualifikimi",
-    years: "PÃ«rvoja",
+    years: "Përvoja",
     countryCol: "Shteti/Qyteti",
-    submittedAt: "Data e dÃ«rgimit",
+    submittedAt: "Data e dërgimit",
     statusCol: "Statusi",
     view: "Shih aplikimin",
     yetToApply: "(Nuk ka aplikuar ende)",
@@ -119,6 +119,7 @@ export default function ApplicationsListPage() {
   }, [status, q, currentRole, qualification, years, gender, country]);
 
   useEffect(() => {
+    setLoading(true);
     fetch(`/api/school-admin/applications?${params}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setRows(d?.teachers ?? []))
@@ -127,7 +128,7 @@ export default function ApplicationsListPage() {
   }, [params]);
 
   function fmtDate(s: string | null | undefined) {
-    if (!s) return "â€”";
+    if (!s) return "—";
     try {
       return new Date(s).toLocaleDateString(L === "ar" ? "ar" : "sq");
     } catch {
@@ -191,7 +192,7 @@ export default function ApplicationsListPage() {
 
       <div className="ap-table-wrap">
         {loading ? (
-          <div className="ap-empty">â€¦</div>
+          <div className="ap-empty">…</div>
         ) : rows.length === 0 ? (
           <div className="ap-empty">{T.empty}</div>
         ) : (
@@ -220,12 +221,12 @@ export default function ApplicationsListPage() {
                   <tr key={r.id}>
                     <td>
                       <div className="ap-name">{a?.full_name ?? r.profile.full_name}</div>
-                      <div className="ap-sub-text">{a?.email ?? r.profile.email ?? "â€”"}</div>
+                      <div className="ap-sub-text">{a?.email ?? r.profile.email ?? "—"}</div>
                     </td>
-                    <td>{a ? CURRENT_ROLE_L[a.current_role as keyof typeof CURRENT_ROLE_L]?.[L] ?? a.current_role : "â€”"}</td>
-                    <td>{a ? QUALIFICATION_L[a.qualification as keyof typeof QUALIFICATION_L]?.[L] ?? a.qualification : "â€”"}</td>
-                    <td>{a ? EXPERIENCE_RANGE_L[a.years_of_experience as keyof typeof EXPERIENCE_RANGE_L]?.[L] ?? a.years_of_experience : "â€”"}</td>
-                    <td>{a ? `${a.country} / ${a.city}` : "â€”"}</td>
+                    <td>{a ? CURRENT_ROLE_L[a.current_role as keyof typeof CURRENT_ROLE_L]?.[L] ?? a.current_role : "—"}</td>
+                    <td>{a ? QUALIFICATION_L[a.qualification as keyof typeof QUALIFICATION_L]?.[L] ?? a.qualification : "—"}</td>
+                    <td>{a ? EXPERIENCE_RANGE_L[a.years_of_experience as keyof typeof EXPERIENCE_RANGE_L]?.[L] ?? a.years_of_experience : "—"}</td>
+                    <td>{a ? `${a.country} / ${a.city}` : "—"}</td>
                     <td>{fmtDate(a?.submitted_at ?? null)}</td>
                     <td>
                       <span className={`ap-status st-${r.onboarding_status}`}>
@@ -254,7 +255,7 @@ export default function ApplicationsListPage() {
         .ap-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
         .ap-sub { font-size: 13.5px; color: #5E5A52; max-width: 740px; line-height: 1.85; margin: 0; }
         .ap-toolbar {
-          background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07);
+          background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07);
           border-radius: 14px; padding: 14px; margin-bottom: 18px;
           display: flex; flex-direction: column; gap: 12px;
         }
@@ -264,14 +265,14 @@ export default function ApplicationsListPage() {
           background: #FFF; font-family: inherit; outline: none;
           transition: border-color 0.15s;
         }
-        .ap-search:focus { border-color: #8F765B; }
+        .ap-search:focus { border-color: #B89B5E; }
         .ap-filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .ap-select {
           padding: 8px 12px; font-size: 13px; font-family: inherit;
           border: 1.5px solid rgba(194,160,89,0.32); border-radius: 10px;
           background: #FFF; color: #2E2210; cursor: pointer; outline: none;
         }
-        .ap-table-wrap { background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px; overflow: auto; }
+        .ap-table-wrap { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; overflow: auto; }
         .ap-empty { padding: 60px 20px; text-align: center; color: #8A8478; font-weight: 700; }
         .ap-table { width: 100%; border-collapse: collapse; min-width: 800px; }
         .ap-table th {
@@ -282,7 +283,7 @@ export default function ApplicationsListPage() {
         }
         .ap-table td {
           padding: 14px; font-size: 13.5px; color: #2E2210;
-          border-bottom: 1px solid rgba(74,14,28,0.06); vertical-align: top;
+          border-bottom: 1px solid rgba(8,11,12,0.06); vertical-align: top;
         }
         .ap-name { font-weight: 800; color: #1B1810; }
         .ap-sub-text { font-size: 12px; color: #7A7468; margin-top: 2px; }
@@ -293,10 +294,10 @@ export default function ApplicationsListPage() {
         .ap-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B4F1E; }
         .ap-status.st-ACTIVE { background: rgba(45,138,74,0.12); color: #1E5C2E; }
         .ap-status.st-REJECTED { background: rgba(139,26,26,0.10); color: #7A1E1E; }
-        .ap-status.st-PENDING_APPLICATION { background: rgba(74,14,28,0.06); color: #5E5A52; }
+        .ap-status.st-PENDING_APPLICATION { background: rgba(8,11,12,0.06); color: #5E5A52; }
         .ap-view {
           display: inline-block; padding: 7px 14px;
-          background: linear-gradient(180deg,#D8B96A,#8F765B); color: #1E1605;
+          background: linear-gradient(180deg,#D8B96A,#B89B5E); color: #1E1605;
           border-radius: 9px; font-size: 12.5px; font-weight: 800;
           text-decoration: none; white-space: nowrap;
         }
@@ -305,4 +306,3 @@ export default function ApplicationsListPage() {
     </div>
   );
 }
-

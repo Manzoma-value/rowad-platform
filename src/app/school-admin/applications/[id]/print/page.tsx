@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { Component, type ReactNode, use, useEffect, useState } from "react";
@@ -35,7 +35,7 @@ type App = {
   submitted_at: string; reviewed_at: string | null; reviewer_notes: string | null;
 };
 
-// Same boundary pattern as the detail page â€” surfaces render errors as a
+// Same boundary pattern as the detail page — surfaces render errors as a
 // visible message + console log instead of an empty page that swallows the
 // auto-print trigger.
 class PrintBoundary extends Component<{ children: ReactNode }, { err: Error | null }> {
@@ -50,7 +50,7 @@ class PrintBoundary extends Component<{ children: ReactNode }, { err: Error | nu
         <div style={{ padding: 40, maxWidth: 720, margin: "0 auto", fontFamily: "'Cairo',sans-serif" }}>
           <div style={{ background: "rgba(139,26,26,0.06)", border: "1.5px solid rgba(139,26,26,0.32)", borderRadius: 12, padding: 18, color: "#5A1818" }}>
             <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 6 }}>
-              ØªØ¹Ø°Ø± ØªØ¬Ù‡ÙŠØ² Ø§Ù„Ø·Ù„Ø¨ Ù„Ù„Ø·Ø¨Ø§Ø¹Ø© Â· Cannot render this application for print
+              تعذر تجهيز الطلب للطباعة · Cannot render this application for print
             </div>
             <code style={{ display: "block", fontSize: 12, opacity: 0.85, whiteSpace: "pre-wrap", direction: "ltr", textAlign: "left" }}>
               {String(this.state.err?.message ?? this.state.err)}
@@ -110,45 +110,45 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
   }, [app]);
 
   if (!app) {
-    return <div style={{ padding: 40, textAlign: "center" }}>â€¦</div>;
+    return <div style={{ padding: 40, textAlign: "center" }}>…</div>;
   }
 
   const fmtDate = (s: string | null | undefined) => {
-    if (!s) return "â€”";
+    if (!s) return "—";
     try { return new Date(s).toLocaleString(L === "ar" ? "ar" : "sq"); }
     catch { return s; }
   };
 
   const labels = L === "ar"
     ? {
-        title: "Ù†Ù…ÙˆØ°Ø¬ Ø§Ù„ØªÙ‚Ø¯ÙŠÙ… â€” Ø§Ù„Ù…Ø±Ø­Ù„Ø© Ø§Ù„Ø£ÙˆÙ„Ù‰",
-        sub: "Ù…Ù„Ù Ø§Ù„Ù…Ø¹Ù„Ù… Ø§Ù„Ù…ØªÙ‚Ø¯Ù…",
-        ageL: "Ø§Ù„Ø¹Ù…Ø±", countryL: "Ø§Ù„Ø¯ÙˆÙ„Ø©", cityL: "Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©", phoneL: "Ø§Ù„Ø¬ÙˆØ§Ù„", emailL: "Ø§Ù„Ø¨Ø±ÙŠØ¯", genderL: "Ø§Ù„Ø¬Ù†Ø³",
-        s1: "Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø´Ø®ØµÙŠØ©", s2: "Ø¬Ù‡Ø© Ø§Ù„ØªØ±Ø´ÙŠØ­", s3: "Ø§Ù„Ø¯ÙˆØ± Ø§Ù„Ø­Ø§Ù„ÙŠ", s4: "Ø§Ù„Ù…Ø¤Ù‡Ù„ Ø§Ù„Ø¹Ù„Ù…ÙŠ",
-        s5: "Ù…Ø¬Ø§Ù„Ø§Øª Ø§Ù„Ø®Ø¨Ø±Ø©", s6: "Ø³Ù†ÙˆØ§Øª Ø§Ù„Ø®Ø¨Ø±Ø©", s7: "Ø§Ù„ÙØ¦Ø§Øª Ø§Ù„Ù…Ø³ØªÙ‡Ø¯ÙØ©",
-        s8: "Ø§Ù„Ù…Ø³Ø§Ù‡Ù…Ø§Øª", s9: "Ø§Ù„Ø¥Ù†Ø¬Ø§Ø²Ø§Øª", s10: "Ø§Ù„Ù„ØºØ§Øª", s11: "Ø§Ù„Ù…Ø±ÙÙ‚Ø§Øª ÙˆØ§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª",
-        s12: "Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
-        nomEntity: "Ø§Ù„Ø¬Ù‡Ø©", nomName: "Ø§Ø³Ù… Ø§Ù„Ù…Ø±Ø´ÙÙ‘Ø­", nomRole: "ØµÙØªÙ‡",
-        spec: "Ø§Ù„ØªØ®ØµØµ", inst: "Ø¬Ù‡Ø© Ø§Ù„ØªØ®Ø±Ø¬",
-        other: "Ø£Ø®Ø±Ù‰", hasAch: "Ø­ØµÙ„ Ø¹Ù„Ù‰ Ø¥Ù†Ø¬Ø§Ø²Ø§Øª", scope: "Ø§Ù„Ù†Ø·Ø§Ù‚", yes: "Ù†Ø¹Ù…", no: "Ù„Ø§",
-        notes: "Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø¥Ø¶Ø§ÙÙŠØ©", submittedAt: "ØªØ§Ø±ÙŠØ® Ø§Ù„ØªÙ‚Ø¯ÙŠÙ…", reviewedAt: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©", reviewerNotes: "Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹",
-        teacherFor: "Ø§Ù„Ù…ØªÙ‚Ø¯Ù…",
-        none: "â€”",
+        title: "نموذج التقديم — المرحلة الأولى",
+        sub: "ملف المعلم المتقدم",
+        ageL: "العمر", countryL: "الدولة", cityL: "المدينة", phoneL: "الجوال", emailL: "البريد", genderL: "الجنس",
+        s1: "البيانات الشخصية", s2: "جهة الترشيح", s3: "الدور الحالي", s4: "المؤهل العلمي",
+        s5: "مجالات الخبرة", s6: "سنوات الخبرة", s7: "الفئات المستهدفة",
+        s8: "المساهمات", s9: "الإنجازات", s10: "اللغات", s11: "المرفقات والملاحظات",
+        s12: "بيانات المراجعة",
+        nomEntity: "الجهة", nomName: "اسم المرشِّح", nomRole: "صفته",
+        spec: "التخصص", inst: "جهة التخرج",
+        other: "أخرى", hasAch: "حصل على إنجازات", scope: "النطاق", yes: "نعم", no: "لا",
+        notes: "ملاحظات إضافية", submittedAt: "تاريخ التقديم", reviewedAt: "تاريخ المراجعة", reviewerNotes: "ملاحظات المراجع",
+        teacherFor: "المتقدم",
+        none: "—",
       }
     : {
-        title: "Formulari i aplikimit â€” Faza e parÃ«",
-        sub: "Dosja e mÃ«suesit aplikant",
+        title: "Formulari i aplikimit — Faza e parë",
+        sub: "Dosja e mësuesit aplikant",
         ageL: "Mosha", countryL: "Shteti", cityL: "Qyteti", phoneL: "Telefoni", emailL: "E-mail", genderL: "Gjinia",
-        s1: "TÃ« dhÃ«nat personale", s2: "Pala rekomanduese", s3: "Roli aktual", s4: "Kualifikimi",
-        s5: "Fushat e pÃ«rvojÃ«s", s6: "Vitet e pÃ«rvojÃ«s", s7: "Grupet e synuara",
-        s8: "Kontributet", s9: "Arritjet", s10: "GjuhÃ«t", s11: "BashkÃ«ngjitje dhe shÃ«nime",
-        s12: "TÃ« dhÃ«nat e shqyrtimit",
+        s1: "Të dhënat personale", s2: "Pala rekomanduese", s3: "Roli aktual", s4: "Kualifikimi",
+        s5: "Fushat e përvojës", s6: "Vitet e përvojës", s7: "Grupet e synuara",
+        s8: "Kontributet", s9: "Arritjet", s10: "Gjuhët", s11: "Bashkëngjitje dhe shënime",
+        s12: "Të dhënat e shqyrtimit",
         nomEntity: "Institucioni", nomName: "Personi rekomandues", nomRole: "Roli i tij",
         spec: "Specializimi", inst: "Institucioni",
-        other: "TjetÃ«r", hasAch: "Ka pasur arritje", scope: "Shtrirja", yes: "Po", no: "Jo",
-        notes: "ShÃ«nime shtesÃ«", submittedAt: "Data e dÃ«rgimit", reviewedAt: "Data e shqyrtimit", reviewerNotes: "ShÃ«nimet e shqyrtuesit",
+        other: "Tjetër", hasAch: "Ka pasur arritje", scope: "Shtrirja", yes: "Po", no: "Jo",
+        notes: "Shënime shtesë", submittedAt: "Data e dërgimit", reviewedAt: "Data e shqyrtimit", reviewerNotes: "Shënimet e shqyrtuesit",
         teacherFor: "Aplikuesi",
-        none: "â€”",
+        none: "—",
       };
 
   return (
@@ -170,7 +170,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
         <KV label={labels.cityL} value={app.city} />
         <KV label={labels.phoneL} value={app.phone} />
         <KV label={labels.emailL} value={app.email} />
-        <KV label={labels.genderL} value={GENDER_L[app.gender as keyof typeof GENDER_L]?.[L] ?? "â€”"} />
+        <KV label={labels.genderL} value={GENDER_L[app.gender as keyof typeof GENDER_L]?.[L] ?? "—"} />
       </Section>
 
       {/* Nomination section only printed for legacy applications that
@@ -188,7 +188,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
           label=""
           value={
             (CURRENT_ROLE_L[app.current_role as keyof typeof CURRENT_ROLE_L]?.[L] ?? app.current_role) +
-            (app.current_role_other ? ` â€” ${app.current_role_other}` : "")
+            (app.current_role_other ? ` — ${app.current_role_other}` : "")
           }
         />
       </Section>
@@ -200,7 +200,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
       </Section>
 
       <Section title={labels.s5}>
-        <p className="pr-list">{app.experience_areas.map((c) => EXPERIENCE_AREA_L[c]?.[L] ?? c).join("ØŒ ") || labels.none}</p>
+        <p className="pr-list">{app.experience_areas.map((c) => EXPERIENCE_AREA_L[c]?.[L] ?? c).join("، ") || labels.none}</p>
         {app.experience_areas_other && <KV label={labels.other} value={app.experience_areas_other} />}
       </Section>
 
@@ -209,12 +209,12 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
       </Section>
 
       <Section title={labels.s7}>
-        <p className="pr-list">{app.target_groups.map((c) => TARGET_GROUP_L[c]?.[L] ?? c).join("ØŒ ") || labels.none}</p>
+        <p className="pr-list">{app.target_groups.map((c) => TARGET_GROUP_L[c]?.[L] ?? c).join("، ") || labels.none}</p>
         {app.target_groups_other && <KV label={labels.other} value={app.target_groups_other} />}
       </Section>
 
       <Section title={labels.s8}>
-        <p className="pr-list">{app.contributions.map((c) => CONTRIBUTION_L[c]?.[L] ?? c).join("ØŒ ") || labels.none}</p>
+        <p className="pr-list">{app.contributions.map((c) => CONTRIBUTION_L[c]?.[L] ?? c).join("، ") || labels.none}</p>
       </Section>
 
       <Section title={labels.s9}>
@@ -232,7 +232,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
               {app.languages.map((l) => (
                 <li key={l.lang}>
                   <strong>{LANGUAGE_L[l.lang]?.[L] ?? l.lang}</strong>
-                  {" â€” "}
+                  {" — "}
                   {LANG_LEVEL_L[l.level]?.[L] ?? l.level}
                 </li>
               ))}
@@ -242,14 +242,14 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
         {app.languages_other && <KV label={labels.other} value={app.languages_other} />}
       </Section>
 
-      {/* "About the candidate" â€” free-form notes (new applications) or
+      {/* "About the candidate" — free-form notes (new applications) or
           legacy attachments checklist if present on older records. */}
-      <Section title={L === "ar" ? "Ù†Ø¨Ø°Ø© Ø¹Ù† Ø§Ù„Ù…Ø±Ø´Ù‘Ø­" : "Rreth kandidatit"}>
+      <Section title={L === "ar" ? "نبذة عن المرشّح" : "Rreth kandidatit"}>
         {app.notes && <KV label={labels.notes} value={app.notes} />}
         {app.attachments && app.attachments.length > 0 && (
           <KV
-            label={L === "ar" ? "Ù…Ø±ÙÙ‚Ø§Øª (Ù‚Ø¯ÙŠÙ…)" : "BashkÃ«ngjitje (tÃ« vjetra)"}
-            value={app.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("ØŒ ")}
+            label={L === "ar" ? "مرفقات (قديم)" : "Bashkëngjitje (të vjetra)"}
+            value={app.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("، ")}
           />
         )}
         {!app.notes && (!app.attachments || app.attachments.length === 0) && (
@@ -273,7 +273,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
         }
         .pr-head {
           display: flex; align-items: flex-start; gap: 20px;
-          padding-bottom: 18px; border-bottom: 3px double #8F765B;
+          padding-bottom: 18px; border-bottom: 3px double #B89B5E;
           margin-bottom: 22px;
         }
         .pr-head > div { flex: 1; }
@@ -286,7 +286,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
         .pr-section { margin-bottom: 18px; page-break-inside: avoid; }
         .pr-section-title {
           font-size: 13.5px; font-weight: 800; color: #FFF;
-          background: #8F765B; padding: 6px 12px; border-radius: 6px;
+          background: #B89B5E; padding: 6px 12px; border-radius: 6px;
           margin: 0 0 10px;
         }
         .pr-kv {
@@ -303,7 +303,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
 
         @media print {
           @page { margin: 14mm 12mm; }
-          /* Hide the admin chrome â€” only the printable page shows. */
+          /* Hide the admin chrome — only the printable page shows. */
           body * { visibility: hidden; }
           .pr-page, .pr-page * { visibility: visible; }
           .pr-page { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none; max-width: 100%; }
@@ -329,4 +329,3 @@ function KV({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-

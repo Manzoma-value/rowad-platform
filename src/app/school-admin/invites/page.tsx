@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
 
-// â”€â”€â”€ TYPES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface Invite {
   id: string;
@@ -19,7 +19,7 @@ interface Invite {
   usedBy: { full_name: string } | null;
 }
 
-// â”€â”€â”€ UTILS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── UTILS ───────────────────────────────────────────────────────────────────
 
 function getOrigin() {
   if (typeof window !== "undefined") return window.location.origin;
@@ -31,12 +31,12 @@ function inviteUrl(token: string) {
 }
 
 function daysLeft(expires_at: string | null): string {
-  if (!expires_at) return "Ù„Ø§ ØªÙ†ØªÙ‡ÙŠ";
+  if (!expires_at) return "لا تنتهي";
   const diff = new Date(expires_at).getTime() - Date.now();
-  if (diff < 0) return "Ù…Ù†ØªÙ‡ÙŠØ©";
+  if (diff < 0) return "منتهية";
   const d = Math.ceil(diff / 86400000);
-  if (d === 1) return "ØªÙ†ØªÙ‡ÙŠ ØºØ¯Ø§Ù‹";
-  return `${d} Ø£ÙŠØ§Ù… Ù…ØªØ¨Ù‚ÙŠØ©`;
+  if (d === 1) return "تنتهي غداً";
+  return `${d} أيام متبقية`;
 }
 
 function getStatus(invite: Invite): {
@@ -47,34 +47,34 @@ function getStatus(invite: Invite): {
 } {
   if (!invite.is_active && invite.used_at)
     return {
-      label: "Ù…ÙØ³ØªØ®Ø¯Ù…Ø©",
+      label: "مُستخدمة",
       color: "#2D8A4A",
       bg: "rgba(45,138,74,0.08)",
       border: "rgba(45,138,74,0.2)",
     };
   if (!invite.is_active)
     return {
-      label: "Ù…Ø¹Ø·Ù‘Ù„Ø©",
+      label: "معطّلة",
       color: "#7A1E1E",
       bg: "rgba(122,30,30,0.07)",
       border: "rgba(122,30,30,0.2)",
     };
   if (invite.expires_at && new Date(invite.expires_at) < new Date())
     return {
-      label: "Ù…Ù†ØªÙ‡ÙŠØ©",
+      label: "منتهية",
       color: "#8A7B60",
       bg: "rgba(138,123,96,0.08)",
       border: "rgba(138,123,96,0.2)",
     };
   return {
-    label: "Ù†Ø´Ø·Ø©",
-    color: "#B8A082",
-    bg: "rgba(184,160,130,0.08)",
-    border: "rgba(184,160,130,0.25)",
+    label: "نشطة",
+    color: "#C8A96A",
+    bg: "rgba(200,169,106,0.08)",
+    border: "rgba(200,169,106,0.25)",
   };
 }
 
-// â”€â”€â”€ COPY BUTTON â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── COPY BUTTON ─────────────────────────────────────────────────────────────
 
 function CopyBtn({ token }: { token: string }) {
   const [copied, setCopied] = useState(false);
@@ -98,7 +98,7 @@ function CopyBtn({ token }: { token: string }) {
           >
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          ØªÙ… Ø§Ù„Ù†Ø³Ø®
+          تم النسخ
         </>
       ) : (
         <>
@@ -114,14 +114,14 @@ function CopyBtn({ token }: { token: string }) {
             <rect x="9" y="9" width="13" height="13" rx="2" />
             <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
           </svg>
-          Ù†Ø³Ø® Ø§Ù„Ø±Ø§Ø¨Ø·
+          نسخ الرابط
         </>
       )}
     </button>
   );
 }
 
-// â”€â”€â”€ INVITE CARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── INVITE CARD ─────────────────────────────────────────────────────────────
 
 function InviteCard({
   invite,
@@ -226,7 +226,7 @@ function InviteCard({
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            ØªÙ†ØªÙ‡ÙŠ{" "}
+            تنتهي{" "}
             {new Date(invite.expires_at).toLocaleDateString("ar-SA", {
               month: "short",
               day: "numeric",
@@ -244,7 +244,7 @@ function InviteCard({
           >
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
           </svg>
-          {invite.use_count}/{invite.max_uses ?? "âˆž"} Ø§Ø³ØªØ®Ø¯Ø§Ù…
+          {invite.use_count}/{invite.max_uses ?? "∞"} استخدام
         </span>
       </div>
 
@@ -273,7 +273,7 @@ function InviteCard({
                 <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
               </svg>
             )}
-            ØªØ¹Ø·ÙŠÙ„ Ø§Ù„Ø¯Ø¹ÙˆØ©
+            تعطيل الدعوة
           </button>
         </div>
       )}
@@ -281,7 +281,7 @@ function InviteCard({
   );
 }
 
-// â”€â”€â”€ MAIN PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
 export default function InvitesPage() {
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -331,8 +331,8 @@ export default function InvitesPage() {
       {/* Header */}
       <div className="inv-header">
         <div>
-          <p className="inv-eyebrow">Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„ÙˆØµÙˆÙ„</p>
-          <h1 className="inv-title">Ø¯Ø¹ÙˆØ§Øª Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ†</h1>
+          <p className="inv-eyebrow">إدارة الوصول</p>
+          <h1 className="inv-title">دعوات المعلمين</h1>
         </div>
         <button
           data-write="true"
@@ -343,7 +343,7 @@ export default function InvitesPage() {
           {creating ? (
             <>
               <div className="inv-mini-spin white" />
-              Ø¬Ø§Ø±Ù Ø§Ù„Ø¥Ù†Ø´Ø§Ø¡...
+              جارٍ الإنشاء...
             </>
           ) : (
             <>
@@ -358,7 +358,7 @@ export default function InvitesPage() {
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              Ø¥Ù†Ø´Ø§Ø¡ Ø¯Ø¹ÙˆØ© Ø¬Ø¯ÙŠØ¯Ø©
+              إنشاء دعوة جديدة
             </>
           )}
         </button>
@@ -387,9 +387,9 @@ export default function InvitesPage() {
           </svg>
         </div>
         <p>
-          Ø£Ù†Ø´Ø¦ Ø±Ø§Ø¨Ø· Ø¯Ø¹ÙˆØ© ÙˆØ´Ø§Ø±ÙƒÙ‡ Ù…Ø¹ Ø§Ù„Ù…Ø¹Ù„Ù… Ø¹Ø¨Ø± ÙˆØ§ØªØ³Ø§Ø¨ Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ.
-          Ø§Ù„Ø±Ø§Ø¨Ø· ØµØ§Ù„Ø­ Ù„Ù…Ø¯Ø© <strong>14 ÙŠÙˆÙ…Ø§Ù‹</strong> ÙˆÙŠÙØ³ØªØ®Ø¯Ù… Ù…Ø±Ø© ÙˆØ§Ø­Ø¯Ø© ÙÙ‚Ø·. Ø¨Ø¹Ø¯
-          Ù‚Ø¨ÙˆÙ„ Ø§Ù„Ø¯Ø¹ÙˆØ©ØŒ ÙŠÙ…ÙƒÙ† Ù„Ù„Ù…Ø¹Ù„Ù… ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø¯Ø®ÙˆÙ„ Ø¨Ø´ÙƒÙ„ Ø·Ø¨ÙŠØ¹ÙŠ.
+          أنشئ رابط دعوة وشاركه مع المعلم عبر واتساب أو البريد الإلكتروني.
+          الرابط صالح لمدة <strong>14 يوماً</strong> ويُستخدم مرة واحدة فقط. بعد
+          قبول الدعوة، يمكن للمعلم تسجيل الدخول بشكل طبيعي.
         </p>
       </div>
 
@@ -397,10 +397,10 @@ export default function InvitesPage() {
       {newInvite && (
         <div className="inv-new-flash">
           <div className="inv-new-flash-top">
-            <div className="inv-new-flash-icon">âœ¦</div>
-            <span className="inv-new-flash-title">ØªÙ… Ø¥Ù†Ø´Ø§Ø¡ Ø±Ø§Ø¨Ø· Ø§Ù„Ø¯Ø¹ÙˆØ©!</span>
+            <div className="inv-new-flash-icon">✦</div>
+            <span className="inv-new-flash-title">تم إنشاء رابط الدعوة!</span>
             <span className="inv-new-flash-sub">
-              Ø§Ù†Ø³Ø® Ø§Ù„Ø±Ø§Ø¨Ø· ÙˆØ´Ø§Ø±ÙƒÙ‡ Ù…Ø¹ Ø§Ù„Ù…Ø¹Ù„Ù… Ø§Ù„Ø¢Ù†
+              انسخ الرابط وشاركه مع المعلم الآن
             </span>
           </div>
           <div className="inv-new-flash-link">
@@ -416,7 +416,7 @@ export default function InvitesPage() {
       {loading ? (
         <div className="inv-loading">
           <div className="inv-spinner" />
-          <span>Ø¬Ø§Ø±Ù Ø§Ù„ØªØ­Ù…ÙŠÙ„...</span>
+          <span>جارٍ التحميل...</span>
         </div>
       ) : invites.length === 0 ? (
         <div className="inv-empty">
@@ -437,8 +437,8 @@ export default function InvitesPage() {
               <line x1="14" y1="1" x2="14" y2="4" />
             </svg>
           </div>
-          <h3>Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¯Ø¹ÙˆØ§Øª Ø¨Ø¹Ø¯</h3>
-          <p>Ø£Ù†Ø´Ø¦ Ø¯Ø¹ÙˆØ© Ø£ÙˆÙ„Ù‰ Ù„Ø¥Ø¶Ø§ÙØ© Ù…Ø¹Ù„Ù… Ø¥Ù„Ù‰ Ù…Ø¯Ø±Ø³ØªÙƒ</p>
+          <h3>لا توجد دعوات بعد</h3>
+          <p>أنشئ دعوة أولى لإضافة معلم إلى مدرستك</p>
           <button
             data-write="true"
             className="inv-create-btn"
@@ -456,7 +456,7 @@ export default function InvitesPage() {
             >
               <path d="M12 5v14M5 12h14" />
             </svg>
-            Ø¥Ù†Ø´Ø§Ø¡ Ø£ÙˆÙ„ Ø¯Ø¹ÙˆØ©
+            إنشاء أول دعوة
           </button>
         </div>
       ) : (
@@ -465,7 +465,7 @@ export default function InvitesPage() {
           {activeInvites.length > 0 && (
             <div className="inv-section">
               <div className="inv-section-hd">
-                <h2 className="inv-section-title">Ø§Ù„Ø¯Ø¹ÙˆØ§Øª Ø§Ù„Ù†Ø´Ø·Ø©</h2>
+                <h2 className="inv-section-title">الدعوات النشطة</h2>
                 <span className="inv-section-count">
                   {activeInvites.length}
                 </span>
@@ -487,7 +487,7 @@ export default function InvitesPage() {
           {inactiveInvites.length > 0 && (
             <div className="inv-section">
               <div className="inv-section-hd">
-                <h2 className="inv-section-title">Ø§Ù„Ø³Ø¬Ù„</h2>
+                <h2 className="inv-section-title">السجل</h2>
                 <span className="inv-section-count muted">
                   {inactiveInvites.length}
                 </span>
@@ -512,7 +512,7 @@ export default function InvitesPage() {
   );
 }
 
-// â”€â”€â”€ CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── CSS ─────────────────────────────────────────────────────────────────────
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
@@ -522,9 +522,9 @@ const css = `
 @keyframes flash-in{from{opacity:0;transform:translateY(-8px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 :root{
-  --gold:#B8A082;--gold2:#D9C9B0;--gold-l:rgba(184,160,130,0.08);--gold-b:rgba(184,160,130,0.18);
-  --black:#1A1A1A;--text:#1E1C18;--text2:#3A3020;--text3:#8A7860;
-  --surface:#FFFFFF;--border:#E4DDD0;--bg:#EFEAE0;
+  --gold:#C8A96A;--gold2:#E5B93C;--gold-l:rgba(200,169,106,0.08);--gold-b:rgba(200,169,106,0.18);
+  --black:#0B0B0C;--text:#1E1C18;--text2:#3A3020;--text3:#8A7860;
+  --surface:#FFFFFF;--border:#E4DDD0;--bg:#F5F3EE;
   --red:#7A1E1E;--red-l:rgba(122,30,30,0.07);
   --font:'Cairo',sans-serif;
 }
@@ -543,7 +543,7 @@ const css = `
 
 /* Create button */
 .inv-create-btn{display:flex;align-items:center;gap:8px;background:var(--black);color:var(--gold);border:none;padding:11px 20px;border-radius:10px;font-size:13.5px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;white-space:nowrap}
-.inv-create-btn:hover:not(:disabled){background:#1a1a1f;box-shadow:0 4px 16px rgba(184,160,130,0.2)}
+.inv-create-btn:hover:not(:disabled){background:#1a1a1f;box-shadow:0 4px 16px rgba(200,169,106,0.2)}
 .inv-create-btn:disabled{opacity:0.55;cursor:not-allowed}
 
 /* How it works */
@@ -552,18 +552,18 @@ const css = `
 .inv-how-it-works strong{color:var(--black);font-weight:800}
 
 /* New invite flash */
-.inv-new-flash{background:var(--black);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;animation:flash-in 0.3s ease;border:1px solid rgba(184,160,130,0.2)}
+.inv-new-flash{background:var(--black);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;animation:flash-in 0.3s ease;border:1px solid rgba(200,169,106,0.2)}
 .inv-new-flash-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .inv-new-flash-icon{color:var(--gold);font-size:16px}
 .inv-new-flash-title{font-size:14px;font-weight:800;color:var(--gold)}
-.inv-new-flash-sub{font-size:12px;color:rgba(184,160,130,0.45);margin-inline-start:auto}
-.inv-new-flash-link{display:flex;align-items:center;gap:10px;background:rgba(184,160,130,0.06);border:1px solid rgba(184,160,130,0.15);border-radius:9px;padding:10px 14px;flex-wrap:wrap}
-.inv-new-flash-url{flex:1;font-size:12px;color:rgba(184,160,130,0.6);font-family:monospace;word-break:break-all;min-width:0}
+.inv-new-flash-sub{font-size:12px;color:rgba(200,169,106,0.45);margin-inline-start:auto}
+.inv-new-flash-link{display:flex;align-items:center;gap:10px;background:rgba(200,169,106,0.06);border:1px solid rgba(200,169,106,0.15);border-radius:9px;padding:10px 14px;flex-wrap:wrap}
+.inv-new-flash-url{flex:1;font-size:12px;color:rgba(200,169,106,0.6);font-family:monospace;word-break:break-all;min-width:0}
 
 /* Loading */
 .inv-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:180px;color:var(--text3);font-size:14px}
 .inv-spinner{width:26px;height:26px;border:3px solid var(--gold-b);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
-.inv-mini-spin{width:13px;height:13px;border:2px solid rgba(184,160,130,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;flex-shrink:0}
+.inv-mini-spin{width:13px;height:13px;border:2px solid rgba(200,169,106,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;flex-shrink:0}
 .inv-mini-spin.white{border-color:rgba(0,0,0,0.2);border-top-color:var(--black)}
 
 /* Empty */
@@ -585,7 +585,7 @@ const css = `
 
 /* Card */
 .inv-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:border-color 0.15s,box-shadow 0.15s;animation:fadeUp 0.3s ease both}
-.inv-card:hover{border-color:var(--gold-b);box-shadow:0 3px 16px rgba(184,160,130,0.08)}
+.inv-card:hover{border-color:var(--gold-b);box-shadow:0 3px 16px rgba(200,169,106,0.08)}
 .inv-card.inactive{opacity:0.65}
 .inv-card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .inv-status{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px}
@@ -595,13 +595,13 @@ const css = `
 
 /* Link row */
 .inv-link-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.inv-link-box{flex:1;min-width:0;background:#EFEAE0;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;font-family:monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--text3)}
+.inv-link-box{flex:1;min-width:0;background:#F5F3EE;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;font-family:monospace;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:var(--text3)}
 .inv-link-prefix{color:var(--text3)}
 .inv-link-token{color:var(--black);font-weight:700}
 
 /* Copy button */
 .inv-copy-btn{display:flex;align-items:center;gap:6px;background:var(--gold-l);border:1px solid var(--gold-b);color:var(--text2);font-size:12px;font-weight:700;padding:7px 13px;border-radius:8px;cursor:pointer;font-family:var(--font);transition:all 0.15s;white-space:nowrap;flex-shrink:0}
-.inv-copy-btn:hover{background:rgba(184,160,130,0.15);border-color:var(--gold)}
+.inv-copy-btn:hover{background:rgba(200,169,106,0.15);border-color:var(--gold)}
 .inv-copy-btn.copied{background:rgba(45,138,74,0.08);border-color:rgba(45,138,74,0.25);color:#2D8A4A}
 
 /* Meta row */
@@ -623,4 +623,3 @@ const css = `
   .inv-actions{flex-wrap:wrap; gap:6px}
 }
 `;
-

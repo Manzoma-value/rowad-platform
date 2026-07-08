@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { Icons } from "./icons";
@@ -29,8 +29,8 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
 
   const deleteModule = async () => {
     if (!(await confirm({
-      message: "Ø³ÙŠØªÙ… Ø­Ø°Ù Ù‡Ø°Ø§ Ø§Ù„Ù…Ø³ØªÙˆÙ‰ ÙˆÙƒÙ„ Ù…Ø§ ÙŠØ­ØªÙˆÙŠÙ‡ Ù…Ù† Ù…Ø­ØªÙˆÙ‰ ÙˆØ£Ø³Ø¦Ù„Ø© ÙˆÙ…Ø­Ø§ÙˆÙ„Ø§Øª Ø§Ù„Ø·Ù„Ø§Ø¨ ÙÙŠÙ‡.",
-      title: "Ø­Ø°Ù Ø§Ù„Ù…Ø³ØªÙˆÙ‰",
+      message: "سيتم حذف هذا المستوى وكل ما يحتويه من محتوى وأسئلة ومحاولات الطلاب فيه.",
+      title: "حذف المستوى",
     }))) return;
     await fetch(`/api/school-admin/roadmap/modules/${mod.id}`, {
       method: "DELETE",
@@ -39,7 +39,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   };
 
   const deleteContent = async (contentId: string) => {
-    if (!(await confirm({ message: "Ù‡Ù„ ØªØ±ÙŠØ¯ Ø­Ø°Ù Ù‡Ø°Ø§ Ø§Ù„Ù…Ø­ØªÙˆÙ‰ØŸ" }))) return;
+    if (!(await confirm({ message: "هل تريد حذف هذا المحتوى؟" }))) return;
     await fetch(`/api/school-admin/roadmap/contents/${contentId}`, {
       method: "DELETE",
     });
@@ -47,7 +47,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   };
 
   const deleteQuestion = async (questionId: string) => {
-    if (!(await confirm({ message: "Ù‡Ù„ ØªØ±ÙŠØ¯ Ø­Ø°Ù Ù‡Ø°Ø§ Ø§Ù„Ø³Ø¤Ø§Ù„ØŸ" }))) return;
+    if (!(await confirm({ message: "هل تريد حذف هذا السؤال؟" }))) return;
     await fetch(`/api/school-admin/roadmap/questions/${questionId}`, {
       method: "DELETE",
     });
@@ -103,7 +103,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={block.image_url}
-              alt={block.alt_text ?? "ØµÙˆØ±Ø©"}
+              alt={block.alt_text ?? "صورة"}
               className="rb-content-thumb"
             />
           ) : (
@@ -111,7 +111,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
               className="rb-content-preview-text"
               style={{ display: "flex", alignItems: "center", gap: 4 }}
             >
-              {Icons.image} Ù„Ø§ ØªÙˆØ¬Ø¯ ØµÙˆØ±Ø©
+              {Icons.image} لا توجد صورة
             </span>
           )}
           {block.alt_text && (
@@ -142,18 +142,18 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   };
 
   const contentTypeBadgeLabel = (type: string) =>
-    ({ TEXT: "Ù†Øµ", IMAGE: "ØµÙˆØ±Ø©", VIDEO: "ÙÙŠØ¯ÙŠÙˆ" })[type] ?? type;
+    ({ TEXT: "نص", IMAGE: "صورة", VIDEO: "فيديو" })[type] ?? type;
 
   const questionTypeLabel = (type: string) =>
     ({
-      MCQ: "Ø§Ø®ØªÙŠØ§Ø± Ù…ØªØ¹Ø¯Ø¯",
-      TF: "ØµØ­/Ø®Ø·Ø£",
-      WRITTEN: "Ù…ÙƒØªÙˆØ¨",
-      MATCHING: "Ù…Ø·Ø§Ø¨Ù‚Ø©",
+      MCQ: "اختيار متعدد",
+      TF: "صح/خطأ",
+      WRITTEN: "مكتوب",
+      MATCHING: "مطابقة",
     })[type] ?? type;
 
   const formatCorrectAnswer = (q: Question) => {
-    if (q.type === "TF") return q.correct_answer === "true" ? "ØµØ­" : "Ø®Ø·Ø£";
+    if (q.type === "TF") return q.correct_answer === "true" ? "صح" : "خطأ";
     return q.correct_answer ?? "";
   };
 
@@ -167,7 +167,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
           <button className="rb-mod-toggle" onClick={() => setOpen((v) => !v)}>
             <span className="rb-mod-dot-wrap">
               {hasMainTrait ? (
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="#D9C9B0">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#E5B93C">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               ) : (
@@ -177,29 +177,29 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
             <span className="rb-mod-info">
               <span className="rb-mod-name">{mod.title}</span>
               <span className="rb-mod-meta">
-                <span>{contents.length} Ù…Ø­ØªÙˆÙ‰</span>
-                <span className="rb-mod-meta-sep">Â·</span>
-                <span>{questions.length} Ø³Ø¤Ø§Ù„</span>
-                <span className="rb-mod-meta-sep">Â·</span>
+                <span>{contents.length} محتوى</span>
+                <span className="rb-mod-meta-sep">·</span>
+                <span>{questions.length} سؤال</span>
+                <span className="rb-mod-meta-sep">·</span>
                 {mainTrait ? (
                   <span
-                    style={{ color: "#B8A082", fontWeight: 700, fontSize: 10 }}
+                    style={{ color: "#C8A96A", fontWeight: 700, fontSize: 10 }}
                   >
-                    â˜… {mainTrait.name}
+                    ★ {mainTrait.name}
                   </span>
                 ) : (
                   <span style={{ color: "#bbb", fontSize: 10 }}>
-                    Ø¨Ù„Ø§ Ø³Ù…Ø© Ù…Ø´ØºÙ‘Ù„Ø©
+                    بلا سمة مشغّلة
                   </span>
                 )}
-                <span className="rb-mod-meta-sep">Â·</span>
+                <span className="rb-mod-meta-sep">·</span>
                 <span
                   className="rb-completion"
                   style={{
                     color: attemptCount > 0 ? "#16a34a" : "var(--muted)",
                   }}
                 >
-                  {attemptCount > 0 ? `âœ“ ${attemptCount} Ø£ÙƒÙ…Ù„ÙˆØ§` : "0 Ø£ÙƒÙ…Ù„ÙˆØ§"}
+                  {attemptCount > 0 ? `✓ ${attemptCount} أكملوا` : "0 أكملوا"}
                 </span>
               </span>
             </span>
@@ -210,7 +210,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
           <button
             className="rb-icon-btn danger"
             onClick={deleteModule}
-            title="Ø­Ø°Ù Ø§Ù„Ù…Ø³ØªÙˆÙ‰"
+            title="حذف المستوى"
           >
             {Icons.trash}
           </button>
@@ -219,11 +219,11 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
         {/* Module Body */}
         {open && (
           <div className="rb-mod-body">
-            {/* â”€â”€ CONTENT SECTION â”€â”€ */}
+            {/* ── CONTENT SECTION ── */}
             <div className="rb-content-section">
               <div className="rb-section-label">
                 <span className="rb-section-label-line" />
-                <span className="rb-section-label-text">Ø¯Ø±Ø³</span>
+                <span className="rb-section-label-text">درس</span>
               </div>
 
               {contents.length > 0 ? (
@@ -237,7 +237,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                       <span
                         className="rb-drag-handle"
                         {...dragHandleProps}
-                        title="Ø§Ø³Ø­Ø¨ Ù„Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„ØªØ±ØªÙŠØ¨"
+                        title="اسحب لإعادة الترتيب"
                         aria-label="Drag to reorder"
                       >
                         {Icons.drag}
@@ -252,14 +252,14 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                         <button
                           className="rb-icon-btn"
                           onClick={() => setEditingContent(block)}
-                          title="ØªØ¹Ø¯ÙŠÙ„"
+                          title="تعديل"
                         >
                           {Icons.edit}
                         </button>
                         <button
                           className="rb-icon-btn danger"
                           onClick={() => deleteContent(block.id)}
-                          title="Ø­Ø°Ù"
+                          title="حذف"
                         >
                           {Icons.trash}
                         </button>
@@ -268,7 +268,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                   )}
                 />
               ) : (
-                <div className="rb-empty-inline">Ù„Ø§ ÙŠÙˆØ¬Ø¯ Ù…Ø­ØªÙˆÙ‰ Ø¨Ø¹Ø¯</div>
+                <div className="rb-empty-inline">لا يوجد محتوى بعد</div>
               )}
 
               <div className="rb-add-content-row">
@@ -276,35 +276,35 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                   className="rb-add-content-pill"
                   onClick={() => setAddingContent("TEXT")}
                 >
-                  {Icons.text} Ù†Øµ+
+                  {Icons.text} نص+
                 </button>
                 <button
                   className="rb-add-content-pill"
                   onClick={() => setAddingContent("IMAGE")}
                 >
-                  {Icons.image} ØµÙˆØ±Ø©+
+                  {Icons.image} صورة+
                 </button>
                 <button
                   className="rb-add-content-pill"
                   onClick={() => setAddingContent("VIDEO")}
                 >
-                  {Icons.video} ÙÙŠØ¯ÙŠÙˆ+
+                  {Icons.video} فيديو+
                 </button>
               </div>
             </div>
 
-            {/* â”€â”€ DIVIDER â”€â”€ */}
+            {/* ── DIVIDER ── */}
             <div className="rb-section-divider">
               <span className="rb-divider-line" />
-              <span className="rb-divider-diamond">â—†</span>
+              <span className="rb-divider-diamond">◆</span>
               <span className="rb-divider-line" />
             </div>
 
-            {/* â”€â”€ QUESTIONS SECTION â”€â”€ */}
+            {/* ── QUESTIONS SECTION ── */}
             <div className="rb-q-section">
               <div className="rb-section-label">
                 <span className="rb-section-label-line" />
-                <span className="rb-section-label-text">Ø£Ø³Ø¦Ù„Ø©</span>
+                <span className="rb-section-label-text">أسئلة</span>
               </div>
 
               {questions.length > 0 ? (
@@ -318,7 +318,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                       <span
                         className="rb-drag-handle"
                         {...dragHandleProps}
-                        title="Ø§Ø³Ø­Ø¨ Ù„Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„ØªØ±ØªÙŠØ¨"
+                        title="اسحب لإعادة الترتيب"
                         aria-label="Drag to reorder"
                         style={{ ...dragHandleProps.style, alignSelf: "center" }}
                       >
@@ -344,14 +344,14 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                         <button
                           className="rb-icon-btn"
                           onClick={() => setEditingQuestion(q)}
-                          title="ØªØ¹Ø¯ÙŠÙ„"
+                          title="تعديل"
                         >
                           {Icons.edit}
                         </button>
                         <button
                           className="rb-icon-btn danger"
                           onClick={() => deleteQuestion(q.id)}
-                          title="Ø­Ø°Ù"
+                          title="حذف"
                         >
                           {Icons.trash}
                         </button>
@@ -360,27 +360,27 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                   )}
                 />
               ) : (
-                <div className="rb-empty-inline">Ù„Ø§ ØªÙˆØ¬Ø¯ Ø£Ø³Ø¦Ù„Ø© Ø¨Ø¹Ø¯</div>
+                <div className="rb-empty-inline">لا توجد أسئلة بعد</div>
               )}
 
               <button
                 className="rb-add-q-btn"
                 onClick={() => setAddingQuestion(true)}
               >
-                {Icons.plus} Ø¥Ø¶Ø§ÙØ© Ø³Ø¤Ø§Ù„
+                {Icons.plus} إضافة سؤال
               </button>
             </div>
 
-            {/* â”€â”€ DIVIDER â”€â”€ */}
+            {/* ── DIVIDER ── */}
             {stageTraits.length > 0 && (
               <div className="rb-section-divider">
                 <span className="rb-divider-line" />
-                <span className="rb-divider-diamond">â—†</span>
+                <span className="rb-divider-diamond">◆</span>
                 <span className="rb-divider-line" />
               </div>
             )}
 
-            {/* â”€â”€ MAIN TRAIT SECTION â”€â”€ */}
+            {/* ── MAIN TRAIT SECTION ── */}
             {stageTraits.length > 0 && (
               <div className="rb-q-section">
                 <ModuleMainTraitSelector
@@ -395,7 +395,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
         )}
       </div>
 
-      {/* â”€â”€ MODALS â”€â”€ */}
+      {/* ── MODALS ── */}
       {addingContent === "TEXT" && (
         <TextModal
           moduleId={mod.id}
@@ -485,4 +485,3 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
     </>
   );
 }
-

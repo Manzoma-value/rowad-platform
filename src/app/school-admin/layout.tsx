@@ -1,4 +1,4 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -37,7 +37,7 @@ import {
   LucideIcon,
 } from "lucide-react";
 
-/* â”€â”€â”€ Inline SVG decorations â”€â”€â”€ */
+/* ─── Inline SVG decorations ─── */
 
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
 
@@ -58,7 +58,7 @@ const INNER_PETALS = Array.from({ length: 4 }, (_, i) => {
   return { cx: r2(100 + 24 * Math.sin(a)), cy: r2(100 - 24 * Math.cos(a)) };
 });
 
-function Mandala({ size = 160, stroke = "rgba(184,160,130,0.32)", className = "" }: {
+function Mandala({ size = 160, stroke = "rgba(200,169,106,0.32)", className = "" }: {
   size?: number; stroke?: string; className?: string;
 }) {
   return (
@@ -105,7 +105,7 @@ function GeoMark({ size = 22, color = "var(--sa-gold)" }: { size?: number; color
   );
 }
 
-/* â”€â”€â”€ Nav â”€â”€â”€ */
+/* ─── Nav ─── */
 interface NavItem {
   href: string;
   label: string;
@@ -121,7 +121,7 @@ interface NavItem {
 
 const COMMUNITY_HREF = "/school-admin/hub";
 
-/* â”€â”€â”€ Layout (thin wrapper that provides tenant context) â”€â”€â”€ */
+/* ─── Layout (thin wrapper that provides tenant context) ─── */
 export default function SchoolAdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <TenantProvider>
@@ -138,13 +138,13 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const isRtl = lang === "ar";
 
   const [name, setName] = useState("");
-  const [initials, setInitials] = useState("Ù…");
+  const [initials, setInitials] = useState("م");
   const [schoolName, setSchoolName] = useState("");
   const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  // Always show the language toggle â€” both options remain visible.
+  // Always show the language toggle — both options remain visible.
   const [showToggle] = useState(true);
   const [deactivated, setDeactivated] = useState(false);
   const [viewOnly, setViewOnly] = useState(false);
@@ -160,7 +160,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const navItems: NavItem[] = [
     {
       href: "/school-admin", sublabel: "Dashboard", exact: true, icon: LayoutDashboard,
-      label: lang === "ar" ? "Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©" : lang === "sq" ? "Kryesore" : "Dashboard",
+      label: lang === "ar" ? "الرئيسية" : lang === "sq" ? "Kryesore" : "Dashboard",
     },
     {
       href: "/school-admin/students", sublabel: "Students", exact: false, icon: Users,
@@ -174,13 +174,13 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/teacher-groups", sublabel: "Teacher Groups", exact: false, icon: Users,
-      label: lang === "ar" ? "Ù…Ø¬Ù…ÙˆØ¹Ø§Øª Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ†" : lang === "sq" ? "Grupet e mÃ«suesve" : "Teacher Groups",
+      label: lang === "ar" ? "مجموعات المعلمين" : lang === "sq" ? "Grupet e mësuesve" : "Teacher Groups",
       hideForViewOnly: true,
       group: "teachers",
     },
     {
       href: "/school-admin/workshops", sublabel: "Workshops", exact: false, icon: QrCode,
-      label: lang === "ar" ? "Ø§Ù„ÙˆØ±Ø´ Ø§Ù„ØªØ¯Ø±ÙŠØ¨ÙŠØ©" : lang === "sq" ? "PunÃ«toritÃ«" : "Workshops",
+      label: lang === "ar" ? "الورش التدريبية" : lang === "sq" ? "Punëtoritë" : "Workshops",
       group: "teachers",
     },
     {
@@ -202,47 +202,47 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
-      label: lang === "ar" ? "Ø·Ù„Ø¨Ø§Øª Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ†" : lang === "sq" ? "Aplikimet e mÃ«suesve" : "Teacher Applications",
+      label: lang === "ar" ? "طلبات المعلمين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
       hideForViewOnly: true,
       group: "teachers",
     },
     {
       href: "/school-admin/review-queue", sublabel: "Review queue", exact: false, icon: ClipboardCheck,
-      label: lang === "ar" ? "Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©" : lang === "sq" ? "Lista e shqyrtimit" : "Review Queue",
+      label: lang === "ar" ? "قائمة المراجعة" : lang === "sq" ? "Lista e shqyrtimit" : "Review Queue",
       hideForViewOnly: true,
       group: "learning",
     },
     {
       href: "/school-admin/game-scores", sublabel: "Model game scores", exact: false, icon: Gamepad2,
-      label: lang === "ar" ? "Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ø§Ù„ØªØ¹Ù„ÙŠÙ…ÙŠ" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
+      label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
       group: "learning",
     },
     {
       href: "/school-admin/owner-reports", sublabel: "Owner Reports", exact: false, icon: FileText,
-      label: lang === "ar" ? "ØªÙ‚Ø§Ø±ÙŠØ± Ø§Ù„Ù…Ø§Ù„Ùƒ" : lang === "sq" ? "Raportet e pronarit" : "Owner Reports",
+      label: lang === "ar" ? "تقارير المالك" : lang === "sq" ? "Raportet e pronarit" : "Owner Reports",
       group: "reports",
     },
     {
       href: "/school-admin/roadmap", sublabel: "Roadmap", exact: false, icon: MapPin,
-      label: lang === "ar" ? "Ø§Ù„Ø®Ø±ÙŠØ·Ø©" : lang === "sq" ? "Rruga e Pyetjeve" : "Roadmap",
+      label: lang === "ar" ? "الخريطة" : lang === "sq" ? "Rruga e Pyetjeve" : "Roadmap",
       feature: "roadmap",
       group: "learning",
     },
     {
       href: "/school-admin/reports", sublabel: "Reports", exact: false, icon: BarChart3,
-      label: lang === "ar" ? "Ø§Ù„ØªÙ‚Ø§Ø±ÙŠØ±" : lang === "sq" ? "Raportet" : "Reports",
+      label: lang === "ar" ? "التقارير" : lang === "sq" ? "Raportet" : "Reports",
       feature: "reports",
       group: "reports",
     },
     {
       href: "/school-admin/invites", sublabel: "Invites", exact: false, icon: Mail,
-      label: lang === "ar" ? "Ø§Ù„Ø¯Ø¹ÙˆØ§Øª" : lang === "sq" ? "Ftesa" : "Invites",
+      label: lang === "ar" ? "الدعوات" : lang === "sq" ? "Ftesa" : "Invites",
       hideForViewOnly: true,
       group: "operations",
     },
   ];
 
-  // â”€â”€ Tenant feature flags â”€â”€
+  // ── Tenant feature flags ──
   const { hasFeature, loading: tenantLoading } = useTenant();
   const visibleNav = navItems.filter((i) => {
     if (i.feature && !hasFeature(i.feature)) return false;
@@ -260,9 +260,9 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // All three layout fetches in parallel + cached so navigation is instant.
-    // /me â€” 10 min TTL (activation rarely changes in a session)
-    // /stats â€” 60s TTL (the dashboard sometimes refreshes counts)
-    // /profile â€” 10 min TTL (avatar doesn't change between page views)
+    // /me — 10 min TTL (activation rarely changes in a session)
+    // /stats — 60s TTL (the dashboard sometimes refreshes counts)
+    // /profile — 10 min TTL (avatar doesn't change between page views)
     cachedFetch<{ status?: string; is_view_only?: boolean }>("/api/school-admin/me", 600_000)
       .then((d) => {
         if (d?.status === "deactivated") setDeactivated(true);
@@ -307,7 +307,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
-  // â”€â”€ Defence-in-depth: when this is a view-only session, monkey-patch
+  // ── Defence-in-depth: when this is a view-only session, monkey-patch
   //    window.fetch so any non-GET request to /api/school-admin/* is
   //    intercepted before it leaves the browser. The server already refuses
   //    these, but blocking client-side means a stray button click never
@@ -336,7 +336,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       return realFetch(input, init);
     };
 
-    // Tiny one-off toast injector â€” appended to <body>, fades after 2.4s.
+    // Tiny one-off toast injector — appended to <body>, fades after 2.4s.
     function showViewOnlyToast() {
       const id = "sa-view-only-toast";
       let el = document.getElementById(id);
@@ -345,21 +345,21 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         el.id = id;
         el.style.cssText = `
           position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-          background: linear-gradient(165deg,#4A0E1C,#1A1A1A); color:#D9C9B0;
+          background: linear-gradient(165deg,#1E2329,#11151A); color:#E5B93C;
           padding: 12px 22px; border-radius: 12px;
           font-family: 'Cairo','Tajawal',sans-serif; font-size: 13.5px; font-weight: 800;
           box-shadow: 0 10px 30px rgba(0,0,0,.35);
-          border:1px solid rgba(217,201,176,0.5); z-index: 9999;
+          border:1px solid rgba(229,185,60,0.5); z-index: 9999;
           opacity: 0; transition: opacity 0.18s ease;
           max-width: 92vw; text-align: center;
         `;
         document.body.appendChild(el);
       }
       el.textContent = lang === "ar"
-        ? "Ù‡Ø°Ø§ Ø­Ø³Ø§Ø¨ Ù„Ù„Ø¹Ø±Ø¶ ÙÙ‚Ø· â€” Ù„Ø§ ÙŠÙ…ÙƒÙ† ØªÙ†ÙÙŠØ° Ù‡Ø°Ø§ Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡."
+        ? "هذا حساب للعرض فقط — لا يمكن تنفيذ هذا الإجراء."
         : lang === "sq"
-          ? "Llogari vetÃ«m pÃ«r shikim â€” ky veprim Ã«shtÃ« i Ã§aktivizuar."
-          : "View-only account â€” this action is disabled.";
+          ? "Llogari vetëm për shikim — ky veprim është i çaktivizuar."
+          : "View-only account — this action is disabled.";
       // force reflow + fade in/out
       requestAnimationFrame(() => { if (el) el.style.opacity = "1"; });
       window.clearTimeout((el as HTMLElement & { _t?: number })._t);
@@ -389,30 +389,30 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   const currentLabel = (() => {
     if (isActive(COMMUNITY_HREF, false))
-      return lang === "ar" ? "Ø§Ù„Ù…Ø¬ØªÙ…Ø¹" : lang === "sq" ? "Komuniteti" : "Community";
+      return lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community";
     const found = navItems.find((item) => isActive(item.href, item.exact));
-    return found?.label ?? (lang === "ar" ? "Ø§Ù„ØµÙØ­Ø©" : "Faqja");
+    return found?.label ?? (lang === "ar" ? "الصفحة" : "Faqja");
   })();
 
   const navGroups = [
     {
       key: "teachers",
-      label: lang === "ar" ? "Ø§Ù„Ù…Ø¹Ù„Ù…ÙˆÙ†" : lang === "sq" ? "MÃ«suesit" : "Teachers",
+      label: lang === "ar" ? "المعلمون" : lang === "sq" ? "Mësuesit" : "Teachers",
       sublabel: "Teachers",
     },
     {
       key: "learning",
-      label: lang === "ar" ? "Ø§Ù„ØªØ¹Ù„Ù… ÙˆØ§Ù„ÙØµÙˆÙ„" : lang === "sq" ? "MÃ«simi" : "Learning",
+      label: lang === "ar" ? "التعلم والفصول" : lang === "sq" ? "Mësimi" : "Learning",
       sublabel: "Classes",
     },
     {
       key: "reports",
-      label: lang === "ar" ? "Ø§Ù„ØªÙ‚Ø§Ø±ÙŠØ± ÙˆØ§Ù„Ù‚ÙŠØ§Ø³" : lang === "sq" ? "Raportet" : "Reports",
+      label: lang === "ar" ? "التقارير والقياس" : lang === "sq" ? "Raportet" : "Reports",
       sublabel: "Reports",
     },
     {
       key: "operations",
-      label: lang === "ar" ? "Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©" : lang === "sq" ? "Administrimi" : "Operations",
+      label: lang === "ar" ? "الإدارة" : lang === "sq" ? "Administrimi" : "Operations",
       sublabel: "Admin",
     },
   ] as const;
@@ -445,36 +445,36 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     );
   };
 
-  // â”€â”€ Deactivated wall â€” replaces the entire UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Deactivated wall — replaces the entire UI ─────────────────────────────
   if (deactivated) {
     return (
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         flexDirection: "column", gap: 20, textAlign: "center", padding: 32,
         fontFamily: "'Cairo', sans-serif", direction: "rtl",
-        background: "radial-gradient(ellipse at 50% 0%, rgba(184,160,130,0.14), transparent 60%), #EFEAE0",
+        background: "radial-gradient(ellipse at 50% 0%, rgba(200,169,106,0.07), transparent 60%), #F6F4EE",
       }}>
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6B1E2D" strokeWidth={1.2}>
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#C8A96A" strokeWidth={1.2}>
           <circle cx="12" cy="12" r="10" />
           <path d="M12 8v4m0 4h.01" />
         </svg>
-        <h1 style={{ fontSize: 22, fontWeight: 900, color: "#1A1A1A", margin: 0 }}>
-          {lang === "ar" ? "ØªÙ… ØªØ¹Ø·ÙŠÙ„ Ø­Ø³Ø§Ø¨Ùƒ" : "Llogaria juaj Ã«shtÃ« Ã§aktivizuar"}
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: "#0B0B0C", margin: 0 }}>
+          {lang === "ar" ? "تم تعطيل حسابك" : "Llogaria juaj është çaktivizuar"}
         </h1>
         <p style={{ fontSize: 14, color: "#8A8478", maxWidth: 380, lineHeight: 1.7, margin: 0 }}>
           {lang === "ar"
-            ? "ØªÙ… ØªØ¹Ø·ÙŠÙ„ Ø­Ø³Ø§Ø¨ Ø§Ù„Ù…Ø¯ÙŠØ± Ø§Ù„Ø®Ø§Øµ Ø¨Ùƒ Ù…Ù† Ù‚ÙØ¨Ù„ Ø§Ù„Ù…Ø§Ù„Ùƒ. ØªÙˆØ§ØµÙ„ Ù…Ø¹ Ù…Ø§Ù„Ùƒ Ø§Ù„Ù†Ø¸Ø§Ù… Ù„Ø¥Ø¹Ø§Ø¯Ø© Ø§Ù„ØªÙØ¹ÙŠÙ„."
-            : "Llogaria juaj e administratorit Ã«shtÃ« Ã§aktivizuar nga pronari. Kontaktoni pronarin e sistemit pÃ«r riaktivizim."}
+            ? "تم تعطيل حساب المدير الخاص بك من قِبل المالك. تواصل مع مالك النظام لإعادة التفعيل."
+            : "Llogaria juaj e administratorit është çaktivizuar nga pronari. Kontaktoni pronarin e sistemit për riaktivizim."}
         </p>
         <button
           onClick={handleLogout}
           style={{
             marginTop: 8, padding: "10px 28px", borderRadius: 10,
-            background: "#4A0E1C", color: "#D9C9B0", border: "1px solid rgba(217,201,176,0.3)",
+            background: "#0B0B0C", color: "#C8A96A", border: "1px solid rgba(200,169,106,0.3)",
             fontFamily: "'Cairo', sans-serif", fontSize: 14, fontWeight: 700, cursor: "pointer",
           }}
         >
-          {lang === "ar" ? "ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø®Ø±ÙˆØ¬" : "Dalje"}
+          {lang === "ar" ? "تسجيل الخروج" : "Dalje"}
         </button>
       </div>
     );
@@ -486,7 +486,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="sa-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SIDEBAR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ═══════════════════ SIDEBAR ═══════════════════ */}
       <aside className={`sa-sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sa-sidebar-glow" aria-hidden="true" />
 
@@ -494,7 +494,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="sa-logo-block">
           <Image
             src="/ahlia.png"
-            alt="Ø¨Ù†Ø§Ø¡ Ø§Ù„Ø£Ù‡Ù„ÙŠØ©"
+            alt="بناء الأهلية"
             fill
             style={{ objectFit: "contain", objectPosition: "center" }}
             priority
@@ -503,7 +503,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
           <button
             className="sa-close-btn"
             onClick={() => setSidebarOpen(false)}
-            aria-label="Ø¥ØºÙ„Ø§Ù‚"
+            aria-label="إغلاق"
           >
             <X size={14} strokeWidth={2} />
           </button>
@@ -520,7 +520,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Section label */}
         <div className="sa-section-label">
-          {lang === "ar" ? "Ø§Ù„Ù‚ÙˆØ§Ø¦Ù… Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ© Â· Main" : lang === "sq" ? "Menuja Kryesore Â· Main" : "Main Menu"}
+          {lang === "ar" ? "القوائم الرئيسية · Main" : lang === "sq" ? "Menuja Kryesore · Main" : "Main Menu"}
         </div>
 
         {showToggle && (
@@ -552,14 +552,14 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                     <span className="sa-nav-group-title">{group.label}</span>
                     <span className="sa-nav-group-sub">{group.sublabel}</span>
                   </span>
-                  <span className={`sa-nav-group-chev ${isOpen ? "open" : ""}`}>âŒ„</span>
+                  <span className={`sa-nav-group-chev ${isOpen ? "open" : ""}`}>⌄</span>
                 </button>
                 {isOpen && <div className="sa-nav-group-items">{items.map((item) => renderNavItem(item, true))}</div>}
               </div>
             );
           })}
 
-          {/* Community â€” visually separated, gated by the hub feature */}
+          {/* Community — visually separated, gated by the hub feature */}
           {showCommunity && (
             <>
               <div className="sa-nav-sep" aria-hidden="true" />
@@ -582,7 +582,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                     </span>
                     <span className="sa-nav-labels">
                       <span className="sa-nav-label-main">
-                        {lang === "ar" ? "Ø§Ù„Ù…Ø¬ØªÙ…Ø¹" : lang === "sq" ? "Komuniteti" : "Community"}
+                        {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
                       </span>
                       <span className="sa-nav-label-sub">Community</span>
                     </span>
@@ -594,7 +594,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
           )}
 
           <div className="sa-mandala-wrap" aria-hidden="true">
-            <Mandala size={172} stroke="rgba(184,160,130,0.32)" />
+            <Mandala size={172} stroke="rgba(200,169,106,0.32)" />
           </div>
         </nav>
 
@@ -628,10 +628,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
               <div className="sa-user-info">
                 <span className="sa-user-name">
-                  {name || (lang === "ar" ? "Ø§Ù„Ù…Ø¯ÙŠØ±" : "Drejtori")}
+                  {name || (lang === "ar" ? "المدير" : "Drejtori")}
                 </span>
                 <span className="sa-user-role">
-                  {lang === "ar" ? "Ù…Ø¯ÙŠØ± Ø§Ù„Ø¬Ù‡Ø©" : lang === "sq" ? "Drejtori" : "Admin"}
+                  {lang === "ar" ? "مدير الجهة" : lang === "sq" ? "Drejtori" : "Admin"}
                 </span>
               </div>
             </Link>
@@ -639,7 +639,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
               className="sa-logout-btn"
               onClick={handleLogout}
               disabled={loggingOut}
-              title={lang === "ar" ? "ØªØ³Ø¬ÙŠÙ„ Ø§Ù„Ø®Ø±ÙˆØ¬" : "Dalje"}
+              title={lang === "ar" ? "تسجيل الخروج" : "Dalje"}
               type="button"
             >
               {loggingOut ? <div className="sa-spin" /> : <LogOut size={15} strokeWidth={1.7} />}
@@ -648,7 +648,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MAIN â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {/* ═══════════════════ MAIN ═══════════════════ */}
       <div className="sa-main" dir={isRtl ? "rtl" : "ltr"}>
         {/* Topbar */}
         <header className="sa-topbar">
@@ -657,7 +657,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
             type="button"
             className="sa-hamburger"
             onClick={() => setSidebarOpen(true)}
-            aria-label="ÙØªØ­ Ø§Ù„Ù‚Ø§Ø¦Ù…Ø©"
+            aria-label="فتح القائمة"
           >
             <Menu size={20} strokeWidth={1.7} />
           </button>
@@ -675,7 +675,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
           <div className="sa-topbar-actions">
             <div className="sa-topbar-divider" />
-            <button type="button" className="sa-bell-btn" aria-label="Ø§Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª">
+            <button type="button" className="sa-bell-btn" aria-label="الإشعارات">
               <Bell size={15} strokeWidth={1.7} />
             </button>
             <div className="sa-topbar-user-pill">
@@ -693,11 +693,11 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                 )}
               </div>
               <div className="sa-topbar-id">
-                <span className="sa-topbar-name">{name || (lang === "ar" ? "Ø§Ù„Ù…Ø¯ÙŠØ±" : "Admin")}</span>
+                <span className="sa-topbar-name">{name || (lang === "ar" ? "المدير" : "Admin")}</span>
                 {(schoolName || schoolNameAlt) && (
                   <span className="sa-topbar-sub">
                     {lang === "ar"
-                      ? `Ù…Ø¯ÙŠØ± ÙÙŠ ${schoolName || schoolNameAlt}`
+                      ? `مدير في ${schoolName || schoolNameAlt}`
                       : `Admin of ${schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}`}
                   </span>
                 )}
@@ -720,10 +720,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                 </svg>
                 <span className="sa-view-only-text">
                   {lang === "ar"
-                    ? "Ù‡Ø°Ø§ Ø­Ø³Ø§Ø¨ Ù„Ù„Ø¹Ø±Ø¶ ÙÙ‚Ø· â€” ÙŠÙ…ÙƒÙ†Ùƒ ØªØµÙÙ‘Ø­ ÙƒÙ„ ØµÙØ­Ø§Øª Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©ØŒ Ù„ÙƒÙ† Ù„Ø§ ÙŠÙ…ÙƒÙ† ØªØ¹Ø¯ÙŠÙ„ Ø£Ùˆ Ø­Ø°Ù Ø£ÙŠ Ø¨ÙŠØ§Ù†Ø§Øª."
+                    ? "هذا حساب للعرض فقط — يمكنك تصفّح كل صفحات الإدارة، لكن لا يمكن تعديل أو حذف أي بيانات."
                     : lang === "sq"
-                      ? "Kjo Ã«shtÃ« njÃ« llogari vetÃ«m pÃ«r shikim â€” mund tÃ« shfletoni Ã§do faqe administrimi, por nuk mund tÃ« modifikoni ose fshini asnjÃ« tÃ« dhÃ«nÃ«."
-                      : "This is a view-only account â€” you can browse every admin page, but no edits or deletions are allowed."}
+                      ? "Kjo është një llogari vetëm për shikim — mund të shfletoni çdo faqe administrimi, por nuk mund të modifikoni ose fshini asnjë të dhënë."
+                      : "This is a view-only account — you can browse every admin page, but no edits or deletions are allowed."}
                 </span>
               </div>
             )}
@@ -731,18 +731,18 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </main>
 
-        {/* Bottom band + footer â€” hidden on the community page so the
+        {/* Bottom band + footer — hidden on the community page so the
             chat-style feed reaches the bottom of the viewport. */}
         {pathname !== "/school-admin/hub" && (
           <>
             <div className="sa-bottom-band" aria-hidden="true">
               <svg viewBox="0 0 1200 80" preserveAspectRatio="none" width="100%" height="100%">
-                <line x1="0" y1="40" x2="1200" y2="40" stroke="rgba(184,160,130,0.28)" strokeWidth="0.5" />
+                <line x1="0" y1="40" x2="1200" y2="40" stroke="rgba(200,169,106,0.25)" strokeWidth="0.5" />
                 {Array.from({ length: 36 }).map((_, i) => (
-                  <circle key={i} cx={(i + 0.5) * (1200 / 36)} cy="40" r="1.2" fill="rgba(184,160,130,0.48)" />
+                  <circle key={i} cx={(i + 0.5) * (1200 / 36)} cy="40" r="1.2" fill="rgba(200,169,106,0.45)" />
                 ))}
-                <circle cx="600" cy="40" r="6" fill="none" stroke="rgba(107,30,45,0.42)" strokeWidth="0.7" />
-                <circle cx="600" cy="40" r="14" fill="none" stroke="rgba(184,160,130,0.34)" strokeWidth="0.5" />
+                <circle cx="600" cy="40" r="6" fill="none" stroke="rgba(200,169,106,0.55)" strokeWidth="0.7" />
+                <circle cx="600" cy="40" r="14" fill="none" stroke="rgba(200,169,106,0.30)" strokeWidth="0.5" />
               </svg>
             </div>
 
@@ -750,10 +750,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
               <Sparkles size={11} className="sa-footer-sparkle" />
               <span className="sa-footer-text">
                 {lang === "ar"
-                  ? "Ø¬Ù…ÙŠØ¹ Ø§Ù„Ø­Ù‚ÙˆÙ‚ Ù…Ø­ÙÙˆØ¸Ø© Â© Ù…Ù†Ø¸ÙˆÙ…Ø© - 2026"
+                  ? "جميع الحقوق محفوظة © منظومة - 2026"
                   : lang === "sq"
-                    ? "TÃ« gjitha tÃ« drejtat e rezervuara Â© Manzoma - 2026"
-                    : "All rights reserved Â© Manzoma - 2026"}
+                    ? "Të gjitha të drejtat e rezervuara © Manzoma - 2026"
+                    : "All rights reserved © Manzoma - 2026"}
               </span>
             </div>
           </>
@@ -765,9 +765,9 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ══════════════════════════════════════════════════════════════════════
    STYLES
-â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+══════════════════════════════════════════════════════════════════════ */
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=El+Messiri:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
@@ -778,28 +778,21 @@ const styles = `
   @keyframes sa-spin    { to { transform: rotate(360deg) } }
 
   :root {
-    --sa-cream:          #EFEAE0;
-    --sa-sand:           #E5E0D5;
-    --sa-burgundy:       #6B1E2D;
-    --sa-burgundy-deep:  #4A0E1C;
-    --sa-charcoal:       #1A1A1A;
-    --sa-success:        #1B5E20;
+    --sa-bg-main:        #F6F4EE;
+    --sa-bg-soft:        #FBFAF6;
+    --sa-bg-card:        #FFFDF8;
 
-    --sa-bg-main:        #EFEAE0;
-    --sa-bg-soft:        #EFEAE0;
-    --sa-bg-card:        #FBF8F1;
+    --sa-graphite:       #080B0C;
+    --sa-graphite-muted: #5E5A52;
+    --sa-graphite-soft:  #8A8478;
 
-    --sa-graphite:       #1A1A1A;
-    --sa-graphite-muted: #5D554A;
-    --sa-graphite-soft:  #8C8274;
+    --sa-gold:           #C8A96A;
+    --sa-gold-deep:      #B89B5E;
+    --sa-gold-soft:      #D8C28A;
 
-    --sa-gold:           #B8A082;
-    --sa-gold-deep:      #8F765B;
-    --sa-gold-soft:      #D9C9B0;
-
-    --sa-bdr-soft:       rgba(74,14,28,0.08);
-    --sa-bdr-med:        rgba(74,14,28,0.13);
-    --sa-bdr-gold:       rgba(184,160,130,0.42);
+    --sa-bdr-soft:       rgba(8,11,12,0.07);
+    --sa-bdr-med:        rgba(8,11,12,0.11);
+    --sa-bdr-gold:       rgba(200,169,106,0.38);
 
     --sa-sidebar-w:      286px;
     --sa-topbar-h:       68px;
@@ -814,75 +807,73 @@ const styles = `
   html, body {
     font-family: var(--sa-font);
     background:
-      radial-gradient(ellipse at 12% 8%,  rgba(184,160,130,0.14), transparent 30%),
-      radial-gradient(ellipse at 88% 85%, rgba(107,30,45,0.07),   transparent 32%),
+      radial-gradient(ellipse at 12% 8%,  rgba(200,169,106,0.07), transparent 30%),
+      radial-gradient(ellipse at 88% 85%, rgba(122,30,30,0.04),   transparent 32%),
       var(--sa-bg-main);
     color: var(--sa-graphite);
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: rgba(184,160,130,0.26); }
+  ::selection { background: rgba(200,169,106,0.20); }
 
-  /* â•â• SHELL â•â• */
+  /* ══ SHELL ══ */
   .sa-shell { display: flex; min-height: 100vh; width: 100%; }
 
-  /* â•â• OVERLAY â•â• */
+  /* ══ OVERLAY ══ */
   .sa-overlay {
     position: fixed; inset: 0; z-index: 40;
-    background: rgba(26,26,26,0.58);
+    background: rgba(8,11,12,0.55);
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     animation: sa-fadein 0.22s ease;
   }
 
-  /* â•â• SIDEBAR â•â• */
+  /* ══ SIDEBAR ══ */
   .sa-sidebar {
     position: fixed; top: 0; inset-inline-start: 0;
     width: var(--sa-sidebar-w); height: 100vh;
     z-index: 50; display: flex; flex-direction: column; overflow: hidden;
-    border-inline-end: 1px solid rgba(184,160,130,0.18);
-    background:
-      radial-gradient(circle at 20% 0%, rgba(107,30,45,0.48), transparent 34%),
-      linear-gradient(180deg, #1A1A1A 0%, #230B13 46%, #12070B 100%);
+    border-inline-end: 1px solid rgba(200,169,106,0.14);
+    background: linear-gradient(180deg, #1E2329 0%, #181C21 50%, #11151A 100%);
     transition: transform 0.32s var(--sa-ease-out);
     transform: translateX(0);
   }
   @media (max-width: 767px) {
     [dir="rtl"] .sa-sidebar      { transform: translateX(100%); }
-    [dir="rtl"] .sa-sidebar.open { transform: translateX(0); box-shadow: -22px 0 60px rgba(74,14,28,0.42); }
+    [dir="rtl"] .sa-sidebar.open { transform: translateX(0); box-shadow: -22px 0 60px rgba(8,11,12,0.42); }
     [dir="ltr"] .sa-sidebar      { transform: translateX(-100%); }
-    [dir="ltr"] .sa-sidebar.open { transform: translateX(0); box-shadow: 22px 0 60px rgba(74,14,28,0.42); }
+    [dir="ltr"] .sa-sidebar.open { transform: translateX(0); box-shadow: 22px 0 60px rgba(8,11,12,0.42); }
   }
 
   .sa-sidebar-glow {
     position: absolute; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(ellipse at 50% 0%,   rgba(217,201,176,0.13), transparent 55%),
-      radial-gradient(ellipse at 50% 100%, rgba(107,30,45,0.28),   transparent 44%);
+      radial-gradient(ellipse at 50% 0%,   rgba(200,169,106,0.12), transparent 55%),
+      radial-gradient(ellipse at 50% 100%, rgba(122,30,30,0.05),   transparent 44%);
   }
 
   /* Logo */
   .sa-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
     width: 100%; height: 86px; overflow: hidden;
-    background: #12070B;
-    border-top: 1.5px solid rgba(217,201,176,0.55);
-    border-bottom: 1px solid rgba(184,160,130,0.24);
-    box-shadow: 0 6px 28px rgba(107,30,45,0.18), inset 0 -1px 0 rgba(217,201,176,0.08);
+    background: #080B0C;
+    border-top: 1.5px solid rgba(200,169,106,0.55);
+    border-bottom: 1px solid rgba(200,169,106,0.20);
+    box-shadow: 0 6px 28px rgba(200,169,106,0.07), inset 0 -1px 0 rgba(200,169,106,0.08);
   }
   .sa-logo-frame {
     position: absolute; inset: 0; pointer-events: none; z-index: 2;
     background:
-      linear-gradient(to right, rgba(18,7,11,0.70) 0%, transparent 26%, transparent 74%, rgba(18,7,11,0.70) 100%),
-      linear-gradient(to bottom, transparent 50%, rgba(18,7,11,0.76) 100%);
+      linear-gradient(to right, rgba(8,11,12,0.65) 0%, transparent 26%, transparent 74%, rgba(8,11,12,0.65) 100%),
+      linear-gradient(to bottom, transparent 50%, rgba(8,11,12,0.72) 100%);
   }
   .sa-close-btn {
     display: none; align-items: center; justify-content: center;
     position: absolute; top: 10px; inset-inline-end: 10px;
     width: 28px; height: 28px; border-radius: 8px;
-    background: rgba(18,7,11,0.58); border: none; cursor: pointer;
-    color: rgba(217,201,176,0.76); transition: color 0.15s, background 0.15s;
+    background: rgba(8,11,12,0.55); border: none; cursor: pointer;
+    color: rgba(200,169,106,0.70); transition: color 0.15s, background 0.15s;
     z-index: 2;
   }
-  .sa-close-btn:hover { color: var(--sa-gold-soft); background: rgba(18,7,11,0.86); }
+  .sa-close-btn:hover { color: var(--sa-gold); background: rgba(8,11,12,0.80); }
   @media (max-width: 767px) { .sa-close-btn { display: flex; } }
 
   /* Gold rule */
@@ -892,9 +883,9 @@ const styles = `
     margin: 0 20px 14px;
   }
   .sa-gold-rule--footer { margin: 0 20px 12px; }
-  .sa-rule-line  { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(217,201,176,0.25), transparent); }
-  .sa-rule-diamond { width: 4px; height: 4px; border-radius: 1px; background: rgba(217,201,176,0.55); transform: rotate(45deg); flex-shrink: 0; }
-  .sa-rule-dash  { width: 10px; height: 1px; background: rgba(184,160,130,0.42); flex-shrink: 0; }
+  .sa-rule-line  { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,169,106,0.22), transparent); }
+  .sa-rule-diamond { width: 4px; height: 4px; border-radius: 1px; background: rgba(200,169,106,0.50); transform: rotate(45deg); flex-shrink: 0; }
+  .sa-rule-dash  { width: 10px; height: 1px; background: rgba(200,169,106,0.38); flex-shrink: 0; }
 
   /* Section label */
   .sa-section-label {
@@ -902,7 +893,7 @@ const styles = `
     padding: 0 24px 10px;
     font-family: var(--sa-font-mono); font-size: 9.5px; font-weight: 700;
     letter-spacing: 0.22em; text-transform: uppercase;
-    color: rgba(217,201,176,0.52);
+    color: rgba(232, 220, 188, 0.45);
   }
 
   /* Nav */
@@ -915,7 +906,7 @@ const styles = `
 
   .sa-nav-sep {
     height: 1px; margin: 8px 8px;
-    background: linear-gradient(90deg, transparent, rgba(217,201,176,0.18), transparent);
+    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.15), transparent);
   }
 
   .sa-nav-group {
@@ -924,14 +915,14 @@ const styles = `
     gap: 3px;
     margin: 5px 0;
     padding: 6px;
-    border: 1px solid rgba(217,201,176,0.10);
+    border: 1px solid rgba(200,169,106,0.08);
     border-radius: 18px;
-    background: rgba(239,234,224,0.025);
+    background: rgba(255,255,255,0.018);
     flex-shrink: 0;
   }
   .sa-nav-group.active {
-    border-color: rgba(217,201,176,0.25);
-    background: rgba(107,30,45,0.24);
+    border-color: rgba(200,169,106,0.22);
+    background: rgba(200,169,106,0.035);
   }
   .sa-nav-group-head {
     display: flex;
@@ -943,15 +934,15 @@ const styles = `
     border: 0;
     border-radius: 13px;
     background: transparent;
-    color: rgba(239,234,224,0.90);
+    color: rgba(245,229,188,0.88);
     cursor: pointer;
     text-align: start;
     font-family: var(--sa-font);
     transition: background 0.18s var(--sa-ease-out), color 0.18s var(--sa-ease-out);
   }
   .sa-nav-group-head:hover {
-    background: rgba(217,201,176,0.07);
-    color: #EFEAE0;
+    background: rgba(232, 220, 188, 0.055);
+    color: #F5E5BC;
   }
   .sa-nav-group-title {
     display: block;
@@ -967,7 +958,7 @@ const styles = `
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgba(217,201,176,0.48);
+    color: rgba(232,220,188,0.42);
   }
   .sa-nav-group-chev {
     display: inline-flex;
@@ -976,12 +967,12 @@ const styles = `
     width: 22px;
     height: 22px;
     border-radius: 8px;
-    border: 1px solid rgba(217,201,176,0.16);
+    border: 1px solid rgba(200,169,106,0.14);
     color: var(--sa-gold-soft);
     transition: transform 0.18s var(--sa-ease-out), background 0.18s var(--sa-ease-out);
   }
   .sa-nav-group-chev.open { transform: rotate(180deg); }
-  .sa-nav-group-head:hover .sa-nav-group-chev { background: rgba(217,201,176,0.12); }
+  .sa-nav-group-head:hover .sa-nav-group-chev { background: rgba(200,169,106,0.10); }
   .sa-nav-group-items {
     display: flex;
     flex-direction: column;
@@ -1002,7 +993,7 @@ const styles = `
     position: relative; display: flex; align-items: center; gap: 11px;
     padding: 10px 12px; border-radius: 14px;
     text-decoration: none; border: 1px solid transparent;
-    color: rgba(239,234,224,0.72);
+    color: rgba(232, 220, 188, 0.70);
     transition: all 0.2s var(--sa-ease-out); overflow: hidden;
     /* Never let parent flex pressure collapse the row. With many nav
        items + a short viewport, omitting these caused labels to overlap. */
@@ -1010,48 +1001,48 @@ const styles = `
     min-height: 52px;
   }
   .sa-nav-item:hover {
-    background: rgba(239,234,224,0.065);
-    color: rgba(239,234,224,0.97);
-    border-color: rgba(217,201,176,0.18);
+    background: rgba(232, 220, 188, 0.06);
+    color: rgba(255, 248, 230, 0.95);
+    border-color: rgba(200,169,106,0.16);
   }
   .sa-nav-item.active {
-    background: linear-gradient(180deg, rgba(107,30,45,0.70), rgba(74,14,28,0.52));
-    color: #EFEAE0;
-    border-color: rgba(217,201,176,0.45);
+    background: linear-gradient(180deg, rgba(200,169,106,0.18), rgba(200,169,106,0.08));
+    color: #F5E5BC;
+    border-color: rgba(200,169,106,0.42);
     box-shadow:
       0 4px 14px rgba(0,0,0,0.25),
       inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
-  .sa-nav-community { border-color: rgba(217,201,176,0.12); }
-  .sa-nav-community:hover { border-color: rgba(217,201,176,0.26); }
+  .sa-nav-community { border-color: rgba(200,169,106,0.10); }
+  .sa-nav-community:hover { border-color: rgba(200,169,106,0.22); }
 
-  .sa-nav-pill    { position: absolute; inset-inline-end: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; background: linear-gradient(180deg, var(--sa-gold-soft), var(--sa-gold)); }
-  .sa-nav-shimmer { position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(to left, transparent, rgba(217,201,176,0.55), transparent); }
+  .sa-nav-pill    { position: absolute; inset-inline-end: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; background: linear-gradient(180deg, var(--sa-gold-soft), var(--sa-gold-deep)); }
+  .sa-nav-shimmer { position: absolute; top: 0; left: 12px; right: 12px; height: 1px; background: linear-gradient(to left, transparent, rgba(200,169,106,0.55), transparent); }
 
   .sa-nav-icon-wrap {
     display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    background: rgba(239,234,224,0.065);
-    border: 1px solid rgba(217,201,176,0.08);
+    background: rgba(232, 220, 188, 0.06);
+    border: 1px solid rgba(200,169,106,0.06);
     transition: all 0.18s;
   }
   .sa-nav-item:hover  .sa-nav-icon-wrap {
-    background: rgba(239,234,224,0.13);
-    border-color: rgba(217,201,176,0.20);
+    background: rgba(232, 220, 188, 0.12);
+    border-color: rgba(200,169,106,0.18);
   }
   .sa-nav-item.active .sa-nav-icon-wrap {
-    background: linear-gradient(135deg, rgba(217,201,176,0.25), rgba(184,160,130,0.16));
-    border-color: rgba(217,201,176,0.42);
+    background: linear-gradient(135deg, rgba(229,185,60,0.22), rgba(200,169,106,0.14));
+    border-color: rgba(200,169,106,0.40);
   }
 
   .sa-nav-labels     { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   /* display:block defensively forces a fresh block for each label so
-     the two never share a baseline â€” protects against parent flex
+     the two never share a baseline — protects against parent flex
      overrides from compromising vertical stacking. */
   .sa-nav-label-main { display: block; font-size: 13.5px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.01em; }
   .sa-nav-label-sub  { display: block; font-family: var(--sa-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; line-height: 1.2; }
-  .sa-nav-dot        { width: 6px; height: 6px; border-radius: 50%; background: var(--sa-gold-soft); box-shadow: 0 0 8px rgba(217,201,176,0.6); flex-shrink: 0; }
+  .sa-nav-dot        { width: 6px; height: 6px; border-radius: 50%; background: var(--sa-gold); box-shadow: 0 0 8px rgba(200,169,106,0.6); flex-shrink: 0; }
 
   .sa-mandala-wrap { margin-top: auto; display: flex; align-items: center; justify-content: center; padding: 20px 0 10px; opacity: 0.70; }
 
@@ -1060,11 +1051,11 @@ const styles = `
   .sa-user {
     display: flex; align-items: center; gap: 10px;
     padding: 11px 13px; border-radius: 16px;
-    background: rgba(239,234,224,0.06);
-    border: 1px solid rgba(217,201,176,0.22);
+    background: rgba(232,220,188,0.05);
+    border: 1px solid rgba(200,169,106,0.20);
     transition: all 0.2s;
   }
-  .sa-user:hover { background: rgba(239,234,224,0.11); border-color: rgba(217,201,176,0.38); }
+  .sa-user:hover { background: rgba(232,220,188,0.10); border-color: rgba(200,169,106,0.35); }
   .sa-user-av {
     width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center; overflow: hidden;
@@ -1073,7 +1064,7 @@ const styles = `
   .sa-user-initial { font-size: 16px; font-weight: 900; color: var(--sa-graphite); font-family: var(--sa-font-heading); }
   .sa-user-info    { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .sa-user-name    { font-size: 13px; font-weight: 700; color: rgba(255,250,235,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .sa-user-role    { font-family: var(--sa-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(217,201,176,0.72); }
+  .sa-user-role    { font-family: var(--sa-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(200,169,106,0.70); }
 
   .sa-user-clickable {
     display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
@@ -1084,16 +1075,16 @@ const styles = `
   .sa-logout-btn {
     display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    background: rgba(239,234,224,0.045);
-    border: 1px solid rgba(217,201,176,0.12);
+    background: rgba(232,220,188,0.04);
+    border: 1px solid rgba(200,169,106,0.10);
     cursor: pointer;
-    color: rgba(239,234,224,0.68); transition: all 0.18s;
+    color: rgba(232,220,188,0.65); transition: all 0.18s;
   }
-  .sa-logout-btn:hover:not(:disabled) { background: rgba(217,201,176,0.15); color: var(--sa-gold-soft); border-color: rgba(217,201,176,0.34); }
+  .sa-logout-btn:hover:not(:disabled) { background: rgba(200,169,106,0.15); color: var(--sa-gold); border-color: rgba(200,169,106,0.32); }
   .sa-logout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .sa-spin { width: 13px; height: 13px; border: 2px solid rgba(217,201,176,0.15); border-top-color: var(--sa-gold-soft); border-radius: 50%; animation: sa-spin 0.7s linear infinite; }
+  .sa-spin { width: 13px; height: 13px; border: 2px solid rgba(200,169,106,0.15); border-top-color: var(--sa-gold); border-radius: 50%; animation: sa-spin 0.7s linear infinite; }
 
-  /* â•â• MAIN â•â• */
+  /* ══ MAIN ══ */
   .sa-main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; margin-inline-start: var(--sa-sidebar-w); }
   @media (max-width: 767px) { .sa-main { margin-inline-start: 0; } }
 
@@ -1102,16 +1093,16 @@ const styles = `
     position: sticky; top: 0; z-index: 40;
     height: var(--sa-topbar-h); display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
-    background: rgba(239,234,224,0.86);
+    background: rgba(251,250,246,0.82);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(74,14,28,0.08);
-    box-shadow: 0 1px 0 rgba(74,14,28,0.04), 0 6px 24px rgba(74,14,28,0.035);
+    border-bottom: 1px solid rgba(8,11,12,0.07);
+    box-shadow: 0 1px 0 rgba(8,11,12,0.04), 0 6px 24px rgba(8,11,12,0.025);
   }
   @media (min-width: 768px) { .sa-topbar { padding: 0 36px; } }
 
   .sa-topbar-accent {
     position: absolute; inset-x: 0; top: 0; height: 1.5px; pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(184,160,130,0.35) 15%, rgba(107,30,45,0.58) 50%, rgba(184,160,130,0.35) 85%, transparent);
+    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.30) 15%, rgba(229,185,60,0.55) 50%, rgba(200,169,106,0.30) 85%, transparent);
   }
 
   .sa-hamburger {
@@ -1120,7 +1111,7 @@ const styles = `
     background: none; border: none; cursor: pointer;
     color: var(--sa-graphite-muted); transition: all 0.15s; flex-shrink: 0;
   }
-  .sa-hamburger:hover { background: rgba(184,160,130,0.14); color: var(--sa-burgundy-deep); }
+  .sa-hamburger:hover { background: rgba(200,169,106,0.10); color: var(--sa-graphite); }
   @media (min-width: 768px) { .sa-hamburger { display: none; } }
 
   .sa-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
@@ -1155,7 +1146,7 @@ const styles = `
     border: 1px solid var(--sa-bdr-soft); background: var(--sa-bg-card);
     transition: all 0.18s var(--sa-ease-out);
   }
-  .sa-topbar-user-pill:hover { border-color: var(--sa-bdr-gold); box-shadow: 0 4px 16px rgba(74,14,28,0.07); }
+  .sa-topbar-user-pill:hover { border-color: var(--sa-bdr-gold); box-shadow: 0 4px 16px rgba(8,11,12,0.06); }
   @media (min-width: 768px) { .sa-topbar-user-pill { display: flex; } }
 
   .sa-topbar-av {
@@ -1175,12 +1166,12 @@ const styles = `
   .sa-watermark    { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
   .sa-content-inner { position: relative; z-index: 10; }
 
-  /* â”€â”€ view-only banner (investor demo) â”€â”€ */
+  /* ── view-only banner (investor demo) ── */
   .sa-view-only-banner {
     display: flex; align-items: center; gap: 12px;
-    background: linear-gradient(135deg, #FBF8F1, #E5E0D5);
-    border: 1.5px solid rgba(184,160,130,0.55);
-    color: #4A0E1C;
+    background: linear-gradient(135deg, #FFF4D2, #FCE9A8);
+    border: 1.5px solid rgba(194,160,89,0.55);
+    color: #5E4A20;
     border-radius: 14px;
     padding: 12px 16px;
     margin-bottom: 18px;
@@ -1188,12 +1179,12 @@ const styles = `
     font-size: 13.5px;
     font-weight: 700;
     line-height: 1.6;
-    box-shadow: 0 6px 18px rgba(74,14,28,0.08);
+    box-shadow: 0 6px 18px rgba(150,115,50,0.08);
   }
-  .sa-view-only-banner svg { color: #6B1E2D; flex-shrink: 0; }
+  .sa-view-only-banner svg { color: #B89B5E; flex-shrink: 0; }
   .sa-view-only-text { flex: 1; }
 
-  /* â”€â”€ Safety net: every mutating control inside the admin shell must be
+  /* ── Safety net: every mutating control inside the admin shell must be
        tagged with data-write="true" (or live inside an element that is).
        When the shell is in view-only mode, all such controls disappear. */
   .sa-shell--view-only [data-write="true"] { display: none !important; }
@@ -1217,4 +1208,3 @@ const styles = `
   .sa-footer-sparkle { color: var(--sa-gold-deep); opacity: 0.60; }
   .sa-footer-text    { font-family: var(--sa-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--sa-graphite-muted); opacity: 0.60; }
 `;
-

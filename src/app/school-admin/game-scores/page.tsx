@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
@@ -26,51 +26,51 @@ type HistoryEntry = {
 
 const UI = {
   ar: {
-    title: "Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ø§Ù„ØªØ¹Ù„ÙŠÙ…ÙŠ â€” Ù†ØªØ§Ø¦Ø¬ Ø§Ù„Ù„Ø¹Ø¨",
-    sub: "Ù†ØªØ§Ø¦Ø¬ Ø¨Ø·Ø§Ù‚Ø© Ø§Ù„Ù†Ù…ÙˆØ°Ø¬ Ø§Ù„ØªØ¹Ù„ÙŠÙ…ÙŠ (Card Game 1 Ùˆ Card Game 2) Ù„ÙƒÙ„ Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ† ÙˆØ§Ù„Ø·Ù„Ø§Ø¨ ÙÙŠ Ø§Ù„Ù…Ø¯Ø±Ø³Ø©. ØªØ¸Ù‡Ø± Ø£Ø¹Ù„Ù‰ Ù†ØªÙŠØ¬Ø© Ù„ÙƒÙ„ Ù„Ø§Ø¹Ø¨ ÙˆØ¹Ø¯Ø¯ Ù…Ø­Ø§ÙˆÙ„Ø§ØªÙ‡.",
-    filterAll: "Ø§Ù„ÙƒÙ„",
-    filterTeachers: "Ø§Ù„Ù…Ø¹Ù„Ù…ÙˆÙ† ÙÙ‚Ø·",
-    filterStudents: "Ø§Ù„Ø·Ù„Ø§Ø¨ ÙÙ‚Ø·",
-    search: "Ø¨Ø­Ø« Ø¨Ø§Ù„Ø§Ø³Ù… Ø£Ùˆ Ø§Ù„Ø¨Ø±ÙŠØ¯",
-    empty: "Ù„Ù… ÙŠÙ„Ø¹Ø¨ Ø£Ø­Ø¯ Ø¨Ø¹Ø¯.",
-    nameCol: "Ø§Ù„Ø§Ø³Ù…",
-    roleCol: "Ø§Ù„Ø¯ÙˆØ±",
-    bestStage1: "Ø£Ø¹Ù„Ù‰ Ù†ØªÙŠØ¬Ø© â€” Ø§Ù„Ø¨Ø·Ø§Ù‚Ø© Ø§Ù„Ø£ÙˆÙ„Ù‰",
-    bestStage2: "Ø£Ø¹Ù„Ù‰ Ù†ØªÙŠØ¬Ø© â€” Ø§Ù„Ø¨Ø·Ø§Ù‚Ø© Ø§Ù„Ø«Ø§Ù†ÙŠØ©",
-    plays: "Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ø­Ø§ÙˆÙ„Ø§Øª",
-    lastPlayed: "Ø¢Ø®Ø± Ù…Ø­Ø§ÙˆÙ„Ø©",
-    open: "Ø¹Ø±Ø¶ Ø§Ù„Ø³Ø¬Ù„",
-    roleTEACHER: "Ù…Ø¹Ù„Ù…",
-    roleSTUDENT: "Ø·Ø§Ù„Ø¨",
-    backToList: "â† Ø§Ù„Ø¹ÙˆØ¯Ø©",
-    historyTitle: (n: string) => `Ø³Ø¬Ù„ Ù…Ø­Ø§ÙˆÙ„Ø§Øª: ${n}`,
-    noHistory: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø­Ø§ÙˆÙ„Ø§Øª.",
-    when: "Ù…ØªÙ‰",
-    stage: "Ø§Ù„Ø¨Ø·Ø§Ù‚Ø©",
-    score: "Ø§Ù„Ù†ØªÙŠØ¬Ø©",
-    stage1Lbl: "Ø§Ù„Ø£ÙˆÙ„Ù‰",
-    stage2Lbl: "Ø§Ù„Ø«Ø§Ù†ÙŠØ©",
+    title: "النموذج التعليمي — نتائج اللعب",
+    sub: "نتائج بطاقة النموذج التعليمي (Card Game 1 و Card Game 2) لكل المعلمين والطلاب في المدرسة. تظهر أعلى نتيجة لكل لاعب وعدد محاولاته.",
+    filterAll: "الكل",
+    filterTeachers: "المعلمون فقط",
+    filterStudents: "الطلاب فقط",
+    search: "بحث بالاسم أو البريد",
+    empty: "لم يلعب أحد بعد.",
+    nameCol: "الاسم",
+    roleCol: "الدور",
+    bestStage1: "أعلى نتيجة — البطاقة الأولى",
+    bestStage2: "أعلى نتيجة — البطاقة الثانية",
+    plays: "عدد المحاولات",
+    lastPlayed: "آخر محاولة",
+    open: "عرض السجل",
+    roleTEACHER: "معلم",
+    roleSTUDENT: "طالب",
+    backToList: "← العودة",
+    historyTitle: (n: string) => `سجل محاولات: ${n}`,
+    noHistory: "لا توجد محاولات.",
+    when: "متى",
+    stage: "البطاقة",
+    score: "النتيجة",
+    stage1Lbl: "الأولى",
+    stage2Lbl: "الثانية",
   },
   sq: {
-    title: "Modeli Edukativ â€” Rezultatet e lojÃ«s",
-    sub: "Rezultatet e Card Game 1 dhe Card Game 2 pÃ«r tÃ« gjithÃ« mÃ«suesit dhe nxÃ«nÃ«sit nÃ« shkollÃ«. Shfaqet rezultati mÃ« i lartÃ« i secilit lojtar dhe numri i provimeve.",
-    filterAll: "TÃ« gjithÃ«",
-    filterTeachers: "VetÃ«m mÃ«suesit",
-    filterStudents: "VetÃ«m nxÃ«nÃ«sit",
-    search: "KÃ«rko sipas emrit ose email-it",
+    title: "Modeli Edukativ — Rezultatet e lojës",
+    sub: "Rezultatet e Card Game 1 dhe Card Game 2 për të gjithë mësuesit dhe nxënësit në shkollë. Shfaqet rezultati më i lartë i secilit lojtar dhe numri i provimeve.",
+    filterAll: "Të gjithë",
+    filterTeachers: "Vetëm mësuesit",
+    filterStudents: "Vetëm nxënësit",
+    search: "Kërko sipas emrit ose email-it",
     empty: "Askush nuk ka luajtur ende.",
     nameCol: "Emri",
     roleCol: "Roli",
-    bestStage1: "Rezultati mÃ« i lartÃ« â€” Karta e parÃ«",
-    bestStage2: "Rezultati mÃ« i lartÃ« â€” Karta e dytÃ«",
+    bestStage1: "Rezultati më i lartë — Karta e parë",
+    bestStage2: "Rezultati më i lartë — Karta e dytë",
     plays: "Numri i provimeve",
     lastPlayed: "Loja e fundit",
     open: "Shih historikun",
-    roleTEACHER: "MÃ«sues",
-    roleSTUDENT: "NxÃ«nÃ«s",
-    backToList: "â† Kthehu",
-    historyTitle: (n: string) => `Historiku i lojÃ«s: ${n}`,
-    noHistory: "AsnjÃ« lojÃ«.",
+    roleTEACHER: "Mësues",
+    roleSTUDENT: "Nxënës",
+    backToList: "← Kthehu",
+    historyTitle: (n: string) => `Historiku i lojës: ${n}`,
+    noHistory: "Asnjë lojë.",
     when: "Kur",
     stage: "Karta",
     score: "Rezultati",
@@ -101,7 +101,7 @@ export default function GameScoresPage() {
   }, []);
 
   function fmtDate(s: string | null | undefined) {
-    if (!s) return "â€”";
+    if (!s) return "—";
     try { return new Date(s).toLocaleString(L === "ar" ? "ar" : "sq"); } catch { return s; }
   }
 
@@ -229,7 +229,7 @@ export default function GameScoresPage() {
 }
 
 function Score({ n, total }: { n: number | null; total: number }) {
-  if (n == null) return <span className="gs-dash">â€”</span>;
+  if (n == null) return <span className="gs-dash">—</span>;
   const pct = total === 0 ? 0 : Math.round((n / total) * 100);
   const tone = pct >= 80 ? "great" : pct >= 50 ? "ok" : "low";
   return (
@@ -248,17 +248,17 @@ function Styles() {
       .gs-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
       .gs-sub { font-size: 13.5px; color: #5E5A52; max-width: 740px; line-height: 1.85; margin: 0; }
       .gs-back { background: none; border: none; color: #6B4F1E; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; margin-bottom: 10px; padding: 0; }
-      .gs-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px; padding: 14px; }
+      .gs-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 14px; }
       .gs-search { width: 100%; padding: 10px 14px; font-size: 14px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px; background: #FFF; font-family: inherit; outline: none; }
-      .gs-search:focus { border-color: #8F765B; }
+      .gs-search:focus { border-color: #B89B5E; }
       .gs-filters { display: flex; gap: 8px; flex-wrap: wrap; }
       .gs-toggle { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 7px 14px; border-radius: 99px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
-      .gs-toggle.active { background: linear-gradient(180deg,#4A0E1C,#12070B); color: #D9C9B0; border-color: transparent; }
-      .gs-empty { padding: 60px 20px; text-align: center; background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px; color: #8A8478; font-weight: 700; }
-      .gs-table-wrap { background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px; overflow: auto; }
+      .gs-toggle.active { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
+      .gs-empty { padding: 60px 20px; text-align: center; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; color: #8A8478; font-weight: 700; }
+      .gs-table-wrap { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; overflow: auto; }
       .gs-table { width: 100%; border-collapse: collapse; min-width: 700px; }
       .gs-table th { text-align: start; padding: 12px 14px; font-size: 11.5px; color: #6B4F1E; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid rgba(194,160,89,0.22); background: rgba(194,160,89,0.06); }
-      .gs-table td { padding: 14px; font-size: 13.5px; color: #2E2210; border-bottom: 1px solid rgba(74,14,28,0.06); vertical-align: middle; }
+      .gs-table td { padding: 14px; font-size: 13.5px; color: #2E2210; border-bottom: 1px solid rgba(8,11,12,0.06); vertical-align: middle; }
       .gs-name { font-weight: 800; color: #1B1810; }
       .gs-email { font-size: 11.5px; color: #7A7468; margin-top: 2px; }
       .gs-role { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; }
@@ -270,9 +270,9 @@ function Styles() {
       .gs-score--ok    { background: rgba(194,160,89,0.18); color: #6B4F1E; }
       .gs-score--low   { background: rgba(139,26,26,0.10); color: #7A1E1E; }
       .gs-dash { color: #BFB6A8; }
-      .gs-open { background: linear-gradient(180deg,#D8B96A,#8F765B); color: #1E1605; border: none; padding: 6px 14px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
-      .gs-history-list { background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px; overflow: hidden; }
-      .gs-history-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(74,14,28,0.06); font-size: 13.5px; }
+      .gs-open { background: linear-gradient(180deg,#D8B96A,#B89B5E); color: #1E1605; border: none; padding: 6px 14px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+      .gs-history-list { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; overflow: hidden; }
+      .gs-history-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(8,11,12,0.06); font-size: 13.5px; }
       .gs-history-row:last-child { border-bottom: none; }
       .gs-stage-tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; }
       .gs-stage-tag.stage-STAGE1 { background: rgba(20,80,140,0.10); color: #14528C; }
@@ -282,4 +282,3 @@ function Styles() {
     `}</style>
   );
 }
-

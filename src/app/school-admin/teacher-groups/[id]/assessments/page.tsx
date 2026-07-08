@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { use, useCallback, useEffect, useMemo, useState } from "react";
@@ -39,76 +39,76 @@ type AssessmentFull = {
 
 const UI = {
   ar: {
-    back: "â† Ø§Ù„Ø¹ÙˆØ¯Ø© Ù„Ù„Ù…Ø¬Ù…ÙˆØ¹Ø©",
-    title: "Ù†Ù…Ø§Ø°Ø¬ Ø§Ù„Ù‚ÙŠØ§Ø³",
-    sub: "ØªØªØ¨ÙŽÙ‘Ø¹ ÙƒÙ„ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø¯Ø§Ø®Ù„ Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹Ø©. Ø£Ù†Ø´Ø¦ ØªÙ‚ÙŠÙŠÙ…Ø§Ù‹ Ø¬Ø¯ÙŠØ¯Ø§Ù‹ØŒ Ø£Ùˆ Ø§ÙØªØ­ Ø£Ø­Ø¯Ù‡Ø§ Ù„Ø±Ø¤ÙŠØ© Ø§Ù„Ù…ØµÙÙˆÙØ© Ø§Ù„ÙƒØ§Ù…Ù„Ø©.",
-    create: "+ ØªÙ‚ÙŠÙŠÙ… Ø¬Ø¯ÙŠØ¯",
-    creating: "Ø¬Ø§Ø±Ù Ø§Ù„Ø¥Ù†Ø´Ø§Ø¡â€¦",
-    listEmpty: "Ù„Ø§ ØªÙˆØ¬Ø¯ ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø¨Ø¹Ø¯ Ù„Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø¬Ù…ÙˆØ¹Ø©.",
-    open: "Ø§ÙØªØ­",
-    statusOPEN: "Ù…ÙØªÙˆØ­",
-    statusCLOSED: "Ù…ØºÙ„Ù‚",
-    ratingsCount: "ØªÙ‚ÙŠÙŠÙ…Ø§Øª",
-    newDlgTitle: "Ø£Ù†Ø´Ø¦ ØªÙ‚ÙŠÙŠÙ…Ø§Ù‹ Ø¬Ø¯ÙŠØ¯Ø§Ù‹",
-    titleLbl: "Ø¹Ù†ÙˆØ§Ù† Ø§Ù„ØªÙ‚ÙŠÙŠÙ…",
-    titlePh: "Ù…Ø«Ø§Ù„: Ù†Ù…ÙˆØ°Ø¬ Ù‚ÙŠØ§Ø³ Ø§Ù„Ø³Ù…Ø§Øª (Ø§Ù„Ù…Ø±Ø­Ù„Ø© Ø§Ù„Ø£ÙˆÙ„Ù‰) â€” Ù…Ø§Ø±Ø³ 2026",
-    cancel: "Ø¥Ù„ØºØ§Ø¡",
-    submit: "Ø¥Ù†Ø´Ø§Ø¡",
-    matrixOf: (n: number, m: number) => `${n} Ù…ÙÙ‚ÙŽÙŠÙÙ‘Ù… Ã— ${m} Ù‡Ø¯Ù`,
-    raterCol: "Ø§Ù„Ù…Ù‚ÙŽÙŠÙÙ‘Ù…",
-    targetCol: "Ø§Ù„Ù‡Ø¯Ù",
-    avgRow: "Ø§Ù„Ù…ØªÙˆØ³Ø·",
-    closeBtn: "Ø¥ØºÙ„Ø§Ù‚ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…",
-    reopenBtn: "Ø¥Ø¹Ø§Ø¯Ø© ÙØªØ­",
-    deleteBtn: "Ø­Ø°Ù",
-    confirmClose: "Ø¥ØºÙ„Ø§Ù‚ Ù‡Ø°Ø§ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… Ø³ÙŠÙ…Ù†Ø¹ Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ† Ù…Ù† ØªØ¹Ø¯ÙŠÙ„ ØªÙ‚ÙŠÙŠÙ…Ø§ØªÙ‡Ù…. Ù…ØªØ§Ø¨Ø¹Ø©ØŸ",
-    confirmReopen: "Ø¥Ø¹Ø§Ø¯Ø© ÙØªØ­ Ù‡Ø°Ø§ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… ØªØ³Ù…Ø­ Ø¨Ø§Ù„ØªØ¹Ø¯ÙŠÙ„ Ù…Ù† Ø¬Ø¯ÙŠØ¯. Ù…ØªØ§Ø¨Ø¹Ø©ØŸ",
-    confirmDelete: "Ø­Ø°Ù Ù‡Ø°Ø§ Ø§Ù„ØªÙ‚ÙŠÙŠÙ… Ù†Ù‡Ø§Ø¦ÙŠÙ‹Ø§ Ù…Ø¹ ÙƒÙ„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§ØªØŸ",
-    matrixHead: "Ø§Ù„Ù…ØµÙÙˆÙØ© Ø§Ù„ÙƒØ§Ù…Ù„Ø©",
-    matrixSub: "ÙƒÙ„ Ø®Ø§Ù†Ø© ØªØ¹Ø±Ø¶ Ø§Ù„Ø¯Ø±Ø¬Ø§Øª Ø§Ù„Ø®Ù…Ø³ (Ù†Ø³Ù„ Â· ÙƒÙØ§Ø±Ø§Øª Â· Ø¯Ø±Ø§ÙŠØ© Â· Ø­Ù…ÙŠØ© Â· ØªÙ…ÙŠÙŠØ²) Ø§Ù„ØªÙŠ Ø£Ø¹Ø·Ø§Ù‡Ø§ Ø§Ù„Ù…Ù‚ÙŽÙŠÙÙ‘Ù… Ù„Ù„Ù‡Ø¯Ù.",
-    aggHead: "Ù†ØªØ§Ø¦Ø¬ ÙƒÙ„ Ù…Ø´Ø±Ù",
-    aggSub: "Ø§Ù„Ø³Ù…Ø© Ø§Ù„Ø¬ÙˆÙ‡Ø±ÙŠØ© ÙˆØ§Ù„Ø¬Ù…Ø§Ø¹ÙŠØ© ÙˆØ§Ù„Ù…Ø³Ø§Ù†Ø¯Ø© Ù„ÙƒÙ„ Ù…Ø´Ø±ÙØŒ Ù…Ø¨Ù†ÙŠÙ‘Ø© Ø¹Ù„Ù‰ Ù…ØªÙˆØ³Ø· ÙƒÙ„ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…Ø§Øª Ø§Ù„ØªÙŠ ØªÙ„Ù‚Ù‘Ø§Ù‡Ø§.",
-    filterMember: "ÙÙ„ØªØ± Ø§Ù„Ù…Ø´Ø§Ø±Ùƒ",
-    filterAll: "Ø§Ù„ÙƒÙ„",
-    perTraitHead: "Ù…ØªÙˆØ³Ø· ÙƒÙ„ Ø³Ù…Ø© Ù„ÙƒÙ„ Ù…Ø´Ø±Ù",
-    print: "Ø·Ø¨Ø§Ø¹Ø© / PDF",
-    noRating: "â€”",
+    back: "← العودة للمجموعة",
+    title: "نماذج القياس",
+    sub: "تتبَّع كل التقييمات داخل هذه المجموعة. أنشئ تقييماً جديداً، أو افتح أحدها لرؤية المصفوفة الكاملة.",
+    create: "+ تقييم جديد",
+    creating: "جارٍ الإنشاء…",
+    listEmpty: "لا توجد تقييمات بعد لهذه المجموعة.",
+    open: "افتح",
+    statusOPEN: "مفتوح",
+    statusCLOSED: "مغلق",
+    ratingsCount: "تقييمات",
+    newDlgTitle: "أنشئ تقييماً جديداً",
+    titleLbl: "عنوان التقييم",
+    titlePh: "مثال: نموذج قياس السمات (المرحلة الأولى) — مارس 2026",
+    cancel: "إلغاء",
+    submit: "إنشاء",
+    matrixOf: (n: number, m: number) => `${n} مُقَيِّم × ${m} هدف`,
+    raterCol: "المقَيِّم",
+    targetCol: "الهدف",
+    avgRow: "المتوسط",
+    closeBtn: "إغلاق التقييم",
+    reopenBtn: "إعادة فتح",
+    deleteBtn: "حذف",
+    confirmClose: "إغلاق هذا التقييم سيمنع المعلمين من تعديل تقييماتهم. متابعة؟",
+    confirmReopen: "إعادة فتح هذا التقييم تسمح بالتعديل من جديد. متابعة؟",
+    confirmDelete: "حذف هذا التقييم نهائيًا مع كل البيانات؟",
+    matrixHead: "المصفوفة الكاملة",
+    matrixSub: "كل خانة تعرض الدرجات الخمس (نسل · كفارات · دراية · حمية · تمييز) التي أعطاها المقَيِّم للهدف.",
+    aggHead: "نتائج كل مشرف",
+    aggSub: "السمة الجوهرية والجماعية والمساندة لكل مشرف، مبنيّة على متوسط كل التقييمات التي تلقّاها.",
+    filterMember: "فلتر المشارك",
+    filterAll: "الكل",
+    perTraitHead: "متوسط كل سمة لكل مشرف",
+    print: "طباعة / PDF",
+    noRating: "—",
   },
   sq: {
-    back: "â† Kthehu te grupi",
+    back: "← Kthehu te grupi",
     title: "Modelet e Matjes",
-    sub: "Ndiq tÃ« gjitha vlerÃ«simet brenda kÃ«tij grupi. Krijo njÃ« tÃ« ri, ose hap njÃ« pÃ«r tÃ« parÃ« matricÃ«n e plotÃ«.",
-    create: "+ VlerÃ«sim i ri",
-    creating: "Po krijohetâ€¦",
-    listEmpty: "Nuk ka vlerÃ«sime ende.",
+    sub: "Ndiq të gjitha vlerësimet brenda këtij grupi. Krijo një të ri, ose hap një për të parë matricën e plotë.",
+    create: "+ Vlerësim i ri",
+    creating: "Po krijohet…",
+    listEmpty: "Nuk ka vlerësime ende.",
     open: "Hap",
     statusOPEN: "I hapur",
     statusCLOSED: "I mbyllur",
-    ratingsCount: "vlerÃ«sime",
-    newDlgTitle: "Krijo njÃ« vlerÃ«sim tÃ« ri",
+    ratingsCount: "vlerësime",
+    newDlgTitle: "Krijo një vlerësim të ri",
     titleLbl: "Titulli",
-    titlePh: "Shembull: Modeli i Matjes sÃ« Tipareve (Faza 1) â€” Mars 2026",
+    titlePh: "Shembull: Modeli i Matjes së Tipareve (Faza 1) — Mars 2026",
     cancel: "Anulo",
     submit: "Krijo",
-    matrixOf: (n: number, m: number) => `${n} vlerÃ«sues Ã— ${m} synim`,
-    raterCol: "VlerÃ«suesi",
+    matrixOf: (n: number, m: number) => `${n} vlerësues × ${m} synim`,
+    raterCol: "Vlerësuesi",
     targetCol: "Synimi",
     avgRow: "Mesatarja",
-    closeBtn: "Mbyll vlerÃ«simin",
+    closeBtn: "Mbyll vlerësimin",
     reopenBtn: "Rihap",
     deleteBtn: "Fshi",
-    confirmClose: "Mbyllja do parandalojÃ« mÃ«suesit tÃ« redaktojnÃ«. TÃ« vazhdohet?",
-    confirmReopen: "Rihapja do lejojÃ« redaktimin sÃ«rish. TÃ« vazhdohet?",
-    confirmDelete: "TÃ« fshihet ky vlerÃ«sim pÃ«rfundimisht me tÃ« gjitha tÃ« dhÃ«nat?",
-    matrixHead: "Matrica e PlotÃ«",
-    matrixSub: "Ã‡do qelizÃ« tregon pesÃ« pikÃ«t (PasardhÃ«sia Â· Shlyerja Â· VetÃ«dija Â· Zelli Â· Dallimi).",
-    aggHead: "Rezultatet pÃ«r Secilin AnÃ«tar",
-    aggSub: "Tipari thelbÃ«sor, kolektiv dhe mbÃ«shtetÃ«s pÃ«r secilin, bazuar nÃ« mesataren e tÃ« gjitha vlerÃ«simeve tÃ« marra.",
-    filterMember: "Filtro sipas anÃ«tarit",
-    filterAll: "TÃ« gjithÃ«",
-    perTraitHead: "Mesatarja pÃ«r secilin tipar pÃ«r secilin anÃ«tar",
+    confirmClose: "Mbyllja do parandalojë mësuesit të redaktojnë. Të vazhdohet?",
+    confirmReopen: "Rihapja do lejojë redaktimin sërish. Të vazhdohet?",
+    confirmDelete: "Të fshihet ky vlerësim përfundimisht me të gjitha të dhënat?",
+    matrixHead: "Matrica e Plotë",
+    matrixSub: "Çdo qelizë tregon pesë pikët (Pasardhësia · Shlyerja · Vetëdija · Zelli · Dallimi).",
+    aggHead: "Rezultatet për Secilin Anëtar",
+    aggSub: "Tipari thelbësor, kolektiv dhe mbështetës për secilin, bazuar në mesataren e të gjitha vlerësimeve të marra.",
+    filterMember: "Filtro sipas anëtarit",
+    filterAll: "Të gjithë",
+    perTraitHead: "Mesatarja për secilin tipar për secilin anëtar",
     print: "Printo / PDF",
-    noRating: "â€”",
+    noRating: "—",
   },
 } as const;
 
@@ -207,7 +207,7 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
     loadList();
   }
 
-  // â”€â”€ Aggregation derived from the ratings rows.
+  // ── Aggregation derived from the ratings rows.
   const aggregation = useMemo(() => {
     if (!detail) return null;
     const byTarget = new Map<string, ScoresTuple[]>();
@@ -276,7 +276,7 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
 
         <section className="aa-detail">
           {!selectedId ? (
-            <div className="aa-detail-empty">â€”</div>
+            <div className="aa-detail-empty">—</div>
           ) : loadingDetail || !detail ? <MandalaLoader /> : (
             <>
               <header className="aa-detail-head no-print">
@@ -360,7 +360,7 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
                 </div>
               </section>
 
-              {/* Full rater Ã— target matrix */}
+              {/* Full rater × target matrix */}
               <section className="aa-sub">
                 <div className="aa-sub-head">
                   <h3>{T.matrixHead}</h3>
@@ -379,7 +379,7 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
                   <table className="aa-matrix">
                     <thead>
                       <tr>
-                        <th className="aa-corner">{T.raterCol} â†“ / {T.targetCol} â†’</th>
+                        <th className="aa-corner">{T.raterCol} ↓ / {T.targetCol} →</th>
                         {filteredMembers.map((m) => (
                           <th key={m.teacher_id}>{m.profile.full_name}</th>
                         ))}
@@ -445,24 +445,24 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
         .aa-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
         .aa-title { font-size: 22px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
         .aa-sub { font-size: 13px; color: #5E5A52; max-width: 640px; line-height: 1.85; margin: 0; }
-        .aa-new { background: linear-gradient(180deg,#4A0E1C,#12070B); color: #D9C9B0; border: none; padding: 9px 16px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .aa-new { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border: none; padding: 9px 16px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
 
         .aa-layout { display: grid; grid-template-columns: 280px 1fr; gap: 14px; }
         @media (max-width: 900px) { .aa-layout { grid-template-columns: 1fr; } }
-        .aa-side { background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 12px; padding: 8px; min-height: 200px; }
+        .aa-side { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 12px; padding: 8px; min-height: 200px; }
         .aa-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
         .aa-list-item { width: 100%; text-align: start; background: transparent; border: 1px solid transparent; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-family: inherit; display: flex; flex-direction: column; gap: 4px; }
         .aa-list-item:hover { background: rgba(194,160,89,0.10); }
-        .aa-list-item.active { background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border-color: #8F765B; }
+        .aa-list-item.active { background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border-color: #B89B5E; }
         .aa-list-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
         .aa-tag { font-size: 10.5px; font-weight: 800; padding: 2px 9px; border-radius: 99px; letter-spacing: .04em; }
         .aa-tag-OPEN   { background: rgba(76,107,60,0.14); color: #4C6B3C; }
-        .aa-tag-CLOSED { background: rgba(74,14,28,0.08);  color: #5E5A52; }
+        .aa-tag-CLOSED { background: rgba(8,11,12,0.08);  color: #5E5A52; }
         .aa-list-count { font-size: 11px; color: #8B6915; font-weight: 700; }
         .aa-list-title { font-size: 13.5px; font-weight: 800; color: #1B1810; }
         .aa-list-date  { font-size: 11px; color: #8A8478; font-weight: 700; }
 
-        .aa-detail { background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 12px; padding: 14px; min-height: 320px; }
+        .aa-detail { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 12px; padding: 14px; min-height: 320px; }
         .aa-detail-empty { padding: 60px 20px; text-align: center; color: #8A8478; font-weight: 700; }
         .aa-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid rgba(184,155,94,0.32); margin-bottom: 14px; }
         .aa-detail-title { font-size: 17px; font-weight: 900; color: #1B1810; margin: 0 0 4px; }
@@ -470,8 +470,8 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
         .aa-detail-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
         .aa-btn { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 6px 12px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
-        .aa-btn:hover { border-color: #8F765B; }
-        .aa-btn-primary { background: linear-gradient(180deg,#4A0E1C,#12070B); color: #D9C9B0; border-color: transparent; }
+        .aa-btn:hover { border-color: #B89B5E; }
+        .aa-btn-primary { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
         .aa-btn-danger  { background: rgba(163,59,46,0.10); color: #A33B2E; border-color: rgba(163,59,46,0.35); }
 
         .aa-sub { margin-top: 18px; }
@@ -500,27 +500,27 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
         .aa-filter label { font-weight: 800; color: #6B4F1E; }
         .aa-filter select { padding: 5px 10px; border-radius: 8px; border: 1.5px solid rgba(194,160,89,0.32); font-family: inherit; background: #FFF; font-size: 12.5px; }
 
-        .aa-table-wrap { overflow-x: auto; border: 1px solid rgba(74,14,28,0.08); border-radius: 10px; background: #FBF8F1; }
+        .aa-table-wrap { overflow-x: auto; border: 1px solid rgba(8,11,12,0.08); border-radius: 10px; background: #FFFDF8; }
         .aa-table, .aa-matrix { width: 100%; border-collapse: collapse; }
         .aa-table th, .aa-matrix th { background: rgba(194,160,89,0.10); color: #6B4F1E; font-size: 11px; font-weight: 800; padding: 8px; text-align: center; letter-spacing: .04em; text-transform: uppercase; border-bottom: 1px solid rgba(184,155,94,0.32); white-space: nowrap; }
         .aa-table th:first-child, .aa-matrix th:first-child { text-align: start; padding-inline-start: 12px; min-width: 160px; }
         .aa-corner { font-size: 10px !important; }
-        .aa-table td, .aa-matrix td { padding: 8px; font-size: 12px; text-align: center; border-bottom: 1px solid rgba(74,14,28,0.06); font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 700; }
+        .aa-table td, .aa-matrix td { padding: 8px; font-size: 12px; text-align: center; border-bottom: 1px solid rgba(8,11,12,0.06); font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 700; }
         .aa-name-cell { font-family: 'Cairo', sans-serif !important; font-weight: 800 !important; text-align: start !important; padding-inline-start: 12px !important; color: #1B1810; background: rgba(194,160,89,0.05); }
         .aa-empty-cell { color: #BFB6A8 !important; }
         .aa-self-cell { background: rgba(122,30,30,0.04); }
         .aa-cell-scores { display: flex; gap: 3px; justify-content: center; }
-        .aa-score { padding: 1px 5px; border-radius: 4px; background: rgba(74,14,28,0.06); color: #2E2210; font-size: 11px; min-width: 24px; }
+        .aa-score { padding: 1px 5px; border-radius: 4px; background: rgba(8,11,12,0.06); color: #2E2210; font-size: 11px; min-width: 24px; }
         .aa-score-core { background: rgba(122,30,30,0.18); color: #7A1E1E; }
         .aa-score-coll { background: rgba(199,154,61,0.28); color: #8E6C36; }
 
         .aa-empty { padding: 30px 16px; text-align: center; color: #8A8478; font-weight: 700; font-size: 13px; }
-        .aa-overlay { position: fixed; inset: 0; background: rgba(74,14,28,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
-        .aa-dlg { background: #FBF8F1; border-radius: 14px; padding: 22px; max-width: 460px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .aa-overlay { position: fixed; inset: 0; background: rgba(8,11,12,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+        .aa-dlg { background: #FFFDF8; border-radius: 14px; padding: 22px; max-width: 460px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .aa-dlg-title { font-size: 16px; font-weight: 900; color: #1B1810; margin: 0 0 12px; }
         .aa-dlg-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B4F1E; margin: 8px 0 4px; }
         .aa-dlg-input { width: 100%; padding: 9px 12px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 8px; font-family: inherit; font-size: 13px; background: #FFF; outline: none; }
-        .aa-dlg-input:focus { border-color: #8F765B; }
+        .aa-dlg-input:focus { border-color: #B89B5E; }
         .aa-dlg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
 
         @media print {
@@ -533,4 +533,3 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
     </div>
   );
 }
-

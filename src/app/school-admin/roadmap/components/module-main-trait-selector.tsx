@@ -1,18 +1,18 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import type { StageTrait } from "./types";
 
 const MAQASID_LABELS: Record<string, string> = {
-  DEEN: "Ø§Ù„Ø¯ÙŠÙ†",
-  AQL: "Ø§Ù„Ø¹Ù‚Ù„",
-  NAFS: "Ø§Ù„Ù†ÙØ³",
-  NASL: "Ø§Ù„Ù†Ø³Ù„",
-  MAL: "Ø§Ù„Ù…Ø§Ù„",
+  DEEN: "الدين",
+  AQL: "العقل",
+  NAFS: "النفس",
+  NASL: "النسل",
+  MAL: "المال",
 };
 
 const MAQASID_COLORS: Record<string, { color: string; bg: string }> = {
-  DEEN: { color: "#7A6020", bg: "rgba(217,201,176,0.10)" },
+  DEEN: { color: "#7A6020", bg: "rgba(229,185,60,0.10)" },
   AQL: { color: "#4A2080", bg: "rgba(74,32,128,0.08)" },
   NAFS: { color: "#1A5C3A", bg: "rgba(26,92,58,0.09)" },
   NASL: { color: "#7A1E1E", bg: "rgba(122,30,30,0.08)" },
@@ -61,7 +61,7 @@ export function ModuleMainTraitSelector({
       {/* Section label */}
       <div className="mts-label-row">
         <div className="mts-label-line" />
-        <span className="mts-label-text">Ø§Ù„Ø³Ù…Ø© Ø§Ù„Ù…Ø´ØºÙ‘Ù„Ø©</span>
+        <span className="mts-label-text">السمة المشغّلة</span>
       </div>
 
       {/* Current selection or empty state */}
@@ -80,7 +80,7 @@ export function ModuleMainTraitSelector({
               >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              Ø§Ù„Ø³Ù…Ø© Ø§Ù„Ù…Ø´ØºÙ‘Ù„Ø©
+              السمة المشغّلة
             </div>
             <div className="mts-current-info">
               <div className="mts-current-name">{currentTrait.name}</div>
@@ -106,7 +106,7 @@ export function ModuleMainTraitSelector({
             onClick={() => setOpen((v) => !v)}
             disabled={saving}
           >
-            {saving ? "..." : open ? "Ø¥Ù„ØºØ§Ø¡" : "ØªØºÙŠÙŠØ±"}
+            {saving ? "..." : open ? "إلغاء" : "تغيير"}
           </button>
         </div>
       ) : (
@@ -126,7 +126,7 @@ export function ModuleMainTraitSelector({
           >
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
-          ØªØ­Ø¯ÙŠØ¯ Ø§Ù„Ø³Ù…Ø© Ø§Ù„Ù…Ø´ØºÙ‘Ù„Ø© Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø³ØªÙˆÙ‰
+          تحديد السمة المشغّلة لهذا المستوى
         </button>
       )}
 
@@ -134,7 +134,7 @@ export function ModuleMainTraitSelector({
       {open && (
         <div className="mts-picker">
           <div className="mts-picker-hint">
-            Ø§Ø®ØªØ± Ø§Ù„Ø³Ù…Ø© Ø§Ù„ØªÙŠ ÙŠÙØ±ÙƒÙ‘Ø² Ø¹Ù„ÙŠÙ‡Ø§ Ù‡Ø°Ø§ Ø§Ù„Ù…Ø³ØªÙˆÙ‰ â€” Ø³ØªØ­Ù…Ù„ ÙˆØ²Ù† 50%
+            اختر السمة التي يُركّز عليها هذا المستوى — ستحمل وزن 50%
           </div>
 
           <div className="mts-picker-list">
@@ -195,7 +195,7 @@ export function ModuleMainTraitSelector({
               onClick={() => selectTrait(null)}
               disabled={saving}
             >
-              Ø¥Ù„ØºØ§Ø¡ ØªØ­Ø¯ÙŠØ¯ Ø§Ù„Ø³Ù…Ø© Ø§Ù„Ù…Ø´ØºÙ‘Ù„Ø©
+              إلغاء تحديد السمة المشغّلة
             </button>
           )}
         </div>
@@ -220,14 +220,14 @@ const mtsCSS = `
 }
 .mts-label-line {
   width: 3px; height: 16px;
-  background: linear-gradient(180deg, #D9C9B0 0%, #B8A082 100%);
+  background: linear-gradient(180deg, #E5B93C 0%, #C8A96A 100%);
   border-radius: 2px;
   flex-shrink: 0;
 }
 .mts-label-text {
   font-size: 11px;
   font-weight: 800;
-  color: #B8A082;
+  color: #C8A96A;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -242,8 +242,8 @@ const mtsCSS = `
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: rgba(217,201,176,0.05);
-  border: 1px solid rgba(217,201,176,0.18);
+  background: rgba(229,185,60,0.05);
+  border: 1px solid rgba(229,185,60,0.18);
   border-radius: 10px;
   padding: 12px 14px;
 }
@@ -291,7 +291,7 @@ const mtsCSS = `
 .mts-weight-badge {
   font-size: 16px;
   font-weight: 900;
-  color: #D9C9B0;
+  color: #E5B93C;
   flex-shrink: 0;
   letter-spacing: -0.5px;
 }
@@ -315,9 +315,9 @@ const mtsCSS = `
 /* Empty trigger */
 .mts-empty-trigger {
   width: 100%;
-  border: 2px dashed rgba(217,201,176,0.25);
+  border: 2px dashed rgba(229,185,60,0.25);
   border-radius: 9px;
-  background: rgba(217,201,176,0.04);
+  background: rgba(229,185,60,0.04);
   color: rgba(154,120,30,0.7);
   font-size: 12.5px;
   font-weight: 700;
@@ -330,8 +330,8 @@ const mtsCSS = `
   transition: all 0.15s;
 }
 .mts-empty-trigger:hover {
-  border-color: rgba(217,201,176,0.5);
-  background: rgba(217,201,176,0.08);
+  border-color: rgba(229,185,60,0.5);
+  background: rgba(229,185,60,0.08);
   color: #7A6020;
 }
 .mts-empty-trigger:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -374,7 +374,7 @@ const mtsCSS = `
 }
 .mts-option:last-child { border-bottom: none; }
 .mts-option:hover { background: var(--surface2); }
-.mts-option.selected { background: rgba(217,201,176,0.06); }
+.mts-option.selected { background: rgba(229,185,60,0.06); }
 .mts-option:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .mts-option-left {
@@ -417,7 +417,7 @@ const mtsCSS = `
   font-size: 12px;
   font-weight: 800;
   color: #7A6020;
-  background: rgba(217,201,176,0.12);
+  background: rgba(229,185,60,0.12);
   border-radius: 6px;
   padding: 3px 9px;
 }
@@ -442,4 +442,3 @@ const mtsCSS = `
 }
 .mts-unset-btn:hover { color: var(--red); background: var(--red-l); }
 `;
-
