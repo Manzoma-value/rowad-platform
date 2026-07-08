@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+﻿/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 export const dynamic = "force-dynamic";
 import { cachedFetch } from "@/lib/api-cache";
@@ -63,7 +63,7 @@ function SubmissionsContent() {
       <div className="sub-header">
         <div>
           <p className="sub-eyebrow">
-            {lang === "ar" ? "نتائج التقييم" : "Rezultatet"}
+            {lang === "ar" ? "Ù†ØªØ§Ø¦Ø¬ Ø§Ù„ØªÙ‚ÙŠÙŠÙ…" : "Rezultatet"}
           </p>
           <h1 className="sub-title">{tr.placementResults}</h1>
           <p className="sub-desc">{tr.reviewDesc}</p>
@@ -145,7 +145,7 @@ function SubmissionsContent() {
                       { month: "short", day: "numeric", year: "numeric" },
                     )}
                   </span>
-                  <span className="meta-sep">·</span>
+                  <span className="meta-sep">Â·</span>
                   <span>{s.assessment.title}</span>
                 </div>
               </div>
@@ -200,12 +200,12 @@ function SubmissionsContent() {
         @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.2} }
 
         :root {
-          --gold: #C8A96A;
-          --gold-pale: rgba(200,169,106,0.07);
-          --gold-border: rgba(200,169,106,0.18);
-          --black: #0B0B0C;
-          --off-white: #F5F3EE;
-          --text: #0B0B0C;
+          --gold: #B8A082;
+          --gold-pale: rgba(184,160,130,0.07);
+          --gold-border: rgba(184,160,130,0.18);
+          --black: #1A1A1A;
+          --off-white: #EFEAE0;
+          --text: #1A1A1A;
           --text2: #3D3526;
           --text3: #8A7B60;
           --surface: #FFFFFF;
@@ -249,8 +249,8 @@ function SubmissionsContent() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: rgba(200,169,106,0.08);
-          border: 1px solid rgba(200,169,106,0.22);
+          background: rgba(184,160,130,0.08);
+          border: 1px solid rgba(184,160,130,0.22);
           color: #6B4E18;
           font-size: 12.5px;
           font-weight: 700;
@@ -352,8 +352,8 @@ function SubmissionsContent() {
           animation: fadeUp 0.35s ease both;
         }
         .sub-row:hover {
-          border-color: rgba(200,169,106,0.38);
-          box-shadow: 0 2px 12px rgba(200,169,106,0.07);
+          border-color: rgba(184,160,130,0.38);
+          box-shadow: 0 2px 12px rgba(184,160,130,0.07);
         }
 
         /* Avatar */
@@ -405,9 +405,9 @@ function SubmissionsContent() {
           letter-spacing: 0.3px;
         }
         .status-pending {
-          background: rgba(200,169,106,0.1);
+          background: rgba(184,160,130,0.1);
           color: #6B4E18;
-          border: 1px solid rgba(200,169,106,0.22);
+          border: 1px solid rgba(184,160,130,0.22);
         }
         .status-reviewed {
           background: rgba(26,107,60,0.07);
@@ -421,7 +421,7 @@ function SubmissionsContent() {
         }
 
         .sub-chevron {
-          color: rgba(200,169,106,0.3);
+          color: rgba(184,160,130,0.3);
           display: flex;
           align-items: center;
           transition: color 0.15s;
@@ -466,3 +466,4 @@ export default function SchoolAdminSubmissionsPage() {
     </Suspense>
   );
 }
+

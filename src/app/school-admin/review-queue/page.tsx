@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
@@ -26,59 +26,59 @@ type Row = {
 
 const UI = {
   ar: {
-    title: "قائمة المراجعة",
-    sub: "راجع الدروس والاختبارات التي قدمها المعلمون قبل أن تصل للطلاب. يمكنك الموافقة أو الرفض مع كتابة ملاحظات.",
-    filterPending: "قيد المراجعة فقط",
-    filterAll: "عرض الكل",
-    empty: "لا توجد عناصر بانتظار المراجعة.",
-    kindLesson: "درس",
-    kindQuiz: "اختبار",
-    teacher: "المعلم",
-    classCol: "الفصل",
-    concept: "المفهوم",
-    submittedAt: "أُرسل في",
-    status: "الحالة",
-    approve: "موافقة",
-    reject: "رفض",
-    open: "عرض",
-    statusDRAFT: "مسودة",
-    statusPENDING_REVIEW: "قيد المراجعة",
-    statusAPPROVED: "معتمد",
-    statusREJECTED: "مرفوض",
-    confirmApprove: "هل أنت متأكد من الموافقة على هذا العنصر؟",
-    confirmReject: "هل أنت متأكد من رفضه؟",
-    notesPh: "اكتب ملاحظاتك للمعلم (اختياري)…",
-    cancel: "إلغاء",
-    submit: "تأكيد",
-    saving: "جارٍ الحفظ…",
-    saveError: "تعذر حفظ القرار",
+    title: "Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+    sub: "Ø±Ø§Ø¬Ø¹ Ø§Ù„Ø¯Ø±ÙˆØ³ ÙˆØ§Ù„Ø§Ø®ØªØ¨Ø§Ø±Ø§Øª Ø§Ù„ØªÙŠ Ù‚Ø¯Ù…Ù‡Ø§ Ø§Ù„Ù…Ø¹Ù„Ù…ÙˆÙ† Ù‚Ø¨Ù„ Ø£Ù† ØªØµÙ„ Ù„Ù„Ø·Ù„Ø§Ø¨. ÙŠÙ…ÙƒÙ†Ùƒ Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø£Ùˆ Ø§Ù„Ø±ÙØ¶ Ù…Ø¹ ÙƒØªØ§Ø¨Ø© Ù…Ù„Ø§Ø­Ø¸Ø§Øª.",
+    filterPending: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø© ÙÙ‚Ø·",
+    filterAll: "Ø¹Ø±Ø¶ Ø§Ù„ÙƒÙ„",
+    empty: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¹Ù†Ø§ØµØ± Ø¨Ø§Ù†ØªØ¸Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©.",
+    kindLesson: "Ø¯Ø±Ø³",
+    kindQuiz: "Ø§Ø®ØªØ¨Ø§Ø±",
+    teacher: "Ø§Ù„Ù…Ø¹Ù„Ù…",
+    classCol: "Ø§Ù„ÙØµÙ„",
+    concept: "Ø§Ù„Ù…ÙÙ‡ÙˆÙ…",
+    submittedAt: "Ø£ÙØ±Ø³Ù„ ÙÙŠ",
+    status: "Ø§Ù„Ø­Ø§Ù„Ø©",
+    approve: "Ù…ÙˆØ§ÙÙ‚Ø©",
+    reject: "Ø±ÙØ¶",
+    open: "Ø¹Ø±Ø¶",
+    statusDRAFT: "Ù…Ø³ÙˆØ¯Ø©",
+    statusPENDING_REVIEW: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+    statusAPPROVED: "Ù…Ø¹ØªÙ…Ø¯",
+    statusREJECTED: "Ù…Ø±ÙÙˆØ¶",
+    confirmApprove: "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø¹Ù†ØµØ±ØŸ",
+    confirmReject: "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø±ÙØ¶Ù‡ØŸ",
+    notesPh: "Ø§ÙƒØªØ¨ Ù…Ù„Ø§Ø­Ø¸Ø§ØªÙƒ Ù„Ù„Ù…Ø¹Ù„Ù… (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)â€¦",
+    cancel: "Ø¥Ù„ØºØ§Ø¡",
+    submit: "ØªØ£ÙƒÙŠØ¯",
+    saving: "Ø¬Ø§Ø±Ù Ø§Ù„Ø­ÙØ¸â€¦",
+    saveError: "ØªØ¹Ø°Ø± Ø­ÙØ¸ Ø§Ù„Ù‚Ø±Ø§Ø±",
   },
   sq: {
     title: "Lista e shqyrtimit",
-    sub: "Shqyrto mësimet dhe kuizet që mësuesit kanë dërguar para se t'i shohin nxënësit. Mund të miratosh ose refuzosh me shënime.",
-    filterPending: "Vetëm në shqyrtim",
-    filterAll: "Shfaq të gjitha",
-    empty: "Nuk ka elemente që presin shqyrtim.",
-    kindLesson: "Mësim",
+    sub: "Shqyrto mÃ«simet dhe kuizet qÃ« mÃ«suesit kanÃ« dÃ«rguar para se t'i shohin nxÃ«nÃ«sit. Mund tÃ« miratosh ose refuzosh me shÃ«nime.",
+    filterPending: "VetÃ«m nÃ« shqyrtim",
+    filterAll: "Shfaq tÃ« gjitha",
+    empty: "Nuk ka elemente qÃ« presin shqyrtim.",
+    kindLesson: "MÃ«sim",
     kindQuiz: "Kuiz",
-    teacher: "Mësuesi",
+    teacher: "MÃ«suesi",
     classCol: "Klasa",
     concept: "Koncepti",
-    submittedAt: "Dërguar më",
+    submittedAt: "DÃ«rguar mÃ«",
     status: "Statusi",
     approve: "Mirato",
     reject: "Refuzo",
     open: "Hap",
     statusDRAFT: "Draft",
-    statusPENDING_REVIEW: "Në shqyrtim",
+    statusPENDING_REVIEW: "NÃ« shqyrtim",
     statusAPPROVED: "Miratuar",
     statusREJECTED: "Refuzuar",
-    confirmApprove: "Je i sigurt që do ta miratosh?",
-    confirmReject: "Je i sigurt që do ta refuzosh?",
-    notesPh: "Shkruaj shënime për mësuesin (opsionale)…",
+    confirmApprove: "Je i sigurt qÃ« do ta miratosh?",
+    confirmReject: "Je i sigurt qÃ« do ta refuzosh?",
+    notesPh: "Shkruaj shÃ«nime pÃ«r mÃ«suesin (opsionale)â€¦",
     cancel: "Anulo",
     submit: "Konfirmo",
-    saving: "Po ruhet…",
+    saving: "Po ruhetâ€¦",
     saveError: "Nuk u ruajt vendimi",
   },
 } as const;
@@ -204,7 +204,7 @@ export default function ReviewQueuePage() {
   }
 
   function fmtDate(s: string | null | undefined) {
-    if (!s) return "—";
+    if (!s) return "â€”";
     try { return new Date(s).toLocaleString(L === "ar" ? "ar" : "sq"); } catch { return s; }
   }
 
@@ -249,7 +249,7 @@ export default function ReviewQueuePage() {
               <dl className="rq-card-meta">
                 <div><dt>{T.teacher}</dt><dd>{r.teacher.full_name}</dd></div>
                 <div><dt>{T.classCol}</dt><dd>{r.class.name}</dd></div>
-                <div><dt>{T.concept}</dt><dd>{r.module ? `${r.module.stage.title} · ${r.module.title}` : "—"}</dd></div>
+                <div><dt>{T.concept}</dt><dd>{r.module ? `${r.module.stage.title} Â· ${r.module.title}` : "â€”"}</dd></div>
                 <div><dt>{T.submittedAt}</dt><dd>{fmtDate(r.submitted_at)}</dd></div>
               </dl>
               {r.reviewer_notes && (
@@ -274,7 +274,7 @@ export default function ReviewQueuePage() {
         <div className="rq-dlg-overlay" onClick={() => !saving && setDecisionFor(null)}>
           <div className="rq-dlg" onClick={(e) => e.stopPropagation()} dir={dir}>
             <h3 className="rq-dlg-title">
-              {decisionFor.action === "approve" ? T.approve : T.reject} — {decisionFor.row.title}
+              {decisionFor.action === "approve" ? T.approve : T.reject} â€” {decisionFor.row.title}
             </h3>
             <textarea
               className="rq-dlg-notes"
@@ -306,11 +306,11 @@ export default function ReviewQueuePage() {
         .rq-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
         .rq-sub { font-size: 13.5px; color: #5E5A52; max-width: 740px; line-height: 1.85; margin: 0; }
         .rq-toolbar { display: flex; gap: 8px; margin-bottom: 18px; }
-        .rq-toggle { background: #FFFDF8; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 8px 16px; border-radius: 99px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .rq-toggle.active { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
-        .rq-empty { padding: 60px 20px; text-align: center; color: #8A8478; font-weight: 700; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; }
+        .rq-toggle { background: #FBF8F1; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 8px 16px; border-radius: 99px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .rq-toggle.active { background: linear-gradient(180deg,#4A0E1C,#12070B); color: #D9C9B0; border-color: transparent; }
+        .rq-empty { padding: 60px 20px; text-align: center; color: #8A8478; font-weight: 700; background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px; }
         .rq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 14px; }
-        .rq-card { background: #FFFDF8; border: 1.5px solid rgba(194,160,89,0.30); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+        .rq-card { background: #FBF8F1; border: 1.5px solid rgba(194,160,89,0.30); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
         .rq-card.rq-st-PENDING_REVIEW { border-color: rgba(194,160,89,0.6); box-shadow: 0 4px 14px rgba(194,160,89,0.16); }
         .rq-card.rq-st-APPROVED { background: linear-gradient(165deg,#F0F8F2,#E6F2EA); }
         .rq-card.rq-st-REJECTED { background: linear-gradient(165deg,#FBEBEB,#F5DCDC); }
@@ -322,7 +322,7 @@ export default function ReviewQueuePage() {
         .rq-st-tag-PENDING_REVIEW { background: rgba(194,160,89,0.20); color: #6B4F1E; }
         .rq-st-tag-APPROVED { background: rgba(45,138,74,0.16); color: #1E5C2E; }
         .rq-st-tag-REJECTED { background: rgba(139,26,26,0.12); color: #7A1E1E; }
-        .rq-st-tag-DRAFT { background: rgba(8,11,12,0.06); color: #5E5A52; }
+        .rq-st-tag-DRAFT { background: rgba(74,14,28,0.06); color: #5E5A52; }
         .rq-card-title { font-size: 16px; font-weight: 900; color: #1B1810; margin: 0; line-height: 1.35; }
         .rq-card-meta { margin: 0; display: flex; flex-direction: column; gap: 6px; }
         .rq-card-meta > div { display: flex; gap: 10px; font-size: 12.5px; }
@@ -334,17 +334,18 @@ export default function ReviewQueuePage() {
         .rq-decide { display: flex; gap: 8px; }
         .rq-approve { background: linear-gradient(180deg,#2D8A4A,#1E5C2E); color: #FFF; border: none; padding: 7px 16px; border-radius: 8px; font-family: inherit; font-weight: 800; font-size: 12px; cursor: pointer; }
         .rq-reject { background: linear-gradient(180deg,#A33333,#7A1E1E); color: #FFF; border: none; padding: 7px 16px; border-radius: 8px; font-family: inherit; font-weight: 800; font-size: 12px; cursor: pointer; }
-        .rq-dlg-overlay { position: fixed; inset: 0; background: rgba(8,11,12,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
-        .rq-dlg { background: #FFFDF8; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .rq-dlg-overlay { position: fixed; inset: 0; background: rgba(74,14,28,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+        .rq-dlg { background: #FBF8F1; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .rq-dlg-title { font-size: 15.5px; font-weight: 900; color: #1B1810; margin: 0 0 14px; }
         .rq-dlg-notes { width: 100%; padding: 11px 13px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; resize: vertical; }
-        .rq-dlg-notes:focus { border-color: #B89B5E; }
+        .rq-dlg-notes:focus { border-color: #8F765B; }
         .rq-dlg-err { color: #7A1E1E; font-size: 12.5px; font-weight: 700; margin-top: 10px; }
         .rq-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-        .rq-dlg-cancel { background: none; border: 1px solid rgba(8,11,12,0.18); color: #5E5A52; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .rq-dlg-cancel { background: none; border: 1px solid rgba(74,14,28,0.18); color: #5E5A52; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; }
         .rq-dlg-submit { background: linear-gradient(180deg,#2D8A4A,#1E5C2E); color: #FFF; border: none; padding: 9px 18px; border-radius: 9px; font-family: inherit; font-weight: 800; cursor: pointer; font-size: 13px; }
         .rq-dlg-submit.danger { background: linear-gradient(180deg,#A33333,#7A1E1E); }
       `}</style>
     </div>
   );
 }
+

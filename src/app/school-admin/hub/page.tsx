@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+﻿/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ import { useConfirm } from "@/lib/confirm-dialog";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 import { useLang } from "@/lib/language-context";
 
-// ─── TYPES ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ TYPES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type ReactionType = "LIKE" | "LOVE" | "DISLIKE" | "HAHA" | "SAD";
 type Lang = "ar" | "sq";
@@ -26,7 +26,7 @@ interface Me {
   school: { id: string; name: string; language: string } | null;
 }
 
-// ─── LOCALIZATION ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ LOCALIZATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const T: Record<Lang, {
   today: string; yesterday: string; community: string; react: string;
@@ -37,43 +37,43 @@ const T: Record<Lang, {
   adminLabel: string; newMsg: (n: number) => string;
 }> = {
   ar: {
-    today: "اليوم", yesterday: "أمس", community: "المجتمع", react: "تفاعل",
-    replyLabel: "رد", replies: "ردود", teacher: "معلم", admin: "مشرف",
-    composerPH: "اكتب رسالة للمجتمع...", replyPH: "اكتب رداً...",
-    loadMore: "رسائل أقدم", loading: "تحميل...",
-    emptyTitle: "لا توجد رسائل بعد", emptySub: "ابدأ بكتابة رسالة للمجتمع",
-    noSchoolTitle: "لم يتم تعيينك في مدرسة", noSchoolSub: "تواصل مع المالك لتفعيل حسابك",
-    del: "حذف", img: "صورة", send: "إرسال",
-    modeBar: "صلاحيات المشرف · يمكنك حذف أي منشور أو رد",
-    delConfirmTip: "اضغط مرة أخرى للتأكيد",
-    adminLabel: "مشرف",
-    newMsg: (n) => `${n} رسالة جديدة · اضغط للتحديث`,
+    today: "Ø§Ù„ÙŠÙˆÙ…", yesterday: "Ø£Ù…Ø³", community: "Ø§Ù„Ù…Ø¬ØªÙ…Ø¹", react: "ØªÙØ§Ø¹Ù„",
+    replyLabel: "Ø±Ø¯", replies: "Ø±Ø¯ÙˆØ¯", teacher: "Ù…Ø¹Ù„Ù…", admin: "Ù…Ø´Ø±Ù",
+    composerPH: "Ø§ÙƒØªØ¨ Ø±Ø³Ø§Ù„Ø© Ù„Ù„Ù…Ø¬ØªÙ…Ø¹...", replyPH: "Ø§ÙƒØªØ¨ Ø±Ø¯Ø§Ù‹...",
+    loadMore: "Ø±Ø³Ø§Ø¦Ù„ Ø£Ù‚Ø¯Ù…", loading: "ØªØ­Ù…ÙŠÙ„...",
+    emptyTitle: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ø±Ø³Ø§Ø¦Ù„ Ø¨Ø¹Ø¯", emptySub: "Ø§Ø¨Ø¯Ø£ Ø¨ÙƒØªØ§Ø¨Ø© Ø±Ø³Ø§Ù„Ø© Ù„Ù„Ù…Ø¬ØªÙ…Ø¹",
+    noSchoolTitle: "Ù„Ù… ÙŠØªÙ… ØªØ¹ÙŠÙŠÙ†Ùƒ ÙÙŠ Ù…Ø¯Ø±Ø³Ø©", noSchoolSub: "ØªÙˆØ§ØµÙ„ Ù…Ø¹ Ø§Ù„Ù…Ø§Ù„Ùƒ Ù„ØªÙØ¹ÙŠÙ„ Ø­Ø³Ø§Ø¨Ùƒ",
+    del: "Ø­Ø°Ù", img: "ØµÙˆØ±Ø©", send: "Ø¥Ø±Ø³Ø§Ù„",
+    modeBar: "ØµÙ„Ø§Ø­ÙŠØ§Øª Ø§Ù„Ù…Ø´Ø±Ù Â· ÙŠÙ…ÙƒÙ†Ùƒ Ø­Ø°Ù Ø£ÙŠ Ù…Ù†Ø´ÙˆØ± Ø£Ùˆ Ø±Ø¯",
+    delConfirmTip: "Ø§Ø¶ØºØ· Ù…Ø±Ø© Ø£Ø®Ø±Ù‰ Ù„Ù„ØªØ£ÙƒÙŠØ¯",
+    adminLabel: "Ù…Ø´Ø±Ù",
+    newMsg: (n) => `${n} Ø±Ø³Ø§Ù„Ø© Ø¬Ø¯ÙŠØ¯Ø© Â· Ø§Ø¶ØºØ· Ù„Ù„ØªØ­Ø¯ÙŠØ«`,
   },
   sq: {
     today: "Sot", yesterday: "Dje", community: "Komuniteti", react: "Reagoj",
-    replyLabel: "Përgjigje", replies: "përgjigje", teacher: "Mësues", admin: "Drejtori",
-    composerPH: "Shkruaj një mesazh për komunitetin...", replyPH: "Shkruaj një përgjigje...",
-    loadMore: "Mesazhe më të vjetra", loading: "Po ngarkohet...",
-    emptyTitle: "Nuk ka mesazhe ende", emptySub: "Filloni duke shkruar një mesazh",
-    noSchoolTitle: "Nuk jeni caktuar në asnjë shkollë",
-    noSchoolSub: "Kontaktoni pronarin për aktivizimin",
-    del: "Fshij", img: "Foto", send: "Dërgo",
-    modeBar: "Aksesi i administratorit · Mund të fshini çdo mesazh",
-    delConfirmTip: "Shtypni përsëri për të konfirmuar",
+    replyLabel: "PÃ«rgjigje", replies: "pÃ«rgjigje", teacher: "MÃ«sues", admin: "Drejtori",
+    composerPH: "Shkruaj njÃ« mesazh pÃ«r komunitetin...", replyPH: "Shkruaj njÃ« pÃ«rgjigje...",
+    loadMore: "Mesazhe mÃ« tÃ« vjetra", loading: "Po ngarkohet...",
+    emptyTitle: "Nuk ka mesazhe ende", emptySub: "Filloni duke shkruar njÃ« mesazh",
+    noSchoolTitle: "Nuk jeni caktuar nÃ« asnjÃ« shkollÃ«",
+    noSchoolSub: "Kontaktoni pronarin pÃ«r aktivizimin",
+    del: "Fshij", img: "Foto", send: "DÃ«rgo",
+    modeBar: "Aksesi i administratorit Â· Mund tÃ« fshini Ã§do mesazh",
+    delConfirmTip: "Shtypni pÃ«rsÃ«ri pÃ«r tÃ« konfirmuar",
     adminLabel: "Drejtori",
-    newMsg: (n) => `${n} mesazhe të reja · shtypni për rifreskuar`,
+    newMsg: (n) => `${n} mesazhe tÃ« reja Â· shtypni pÃ«r rifreskuar`,
   },
 };
 
 const RX: { type: ReactionType; emoji: string; label: Record<Lang, string> }[] = [
-  { type: "LIKE",    emoji: "👍", label: { ar: "أعجبني",    sq: "Pëlqej" } },
-  { type: "LOVE",    emoji: "❤️",  label: { ar: "أحببته",    sq: "Dashuri" } },
-  { type: "HAHA",    emoji: "😂", label: { ar: "مضحك",      sq: "Qesharak" } },
-  { type: "SAD",     emoji: "😢", label: { ar: "حزين",      sq: "Trishtim" } },
-  { type: "DISLIKE", emoji: "👎", label: { ar: "لم يعجبني", sq: "Nuk pëlqej" } },
+  { type: "LIKE",    emoji: "ðŸ‘", label: { ar: "Ø£Ø¹Ø¬Ø¨Ù†ÙŠ",    sq: "PÃ«lqej" } },
+  { type: "LOVE",    emoji: "â¤ï¸",  label: { ar: "Ø£Ø­Ø¨Ø¨ØªÙ‡",    sq: "Dashuri" } },
+  { type: "HAHA",    emoji: "ðŸ˜‚", label: { ar: "Ù…Ø¶Ø­Ùƒ",      sq: "Qesharak" } },
+  { type: "SAD",     emoji: "ðŸ˜¢", label: { ar: "Ø­Ø²ÙŠÙ†",      sq: "Trishtim" } },
+  { type: "DISLIKE", emoji: "ðŸ‘Ž", label: { ar: "Ù„Ù… ÙŠØ¹Ø¬Ø¨Ù†ÙŠ", sq: "Nuk pÃ«lqej" } },
 ];
 
-// ─── UTILS ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ UTILS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function formatDate(d: string, lang: Lang) {
   const date = new Date(d);
@@ -82,9 +82,9 @@ function formatDate(d: string, lang: Lang) {
   const loc  = lang === "ar" ? "ar-SA" : "sq-AL";
   const time = date.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit", hour12: lang === "ar" });
   if (diff === 0) return time;
-  if (diff === 1) return `${T[lang].yesterday} · ${time}`;
-  if (diff < 7) return `${date.toLocaleDateString(loc, { weekday: "long" })} · ${time}`;
-  return date.toLocaleDateString(loc, { day: "numeric", month: "long" }) + ` · ${time}`;
+  if (diff === 1) return `${T[lang].yesterday} Â· ${time}`;
+  if (diff < 7) return `${date.toLocaleDateString(loc, { weekday: "long" })} Â· ${time}`;
+  return date.toLocaleDateString(loc, { day: "numeric", month: "long" }) + ` Â· ${time}`;
 }
 
 function getDayLabel(d: string, lang: Lang) {
@@ -120,7 +120,7 @@ function applyReaction(reactions: Reaction[], myId: string, type: ReactionType):
   return rxs;
 }
 
-// ─── AVATAR ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ AVATAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const AV_COLORS = [
   { bg: "#D4A96A", text: "#3D1A00" }, { bg: "#7BAF7B", text: "#0D2A0D" },
@@ -130,8 +130,8 @@ const AV_COLORS = [
 ];
 
 function getAvColor(name: string, role: string) {
-  if (role === "SCHOOL_ADMIN") return { bg: "linear-gradient(135deg,#C8A96A,#E5B93C)", text: "#1A0D00" };
-  if (role === "TEACHER") return { bg: "#0B0B0C", text: "#C8A96A" };
+  if (role === "SCHOOL_ADMIN") return { bg: "linear-gradient(135deg,#B8A082,#D9C9B0)", text: "#1A0D00" };
+  if (role === "TEACHER") return { bg: "#1A1A1A", text: "#B8A082" };
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return { bg: AV_COLORS[Math.abs(h) % AV_COLORS.length].bg, text: AV_COLORS[Math.abs(h) % AV_COLORS.length].text };
@@ -150,12 +150,12 @@ function Av({ name, role, avatarUrl, size = 40, isAdminSelf = false }: {
         // eslint-disable-next-line @next/next/no-img-element
         <img className="av-img" src={avatarUrl} alt="" />
       ) : initials(name)}
-      {isStaff && <span className={`av-badge ${isAdmin ? "av-badge-admin" : ""}`}>{isAdmin ? "★" : "✦"}</span>}
+      {isStaff && <span className={`av-badge ${isAdmin ? "av-badge-admin" : ""}`}>{isAdmin ? "â˜…" : "âœ¦"}</span>}
     </div>
   );
 }
 
-// ─── REACTION BAR ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ REACTION BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function RxBar({ postId, reactions, myId, lang, onReact, compact = false, alignEnd = false }: {
   postId: string; reactions: Reaction[]; myId: string; lang: Lang;
@@ -190,7 +190,7 @@ function RxBar({ postId, reactions, myId, lang, onReact, compact = false, alignE
         <button className={`rx-btn ${mine ? "rx-on" : ""} ${compact ? "rx-compact" : ""}`}
           onMouseEnter={open_}
           onClick={() => mine ? onReact(postId, mine.type) : setOpen((v) => !v)}>
-          <span className="rx-btn-emoji">{mine ? mineRx?.emoji : "👍"}</span>
+          <span className="rx-btn-emoji">{mine ? mineRx?.emoji : "ðŸ‘"}</span>
           {!compact && <span>{mine ? mineRx?.label[lang] : tr.react}</span>}
         </button>
         {grp.length > 0 && (
@@ -205,7 +205,7 @@ function RxBar({ postId, reactions, myId, lang, onReact, compact = false, alignE
   );
 }
 
-// ─── IMAGE UPLOAD HOOK ────────────────────────────────────────────────────────
+// â”€â”€â”€ IMAGE UPLOAD HOOK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function useImgUpload() {
   const [file, setFile]       = useState<File | null>(null);
@@ -221,7 +221,7 @@ function useImgUpload() {
   return { file, preview, ref, pick, clear };
 }
 
-// ─── DATE DIVIDER ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ DATE DIVIDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function DateDivider({ label }: { label: string }) {
   return (
@@ -231,7 +231,7 @@ function DateDivider({ label }: { label: string }) {
   );
 }
 
-// ─── REPLIES ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ REPLIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function Replies({ postId, me, lang }: {
   postId: string; me: Me; lang: Lang;
@@ -279,7 +279,7 @@ function Replies({ postId, me, lang }: {
 
   const del = async (id: string) => {
     const ok = await confirm({
-      message: lang === "ar" ? "حذف هذا الرد؟" : "Fshi këtë përgjigje?",
+      message: lang === "ar" ? "Ø­Ø°Ù Ù‡Ø°Ø§ Ø§Ù„Ø±Ø¯ØŸ" : "Fshi kÃ«tÃ« pÃ«rgjigje?",
     });
     if (!ok) return;
     await fetch(`/api/hub/posts/${id}`, { method: "DELETE" });
@@ -357,7 +357,7 @@ function Replies({ postId, me, lang }: {
           {img.preview && (
             <div className="img-preview-mini">
               <img src={img.preview} className="img-preview-mini-img" alt="" />
-              <button className="img-preview-mini-x" onClick={img.clear}>✕</button>
+              <button className="img-preview-mini-x" onClick={img.clear}>âœ•</button>
             </div>
           )}
           <div className="reply-composer-row">
@@ -388,7 +388,7 @@ function Replies({ postId, me, lang }: {
   );
 }
 
-// ─── POST CARD (admin: distinctive gold mine bubble, always-delete) ────────────
+// â”€â”€â”€ POST CARD (admin: distinctive gold mine bubble, always-delete) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function PostCard({ post, me, lang, onDelete, onReact, index }: {
   post: Post; me: Me; lang: Lang;
@@ -524,7 +524,7 @@ function PostCard({ post, me, lang, onDelete, onReact, index }: {
   );
 }
 
-// ─── COMPOSER ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ COMPOSER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Post) => void }) {
   const [text, setText]       = useState("");
@@ -559,7 +559,7 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
       {img.preview && (
         <div className="composer-img-preview">
           <img src={img.preview} className="composer-img-preview-img" alt="" />
-          <button className="composer-img-x" onClick={img.clear}>✕</button>
+          <button className="composer-img-x" onClick={img.clear}>âœ•</button>
         </div>
       )}
       <div className="composer-row">
@@ -598,7 +598,7 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
   );
 }
 
-// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ MAIN PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function AdminHubPage() {
   const { lang: uiLang } = useLang();
@@ -700,7 +700,7 @@ export default function AdminHubPage() {
   const tr    = T[lang];
 
   const byDay: { day: string; items: Post[] }[] = [];
-  // Reverse the desc-from-API list so chat reads oldest → newest top-to-bottom.
+  // Reverse the desc-from-API list so chat reads oldest â†’ newest top-to-bottom.
   [...posts].reverse().forEach((p) => {
     const day = getDayLabel(p.created_at, lang);
     const last = byDay[byDay.length - 1];
@@ -762,7 +762,7 @@ export default function AdminHubPage() {
         </div>
       </header>
 
-      {/* Admin mode bar — gold */}
+      {/* Admin mode bar â€” gold */}
       <div className="mode-bar mode-bar-admin">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -770,7 +770,7 @@ export default function AdminHubPage() {
         <span>{tr.modeBar}</span>
       </div>
 
-      {/* new-posts banner removed — posts auto-append */}
+      {/* new-posts banner removed â€” posts auto-append */}
 
       <div className="hub-feed" ref={feedRef}>
         {cursor && (
@@ -817,17 +817,17 @@ export default function AdminHubPage() {
   );
 }
 
-// ─── CSS ─────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const css = `/* hub-viral-pack */
 @keyframes hubBlob{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.07)}66%{transform:translate(-30px,30px) scale(.94)}}
 @keyframes hubBlob2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-50px,40px) scale(1.1)}}
 @keyframes burstFloat{0%{opacity:0;transform:translateY(0) scale(.6)}25%{opacity:1;transform:translateY(-20px) scale(1.3)}100%{opacity:0;transform:translateY(-70px) scale(.9)}}
 .hub-bg-pattern::before,.hub-bg-pattern::after{content:'';position:absolute;border-radius:50%;filter:blur(80px);opacity:.45;pointer-events:none;}
-.hub-bg-pattern::before{width:520px;height:520px;background:radial-gradient(circle,#E5B93C 0%,transparent 70%);top:-120px;inset-inline-end:-120px;animation:hubBlob 18s ease-in-out infinite;}
+.hub-bg-pattern::before{width:520px;height:520px;background:radial-gradient(circle,#D9C9B0 0%,transparent 70%);top:-120px;inset-inline-end:-120px;animation:hubBlob 18s ease-in-out infinite;}
 .hub-bg-pattern::after{width:460px;height:460px;background:radial-gradient(circle,#7A1E1E 0%,transparent 70%);bottom:-140px;inset-inline-start:-100px;animation:hubBlob2 22s ease-in-out infinite;opacity:.22;}
 .chat-bubble-staff{position:relative;overflow:visible;}
-.chat-bubble-staff::after{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(135deg,rgba(229,185,60,.55),rgba(200,169,106,0) 50%,rgba(229,185,60,.45));z-index:-1;}
+.chat-bubble-staff::after{content:'';position:absolute;inset:-1.5px;border-radius:inherit;background:linear-gradient(135deg,rgba(217,201,176,.55),rgba(184,160,130,0) 50%,rgba(217,201,176,.45));z-index:-1;}
 .rx-burst{position:absolute;font-size:22px;pointer-events:none;animation:burstFloat .9s ease-out forwards;left:50%;top:0;transform-origin:center;}
 .composer{background:linear-gradient(135deg,#fff,#FBF8F2)!important;}
 .composer-focused{background:#fff!important;}
@@ -844,18 +844,18 @@ const css = `/* hub-viral-pack */
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 @keyframes blobIn{0%{opacity:0;transform:scale(.88) translateY(6px)}70%{transform:scale(1.02)}100%{opacity:1;transform:scale(1) translateY(0)}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
-@keyframes goldPulse{0%,100%{box-shadow:0 4px 20px rgba(200,169,106,.35)}50%{box-shadow:0 4px 28px rgba(200,169,106,.55)}}
+@keyframes goldPulse{0%,100%{box-shadow:0 4px 20px rgba(184,160,130,.35)}50%{box-shadow:0 4px 28px rgba(184,160,130,.55)}}
 
 :root{
   --cream:#F7F2EA;--cream2:#EFE8DC;--cream3:#E6DDD0;--cream4:#DDD2C2;
-  --graphite:#0B0B0C;--graphite2:#1A1208;
-  --gold:#C8A96A;--gold2:#D4B87A;--gold3:#E0C98A;--gold4:#E5B93C;
-  --gold-dim:rgba(200,169,106,.10);--gold-mid:rgba(200,169,106,.18);--gold-border:rgba(200,169,106,.35);
+  --graphite:#1A1A1A;--graphite2:#1A1208;
+  --gold:#B8A082;--gold2:#D9C9B0;--gold3:#D9C9B0;--gold4:#D9C9B0;
+  --gold-dim:rgba(184,160,130,.10);--gold-mid:rgba(184,160,130,.18);--gold-border:rgba(184,160,130,.35);
   --text:#2A1A0A;--text2:#6B5A4A;--text3:#9A8A7A;
-  --mine-bg:#C8A96A;--mine-fg:#1A0D00;
-  --admin-mine-bg:linear-gradient(135deg,#D4B87A,#E5B93C);--admin-mine-border:rgba(200,169,106,.45);
+  --mine-bg:#B8A082;--mine-fg:#1A0D00;
+  --admin-mine-bg:linear-gradient(135deg,#D9C9B0,#D9C9B0);--admin-mine-border:rgba(184,160,130,.45);
   --their-bg:#FFFFFF;--their-fg:#2A1A0A;--their-border:rgba(0,0,0,.08);
-  --staff-bg:rgba(200,169,106,.06);--staff-border:rgba(200,169,106,.20);
+  --staff-bg:rgba(184,160,130,.06);--staff-border:rgba(184,160,130,.20);
   --r:16px;--r-sm:12px;--r-xs:8px;--r-pill:100px;
   --font:'Cairo','IBM Plex Sans Arabic',-apple-system,sans-serif;
   --sh-soft:0 2px 12px rgba(42,26,10,.08);--sh-med:0 4px 24px rgba(42,26,10,.12);--sh-lift:0 8px 40px rgba(42,26,10,.16);
@@ -863,11 +863,11 @@ const css = `/* hub-viral-pack */
 }
 
 .hub{display:flex;flex-direction:column;height:100dvh;height:100vh;background:var(--cream);font-family:var(--font);color:var(--text);position:relative;overflow:hidden;}
-.hub-bg-pattern{position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle at 20% 20%,rgba(200,169,106,.09) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(11,11,12,.04) 0%,transparent 50%);}
+.hub-bg-pattern{position:absolute;inset:0;pointer-events:none;z-index:0;background-image:radial-gradient(circle at 20% 20%,rgba(184,160,130,.09) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(11,11,12,.04) 0%,transparent 50%);}
 
 /* skeleton */
 .skel-header{height:72px;background:var(--graphite);flex-shrink:0;}
-.skel-mode-bar{height:38px;background:rgba(200,169,106,.15);flex-shrink:0;}
+.skel-mode-bar{height:38px;background:rgba(184,160,130,.15);flex-shrink:0;}
 .skel-body{flex:1;padding:20px 16px;display:flex;flex-direction:column;gap:16px;overflow:hidden;}
 .skel-row{display:flex;align-items:flex-end;gap:10px;}.skel-mine{flex-direction:row-reverse;}
 .skel-av{width:42px;height:42px;border-radius:50%;background:var(--cream3);flex-shrink:0;}
@@ -878,14 +878,14 @@ const css = `/* hub-viral-pack */
 .hub-header-stripe{position:absolute;top:0;left:0;right:0;height:2.5px;background:linear-gradient(90deg,transparent,var(--gold) 25%,var(--gold4) 50%,var(--gold) 75%,transparent);}
 .hub-header-inner{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;max-width:860px;margin:0 auto;}
 .hub-brand{display:flex;align-items:center;gap:14px;}
-.hub-brand-icon{width:44px;height:44px;border-radius:13px;flex-shrink:0;background:rgba(200,169,106,.15);border:1.5px solid rgba(200,169,106,.35);display:flex;align-items:center;justify-content:center;color:var(--gold);transition:all .3s var(--ease-b);}
-.hub-brand-icon:hover{background:rgba(200,169,106,.28);transform:scale(1.08) rotate(-3deg);}
+.hub-brand-icon{width:44px;height:44px;border-radius:13px;flex-shrink:0;background:rgba(184,160,130,.15);border:1.5px solid rgba(184,160,130,.35);display:flex;align-items:center;justify-content:center;color:var(--gold);transition:all .3s var(--ease-b);}
+.hub-brand-icon:hover{background:rgba(184,160,130,.28);transform:scale(1.08) rotate(-3deg);}
 .hub-title{font-size:16px;font-weight:800;color:#F7EDD8;letter-spacing:-.2px;line-height:1.25;}
-.hub-subtitle{font-size:11px;color:rgba(200,169,106,.60);font-weight:500;margin-top:2px;}
+.hub-subtitle{font-size:11px;color:rgba(184,160,130,.60);font-weight:500;margin-top:2px;}
 
 /* mode bar */
 .mode-bar{display:flex;align-items:center;gap:8px;padding:9px 20px;font-size:12px;font-weight:700;flex-shrink:0;z-index:90;position:relative;}
-.mode-bar-admin{background:linear-gradient(90deg,rgba(200,169,106,.16),rgba(229,185,60,.12));border-bottom:1px solid rgba(200,169,106,.25);color:var(--gold4);}
+.mode-bar-admin{background:linear-gradient(90deg,rgba(184,160,130,.16),rgba(217,201,176,.12));border-bottom:1px solid rgba(184,160,130,.25);color:var(--gold4);}
 
 /* new posts */
 .new-posts-banner{width:100%;padding:10px 20px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--gold),var(--gold4));color:var(--text);font-size:13px;font-weight:700;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;z-index:50;position:relative;flex-shrink:0;animation:slideDown .35s var(--ease);}
@@ -915,11 +915,11 @@ const css = `/* hub-viral-pack */
 /* bubbles */
 .chat-bubble{padding:12px 15px;border-radius:18px;position:relative;word-break:break-word;transition:transform .2s var(--ease);max-width:100%;}
 .chat-bubble:hover{transform:scale(1.005);}
-.chat-bubble-mine{background:var(--mine-bg);color:var(--mine-fg);border-bottom-right-radius:5px;box-shadow:0 3px 16px rgba(200,169,106,.3);}
+.chat-bubble-mine{background:var(--mine-bg);color:var(--mine-fg);border-bottom-right-radius:5px;box-shadow:0 3px 16px rgba(184,160,130,.3);}
 [dir="rtl"] .chat-bubble-mine{border-bottom-right-radius:18px;border-bottom-left-radius:5px;}
 
 /* Admin's distinctive gold gradient bubble */
-.chat-bubble-admin-mine{background:var(--admin-mine-bg);border:1.5px solid var(--admin-mine-border);animation:goldPulse 3s ease-in-out infinite;box-shadow:0 4px 20px rgba(200,169,106,.4),0 1px 4px rgba(200,169,106,.3);}
+.chat-bubble-admin-mine{background:var(--admin-mine-bg);border:1.5px solid var(--admin-mine-border);animation:goldPulse 3s ease-in-out infinite;box-shadow:0 4px 20px rgba(184,160,130,.4),0 1px 4px rgba(184,160,130,.3);}
 
 .chat-bubble-theirs{background:var(--their-bg);color:var(--their-fg);border:1px solid var(--their-border);border-bottom-left-radius:5px;box-shadow:var(--sh-soft);}
 [dir="rtl"] .chat-bubble-theirs{border-bottom-left-radius:18px;border-bottom-right-radius:5px;}
@@ -939,10 +939,10 @@ const css = `/* hub-viral-pack */
 .chat-bubble:hover .bubble-del{opacity:.55;}
 .admin-del-btn{opacity:0.45;}
 .admin-del-btn:hover{opacity:1 !important;background:rgba(200,0,0,.12);color:#c00;}
-.bubble-del-confirm{opacity:1 !important;background:rgba(200,169,106,.25);color:var(--graphite);animation:shake .3s var(--ease);}
+.bubble-del-confirm{opacity:1 !important;background:rgba(184,160,130,.25);color:var(--graphite);animation:shake .3s var(--ease);}
 
 /* confirm toast */
-.del-confirm-toast{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gold);background:rgba(200,169,106,.12);border:1px solid rgba(200,169,106,.28);border-radius:var(--r-pill);padding:5px 12px;margin-top:4px;animation:fadeUp .2s var(--ease);}
+.del-confirm-toast{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gold);background:rgba(184,160,130,.12);border:1px solid rgba(184,160,130,.28);border-radius:var(--r-pill);padding:5px 12px;margin-top:4px;animation:fadeUp .2s var(--ease);}
 
 /* actions */
 .chat-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:2px 4px;}
@@ -965,7 +965,7 @@ const css = `/* hub-viral-pack */
 .msg-sender{display:flex;align-items:center;gap:5px;padding:0 4px;}
 .msg-sender-name{font-size:10px;font-weight:700;color:var(--graphite2);}
 .bubble{border-radius:14px;padding:9px 13px;word-break:break-word;position:relative;}
-.bubble-mine{background:var(--mine-bg);color:var(--mine-fg);border-bottom-right-radius:4px;box-shadow:0 2px 10px rgba(200,169,106,.25);}
+.bubble-mine{background:var(--mine-bg);color:var(--mine-fg);border-bottom-right-radius:4px;box-shadow:0 2px 10px rgba(184,160,130,.25);}
 .bubble-mine-admin{background:var(--admin-mine-bg);}
 [dir="rtl"] .bubble-mine{border-bottom-right-radius:14px;border-bottom-left-radius:4px;}
 .bubble-theirs{background:var(--their-bg);color:var(--their-fg);border:1px solid var(--their-border);border-bottom-left-radius:4px;box-shadow:0 1px 6px rgba(0,0,0,.07);}
@@ -989,23 +989,23 @@ const css = `/* hub-viral-pack */
 .img-preview-mini-x{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;}
 .reply-composer-row{display:flex;align-items:center;gap:6px;}
 .reply-input{flex:1;border:1.5px solid var(--cream4);border-radius:var(--r-pill);padding:9px 15px;font-size:13px;font-family:var(--font);color:var(--text);background:#fff;outline:none;transition:all .2s var(--ease);}
-.reply-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,169,106,.12);}
+.reply-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,160,130,.12);}
 .reply-input::placeholder{color:var(--text3);}
 .reply-icon-btn{background:none;border:1.5px solid var(--cream4);color:var(--text2);width:36px;height:36px;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease);}
 .reply-icon-btn:hover{border-color:var(--gold);color:var(--graphite);background:var(--gold-dim);}
 .reply-send-btn{background:var(--graphite);border:none;color:#F7EDD8;width:36px;height:36px;border-radius:50%;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s var(--ease-b);}
-.admin-send{background:linear-gradient(135deg,var(--gold),var(--gold4));color:var(--graphite);box-shadow:0 3px 14px rgba(200,169,106,.35);}
-.admin-send:hover:not(:disabled){filter:brightness(1.08);transform:scale(1.1);box-shadow:0 5px 20px rgba(200,169,106,.5);}
+.admin-send{background:linear-gradient(135deg,var(--gold),var(--gold4));color:var(--graphite);box-shadow:0 3px 14px rgba(184,160,130,.35);}
+.admin-send:hover:not(:disabled){filter:brightness(1.08);transform:scale(1.1);box-shadow:0 5px 20px rgba(184,160,130,.5);}
 .reply-send-btn:disabled{opacity:.35;cursor:not-allowed;}
 
 /* chips */
-.chip-staff{font-size:9px;font-weight:700;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(200,169,106,.28);padding:2px 8px;border-radius:var(--r-pill);}
-.chip-admin{color:var(--gold4);background:rgba(229,185,60,.12);border-color:rgba(229,185,60,.38);}
+.chip-staff{font-size:9px;font-weight:700;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(184,160,130,.28);padding:2px 8px;border-radius:var(--r-pill);}
+.chip-admin{color:var(--gold4);background:rgba(217,201,176,.12);border-color:rgba(217,201,176,.38);}
 
 /* avatar */
 .av{border-radius:50%;flex-shrink:0;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.15),0 0 0 2px rgba(255,255,255,.8);transition:transform .2s var(--ease-b);}
 .av:hover{transform:scale(1.07);}
-.av-admin-self{box-shadow:0 2px 8px rgba(0,0,0,.15),0 0 0 2px rgba(200,169,106,.5),0 0 0 3.5px rgba(229,185,60,.25);}
+.av-admin-self{box-shadow:0 2px 8px rgba(0,0,0,.15),0 0 0 2px rgba(184,160,130,.5),0 0 0 3.5px rgba(217,201,176,.25);}
 .av-img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block;}
 .av-badge{position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid #fff;font-size:6px;font-weight:900;color:var(--graphite);display:flex;align-items:center;justify-content:center;}
 .av-badge-admin{background:var(--gold4);font-size:7px;}
@@ -1032,8 +1032,8 @@ const css = `/* hub-viral-pack */
 /* composer */
 .hub-composer-wrap{padding:12px 16px 16px;flex-shrink:0;background:rgba(247,242,234,.92);backdrop-filter:blur(20px);border-top:1px solid rgba(0,0,0,.08);position:relative;z-index:50;}
 .composer{max-width:860px;margin:0 auto;background:#fff;border:1.5px solid var(--cream4);border-radius:28px;padding:8px 8px 8px 14px;box-shadow:var(--sh-med);transition:border-color .25s var(--ease),box-shadow .25s var(--ease);}
-.composer-admin{border-color:rgba(200,169,106,.2);}
-.composer-focused{border-color:var(--gold);box-shadow:var(--sh-med),0 0 0 3px rgba(200,169,106,.12);}
+.composer-admin{border-color:rgba(184,160,130,.2);}
+.composer-focused{border-color:var(--gold);box-shadow:var(--sh-med),0 0 0 3px rgba(184,160,130,.12);}
 .composer-img-preview{padding:8px 8px 0;position:relative;display:inline-block;margin-bottom:4px;}
 .composer-img-preview-img{max-height:120px;border-radius:12px;display:block;object-fit:cover;border:1px solid var(--cream4);}
 .composer-img-x{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.6);border:none;color:#fff;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;}
@@ -1059,13 +1059,13 @@ const css = `/* hub-viral-pack */
 
 /* empty */
 .hub-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;gap:14px;animation:fadeUp .5s var(--ease);}
-.hub-empty-icon{color:rgba(200,169,106,.38);}
+.hub-empty-icon{color:rgba(184,160,130,.38);}
 .hub-empty-title{font-size:20px;font-weight:800;color:var(--text);}
 .hub-empty-sub{font-size:14px;color:var(--text2);max-width:240px;text-align:center;line-height:1.7;}
 
 /* no school */
 .hub-no-school{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;text-align:center;padding:24px;}
-.no-school-icon{color:rgba(200,169,106,.42);margin-bottom:4px;}
+.no-school-icon{color:rgba(184,160,130,.42);margin-bottom:4px;}
 .no-school-title{font-size:20px;font-weight:800;color:var(--text);}
 .no-school-sub{font-size:14px;color:var(--text2);}
 
@@ -1089,16 +1089,16 @@ const css = `/* hub-viral-pack */
 
 /* community UX refresh */
 .hub{background:
-  radial-gradient(circle at 18% 0%,rgba(200,169,106,.18),transparent 28%),
+  radial-gradient(circle at 18% 0%,rgba(184,160,130,.18),transparent 28%),
   linear-gradient(180deg,#F6F0E6 0%,#EEE4D6 100%);
 }
 .hub-header{background:rgba(11,11,12,.96);backdrop-filter:blur(18px);box-shadow:0 14px 38px rgba(11,11,12,.24);}
 .hub-header-inner{max-width:980px;padding:14px 22px;}
-.hub-brand-icon{border-radius:16px;background:linear-gradient(145deg,rgba(200,169,106,.22),rgba(200,169,106,.08));}
+.hub-brand-icon{border-radius:16px;background:linear-gradient(145deg,rgba(184,160,130,.22),rgba(184,160,130,.08));}
 .hub-title{font-size:18px;letter-spacing:0;}
 .hub-subtitle{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(247,237,216,.78);}
 .mode-bar{justify-content:center;background:rgba(255,253,248,.72);backdrop-filter:blur(16px);border-bottom:1px solid rgba(184,155,94,.22);}
-.mode-bar-admin{color:#7A5B16;background:linear-gradient(90deg,rgba(255,253,248,.86),rgba(229,185,60,.16));}
+.mode-bar-admin{color:#7A5B16;background:linear-gradient(90deg,rgba(255,253,248,.86),rgba(217,201,176,.16));}
 .hub-feed{max-width:980px;padding:22px 22px 16px;}
 @media(min-width:900px){
   .hub-feed{background:rgba(255,253,248,.42);border-inline:1px solid rgba(184,155,94,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);}
@@ -1106,8 +1106,8 @@ const css = `/* hub-viral-pack */
 .chat-row{margin-bottom:12px;gap:12px;}
 .chat-col{max-width:min(72%,680px);}
 .chat-bubble{padding:11px 14px;border-radius:20px;box-shadow:0 8px 22px rgba(42,26,10,.08);}
-.chat-bubble-mine{background:linear-gradient(145deg,#D8B777,#C8A96A);box-shadow:0 10px 24px rgba(157,116,44,.22);}
-.chat-bubble-admin-mine{background:linear-gradient(135deg,#D4B87A,#F0CE70);box-shadow:0 10px 26px rgba(157,116,44,.26);}
+.chat-bubble-mine{background:linear-gradient(145deg,#B8A082,#B8A082);box-shadow:0 10px 24px rgba(157,116,44,.22);}
+.chat-bubble-admin-mine{background:linear-gradient(135deg,#D9C9B0,#D9C9B0);box-shadow:0 10px 26px rgba(157,116,44,.26);}
 .chat-bubble-theirs{background:rgba(255,255,255,.94);border-color:rgba(42,26,10,.06);}
 .chat-text{font-size:15.5px;line-height:1.78;}
 .chat-actions{opacity:.78;transition:opacity .18s ease;}
@@ -1117,7 +1117,7 @@ const css = `/* hub-viral-pack */
 .replies-scroll{max-height:360px;}
 .hub-composer-wrap{padding:12px 18px max(14px,env(safe-area-inset-bottom));background:rgba(246,240,230,.82);backdrop-filter:blur(24px);border-top:1px solid rgba(184,155,94,.20);}
 .composer{max-width:980px;border-radius:24px;border-color:rgba(184,155,94,.24);box-shadow:0 14px 36px rgba(42,26,10,.13);padding:9px 10px 9px 16px;}
-.composer-focused{box-shadow:0 18px 44px rgba(42,26,10,.16),0 0 0 4px rgba(200,169,106,.12);}
+.composer-focused{box-shadow:0 18px 44px rgba(42,26,10,.16),0 0 0 4px rgba(184,160,130,.12);}
 .composer-send-btn,.reply-send-btn{min-width:42px;min-height:42px;}
 @media(max-width:640px){
   .hub{height:100svh;}
@@ -1141,16 +1141,16 @@ const css = `/* hub-viral-pack */
 
 /* community UX polish v2 */
 .hub{background:
-  radial-gradient(circle at 12% 8%,rgba(229,185,60,.18),transparent 30%),
+  radial-gradient(circle at 12% 8%,rgba(217,201,176,.18),transparent 30%),
   radial-gradient(circle at 88% 10%,rgba(84,61,30,.16),transparent 28%),
   linear-gradient(180deg,#F8F1E6 0%,#EFE2D0 46%,#E7DACB 100%);
 }
 .hub-bg-pattern{opacity:.34;background-size:26px 26px;}
-.hub-header{background:linear-gradient(135deg,rgba(15,16,18,.98),rgba(45,35,20,.96));border-bottom:1px solid rgba(229,185,60,.22);box-shadow:0 18px 46px rgba(17,17,18,.28);}
-.hub-header-stripe{height:3px;background:linear-gradient(90deg,transparent 0%,#C8A96A 16%,#F0CE70 48%,#C8A96A 82%,transparent 100%);}
+.hub-header{background:linear-gradient(135deg,rgba(15,16,18,.98),rgba(45,35,20,.96));border-bottom:1px solid rgba(217,201,176,.22);box-shadow:0 18px 46px rgba(17,17,18,.28);}
+.hub-header-stripe{height:3px;background:linear-gradient(90deg,transparent 0%,#B8A082 16%,#D9C9B0 48%,#B8A082 82%,transparent 100%);}
 .hub-header-inner{max-width:1040px;padding:15px clamp(14px,3vw,30px);}
 .hub-brand{min-width:0;gap:13px;}
-.hub-brand-icon{width:50px;height:50px;border-radius:19px;background:linear-gradient(145deg,rgba(240,206,112,.28),rgba(200,169,106,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 12px 28px rgba(0,0,0,.24);}
+.hub-brand-icon{width:50px;height:50px;border-radius:19px;background:linear-gradient(145deg,rgba(240,206,112,.28),rgba(184,160,130,.08));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 12px 28px rgba(0,0,0,.24);}
 .hub-title{font-size:clamp(17px,2vw,22px);line-height:1.2;}
 .hub-subtitle{font-size:12px;color:rgba(247,237,216,.72);}
 .mode-bar{background:rgba(255,253,248,.78);box-shadow:0 10px 28px rgba(42,26,10,.08);}
@@ -1165,8 +1165,8 @@ const css = `/* hub-viral-pack */
 .chat-col{max-width:min(70%,700px);}
 .chat-bubble{border-radius:24px;padding:13px 16px;box-shadow:0 12px 30px rgba(42,26,10,.10);transition:transform .18s ease,box-shadow .18s ease;}
 .chat-bubble:hover{transform:translateY(-1px);box-shadow:0 16px 34px rgba(42,26,10,.13);}
-.chat-bubble-mine{background:linear-gradient(135deg,#F0CD72 0%,#C8A96A 100%);border:1px solid rgba(122,84,18,.12);box-shadow:0 14px 30px rgba(157,116,44,.22);}
-.chat-bubble-admin-mine{background:linear-gradient(135deg,#F6D87C 0%,#C8A96A 100%);box-shadow:0 16px 34px rgba(157,116,44,.26);}
+.chat-bubble-mine{background:linear-gradient(135deg,#D9C9B0 0%,#B8A082 100%);border:1px solid rgba(122,84,18,.12);box-shadow:0 14px 30px rgba(157,116,44,.22);}
+.chat-bubble-admin-mine{background:linear-gradient(135deg,#D9C9B0 0%,#B8A082 100%);box-shadow:0 16px 34px rgba(157,116,44,.26);}
 .chat-bubble-theirs{background:rgba(255,255,255,.90);border:1px solid rgba(91,65,27,.08);backdrop-filter:blur(16px);}
 .chat-bubble-staff{background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(255,248,227,.92));}
 .chat-author-name{font-size:12.5px;letter-spacing:.01em;}
@@ -1192,3 +1192,4 @@ const css = `/* hub-viral-pack */
   .composer{border-radius:25px;padding:7px 7px 7px 12px;}
 }
 `;
+

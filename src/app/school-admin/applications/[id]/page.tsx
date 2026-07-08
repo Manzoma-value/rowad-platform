@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 export const dynamic = "force-dynamic";
 
 import { Component, type ReactNode, use, useEffect, useState } from "react";
@@ -25,70 +25,70 @@ import MandalaLoader from "@/components/MandalaLoader";
 
 const UI = {
   ar: {
-    back: "← العودة للقائمة",
-    print: "تنزيل PDF",
-    approve: "موافقة",
-    reject: "رفض",
-    underReview: "قيد المراجعة",
-    active: "مفعّل",
-    rejected: "مرفوض",
-    confirmApprove: "هل أنت متأكد من الموافقة على هذا الطلب؟",
-    confirmReject: "هل أنت متأكد من رفض هذا الطلب؟",
-    notes: "ملاحظات (اختيارية، تظهر للمعلم)",
-    saving: "جاري الحفظ…",
-    saveError: "تعذر حفظ القرار",
-    sectionPersonal: "البيانات الشخصية",
-    sectionNomination: "جهة الترشيح",
-    sectionRole: "الدور الحالي",
-    sectionQual: "المؤهل العلمي",
-    sectionExp: "مجالات الخبرة وسنواتها",
-    sectionGroups: "الفئات",
-    sectionContrib: "المساهمات",
-    sectionAch: "الإنجازات",
-    sectionLang: "اللغات",
-    sectionAtt: "المرفقات",
-    sectionRev: "المراجعة",
-    none: "—",
-    decision: "قرار المراجعة",
-    submittedAt: "تاريخ التقديم",
-    reviewedAt: "تاريخ المراجعة",
-    submitting: "جاري الإرسال…",
-    assignGroups: "مجموعات المعلمين (اختياري)",
-    assignGroupsHint: "يمكنك إضافة المعلم إلى مجموعة أو أكثر الآن، أو تنظيمه لاحقاً من صفحة مجموعات المعلمين.",
-    noTeacherGroups: "لا توجد مجموعات معلمين بعد.",
+    back: "â† Ø§Ù„Ø¹ÙˆØ¯Ø© Ù„Ù„Ù‚Ø§Ø¦Ù…Ø©",
+    print: "ØªÙ†Ø²ÙŠÙ„ PDF",
+    approve: "Ù…ÙˆØ§ÙÙ‚Ø©",
+    reject: "Ø±ÙØ¶",
+    underReview: "Ù‚ÙŠØ¯ Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+    active: "Ù…ÙØ¹Ù‘Ù„",
+    rejected: "Ù…Ø±ÙÙˆØ¶",
+    confirmApprove: "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø§Ù„Ù…ÙˆØ§ÙÙ‚Ø© Ø¹Ù„Ù‰ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ØŸ",
+    confirmReject: "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø±ÙØ¶ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ØŸ",
+    notes: "Ù…Ù„Ø§Ø­Ø¸Ø§Øª (Ø§Ø®ØªÙŠØ§Ø±ÙŠØ©ØŒ ØªØ¸Ù‡Ø± Ù„Ù„Ù…Ø¹Ù„Ù…)",
+    saving: "Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø­ÙØ¸â€¦",
+    saveError: "ØªØ¹Ø°Ø± Ø­ÙØ¸ Ø§Ù„Ù‚Ø±Ø§Ø±",
+    sectionPersonal: "Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø´Ø®ØµÙŠØ©",
+    sectionNomination: "Ø¬Ù‡Ø© Ø§Ù„ØªØ±Ø´ÙŠØ­",
+    sectionRole: "Ø§Ù„Ø¯ÙˆØ± Ø§Ù„Ø­Ø§Ù„ÙŠ",
+    sectionQual: "Ø§Ù„Ù…Ø¤Ù‡Ù„ Ø§Ù„Ø¹Ù„Ù…ÙŠ",
+    sectionExp: "Ù…Ø¬Ø§Ù„Ø§Øª Ø§Ù„Ø®Ø¨Ø±Ø© ÙˆØ³Ù†ÙˆØ§ØªÙ‡Ø§",
+    sectionGroups: "Ø§Ù„ÙØ¦Ø§Øª",
+    sectionContrib: "Ø§Ù„Ù…Ø³Ø§Ù‡Ù…Ø§Øª",
+    sectionAch: "Ø§Ù„Ø¥Ù†Ø¬Ø§Ø²Ø§Øª",
+    sectionLang: "Ø§Ù„Ù„ØºØ§Øª",
+    sectionAtt: "Ø§Ù„Ù…Ø±ÙÙ‚Ø§Øª",
+    sectionRev: "Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+    none: "â€”",
+    decision: "Ù‚Ø±Ø§Ø± Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+    submittedAt: "ØªØ§Ø±ÙŠØ® Ø§Ù„ØªÙ‚Ø¯ÙŠÙ…",
+    reviewedAt: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ù…Ø±Ø§Ø¬Ø¹Ø©",
+    submitting: "Ø¬Ø§Ø±ÙŠ Ø§Ù„Ø¥Ø±Ø³Ø§Ù„â€¦",
+    assignGroups: "Ù…Ø¬Ù…ÙˆØ¹Ø§Øª Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ† (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)",
+    assignGroupsHint: "ÙŠÙ…ÙƒÙ†Ùƒ Ø¥Ø¶Ø§ÙØ© Ø§Ù„Ù…Ø¹Ù„Ù… Ø¥Ù„Ù‰ Ù…Ø¬Ù…ÙˆØ¹Ø© Ø£Ùˆ Ø£ÙƒØ«Ø± Ø§Ù„Ø¢Ù†ØŒ Ø£Ùˆ ØªÙ†Ø¸ÙŠÙ…Ù‡ Ù„Ø§Ø­Ù‚Ø§Ù‹ Ù…Ù† ØµÙØ­Ø© Ù…Ø¬Ù…ÙˆØ¹Ø§Øª Ø§Ù„Ù…Ø¹Ù„Ù…ÙŠÙ†.",
+    noTeacherGroups: "Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø¬Ù…ÙˆØ¹Ø§Øª Ù…Ø¹Ù„Ù…ÙŠÙ† Ø¨Ø¹Ø¯.",
   },
   sq: {
-    back: "← Kthehu te lista",
+    back: "â† Kthehu te lista",
     print: "Shkarko PDF",
     approve: "Mirato",
     reject: "Refuzo",
-    underReview: "Në shqyrtim",
+    underReview: "NÃ« shqyrtim",
     active: "Aktiv",
     rejected: "I refuzuar",
-    confirmApprove: "Je i sigurt që do ta miratosh këtë aplikim?",
-    confirmReject: "Je i sigurt që do ta refuzosh këtë aplikim?",
-    notes: "Shënime (opsionale, i shfaqen mësuesit)",
-    saving: "Po ruhet…",
+    confirmApprove: "Je i sigurt qÃ« do ta miratosh kÃ«tÃ« aplikim?",
+    confirmReject: "Je i sigurt qÃ« do ta refuzosh kÃ«tÃ« aplikim?",
+    notes: "ShÃ«nime (opsionale, i shfaqen mÃ«suesit)",
+    saving: "Po ruhetâ€¦",
     saveError: "Vendimi nuk u ruajt",
-    sectionPersonal: "Të dhënat personale",
+    sectionPersonal: "TÃ« dhÃ«nat personale",
     sectionNomination: "Pala rekomanduese",
     sectionRole: "Roli aktual",
     sectionQual: "Kualifikimi",
-    sectionExp: "Fushat dhe vitet e përvojës",
+    sectionExp: "Fushat dhe vitet e pÃ«rvojÃ«s",
     sectionGroups: "Grupet",
     sectionContrib: "Kontributet",
     sectionAch: "Arritjet",
-    sectionLang: "Gjuhët",
-    sectionAtt: "Bashkëngjitjet",
+    sectionLang: "GjuhÃ«t",
+    sectionAtt: "BashkÃ«ngjitjet",
     sectionRev: "Shqyrtimi",
-    none: "—",
+    none: "â€”",
     decision: "Vendimi i shqyrtimit",
-    submittedAt: "Data e dërgimit",
+    submittedAt: "Data e dÃ«rgimit",
     reviewedAt: "Data e shqyrtimit",
-    submitting: "Po dërgohet…",
-    assignGroups: "Grupet e mësuesve (opsionale)",
-    assignGroupsHint: "Mund ta shtosh mësuesin në një ose më shumë grupe tani, ose ta organizosh më vonë.",
-    noTeacherGroups: "Nuk ka grupe mësuesish ende.",
+    submitting: "Po dÃ«rgohetâ€¦",
+    assignGroups: "Grupet e mÃ«suesve (opsionale)",
+    assignGroupsHint: "Mund ta shtosh mÃ«suesin nÃ« njÃ« ose mÃ« shumÃ« grupe tani, ose ta organizosh mÃ« vonÃ«.",
+    noTeacherGroups: "Nuk ka grupe mÃ«suesish ende.",
   },
 } as const;
 
@@ -149,7 +149,7 @@ class DetailBoundary extends Component<{ children: ReactNode }, { err: Error | n
         <div style={{ padding: 40, maxWidth: 720, margin: "0 auto", fontFamily: "'Cairo',sans-serif" }}>
           <div style={{ background: "rgba(139,26,26,0.06)", border: "1.5px solid rgba(139,26,26,0.32)", borderRadius: 12, padding: 18, color: "#5A1818" }}>
             <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 6 }}>
-              تعذر عرض هذا الطلب · This application could not be rendered
+              ØªØ¹Ø°Ø± Ø¹Ø±Ø¶ Ù‡Ø°Ø§ Ø§Ù„Ø·Ù„Ø¨ Â· This application could not be rendered
             </div>
             <code style={{ display: "block", fontSize: 12, opacity: 0.85, whiteSpace: "pre-wrap", direction: "ltr", textAlign: "left" }}>
               {String(this.state.err?.message ?? this.state.err)}
@@ -283,24 +283,24 @@ function ApplicationDetailPageInner({
           target="_blank"
           rel="noopener noreferrer"
         >
-          🖨 {T.print}
+          ðŸ–¨ {T.print}
         </a>
       </div>
 
       <header className="ad-head">
         <div>
           <h1 className="ad-name">{a.full_name}</h1>
-          <p className="ad-meta">{a.email} · {a.phone}</p>
+          <p className="ad-meta">{a.email} Â· {a.phone}</p>
         </div>
         <span className={`ad-status st-${teacher.onboarding_status}`}>{statusLabel}</span>
       </header>
 
       <Section title={T.sectionPersonal}>
         <Grid>
-          <Item label={L === "ar" ? "العمر" : "Mosha"} value={String(a.age)} />
-          <Item label={L === "ar" ? "الدولة" : "Shteti"} value={a.country} />
-          <Item label={L === "ar" ? "المدينة" : "Qyteti"} value={a.city} />
-          <Item label={L === "ar" ? "الجنس" : "Gjinia"} value={GENDER_L[a.gender as keyof typeof GENDER_L]?.[L] ?? T.none} />
+          <Item label={L === "ar" ? "Ø§Ù„Ø¹Ù…Ø±" : "Mosha"} value={String(a.age)} />
+          <Item label={L === "ar" ? "Ø§Ù„Ø¯ÙˆÙ„Ø©" : "Shteti"} value={a.country} />
+          <Item label={L === "ar" ? "Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©" : "Qyteti"} value={a.city} />
+          <Item label={L === "ar" ? "Ø§Ù„Ø¬Ù†Ø³" : "Gjinia"} value={GENDER_L[a.gender as keyof typeof GENDER_L]?.[L] ?? T.none} />
         </Grid>
       </Section>
 
@@ -309,9 +309,9 @@ function ApplicationDetailPageInner({
       {(a.nominating_entity || a.nominator_name || a.nominator_role) && (
         <Section title={T.sectionNomination}>
           <Grid>
-            <Item label={L === "ar" ? "الجهة" : "Institucioni"} value={a.nominating_entity || T.none} />
-            <Item label={L === "ar" ? "الاسم" : "Emri"} value={a.nominator_name || T.none} />
-            <Item label={L === "ar" ? "الصفة" : "Roli"} value={a.nominator_role || T.none} />
+            <Item label={L === "ar" ? "Ø§Ù„Ø¬Ù‡Ø©" : "Institucioni"} value={a.nominating_entity || T.none} />
+            <Item label={L === "ar" ? "Ø§Ù„Ø§Ø³Ù…" : "Emri"} value={a.nominator_name || T.none} />
+            <Item label={L === "ar" ? "Ø§Ù„ØµÙØ©" : "Roli"} value={a.nominator_role || T.none} />
           </Grid>
         </Section>
       )}
@@ -321,48 +321,48 @@ function ApplicationDetailPageInner({
           label=""
           value={
             (CURRENT_ROLE_L[a.current_role as keyof typeof CURRENT_ROLE_L]?.[L] ?? a.current_role) +
-            (a.current_role_other ? ` — ${a.current_role_other}` : "")
+            (a.current_role_other ? ` â€” ${a.current_role_other}` : "")
           }
         />
       </Section>
 
       <Section title={T.sectionQual}>
         <Grid>
-          <Item label={L === "ar" ? "المستوى" : "Niveli"} value={QUALIFICATION_L[a.qualification as keyof typeof QUALIFICATION_L]?.[L] ?? a.qualification} />
-          <Item label={L === "ar" ? "التخصص" : "Specializimi"} value={a.specialization} />
-          <Item label={L === "ar" ? "جهة التخرج" : "Institucioni"} value={a.graduation_institution} />
+          <Item label={L === "ar" ? "Ø§Ù„Ù…Ø³ØªÙˆÙ‰" : "Niveli"} value={QUALIFICATION_L[a.qualification as keyof typeof QUALIFICATION_L]?.[L] ?? a.qualification} />
+          <Item label={L === "ar" ? "Ø§Ù„ØªØ®ØµØµ" : "Specializimi"} value={a.specialization} />
+          <Item label={L === "ar" ? "Ø¬Ù‡Ø© Ø§Ù„ØªØ®Ø±Ø¬" : "Institucioni"} value={a.graduation_institution} />
         </Grid>
       </Section>
 
       <Section title={T.sectionExp}>
-        <Item label={L === "ar" ? "المجالات" : "Fushat"} value={
-          a.experience_areas.map((c) => EXPERIENCE_AREA_L[c]?.[L] ?? c).join("، ") || T.none
+        <Item label={L === "ar" ? "Ø§Ù„Ù…Ø¬Ø§Ù„Ø§Øª" : "Fushat"} value={
+          a.experience_areas.map((c) => EXPERIENCE_AREA_L[c]?.[L] ?? c).join("ØŒ ") || T.none
         } />
         {a.experience_areas_other && (
-          <Item label={L === "ar" ? "أخرى" : "Tjetër"} value={a.experience_areas_other} />
+          <Item label={L === "ar" ? "Ø£Ø®Ø±Ù‰" : "TjetÃ«r"} value={a.experience_areas_other} />
         )}
-        <Item label={L === "ar" ? "سنوات الخبرة" : "Vitet e përvojës"} value={EXPERIENCE_RANGE_L[a.years_of_experience as keyof typeof EXPERIENCE_RANGE_L]?.[L] ?? a.years_of_experience} />
+        <Item label={L === "ar" ? "Ø³Ù†ÙˆØ§Øª Ø§Ù„Ø®Ø¨Ø±Ø©" : "Vitet e pÃ«rvojÃ«s"} value={EXPERIENCE_RANGE_L[a.years_of_experience as keyof typeof EXPERIENCE_RANGE_L]?.[L] ?? a.years_of_experience} />
       </Section>
 
       <Section title={T.sectionGroups}>
         <Item label="" value={
-          a.target_groups.map((c) => TARGET_GROUP_L[c]?.[L] ?? c).join("، ") || T.none
+          a.target_groups.map((c) => TARGET_GROUP_L[c]?.[L] ?? c).join("ØŒ ") || T.none
         } />
         {a.target_groups_other && (
-          <Item label={L === "ar" ? "أخرى" : "Tjetër"} value={a.target_groups_other} />
+          <Item label={L === "ar" ? "Ø£Ø®Ø±Ù‰" : "TjetÃ«r"} value={a.target_groups_other} />
         )}
       </Section>
 
       <Section title={T.sectionContrib}>
         <Item label="" value={
-          a.contributions.map((c) => CONTRIBUTION_L[c]?.[L] ?? c).join("، ") || T.none
+          a.contributions.map((c) => CONTRIBUTION_L[c]?.[L] ?? c).join("ØŒ ") || T.none
         } />
       </Section>
 
       <Section title={T.sectionAch}>
-        <Item label={L === "ar" ? "حصل على" : "Ka pasur"} value={a.has_achievements ? (L === "ar" ? "نعم" : "Po") : (L === "ar" ? "لا" : "Jo")} />
+        <Item label={L === "ar" ? "Ø­ØµÙ„ Ø¹Ù„Ù‰" : "Ka pasur"} value={a.has_achievements ? (L === "ar" ? "Ù†Ø¹Ù…" : "Po") : (L === "ar" ? "Ù„Ø§" : "Jo")} />
         {a.has_achievements && a.achievements_scope && (
-          <Item label={L === "ar" ? "النطاق" : "Shtrirja"} value={ACHIEVEMENT_SCOPE_L[a.achievements_scope as keyof typeof ACHIEVEMENT_SCOPE_L]?.[L] ?? a.achievements_scope} />
+          <Item label={L === "ar" ? "Ø§Ù„Ù†Ø·Ø§Ù‚" : "Shtrirja"} value={ACHIEVEMENT_SCOPE_L[a.achievements_scope as keyof typeof ACHIEVEMENT_SCOPE_L]?.[L] ?? a.achievements_scope} />
         )}
       </Section>
 
@@ -374,28 +374,28 @@ function ApplicationDetailPageInner({
             {a.languages.map((l) => (
               <li key={l.lang}>
                 <strong>{LANGUAGE_L[l.lang]?.[L] ?? l.lang}</strong>
-                {" — "}
+                {" â€” "}
                 {LANG_LEVEL_L[l.level]?.[L] ?? l.level}
               </li>
             ))}
           </ul>
         )}
         {a.languages_other && (
-          <Item label={L === "ar" ? "لغة أخرى" : "Gjuhë tjetër"} value={a.languages_other} />
+          <Item label={L === "ar" ? "Ù„ØºØ© Ø£Ø®Ø±Ù‰" : "GjuhÃ« tjetÃ«r"} value={a.languages_other} />
         )}
       </Section>
 
-      {/* "About the candidate" — replaces the old attachments checklist.
+      {/* "About the candidate" â€” replaces the old attachments checklist.
           Legacy applications might still have attachments[]; show them only
           when present. The free-form notes field is the headline now. */}
-      <Section title={L === "ar" ? "نبذة عن المرشّح" : "Rreth kandidatit"}>
+      <Section title={L === "ar" ? "Ù†Ø¨Ø°Ø© Ø¹Ù† Ø§Ù„Ù…Ø±Ø´Ù‘Ø­" : "Rreth kandidatit"}>
         {a.notes && (
-          <Item label={L === "ar" ? "ملاحظات" : "Shënime"} value={a.notes} />
+          <Item label={L === "ar" ? "Ù…Ù„Ø§Ø­Ø¸Ø§Øª" : "ShÃ«nime"} value={a.notes} />
         )}
         {a.attachments && a.attachments.length > 0 && (
           <Item
-            label={L === "ar" ? "مرفقات (قديم)" : "Bashkëngjitje (të vjetra)"}
-            value={a.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("، ")}
+            label={L === "ar" ? "Ù…Ø±ÙÙ‚Ø§Øª (Ù‚Ø¯ÙŠÙ…)" : "BashkÃ«ngjitje (tÃ« vjetra)"}
+            value={a.attachments.map((c) => ATTACHMENT_L[c]?.[L] ?? c).join("ØŒ ")}
           />
         )}
         {!a.notes && (!a.attachments || a.attachments.length === 0) && (
@@ -409,7 +409,7 @@ function ApplicationDetailPageInner({
           <Item label={T.reviewedAt} value={fmtDate(a.reviewed_at)} />
         </Grid>
         {a.reviewer_notes && (
-          <Item label={L === "ar" ? "ملاحظات سابقة" : "Shënime të mëparshme"} value={a.reviewer_notes} />
+          <Item label={L === "ar" ? "Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø³Ø§Ø¨Ù‚Ø©" : "ShÃ«nime tÃ« mÃ«parshme"} value={a.reviewer_notes} />
         )}
 
         {!isDecided && (
@@ -433,10 +433,10 @@ function ApplicationDetailPageInner({
                         onClick={() => toggleGroup(group.id)}
                         disabled={viewOnly || saving}
                       >
-                        <span className="ad-group-check">{checked ? "✓" : "+"}</span>
+                        <span className="ad-group-check">{checked ? "âœ“" : "+"}</span>
                         <span className="ad-group-info">
                           <strong>{group.name}</strong>
-                          <small>{group._count.members} {L === "ar" ? "أعضاء" : "anëtarë"}</small>
+                          <small>{group._count.members} {L === "ar" ? "Ø£Ø¹Ø¶Ø§Ø¡" : "anÃ«tarÃ«"}</small>
                         </span>
                       </button>
                     );
@@ -455,10 +455,10 @@ function ApplicationDetailPageInner({
             {!viewOnly && (
               <div className="ad-actions">
                 <button className="ad-btn approve" onClick={() => decide("approve")} disabled={saving}>
-                  ✓ {saving ? T.saving : T.approve}
+                  âœ“ {saving ? T.saving : T.approve}
                 </button>
                 <button className="ad-btn reject" onClick={() => decide("reject")} disabled={saving}>
-                  ✕ {saving ? T.saving : T.reject}
+                  âœ• {saving ? T.saving : T.reject}
                 </button>
               </div>
             )}
@@ -471,18 +471,18 @@ function ApplicationDetailPageInner({
         .ad-page { font-family: 'Cairo', sans-serif; max-width: 920px; margin: 0 auto; }
         .ad-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
         .ad-back { text-decoration: none; color: #6B4F1E; font-weight: 800; font-size: 13.5px; }
-        .ad-back:hover { color: #B89B5E; }
+        .ad-back:hover { color: #8F765B; }
         .ad-bar-spacer { flex: 1; }
         .ad-print-btn {
-          padding: 8px 16px; background: #FFFDF8; border: 1.5px solid #B89B5E;
+          padding: 8px 16px; background: #FBF8F1; border: 1.5px solid #8F765B;
           color: #6B4F1E; border-radius: 10px; text-decoration: none;
           font-size: 13px; font-weight: 800;
         }
-        .ad-print-btn:hover { background: #B89B5E; color: #FFF8E2; }
+        .ad-print-btn:hover { background: #8F765B; color: #FFF8E2; }
 
         .ad-head {
           display: flex; align-items: center; gap: 14px;
-          background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px;
+          background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px;
           padding: 20px; margin-bottom: 18px;
         }
         .ad-head > div { flex: 1; min-width: 0; }
@@ -497,7 +497,7 @@ function ApplicationDetailPageInner({
         .ad-status.st-REJECTED     { background: rgba(139,26,26,0.10); color: #7A1E1E; }
 
         .ad-section {
-          background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07);
+          background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07);
           border-radius: 14px; padding: 18px; margin-bottom: 14px;
         }
         .ad-section-title {
@@ -525,14 +525,14 @@ function ApplicationDetailPageInner({
           background: #FFF; cursor: pointer; font-family: inherit; transition: border-color .15s, background .15s;
         }
         .ad-group-option:hover:not(:disabled), .ad-group-option.selected {
-          border-color: #B89B5E; background: linear-gradient(165deg,#FCF6E6,#F4EBD3);
+          border-color: #8F765B; background: linear-gradient(165deg,#FCF6E6,#F4EBD3);
         }
         .ad-group-option:disabled { opacity: 0.6; cursor: not-allowed; }
         .ad-group-check {
           width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
           background: rgba(194,160,89,0.14); color: #8B6915; font-weight: 900; flex-shrink: 0;
         }
-        .ad-group-option.selected .ad-group-check { background: #B89B5E; color: #1E1605; }
+        .ad-group-option.selected .ad-group-check { background: #8F765B; color: #1E1605; }
         .ad-group-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
         .ad-group-info strong { color: #1B1810; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
         .ad-group-info small { color: #8A7B60; font-size: 11.5px; font-weight: 800; }
@@ -542,7 +542,7 @@ function ApplicationDetailPageInner({
           border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px;
           background: #FFFCEF; outline: none; resize: vertical;
         }
-        .ad-notes:focus { border-color: #B89B5E; }
+        .ad-notes:focus { border-color: #8F765B; }
         .ad-err { color: #7A1E1E; font-size: 13px; font-weight: 700; margin-top: 8px; }
         .ad-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
         .ad-btn {
@@ -582,3 +582,4 @@ function Item({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+

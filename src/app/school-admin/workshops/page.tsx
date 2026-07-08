@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
@@ -21,42 +21,42 @@ type Row = {
 
 const UI = {
   ar: {
-    title: "الورش التدريبية",
-    sub: "أنشئ ورشة، شارك رمز QR للتسجيل، ثم اعرض رمز الحضور اليومي. جميع بيانات المشاركة والغياب تظهر لك مباشرة.",
-    create: "+ ورشة جديدة",
-    empty: "لا توجد ورش بعد. ابدأ بإنشاء واحدة!",
-    statusOPEN: "مفتوحة",
-    statusCLOSED: "مغلقة",
-    signed: "مسجّلون",
-    attend: "حضور",
-    open: "تفاصيل الورشة",
-    newTitle: "أنشئ ورشة جديدة",
-    lblName: "اسم الورشة",
-    lblDesc: "الوصف",
-    lblStart: "تاريخ البداية",
-    lblEnd: "تاريخ النهاية",
-    cancel: "إلغاء",
-    submit: "إنشاء",
-    creating: "جارٍ الإنشاء…",
+    title: "Ø§Ù„ÙˆØ±Ø´ Ø§Ù„ØªØ¯Ø±ÙŠØ¨ÙŠØ©",
+    sub: "Ø£Ù†Ø´Ø¦ ÙˆØ±Ø´Ø©ØŒ Ø´Ø§Ø±Ùƒ Ø±Ù…Ø² QR Ù„Ù„ØªØ³Ø¬ÙŠÙ„ØŒ Ø«Ù… Ø§Ø¹Ø±Ø¶ Ø±Ù…Ø² Ø§Ù„Ø­Ø¶ÙˆØ± Ø§Ù„ÙŠÙˆÙ…ÙŠ. Ø¬Ù…ÙŠØ¹ Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ù…Ø´Ø§Ø±ÙƒØ© ÙˆØ§Ù„ØºÙŠØ§Ø¨ ØªØ¸Ù‡Ø± Ù„Ùƒ Ù…Ø¨Ø§Ø´Ø±Ø©.",
+    create: "+ ÙˆØ±Ø´Ø© Ø¬Ø¯ÙŠØ¯Ø©",
+    empty: "Ù„Ø§ ØªÙˆØ¬Ø¯ ÙˆØ±Ø´ Ø¨Ø¹Ø¯. Ø§Ø¨Ø¯Ø£ Ø¨Ø¥Ù†Ø´Ø§Ø¡ ÙˆØ§Ø­Ø¯Ø©!",
+    statusOPEN: "Ù…ÙØªÙˆØ­Ø©",
+    statusCLOSED: "Ù…ØºÙ„Ù‚Ø©",
+    signed: "Ù…Ø³Ø¬Ù‘Ù„ÙˆÙ†",
+    attend: "Ø­Ø¶ÙˆØ±",
+    open: "ØªÙØ§ØµÙŠÙ„ Ø§Ù„ÙˆØ±Ø´Ø©",
+    newTitle: "Ø£Ù†Ø´Ø¦ ÙˆØ±Ø´Ø© Ø¬Ø¯ÙŠØ¯Ø©",
+    lblName: "Ø§Ø³Ù… Ø§Ù„ÙˆØ±Ø´Ø©",
+    lblDesc: "Ø§Ù„ÙˆØµÙ",
+    lblStart: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ø¨Ø¯Ø§ÙŠØ©",
+    lblEnd: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ù†Ù‡Ø§ÙŠØ©",
+    cancel: "Ø¥Ù„ØºØ§Ø¡",
+    submit: "Ø¥Ù†Ø´Ø§Ø¡",
+    creating: "Ø¬Ø§Ø±Ù Ø§Ù„Ø¥Ù†Ø´Ø§Ø¡â€¦",
   },
   sq: {
-    title: "Punëtoritë",
-    sub: "Krijo një punëtori, ndaj kodin QR të regjistrimit, pastaj shfaq kodin ditor të pranisë. Të gjitha të dhënat shfaqen këtu.",
-    create: "+ Punëtori e re",
-    empty: "Nuk ka punëtori ende.",
+    title: "PunÃ«toritÃ«",
+    sub: "Krijo njÃ« punÃ«tori, ndaj kodin QR tÃ« regjistrimit, pastaj shfaq kodin ditor tÃ« pranisÃ«. TÃ« gjitha tÃ« dhÃ«nat shfaqen kÃ«tu.",
+    create: "+ PunÃ«tori e re",
+    empty: "Nuk ka punÃ«tori ende.",
     statusOPEN: "E hapur",
     statusCLOSED: "E mbyllur",
-    signed: "Të regjistruar",
+    signed: "TÃ« regjistruar",
     attend: "Prania",
     open: "Detajet",
-    newTitle: "Krijo një punëtori",
+    newTitle: "Krijo njÃ« punÃ«tori",
     lblName: "Titulli",
-    lblDesc: "Përshkrimi",
+    lblDesc: "PÃ«rshkrimi",
     lblStart: "Data e fillimit",
     lblEnd: "Data e mbarimit",
     cancel: "Anulo",
     submit: "Krijo",
-    creating: "Po krijohet…",
+    creating: "Po krijohetâ€¦",
   },
 } as const;
 
@@ -101,7 +101,7 @@ export default function WorkshopsPage() {
   }
 
   function fmt(s: string | null) {
-    if (!s) return "—";
+    if (!s) return "â€”";
     try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL"); } catch { return s; }
   }
 
@@ -137,7 +137,7 @@ export default function WorkshopsPage() {
                 <span><strong>{w._count.signed_up_teachers}</strong> {T.signed}</span>
                 <span><strong>{w._count.attendance}</strong> {T.attend}</span>
               </div>
-              <span className="ws-card-open">{T.open} →</span>
+              <span className="ws-card-open">{T.open} â†’</span>
             </Link>
           ))}
         </div>
@@ -177,15 +177,15 @@ export default function WorkshopsPage() {
         .ws-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
         .ws-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
         .ws-sub { font-size: 13.5px; color: #5E5A52; max-width: 680px; line-height: 1.85; margin: 0; }
-        .ws-new { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border: none; padding: 10px 18px; border-radius: 11px; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
-        .ws-empty { padding: 60px 20px; text-align: center; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; color: #8A8478; font-weight: 700; }
+        .ws-new { background: linear-gradient(180deg,#4A0E1C,#12070B); color: #D9C9B0; border: none; padding: 10px 18px; border-radius: 11px; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+        .ws-empty { padding: 60px 20px; text-align: center; background: #FBF8F1; border: 1px solid rgba(74,14,28,0.07); border-radius: 14px; color: #8A8478; font-weight: 700; }
         .ws-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 14px; }
         .ws-card { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px; background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border: 1.5px solid rgba(194,160,89,0.32); border-radius: 14px; text-decoration: none; color: inherit; transition: all .18s; box-shadow: 0 4px 14px rgba(150,115,50,0.06); }
-        .ws-card:hover { transform: translateY(-2px); border-color: #B89B5E; box-shadow: 0 10px 26px rgba(150,115,50,0.16); }
+        .ws-card:hover { transform: translateY(-2px); border-color: #8F765B; box-shadow: 0 10px 26px rgba(150,115,50,0.16); }
         .ws-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .ws-tag { font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 99px; letter-spacing: 0.04em; }
         .ws-tag-OPEN   { background: rgba(76,107,60,0.16); color: #4C6B3C; }
-        .ws-tag-CLOSED { background: rgba(8,11,12,0.08); color: #5E5A52; }
+        .ws-tag-CLOSED { background: rgba(74,14,28,0.08); color: #5E5A52; }
         .ws-card-date { font-size: 11.5px; color: #8B6915; font-weight: 700; }
         .ws-card-title { font-size: 17px; font-weight: 900; color: #1B1810; margin: 0; line-height: 1.4; }
         .ws-card-desc { font-size: 13px; color: #5E4A20; margin: 0; line-height: 1.75; }
@@ -193,18 +193,19 @@ export default function WorkshopsPage() {
         .ws-card-stats strong { color: #1B1810; font-weight: 900; font-family: 'JetBrains Mono', ui-monospace, monospace; }
         .ws-card-open { font-size: 12px; font-weight: 800; color: #6B4F1E; margin-top: auto; }
 
-        .ws-overlay { position: fixed; inset: 0; background: rgba(8,11,12,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
-        .ws-dlg { background: #FFFDF8; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .ws-overlay { position: fixed; inset: 0; background: rgba(74,14,28,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+        .ws-dlg { background: #FBF8F1; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .ws-dlg-title { font-size: 17px; font-weight: 900; color: #1B1810; margin: 0 0 14px; }
         .ws-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B4F1E; margin: 10px 0 4px; }
         .ws-input { width: 100%; padding: 10px 13px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; }
-        .ws-input:focus { border-color: #B89B5E; }
+        .ws-input:focus { border-color: #8F765B; }
         .ws-ta { resize: vertical; min-height: 50px; line-height: 1.7; }
         .ws-dlg-row { display: flex; gap: 10px; }
         .ws-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
         .ws-btn { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-        .ws-btn-primary { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
+        .ws-btn-primary { background: linear-gradient(180deg,#4A0E1C,#12070B); color: #D9C9B0; border-color: transparent; }
       `}</style>
     </div>
   );
 }
+

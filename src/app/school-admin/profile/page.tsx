@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
@@ -33,63 +33,63 @@ function formatDate(d: string, lang: string) {
 
 const c = {
   ar: {
-    section: "الحساب الشخصي",
-    title: "ملفي الشخصي",
-    role: "مدير الجهة",
-    basicInfo: "المعلومات الأساسية",
-    fullName: "الاسم الكامل",
-    email: "البريد الإلكتروني",
-    permission: "الصلاحية",
-    joinDate: "تاريخ الانضمام",
-    security: "الأمان",
-    password: "كلمة المرور",
-    change: "تغيير",
-    accountType: "نوع الحساب",
-    profileComp: "اكتمال الملف الشخصي",
-    addPhoto: "أضف صورة شخصية لإكمال ملفك",
-    upload: "رفع صورة",
-    changePhoto: "تغيير الصورة",
-    remove: "إزالة الصورة",
-    uploading: "جارٍ الرفع",
-    view: "عرض",
-    drag: "أو اسحب الصورة وأفلتها هنا",
-    fileRules: "PNG · JPG · WEBP · حتى 5 ميغابايت",
-    complete: "مكتمل",
-    toastOk: "تم تحديث الصورة بنجاح",
-    toastRemove: "تمت إزالة الصورة",
-    toastErr: "فشل رفع الصورة، حاول مجدداً",
-    toastRemErr: "فشلت الإزالة",
-    toastType: "يُسمح فقط برفع صور",
-    toastSize: "حجم الصورة يتجاوز 5 ميغابايت",
+    section: "Ø§Ù„Ø­Ø³Ø§Ø¨ Ø§Ù„Ø´Ø®ØµÙŠ",
+    title: "Ù…Ù„ÙÙŠ Ø§Ù„Ø´Ø®ØµÙŠ",
+    role: "Ù…Ø¯ÙŠØ± Ø§Ù„Ø¬Ù‡Ø©",
+    basicInfo: "Ø§Ù„Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ©",
+    fullName: "Ø§Ù„Ø§Ø³Ù… Ø§Ù„ÙƒØ§Ù…Ù„",
+    email: "Ø§Ù„Ø¨Ø±ÙŠØ¯ Ø§Ù„Ø¥Ù„ÙƒØªØ±ÙˆÙ†ÙŠ",
+    permission: "Ø§Ù„ØµÙ„Ø§Ø­ÙŠØ©",
+    joinDate: "ØªØ§Ø±ÙŠØ® Ø§Ù„Ø§Ù†Ø¶Ù…Ø§Ù…",
+    security: "Ø§Ù„Ø£Ù…Ø§Ù†",
+    password: "ÙƒÙ„Ù…Ø© Ø§Ù„Ù…Ø±ÙˆØ±",
+    change: "ØªØºÙŠÙŠØ±",
+    accountType: "Ù†ÙˆØ¹ Ø§Ù„Ø­Ø³Ø§Ø¨",
+    profileComp: "Ø§ÙƒØªÙ…Ø§Ù„ Ø§Ù„Ù…Ù„Ù Ø§Ù„Ø´Ø®ØµÙŠ",
+    addPhoto: "Ø£Ø¶Ù ØµÙˆØ±Ø© Ø´Ø®ØµÙŠØ© Ù„Ø¥ÙƒÙ…Ø§Ù„ Ù…Ù„ÙÙƒ",
+    upload: "Ø±ÙØ¹ ØµÙˆØ±Ø©",
+    changePhoto: "ØªØºÙŠÙŠØ± Ø§Ù„ØµÙˆØ±Ø©",
+    remove: "Ø¥Ø²Ø§Ù„Ø© Ø§Ù„ØµÙˆØ±Ø©",
+    uploading: "Ø¬Ø§Ø±Ù Ø§Ù„Ø±ÙØ¹",
+    view: "Ø¹Ø±Ø¶",
+    drag: "Ø£Ùˆ Ø§Ø³Ø­Ø¨ Ø§Ù„ØµÙˆØ±Ø© ÙˆØ£ÙÙ„ØªÙ‡Ø§ Ù‡Ù†Ø§",
+    fileRules: "PNG Â· JPG Â· WEBP Â· Ø­ØªÙ‰ 5 Ù…ÙŠØºØ§Ø¨Ø§ÙŠØª",
+    complete: "Ù…ÙƒØªÙ…Ù„",
+    toastOk: "ØªÙ… ØªØ­Ø¯ÙŠØ« Ø§Ù„ØµÙˆØ±Ø© Ø¨Ù†Ø¬Ø§Ø­",
+    toastRemove: "ØªÙ…Øª Ø¥Ø²Ø§Ù„Ø© Ø§Ù„ØµÙˆØ±Ø©",
+    toastErr: "ÙØ´Ù„ Ø±ÙØ¹ Ø§Ù„ØµÙˆØ±Ø©ØŒ Ø­Ø§ÙˆÙ„ Ù…Ø¬Ø¯Ø¯Ø§Ù‹",
+    toastRemErr: "ÙØ´Ù„Øª Ø§Ù„Ø¥Ø²Ø§Ù„Ø©",
+    toastType: "ÙŠÙØ³Ù…Ø­ ÙÙ‚Ø· Ø¨Ø±ÙØ¹ ØµÙˆØ±",
+    toastSize: "Ø­Ø¬Ù… Ø§Ù„ØµÙˆØ±Ø© ÙŠØªØ¬Ø§ÙˆØ² 5 Ù…ÙŠØºØ§Ø¨Ø§ÙŠØª",
   },
   sq: {
     section: "Llogaria ime",
     title: "Profili im",
     role: "Drejtori i Institucionit",
-    basicInfo: "Të dhënat bazë",
-    fullName: "Emri i plotë",
+    basicInfo: "TÃ« dhÃ«nat bazÃ«",
+    fullName: "Emri i plotÃ«",
     email: "Email",
     permission: "Roli",
     joinDate: "Data e regjistrimit",
     security: "Siguria",
-    password: "Fjalëkalimi",
+    password: "FjalÃ«kalimi",
     change: "Ndrysho",
-    accountType: "Lloji i llogarisë",
-    profileComp: "Plotësia e profilit",
-    addPhoto: "Shto foto profili për ta plotësuar",
+    accountType: "Lloji i llogarisÃ«",
+    profileComp: "PlotÃ«sia e profilit",
+    addPhoto: "Shto foto profili pÃ«r ta plotÃ«suar",
     upload: "Ngarko foto",
     changePhoto: "Ndrysho foton",
     remove: "Hiq foton",
     uploading: "Duke ngarkuar",
     view: "Shiko",
-    drag: "ose tërhiq dhe lësho foton këtu",
-    fileRules: "PNG · JPG · WEBP · Maks 5MB",
-    complete: "Plotë",
-    toastOk: "Foto u përditësua me sukses",
+    drag: "ose tÃ«rhiq dhe lÃ«sho foton kÃ«tu",
+    fileRules: "PNG Â· JPG Â· WEBP Â· Maks 5MB",
+    complete: "PlotÃ«",
+    toastOk: "Foto u pÃ«rditÃ«sua me sukses",
     toastRemove: "Foto u hoq",
-    toastErr: "Ngarkimi dështoi, provo përsëri",
-    toastRemErr: "Heqja dështoi",
-    toastType: "Lejohen vetëm imazhe",
+    toastErr: "Ngarkimi dÃ«shtoi, provo pÃ«rsÃ«ri",
+    toastRemErr: "Heqja dÃ«shtoi",
+    toastType: "Lejohen vetÃ«m imazhe",
     toastSize: "Imazhi tejkalon 5MB",
   },
 };
@@ -199,7 +199,7 @@ export default function SchoolAdminProfilePage() {
     return (
       <div className="pf-loading">
         <div className="pf-spin" />
-        <style>{`@keyframes sp{to{transform:rotate(360deg)}}.pf-loading{display:flex;align-items:center;justify-content:center;min-height:60vh}.pf-spin{width:32px;height:32px;border:2.5px solid rgba(200,169,106,0.2);border-top-color:#C8A96A;border-radius:50%;animation:sp 0.75s linear infinite}`}</style>
+        <style>{`@keyframes sp{to{transform:rotate(360deg)}}.pf-loading{display:flex;align-items:center;justify-content:center;min-height:60vh}.pf-spin{width:32px;height:32px;border:2.5px solid rgba(184,160,130,0.2);border-top-color:#B8A082;border-radius:50%;animation:sp 0.75s linear infinite}`}</style>
       </div>
     );
 
@@ -277,7 +277,7 @@ export default function SchoolAdminProfilePage() {
                   cx="100"
                   cy="100"
                   r="95"
-                  stroke="#C8A96A"
+                  stroke="#B8A082"
                   strokeWidth="0.5"
                   opacity="0.1"
                 />
@@ -285,7 +285,7 @@ export default function SchoolAdminProfilePage() {
                   cx="100"
                   cy="100"
                   r="78"
-                  stroke="#C8A96A"
+                  stroke="#B8A082"
                   strokeWidth="0.4"
                   strokeDasharray="4 7"
                   opacity="0.08"
@@ -294,7 +294,7 @@ export default function SchoolAdminProfilePage() {
                   cx="100"
                   cy="100"
                   r="58"
-                  stroke="#E5B93C"
+                  stroke="#D9C9B0"
                   strokeWidth="0.3"
                   opacity="0.07"
                 />
@@ -306,7 +306,7 @@ export default function SchoolAdminProfilePage() {
                       cx={Math.round((100 + 52 * Math.sin(a)) * 100) / 100}
                       cy={Math.round((100 - 52 * Math.cos(a)) * 100) / 100}
                       r="50"
-                      stroke="#C8A96A"
+                      stroke="#B8A082"
                       strokeWidth="0.3"
                       opacity="0.055"
                       fill="none"
@@ -317,7 +317,7 @@ export default function SchoolAdminProfilePage() {
                   cx="100"
                   cy="100"
                   r="28"
-                  stroke="#C8A96A"
+                  stroke="#B8A082"
                   strokeWidth="0.3"
                   opacity="0.1"
                 />
@@ -690,11 +690,11 @@ const styles = `
 @keyframes pulse {0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
 
 :root{
-  --gold:#C8A96A;--gold2:#E5B93C;
-  --gold-border:rgba(200,169,106,0.2);
-  --bg-card:#FFFDF8;
-  --text:#080B0C;--text2:#5E5A52;--text3:#8A8478;
-  --border:rgba(8,11,12,0.08);--border-med:rgba(8,11,12,0.13);
+  --gold:#B8A082;--gold2:#D9C9B0;
+  --gold-border:rgba(184,160,130,0.2);
+  --bg-card:#FBF8F1;
+  --text:#1A1A1A;--text2:#5E5A52;--text3:#8A8478;
+  --border:rgba(74,14,28,0.08);--border-med:rgba(74,14,28,0.13);
   --font:'Cairo',sans-serif;
   --r-lg:22px;--r-xl:28px;
 }
@@ -714,30 +714,30 @@ const styles = `
 .pf-layout{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:start}
 
 /* Avatar card */
-.pf-av-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:32px 24px 24px;text-align:center;position:relative;overflow:hidden;box-shadow:0 20px 50px rgba(8,11,12,0.05)}
+.pf-av-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:32px 24px 24px;text-align:center;position:relative;overflow:hidden;box-shadow:0 20px 50px rgba(74,14,28,0.05)}
 .pf-card-topline{position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
 .pf-wmark{position:absolute;top:-30px;left:-30px;width:210px;height:210px;pointer-events:none}
 
 .pf-av-zone{position:relative;width:fit-content;margin:0 auto 22px}
-.pf-av-ring{width:148px;height:148px;border-radius:50%;border:2px solid var(--gold-border);background:rgba(200,169,106,0.06);overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;z-index:1;transition:border-color 0.2s,box-shadow 0.2s}
-.pf-av-zone.drag-on .pf-av-ring{border-color:var(--gold);box-shadow:0 0 0 4px rgba(200,169,106,0.12)}
-.pf-drag-ring{position:absolute;inset:-8px;border-radius:50%;border:2px dashed rgba(200,169,106,0.45);animation:pulse 1.2s ease infinite;pointer-events:none;z-index:0}
+.pf-av-ring{width:148px;height:148px;border-radius:50%;border:2px solid var(--gold-border);background:rgba(184,160,130,0.06);overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;z-index:1;transition:border-color 0.2s,box-shadow 0.2s}
+.pf-av-zone.drag-on .pf-av-ring{border-color:var(--gold);box-shadow:0 0 0 4px rgba(184,160,130,0.12)}
+.pf-drag-ring{position:absolute;inset:-8px;border-radius:50%;border:2px dashed rgba(184,160,130,0.45);animation:pulse 1.2s ease infinite;pointer-events:none;z-index:0}
 .pf-av-initials{font-size:44px;font-weight:900;color:var(--gold);user-select:none;line-height:1}
 .pf-av-btn{width:100%;height:100%;background:none;border:none;cursor:pointer;padding:0;position:relative;overflow:hidden}
-.pf-av-hover{position:absolute;inset:0;background:rgba(8,11,12,0.52);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#fff;font-size:12px;font-weight:700;font-family:var(--font);opacity:0;transition:opacity 0.2s}
+.pf-av-hover{position:absolute;inset:0;background:rgba(74,14,28,0.52);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#fff;font-size:12px;font-weight:700;font-family:var(--font);opacity:0;transition:opacity 0.2s}
 .pf-av-btn:hover .pf-av-hover{opacity:1}
 .pf-av-load{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--gold);font-size:11px;font-weight:600;font-family:var(--font)}
-.pf-av-spin{width:36px;height:36px;border:2.5px solid rgba(200,169,106,0.15);border-top-color:var(--gold);border-radius:50%;animation:sp 0.75s linear infinite}
+.pf-av-spin{width:36px;height:36px;border:2.5px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:sp 0.75s linear infinite}
 
 .pf-av-name{font-size:18px;font-weight:900;color:var(--text);margin-bottom:9px;letter-spacing:-0.2px;position:relative;z-index:1}
-.pf-av-badge{display:inline-block;font-size:11px;font-weight:700;color:#8B6F32;background:rgba(200,169,106,0.13);border:1px solid rgba(200,169,106,0.24);border-radius:999px;padding:4px 14px;letter-spacing:0.5px;margin-bottom:22px;position:relative;z-index:1}
+.pf-av-badge{display:inline-block;font-size:11px;font-weight:700;color:#8B6F32;background:rgba(184,160,130,0.13);border:1px solid rgba(184,160,130,0.24);border-radius:999px;padding:4px 14px;letter-spacing:0.5px;margin-bottom:22px;position:relative;z-index:1}
 .pf-sep{display:flex;align-items:center;gap:8px;margin:0 0 22px}
-.pf-sep-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.15),transparent)}
-.pf-sep-dot{width:4px;height:4px;background:rgba(200,169,106,0.3);transform:rotate(45deg);flex-shrink:0}
+.pf-sep-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.15),transparent)}
+.pf-sep-dot{width:4px;height:4px;background:rgba(184,160,130,0.3);transform:rotate(45deg);flex-shrink:0}
 
 .pf-actions{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
-.pf-btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:999px;background:var(--text);color:#FFFDF8;border:none;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;box-shadow:0 8px 24px rgba(8,11,12,0.14)}
-.pf-btn-primary:hover:not(:disabled){background:#1F2328;transform:translateY(-1px);box-shadow:0 12px 30px rgba(8,11,12,0.2)}
+.pf-btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:999px;background:var(--text);color:#FBF8F1;border:none;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;box-shadow:0 8px 24px rgba(74,14,28,0.14)}
+.pf-btn-primary:hover:not(:disabled){background:#1F2328;transform:translateY(-1px);box-shadow:0 12px 30px rgba(74,14,28,0.2)}
 .pf-btn-primary:disabled{opacity:0.5;cursor:not-allowed}
 .pf-btn-danger{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 22px;border-radius:999px;background:transparent;color:rgba(122,30,30,0.65);border:1px solid rgba(122,30,30,0.16);font-size:12.5px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.18s}
 .pf-btn-danger:hover:not(:disabled){background:rgba(122,30,30,0.05);color:#7A1E1E;border-color:rgba(122,30,30,0.28)}
@@ -748,58 +748,58 @@ const styles = `
 .pf-drag-label{margin-top:5px;font-size:11px;color:var(--text3);position:relative;z-index:1}
 
 /* Completeness */
-.pf-comp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-top:16px;box-shadow:0 10px 28px rgba(8,11,12,0.04)}
+.pf-comp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-top:16px;box-shadow:0 10px 28px rgba(74,14,28,0.04)}
 .pf-comp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .pf-comp-label{font-size:11px;font-weight:700;color:var(--text3)}
 .pf-comp-pct{font-size:17px;font-weight:900;color:var(--gold)}
-.pf-bar-bg{height:4px;border-radius:99px;background:rgba(200,169,106,0.1);overflow:hidden;margin-bottom:10px}
+.pf-bar-bg{height:4px;border-radius:99px;background:rgba(184,160,130,0.1);overflow:hidden;margin-bottom:10px}
 .pf-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width 1s cubic-bezier(0.22,1,0.36,1)}
 .pf-comp-hint{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text3)}
 .pf-comp-hint svg{flex-shrink:0;color:var(--gold)}
 
 /* Right */
 .pf-right{display:flex;flex-direction:column;gap:20px}
-.pf-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:28px;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(8,11,12,0.04)}
+.pf-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:28px;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(74,14,28,0.04)}
 .pf-card-hd{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-.pf-card-ico{width:36px;height:36px;border-radius:10px;background:rgba(200,169,106,0.08);border:1px solid rgba(200,169,106,0.15);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
+.pf-card-ico{width:36px;height:36px;border-radius:10px;background:rgba(184,160,130,0.08);border:1px solid rgba(184,160,130,0.15);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
 .pf-card-title{font-size:13px;font-weight:800;color:var(--text);letter-spacing:0.2px}
 .pf-rows{display:flex;flex-direction:column}
 .pf-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
 .pf-row-last{border-bottom:none;padding-bottom:0}
-.pf-row-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:rgba(8,11,12,0.03);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.pf-row-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:rgba(74,14,28,0.03);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2)}
 .pf-row-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
 .pf-row-lbl{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:0.3px}
 .pf-row-val{font-size:14px;font-weight:700;color:var(--text)}
-.pf-role-pill{display:inline-block;font-size:12px;font-weight:700;color:#8B6F32;background:rgba(200,169,106,0.12);border-radius:6px;padding:3px 10px}
+.pf-role-pill{display:inline-block;font-size:12px;font-weight:700;color:#8B6F32;background:rgba(184,160,130,0.12);border-radius:6px;padding:3px 10px}
 .pf-sec-row{display:flex;align-items:center;gap:14px}
-.pf-sec-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;background:rgba(8,11,12,0.03);border:1px solid var(--border-med);display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.pf-sec-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;background:rgba(74,14,28,0.03);border:1px solid var(--border-med);display:flex;align-items:center;justify-content:center;color:var(--text2)}
 .pf-sec-body{flex:1;display:flex;flex-direction:column;gap:3px}
 .pf-sec-title{font-size:14px;font-weight:700;color:var(--text)}
 .pf-sec-dots{font-size:12px;color:var(--text3);letter-spacing:3px}
 .pf-btn-sm{padding:8px 18px;border-radius:999px;border:1px solid var(--border-med);background:none;color:var(--text2);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.15s;flex-shrink:0}
-.pf-btn-sm:hover{background:rgba(200,169,106,0.06);border-color:var(--gold-border);color:var(--text)}
+.pf-btn-sm:hover{background:rgba(184,160,130,0.06);border-color:var(--gold-border);color:var(--text)}
 
 /* Stats */
 .pf-stats{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center}
 .pf-stat{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 12px;text-align:center}
-.pf-stat-ico{width:38px;height:38px;border-radius:12px;background:rgba(200,169,106,0.07);border:1px solid rgba(200,169,106,0.13);display:flex;align-items:center;justify-content:center;color:var(--gold);margin-bottom:2px}
+.pf-stat-ico{width:38px;height:38px;border-radius:12px;background:rgba(184,160,130,0.07);border:1px solid rgba(184,160,130,0.13);display:flex;align-items:center;justify-content:center;color:var(--gold);margin-bottom:2px}
 .pf-stat-val{font-size:13px;font-weight:800;color:var(--text)}
 .pf-stat-lbl{font-size:10.5px;font-weight:600;color:var(--text3)}
-.pf-stat-div{width:1px;height:60px;background:linear-gradient(180deg,transparent,rgba(200,169,106,0.2),transparent)}
+.pf-stat-div{width:1px;height:60px;background:linear-gradient(180deg,transparent,rgba(184,160,130,0.2),transparent)}
 
 /* Toast */
-.pf-toast{position:fixed;top:24px;left:28px;z-index:9999;display:flex;align-items:center;gap:10px;padding:13px 20px;border-radius:12px;font-size:13.5px;font-weight:700;font-family:var(--font);box-shadow:0 16px 44px rgba(8,11,12,0.14);animation:toastIn 0.28s cubic-bezier(0.22,1,0.36,1)}
-.pf-ok{background:#FFFDF8;border:1px solid rgba(31,78,82,0.22);color:#1F4E52}
-.pf-err{background:#FFFDF8;border:1px solid rgba(122,30,30,0.22);color:#7A1E1E}
+.pf-toast{position:fixed;top:24px;left:28px;z-index:9999;display:flex;align-items:center;gap:10px;padding:13px 20px;border-radius:12px;font-size:13.5px;font-weight:700;font-family:var(--font);box-shadow:0 16px 44px rgba(74,14,28,0.14);animation:toastIn 0.28s cubic-bezier(0.22,1,0.36,1)}
+.pf-ok{background:#FBF8F1;border:1px solid rgba(31,78,82,0.22);color:#1F4E52}
+.pf-err{background:#FBF8F1;border:1px solid rgba(122,30,30,0.22);color:#7A1E1E}
 .pf-toast-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .pf-ok .pf-toast-dot{background:#1F4E52}
 .pf-err .pf-toast-dot{background:#7A1E1E}
 
 /* Lightbox */
-.pf-lb-back{position:fixed;inset:0;z-index:9999;background:rgba(8,11,12,0.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:fadeUp 0.2s ease;cursor:pointer}
+.pf-lb-back{position:fixed;inset:0;z-index:9999;background:rgba(74,14,28,0.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:fadeUp 0.2s ease;cursor:pointer}
 .pf-lb-box{position:relative;cursor:default;animation:lbIn 0.25s cubic-bezier(0.22,1,0.36,1);text-align:center}
-.pf-lb-close{position:absolute;top:-14px;left:-14px;width:36px;height:36px;border-radius:50%;background:rgba(200,169,106,0.12);border:1px solid rgba(200,169,106,0.28);color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;z-index:1}
-.pf-lb-close:hover{background:rgba(200,169,106,0.26)}
+.pf-lb-close{position:absolute;top:-14px;left:-14px;width:36px;height:36px;border-radius:50%;background:rgba(184,160,130,0.12);border:1px solid rgba(184,160,130,0.28);color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;z-index:1}
+.pf-lb-close:hover{background:rgba(184,160,130,0.26)}
 .pf-lb-img{width:420px;height:420px;border-radius:20px;overflow:hidden}
 .pf-lb-name{margin-top:16px;font-size:15px;font-weight:700;color:rgba(255,255,255,0.88);font-family:var(--font)}
 
@@ -816,3 +816,4 @@ const styles = `
   .pf-lb-img{width:230px;height:230px}
 }
 `;
+

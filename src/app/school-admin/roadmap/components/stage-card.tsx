@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Icons } from "./icons";
@@ -28,8 +28,8 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
 
   const deleteStage = async () => {
     if (!(await confirm({
-      title: "حذف المرحلة",
-      message: "هل أنت متأكد من حذف هذه المرحلة؟ سيتم حذف جميع مستوياتها وأسئلتها ومحاولات الطلاب فيها.",
+      title: "Ø­Ø°Ù Ø§Ù„Ù…Ø±Ø­Ù„Ø©",
+      message: "Ù‡Ù„ Ø£Ù†Øª Ù…ØªØ£ÙƒØ¯ Ù…Ù† Ø­Ø°Ù Ù‡Ø°Ù‡ Ø§Ù„Ù…Ø±Ø­Ù„Ø©ØŸ Ø³ÙŠØªÙ… Ø­Ø°Ù Ø¬Ù…ÙŠØ¹ Ù…Ø³ØªÙˆÙŠØ§ØªÙ‡Ø§ ÙˆØ£Ø³Ø¦Ù„ØªÙ‡Ø§ ÙˆÙ…Ø­Ø§ÙˆÙ„Ø§Øª Ø§Ù„Ø·Ù„Ø§Ø¨ ÙÙŠÙ‡Ø§.",
     }))) return;
     await fetch(`/api/school-admin/roadmap/stages/${stage.id}`, {
       method: "DELETE",
@@ -65,21 +65,21 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
             <span className="rb-stage-stats">
               <span className="rb-stage-stat">
                 {Icons.modules}
-                {stage.modules.length} مستوى
+                {stage.modules.length} Ù…Ø³ØªÙˆÙ‰
               </span>
-              <span className="rb-stage-div">·</span>
+              <span className="rb-stage-div">Â·</span>
               <span className="rb-stage-stat">
                 {Icons.questions}
-                {totalQuestions} سؤال
+                {totalQuestions} Ø³Ø¤Ø§Ù„
               </span>
-              <span className="rb-stage-div">·</span>
+              <span className="rb-stage-div">Â·</span>
               <span
                 className="rb-stage-stat"
                 style={{
                   color:
                     traits.length === 5
                       ? "rgba(26,200,100,0.7)"
-                      : "rgba(229,185,60,0.5)",
+                      : "rgba(217,201,176,0.5)",
                 }}
               >
                 <svg
@@ -90,7 +90,7 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
                 >
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
-                {traits.length} سمات
+                {traits.length} Ø³Ù…Ø§Øª
               </span>
             </span>
           </span>
@@ -100,7 +100,7 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
         </button>
 
         <button className="rb-btn-danger-sm" onClick={deleteStage}>
-          {Icons.trash} حذف
+          {Icons.trash} Ø­Ø°Ù
         </button>
       </div>
 
@@ -111,8 +111,8 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
           {stage.modules.length === 0 ? (
             <div className="rb-empty-sm">
               {Icons.folder}
-              <p>لا توجد مستويات</p>
-              <span>أضف أول مستوى</span>
+              <p>Ù„Ø§ ØªÙˆØ¬Ø¯ Ù…Ø³ØªÙˆÙŠØ§Øª</p>
+              <span>Ø£Ø¶Ù Ø£ÙˆÙ„ Ù…Ø³ØªÙˆÙ‰</span>
             </div>
           ) : (
             stage.modules.map((mod) => (
@@ -130,7 +130,7 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
             <input
               className="rb-input"
               dir="rtl"
-              placeholder="اسم المستوى الجديد..."
+              placeholder="Ø§Ø³Ù… Ø§Ù„Ù…Ø³ØªÙˆÙ‰ Ø§Ù„Ø¬Ø¯ÙŠØ¯..."
               value={moduleName}
               onChange={(e) => setModuleName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addModule()}
@@ -140,11 +140,11 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
               disabled={adding || !moduleName.trim()}
               onClick={addModule}
             >
-              {Icons.plus} إضافة مستوى
+              {Icons.plus} Ø¥Ø¶Ø§ÙØ© Ù…Ø³ØªÙˆÙ‰
             </button>
           </div>
 
-          {/* Traits panel — sits at the bottom of the stage */}
+          {/* Traits panel â€” sits at the bottom of the stage */}
           <StageTraitsPanel
             stageId={stage.id}
             traits={traits}
@@ -155,3 +155,4 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
     </div>
   );
 }
+
