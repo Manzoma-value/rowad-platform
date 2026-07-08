@@ -1406,6 +1406,56 @@ const brandStyles = `
     color: #1A1A1A !important;
   }
 
+  .sa-shell .ad-modules {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    position: relative !important;
+    z-index: 2 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .sa-shell .ad-module-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+    gap: 14px !important;
+    width: 100% !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .sa-shell .ad-module {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 210px !important;
+    padding: 18px !important;
+    border-radius: 24px !important;
+    background: linear-gradient(180deg,#FBF8F1,#EFEAE0) !important;
+    border: 1px solid rgba(184,160,130,0.28) !important;
+    box-shadow: 0 14px 34px rgba(74,14,28,0.07) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+
+  .sa-shell .ad-module h3 {
+    display: block !important;
+    color: #1A1A1A !important;
+  }
+
+  .sa-shell .ad-module p {
+    display: block !important;
+    color: #5D554A !important;
+  }
+
+  .sa-shell .ad-module div {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: auto !important;
+  }
+
   .sa-shell :is(input,textarea,select) {
     border-color: rgba(184,160,130,0.30);
   }
