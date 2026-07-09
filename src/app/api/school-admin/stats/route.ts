@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 30;
+// Auth-dependent response — must never be cached across users/sessions.
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   const supabase = await createClient();

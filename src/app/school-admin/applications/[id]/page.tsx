@@ -190,27 +190,51 @@ function ApplicationDetailPageInner({
   const [error, setError] = useState("");
   const [groupOptions, setGroupOptions] = useState<GroupOption[]>([]);
   const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  // "notfound" = server said 404 (real). "error" = 5xx/network — retryable.
+  const [loadFail, setLoadFail] = useState<"" | "notfound" | "error">("");
+  const [retryTick, setRetryTick] = useState(0);
 
   useEffect(() => {
-    fetch(`/api/school-admin/applications/${id}`, { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => {
-        // Defensive: JSON columns can deserialize as null. Coerce every
-        // array-shaped field so the render never throws on `.length`/`.map`.
-        const t = d?.teacher;
-        if (t?.application) {
-          const a = t.application;
-          a.experience_areas = Array.isArray(a.experience_areas) ? a.experience_areas : [];
-          a.target_groups    = Array.isArray(a.target_groups)    ? a.target_groups    : [];
-          a.contributions    = Array.isArray(a.contributions)    ? a.contributions    : [];
-          a.languages        = Array.isArray(a.languages)        ? a.languages        : [];
-          a.attachments      = Array.isArray(a.attachments)      ? a.attachments      : [];
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setLoadFail("");
+      // One automatic retry on 5xx/network — a stale serverless DB socket
+      // recovers on the second attempt.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const r = await fetch(`/api/school-admin/applications/${id}`, { cache: "no-store" });
+          if (r.status === 404) {
+            if (!cancelled) { setLoadFail("notfound"); setLoading(false); }
+            return;
+          }
+          if (!r.ok) throw new Error(`status ${r.status}`);
+          const d = await r.json();
+          // Defensive: JSON columns can deserialize as null. Coerce every
+          // array-shaped field so the render never throws on `.length`/`.map`.
+          const t = d?.teacher;
+          if (t?.application) {
+            const a = t.application;
+            a.experience_areas = Array.isArray(a.experience_areas) ? a.experience_areas : [];
+            a.target_groups    = Array.isArray(a.target_groups)    ? a.target_groups    : [];
+            a.contributions    = Array.isArray(a.contributions)    ? a.contributions    : [];
+            a.languages        = Array.isArray(a.languages)        ? a.languages        : [];
+            a.attachments      = Array.isArray(a.attachments)      ? a.attachments      : [];
+          }
+          if (!cancelled) {
+            setTeacher(t ?? null);
+            if (!t) setLoadFail("notfound");
+            setLoading(false);
+          }
+          return;
+        } catch {
+          if (attempt === 0) await new Promise((res) => setTimeout(res, 700));
         }
-        setTeacher(t ?? null);
-      })
-      .catch(() => setTeacher(null))
-      .finally(() => setLoading(false));
-  }, [id]);
+      }
+      if (!cancelled) { setLoadFail("error"); setLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [id, retryTick]);
 
   useEffect(() => {
     fetch("/api/school-admin/teacher-groups", { cache: "no-store" })
@@ -257,8 +281,32 @@ function ApplicationDetailPageInner({
   if (loading) {
     return <div style={{ minHeight: "50vh", display: "flex", alignItems: "center", justifyContent: "center" }}><MandalaLoader /></div>;
   }
-  if (!teacher || !teacher.application) {
-    return <div style={{ padding: 40, textAlign: "center", color: "#7A1E1E", fontWeight: 700 }}>404</div>;
+  // Transient server/network failure — show a retry, never a dead page.
+  if (loadFail === "error") {
+    return (
+      <div dir={dir} style={{ padding: 60, textAlign: "center", fontFamily: "'Cairo',sans-serif" }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "#7A1E1E", marginBottom: 16 }}>
+          {L === "ar" ? "تعذر تحميل الطلب — مشكلة مؤقتة في الاتصال." : "Aplikimi nuk u ngarkua — problem i përkohshëm."}
+        </div>
+        <button
+          onClick={() => setRetryTick((n) => n + 1)}
+          style={{
+            background: "linear-gradient(180deg,#1E2329,#11151A)", color: "#E5B93C",
+            border: "none", padding: "10px 26px", borderRadius: 11,
+            fontFamily: "inherit", fontSize: 14, fontWeight: 800, cursor: "pointer",
+          }}
+        >
+          {L === "ar" ? "إعادة المحاولة" : "Provo përsëri"}
+        </button>
+      </div>
+    );
+  }
+  if (loadFail === "notfound" || !teacher || !teacher.application) {
+    return (
+      <div dir={dir} style={{ padding: 40, textAlign: "center", color: "#7A1E1E", fontWeight: 700, fontFamily: "'Cairo',sans-serif" }}>
+        {L === "ar" ? "هذا الطلب غير موجود." : "Ky aplikim nuk ekziston."}
+      </div>
+    );
   }
   const a = teacher.application;
 

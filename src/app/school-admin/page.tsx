@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
-import { cachedFetch } from "@/lib/api-cache";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useViewOnly } from "@/lib/view-only-context";
 
 interface Stats {
@@ -43,7 +43,10 @@ export default function SchoolAdminDashboard() {
     noUrgent: lang === "ar" ? "لا توجد مهام عاجلة الآن." : lang === "sq" ? "Nuk ka detyra urgjente tani." : "No urgent work right now.",
   };
 
+  const [retryTick, setRetryTick] = useState(0);
   useEffect(() => {
+    setLoading(true);
+    setError(false);
     cachedFetch<Stats>("/api/school-admin/stats", 60_000)
       .then((d) => {
         if (d?.school) setStats(d);
@@ -51,7 +54,12 @@ export default function SchoolAdminDashboard() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [retryTick]);
+
+  function retry() {
+    invalidateCache("/api/school-admin/stats");
+    setRetryTick((n) => n + 1);
+  }
 
   const studentStatus = useMemo(() => {
     const rows = stats?.studentsByStatus ?? [];
@@ -60,7 +68,23 @@ export default function SchoolAdminDashboard() {
   }, [stats]);
 
   if (loading) return <MandalaLoader label={tr.loading} />;
-  if (error || !stats) return <div className="ad-error">{tr.failedLoad}</div>;
+  if (error || !stats) {
+    return (
+      <div className="ad-error-wrap" dir={dir} style={{ padding: 60, textAlign: "center", fontFamily: "'Cairo',sans-serif" }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "#7A1E1E", marginBottom: 16 }}>{tr.failedLoad}</div>
+        <button
+          onClick={retry}
+          style={{
+            background: "linear-gradient(180deg,#1E2329,#11151A)", color: "#E5B93C",
+            border: "none", padding: "10px 26px", borderRadius: 11,
+            fontFamily: "inherit", fontSize: 14, fontWeight: 800, cursor: "pointer",
+          }}
+        >
+          {lang === "ar" ? "إعادة المحاولة" : lang === "sq" ? "Provo përsëri" : "Retry"}
+        </button>
+      </div>
+    );
+  }
 
   const schoolName = lang === "ar" ? stats.school.name : stats.school.name_alt || stats.school.name;
   const kpis = [

@@ -26,23 +26,20 @@ export async function requireSchoolAdmin() {
     return null;
   }
 
-  let school;
-  try {
-    const membership = await prisma.schoolAdminMember.findFirst({
-      where: { profile_id: profile.id },
-      include: { school: true },
-    });
-    if (!membership) {
-      console.error("[requireSchoolAdmin] FAIL step 4 — no school_admins membership for profile:", profile.id, "(user:", user.id, ")");
-      return null;
-    }
-    school = membership.school;
-  } catch (err) {
-    console.error("[requireSchoolAdmin] FAIL step 4 — DB error querying school_admins:", err);
+  // NOTE: deliberately NO try/catch around this query. A transient DB error
+  // must bubble up as a 500 (and get retried by the prisma-level retry
+  // wrapper) — NOT be silently converted into "unauthorized". The old catch
+  // made every stale-connection hiccup render as a blank 403/404 page.
+  const membership = await prisma.schoolAdminMember.findFirst({
+    where: { profile_id: profile.id },
+    include: { school: true },
+  });
+  if (!membership) {
+    console.error("[requireSchoolAdmin] FAIL step 4 — no school_admins membership for profile:", profile.id, "(user:", user.id, ")");
     return null;
   }
 
-  return { profile, school };
+  return { profile, school: membership.school };
 }
 
 /**

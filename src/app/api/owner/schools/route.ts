@@ -87,7 +87,10 @@ export async function POST(req: Request) {
 
   // Give every new school its own editable copy of النموذج التعليمي للرواد.
   try {
-    await seedRowadModel(prisma, school.id);
+    // The $extends()-wrapped client is runtime-compatible with the base
+    // PrismaClient for the delegates the seeder uses; the cast bridges the
+    // type-level mismatch introduced by the retry extension.
+    await seedRowadModel(prisma as unknown as import("@prisma/client").PrismaClient, school.id);
   } catch (err) {
     console.error("[owner/schools] seedRowadModel failed:", err);
   }

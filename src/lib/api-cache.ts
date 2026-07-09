@@ -124,11 +124,24 @@ export async function cachedFetch<T>(
   // ── 3. Fire a new request and remember the promise ──
   const promise = (async () => {
     try {
-      const res = await fetch(url);
-      if (!res.ok) {
+      // One automatic retry on transient failures (network error or 5xx).
+      // Serverless cold-starts and stale DB sockets recover on the second
+      // attempt; without this, one hiccup meant a dead page until the user
+      // manually refreshed. 4xx responses are semantic — never retried.
+      let res: Response | null = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          res = await fetch(url);
+        } catch {
+          res = null; // network-level failure
+        }
+        if (res && (res.ok || res.status < 500)) break;
+        if (attempt === 0) await new Promise((r) => setTimeout(r, 600));
+      }
+      if (!res || !res.ok) {
         // Stale-while-error: prefer returning known-good data over throwing.
         if (hit) return hit.data as T;
-        throw new Error(`Request failed: ${res.status} ${url}`);
+        throw new Error(`Request failed: ${res?.status ?? "network"} ${url}`);
       }
       const data = (await res.json()) as T;
       const entry = { data, ts: Date.now() };
