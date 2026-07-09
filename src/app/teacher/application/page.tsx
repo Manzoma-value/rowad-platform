@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 import { invalidateCache } from "@/lib/api-cache";
@@ -33,12 +33,10 @@ import {
 } from "@/lib/teacher-application";
 
 type Form = {
-  full_name: string;
   age: string;
   country: string;
   city: string;
   phone: string;
-  email: string;
   gender: "MALE" | "FEMALE" | "";
   current_role: string;
   current_role_other: string;
@@ -59,7 +57,7 @@ type Form = {
 };
 
 const EMPTY: Form = {
-  full_name: "", age: "", country: "", city: "", phone: "", email: "",
+  age: "", country: "", city: "", phone: "",
   gender: "",
   current_role: "", current_role_other: "",
   qualification: "", specialization: "", graduation_institution: "",
@@ -94,10 +92,8 @@ export default function TeacherApplicationPage() {
         const status: string = d?.onboarding_status;
         if (status === "UNDER_REVIEW") { router.replace("/teacher/under-review"); return; }
         if (status === "REJECTED")     { router.replace("/teacher/rejected"); return; }
+        if (status === "WAITING_LIST") { router.replace("/teacher/under-review"); return; }
         if (status === "ACTIVE")       { router.replace("/teacher"); return; }
-        // Pre-fill the email/full_name from profile if available
-        if (d?.profile?.full_name)
-          setForm((f) => ({ ...f, full_name: f.full_name || d.profile.full_name }));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -130,12 +126,10 @@ export default function TeacherApplicationPage() {
   async function submit() {
     setError("");
     const required: Record<string, unknown> = {
-      full_name: form.full_name.trim(),
       age: form.age,
       country: form.country.trim(),
       city: form.city.trim(),
       phone: form.phone.trim(),
-      email: form.email.trim(),
       gender: form.gender,
       current_role: form.current_role,
       qualification: form.qualification,
@@ -149,6 +143,9 @@ export default function TeacherApplicationPage() {
     }
     const ageNum = Number(form.age);
     if (!ageNum || ageNum < 16 || ageNum > 120) missing.add("age");
+    if (form.languages.some((entry) => entry.lang === "other") && !form.languages_other.trim()) {
+      missing.add("languages_other");
+    }
     if (missing.size > 0) {
       setInvalidFields(missing);
       setError(T.requiredFields);
@@ -209,9 +206,6 @@ export default function TeacherApplicationPage() {
         {/* Personal */}
         <Section title={T.sectionPersonal}>
           <Grid>
-            <Field label={T.fullName} invalid={isInvalid("full_name")}>
-              <input value={form.full_name} onChange={(e) => set("full_name", e.target.value)} className="ta-input" />
-            </Field>
             <Field label={T.age} invalid={isInvalid("age")}>
               <input type="number" min={16} max={120} value={form.age} onChange={(e) => set("age", e.target.value)} className="ta-input" />
             </Field>
@@ -223,9 +217,6 @@ export default function TeacherApplicationPage() {
             </Field>
             <Field label={T.phone} invalid={isInvalid("phone")}>
               <input value={form.phone} onChange={(e) => set("phone", e.target.value)} className="ta-input" dir="ltr" />
-            </Field>
-            <Field label={T.email} invalid={isInvalid("email")}>
-              <input type="email" value={form.email} onChange={(e) => set("email", e.target.value)} className="ta-input" dir="ltr" />
             </Field>
           </Grid>
           <Field label={T.gender} invalid={isInvalid("gender")}>
@@ -323,7 +314,6 @@ export default function TeacherApplicationPage() {
           )}
         </Section>
 
-        {/* Contributions */}
         <Section title={T.sectionContributions}>
           <p className="ta-hint">{T.contributions}</p>
           <CheckboxGrid
@@ -394,7 +384,7 @@ export default function TeacherApplicationPage() {
             })}
           </div>
           {form.languages.some((l) => l.lang === "other") && (
-            <Field label={T.languagesOther} optional>
+            <Field label={T.languagesOther} invalid={isInvalid("languages_other")}>
               <input value={form.languages_other} onChange={(e) => set("languages_other", e.target.value)} className="ta-input" />
             </Field>
           )}

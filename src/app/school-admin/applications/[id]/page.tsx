@@ -128,7 +128,7 @@ type App = {
 
 type Teacher = {
   id: string;
-  onboarding_status: "PENDING_APPLICATION" | "UNDER_REVIEW" | "ACTIVE" | "REJECTED";
+  onboarding_status: "PENDING_APPLICATION" | "UNDER_REVIEW" | "WAITING_LIST" | "ACTIVE" | "REJECTED";
   profile: { full_name: string; email: string | null };
   application: App | null;
 };
@@ -251,8 +251,12 @@ function ApplicationDetailPageInner({
     );
   }
 
-  async function decide(action: "approve" | "reject") {
-    const confirmMsg = action === "approve" ? T.confirmApprove : T.confirmReject;
+  async function decide(action: "approve" | "reject" | "waitlist") {
+    const confirmMsg = action === "approve"
+      ? T.confirmApprove
+      : action === "reject"
+        ? T.confirmReject
+        : (L === "ar" ? "هل تريد وضع هذا الطلب في قائمة الانتظار؟" : "Ta vendosim këtë aplikim në listë pritjeje?");
     if (!window.confirm(confirmMsg)) return;
     setSaving(true);
     setError("");
@@ -315,9 +319,9 @@ function ApplicationDetailPageInner({
     try { return new Date(s).toLocaleString(L === "ar" ? "ar" : "sq"); }
     catch { return s; }
   }
-  const isDecided = teacher.onboarding_status === "ACTIVE" || teacher.onboarding_status === "REJECTED";
   const statusLabel =
     teacher.onboarding_status === "ACTIVE" ? T.active :
+    teacher.onboarding_status === "WAITING_LIST" ? (L === "ar" ? "قائمة الانتظار" : "Në pritje") :
     teacher.onboarding_status === "REJECTED" ? T.rejected : T.underReview;
 
   return (
@@ -460,7 +464,7 @@ function ApplicationDetailPageInner({
           <Item label={L === "ar" ? "ملاحظات سابقة" : "Shënime të mëparshme"} value={a.reviewer_notes} />
         )}
 
-        {!isDecided && (
+        {(
           <div className="ad-decision">
             <div className="ad-group-pick">
               <div className="ad-group-pick-head">
@@ -505,6 +509,9 @@ function ApplicationDetailPageInner({
                 <button className="ad-btn approve" onClick={() => decide("approve")} disabled={saving}>
                   ✓ {saving ? T.saving : T.approve}
                 </button>
+                <button className="ad-btn waitlist" onClick={() => decide("waitlist")} disabled={saving}>
+                  {saving ? T.saving : (L === "ar" ? "قائمة الانتظار" : "Në pritje")}
+                </button>
                 <button className="ad-btn reject" onClick={() => decide("reject")} disabled={saving}>
                   ✕ {saving ? T.saving : T.reject}
                 </button>
@@ -541,6 +548,7 @@ function ApplicationDetailPageInner({
           letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0;
         }
         .ad-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B4F1E; }
+        .ad-status.st-WAITING_LIST  { background: rgba(184,160,130,0.18); color: #4A0E1C; }
         .ad-status.st-ACTIVE       { background: rgba(45,138,74,0.12); color: #1E5C2E; }
         .ad-status.st-REJECTED     { background: rgba(139,26,26,0.10); color: #7A1E1E; }
 
@@ -605,6 +613,10 @@ function ApplicationDetailPageInner({
         .ad-btn.reject {
           background: linear-gradient(180deg, #C24F4F, #A33333); color: #FFF0E2;
           box-shadow: 0 4px 14px rgba(163,51,51,0.32);
+        }
+        .ad-btn.waitlist {
+          background: #4A0E1C; color: #D9C9B0;
+          box-shadow: 0 4px 14px rgba(74,14,28,0.22);
         }
       `}</style>
     </div>

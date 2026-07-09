@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 
 const COPY = {
@@ -23,9 +24,12 @@ const COPY = {
 
 export default function RejectedPage() {
   const { lang } = useLang();
+  const router = useRouter();
   const L = lang === "sq" ? "sq" : "ar";
   const C = COPY[L];
   const [notes, setNotes] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState("");
 
   useEffect(() => {
     fetch("/api/teacher/application", { cache: "no-store" })
@@ -33,6 +37,23 @@ export default function RejectedPage() {
       .then((d) => setNotes(d?.application?.reviewer_notes ?? null))
       .catch(() => {});
   }, []);
+
+  async function retryApplication() {
+    setRetrying(true);
+    setRetryError("");
+    try {
+      const r = await fetch("/api/teacher/application/retry", { method: "POST" });
+      if (!r.ok) {
+        setRetryError(L === "ar" ? "تعذر فتح نموذج جديد. حاول مرة أخرى." : "Formulari i ri nuk u hap. Provo përsëri.");
+        setRetrying(false);
+        return;
+      }
+      router.replace("/teacher/application");
+    } catch {
+      setRetryError(L === "ar" ? "تعذر فتح نموذج جديد. حاول مرة أخرى." : "Formulari i ri nuk u hap. Provo përsëri.");
+      setRetrying(false);
+    }
+  }
 
   return (
     <div dir={L === "ar" ? "rtl" : "ltr"} className="rj-wrap">
@@ -50,6 +71,12 @@ export default function RejectedPage() {
           <div className="rj-notes-label">{C.notesLabel}</div>
           <div className={`rj-notes${notes ? "" : " empty"}`}>{notes || C.noNotes}</div>
         </div>
+        {retryError && <div className="rj-error">{retryError}</div>}
+        <button className="rj-retry" onClick={retryApplication} disabled={retrying}>
+          {retrying
+            ? (L === "ar" ? "جاري التجهيز..." : "Po përgatitet...")
+            : (L === "ar" ? "إرسال طلب جديد" : "Dërgo aplikim të ri")}
+        </button>
       </div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
@@ -93,6 +120,14 @@ export default function RejectedPage() {
         }
         .rj-notes       { font-size:13.5px; color:#2E1A0F; line-height:1.85; font-weight:600; white-space:pre-wrap; }
         .rj-notes.empty { color:#8A7B60; font-style:italic; font-weight:500; }
+        .rj-error { margin-top: 12px; color: #7A1E1E; font-size: 13px; font-weight: 800; }
+        .rj-retry {
+          margin-top: 18px; border: 0; border-radius: 12px; padding: 12px 24px;
+          background: #4A0E1C; color: #D9C9B0; font-family: inherit;
+          font-size: 14px; font-weight: 900; cursor: pointer;
+          box-shadow: 0 10px 24px rgba(74,14,28,0.18);
+        }
+        .rj-retry:disabled { opacity: 0.6; cursor: progress; }
       `}</style>
     </div>
   );

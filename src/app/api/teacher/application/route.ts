@@ -1,8 +1,7 @@
 // api/teacher/application
 //   GET  → returns the teacher's application (if any) + onboarding status
 //   POST → creates the application and flips the teacher to UNDER_REVIEW.
-//          One application per teacher (unique on teacher_id). Refuses if
-//          the teacher is already past PENDING_APPLICATION.
+//          Identity fields come from the profile created during QR signup.
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
@@ -91,11 +90,11 @@ export async function POST(req: Request) {
   }
 
   // Required scalars
-  const full_name = pickString(body.full_name, 2, 200);
   const country = pickString(body.country, 2, 100);
   const city = pickString(body.city, 1, 100);
   const phone = pickString(body.phone, 4, 40);
-  const email = pickString(body.email, 4, 200);
+  const full_name = pickString(auth.profile.full_name, 2, 200);
+  const email = pickString(auth.profile.email, 4, 200);
   const specialization = pickString(body.specialization, 2, 200);
   const graduation_institution = pickString(body.graduation_institution, 2, 200);
   const age = typeof body.age === "number" && body.age >= 16 && body.age <= 120
@@ -107,7 +106,7 @@ export async function POST(req: Request) {
   const years_of_experience = pickEnum(body.years_of_experience, APP_EXPERIENCE_RANGES);
 
   const required = {
-    full_name, country, city, phone, email, age, gender,
+    country, city, phone, age, gender,
     current_role, qualification, specialization, graduation_institution,
     years_of_experience,
   };
@@ -118,6 +117,9 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+  }
+  if (!full_name || !email) {
+    return NextResponse.json({ error: "missing_profile_identity" }, { status: 400 });
   }
 
   const experience_areas = pickEnumArray(body.experience_areas, APP_EXPERIENCE_AREAS);
@@ -147,18 +149,27 @@ export async function POST(req: Request) {
         )
         .map((e) => ({ lang: e.lang, level: e.level }))
     : [];
+  if (languages.some((entry) => entry.lang === "other") && !optionalString(body.languages_other, 200)) {
+    return NextResponse.json(
+      { error: "missing_field", field: "languages_other" },
+      { status: 400 },
+    );
+  }
 
   await prisma.$transaction(async (tx) => {
+    await tx.teacherApplication.deleteMany({
+      where: { teacher_id: teacher.id },
+    });
     await tx.teacherApplication.create({
       data: {
         teacher_id: teacher.id,
         school_id: teacher.school_id,
-        full_name: full_name!,
+        full_name,
         age: age!,
         country: country!,
         city: city!,
         phone: phone!,
-        email: email!,
+        email,
         gender: gender!,
         // Nomination fields were removed from the form; DB columns kept for
         // historical applications, written as NULL for new ones.

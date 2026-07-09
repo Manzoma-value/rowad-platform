@@ -152,6 +152,8 @@ export default function TeacherGroupsPage() {
   const confirm = useConfirm();
 
   const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [openVisibility, setOpenVisibility] = useState(false);
+  const [savingVisibility, setSavingVisibility] = useState(false);
   const [groupQuery, setGroupQuery] = useState("");
   const [loadingList, setLoadingList] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -186,8 +188,28 @@ export default function TeacherGroupsPage() {
       const r = await fetch("/api/school-admin/teacher-groups", { cache: "no-store" });
       const d = await r.json();
       setGroups(d?.groups ?? []);
+      setOpenVisibility(d?.openVisibility === true);
     } finally { setLoadingList(false); }
   }, []);
+
+  async function toggleOpenVisibility() {
+    if (viewOnly || savingVisibility) return;
+    const next = !openVisibility;
+    setOpenVisibility(next);
+    setSavingVisibility(true);
+    try {
+      const r = await fetch("/api/school-admin/teacher-groups", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ openVisibility: next }),
+      });
+      if (!r.ok) setOpenVisibility(!next);
+    } catch {
+      setOpenVisibility(!next);
+    } finally {
+      setSavingVisibility(false);
+    }
+  }
 
   const loadDetail = useCallback(async (id: string) => {
     setLoadingDetail(true);
@@ -366,11 +388,24 @@ export default function TeacherGroupsPage() {
           <h1 className="tg-title">{T.title}</h1>
           <p className="tg-sub">{T.sub}</p>
         </div>
-        {!viewOnly && (
-          <button className="tg-new" onClick={() => setCreateOpen(true)} data-write="true">
-            {T.create}
-          </button>
-        )}
+        <div className="tg-hero-actions">
+          {!viewOnly && (
+            <button
+              className={`tg-visibility${openVisibility ? " on" : ""}`}
+              onClick={toggleOpenVisibility}
+              disabled={savingVisibility}
+              data-write="true"
+            >
+              <strong>{L === "ar" ? "رؤية المجموعات" : "Shikimi i grupeve"}</strong>
+              <span>{openVisibility ? (L === "ar" ? "مفتوحة لكل المعلمين" : "E hapur për mësuesit") : (L === "ar" ? "خاصة بكل مجموعة" : "Private për çdo grup")}</span>
+            </button>
+          )}
+          {!viewOnly && (
+            <button className="tg-new" onClick={() => setCreateOpen(true)} data-write="true">
+              {T.create}
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="tg-layout">
@@ -627,6 +662,12 @@ export default function TeacherGroupsPage() {
         .tg-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
         .tg-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
         .tg-sub { font-size: 13.5px; color: #5E5A52; max-width: 680px; line-height: 1.85; margin: 0; }
+        .tg-hero-actions { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+        .tg-visibility { display: flex; flex-direction: column; gap: 2px; text-align: start; min-width: 220px; border: 1.5px solid rgba(184,160,130,0.32); border-radius: 12px; background: #FBF8F1; color: #4A0E1C; padding: 9px 13px; font-family: inherit; cursor: pointer; }
+        .tg-visibility strong { font-size: 12.5px; font-weight: 900; }
+        .tg-visibility span { font-size: 11.5px; color: #7B6B52; font-weight: 800; }
+        .tg-visibility.on { background: rgba(107,30,45,0.08); border-color: rgba(107,30,45,0.24); }
+        .tg-visibility:disabled { opacity: 0.6; cursor: progress; }
         .tg-new { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border: none; padding: 10px 18px; border-radius: 11px; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
 
         .tg-layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px; }

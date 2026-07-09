@@ -1,7 +1,4 @@
-// api/school-admin/applications/[id]/decision — approve or reject.
-// Body: { action: "approve" | "reject", notes?: string }
-// Stamps reviewer/notes on the application and flips the teacher's
-// onboarding_status to ACTIVE or REJECTED.
+// Body: { action: "approve" | "reject" | "waitlist", notes?: string }
 import { NextResponse } from "next/server";
 import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
@@ -25,7 +22,8 @@ export async function POST(
 
   const approve = body.action === "approve";
   const reject = body.action === "reject";
-  if (!approve && !reject) {
+  const waitlist = body.action === "waitlist";
+  if (!approve && !reject && !waitlist) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   }
 
@@ -43,11 +41,7 @@ export async function POST(
   if (!teacher.application) {
     return NextResponse.json({ error: "No application to review" }, { status: 409 });
   }
-  if (teacher.onboarding_status === "ACTIVE" && approve) {
-    return NextResponse.json({ success: true, status: "ACTIVE" });
-  }
-
-  const nextStatus = approve ? "ACTIVE" : "REJECTED";
+  const nextStatus = approve ? "ACTIVE" : reject ? "REJECTED" : "WAITING_LIST";
   const notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 4000) : null;
 
   await prisma.$transaction(async (tx) => {

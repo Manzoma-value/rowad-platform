@@ -18,7 +18,7 @@ import {
 
 type Row = {
   id: string;
-  onboarding_status: "PENDING_APPLICATION" | "UNDER_REVIEW" | "ACTIVE" | "REJECTED";
+  onboarding_status: "PENDING_APPLICATION" | "UNDER_REVIEW" | "WAITING_LIST" | "ACTIVE" | "REJECTED";
   created_at: string;
   profile: { full_name: string; email: string | null };
   application: null | {
@@ -119,7 +119,6 @@ export default function ApplicationsListPage() {
   }, [status, q, currentRole, qualification, years, gender, country]);
 
   useEffect(() => {
-    setLoading(true);
     fetch(`/api/school-admin/applications?${params}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setRows(d?.teachers ?? []))
@@ -153,6 +152,7 @@ export default function ApplicationsListPage() {
         <div className="ap-filter-row">
           <select className="ap-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="UNDER_REVIEW">{T.statusUnderReview}</option>
+            <option value="WAITING_LIST">{L === "ar" ? "قائمة الانتظار" : "Në pritje"}</option>
             <option value="ACTIVE">{T.statusActive}</option>
             <option value="REJECTED">{T.statusRejected}</option>
             <option value="all">{T.statusAll}</option>
@@ -214,6 +214,7 @@ export default function ApplicationsListPage() {
                 const a = r.application;
                 const statusLabel =
                   r.onboarding_status === "UNDER_REVIEW" ? T.statusUnderReview :
+                  r.onboarding_status === "WAITING_LIST"  ? (L === "ar" ? "قائمة الانتظار" : "Në pritje") :
                   r.onboarding_status === "ACTIVE"       ? T.statusActive :
                   r.onboarding_status === "REJECTED"     ? T.statusRejected :
                   T.yetToApply;
@@ -292,6 +293,7 @@ export default function ApplicationsListPage() {
           font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em;
         }
         .ap-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B4F1E; }
+        .ap-status.st-WAITING_LIST { background: rgba(184,160,130,0.18); color: #4A0E1C; }
         .ap-status.st-ACTIVE { background: rgba(45,138,74,0.12); color: #1E5C2E; }
         .ap-status.st-REJECTED { background: rgba(139,26,26,0.10); color: #7A1E1E; }
         .ap-status.st-PENDING_APPLICATION { background: rgba(8,11,12,0.06); color: #5E5A52; }

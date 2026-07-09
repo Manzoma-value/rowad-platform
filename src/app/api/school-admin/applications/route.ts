@@ -2,7 +2,7 @@
 //
 // Query params (all optional):
 //   q            — free-text search over name / email / phone / city
-//   status       — onboarding status filter: UNDER_REVIEW | ACTIVE | REJECTED | all
+//   status       — onboarding status filter: UNDER_REVIEW | WAITING_LIST | ACTIVE | REJECTED | all
 //   current_role — TEACHER | SUPERVISOR | ... (single enum)
 //   qualification — DIPLOMA | BACHELOR | ...
 //   years        — LT_3 | Y_3_5 | Y_6_10 | Y_11_15 | GT_15
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     ...(status !== "all"
       ? {
           onboarding_status: status as
-            | "PENDING_APPLICATION" | "UNDER_REVIEW" | "ACTIVE" | "REJECTED",
+            | "PENDING_APPLICATION" | "UNDER_REVIEW" | "WAITING_LIST" | "ACTIVE" | "REJECTED",
         }
       : {}),
   };

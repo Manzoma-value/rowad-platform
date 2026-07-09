@@ -269,13 +269,13 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
   // ── Application onboarding gate ──
   // PENDING_APPLICATION → /teacher/application
-  // UNDER_REVIEW        → /teacher/under-review
+  // UNDER_REVIEW / WAITING_LIST → /teacher/under-review
   // REJECTED            → /teacher/rejected
   // ACTIVE              → full dashboard
   const gatedTo = (() => {
     if (!statusLoaded || !onboardingStatus) return null;
     if (onboardingStatus === "PENDING_APPLICATION") return "/teacher/application";
-    if (onboardingStatus === "UNDER_REVIEW")        return "/teacher/under-review";
+    if (onboardingStatus === "UNDER_REVIEW" || onboardingStatus === "WAITING_LIST") return "/teacher/under-review";
     if (onboardingStatus === "REJECTED")            return "/teacher/rejected";
     return null;
   })();

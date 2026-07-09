@@ -150,10 +150,10 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [viewOnly, setViewOnly] = useState(false);
   const [schoolLang, setSchoolLang] = useState<"ar" | "sq" | "en">("sq");
   const [openNavGroups, setOpenNavGroups] = useState<Record<string, boolean>>({
-    teachers: true,
-    learning: true,
-    reports: true,
-    operations: true,
+    teachers: false,
+    learning: false,
+    reports: false,
+    operations: false,
   });
   const schoolSlugRef = useRef<string>("");
 
@@ -181,7 +181,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/workshops", sublabel: "Workshops", exact: false, icon: QrCode,
       label: lang === "ar" ? "الورش التدريبية" : lang === "sq" ? "Punëtoritë" : "Workshops",
-      group: "teachers",
+      group: "operations",
     },
     {
       href: "/school-admin/classes", sublabel: "Classes", exact: false, icon: BookOpen,

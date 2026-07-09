@@ -9,7 +9,7 @@ export async function requireTeacher() {
 
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
-    select: { id: true, role: true, is_active: true },
+    select: { id: true, role: true, is_active: true, full_name: true, email: true },
   });
   if (!profile) return null;
   if (profile.role !== "TEACHER") return null;

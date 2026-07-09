@@ -19,14 +19,25 @@ export async function GET(
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id, aid } = await context.params;
 
+  const school = await prisma.school.findUnique({
+    where: { id: auth.teacher.school_id },
+    select: { features: true },
+  });
+  const openVisibility = !!(
+    school?.features &&
+    typeof school.features === "object" &&
+    !Array.isArray(school.features) &&
+    (school.features as Record<string, unknown>).teacher_groups_open_visibility === true
+  );
+
   const membership = await prisma.teacherGroupMember.findUnique({
     where: { group_id_teacher_id: { group_id: id, teacher_id: auth.teacher.id } },
     select: { joined_at: true },
   });
-  if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!membership && !openVisibility) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const assessment = await prisma.groupAssessment.findFirst({
-    where: { id: aid, group_id: id },
+    where: { id: aid, group_id: id, school_id: auth.teacher.school_id },
     select: {
       id: true,
       title: true,
@@ -80,6 +91,21 @@ export async function GET(
     },
   });
 
+  const allRatings = openVisibility
+    ? await prisma.assessmentRating.findMany({
+        where: { assessment_id: aid },
+        orderBy: { updated_at: "desc" },
+        select: {
+          rater_teacher_id: true,
+          target_teacher_id: true,
+          s_lineage: true, s_atonement: true, s_awareness: true, s_zeal: true, s_distinct: true,
+          updated_at: true,
+          rater: { select: { profile: { select: { full_name: true } } } },
+          target: { select: { profile: { select: { full_name: true } } } },
+        },
+      })
+    : [];
+
   return NextResponse.json({
     assessment: {
       id: assessment.id,
@@ -109,6 +135,20 @@ export async function GET(
         s_distinct: r.s_distinct,
         updated_at: r.updated_at,
       })),
+      all_ratings: allRatings.map((r) => ({
+        rater_teacher_id: r.rater_teacher_id,
+        rater_name: r.rater.profile.full_name,
+        target_teacher_id: r.target_teacher_id,
+        target_name: r.target.profile.full_name,
+        s_lineage: r.s_lineage,
+        s_atonement: r.s_atonement,
+        s_awareness: r.s_awareness,
+        s_zeal: r.s_zeal,
+        s_distinct: r.s_distinct,
+        updated_at: r.updated_at,
+      })),
+      openVisibility,
+      is_member: !!membership,
     },
   });
 }

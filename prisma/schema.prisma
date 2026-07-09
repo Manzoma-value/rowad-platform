@@ -19,6 +19,7 @@ enum Maqsad {
 enum TeacherOnboardingStatus {
   PENDING_APPLICATION // signed up, must fill the application
   UNDER_REVIEW // application submitted, awaiting admin review
+  WAITING_LIST // reviewed, kept pending for a later decision
   ACTIVE // application approved
   REJECTED // application rejected (terminal)
 }

@@ -14,12 +14,23 @@ export async function GET(
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await context.params;
 
-  // Membership check
+  const school = await prisma.school.findUnique({
+    where: { id: auth.teacher.school_id },
+    select: { features: true },
+  });
+  const openVisibility = !!(
+    school?.features &&
+    typeof school.features === "object" &&
+    !Array.isArray(school.features) &&
+    (school.features as Record<string, unknown>).teacher_groups_open_visibility === true
+  );
+
+  // Membership check, unless admin opened school-wide group visibility.
   const membership = await prisma.teacherGroupMember.findUnique({
     where: { group_id_teacher_id: { group_id: id, teacher_id: auth.teacher.id } },
     select: { joined_at: true },
   });
-  if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!membership && !openVisibility) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const group = await prisma.teacherGroup.findFirst({
     where: { id, school_id: auth.teacher.school_id },
@@ -54,5 +65,5 @@ export async function GET(
     },
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ group });
+  return NextResponse.json({ group, openVisibility, is_member: !!membership });
 }

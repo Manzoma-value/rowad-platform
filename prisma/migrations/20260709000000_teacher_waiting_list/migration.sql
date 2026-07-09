@@ -1,0 +1,1 @@
+ALTER TYPE "TeacherOnboardingStatus" ADD VALUE IF NOT EXISTS 'WAITING_LIST';
