@@ -91,7 +91,7 @@ export default function StudentWaitingPage() {
           <div className="seal-ring" />
           <div className="seal-ring2" />
           <div className="seal-inner">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C8A96A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#B8A082" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
@@ -164,8 +164,8 @@ export default function StudentWaitingPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-          --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7; --border: #E8D9B8;
+          --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+          --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7; --border: #E8D9B8;
         }
         .shell {
           min-height: 100vh; background: var(--gold-pale);
@@ -179,9 +179,9 @@ export default function StudentWaitingPage() {
           box-shadow: 0 4px 32px rgba(26,18,8,0.08);
         }
         .seal-wrap { position: relative; width: 88px; height: 88px; display: flex; align-items: center; justify-content: center; }
-        .seal-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(200,169,106,0.35); animation: rp 2.4s ease infinite; }
+        .seal-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(184,160,130,0.35); animation: rp 2.4s ease infinite; }
         @keyframes rp { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.14);opacity:1} }
-        .seal-ring2 { position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed rgba(200,169,106,0.25); animation: spin 8s linear infinite; }
+        .seal-ring2 { position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed rgba(184,160,130,0.25); animation: spin 8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .seal-inner { width: 66px; height: 66px; border-radius: 50%; background: var(--ink); display: flex; align-items: center; justify-content: center; }
         .card-text { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; width: 100%; }
@@ -195,7 +195,7 @@ export default function StudentWaitingPage() {
         .step-line { width: 2px; height: 18px; background: var(--border); margin: 0 auto; }
         .line-done { background: var(--gold); }
         .dot-done { background: var(--gold); color: var(--ink); }
-        .dot-active { background: rgba(200,169,106,0.12); border: 2px solid var(--gold); }
+        .dot-active { background: rgba(184,160,130,0.12); border: 2px solid var(--gold); }
         .dot-pulse { width: 11px; height: 11px; border-radius: 50%; background: var(--gold); animation: dp 1.6s ease infinite; }
         @keyframes dp { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.8)} }
         .dot-empty { background: var(--surface); border: 2px solid var(--border); }
@@ -206,7 +206,7 @@ export default function StudentWaitingPage() {
         .sub-active { color: var(--gold-dark); }
         .note-bar {
           display: flex; align-items: center; gap: 9px; width: 100%;
-          background: rgba(200,169,106,0.08); border: 1px solid rgba(200,169,106,0.25);
+          background: rgba(184,160,130,0.08); border: 1px solid rgba(184,160,130,0.25);
           color: var(--muted); font-size: 12.5px; padding: 11px 15px; border-radius: 10px;
         }
         .note-bar svg { flex-shrink: 0; color: var(--gold-dark); }

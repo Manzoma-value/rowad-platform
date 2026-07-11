@@ -257,15 +257,15 @@ export default function LandingClient() {
           {/* Decorative floating elements */}
           <div className="gl-deco gl-deco-1" aria-hidden="true">
             <svg viewBox="0 0 200 200" fill="none">
-              <circle cx="100" cy="100" r="90" stroke="#A8863E" strokeWidth="0.5" opacity="0.18"/>
-              <circle cx="100" cy="100" r="70" stroke="#A8863E" strokeWidth="0.4" opacity="0.14" strokeDasharray="3 5"/>
-              <circle cx="100" cy="100" r="50" stroke="#A8863E" strokeWidth="0.5" opacity="0.18"/>
-              <circle cx="100" cy="100" r="30" stroke="#A8863E" strokeWidth="0.4" opacity="0.22"/>
+              <circle cx="100" cy="100" r="90" stroke="#8F765B" strokeWidth="0.5" opacity="0.18"/>
+              <circle cx="100" cy="100" r="70" stroke="#8F765B" strokeWidth="0.4" opacity="0.14" strokeDasharray="3 5"/>
+              <circle cx="100" cy="100" r="50" stroke="#8F765B" strokeWidth="0.5" opacity="0.18"/>
+              <circle cx="100" cy="100" r="30" stroke="#8F765B" strokeWidth="0.4" opacity="0.22"/>
             </svg>
           </div>
           <div className="gl-deco gl-deco-2" aria-hidden="true">
             <svg viewBox="0 0 160 160" fill="none">
-              <polygon points="80 10 92 60 142 60 102 92 116 142 80 110 44 142 58 92 18 60 68 60" stroke="#E5B93C" strokeWidth="0.6" opacity="0.18" fill="none"/>
+              <polygon points="80 10 92 60 142 60 102 92 116 142 80 110 44 142 58 92 18 60 68 60" stroke="#B8A082" strokeWidth="0.6" opacity="0.18" fill="none"/>
             </svg>
           </div>
 
@@ -380,11 +380,11 @@ export default function LandingClient() {
           <div className="gl-footer-top-line" aria-hidden="true"/>
           <div className="gl-footer-deco" aria-hidden="true">
             <svg viewBox="0 0 400 400" fill="none">
-              <circle cx="200" cy="200" r="180" stroke="#C8A96A" strokeWidth="0.5" opacity="0.18"/>
-              <circle cx="200" cy="200" r="140" stroke="#C8A96A" strokeWidth="0.4" opacity="0.14" strokeDasharray="3 4"/>
-              <circle cx="200" cy="200" r="100" stroke="#E5B93C" strokeWidth="0.5" opacity="0.18"/>
-              <circle cx="200" cy="200" r="60"  stroke="#C8A96A" strokeWidth="0.6" opacity="0.22"/>
-              <circle cx="200" cy="200" r="30"  stroke="#E5B93C" strokeWidth="0.5" opacity="0.30"/>
+              <circle cx="200" cy="200" r="180" stroke="#B8A082" strokeWidth="0.5" opacity="0.18"/>
+              <circle cx="200" cy="200" r="140" stroke="#B8A082" strokeWidth="0.4" opacity="0.14" strokeDasharray="3 4"/>
+              <circle cx="200" cy="200" r="100" stroke="#B8A082" strokeWidth="0.5" opacity="0.18"/>
+              <circle cx="200" cy="200" r="60"  stroke="#B8A082" strokeWidth="0.6" opacity="0.22"/>
+              <circle cx="200" cy="200" r="30"  stroke="#B8A082" strokeWidth="0.5" opacity="0.30"/>
             </svg>
           </div>
           <p className="gl-tag gl-tag--gold">{tr.finalEyebrow}</p>
@@ -416,10 +416,10 @@ const css = `
 html{scroll-behavior:smooth;}
 
 :root{
-  --gold:#C8A96A; --gold2:#E5B93C; --gold-dk:#A8863E; --gold-soft:#E0C788;
+  --gold:#B8A082; --gold2:#B8A082; --gold-dk:#8F765B; --gold-soft:#D9C9B0;
   --ink:#080B0E;  --ink2:#15110A;  --ink3:#2A1F12;
-  --bg-a:#FFFDF8; --bg-b:#F5F1E6; --bg-c:#FBFAF6;
-  --text:#1A1208; --text2:#3D2E10; --text3:#7A6540;
+  --bg-a:#FFFBF5; --bg-b:#F5F1E6; --bg-c:#FBFAF6;
+  --text:#4A0E1C; --text2:#4A0E1C; --text3:#796A62;
   --border:#E8D9B8; --border2:#F0E8D4;
   --font:'Cairo','Inter',sans-serif;
   --font-h:'El Messiri','Cairo',serif;
@@ -464,7 +464,7 @@ html{scroll-behavior:smooth;}
 .gl-brand-mark{
   width:34px;height:34px;color:var(--gold-dk);
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  background:linear-gradient(135deg,rgba(168,134,62,.12),rgba(229,185,60,.05));
+  background:linear-gradient(135deg,rgba(168,134,62,.12),rgba(184,160,130,.05));
   border:1px solid rgba(168,134,62,.22);border-radius:10px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
 }
@@ -605,7 +605,7 @@ html{scroll-behavior:smooth;}
   padding:14px 38px;background:var(--ink2);border-radius:12px;border:none;
   color:var(--gold);font-size:14px;font-weight:900;
   cursor:pointer;font-family:var(--font);transition:all .24s;
-  box-shadow:0 6px 28px rgba(26,18,8,.22),inset 0 1px 0 rgba(229,185,60,.15);
+  box-shadow:0 6px 28px rgba(26,18,8,.22),inset 0 1px 0 rgba(184,160,130,.15);
   display:inline-flex;align-items:center;gap:8px;letter-spacing:.02em;
 }
 .gl-cta-solid:hover{background:#2a1e08;transform:translateY(-2px);box-shadow:0 14px 38px rgba(26,18,8,.32);}
@@ -630,7 +630,7 @@ html{scroll-behavior:smooth;}
 .gl-sec-cream{
   background:
     radial-gradient(ellipse at 10% 0%, rgba(168,134,62,.08), transparent 50%),
-    radial-gradient(ellipse at 90% 100%, rgba(229,185,60,.05), transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(184,160,130,.05), transparent 55%),
     var(--bg-a);
 }
 .gl-sec-dark{
@@ -705,7 +705,7 @@ html{scroll-behavior:smooth;}
 .gl-dim-body{font-size:13px;color:var(--text3);line-height:1.75;position:relative;z-index:1;}
 
 /* Per-dimension accent palette */
-.gl-dim-gold   { --accent:#B89B5E; --accent-bg:rgba(184,155,94,0.10);  --accent-border:rgba(184,155,94,0.26); }
+.gl-dim-gold   { --accent:#B8A082; --accent-bg:rgba(184,155,94,0.10);  --accent-border:rgba(184,155,94,0.26); }
 .gl-dim-teal   { --accent:#2E8B7D; --accent-bg:rgba(46,139,125,0.10);  --accent-border:rgba(46,139,125,0.26); }
 .gl-dim-purple { --accent:#6D3FB3; --accent-bg:rgba(109,63,179,0.10);  --accent-border:rgba(109,63,179,0.26); }
 .gl-dim-rose   { --accent:#B8456C; --accent-bg:rgba(184,69,108,0.10);  --accent-border:rgba(184,69,108,0.26); }
@@ -729,23 +729,23 @@ html{scroll-behavior:smooth;}
   display:flex;align-items:center;justify-content:center;
   font-family:var(--font-h);font-size:16px;font-weight:800;color:var(--ink2);
   letter-spacing:-.5px;
-  box-shadow:0 6px 22px rgba(200,169,106,.35),inset 0 1px 0 rgba(255,255,255,.3);
+  box-shadow:0 6px 22px rgba(184,160,130,.35),inset 0 1px 0 rgba(255,255,255,.3);
   border:2px solid rgba(255,255,255,.08);
   position:relative;z-index:2;
 }
 .gl-level-line{
   width:2px;flex:1;min-height:30px;
-  background:linear-gradient(180deg,rgba(200,169,106,.45),rgba(200,169,106,.1));
+  background:linear-gradient(180deg,rgba(184,160,130,.45),rgba(184,160,130,.1));
   margin-top:6px;
 }
 .gl-level-content{
   flex:1;padding:6px 22px 32px;
   background:linear-gradient(180deg,rgba(255,253,248,.05),rgba(255,253,248,.01));
-  border:1px solid rgba(200,169,106,.16);border-radius:14px;
+  border:1px solid rgba(184,160,130,.16);border-radius:14px;
   transition:all .25s var(--ease);
   margin-bottom:4px;
 }
-.gl-level-content:hover{border-color:rgba(200,169,106,.36);background:linear-gradient(180deg,rgba(200,169,106,.08),rgba(255,253,248,.01));transform:translateX(0);}
+.gl-level-content:hover{border-color:rgba(184,160,130,.36);background:linear-gradient(180deg,rgba(184,160,130,.08),rgba(255,253,248,.01));transform:translateX(0);}
 .gl-level-eye{display:block;font-size:10.5px;font-weight:800;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin:6px 0 4px;opacity:.85;}
 .gl-level-title{font-family:var(--font-h);font-size:18px;font-weight:700;color:#FFF;letter-spacing:-.2px;margin-bottom:4px;}
 .gl-level-desc{font-size:13.5px;color:rgba(245,239,224,.55);line-height:1.7;}
@@ -759,12 +759,12 @@ html{scroll-behavior:smooth;}
   transition:all .25s var(--ease);
   animation:fuSlow .6s both var(--ease);
 }
-.gl-outcome:hover{box-shadow:0 14px 32px rgba(26,18,8,.08);border-color:rgba(200,169,106,.4);transform:translateY(-2px);}
+.gl-outcome:hover{box-shadow:0 14px 32px rgba(26,18,8,.08);border-color:rgba(184,160,130,.4);transform:translateY(-2px);}
 .gl-check{
   width:38px;height:38px;border-radius:11px;flex-shrink:0;
   background:linear-gradient(135deg,var(--gold-soft),var(--gold-dk));
   color:var(--ink2);display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px rgba(200,169,106,.32);
+  box-shadow:0 4px 14px rgba(184,160,130,.32);
 }
 .gl-check svg{width:18px;height:18px;}
 .gl-outcome-text{font-size:14.5px;color:var(--text2);line-height:1.7;font-weight:500;padding-top:7px;}
@@ -777,10 +777,10 @@ html{scroll-behavior:smooth;}
   display:flex;flex-direction:column;align-items:center;
   text-align:center;
 }
-.gl-footer-top-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(229,185,60,.40),transparent);}
+.gl-footer-top-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,160,130,.40),transparent);}
 .gl-footer::before{
   content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 30%,rgba(200,169,106,.12),transparent 55%);
+  background:radial-gradient(ellipse at 50% 30%,rgba(184,160,130,.12),transparent 55%);
 }
 .gl-footer-deco{
   position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -797,11 +797,11 @@ html{scroll-behavior:smooth;}
   font-size:15.5px;color:rgba(245,239,224,.42);
   max-width:500px;line-height:1.95;margin-bottom:38px;position:relative;
 }
-.gl-footer .gl-cta-solid{background:linear-gradient(135deg,var(--gold-soft),var(--gold-dk));color:var(--ink2);box-shadow:0 8px 30px rgba(200,169,106,.35);}
-.gl-footer .gl-cta-solid:hover{filter:brightness(1.08);box-shadow:0 12px 36px rgba(200,169,106,.45);}
-.gl-footer .gl-cta-outline{border-color:rgba(200,169,106,.36);color:var(--gold-soft);background:transparent;}
-.gl-footer .gl-cta-outline:hover{background:rgba(200,169,106,.10);border-color:var(--gold);color:var(--gold);}
-.gl-credit{margin-top:60px;font-size:11px;color:rgba(200,169,106,.25);letter-spacing:.22em;text-transform:uppercase;position:relative;}
+.gl-footer .gl-cta-solid{background:linear-gradient(135deg,var(--gold-soft),var(--gold-dk));color:var(--ink2);box-shadow:0 8px 30px rgba(184,160,130,.35);}
+.gl-footer .gl-cta-solid:hover{filter:brightness(1.08);box-shadow:0 12px 36px rgba(184,160,130,.45);}
+.gl-footer .gl-cta-outline{border-color:rgba(184,160,130,.36);color:var(--gold-soft);background:transparent;}
+.gl-footer .gl-cta-outline:hover{background:rgba(184,160,130,.10);border-color:var(--gold);color:var(--gold);}
+.gl-credit{margin-top:60px;font-size:11px;color:rgba(184,160,130,.25);letter-spacing:.22em;text-transform:uppercase;position:relative;}
 
 /* ════════════ RESPONSIVE ════════════ */
 @media(max-width:1000px){

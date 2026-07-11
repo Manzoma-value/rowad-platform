@@ -318,9 +318,9 @@ function Shell({ children, dir = "rtl" }: { children: React.ReactNode; dir?: str
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-          --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7;
-          --border: #E8D9B8; --success: #2D7A4F; --danger: #C0392B;
+          --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+          --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7;
+          --border: #E8D9B8; --success: #2D7A4F; --danger: #6B1E2D;
         }
         .p-shell {
           min-height: 100vh; background: var(--gold-pale);
@@ -334,8 +334,8 @@ function Shell({ children, dir = "rtl" }: { children: React.ReactNode; dir?: str
 
 function Spinner({ label = "..." }: { label?: string }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#7A6540", fontSize: 14, padding: "80px 0" }}>
-      <div style={{ width: 20, height: 20, border: "2px solid #E8D9B8", borderTopColor: "#C8A96A", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#796A62", fontSize: 14, padding: "80px 0" }}>
+      <div style={{ width: 20, height: 20, border: "2px solid #E8D9B8", borderTopColor: "#B8A082", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
       {label}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -352,7 +352,7 @@ const styles = `
   .p-header-left {}
   .school-chip {
     display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(200,169,106,0.18); border: 1px solid rgba(200,169,106,0.35);
+    background: rgba(184,160,130,0.18); border: 1px solid rgba(184,160,130,0.35);
     color: var(--gold-light); font-size: 11.5px; font-weight: 700;
     padding: 4px 12px; border-radius: 99px; margin-bottom: 10px;
   }
@@ -360,11 +360,11 @@ const styles = `
   .p-title { font-size: 20px; font-weight: 800; color: #fff; }
   .p-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
   .q-counter { font-size: 30px; font-weight: 800; color: var(--gold); line-height: 1; }
-  .q-counter-total { font-size: 16px; color: rgba(200,169,106,0.5); }
+  .q-counter-total { font-size: 16px; color: rgba(184,160,130,0.5); }
   .q-counter-label { font-size: 10.5px; color: rgba(255,255,255,0.45); }
-  .answered-badge { font-size: 11.5px; color: var(--gold-light); background: rgba(200,169,106,0.15); border-radius: 99px; padding: 3px 10px; }
+  .answered-badge { font-size: 11.5px; color: var(--gold-light); background: rgba(184,160,130,0.15); border-radius: 99px; padding: 3px 10px; }
 
-  .prog-section { background: rgba(200,169,106,0.1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .prog-section { background: rgba(184,160,130,0.1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
   .prog-info { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); font-weight: 600; }
   .prog-track { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
   .prog-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dark), var(--gold)); border-radius: 99px; transition: width 0.4s ease; }
@@ -389,7 +389,7 @@ const styles = `
     text-align: right; transition: all 0.15s; font-family: 'Cairo', sans-serif; width: 100%;
   }
   .q-opt:hover { border-color: var(--gold); background: var(--gold-pale); }
-  .q-opt.selected { border-color: var(--gold-dark); background: rgba(200,169,106,0.1); color: var(--ink); font-weight: 700; }
+  .q-opt.selected { border-color: var(--gold-dark); background: rgba(184,160,130,0.1); color: var(--ink); font-weight: 700; }
   .opt-radio { width: 19px; height: 19px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s; }
   .q-opt.selected .opt-radio { border-color: var(--gold-dark); }
   .opt-fill { width: 9px; height: 9px; border-radius: 50%; background: var(--gold-dark); }
@@ -402,7 +402,7 @@ const styles = `
   }
   .tf-btn:hover { border-color: var(--gold); }
   .tf-btn.sel-true { background: rgba(45,122,79,0.08); border-color: #2D7A4F; color: #1A4D30; }
-  .tf-btn.sel-false { background: rgba(192,57,43,0.08); border-color: #C0392B; color: #7B1A12; }
+  .tf-btn.sel-false { background: rgba(192,57,43,0.08); border-color: #6B1E2D; color: #7B1A12; }
 
   .written-inp {
     width: 100%; padding: 13px 15px; background: var(--surface); border: 1.5px solid var(--border);

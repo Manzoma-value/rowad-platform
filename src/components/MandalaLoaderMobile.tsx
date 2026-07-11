@@ -28,8 +28,8 @@ export default function MandalaLoaderMobile({ label = "جارٍ التحميل" 
         <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
           <defs>
             <linearGradient id="mlm-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#E5B93C" />
-              <stop offset="100%" stopColor="#B89B5E" />
+              <stop offset="0%" stopColor="#B8A082" />
+              <stop offset="100%" stopColor="#B8A082" />
             </linearGradient>
           </defs>
 
@@ -40,11 +40,11 @@ export default function MandalaLoaderMobile({ label = "جارٍ التحميل" 
 
           {/* Middle ring — counter-rotates */}
           <g className="mlm-r2">
-            <circle cx="50" cy="50" r="30" stroke="#C8A96A" strokeWidth="1" fill="none" opacity="0.45" />
-            <circle cx="50" cy="8"  r="1.5" fill="#E5B93C" />
-            <circle cx="50" cy="92" r="1.5" fill="#E5B93C" />
-            <circle cx="8"  cy="50" r="1.5" fill="#E5B93C" />
-            <circle cx="92" cy="50" r="1.5" fill="#E5B93C" />
+            <circle cx="50" cy="50" r="30" stroke="#B8A082" strokeWidth="1" fill="none" opacity="0.45" />
+            <circle cx="50" cy="8"  r="1.5" fill="#B8A082" />
+            <circle cx="50" cy="92" r="1.5" fill="#B8A082" />
+            <circle cx="8"  cy="50" r="1.5" fill="#B8A082" />
+            <circle cx="92" cy="50" r="1.5" fill="#B8A082" />
           </g>
 
           {/* Inner ring — fast rotation */}
@@ -53,7 +53,7 @@ export default function MandalaLoaderMobile({ label = "جارٍ التحميل" 
           </g>
 
           {/* Pulsing center */}
-          <circle className="mlm-pulse-bg" cx="50" cy="50" r="10" fill="rgba(229,185,60,0.18)" />
+          <circle className="mlm-pulse-bg" cx="50" cy="50" r="10" fill="rgba(184,160,130,0.18)" />
           <circle className="mlm-pulse" cx="50" cy="50" r="4" fill="url(#mlm-grad)" />
         </svg>
       </div>
@@ -96,7 +96,7 @@ const css = `
     width: 84px;
     height: 84px;
     position: relative;
-    filter: drop-shadow(0 2px 12px rgba(200,169,106,0.20));
+    filter: drop-shadow(0 2px 12px rgba(184,160,130,0.20));
   }
   .mlm-mandala svg {
     width: 100%;

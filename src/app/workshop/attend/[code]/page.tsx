@@ -130,16 +130,16 @@ export default function AttendPage({ params }: { params: Promise<{ code: string 
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
         html, body { background: linear-gradient(160deg,#F7EFDD 0%,#EEE1C2 100%); min-height: 100vh; margin: 0; }
         .wa-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; font-family: 'Cairo', 'Tajawal', sans-serif; }
-        .wa-card { width: 100%; max-width: 400px; background: #FFFDF8; border: 1.5px solid #C0A063; border-radius: 22px; padding: 40px 28px; text-align: center; box-shadow: 0 20px 60px rgba(150,115,50,0.20), inset 0 0 0 4px #EFE6D1, inset 0 0 0 5.5px rgba(194,160,89,0.4); }
-        .wa-spinner { width: 44px; height: 44px; border: 3px solid rgba(184,155,94,0.24); border-top-color: #6B4F1E; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 18px; }
+        .wa-card { width: 100%; max-width: 400px; background: #FFFBF5; border: 1.5px solid #B8A082; border-radius: 22px; padding: 40px 28px; text-align: center; box-shadow: 0 20px 60px rgba(150,115,50,0.20), inset 0 0 0 4px #E5E0D5, inset 0 0 0 5.5px rgba(194,160,89,0.4); }
+        .wa-spinner { width: 44px; height: 44px; border: 3px solid rgba(184,155,94,0.24); border-top-color: #6B1E2D; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 18px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .wa-check { width: 68px; height: 68px; border-radius: 50%; background: rgba(76,107,60,0.14); color: #4C6B3C; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 900; }
+        .wa-check { width: 68px; height: 68px; border-radius: 50%; background: rgba(76,107,60,0.14); color: #1B5E20; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 900; }
         .wa-x { width: 68px; height: 68px; border-radius: 50%; background: rgba(163,59,46,0.14); color: #A33B2E; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 48px; font-weight: 900; line-height: 1; }
-        .wa-title { font-size: 18px; font-weight: 900; color: #1B1810; margin: 8px 0 12px; line-height: 1.5; }
-        .wa-title-err { font-size: 15px; font-weight: 900; color: #7A1E1E; margin: 8px 0 6px; }
-        .wa-msg { font-size: 14px; color: #5E4A20; margin: 0; }
+        .wa-title { font-size: 18px; font-weight: 900; color: #32101A; margin: 8px 0 12px; line-height: 1.5; }
+        .wa-title-err { font-size: 15px; font-weight: 900; color: #6B1E2D; margin: 8px 0 6px; }
+        .wa-msg { font-size: 14px; color: #6B1E2D; margin: 0; }
         .wa-err-msg { font-size: 13px; color: #5A1818; margin: 4px 0 18px; line-height: 1.75; }
-        .wa-btn { display: inline-block; background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; padding: 10px 22px; border-radius: 12px; font-family: inherit; font-size: 13.5px; font-weight: 900; text-decoration: none; letter-spacing: 0.02em; box-shadow: 0 6px 16px rgba(0,0,0,0.14); }
+        .wa-btn { display: inline-block; background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; padding: 10px 22px; border-radius: 12px; font-family: inherit; font-size: 13.5px; font-weight: 900; text-decoration: none; letter-spacing: 0.02em; box-shadow: 0 6px 16px rgba(0,0,0,0.14); }
       `}</style>
     </div>
   );

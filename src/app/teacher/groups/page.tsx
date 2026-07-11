@@ -135,51 +135,51 @@ export default function TeacherGroupsPage() {
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-  .tg-page { min-height: 100%; padding: 28px; background: #F6F4EE; font-family: 'Cairo', sans-serif; color: #0B0B0C; }
+  .tg-page { min-height: 100%; padding: 28px; background: #EFEAE0; font-family: 'Cairo', sans-serif; color: #1A1A1A; }
   .tg-loading { min-height: 50vh; display: flex; align-items: center; justify-content: center; }
   .tg-head {
     display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
     padding: 22px 24px; margin-bottom: 18px; border-radius: 18px;
-    background: #0B0B0C; border: 1px solid rgba(200,169,106,0.14);
+    background: #1A1A1A; border: 1px solid rgba(184,160,130,0.14);
   }
   .tg-title-block { display: flex; align-items: center; gap: 14px; min-width: 0; }
   .tg-mark {
     width: 42px; height: 42px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
-    background: rgba(200,169,106,0.12); color: #C8A96A; border: 1px solid rgba(200,169,106,0.22); flex-shrink: 0;
+    background: rgba(184,160,130,0.12); color: #B8A082; border: 1px solid rgba(184,160,130,0.22); flex-shrink: 0;
   }
-  .tg-title { margin: 0 0 4px; font-size: 23px; font-weight: 900; color: #C8A96A; }
-  .tg-sub { margin: 0; font-size: 13.5px; line-height: 1.7; color: rgba(232,220,188,0.72); }
+  .tg-title { margin: 0 0 4px; font-size: 23px; font-weight: 900; color: #B8A082; }
+  .tg-sub { margin: 0; font-size: 13.5px; line-height: 1.7; color: rgba(255,247,237,0.72); }
   .tg-count {
     display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 10px 18px; border-radius: 12px; background: rgba(200,169,106,0.08); border: 1px solid rgba(200,169,106,0.16);
+    padding: 10px 18px; border-radius: 12px; background: rgba(184,160,130,0.08); border: 1px solid rgba(184,160,130,0.16);
   }
-  .tg-count strong { font-size: 25px; line-height: 1; color: #C8A96A; }
-  .tg-count span { font-size: 11.5px; font-weight: 700; color: rgba(232,220,188,0.64); }
+  .tg-count strong { font-size: 25px; line-height: 1; color: #B8A082; }
+  .tg-count span { font-size: 11.5px; font-weight: 700; color: rgba(255,247,237,0.64); }
   .tg-filter { margin: 0 0 16px; }
   .tg-filter input {
     width: min(520px, 100%); border: 1.5px solid rgba(184,155,94,0.24); border-radius: 14px;
-    background: #FFFDF8; padding: 12px 15px; font: inherit; font-size: 14px; outline: none;
-    box-shadow: 0 10px 24px rgba(8,11,12,0.04);
+    background: #FFFBF5; padding: 12px 15px; font: inherit; font-size: 14px; outline: none;
+    box-shadow: 0 10px 24px rgba(26,26,26,0.04);
   }
   .tg-filter input:focus { border-color: rgba(184,155,94,0.62); box-shadow: 0 0 0 4px rgba(184,155,94,0.10); }
   .tg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
   .tg-card {
     display: flex; flex-direction: column; min-height: 190px; padding: 17px; text-decoration: none;
-    background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 12px;
+    background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 12px;
     transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
   }
-  .tg-card:hover { transform: translateY(-2px); border-color: rgba(184,155,94,0.55); box-shadow: 0 10px 24px rgba(8,11,12,0.08); }
+  .tg-card:hover { transform: translateY(-2px); border-color: rgba(184,155,94,0.55); box-shadow: 0 10px 24px rgba(26,26,26,0.08); }
   .tg-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-  .tg-card-icon { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: #0B0B0C; color: #C8A96A; }
-  .tg-open { color: #B89B5E; }
-  .tg-card-title { margin: 0 0 8px; font-size: 16px; font-weight: 900; color: #1B1810; }
+  .tg-card-icon { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: #1A1A1A; color: #B8A082; }
+  .tg-open { color: #B8A082; }
+  .tg-card-title { margin: 0 0 8px; font-size: 16px; font-weight: 900; color: #32101A; }
   .tg-card-desc { margin: 0; color: #625A4E; font-size: 13px; line-height: 1.7; flex: 1; }
-  .tg-card-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; color: #8B6915; font-size: 12px; font-weight: 800; }
+  .tg-card-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; color: #8F765B; font-size: 12px; font-weight: 800; }
   .tg-empty {
     min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-    text-align: center; border: 1px dashed rgba(184,155,94,0.34); border-radius: 14px; background: #FFFDF8; color: #9A8A70; padding: 32px;
+    text-align: center; border: 1px dashed rgba(184,155,94,0.34); border-radius: 14px; background: #FFFBF5; color: #796A62; padding: 32px;
   }
-  .tg-empty h2 { margin: 0; color: #1B1810; font-size: 17px; font-weight: 900; }
+  .tg-empty h2 { margin: 0; color: #32101A; font-size: 17px; font-weight: 900; }
   .tg-empty p { margin: 0; max-width: 360px; font-size: 13.5px; line-height: 1.8; }
   @media (max-width: 640px) {
     .tg-page { padding: 16px; }

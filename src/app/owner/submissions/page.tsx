@@ -53,7 +53,7 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
             cx="90"
             cy="90"
             r="82"
-            stroke="rgba(200,169,106,0.05)"
+            stroke="rgba(184,160,130,0.05)"
             strokeWidth="1"
             fill="none"
           />
@@ -66,7 +66,7 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
                 cy="90"
                 r={ring.r}
                 fill="none"
-                stroke="#C8A96A"
+                stroke="#B8A082"
                 strokeWidth={ring.strokeW}
                 opacity={ring.opacity}
                 strokeDasharray={`${ring.dashLen} ${ring.gapLen}`}
@@ -83,7 +83,7 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
                 cy={90 - 40 * Math.cos(a)}
                 r={40}
                 fill="none"
-                stroke="#C8A96A"
+                stroke="#B8A082"
                 strokeWidth="0.4"
                 opacity="0.10"
               />
@@ -98,7 +98,7 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
                 y1={90 - 14 * Math.cos(a)}
                 x2={90 + 70 * Math.sin(a)}
                 y2={90 - 70 * Math.cos(a)}
-                stroke="#C8A96A"
+                stroke="#B8A082"
                 strokeWidth="0.4"
                 opacity={
                   0.06 +
@@ -118,7 +118,7 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
                 y1={90 - 26 * Math.cos(a1)}
                 x2={90 + 14 * Math.sin(a2)}
                 y2={90 - 14 * Math.cos(a2)}
-                stroke="#E5B93C"
+                stroke="#B8A082"
                 strokeWidth="0.7"
                 opacity="0.28"
               />
@@ -129,7 +129,7 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
             cy="90"
             r="6"
             fill="none"
-            stroke="#C8A96A"
+            stroke="#B8A082"
             strokeWidth="0.5"
             opacity="0.2"
           />
@@ -137,7 +137,7 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
             cx="90"
             cy="90"
             r="2.5"
-            fill="#C8A96A"
+            fill="#B8A082"
             opacity={0.35 + 0.25 * Math.sin(phase * 0.06)}
           />
         </svg>
@@ -161,13 +161,13 @@ function MandalaLoader({ label = "جارٍ تحميل الإجابات" }: { lab
         @keyframes mlBlink { 0%,80%,100%{opacity:0.18;transform:scaleY(0.5)} 40%{opacity:1;transform:scaleY(1)} }
         @keyframes mlIn { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
         .ml-wrap { display:flex; align-items:center; justify-content:center; min-height:380px; }
-        .ml-panel { display:flex;flex-direction:column;align-items:center;padding:28px 36px 24px;background:#fff;border:1px solid #E2D9CA;border-top:2px solid #C8A96A;border-radius:12px;box-shadow:0 8px 32px rgba(11,11,12,0.08);animation:mlIn 0.4s ease; }
+        .ml-panel { display:flex;flex-direction:column;align-items:center;padding:28px 36px 24px;background:#fff;border:1px solid #E2D9CA;border-top:2px solid #B8A082;border-radius:12px;box-shadow:0 8px 32px rgba(11,11,12,0.08);animation:mlIn 0.4s ease; }
         .ml-ornament { display:flex;align-items:center;width:100%;margin-bottom:18px; }
-        .ml-orn-line { flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.22),transparent); }
-        .ml-orn-diamond { width:5px;height:5px;background:rgba(200,169,106,0.38);transform:rotate(45deg);margin:0 10px;flex-shrink:0; }
+        .ml-orn-line { flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.22),transparent); }
+        .ml-orn-diamond { width:5px;height:5px;background:rgba(184,160,130,0.38);transform:rotate(45deg);margin:0 10px;flex-shrink:0; }
         .ml-label { font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;color:#8A7A5A;margin-bottom:10px; }
         .ml-dots { display:flex;gap:5px;align-items:center;height:16px; }
-        .ml-dot { width:3px;height:14px;border-radius:2px;background:#C8A96A;opacity:0.2;animation:mlBlink 1.2s ease-in-out infinite; }
+        .ml-dot { width:3px;height:14px;border-radius:2px;background:#B8A082;opacity:0.2;animation:mlBlink 1.2s ease-in-out infinite; }
       `}</style>
     </div>
   );
@@ -313,7 +313,7 @@ function SubmissionsContent() {
               >
                 <div
                   className="s-row-accent"
-                  style={{ background: isReviewed ? "#1a6b3c" : "#9a6200" }}
+                  style={{ background: isReviewed ? "#1B5E20" : "#9a6200" }}
                 />
                 <div className="s-avatar">
                   {s.student.profile.full_name.charAt(0)}
@@ -365,10 +365,10 @@ function SubmissionsContent() {
                             width: `${pct}%`,
                             background:
                               pct >= 70
-                                ? "#1a6b3c"
+                                ? "#1B5E20"
                                 : pct >= 50
                                   ? "#9a6200"
-                                  : "#8b1a1a",
+                                  : "#6B1E2D",
                           }}
                         />
                       </div>
@@ -413,14 +413,14 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
   :root {
-    --gold: #C8A96A; --gold2: #E5B93C;
+    --gold: #B8A082; --gold2: #B8A082;
     --black: #0A0A0B;
-    --text: #0B0B0C; --text2: #3E3526; --text3: #8A7A5A;
+    --text: #1A1A1A; --text2: #3E3526; --text3: #8A7A5A;
     --surface: #FFFFFF; --surface2: #FAF8F4; --surface3: #F3EEE5;
     --border: #E2D9CA; --border2: #CEC2AD;
-    --success: #1a6b3c; --success-bg: rgba(26,107,60,0.07);
+    --success: #1B5E20; --success-bg: rgba(26,107,60,0.07);
     --warning: #9a6200; --warning-bg: rgba(154,98,0,0.07);
-    --danger: #8b1a1a;
+    --danger: #6B1E2D;
     --radius: 10px;
     --shadow-sm: 0 1px 4px rgba(11,11,12,0.05);
     --shadow: 0 4px 16px rgba(11,11,12,0.08);
@@ -443,7 +443,7 @@ const css = `
     background:linear-gradient(90deg,var(--gold),transparent);
   }
   .s-eyebrow { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
-  .s-eyebrow-line { flex:1;height:1px;max-width:22px;background:rgba(200,169,106,0.35); }
+  .s-eyebrow-line { flex:1;height:1px;max-width:22px;background:rgba(184,160,130,0.35); }
   .s-eyebrow span { font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold); }
   .s-title { font-size:24px;font-weight:900;color:var(--black);letter-spacing:-0.4px; }
   .s-subtitle { font-size:13px;color:var(--text3);margin-top:4px;font-weight:500; }
@@ -464,7 +464,7 @@ const css = `
   }
   .s-summary::before {
     content:'';position:absolute;top:0;left:0;right:0;
-    height:2px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.3) 40%,rgba(229,185,60,0.4) 50%,rgba(200,169,106,0.3) 60%,transparent);
+    height:2px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.3) 40%,rgba(184,160,130,0.4) 50%,rgba(184,160,130,0.3) 60%,transparent);
   }
   .s-sum-item {
     flex:1;display:flex;flex-direction:column;align-items:center;
@@ -491,10 +491,10 @@ const css = `
     transition:all 0.16s;font-family:'Cairo',sans-serif;
     box-shadow:var(--shadow-sm);
   }
-  .s-filter-btn:hover { border-color:rgba(200,169,106,0.3);color:var(--text); }
+  .s-filter-btn:hover { border-color:rgba(184,160,130,0.3);color:var(--text); }
   .s-filter-btn.active {
-    background:rgba(200,169,106,0.09);
-    border-color:rgba(200,169,106,0.32);
+    background:rgba(184,160,130,0.09);
+    border-color:rgba(184,160,130,0.32);
     color:var(--gold);
   }
   .s-filter-count {
@@ -514,9 +514,9 @@ const css = `
   }
   .s-empty-icon {
     width:64px;height:64px;border-radius:16px;
-    background:rgba(200,169,106,0.08);border:1px solid rgba(200,169,106,0.18);
+    background:rgba(184,160,130,0.08);border:1px solid rgba(184,160,130,0.18);
     display:flex;align-items:center;justify-content:center;
-    color:rgba(200,169,106,0.5);margin-bottom:6px;
+    color:rgba(184,160,130,0.5);margin-bottom:6px;
   }
   .s-empty-text { font-size:14px;font-weight:700;color:var(--text2); }
   .s-empty-sub { font-size:12.5px;color:var(--text3);font-weight:500; }
@@ -531,14 +531,14 @@ const css = `
     animation:rowIn 0.4s ease both;
     position:relative;overflow:hidden;
   }
-  .s-row:hover { border-color:rgba(200,169,106,0.3);box-shadow:var(--shadow); }
+  .s-row:hover { border-color:rgba(184,160,130,0.3);box-shadow:var(--shadow); }
   .s-row-accent { position:absolute;right:0;top:8px;bottom:8px;width:2.5px;border-radius:2px; }
 
   .s-avatar {
     width:42px;height:42px;border-radius:10px;flex-shrink:0;
     background:var(--black);display:flex;align-items:center;justify-content:center;
     font-size:15px;font-weight:900;color:var(--gold);
-    border:1px solid rgba(200,169,106,0.15);
+    border:1px solid rgba(184,160,130,0.15);
   }
   .s-body { flex:1;min-width:0; }
   .s-name { font-size:14px;font-weight:700;color:var(--black); }

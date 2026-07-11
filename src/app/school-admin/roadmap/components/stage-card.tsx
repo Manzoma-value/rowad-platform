@@ -79,7 +79,7 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
                   color:
                     traits.length === 5
                       ? "rgba(26,200,100,0.7)"
-                      : "rgba(229,185,60,0.5)",
+                      : "rgba(184,160,130,0.5)",
                 }}
               >
                 <svg

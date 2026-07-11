@@ -167,7 +167,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
           <button className="rb-mod-toggle" onClick={() => setOpen((v) => !v)}>
             <span className="rb-mod-dot-wrap">
               {hasMainTrait ? (
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="#E5B93C">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="#B8A082">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
               ) : (
@@ -183,7 +183,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                 <span className="rb-mod-meta-sep">·</span>
                 {mainTrait ? (
                   <span
-                    style={{ color: "#C8A96A", fontWeight: 700, fontSize: 10 }}
+                    style={{ color: "#B8A082", fontWeight: 700, fontSize: 10 }}
                   >
                     ★ {mainTrait.name}
                   </span>

@@ -303,47 +303,47 @@ export default function ReviewQueuePage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
         .rq-page { font-family: 'Cairo', sans-serif; }
         .rq-hero { margin-bottom: 18px; }
-        .rq-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
-        .rq-sub { font-size: 13.5px; color: #5E5A52; max-width: 740px; line-height: 1.85; margin: 0; }
+        .rq-title { font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
+        .rq-sub { font-size: 13.5px; color: #655B53; max-width: 740px; line-height: 1.85; margin: 0; }
         .rq-toolbar { display: flex; gap: 8px; margin-bottom: 18px; }
-        .rq-toggle { background: #FFFDF8; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 8px 16px; border-radius: 99px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .rq-toggle.active { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
-        .rq-empty { padding: 60px 20px; text-align: center; color: #8A8478; font-weight: 700; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; }
+        .rq-toggle { background: #FFFBF5; border: 1.5px solid rgba(194,160,89,0.32); color: #6B1E2D; padding: 8px 16px; border-radius: 99px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .rq-toggle.active { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border-color: transparent; }
+        .rq-empty { padding: 60px 20px; text-align: center; color: #8C8274; font-weight: 700; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; }
         .rq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 14px; }
-        .rq-card { background: #FFFDF8; border: 1.5px solid rgba(194,160,89,0.30); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+        .rq-card { background: #FFFBF5; border: 1.5px solid rgba(194,160,89,0.30); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
         .rq-card.rq-st-PENDING_REVIEW { border-color: rgba(194,160,89,0.6); box-shadow: 0 4px 14px rgba(194,160,89,0.16); }
         .rq-card.rq-st-APPROVED { background: linear-gradient(165deg,#F0F8F2,#E6F2EA); }
         .rq-card.rq-st-REJECTED { background: linear-gradient(165deg,#FBEBEB,#F5DCDC); }
         .rq-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .rq-kind { font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; }
         .rq-kind--lesson { background: rgba(20,80,140,0.10); color: #14528C; }
-        .rq-kind--quiz { background: rgba(122,30,30,0.10); color: #7A1E1E; }
+        .rq-kind--quiz { background: rgba(107,30,45,0.10); color: #6B1E2D; }
         .rq-tag { font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 99px; }
-        .rq-st-tag-PENDING_REVIEW { background: rgba(194,160,89,0.20); color: #6B4F1E; }
-        .rq-st-tag-APPROVED { background: rgba(45,138,74,0.16); color: #1E5C2E; }
-        .rq-st-tag-REJECTED { background: rgba(139,26,26,0.12); color: #7A1E1E; }
-        .rq-st-tag-DRAFT { background: rgba(8,11,12,0.06); color: #5E5A52; }
-        .rq-card-title { font-size: 16px; font-weight: 900; color: #1B1810; margin: 0; line-height: 1.35; }
+        .rq-st-tag-PENDING_REVIEW { background: rgba(194,160,89,0.20); color: #6B1E2D; }
+        .rq-st-tag-APPROVED { background: rgba(45,138,74,0.16); color: #1B5E20; }
+        .rq-st-tag-REJECTED { background: rgba(139,26,26,0.12); color: #6B1E2D; }
+        .rq-st-tag-DRAFT { background: rgba(26,26,26,0.06); color: #655B53; }
+        .rq-card-title { font-size: 16px; font-weight: 900; color: #32101A; margin: 0; line-height: 1.35; }
         .rq-card-meta { margin: 0; display: flex; flex-direction: column; gap: 6px; }
         .rq-card-meta > div { display: flex; gap: 10px; font-size: 12.5px; }
-        .rq-card-meta dt { font-weight: 800; color: #8B6915; min-width: 70px; margin: 0; }
-        .rq-card-meta dd { margin: 0; color: #2E2210; }
+        .rq-card-meta dt { font-weight: 800; color: #8F765B; min-width: 70px; margin: 0; }
+        .rq-card-meta dd { margin: 0; color: #4A0E1C; }
         .rq-prev-notes { background: rgba(139,26,26,0.06); border: 1px solid rgba(139,26,26,0.18); padding: 9px 11px; border-radius: 8px; font-size: 12px; color: #5A1818; line-height: 1.7; }
         .rq-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
-        .rq-open { color: #6B4F1E; font-size: 12.5px; font-weight: 800; text-decoration: none; }
+        .rq-open { color: #6B1E2D; font-size: 12.5px; font-weight: 800; text-decoration: none; }
         .rq-decide { display: flex; gap: 8px; }
-        .rq-approve { background: linear-gradient(180deg,#2D8A4A,#1E5C2E); color: #FFF; border: none; padding: 7px 16px; border-radius: 8px; font-family: inherit; font-weight: 800; font-size: 12px; cursor: pointer; }
-        .rq-reject { background: linear-gradient(180deg,#A33333,#7A1E1E); color: #FFF; border: none; padding: 7px 16px; border-radius: 8px; font-family: inherit; font-weight: 800; font-size: 12px; cursor: pointer; }
-        .rq-dlg-overlay { position: fixed; inset: 0; background: rgba(8,11,12,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
-        .rq-dlg { background: #FFFDF8; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .rq-dlg-title { font-size: 15.5px; font-weight: 900; color: #1B1810; margin: 0 0 14px; }
+        .rq-approve { background: linear-gradient(180deg,#1B5E20,#1B5E20); color: #FFF; border: none; padding: 7px 16px; border-radius: 8px; font-family: inherit; font-weight: 800; font-size: 12px; cursor: pointer; }
+        .rq-reject { background: linear-gradient(180deg,#6B1E2D,#6B1E2D); color: #FFF; border: none; padding: 7px 16px; border-radius: 8px; font-family: inherit; font-weight: 800; font-size: 12px; cursor: pointer; }
+        .rq-dlg-overlay { position: fixed; inset: 0; background: rgba(26,26,26,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+        .rq-dlg { background: #FFFBF5; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .rq-dlg-title { font-size: 15.5px; font-weight: 900; color: #32101A; margin: 0 0 14px; }
         .rq-dlg-notes { width: 100%; padding: 11px 13px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; resize: vertical; }
-        .rq-dlg-notes:focus { border-color: #B89B5E; }
-        .rq-dlg-err { color: #7A1E1E; font-size: 12.5px; font-weight: 700; margin-top: 10px; }
+        .rq-dlg-notes:focus { border-color: #B8A082; }
+        .rq-dlg-err { color: #6B1E2D; font-size: 12.5px; font-weight: 700; margin-top: 10px; }
         .rq-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-        .rq-dlg-cancel { background: none; border: 1px solid rgba(8,11,12,0.18); color: #5E5A52; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; }
-        .rq-dlg-submit { background: linear-gradient(180deg,#2D8A4A,#1E5C2E); color: #FFF; border: none; padding: 9px 18px; border-radius: 9px; font-family: inherit; font-weight: 800; cursor: pointer; font-size: 13px; }
-        .rq-dlg-submit.danger { background: linear-gradient(180deg,#A33333,#7A1E1E); }
+        .rq-dlg-cancel { background: none; border: 1px solid rgba(26,26,26,0.18); color: #655B53; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .rq-dlg-submit { background: linear-gradient(180deg,#1B5E20,#1B5E20); color: #FFF; border: none; padding: 9px 18px; border-radius: 9px; font-family: inherit; font-weight: 800; cursor: pointer; font-size: 13px; }
+        .rq-dlg-submit.danger { background: linear-gradient(180deg,#6B1E2D,#6B1E2D); }
       `}</style>
     </div>
   );

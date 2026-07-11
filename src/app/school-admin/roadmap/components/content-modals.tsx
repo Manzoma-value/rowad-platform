@@ -215,7 +215,7 @@ export function ImageModal({
     >
       <div className="rb-modal">
         <div className="rb-modal-hd">
-          <div className="rb-modal-icon" style={{ background: "rgba(200,169,106,0.1)", color: "#7A6020", borderColor: "rgba(200,169,106,0.2)" }}>
+          <div className="rb-modal-icon" style={{ background: "rgba(184,160,130,0.1)", color: "#8F765B", borderColor: "rgba(184,160,130,0.2)" }}>
             {Icons.image}
           </div>
           <div className="rb-modal-hd-text">
@@ -239,7 +239,7 @@ export function ImageModal({
             }
           />
           {preview ? (
-            <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(200,169,106,0.15)" }}>
+            <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(184,160,130,0.15)" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="preview" className="rb-img-preview" style={{ borderRadius: 0, border: "none" }} />
               <div style={{
@@ -276,14 +276,14 @@ export function ImageModal({
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               style={{
-                borderColor: dragOver ? "#C8A96A" : undefined,
-                background: dragOver ? "rgba(229,185,60,0.08)" : undefined,
+                borderColor: dragOver ? "#B8A082" : undefined,
+                background: dragOver ? "rgba(184,160,130,0.08)" : undefined,
                 transform: dragOver ? "scale(1.01)" : undefined,
               }}
             >
               <div style={{
                 width: 64, height: 64, borderRadius: 16,
-                background: "rgba(200,169,106,0.08)", border: "1px solid rgba(200,169,106,0.15)",
+                background: "rgba(184,160,130,0.08)", border: "1px solid rgba(184,160,130,0.15)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 marginBottom: 4,
               }}>
@@ -298,15 +298,15 @@ export function ImageModal({
               }}>
                 {["PNG", "JPG", "WEBP"].map((fmt) => (
                   <span key={fmt} style={{
-                    fontSize: 10, fontWeight: 700, color: "#9A8A70",
-                    background: "rgba(200,169,106,0.08)", border: "1px solid rgba(200,169,106,0.12)",
+                    fontSize: 10, fontWeight: 700, color: "#796A62",
+                    background: "rgba(184,160,130,0.08)", border: "1px solid rgba(184,160,130,0.12)",
                     padding: "3px 10px", borderRadius: 100,
                   }}>
                     {fmt}
                   </span>
                 ))}
                 <span style={{
-                  fontSize: 10, fontWeight: 600, color: "#9A8A70",
+                  fontSize: 10, fontWeight: 600, color: "#796A62",
                   padding: "3px 6px",
                 }}>
                   حتى 10MB
@@ -452,7 +452,7 @@ export function VideoModal({
               dir="ltr"
             />
             {!ytId && url.trim() && (
-              <span style={{ fontSize: 11, color: "#9A8A70", fontWeight: 500 }}>
+              <span style={{ fontSize: 11, color: "#796A62", fontWeight: 500 }}>
                 أدخل رابط يوتيوب صالح للمعاينة
               </span>
             )}
@@ -473,7 +473,7 @@ export function VideoModal({
                 fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.8)",
                 display: "flex", alignItems: "center", gap: 5,
               }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="#E5B93C">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="#B8A082">
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
                 YouTube

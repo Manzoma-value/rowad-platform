@@ -25,12 +25,12 @@ interface School {
 const PRESET_THEMES = [
   {
     name: "الهوية الرئيسية",
-    primary: "#C8A96A",
-    secondary: "#E5B93C",
-    bg: "#0B0B0C",
+    primary: "#B8A082",
+    secondary: "#B8A082",
+    bg: "#1A1A1A",
   },
-  { name: "الشباب", primary: "#E5B93C", secondary: "#C8A96A", bg: "#0B0B0C" },
-  { name: "القيم", primary: "#C8A96A", secondary: "#E5B93C", bg: "#7A1E1E" },
+  { name: "الشباب", primary: "#B8A082", secondary: "#B8A082", bg: "#1A1A1A" },
+  { name: "القيم", primary: "#B8A082", secondary: "#B8A082", bg: "#6B1E2D" },
   {
     name: "أزرق ليلي",
     primary: "#60A5FA",
@@ -52,9 +52,9 @@ export default function OwnerSchoolsPage() {
   const [newSlug, setNewSlug] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newLang, setNewLang] = useState("ar");
-  const [newColorPrimary, setNewColorPrimary] = useState("#C8A96A");
-  const [newColorSecondary, setNewColorSecondary] = useState("#E5B93C");
-  const [newColorBg, setNewColorBg] = useState("#0B0B0C");
+  const [newColorPrimary, setNewColorPrimary] = useState("#B8A082");
+  const [newColorSecondary, setNewColorSecondary] = useState("#B8A082");
+  const [newColorBg, setNewColorBg] = useState("#1A1A1A");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [toggling, setToggling] = useState<string | null>(null);
@@ -127,9 +127,9 @@ export default function OwnerSchoolsPage() {
       setNewSlug("");
       setNewDesc("");
       setNewLang("ar");
-      setNewColorPrimary("#C8A96A");
-      setNewColorSecondary("#E5B93C");
-      setNewColorBg("#0B0B0C");
+      setNewColorPrimary("#B8A082");
+      setNewColorSecondary("#B8A082");
+      setNewColorBg("#1A1A1A");
     } catch {
       setCreateError("تعذر الاتصال بالخادم");
     } finally {
@@ -367,7 +367,7 @@ export default function OwnerSchoolsPage() {
                 cx="24"
                 cy="24"
                 r="22"
-                stroke="#C8A96A"
+                stroke="#B8A082"
                 strokeWidth="0.6"
                 strokeDasharray="3 4"
               />
@@ -375,11 +375,11 @@ export default function OwnerSchoolsPage() {
                 cx="24"
                 cy="24"
                 r="15"
-                stroke="#C8A96A"
+                stroke="#B8A082"
                 strokeWidth="0.6"
               />
-              <circle cx="24" cy="24" r="8" stroke="#E5B93C" strokeWidth="1" />
-              <circle cx="24" cy="24" r="2.5" fill="#C8A96A" />
+              <circle cx="24" cy="24" r="8" stroke="#B8A082" strokeWidth="1" />
+              <circle cx="24" cy="24" r="2.5" fill="#B8A082" />
             </svg>
           </div>
           <p>
@@ -398,7 +398,7 @@ export default function OwnerSchoolsPage() {
               <div
                 className="card-accent"
                 style={{
-                  background: `linear-gradient(90deg, ${school.color_primary || "#C8A96A"}, ${school.color_secondary || "#E5B93C"})`,
+                  background: `linear-gradient(90deg, ${school.color_primary || "#B8A082"}, ${school.color_secondary || "#B8A082"})`,
                 }}
               />
 
@@ -407,13 +407,13 @@ export default function OwnerSchoolsPage() {
                 <div
                   className="card-swatch"
                   style={{
-                    background: school.color_bg || "#0B0B0C",
-                    border: `1px solid ${school.color_primary || "#C8A96A"}30`,
+                    background: school.color_bg || "#1A1A1A",
+                    border: `1px solid ${school.color_primary || "#B8A082"}30`,
                   }}
                 >
                   <span
                     style={{
-                      color: school.color_primary || "#C8A96A",
+                      color: school.color_primary || "#B8A082",
                       fontSize: 18,
                     }}
                   >
@@ -545,27 +545,27 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
 
   :root {
-    --gold: #C8A96A;
-    --gold2: #E5B93C;
-    --gold-muted: rgba(200,169,106,0.08);
-    --gold-muted2: rgba(200,169,106,0.15);
-    --gold-border: rgba(200,169,106,0.18);
-    --black: #0B0B0C;
-    --off-white: #F5F3EE;
+    --gold: #B8A082;
+    --gold2: #B8A082;
+    --gold-muted: rgba(184,160,130,0.08);
+    --gold-muted2: rgba(184,160,130,0.15);
+    --gold-border: rgba(184,160,130,0.18);
+    --black: #1A1A1A;
+    --off-white: #F7F3EB;
     --cream: #EDE9E0;
-    --text: #1a1208;
+    --text: #4A0E1C;
     --text2: #4a3f2a;
     --text3: #8a7a5a;
     --surface: #ffffff;
     --surface2: #FAF8F4;
     --surface3: #F5F0E8;
-    --border: #E4DDD0;
+    --border: #E5E0D5;
     --border2: #D4C9B5;
-    --danger: #8b1a1a;
+    --danger: #6B1E2D;
     --radius: 12px;
-    --shadow-sm: 0 1px 4px rgba(11,11,12,0.05), 0 0 0 1px rgba(200,169,106,0.06);
-    --shadow: 0 4px 16px rgba(11,11,12,0.07), 0 0 0 1px rgba(200,169,106,0.08);
-    --shadow-lg: 0 12px 40px rgba(11,11,12,0.10), 0 0 0 1px rgba(200,169,106,0.10);
+    --shadow-sm: 0 1px 4px rgba(11,11,12,0.05), 0 0 0 1px rgba(184,160,130,0.06);
+    --shadow: 0 4px 16px rgba(11,11,12,0.07), 0 0 0 1px rgba(184,160,130,0.08);
+    --shadow-lg: 0 12px 40px rgba(11,11,12,0.10), 0 0 0 1px rgba(184,160,130,0.10);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -600,12 +600,12 @@ const css = `
     display: inline-flex; align-items: center; gap: 8px;
     padding: 11px 22px;
     background: var(--black); color: var(--gold);
-    border: 1px solid rgba(200,169,106,0.25);
+    border: 1px solid rgba(184,160,130,0.25);
     border-radius: 9px; font-size: 13px; font-weight: 700;
     cursor: pointer; font-family: 'Cairo', sans-serif;
     transition: all 0.2s; white-space: nowrap; letter-spacing: 0.1px;
   }
-  .btn-create:hover:not(:disabled) { background: #1a1208; border-color: var(--gold); box-shadow: 0 4px 20px rgba(200,169,106,0.2); }
+  .btn-create:hover:not(:disabled) { background: #4A0E1C; border-color: var(--gold); box-shadow: 0 4px 20px rgba(184,160,130,0.2); }
   .btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-cancel {
     display: inline-flex; align-items: center; padding: 11px 22px;
@@ -645,7 +645,7 @@ const css = `
     font-size: 13.5px; font-family: 'Cairo', sans-serif; outline: none; width: 100%;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .cf-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,169,106,0.1); background: var(--surface); }
+  .cf-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(184,160,130,0.1); background: var(--surface); }
   .cf-select {
     background: var(--surface2); border: 1px solid var(--border2);
     color: var(--text); border-radius: 8px; padding: 10px 13px;
@@ -710,7 +710,7 @@ const css = `
     outline: none; transition: border-color 0.15s, box-shadow 0.15s;
     box-shadow: var(--shadow-sm);
   }
-  .search-inp:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,169,106,0.1); }
+  .search-inp:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(184,160,130,0.1); }
   .search-inp::placeholder { color: var(--text3); }
 
 
@@ -737,7 +737,7 @@ const css = `
   .school-card:hover {
     box-shadow: var(--shadow-lg);
     transform: translateY(-2px);
-    border-color: rgba(200,169,106,0.3);
+    border-color: rgba(184,160,130,0.3);
   }
 
   .card-accent { height: 2px; width: 100%; flex-shrink: 0; }
@@ -785,12 +785,12 @@ const css = `
   .btn-manage {
     display: inline-flex; align-items: center; padding: 8px 16px;
     background: var(--black); color: var(--gold);
-    border: 1px solid rgba(200,169,106,0.2);
+    border: 1px solid rgba(184,160,130,0.2);
     border-radius: 8px; font-size: 12.5px; font-weight: 700;
     text-decoration: none; transition: all 0.15s;
     font-family: 'Cairo', sans-serif;
   }
-  .btn-manage:hover { border-color: var(--gold); box-shadow: 0 2px 12px rgba(200,169,106,0.2); }
+  .btn-manage:hover { border-color: var(--gold); box-shadow: 0 2px 12px rgba(184,160,130,0.2); }
   .btn-view {
     display: inline-flex; align-items: center; gap: 5px;
     font-size: 11.5px; font-weight: 600; color: var(--text3);
@@ -802,8 +802,8 @@ const css = `
   /* ── Status & actions ── */
   .card-status-row { display: flex; align-items: center; justify-content: space-between; padding: 0 20px 12px; gap: 8px; }
   .card-status-badge { font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 99px; }
-  .card-status-badge.active { background: rgba(45,138,74,0.10); color: #2D8A4A; border: 1px solid rgba(45,138,74,0.20); }
-  .card-status-badge.inactive { background: rgba(139,26,26,0.08); color: #8b1a1a; border: 1px solid rgba(139,26,26,0.18); }
+  .card-status-badge.active { background: rgba(45,138,74,0.10); color: #1B5E20; border: 1px solid rgba(45,138,74,0.20); }
+  .card-status-badge.inactive { background: rgba(139,26,26,0.08); color: #6B1E2D; border: 1px solid rgba(139,26,26,0.18); }
   .card-status-actions { display: flex; align-items: center; gap: 6px; }
   .btn-toggle {
     font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 7px;
@@ -811,21 +811,21 @@ const css = `
     transition: all 0.15s;
   }
   .btn-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-toggle.deactivate { background: rgba(139,26,26,0.07); color: #8b1a1a; border-color: rgba(139,26,26,0.20); }
+  .btn-toggle.deactivate { background: rgba(139,26,26,0.07); color: #6B1E2D; border-color: rgba(139,26,26,0.20); }
   .btn-toggle.deactivate:hover:not(:disabled) { background: rgba(139,26,26,0.14); }
-  .btn-toggle.activate { background: rgba(45,138,74,0.08); color: #2D8A4A; border-color: rgba(45,138,74,0.20); }
+  .btn-toggle.activate { background: rgba(45,138,74,0.08); color: #1B5E20; border-color: rgba(45,138,74,0.20); }
   .btn-toggle.activate:hover:not(:disabled) { background: rgba(45,138,74,0.15); }
   .btn-delete {
     display: flex; align-items: center; justify-content: center;
     width: 28px; height: 28px; border-radius: 7px;
     background: rgba(139,26,26,0.06); border: 1px solid rgba(139,26,26,0.15);
-    color: #8b1a1a; cursor: pointer; transition: all 0.15s;
+    color: #6B1E2D; cursor: pointer; transition: all 0.15s;
   }
   .btn-delete:hover { background: rgba(139,26,26,0.14); }
   .confirm-delete-row { display: flex; align-items: center; gap: 4px; }
   .btn-delete-confirm {
     font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 7px;
-    background: #8b1a1a; color: #fff; border: none; cursor: pointer;
+    background: #6B1E2D; color: #fff; border: none; cursor: pointer;
     font-family: 'Cairo', sans-serif; transition: opacity 0.15s;
   }
   .btn-delete-confirm:disabled { opacity: 0.5; cursor: not-allowed; }

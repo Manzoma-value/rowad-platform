@@ -85,42 +85,42 @@ export default function RejectedPage() {
           padding: 24px; font-family:'Cairo','Tajawal',sans-serif;
           background:
             radial-gradient(ellipse at 50% 10%, #F8E0DE 0%, transparent 55%),
-            linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%);
+            linear-gradient(160deg,#E5E0D5 0%,#E5E0D5 100%);
         }
         .rj-card {
           max-width: 560px; text-align:center;
           background: linear-gradient(160deg,#FFF4E5 0%,#FBEDD2 100%);
-          border: 1.5px solid rgba(122,30,30,0.32); border-radius: 22px;
+          border: 1.5px solid rgba(107,30,45,0.32); border-radius: 22px;
           padding: 48px 40px;
-          box-shadow: 0 10px 40px rgba(122,30,30,0.10),
+          box-shadow: 0 10px 40px rgba(107,30,45,0.10),
             inset 0 0 0 5px rgba(255,248,236,0.55);
           color: #5A1818;
         }
         .rj-icon {
           width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 18px;
           display:flex; align-items:center; justify-content:center;
-          background: rgba(122,30,30,0.10); color: #7A1E1E;
-          border: 1.5px solid rgba(122,30,30,0.32);
+          background: rgba(107,30,45,0.10); color: #6B1E2D;
+          border: 1.5px solid rgba(107,30,45,0.32);
         }
         .rj-badge {
-          display:inline-block; font-size:11.5px; font-weight:800; color:#7A1E1E;
-          background:rgba(122,30,30,.10); padding:4px 16px; border-radius:99px;
+          display:inline-block; font-size:11.5px; font-weight:800; color:#6B1E2D;
+          background:rgba(107,30,45,.10); padding:4px 16px; border-radius:99px;
           margin-bottom:14px; letter-spacing:1.5px; text-transform:uppercase;
-          border:1px solid rgba(122,30,30,0.30);
+          border:1px solid rgba(107,30,45,0.30);
         }
         .rj-title { font-size:22px; font-weight:900; color:#5A1818; margin:0 0 14px; }
         .rj-body  { font-size:14px; color:#6F2A2A; line-height:1.9; margin:0 0 22px; }
         .rj-notes-block {
-          background: #FFF8EC; border:1px solid rgba(122,30,30,0.20);
+          background: #FFF8EC; border:1px solid rgba(107,30,45,0.20);
           border-radius:12px; padding:14px 16px; text-align:start;
         }
         .rj-notes-label {
-          font-size: 11px; font-weight:800; color:#8B6915;
+          font-size: 11px; font-weight:800; color:#8F765B;
           letter-spacing:1.2px; text-transform:uppercase; margin-bottom:6px;
         }
         .rj-notes       { font-size:13.5px; color:#2E1A0F; line-height:1.85; font-weight:600; white-space:pre-wrap; }
-        .rj-notes.empty { color:#8A7B60; font-style:italic; font-weight:500; }
-        .rj-error { margin-top: 12px; color: #7A1E1E; font-size: 13px; font-weight: 800; }
+        .rj-notes.empty { color:#796A62; font-style:italic; font-weight:500; }
+        .rj-error { margin-top: 12px; color: #6B1E2D; font-size: 13px; font-weight: 800; }
         .rj-retry {
           margin-top: 18px; border: 0; border-radius: 12px; padding: 12px 24px;
           background: #4A0E1C; color: #D9C9B0; font-family: inherit;

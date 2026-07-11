@@ -50,8 +50,8 @@ function initials(name: string) {
 }
 
 function getAvColor(name: string, role: string) {
-  if (role === "SCHOOL_ADMIN") return { bg: "linear-gradient(135deg,#C8A96A,#E5B93C)", text: "#1A0D00" };
-  if (role === "TEACHER") return { bg: "#0B0B0C", text: "#C8A96A" };
+  if (role === "SCHOOL_ADMIN") return { bg: "linear-gradient(135deg,#B8A082,#B8A082)", text: "#1A0D00" };
+  if (role === "TEACHER") return { bg: "#1A1A1A", text: "#B8A082" };
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
   return AV_COLORS[Math.abs(h) % AV_COLORS.length];
@@ -262,11 +262,11 @@ const css = `
   width: 100%; max-width: 380px;
   border-radius: 20px;
   overflow: hidden;
-  background: linear-gradient(165deg, #FFFDF8 0%, #F7F1E3 100%);
-  border: 1.5px solid #C0A063;
+  background: linear-gradient(165deg, #FFFBF5 0%, #F7F1E3 100%);
+  border: 1.5px solid #B8A082;
   box-shadow:
     0 22px 70px rgba(0,0,0,0.32),
-    inset 0 0 0 4px #EFE6D1,
+    inset 0 0 0 4px #E5E0D5,
     inset 0 0 0 5.5px rgba(194,160,89,0.4);
   animation: hpa-pop .22s cubic-bezier(.22,1,.36,1);
 }
@@ -277,7 +277,7 @@ const css = `
 
 .hpa-band {
   height: 70px;
-  background: linear-gradient(135deg, #171716 0%, #4B3718 100%);
+  background: linear-gradient(135deg, #32101A 0%, #4B3718 100%);
 }
 .hpa-x {
   position: absolute; top: 10px; inset-inline-end: 12px; z-index: 2;
@@ -300,7 +300,7 @@ const css = `
 .hpa-big-av {
   width: 78px !important; height: 78px !important; min-width: 78px;
   font-size: 26px !important;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.25), 0 0 0 4px #FFFDF8;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.25), 0 0 0 4px #FFFBF5;
 }
 .hpa-role-pill {
   margin-bottom: 4px;
@@ -308,12 +308,12 @@ const css = `
   padding: 5px 12px; border-radius: 999px;
 }
 .hpa-role-TEACHER      { background: rgba(20,80,140,0.12); color: #14528C; }
-.hpa-role-SCHOOL_ADMIN { background: rgba(229,185,60,0.20); color: #8E6C36; }
-.hpa-role-STUDENT      { background: rgba(122,30,30,0.10); color: #7A1E1E; }
-.hpa-role-OWNER        { background: rgba(8,11,12,0.10);   color: #1B1810; }
+.hpa-role-SCHOOL_ADMIN { background: rgba(184,160,130,0.20); color: #8F765B; }
+.hpa-role-STUDENT      { background: rgba(107,30,45,0.10); color: #6B1E2D; }
+.hpa-role-OWNER        { background: rgba(26,26,26,0.10);   color: #32101A; }
 
 .hpa-name-wrap { margin-top: 14px; }
-.hpa-name { font-size: 18px; font-weight: 900; color: #1B1810; line-height: 1.3; word-break: break-word; }
+.hpa-name { font-size: 18px; font-weight: 900; color: #32101A; line-height: 1.3; word-break: break-word; }
 .hpa-email { margin-top: 4px; color: #85745D; font-size: 12.5px; word-break: break-word; }
 
 .hpa-blocks { margin-top: 14px; display: grid; gap: 10px; }

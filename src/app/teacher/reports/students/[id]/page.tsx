@@ -122,7 +122,7 @@ const MAQSAD_LABELS: Record<string, Record<string, string>> = {
 };
 
 const MAQSAD_COLORS: Record<string,{color:string;bg:string}> = {
-  DEEN:{color:"#7A6020",bg:"rgba(229,185,60,0.10)"},
+  DEEN:{color:"#8F765B",bg:"rgba(184,160,130,0.10)"},
   AQL:{color:"#4A2080",bg:"rgba(74,32,128,0.08)"},
   NAFS:{color:"#1A5C3A",bg:"rgba(26,92,58,0.09)"},
   NASL:{color:"#7A4040",bg:"rgba(122,64,64,0.08)"},
@@ -133,16 +133,16 @@ const MAQSAD_COLORS: Record<string,{color:string;bg:string}> = {
 
 function ScoreRing({pct,size=52}:{pct:number|null;size?:number}){
   if(pct===null) return (
-    <div style={{width:size,height:size,borderRadius:"50%",background:"rgba(200,169,106,0.08)",border:"2px solid rgba(200,169,106,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <span style={{fontSize:11,color:"#9A8A70",fontWeight:700}}>—</span>
+    <div style={{width:size,height:size,borderRadius:"50%",background:"rgba(184,160,130,0.08)",border:"2px solid rgba(184,160,130,0.12)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <span style={{fontSize:11,color:"#796A62",fontWeight:700}}>—</span>
     </div>
   );
   const r=(size-8)/2,circ=2*Math.PI*r,offset=circ-(pct/100)*circ;
-  const color=pct>=75?"#2D8A4A":pct>=50?"#C8A96A":"#64748B";
+  const color=pct>=75?"#1B5E20":pct>=50?"#B8A082":"#64748B";
   return (
     <div style={{position:"relative",width:size,height:size,flexShrink:0}}>
       <svg width={size} height={size} style={{transform:"rotate(-90deg)"}}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(200,169,106,0.12)" strokeWidth="5"/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="5"/>
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="5"
           strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
           style={{transition:"stroke-dashoffset 0.9s ease"}}/>
@@ -165,13 +165,13 @@ function RadarChart({data}:{data:RadarPoint[]}){
   return (
     <svg viewBox="0 0 240 240" width="100%" style={{maxWidth:220}}>
       {[0.25,0.5,0.75,1].map(s=>(
-        <polygon key={s} points={gridPts(s)} fill="none" stroke="rgba(200,169,106,0.12)" strokeWidth="1"/>
+        <polygon key={s} points={gridPts(s)} fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="1"/>
       ))}
       {angles.map((a,i)=>(
         <line key={i} x1={cx} y1={cy} x2={cx+r*Math.cos(a)} y2={cy+r*Math.sin(a)}
-          stroke="rgba(200,169,106,0.1)" strokeWidth="1"/>
+          stroke="rgba(184,160,130,0.1)" strokeWidth="1"/>
       ))}
-      <polygon points={dataPts} fill="rgba(200,169,106,0.12)" stroke="#C8A96A" strokeWidth="2"/>
+      <polygon points={dataPts} fill="rgba(184,160,130,0.12)" stroke="#B8A082" strokeWidth="2"/>
       {data.map((d,i)=>{
         const x=cx+r*(d.average/100)*Math.cos(angles[i]);
         const y=cy+r*(d.average/100)*Math.sin(angles[i]);
@@ -179,8 +179,8 @@ function RadarChart({data}:{data:RadarPoint[]}){
         const ly=cy+(r+20)*Math.sin(angles[i]);
         return (
           <g key={i}>
-            <circle cx={x} cy={y} r="4" fill="#C8A96A"/>
-            <text x={lx} y={ly} fontSize="9" fill="#9A8A70" textAnchor="middle" dominantBaseline="middle">{d.name}</text>
+            <circle cx={x} cy={y} r="4" fill="#B8A082"/>
+            <text x={lx} y={ly} fontSize="9" fill="#796A62" textAnchor="middle" dominantBaseline="middle">{d.name}</text>
           </g>
         );
       })}
@@ -223,7 +223,7 @@ export default function StudentReportPage() {
 
   const {student}=data;
 
-  const scoreColor=(pct:number)=>pct>=75?"#2D8A4A":pct>=50?"#C8A96A":"#64748B";
+  const scoreColor=(pct:number)=>pct>=75?"#1B5E20":pct>=50?"#B8A082":"#64748B";
 
   return (
     <div className="sp-shell" dir={dir}>
@@ -438,7 +438,7 @@ export default function StudentReportPage() {
                         <div className="sp-assessed-right">
                           <div className="sp-assessed-ring">
                             <svg width="54" height="54" style={{transform:"rotate(-90deg)"}}>
-                              <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(200,169,106,0.12)" strokeWidth="5"/>
+                              <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="5"/>
                               <circle cx="27" cy="27" r="22" fill="none"
                                 stroke={scoreColor(a.total_score)} strokeWidth="5" strokeLinecap="round"
                                 strokeDasharray={2*Math.PI*22}
@@ -519,8 +519,8 @@ export default function StudentReportPage() {
                         <div className="sp-bar-track">
                           <div className="sp-bar-fill" style={{
                             width:`${item.pct}%`,
-                            background:item.pct>=75?"linear-gradient(90deg,#2D8A4A,#4AAD6A)":
-                              item.pct>=50?"linear-gradient(90deg,#C8A96A,#E5B93C)":
+                            background:item.pct>=75?"linear-gradient(90deg,#1B5E20,#4AAD6A)":
+                              item.pct>=50?"linear-gradient(90deg,#B8A082,#B8A082)":
                               "linear-gradient(90deg,#94A3B8,#64748B)",
                           }}/>
                         </div>
@@ -548,8 +548,8 @@ export default function StudentReportPage() {
                       <div className="sp-bar-track">
                         <div className="sp-bar-fill" style={{
                           width:`${s.avg_score??0}%`,
-                          background:(s.avg_score??0)>=75?"linear-gradient(90deg,#2D8A4A,#4AAD6A)":
-                            (s.avg_score??0)>=50?"linear-gradient(90deg,#C8A96A,#E5B93C)":
+                          background:(s.avg_score??0)>=75?"linear-gradient(90deg,#1B5E20,#4AAD6A)":
+                            (s.avg_score??0)>=50?"linear-gradient(90deg,#B8A082,#B8A082)":
                             "linear-gradient(90deg,#94A3B8,#64748B)",
                         }}/>
                       </div>
@@ -607,10 +607,10 @@ const css = `
 @keyframes sp-fillIn{from{width:0}}
 
 :root{
-  --sp-gold:#C8A96A; --sp-gold2:#E5B93C;
-  --sp-black:#0B0B0C; --sp-bg:#F6F4EE;
-  --sp-card:#FFFDF8; --sp-border:rgba(200,169,106,0.14);
-  --sp-text:#0B0B0C; --sp-text2:#3D3526; --sp-text3:#9A8A70;
+  --sp-gold:#B8A082; --sp-gold2:#B8A082;
+  --sp-black:#1A1A1A; --sp-bg:#EFEAE0;
+  --sp-card:#FFFBF5; --sp-border:rgba(184,160,130,0.14);
+  --sp-text:#1A1A1A; --sp-text2:#3D3526; --sp-text3:#796A62;
   --sp-font:'Cairo',sans-serif;
 }
 
@@ -619,43 +619,43 @@ const css = `
 
 /* Loading */
 .sp-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:60vh;color:var(--sp-text3);font-size:14px;font-weight:600}
-.sp-spinner{width:26px;height:26px;border-radius:50%;border:3px solid rgba(200,169,106,0.15);border-top-color:var(--sp-gold);animation:sp-spin 0.7s linear infinite}
+.sp-spinner{width:26px;height:26px;border-radius:50%;border:3px solid rgba(184,160,130,0.15);border-top-color:var(--sp-gold);animation:sp-spin 0.7s linear infinite}
 
 /* Hero */
-.sp-hero{background:var(--sp-black);position:relative;overflow:hidden;padding:22px 40px 28px;border-bottom:1px solid rgba(200,169,106,0.08)}
-.sp-hero-stripe{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#C8A96A 30%,#E5B93C 60%,transparent)}
-.sp-hero::after{content:'';position:absolute;bottom:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(200,169,106,0.07),transparent 70%);pointer-events:none}
+.sp-hero{background:var(--sp-black);position:relative;overflow:hidden;padding:22px 40px 28px;border-bottom:1px solid rgba(184,160,130,0.08)}
+.sp-hero-stripe{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#B8A082 30%,#B8A082 60%,transparent)}
+.sp-hero::after{content:'';position:absolute;bottom:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(184,160,130,0.07),transparent 70%);pointer-events:none}
 .sp-hero-inner{position:relative;z-index:1;display:flex;flex-direction:column;gap:20px}
 
 /* Back button */
 .sp-back{
-  display:inline-flex;align-items:center;gap:7px;background:rgba(200,169,106,0.08);
-  border:1px solid rgba(200,169,106,0.2);border-radius:8px;
+  display:inline-flex;align-items:center;gap:7px;background:rgba(184,160,130,0.08);
+  border:1px solid rgba(184,160,130,0.2);border-radius:8px;
   padding:7px 14px;font-family:var(--sp-font);font-size:12px;font-weight:700;
-  color:rgba(200,169,106,0.7);cursor:pointer;transition:all 0.15s;width:fit-content;
+  color:rgba(184,160,130,0.7);cursor:pointer;transition:all 0.15s;width:fit-content;
 }
-.sp-back:hover{background:rgba(200,169,106,0.14);color:var(--sp-gold)}
+.sp-back:hover{background:rgba(184,160,130,0.14);color:var(--sp-gold)}
 
 /* Profile */
 .sp-hero-profile{display:flex;align-items:center;gap:18px}
 .sp-hero-av{
   width:70px;height:70px;border-radius:22px;
-  background:linear-gradient(135deg,rgba(200,169,106,0.15),rgba(229,185,60,0.12));
-  border:2px solid rgba(200,169,106,0.25);
+  background:linear-gradient(135deg,rgba(184,160,130,0.15),rgba(184,160,130,0.12));
+  border:2px solid rgba(184,160,130,0.25);
   color:var(--sp-gold);display:flex;align-items:center;justify-content:center;
   font-size:28px;font-weight:900;flex-shrink:0;
 }
 .sp-hero-info{flex:1;min-width:0}
 .sp-hero-name{font-size:24px;font-weight:900;color:#FFFFFF;letter-spacing:-0.3px}
-.sp-hero-class{font-size:12px;color:rgba(200,169,106,0.55);font-weight:600;margin-top:3px;display:block}
+.sp-hero-class{font-size:12px;color:rgba(184,160,130,0.55);font-weight:600;margin-top:3px;display:block}
 
 /* Hero stats */
-.sp-hero-stats{display:flex;align-items:center;gap:0;background:rgba(255,255,255,0.04);border:1px solid rgba(200,169,106,0.12);border-radius:16px;padding:14px 20px;flex-wrap:wrap;gap:16px}
+.sp-hero-stats{display:flex;align-items:center;gap:0;background:rgba(255,255,255,0.04);border:1px solid rgba(184,160,130,0.12);border-radius:16px;padding:14px 20px;flex-wrap:wrap;gap:16px}
 .sp-hstat{display:flex;flex-direction:column;align-items:center;gap:2px}
 .sp-hstat-n{font-size:22px;font-weight:900;color:#FFFFFF;line-height:1}
-.sp-hstat-l{font-size:10px;color:rgba(200,169,106,0.55);font-weight:600;white-space:nowrap}
+.sp-hstat-l{font-size:10px;color:rgba(184,160,130,0.55);font-weight:600;white-space:nowrap}
 .sp-hstat.pending .sp-hstat-n{color:var(--sp-gold)}
-.sp-hstat-sep{width:1px;height:32px;background:rgba(200,169,106,0.15)}
+.sp-hstat-sep{width:1px;height:32px;background:rgba(184,160,130,0.15)}
 
 /* Body */
 .sp-body{display:flex;flex-direction:column;gap:22px;padding:24px 40px 80px}
@@ -670,7 +670,7 @@ const css = `
 }
 .sp-tab:hover{color:var(--sp-text2)}
 .sp-tab.active{color:var(--sp-black);border-bottom-color:var(--sp-gold);font-weight:800}
-.sp-tab-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(229,185,60,0.12);color:#A8863E;border:1px solid rgba(229,185,60,0.25)}
+.sp-tab-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(184,160,130,0.12);color:#8F765B;border:1px solid rgba(184,160,130,0.25)}
 
 /* Section */
 .sp-section{display:flex;flex-direction:column;gap:20px;animation:sp-fadeUp 0.25s ease}
@@ -679,7 +679,7 @@ const css = `
   font-size:10px;font-weight:800;letter-spacing:2px;
   text-transform:uppercase;color:var(--sp-text3);
 }
-.sp-section-hd svg{color:rgba(200,169,106,0.5);flex-shrink:0}
+.sp-section-hd svg{color:rgba(184,160,130,0.5);flex-shrink:0}
 
 /* Empty */
 .sp-empty-box{
@@ -687,14 +687,14 @@ const css = `
   padding:56px 32px;background:var(--sp-card);
   border:1.5px solid var(--sp-border);border-radius:20px;text-align:center;
 }
-.sp-empty-box svg{color:rgba(200,169,106,0.25)}
+.sp-empty-box svg{color:rgba(184,160,130,0.25)}
 .sp-empty-box p{font-size:14px;font-weight:600;color:var(--sp-text3)}
 
 /* ── TIMELINE ── */
 .sp-timeline{display:flex;flex-direction:column;gap:0}
 .sp-tl-row{display:flex;gap:14px}
 .sp-tl-aside{display:flex;flex-direction:column;align-items:center;padding-top:18px;flex-shrink:0}
-.sp-tl-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;background:#C8A96A;box-shadow:0 0 0 3px rgba(200,169,106,0.18)}
+.sp-tl-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;background:#B8A082;box-shadow:0 0 0 3px rgba(184,160,130,0.18)}
 .sp-tl-line{width:1.5px;flex:1;background:var(--sp-border);margin-top:5px;min-height:18px}
 .sp-tl-card{
   flex:1;margin-bottom:14px;
@@ -703,7 +703,7 @@ const css = `
   box-shadow:0 2px 8px rgba(0,0,0,0.04);
   transition:border-color 0.18s;
 }
-.sp-tl-card:hover{border-color:rgba(200,169,106,0.3)}
+.sp-tl-card:hover{border-color:rgba(184,160,130,0.3)}
 .sp-tl-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px 10px}
 .sp-tl-info{display:flex;flex-direction:column;gap:3px}
 .sp-tl-stage{font-size:10px;font-weight:700;color:var(--sp-text3);text-transform:uppercase;letter-spacing:0.8px}
@@ -714,31 +714,31 @@ const css = `
 .sp-tl-trait-row{padding:0 16px 12px}
 .sp-tl-done{
   display:inline-flex;align-items:center;gap:6px;
-  font-size:11.5px;font-weight:700;color:#2D8A4A;
+  font-size:11.5px;font-weight:700;color:#1B5E20;
   background:rgba(45,138,74,0.08);border-radius:7px;padding:4px 11px;
 }
 .sp-tl-eval-btn{
   display:inline-flex;align-items:center;gap:6px;
-  font-size:11.5px;font-weight:700;color:#A8863E;
-  background:rgba(229,185,60,0.1);border:1px solid rgba(229,185,60,0.25);
+  font-size:11.5px;font-weight:700;color:#8F765B;
+  background:rgba(184,160,130,0.1);border:1px solid rgba(184,160,130,0.25);
   border-radius:7px;padding:5px 13px;cursor:pointer;font-family:var(--sp-font);
   transition:all 0.15s;
 }
-.sp-tl-eval-btn:hover{background:rgba(229,185,60,0.18);border-color:rgba(229,185,60,0.4)}
+.sp-tl-eval-btn:hover{background:rgba(184,160,130,0.18);border-color:rgba(184,160,130,0.4)}
 
 /* ── PENDING BOX ── */
 .sp-pending-box{
-  background:rgba(229,185,60,0.04);border:1.5px solid rgba(229,185,60,0.18);
+  background:rgba(184,160,130,0.04);border:1.5px solid rgba(184,160,130,0.18);
   border-radius:18px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;
 }
 .sp-pending-hd{
   display:flex;align-items:center;gap:8px;
   font-size:10px;font-weight:800;letter-spacing:2px;
-  text-transform:uppercase;color:#A8863E;
+  text-transform:uppercase;color:#8F765B;
 }
 .sp-pending-count{
   font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px;
-  background:rgba(229,185,60,0.15);color:#A8863E;border:1px solid rgba(229,185,60,0.25);
+  background:rgba(184,160,130,0.15);color:#8F765B;border:1px solid rgba(184,160,130,0.25);
 }
 .sp-pending-list{display:flex;flex-direction:column;gap:8px}
 .sp-pending-row{
@@ -756,7 +756,7 @@ const css = `
   transition:all 0.18s;flex-shrink:0;
   box-shadow:0 3px 12px rgba(0,0,0,0.15);
 }
-.sp-eval-btn:hover{background:#1A1208;box-shadow:0 5px 18px rgba(0,0,0,0.22)}
+.sp-eval-btn:hover{background:#4A0E1C;box-shadow:0 5px 18px rgba(0,0,0,0.22)}
 
 /* ── RADAR ── */
 .sp-radar-card{
@@ -781,7 +781,7 @@ const css = `
 }
 .sp-assessed-hd{
   display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
-  padding:16px 18px;border-bottom:1px solid rgba(200,169,106,0.08);
+  padding:16px 18px;border-bottom:1px solid rgba(184,160,130,0.08);
 }
 .sp-assessed-info{display:flex;flex-direction:column;gap:3px}
 .sp-assessed-stage{font-size:10px;font-weight:700;color:var(--sp-text3);text-transform:uppercase;letter-spacing:0.8px}
@@ -794,20 +794,20 @@ const css = `
   background:none;font-family:var(--sp-font);font-size:12px;font-weight:700;
   color:var(--sp-text3);cursor:pointer;transition:all 0.15s;
 }
-.sp-reassess-btn:hover{border-color:rgba(200,169,106,0.35);color:var(--sp-black)}
+.sp-reassess-btn:hover{border-color:rgba(184,160,130,0.35);color:var(--sp-black)}
 
 /* Trait bars */
 .sp-trait-bars{display:flex;flex-direction:column;gap:8px;padding:14px 18px}
 .sp-trait-bar-row{display:flex;align-items:center;gap:8px}
 .sp-trait-mq{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;flex-shrink:0;white-space:nowrap}
 .sp-trait-name{font-size:12px;font-weight:600;color:var(--sp-text);width:110px;flex-shrink:0}
-.sp-trait-track{flex:1;height:6px;background:rgba(200,169,106,0.1);border-radius:99px;overflow:hidden}
+.sp-trait-track{flex:1;height:6px;background:rgba(184,160,130,0.1);border-radius:99px;overflow:hidden}
 .sp-trait-fill{height:100%;border-radius:99px;animation:sp-fillIn 0.8s ease both;transition:width 0.6s ease}
 .sp-trait-score{font-size:11.5px;font-weight:800;color:var(--sp-text2);width:26px;text-align:end;flex-shrink:0}
 .sp-note{
   margin:0 18px 14px;padding:10px 14px;
   font-size:12.5px;color:var(--sp-text3);font-style:italic;line-height:1.6;
-  background:#FAFAF8;border-radius:10px;border-left:2.5px solid rgba(200,169,106,0.3);
+  background:#FAFAF8;border-radius:10px;border-left:2.5px solid rgba(184,160,130,0.3);
 }
 
 /* ── STATS ── */
@@ -819,7 +819,7 @@ const css = `
 .sp-bar-list{display:flex;flex-direction:column;gap:12px}
 .sp-bar-row{display:flex;align-items:center;gap:10px}
 .sp-bar-label{font-size:12px;color:var(--sp-text2);font-weight:600;width:120px;flex-shrink:0}
-.sp-bar-track{flex:1;height:8px;background:rgba(200,169,106,0.1);border-radius:99px;overflow:hidden}
+.sp-bar-track{flex:1;height:8px;background:rgba(184,160,130,0.1);border-radius:99px;overflow:hidden}
 .sp-bar-fill{height:100%;border-radius:99px;animation:sp-fillIn 0.85s ease both;transition:width 0.6s ease}
 .sp-bar-pct{font-size:12px;font-weight:800;width:38px;text-align:end;flex-shrink:0}
 .sp-bar-frac{font-size:11px;color:var(--sp-text3);width:42px;flex-shrink:0}
@@ -827,7 +827,7 @@ const css = `
 /* ── OVERLAY ── */
 .sp-overlay{
   position:fixed;inset:0;z-index:200;
-  background:rgba(8,11,12,0.65);backdrop-filter:blur(8px);
+  background:rgba(26,26,26,0.65);backdrop-filter:blur(8px);
   display:flex;align-items:flex-end;justify-content:center;
   padding:20px;animation:sp-overlayIn 0.22s ease;
 }

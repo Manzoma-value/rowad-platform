@@ -245,39 +245,39 @@ function Styles() {
       @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
       .gs-page { font-family: 'Cairo', sans-serif; }
       .gs-hero { margin-bottom: 18px; }
-      .gs-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
-      .gs-sub { font-size: 13.5px; color: #5E5A52; max-width: 740px; line-height: 1.85; margin: 0; }
-      .gs-back { background: none; border: none; color: #6B4F1E; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; margin-bottom: 10px; padding: 0; }
-      .gs-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; padding: 14px; }
+      .gs-title { font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
+      .gs-sub { font-size: 13.5px; color: #655B53; max-width: 740px; line-height: 1.85; margin: 0; }
+      .gs-back { background: none; border: none; color: #6B1E2D; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; margin-bottom: 10px; padding: 0; }
+      .gs-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; padding: 14px; }
       .gs-search { width: 100%; padding: 10px 14px; font-size: 14px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px; background: #FFF; font-family: inherit; outline: none; }
-      .gs-search:focus { border-color: #B89B5E; }
+      .gs-search:focus { border-color: #B8A082; }
       .gs-filters { display: flex; gap: 8px; flex-wrap: wrap; }
-      .gs-toggle { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 7px 14px; border-radius: 99px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
-      .gs-toggle.active { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
-      .gs-empty { padding: 60px 20px; text-align: center; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; color: #8A8478; font-weight: 700; }
-      .gs-table-wrap { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; overflow: auto; }
+      .gs-toggle { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #6B1E2D; padding: 7px 14px; border-radius: 99px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+      .gs-toggle.active { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border-color: transparent; }
+      .gs-empty { padding: 60px 20px; text-align: center; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; color: #8C8274; font-weight: 700; }
+      .gs-table-wrap { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; overflow: auto; }
       .gs-table { width: 100%; border-collapse: collapse; min-width: 700px; }
-      .gs-table th { text-align: start; padding: 12px 14px; font-size: 11.5px; color: #6B4F1E; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid rgba(194,160,89,0.22); background: rgba(194,160,89,0.06); }
-      .gs-table td { padding: 14px; font-size: 13.5px; color: #2E2210; border-bottom: 1px solid rgba(8,11,12,0.06); vertical-align: middle; }
-      .gs-name { font-weight: 800; color: #1B1810; }
+      .gs-table th { text-align: start; padding: 12px 14px; font-size: 11.5px; color: #6B1E2D; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid rgba(194,160,89,0.22); background: rgba(194,160,89,0.06); }
+      .gs-table td { padding: 14px; font-size: 13.5px; color: #4A0E1C; border-bottom: 1px solid rgba(26,26,26,0.06); vertical-align: middle; }
+      .gs-name { font-weight: 800; color: #32101A; }
       .gs-email { font-size: 11.5px; color: #7A7468; margin-top: 2px; }
       .gs-role { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: 0.02em; }
       .gs-role--TEACHER { background: rgba(20,80,140,0.10); color: #14528C; }
-      .gs-role--STUDENT { background: rgba(122,30,30,0.10); color: #7A1E1E; }
-      .gs-num { font-weight: 800; color: #6B4F1E; }
+      .gs-role--STUDENT { background: rgba(107,30,45,0.10); color: #6B1E2D; }
+      .gs-num { font-weight: 800; color: #6B1E2D; }
       .gs-score { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
-      .gs-score--great { background: rgba(45,138,74,0.14); color: #1E5C2E; }
-      .gs-score--ok    { background: rgba(194,160,89,0.18); color: #6B4F1E; }
-      .gs-score--low   { background: rgba(139,26,26,0.10); color: #7A1E1E; }
+      .gs-score--great { background: rgba(45,138,74,0.14); color: #1B5E20; }
+      .gs-score--ok    { background: rgba(194,160,89,0.18); color: #6B1E2D; }
+      .gs-score--low   { background: rgba(139,26,26,0.10); color: #6B1E2D; }
       .gs-dash { color: #BFB6A8; }
-      .gs-open { background: linear-gradient(180deg,#D8B96A,#B89B5E); color: #1E1605; border: none; padding: 6px 14px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
-      .gs-history-list { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; overflow: hidden; }
-      .gs-history-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(8,11,12,0.06); font-size: 13.5px; }
+      .gs-open { background: linear-gradient(180deg,#D8B96A,#B8A082); color: #4A0E1C; border: none; padding: 6px 14px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+      .gs-history-list { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; overflow: hidden; }
+      .gs-history-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(26,26,26,0.06); font-size: 13.5px; }
       .gs-history-row:last-child { border-bottom: none; }
       .gs-stage-tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; }
       .gs-stage-tag.stage-STAGE1 { background: rgba(20,80,140,0.10); color: #14528C; }
-      .gs-stage-tag.stage-STAGE2 { background: rgba(122,30,30,0.10); color: #7A1E1E; }
-      .gs-history-score { font-weight: 800; color: #1B1810; font-variant-numeric: tabular-nums; }
+      .gs-stage-tag.stage-STAGE2 { background: rgba(107,30,45,0.10); color: #6B1E2D; }
+      .gs-history-score { font-weight: 800; color: #32101A; font-variant-numeric: tabular-nums; }
       .gs-history-when { color: #7A7468; font-size: 12px; }
     `}</style>
   );

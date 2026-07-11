@@ -91,20 +91,20 @@ function ScoreRing({ pct, size = 52 }: { pct: number | null; size?: number }) {
     return (
       <div style={{
         width: size, height: size, borderRadius: "50%",
-        background: "rgba(200,169,106,0.08)", border: "2px solid rgba(200,169,106,0.15)",
+        background: "rgba(184,160,130,0.08)", border: "2px solid rgba(184,160,130,0.15)",
         display: "flex", alignItems: "center", justifyContent: "center",
       }}>
-        <span style={{ fontSize: 11, color: "#9A8A70", fontWeight: 700 }}>—</span>
+        <span style={{ fontSize: 11, color: "#796A62", fontWeight: 700 }}>—</span>
       </div>
     );
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
-  const color = pct >= 75 ? "#2D8A4A" : pct >= 50 ? "#C8A96A" : "#64748B";
+  const color = pct >= 75 ? "#1B5E20" : pct >= 50 ? "#B8A082" : "#64748B";
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(200,169,106,0.12)" strokeWidth="5" />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="5" />
         <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="5"
           strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
           style={{ transition: "stroke-dashoffset 0.8s ease" }} />
@@ -239,7 +239,7 @@ export default function TeacherReportsPage() {
                   <div className="rp-stat rp-stat-score">
                     <ScoreRing pct={selectedClass.avg_score} size={56} />
                     <div className="rp-stat-body">
-                      <span className="rp-stat-num" style={{ fontSize: 13, color: "#9A8A70", fontWeight: 700 }}>{tr.avgLabel}</span>
+                      <span className="rp-stat-num" style={{ fontSize: 13, color: "#796A62", fontWeight: 700 }}>{tr.avgLabel}</span>
                     </div>
                   </div>
 
@@ -338,10 +338,10 @@ const css = `
 @keyframes rp-shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 
 :root{
-  --rp-gold:#C8A96A; --rp-gold2:#E5B93C;
-  --rp-black:#0B0B0C; --rp-bg:#F6F4EE;
-  --rp-card:#FFFDF8; --rp-border:rgba(200,169,106,0.14);
-  --rp-text:#0B0B0C; --rp-text2:#3D3526; --rp-text3:#9A8A70;
+  --rp-gold:#B8A082; --rp-gold2:#B8A082;
+  --rp-black:#1A1A1A; --rp-bg:#EFEAE0;
+  --rp-card:#FFFBF5; --rp-border:rgba(184,160,130,0.14);
+  --rp-text:#1A1A1A; --rp-text2:#3D3526; --rp-text3:#796A62;
   --rp-font:'Cairo',sans-serif;
 }
 
@@ -359,7 +359,7 @@ const css = `
 }
 .rp-spinner{
   width:26px;height:26px;border-radius:50%;
-  border:3px solid rgba(200,169,106,0.15);border-top-color:var(--rp-gold);
+  border:3px solid rgba(184,160,130,0.15);border-top-color:var(--rp-gold);
   animation:rp-spin 0.7s linear infinite;
 }
 
@@ -367,27 +367,27 @@ const css = `
 .rp-hero{
   background:var(--rp-black); position:relative; overflow:hidden;
   padding:28px 40px 24px;
-  border-bottom:1px solid rgba(200,169,106,0.08);
+  border-bottom:1px solid rgba(184,160,130,0.08);
 }
 .rp-hero-stripe{
   position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,#C8A96A 30%,#E5B93C 60%,transparent);
+  background:linear-gradient(90deg,transparent,#B8A082 30%,#B8A082 60%,transparent);
 }
 .rp-hero::after{
   content:'';position:absolute;bottom:-60px;right:-60px;
   width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(200,169,106,0.06),transparent 70%);
+  background:radial-gradient(circle,rgba(184,160,130,0.06),transparent 70%);
   pointer-events:none;
 }
 .rp-hero-body{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .rp-hero-left{display:flex;flex-direction:column;gap:6px}
-.rp-eyebrow{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(200,169,106,0.55)}
+.rp-eyebrow{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(184,160,130,0.55)}
 .rp-title{font-size:26px;font-weight:900;color:#FFFFFF;letter-spacing:-0.3px}
 .rp-pending-chip{
   display:flex;align-items:center;gap:7px;
   padding:8px 16px;border-radius:10px;
-  background:rgba(229,185,60,0.12);border:1px solid rgba(229,185,60,0.25);
-  color:#C8A96A;font-size:12.5px;font-weight:700;flex-shrink:0;
+  background:rgba(184,160,130,0.12);border:1px solid rgba(184,160,130,0.25);
+  color:#B8A082;font-size:12.5px;font-weight:700;flex-shrink:0;
 }
 
 /* Content */
@@ -402,7 +402,7 @@ const css = `
   padding:64px 32px;background:var(--rp-card);
   border:1px solid var(--rp-border);border-radius:20px;text-align:center;
 }
-.rp-empty svg{color:rgba(200,169,106,0.3)}
+.rp-empty svg{color:rgba(184,160,130,0.3)}
 .rp-empty p{font-size:14px;font-weight:600;color:var(--rp-text3)}
 
 /* Tabs */
@@ -414,14 +414,14 @@ const css = `
   cursor:pointer;font-family:var(--rp-font);font-size:13.5px;font-weight:600;
   color:var(--rp-text2);transition:all 0.18s;
 }
-.rp-tab:hover{border-color:rgba(200,169,106,0.3)}
+.rp-tab:hover{border-color:rgba(184,160,130,0.3)}
 .rp-tab.active{background:var(--rp-black);border-color:var(--rp-black);color:var(--rp-gold)}
 .rp-tab-badge{
   font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;
-  background:rgba(200,169,106,0.12);color:var(--rp-text3);
+  background:rgba(184,160,130,0.12);color:var(--rp-text3);
 }
-.rp-tab.active .rp-tab-badge{background:rgba(200,169,106,0.2);color:var(--rp-gold)}
-.rp-tab-star{font-size:10px;font-weight:800;color:#C8A96A;background:rgba(229,185,60,0.12);padding:2px 8px;border-radius:99px;border:1px solid rgba(229,185,60,0.25)}
+.rp-tab.active .rp-tab-badge{background:rgba(184,160,130,0.2);color:var(--rp-gold)}
+.rp-tab-star{font-size:10px;font-weight:800;color:#B8A082;background:rgba(184,160,130,0.12);padding:2px 8px;border-radius:99px;border:1px solid rgba(184,160,130,0.25)}
 
 /* Stats */
 .rp-stats{
@@ -435,23 +435,23 @@ const css = `
   box-shadow:0 2px 10px rgba(0,0,0,0.04);
   transition:all 0.2s ease;
 }
-.rp-stat:hover{border-color:rgba(200,169,106,0.28);box-shadow:0 4px 16px rgba(200,169,106,0.1)}
+.rp-stat:hover{border-color:rgba(184,160,130,0.28);box-shadow:0 4px 16px rgba(184,160,130,0.1)}
 .rp-stat::after{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,rgba(200,169,106,0.25),transparent);
+  background:linear-gradient(90deg,transparent,rgba(184,160,130,0.25),transparent);
 }
 .rp-stat-pending::after{background:linear-gradient(90deg,transparent,var(--rp-gold),transparent)}
 .rp-stat-score{gap:12px}
 .rp-stat-icon{
   width:40px;height:40px;border-radius:12px;flex-shrink:0;
-  background:#F0EDE6;border:1px solid rgba(200,169,106,0.2);
+  background:#F0EDE6;border:1px solid rgba(184,160,130,0.2);
   display:flex;align-items:center;justify-content:center;
   color:var(--rp-text3);
 }
-.rp-stat-icon.gold{background:rgba(229,185,60,0.1);border-color:rgba(229,185,60,0.25);color:var(--rp-gold)}
+.rp-stat-icon.gold{background:rgba(184,160,130,0.1);border-color:rgba(184,160,130,0.25);color:var(--rp-gold)}
 .rp-stat-body{display:flex;flex-direction:column;gap:2px}
 .rp-stat-num{font-size:26px;font-weight:900;color:var(--rp-black);line-height:1;letter-spacing:-0.5px}
-.rp-stat-num.gold{color:#A8863E}
+.rp-stat-num.gold{color:#8F765B}
 .rp-stat-label{font-size:11.5px;color:var(--rp-text3);font-weight:600}
 
 /* Section label */
@@ -488,9 +488,9 @@ const css = `
   transform:scaleX(0);transition:transform 0.25s ease;transform-origin:center;
 }
 .rp-card:hover{
-  border-color:rgba(200,169,106,0.35);
+  border-color:rgba(184,160,130,0.35);
   transform:translateY(-4px);
-  box-shadow:0 14px 36px rgba(0,0,0,0.1),0 4px 14px rgba(200,169,106,0.1);
+  box-shadow:0 14px 36px rgba(0,0,0,0.1),0 4px 14px rgba(184,160,130,0.1);
 }
 .rp-card:hover::before{transform:scaleX(1)}
 
@@ -498,8 +498,8 @@ const css = `
 .rp-card-star{
   position:absolute;top:12px;left:12px;
   display:flex;align-items:center;gap:4px;
-  font-size:10px;font-weight:800;color:#A8863E;
-  background:rgba(229,185,60,0.12);border:1px solid rgba(229,185,60,0.28);
+  font-size:10px;font-weight:800;color:#8F765B;
+  background:rgba(184,160,130,0.12);border:1px solid rgba(184,160,130,0.28);
   border-radius:99px;padding:3px 8px;
 }
 
@@ -522,14 +522,14 @@ const css = `
 
 /* Trait bar */
 .rp-card-trait-row{width:100%;display:flex;align-items:center;gap:8px}
-.rp-trait-bar{flex:1;height:4px;background:rgba(200,169,106,0.1);border-radius:99px;overflow:hidden}
+.rp-trait-bar{flex:1;height:4px;background:rgba(184,160,130,0.1);border-radius:99px;overflow:hidden}
 .rp-trait-fill{height:100%;background:linear-gradient(90deg,var(--rp-gold),var(--rp-gold2));border-radius:99px;transition:width 0.8s ease}
 .rp-trait-label{font-size:10px;font-weight:700;color:var(--rp-text3);white-space:nowrap;flex-shrink:0}
-.rp-trait-none{font-size:10px;color:rgba(200,169,106,0.3);width:100%;text-align:center}
+.rp-trait-none{font-size:10px;color:rgba(184,160,130,0.3);width:100%;text-align:center}
 
 /* Arrow */
 .rp-card-arrow{
-  color:rgba(200,169,106,0.35);transition:color 0.15s,transform 0.15s;margin-top:2px;
+  color:rgba(184,160,130,0.35);transition:color 0.15s,transform 0.15s;margin-top:2px;
 }
 .rp-card:hover .rp-card-arrow{color:var(--rp-gold);transform:translateX(3px)}
 

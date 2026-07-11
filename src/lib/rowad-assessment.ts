@@ -11,11 +11,11 @@ export const TRAIT_KEYS: readonly TraitKey[] = [
 ] as const;
 
 export const TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
-  { key: "lineage",   ar: "النسل",     sq: "Pasardhësia", color: "#7A1E1E" },
-  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",    color: "#C79A3D" },
-  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",    color: "#6B7D4C" },
-  { key: "zeal",      ar: "الحمية",    sq: "Zelli",       color: "#3F6B78" },
-  { key: "distinct",  ar: "التمييز",  sq: "Dallimi",     color: "#7A4F8E" },
+  { key: "lineage",   ar: "النسل",     sq: "Pasardhësia", color: "#6B1E2D" },
+  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",    color: "#B8A082" },
+  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",    color: "#8F765B" },
+  { key: "zeal",      ar: "الحمية",    sq: "Zelli",       color: "#4A0E1C" },
+  { key: "distinct",  ar: "التمييز",  sq: "Dallimi",     color: "#A55A68" },
 ];
 
 export const STATEMENTS = {

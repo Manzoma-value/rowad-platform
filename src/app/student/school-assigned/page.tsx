@@ -81,12 +81,12 @@ export default function StudentSchoolAssignedPage() {
 
   const scoreColor =
     pct === null
-      ? "#C8A96A"
+      ? "#B8A082"
       : pct >= 70
         ? "#2D7A4F"
         : pct >= 50
-          ? "#A8863E"
-          : "#C0392B";
+          ? "#8F765B"
+          : "#6B1E2D";
 
   if (loading)
     return (
@@ -117,7 +117,7 @@ export default function StudentSchoolAssignedPage() {
                 height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#C8A96A"
+                stroke="#B8A082"
                 strokeWidth="2.2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -240,8 +240,8 @@ const baseStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-    --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7; --border: #E8D9B8;
+    --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+    --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7; --border: #E8D9B8;
   }
   .shell {
     min-height: 100vh; background: var(--gold-pale);
@@ -265,13 +265,13 @@ const pageStyles = `
     display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center;
   }
   .banner-seal { position: relative; width: 82px; height: 82px; display: flex; align-items: center; justify-content: center; }
-  .seal-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(200,169,106,0.3); animation: rp 2.4s ease infinite; }
+  .seal-ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(184,160,130,0.3); animation: rp 2.4s ease infinite; }
   @keyframes rp { 0%,100%{transform:scale(1);opacity:0.4} 50%{transform:scale(1.14);opacity:1} }
-  .seal-ring2 { position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed rgba(200,169,106,0.2); animation: spin 8s linear infinite; }
+  .seal-ring2 { position: absolute; inset: 8px; border-radius: 50%; border: 1px dashed rgba(184,160,130,0.2); animation: spin 8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .seal-core { width: 62px; height: 62px; border-radius: 50%; background: rgba(200,169,106,0.12); border: 1.5px solid rgba(200,169,106,0.35); display: flex; align-items: center; justify-content: center; }
+  .seal-core { width: 62px; height: 62px; border-radius: 50%; background: rgba(184,160,130,0.12); border: 1.5px solid rgba(184,160,130,0.35); display: flex; align-items: center; justify-content: center; }
   .banner-text { display: flex; flex-direction: column; gap: 5px; }
-  .banner-eyebrow { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase; background: rgba(200,169,106,0.15); border: 1px solid rgba(200,169,106,0.25); border-radius: 99px; padding: 3px 14px; width: fit-content; margin: 0 auto; }
+  .banner-eyebrow { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase; background: rgba(184,160,130,0.15); border: 1px solid rgba(184,160,130,0.25); border-radius: 99px; padding: 3px 14px; width: fit-content; margin: 0 auto; }
   .banner-title { font-size: 22px; font-weight: 800; color: #fff; }
   .banner-sub { font-size: 13px; color: rgba(255,255,255,0.55); }
 
@@ -288,7 +288,7 @@ const pageStyles = `
   }
   .school-icon-wrap {
     width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
-    background: rgba(200,169,106,0.15); border: 1px solid rgba(200,169,106,0.3);
+    background: rgba(184,160,130,0.15); border: 1px solid rgba(184,160,130,0.3);
     display: flex; align-items: center; justify-content: center; color: var(--gold-dark);
   }
   .school-info { display: flex; flex-direction: column; gap: 3px; }

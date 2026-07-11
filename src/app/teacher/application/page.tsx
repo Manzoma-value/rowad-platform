@@ -517,13 +517,13 @@ const ta_styles = `
     min-height: 100vh; padding: 36px 16px 60px;
     font-family: 'Cairo', 'Tajawal', sans-serif;
     background:
-      radial-gradient(ellipse at 50% 8%, #F8F1E0, transparent 45%),
-      linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%);
+      radial-gradient(ellipse at 50% 8%, #F7F3EB, transparent 45%),
+      linear-gradient(160deg,#E5E0D5 0%,#E5E0D5 100%);
   }
   .ta-shell {
     max-width: 900px; margin: 0 auto;
     background: linear-gradient(160deg,#FDF8E9,#F4E9CD);
-    border: 1.5px solid #C0A063; border-radius: 22px;
+    border: 1.5px solid #B8A082; border-radius: 22px;
     padding: 36px clamp(20px, 4vw, 42px);
     box-shadow: 0 18px 60px rgba(150,115,50,0.16),
       inset 0 0 0 5px #F2E6CC, inset 0 0 0 6.5px rgba(194,160,89,0.42);
@@ -540,12 +540,12 @@ const ta_styles = `
     margin: 0 0 10px; line-height: 1.35;
   }
   .ta-hero-sub {
-    font-size: 13.5px; color: #7A6440; line-height: 1.9; margin: 0;
+    font-size: 13.5px; color: #796A62; line-height: 1.9; margin: 0;
     max-width: 640px; margin-inline: auto;
   }
 
   .ta-error {
-    background: rgba(139,26,26,.10); color: #7A1E1E;
+    background: rgba(139,26,26,.10); color: #6B1E2D;
     border: 1px solid rgba(139,26,26,.28);
     border-radius: 12px; padding: 11px 16px; text-align: center;
     font-weight: 700; font-size: 13.5px; margin-bottom: 18px;
@@ -560,7 +560,7 @@ const ta_styles = `
     background: linear-gradient(90deg, transparent, rgba(194,160,89,0.45), transparent);
   }
   .ta-section-title {
-    font-size: 15px; font-weight: 800; color: #6B4F1E;
+    font-size: 15px; font-weight: 800; color: #6B1E2D;
     margin: 0; letter-spacing: 0.02em;
   }
   .ta-section-body {
@@ -582,14 +582,14 @@ const ta_styles = `
 
   .ta-input {
     width: 100%; padding: 10px 13px; font-size: 14px;
-    font-family: inherit; color: #2E2210;
+    font-family: inherit; color: #4A0E1C;
     background: #FFFCEF; border: 1.5px solid rgba(194,160,89,0.4);
     border-radius: 11px; outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .ta-input:focus { border-color: #B89B5E; box-shadow: 0 0 0 3px rgba(184,155,94,0.18); }
+  .ta-input:focus { border-color: #B8A082; box-shadow: 0 0 0 3px rgba(184,155,94,0.18); }
   .ta-textarea { resize: vertical; min-height: 80px; }
-  .ta-hint { font-size: 12.5px; color: #7A6440; margin: 0 0 12px; line-height: 1.7; }
+  .ta-hint { font-size: 12.5px; color: #796A62; margin: 0 0 12px; line-height: 1.7; }
 
   .ta-chk-grid {
     display: grid; gap: 9px;
@@ -603,7 +603,7 @@ const ta_styles = `
     font-size: 13px; font-weight: 600; transition: all 0.15s;
   }
   .ta-chk:hover  { border-color: rgba(184,155,94,0.55); background: #FFF7DD; }
-  .ta-chk.on     { border-color: #B89B5E; background: linear-gradient(135deg, rgba(229,185,60,0.18), rgba(194,160,89,0.10)); color: #3B2A0E; }
+  .ta-chk.on     { border-color: #B8A082; background: linear-gradient(135deg, rgba(184,160,130,0.18), rgba(194,160,89,0.10)); color: #3B2A0E; }
   .ta-chk-box {
     width: 18px; height: 18px; flex-shrink: 0;
     border-radius: 5px; border: 1.5px solid rgba(184,155,94,0.55);
@@ -611,7 +611,7 @@ const ta_styles = `
     background: #FFFEF6;
   }
   .ta-chk-box.radio { border-radius: 50%; }
-  .ta-chk.on .ta-chk-box { background: #B89B5E; border-color: #B89B5E; }
+  .ta-chk.on .ta-chk-box { background: #B8A082; border-color: #B8A082; }
   .ta-chk-dot {
     width: 8px; height: 8px; border-radius: 50%; background: #FFF6D8;
   }
@@ -626,19 +626,19 @@ const ta_styles = `
     transition: all 0.15s;
   }
   .ta-radio:hover { border-color: rgba(184,155,94,0.55); }
-  .ta-radio.on    { border-color: #B89B5E; background: linear-gradient(135deg, rgba(229,185,60,0.18), rgba(194,160,89,0.08)); color: #3B2A0E; }
+  .ta-radio.on    { border-color: #B8A082; background: linear-gradient(135deg, rgba(184,160,130,0.18), rgba(194,160,89,0.08)); color: #3B2A0E; }
   .ta-radio-dot {
     width: 14px; height: 14px; border-radius: 50%;
     border: 1.5px solid rgba(184,155,94,0.55); background: #FFFEF6;
   }
-  .ta-radio.on .ta-radio-dot { background: #B89B5E; border-color: #B89B5E; box-shadow: inset 0 0 0 3px #FFF6D8; }
+  .ta-radio.on .ta-radio-dot { background: #B8A082; border-color: #B8A082; box-shadow: inset 0 0 0 3px #FFF6D8; }
 
   .ta-lang-list { display: flex; flex-direction: column; gap: 10px; }
   .ta-lang-row {
     border: 1.5px solid rgba(194,160,89,0.30); border-radius: 12px;
     background: #FFFCEF; transition: all 0.15s;
   }
-  .ta-lang-row.on { border-color: #B89B5E; background: linear-gradient(135deg, rgba(229,185,60,0.10), rgba(194,160,89,0.04)); }
+  .ta-lang-row.on { border-color: #B8A082; background: linear-gradient(135deg, rgba(184,160,130,0.10), rgba(194,160,89,0.04)); }
   .ta-lang-toggle {
     width: 100%; display: flex; align-items: center; gap: 11px;
     padding: 11px 14px; background: none; border: none;
@@ -651,24 +651,24 @@ const ta_styles = `
     background: #FFFEF6; display: flex; align-items: center; justify-content: center;
     font-weight: 900; color: #FFFEF6;
   }
-  .ta-lang-row.on .ta-lang-check { background: #B89B5E; border-color: #B89B5E; }
+  .ta-lang-row.on .ta-lang-check { background: #B8A082; border-color: #B8A082; }
   .ta-lang-levels {
     display: flex; flex-wrap: wrap; gap: 7px; padding: 0 14px 14px;
   }
   .ta-lang-lvl {
     padding: 6px 13px; border-radius: 99px; font-size: 12px; font-weight: 700;
     background: #FFF; border: 1px solid rgba(194,160,89,0.30);
-    color: #6B4F1E; cursor: pointer; font-family: inherit;
+    color: #6B1E2D; cursor: pointer; font-family: inherit;
     transition: all 0.15s;
   }
-  .ta-lang-lvl:hover { border-color: #B89B5E; color: #3B2A0E; }
-  .ta-lang-lvl.on    { background: #B89B5E; color: #FFF8E2; border-color: #B89B5E; }
+  .ta-lang-lvl:hover { border-color: #B8A082; color: #3B2A0E; }
+  .ta-lang-lvl.on    { background: #B8A082; color: #FFF8E2; border-color: #B8A082; }
 
   .ta-submit-row { display: flex; justify-content: center; margin-top: 14px; }
   .ta-submit-btn {
     padding: 14px 44px; font-size: 15px; font-weight: 900;
-    background: linear-gradient(180deg,#D8B96A,#B89B5E);
-    color: #1E1605; border: none; border-radius: 14px;
+    background: linear-gradient(180deg,#D8B96A,#B8A082);
+    color: #4A0E1C; border: none; border-radius: 14px;
     cursor: pointer; font-family: inherit; letter-spacing: 0.02em;
     box-shadow: 0 8px 22px rgba(184,155,94,0.32),
       inset 0 1.5px 0 rgba(255,250,235,0.4);

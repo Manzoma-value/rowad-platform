@@ -37,37 +37,37 @@ function Mandala({ size = 200, className = "" }: { size?: number; className?: st
   return (
     <div className={className} style={{ width: size, height: size, flexShrink: 0 }}>
       <svg viewBox="0 0 200 200" fill="none" width="100%" height="100%">
-        <circle cx="100" cy="100" r="92" stroke="#C8A96A" strokeWidth="0.3" opacity="0.08" />
-        <circle cx="100" cy="100" r="86" stroke="#C8A96A" strokeWidth="0.3" opacity="0.06" />
+        <circle cx="100" cy="100" r="92" stroke="#B8A082" strokeWidth="0.3" opacity="0.08" />
+        <circle cx="100" cy="100" r="86" stroke="#B8A082" strokeWidth="0.3" opacity="0.06" />
         {PETAL_CIRCLES.map((p, i) => (
-          <circle key={i} cx={p.cx} cy={p.cy} r="52" stroke="#C8A96A" strokeWidth="0.5" opacity="0.13" fill="none" />
+          <circle key={i} cx={p.cx} cy={p.cy} r="52" stroke="#B8A082" strokeWidth="0.5" opacity="0.13" fill="none" />
         ))}
-        <circle cx="100" cy="100" r="74" stroke="#C8A96A" strokeWidth="0.4" opacity="0.16" strokeDasharray="3 8" />
-        <circle cx="100" cy="100" r="62" stroke="#E5B93C" strokeWidth="0.35" opacity="0.13" />
-        <circle cx="100" cy="100" r="50" stroke="#C8A96A" strokeWidth="0.5" opacity="0.18" strokeDasharray="5 5" />
-        <circle cx="100" cy="100" r="38" stroke="#C8A96A" strokeWidth="0.35" opacity="0.15" />
-        <circle cx="100" cy="100" r="28" stroke="#E5B93C" strokeWidth="0.45" opacity="0.22" strokeDasharray="3 4" />
-        <circle cx="100" cy="100" r="18" stroke="#C8A96A" strokeWidth="0.35" opacity="0.24" />
-        <circle cx="100" cy="100" r="9" stroke="#E5B93C" strokeWidth="0.55" opacity="0.30" />
+        <circle cx="100" cy="100" r="74" stroke="#B8A082" strokeWidth="0.4" opacity="0.16" strokeDasharray="3 8" />
+        <circle cx="100" cy="100" r="62" stroke="#B8A082" strokeWidth="0.35" opacity="0.13" />
+        <circle cx="100" cy="100" r="50" stroke="#B8A082" strokeWidth="0.5" opacity="0.18" strokeDasharray="5 5" />
+        <circle cx="100" cy="100" r="38" stroke="#B8A082" strokeWidth="0.35" opacity="0.15" />
+        <circle cx="100" cy="100" r="28" stroke="#B8A082" strokeWidth="0.45" opacity="0.22" strokeDasharray="3 4" />
+        <circle cx="100" cy="100" r="18" stroke="#B8A082" strokeWidth="0.35" opacity="0.24" />
+        <circle cx="100" cy="100" r="9" stroke="#B8A082" strokeWidth="0.55" opacity="0.30" />
         {STAR_LINES.map((l, i) => (
-          <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#C8A96A" strokeWidth="0.35" opacity="0.16" />
+          <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#B8A082" strokeWidth="0.35" opacity="0.16" />
         ))}
         {INNER_PETALS.map((p, i) => (
-          <circle key={i} cx={p.cx} cy={p.cy} r="24" stroke="#C8A96A" strokeWidth="0.45" opacity="0.20" fill="none" />
+          <circle key={i} cx={p.cx} cy={p.cy} r="24" stroke="#B8A082" strokeWidth="0.45" opacity="0.20" fill="none" />
         ))}
-        <line x1="100" y1="73" x2="100" y2="127" stroke="#E5B93C" strokeWidth="0.6" opacity="0.24" />
-        <line x1="76" y1="87" x2="124" y2="113" stroke="#E5B93C" strokeWidth="0.6" opacity="0.24" />
-        <line x1="124" y1="87" x2="76" y2="113" stroke="#E5B93C" strokeWidth="0.6" opacity="0.24" />
-        <circle cx="100" cy="100" r="7" fill="none" stroke="#E5B93C" strokeWidth="0.7" opacity="0.45" />
-        <circle cx="100" cy="100" r="4" fill="none" stroke="#C8A96A" strokeWidth="0.45" opacity="0.55" />
-        <circle cx="100" cy="100" r="2" fill="#E5B93C" opacity="0.7" />
+        <line x1="100" y1="73" x2="100" y2="127" stroke="#B8A082" strokeWidth="0.6" opacity="0.24" />
+        <line x1="76" y1="87" x2="124" y2="113" stroke="#B8A082" strokeWidth="0.6" opacity="0.24" />
+        <line x1="124" y1="87" x2="76" y2="113" stroke="#B8A082" strokeWidth="0.6" opacity="0.24" />
+        <circle cx="100" cy="100" r="7" fill="none" stroke="#B8A082" strokeWidth="0.7" opacity="0.45" />
+        <circle cx="100" cy="100" r="4" fill="none" stroke="#B8A082" strokeWidth="0.45" opacity="0.55" />
+        <circle cx="100" cy="100" r="2" fill="#B8A082" opacity="0.7" />
       </svg>
     </div>
   );
 }
 
 function Rule({ dim = false }: { dim?: boolean }) {
-  const c = dim ? "rgba(200,169,106,0.35)" : "rgba(200,169,106,0.5)";
+  const c = dim ? "rgba(184,160,130,0.35)" : "rgba(184,160,130,0.5)";
   return (
     <div className="sp-rule">
       <div className="sp-rule-line" style={{ background: `linear-gradient(90deg, transparent, ${c}, transparent)` }} />
@@ -290,7 +290,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
               <div className="sp-panel-footer">
                 <p className="sp-panel-quote">
                   {L.poweredBy}{" "}
-                  <span style={{ color: "rgba(200,169,106,0.5)", fontWeight: 700 }}>بناء الأهلية</span>
+                  <span style={{ color: "rgba(184,160,130,0.5)", fontWeight: 700 }}>بناء الأهلية</span>
                 </p>
               </div>
             </div>
@@ -338,7 +338,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
             <div className="sp-panel-footer">
               <p className="sp-panel-quote">
                 {L.poweredBy}{" "}
-                <span style={{ color: "rgba(200,169,106,0.5)", fontWeight: 700 }}>بناء الأهلية</span>
+                <span style={{ color: "rgba(184,160,130,0.5)", fontWeight: 700 }}>بناء الأهلية</span>
               </p>
             </div>
           </div>
@@ -540,8 +540,8 @@ const css = `
   @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
   @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
   :root {
-    --gold: #C8A96A; --gold2: #E5B93C; --black: #0B0B0C;
-    --off-white: #F5F3EE; --cream: #EDE8DF;
+    --gold: #B8A082; --gold2: #D9C9B0; --black: #4A0E1C;
+    --off-white: #F7F3EB; --cream: #EDE8DF;
     --text: #1a1610; --text2: #4a3f2e; --text3: #8a7a5a; --border: #DDD5C4;
   }
   html, body { height: 100%; }
@@ -552,13 +552,13 @@ const css = `
   }
   .sp-panel::before {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 50% 20%, rgba(200,169,106,0.10) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 80%, rgba(229,185,60,0.06) 0%, transparent 50%);
+    background: radial-gradient(ellipse at 50% 20%, rgba(184,160,130,0.10) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(184,160,130,0.06) 0%, transparent 50%);
     pointer-events: none;
   }
   .sp-corner { position: absolute; width: 80px; height: 80px; pointer-events: none; }
-  .sp-corner-tl { top: 0; right: 0; border-top: 1px solid rgba(200,169,106,0.25); border-right: 1px solid rgba(200,169,106,0.25); }
-  .sp-corner-br { bottom: 0; left: 0; border-bottom: 1px solid rgba(200,169,106,0.25); border-left: 1px solid rgba(200,169,106,0.25); }
+  .sp-corner-tl { top: 0; right: 0; border-top: 1px solid rgba(184,160,130,0.25); border-right: 1px solid rgba(184,160,130,0.25); }
+  .sp-corner-br { bottom: 0; left: 0; border-bottom: 1px solid rgba(184,160,130,0.25); border-left: 1px solid rgba(184,160,130,0.25); }
   .sp-panel-inner {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 60px 40px; position: sticky; top: 0; height: 100vh; z-index: 1; gap: 22px;
@@ -567,34 +567,34 @@ const css = `
   .sp-brand-text { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; width: 100%; }
   .sp-school-badge {
     width: 48px; height: 48px; border-radius: 12px;
-    background: linear-gradient(135deg, #C8A96A 0%, #E5B93C 100%);
+    background: linear-gradient(135deg, #B8A082 0%, #B8A082 100%);
     display: flex; align-items: center; justify-content: center;
     font-size: 22px; font-weight: 900; color: var(--black); margin: 4px 0;
-    box-shadow: 0 4px 16px rgba(200,169,106,0.25);
+    box-shadow: 0 4px 16px rgba(184,160,130,0.25);
   }
   .sp-brand-name { font-size: 28px; font-weight: 900; color: var(--gold); letter-spacing: -0.5px; line-height: 1.15; }
-  .sp-brand-desc { font-size: 12px; color: rgba(200,169,106,0.45); font-weight: 500; max-width: 280px; line-height: 1.6; }
+  .sp-brand-desc { font-size: 12px; color: rgba(184,160,130,0.45); font-weight: 500; max-width: 280px; line-height: 1.6; }
   .sp-panel-footer { position: absolute; bottom: 32px; left: 0; right: 0; text-align: center; }
-  .sp-panel-quote { font-size: 11px; color: rgba(200,169,106,0.22); font-weight: 400; }
+  .sp-panel-quote { font-size: 11px; color: rgba(184,160,130,0.22); font-weight: 400; }
   .sp-rule { display: flex; align-items: center; width: 100%; }
   .sp-rule-line { flex: 1; height: 1px; }
   .sp-rule-diamond { width: 5px; height: 5px; transform: rotate(45deg); margin: 0 10px; flex-shrink: 0; }
   .sp-lang-toggle {
     display: flex; align-items: center;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(200,169,106,0.2); border-radius: 10px; padding: 3px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(184,160,130,0.2); border-radius: 10px; padding: 3px;
   }
   .sp-lang-btn {
     display: flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 7px; border: none;
-    background: transparent; color: rgba(200,169,106,0.4); font-size: 12px; font-weight: 700;
+    background: transparent; color: rgba(184,160,130,0.4); font-size: 12px; font-weight: 700;
     font-family: 'Cairo', sans-serif; cursor: pointer; transition: background 0.18s, color 0.18s; white-space: nowrap;
   }
-  .sp-lang-btn:hover:not(.sp-lang-btn--active) { color: rgba(200,169,106,0.7); background: rgba(200,169,106,0.07); }
-  .sp-lang-btn--active { background: rgba(200,169,106,0.16); color: var(--gold); }
+  .sp-lang-btn:hover:not(.sp-lang-btn--active) { color: rgba(184,160,130,0.7); background: rgba(184,160,130,0.07); }
+  .sp-lang-btn--active { background: rgba(184,160,130,0.16); color: var(--gold); }
   .sp-lang-flag { font-size: 15px; line-height: 1; }
   .sp-lang-name { font-size: 11.5px; }
-  .sp-lang-sep { width: 1px; height: 18px; background: rgba(200,169,106,0.15); flex-shrink: 0; }
+  .sp-lang-sep { width: 1px; height: 18px; background: rgba(184,160,130,0.15); flex-shrink: 0; }
   .sp-lang-toggle-mobile { display: none; justify-content: center; margin-bottom: 20px; }
-  .sp-lang-toggle-mobile .sp-lang-toggle { background: rgba(11,11,12,0.04); border-color: rgba(200,169,106,0.3); }
+  .sp-lang-toggle-mobile .sp-lang-toggle { background: rgba(11,11,12,0.04); border-color: rgba(184,160,130,0.3); }
   .sp-lang-toggle-mobile .sp-lang-btn { color: var(--text3); }
   .sp-lang-toggle-mobile .sp-lang-btn--active { background: var(--black); color: var(--gold); }
   .sp-lang-toggle-mobile .sp-lang-sep { background: var(--border); }
@@ -617,13 +617,13 @@ const css = `
   }
   .sp-avatar-wrap {
     width: 72px; height: 72px; border-radius: 50%;
-    background: rgba(200,169,106,0.08); border: 2px solid rgba(200,169,106,0.2);
+    background: rgba(184,160,130,0.08); border: 2px solid rgba(184,160,130,0.2);
     display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
     position: relative; overflow: hidden; transition: border-color 0.18s;
   }
-  .sp-avatar-wrap:hover { border-color: rgba(200,169,106,0.5); }
+  .sp-avatar-wrap:hover { border-color: rgba(184,160,130,0.5); }
   .sp-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-  .sp-avatar-placeholder { color: rgba(200,169,106,0.4); display: flex; align-items: center; justify-content: center; }
+  .sp-avatar-placeholder { color: rgba(184,160,130,0.4); display: flex; align-items: center; justify-content: center; }
   .sp-avatar-overlay {
     position: absolute; inset: 0; background: rgba(0,0,0,0.45);
     display: flex; align-items: center; justify-content: center;
@@ -649,7 +649,7 @@ const css = `
   }
   .sp-label-icon {
     display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
-    background: rgba(200,169,106,0.12); border-radius: 5px; color: var(--gold); flex-shrink: 0;
+    background: rgba(184,160,130,0.12); border-radius: 5px; color: var(--gold); flex-shrink: 0;
   }
   .sp-input {
     width: 100%; padding: 12px 16px; background: #FFFFFF;
@@ -658,7 +658,7 @@ const css = `
     transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
     box-shadow: 0 1px 3px rgba(11,11,12,0.04);
   }
-  .sp-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,169,106,0.12); background: #FFFDF9; }
+  .sp-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(184,160,130,0.12); background: #FFFDF9; }
   .sp-input::placeholder { color: #bbb0a0; }
   .sp-input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--cream); }
   .sp-password-wrap { position: relative; }
@@ -670,14 +670,14 @@ const css = `
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: background 0.18s, color 0.18s, opacity 0.18s;
   }
-  .sp-eye-btn:hover:not(:disabled) { background: rgba(200,169,106,0.10); color: var(--text2); }
+  .sp-eye-btn:hover:not(:disabled) { background: rgba(184,160,130,0.10); color: var(--text2); }
   .sp-eye-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .sp-input--error {
-    border-color: #c0392b !important;
+    border-color: #6B1E2D !important;
     box-shadow: 0 0 0 3px rgba(192,57,43,0.10) !important;
   }
   .sp-input--valid {
-    border-color: #27ae60 !important;
+    border-color: #1B5E20 !important;
     box-shadow: 0 0 0 3px rgba(39,174,96,0.10) !important;
   }
   .sp-field-msg {
@@ -685,30 +685,30 @@ const css = `
     display: flex; align-items: center; gap: 5px;
     margin-top: 2px;
   }
-  .sp-field-msg--error { color: #c0392b; }
-  .sp-field-msg--success { color: #27ae60; }
+  .sp-field-msg--error { color: #6B1E2D; }
+  .sp-field-msg--success { color: #1B5E20; }
   input[type=number].sp-input::-webkit-inner-spin-button { opacity: 0.4; }
   .sp-error {
     display: flex; align-items: center; gap: 8px;
     background: rgba(139,26,26,0.06); border: 1px solid rgba(139,26,26,0.2);
-    color: #8b1a1a; font-size: 12.5px; padding: 11px 14px; border-radius: 9px; font-weight: 600;
+    color: #6B1E2D; font-size: 12.5px; padding: 11px 14px; border-radius: 9px; font-weight: 600;
   }
   .sp-btn {
     display: flex; align-items: center; justify-content: center; gap: 9px;
     width: 100%; padding: 14px; background: var(--black); color: var(--gold);
-    border: 1px solid rgba(200,169,106,0.25); border-radius: 10px;
+    border: 1px solid rgba(184,160,130,0.25); border-radius: 10px;
     font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.18s;
     font-family: 'Cairo', sans-serif; margin-top: 4px; position: relative; overflow: hidden;
   }
   .sp-btn::before {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(200,169,106,0.08) 0%, transparent 60%); pointer-events: none;
+    background: linear-gradient(135deg, rgba(184,160,130,0.08) 0%, transparent 60%); pointer-events: none;
   }
-  .sp-btn:hover:not(:disabled) { background: #1a1a1e; border-color: rgba(200,169,106,0.5); color: var(--gold2); }
+  .sp-btn:hover:not(:disabled) { background: #1A1A1A; border-color: rgba(184,160,130,0.5); color: var(--gold2); }
   .sp-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .sp-spin {
     display: inline-block; width: 14px; height: 14px;
-    border: 2px solid rgba(200,169,106,0.25); border-top-color: var(--gold);
+    border: 2px solid rgba(184,160,130,0.25); border-top-color: var(--gold);
     border-radius: 50%; animation: spin 0.7s linear infinite;
   }
   .sp-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0 14px; }
@@ -819,7 +819,7 @@ const css = `
   }
   .sp-confirm-icon {
     width: 80px; height: 80px; border-radius: 50%;
-    background: rgba(200,169,106,0.10); border: 2px solid rgba(200,169,106,0.25);
+    background: rgba(184,160,130,0.10); border: 2px solid rgba(184,160,130,0.25);
     display: flex; align-items: center; justify-content: center; color: var(--gold);
   }
   .sp-confirm-title { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.3px; }

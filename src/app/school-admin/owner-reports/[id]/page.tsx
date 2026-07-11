@@ -37,7 +37,7 @@ export default function AdminOwnerReportViewPage({ params }: { params: Promise<{
   if (loading) return <MandalaLoader />;
   if (notFound || !report) {
     return (
-      <div style={{ padding: 60, textAlign: "center", color: "#8B6915", fontFamily: "'Cairo',sans-serif" }} dir={dir}>
+      <div style={{ padding: 60, textAlign: "center", color: "#8F765B", fontFamily: "'Cairo',sans-serif" }} dir={dir}>
         {L === "ar" ? "هذا التقرير غير متاح." : "Ky raport nuk është i disponueshëm."}
       </div>
     );
@@ -53,7 +53,7 @@ export default function AdminOwnerReportViewPage({ params }: { params: Promise<{
         .ovrv-toolbar { padding: 12px 20px; max-width: 880px; margin: 0 auto; }
         .ovrv-back {
           font-family: 'Cairo', sans-serif;
-          font-size: 13px; font-weight: 800; color: #6B4F1E;
+          font-size: 13px; font-weight: 800; color: #6B1E2D;
           text-decoration: none;
         }
         .ovrv-back:hover { text-decoration: underline; }

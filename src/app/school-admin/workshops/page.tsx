@@ -175,35 +175,35 @@ export default function WorkshopsPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
         .ws { font-family: 'Cairo', sans-serif; }
         .ws-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
-        .ws-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
-        .ws-sub { font-size: 13.5px; color: #5E5A52; max-width: 680px; line-height: 1.85; margin: 0; }
-        .ws-new { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border: none; padding: 10px 18px; border-radius: 11px; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
-        .ws-empty { padding: 60px 20px; text-align: center; background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; color: #8A8478; font-weight: 700; }
+        .ws-title { font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
+        .ws-sub { font-size: 13.5px; color: #655B53; max-width: 680px; line-height: 1.85; margin: 0; }
+        .ws-new { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border: none; padding: 10px 18px; border-radius: 11px; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
+        .ws-empty { padding: 60px 20px; text-align: center; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; color: #8C8274; font-weight: 700; }
         .ws-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 14px; }
-        .ws-card { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px; background: linear-gradient(165deg,#FCF6E6,#F4EBD3); border: 1.5px solid rgba(194,160,89,0.32); border-radius: 14px; text-decoration: none; color: inherit; transition: all .18s; box-shadow: 0 4px 14px rgba(150,115,50,0.06); }
-        .ws-card:hover { transform: translateY(-2px); border-color: #B89B5E; box-shadow: 0 10px 26px rgba(150,115,50,0.16); }
+        .ws-card { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px; background: linear-gradient(165deg,#FFFBF5,#F7F3EB); border: 1.5px solid rgba(194,160,89,0.32); border-radius: 14px; text-decoration: none; color: inherit; transition: all .18s; box-shadow: 0 4px 14px rgba(150,115,50,0.06); }
+        .ws-card:hover { transform: translateY(-2px); border-color: #B8A082; box-shadow: 0 10px 26px rgba(150,115,50,0.16); }
         .ws-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .ws-tag { font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 99px; letter-spacing: 0.04em; }
-        .ws-tag-OPEN   { background: rgba(76,107,60,0.16); color: #4C6B3C; }
-        .ws-tag-CLOSED { background: rgba(8,11,12,0.08); color: #5E5A52; }
-        .ws-card-date { font-size: 11.5px; color: #8B6915; font-weight: 700; }
-        .ws-card-title { font-size: 17px; font-weight: 900; color: #1B1810; margin: 0; line-height: 1.4; }
-        .ws-card-desc { font-size: 13px; color: #5E4A20; margin: 0; line-height: 1.75; }
-        .ws-card-stats { display: flex; gap: 14px; font-size: 12.5px; color: #7A6440; padding-top: 6px; }
-        .ws-card-stats strong { color: #1B1810; font-weight: 900; font-family: 'JetBrains Mono', ui-monospace, monospace; }
-        .ws-card-open { font-size: 12px; font-weight: 800; color: #6B4F1E; margin-top: auto; }
+        .ws-tag-OPEN   { background: rgba(76,107,60,0.16); color: #1B5E20; }
+        .ws-tag-CLOSED { background: rgba(26,26,26,0.08); color: #655B53; }
+        .ws-card-date { font-size: 11.5px; color: #8F765B; font-weight: 700; }
+        .ws-card-title { font-size: 17px; font-weight: 900; color: #32101A; margin: 0; line-height: 1.4; }
+        .ws-card-desc { font-size: 13px; color: #6B1E2D; margin: 0; line-height: 1.75; }
+        .ws-card-stats { display: flex; gap: 14px; font-size: 12.5px; color: #796A62; padding-top: 6px; }
+        .ws-card-stats strong { color: #32101A; font-weight: 900; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+        .ws-card-open { font-size: 12px; font-weight: 800; color: #6B1E2D; margin-top: auto; }
 
-        .ws-overlay { position: fixed; inset: 0; background: rgba(8,11,12,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
-        .ws-dlg { background: #FFFDF8; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .ws-dlg-title { font-size: 17px; font-weight: 900; color: #1B1810; margin: 0 0 14px; }
-        .ws-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B4F1E; margin: 10px 0 4px; }
+        .ws-overlay { position: fixed; inset: 0; background: rgba(26,26,26,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
+        .ws-dlg { background: #FFFBF5; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .ws-dlg-title { font-size: 17px; font-weight: 900; color: #32101A; margin: 0 0 14px; }
+        .ws-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B1E2D; margin: 10px 0 4px; }
         .ws-input { width: 100%; padding: 10px 13px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; }
-        .ws-input:focus { border-color: #B89B5E; }
+        .ws-input:focus { border-color: #B8A082; }
         .ws-ta { resize: vertical; min-height: 50px; line-height: 1.7; }
         .ws-dlg-row { display: flex; gap: 10px; }
         .ws-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-        .ws-btn { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #5E4A20; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-        .ws-btn-primary { background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border-color: transparent; }
+        .ws-btn { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #6B1E2D; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .ws-btn-primary { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border-color: transparent; }
       `}</style>
     </div>
   );

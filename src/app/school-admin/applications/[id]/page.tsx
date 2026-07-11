@@ -289,13 +289,13 @@ function ApplicationDetailPageInner({
   if (loadFail === "error") {
     return (
       <div dir={dir} style={{ padding: 60, textAlign: "center", fontFamily: "'Cairo',sans-serif" }}>
-        <div style={{ fontSize: 15, fontWeight: 800, color: "#7A1E1E", marginBottom: 16 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "#6B1E2D", marginBottom: 16 }}>
           {L === "ar" ? "تعذر تحميل الطلب — مشكلة مؤقتة في الاتصال." : "Aplikimi nuk u ngarkua — problem i përkohshëm."}
         </div>
         <button
           onClick={() => setRetryTick((n) => n + 1)}
           style={{
-            background: "linear-gradient(180deg,#1E2329,#11151A)", color: "#E5B93C",
+            background: "linear-gradient(180deg,#5B1526,#32101A)", color: "#B8A082",
             border: "none", padding: "10px 26px", borderRadius: 11,
             fontFamily: "inherit", fontSize: 14, fontWeight: 800, cursor: "pointer",
           }}
@@ -307,7 +307,7 @@ function ApplicationDetailPageInner({
   }
   if (loadFail === "notfound" || !teacher || !teacher.application) {
     return (
-      <div dir={dir} style={{ padding: 40, textAlign: "center", color: "#7A1E1E", fontWeight: 700, fontFamily: "'Cairo',sans-serif" }}>
+      <div dir={dir} style={{ padding: 40, textAlign: "center", color: "#6B1E2D", fontWeight: 700, fontFamily: "'Cairo',sans-serif" }}>
         {L === "ar" ? "هذا الطلب غير موجود." : "Ky aplikim nuk ekziston."}
       </div>
     );
@@ -525,54 +525,54 @@ function ApplicationDetailPageInner({
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
         .ad-page { font-family: 'Cairo', sans-serif; max-width: 920px; margin: 0 auto; }
         .ad-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-        .ad-back { text-decoration: none; color: #6B4F1E; font-weight: 800; font-size: 13.5px; }
-        .ad-back:hover { color: #B89B5E; }
+        .ad-back { text-decoration: none; color: #6B1E2D; font-weight: 800; font-size: 13.5px; }
+        .ad-back:hover { color: #B8A082; }
         .ad-bar-spacer { flex: 1; }
         .ad-print-btn {
-          padding: 8px 16px; background: #FFFDF8; border: 1.5px solid #B89B5E;
-          color: #6B4F1E; border-radius: 10px; text-decoration: none;
+          padding: 8px 16px; background: #FFFBF5; border: 1.5px solid #B8A082;
+          color: #6B1E2D; border-radius: 10px; text-decoration: none;
           font-size: 13px; font-weight: 800;
         }
-        .ad-print-btn:hover { background: #B89B5E; color: #FFF8E2; }
+        .ad-print-btn:hover { background: #B8A082; color: #FFF8E2; }
 
         .ad-head {
           display: flex; align-items: center; gap: 14px;
-          background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px;
+          background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px;
           padding: 20px; margin-bottom: 18px;
         }
         .ad-head > div { flex: 1; min-width: 0; }
-        .ad-name { font-size: 22px; font-weight: 900; color: #1B1810; margin: 0 0 4px; }
-        .ad-meta { font-size: 13px; color: #5E5A52; margin: 0; }
+        .ad-name { font-size: 22px; font-weight: 900; color: #32101A; margin: 0 0 4px; }
+        .ad-meta { font-size: 13px; color: #655B53; margin: 0; }
         .ad-status {
           padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 800;
           letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0;
         }
-        .ad-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B4F1E; }
+        .ad-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B1E2D; }
         .ad-status.st-WAITING_LIST  { background: rgba(184,160,130,0.18); color: #4A0E1C; }
-        .ad-status.st-ACTIVE       { background: rgba(45,138,74,0.12); color: #1E5C2E; }
-        .ad-status.st-REJECTED     { background: rgba(139,26,26,0.10); color: #7A1E1E; }
+        .ad-status.st-ACTIVE       { background: rgba(45,138,74,0.12); color: #1B5E20; }
+        .ad-status.st-REJECTED     { background: rgba(139,26,26,0.10); color: #6B1E2D; }
 
         .ad-section {
-          background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07);
+          background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07);
           border-radius: 14px; padding: 18px; margin-bottom: 14px;
         }
         .ad-section-title {
-          font-size: 14px; font-weight: 900; color: #6B4F1E; margin: 0 0 12px;
+          font-size: 14px; font-weight: 900; color: #6B1E2D; margin: 0 0 12px;
           padding-bottom: 8px; border-bottom: 1px solid rgba(194,160,89,0.18);
         }
         .ad-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         .ad-item { margin-bottom: 10px; }
-        .ad-item-label { display: block; font-size: 11px; font-weight: 800; color: #8A7B60; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
-        .ad-item-value { font-size: 13.5px; color: #2E2210; font-weight: 600; line-height: 1.7; white-space: pre-wrap; }
+        .ad-item-label { display: block; font-size: 11px; font-weight: 800; color: #796A62; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
+        .ad-item-value { font-size: 13.5px; color: #4A0E1C; font-weight: 600; line-height: 1.7; white-space: pre-wrap; }
 
-        .ad-langs { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #2E2210; }
+        .ad-langs { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #4A0E1C; }
 
         .ad-decision { margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(194,160,89,0.32); }
         .ad-group-pick { margin-bottom: 14px; }
-        .ad-group-pick-head p { margin: -2px 0 10px; color: #8A7B60; font-size: 12.5px; line-height: 1.7; }
+        .ad-group-pick-head p { margin: -2px 0 10px; color: #796A62; font-size: 12.5px; line-height: 1.7; }
         .ad-group-empty {
           padding: 12px; border-radius: 10px; border: 1px dashed rgba(194,160,89,0.32);
-          color: #8A7B60; font-size: 12.5px; font-weight: 800; background: rgba(194,160,89,0.04);
+          color: #796A62; font-size: 12.5px; font-weight: 800; background: rgba(194,160,89,0.04);
         }
         .ad-group-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin-bottom: 8px; }
         .ad-group-option {
@@ -581,25 +581,25 @@ function ApplicationDetailPageInner({
           background: #FFF; cursor: pointer; font-family: inherit; transition: border-color .15s, background .15s;
         }
         .ad-group-option:hover:not(:disabled), .ad-group-option.selected {
-          border-color: #B89B5E; background: linear-gradient(165deg,#FCF6E6,#F4EBD3);
+          border-color: #B8A082; background: linear-gradient(165deg,#FFFBF5,#F7F3EB);
         }
         .ad-group-option:disabled { opacity: 0.6; cursor: not-allowed; }
         .ad-group-check {
           width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          background: rgba(194,160,89,0.14); color: #8B6915; font-weight: 900; flex-shrink: 0;
+          background: rgba(194,160,89,0.14); color: #8F765B; font-weight: 900; flex-shrink: 0;
         }
-        .ad-group-option.selected .ad-group-check { background: #B89B5E; color: #1E1605; }
+        .ad-group-option.selected .ad-group-check { background: #B8A082; color: #4A0E1C; }
         .ad-group-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-        .ad-group-info strong { color: #1B1810; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
-        .ad-group-info small { color: #8A7B60; font-size: 11.5px; font-weight: 800; }
-        .ad-notes-label { display: block; font-size: 12.5px; font-weight: 800; color: #6B4F1E; margin-bottom: 6px; }
+        .ad-group-info strong { color: #32101A; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+        .ad-group-info small { color: #796A62; font-size: 11.5px; font-weight: 800; }
+        .ad-notes-label { display: block; font-size: 12.5px; font-weight: 800; color: #6B1E2D; margin-bottom: 6px; }
         .ad-notes {
           width: 100%; padding: 10px 12px; font-family: inherit; font-size: 13.5px;
           border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px;
           background: #FFFCEF; outline: none; resize: vertical;
         }
-        .ad-notes:focus { border-color: #B89B5E; }
-        .ad-err { color: #7A1E1E; font-size: 13px; font-weight: 700; margin-top: 8px; }
+        .ad-notes:focus { border-color: #B8A082; }
+        .ad-err { color: #6B1E2D; font-size: 13px; font-weight: 700; margin-top: 8px; }
         .ad-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
         .ad-btn {
           padding: 11px 22px; border-radius: 11px; font-weight: 900; font-size: 14px;
@@ -607,11 +607,11 @@ function ApplicationDetailPageInner({
         }
         .ad-btn:disabled { opacity: 0.55; cursor: not-allowed; }
         .ad-btn.approve {
-          background: linear-gradient(180deg, #4FA465, #2D8A4A); color: #F0F8E8;
+          background: linear-gradient(180deg, #4FA465, #1B5E20); color: #F0F8E8;
           box-shadow: 0 4px 14px rgba(45,138,74,0.32);
         }
         .ad-btn.reject {
-          background: linear-gradient(180deg, #C24F4F, #A33333); color: #FFF0E2;
+          background: linear-gradient(180deg, #C24F4F, #6B1E2D); color: #FFF0E2;
           box-shadow: 0 4px 14px rgba(163,51,51,0.32);
         }
         .ad-btn.waitlist {

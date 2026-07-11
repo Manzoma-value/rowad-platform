@@ -103,11 +103,11 @@ export default function AdminOwnerReportsListPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=El+Messiri:wght@500;600;700&display=swap');
         .aor { font-family:'Cairo',sans-serif; }
         .aor-hero { margin-bottom:22px; }
-        .aor-title { font-family:'El Messiri','Cairo',serif; font-size:26px; font-weight:700; color:#1B1810; margin:0 0 8px; }
-        .aor-sub { font-size:13.5px; color:#5E5A52; max-width:680px; line-height:1.85; margin:0; }
+        .aor-title { font-family:'El Messiri','Cairo',serif; font-size:26px; font-weight:700; color:#32101A; margin:0 0 8px; }
+        .aor-sub { font-size:13.5px; color:#655B53; max-width:680px; line-height:1.85; margin:0; }
 
-        .aor-empty { padding:80px 24px; text-align:center; background:linear-gradient(165deg,#FCF6E6,#F4EBD3); border:1.5px solid rgba(194,160,89,0.32); border-radius:18px; color:#8B6915; }
-        .aor-empty-mark { color:#C8A96A; display:inline-flex; margin-bottom:14px; opacity:0.7; }
+        .aor-empty { padding:80px 24px; text-align:center; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(194,160,89,0.32); border-radius:18px; color:#8F765B; }
+        .aor-empty-mark { color:#B8A082; display:inline-flex; margin-bottom:14px; opacity:0.7; }
         .aor-empty p { font-weight:700; font-size:14px; margin:0; }
 
         .aor-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px,1fr)); gap:16px; }
@@ -115,28 +115,28 @@ export default function AdminOwnerReportsListPage() {
           position:relative;
           display:flex; flex-direction:column; gap:8px;
           padding:24px 24px 20px;
-          background:linear-gradient(165deg,#FCF6E6 0%,#F4EBD3 100%);
-          border:1.5px solid #C0A063;
+          background:linear-gradient(165deg,#FFFBF5 0%,#F7F3EB 100%);
+          border:1.5px solid #B8A082;
           border-radius:16px;
           text-decoration:none; color:inherit;
-          box-shadow:0 6px 22px rgba(150,115,50,0.10), inset 0 0 0 4px #EFE6D1, inset 0 0 0 5.5px rgba(194,160,89,0.4);
+          box-shadow:0 6px 22px rgba(150,115,50,0.10), inset 0 0 0 4px #E5E0D5, inset 0 0 0 5.5px rgba(194,160,89,0.4);
           transition:all .2s cubic-bezier(.22,1,.36,1);
         }
-        .aor-card:hover { transform:translateY(-2px); box-shadow:0 14px 36px rgba(150,115,50,0.18), inset 0 0 0 4px #EFE6D1, inset 0 0 0 5.5px rgba(194,160,89,0.55); }
-        .aor-card::before { content:''; position:absolute; top:14px; inset-inline-start:14px; width:20px; height:20px; border-top:1.5px solid rgba(122,30,30,0.55); border-inline-start:1.5px solid rgba(122,30,30,0.55); pointer-events:none; }
-        .aor-card::after  { content:''; position:absolute; bottom:14px; inset-inline-end:14px; width:20px; height:20px; border-bottom:1.5px solid rgba(122,30,30,0.55); border-inline-end:1.5px solid rgba(122,30,30,0.55); pointer-events:none; }
+        .aor-card:hover { transform:translateY(-2px); box-shadow:0 14px 36px rgba(150,115,50,0.18), inset 0 0 0 4px #E5E0D5, inset 0 0 0 5.5px rgba(194,160,89,0.55); }
+        .aor-card::before { content:''; position:absolute; top:14px; inset-inline-start:14px; width:20px; height:20px; border-top:1.5px solid rgba(107,30,45,0.55); border-inline-start:1.5px solid rgba(107,30,45,0.55); pointer-events:none; }
+        .aor-card::after  { content:''; position:absolute; bottom:14px; inset-inline-end:14px; width:20px; height:20px; border-bottom:1.5px solid rgba(107,30,45,0.55); border-inline-end:1.5px solid rgba(107,30,45,0.55); pointer-events:none; }
 
-        .aor-tag { display:inline-flex; align-items:center; gap:7px; font-size:10.5px; font-weight:800; color:#7A1E1E; letter-spacing:0.18em; text-transform:uppercase; align-self:flex-start; }
-        .aor-tag-dot { width:6px; height:6px; background:#7A1E1E; transform:rotate(45deg); border-radius:1px; }
+        .aor-tag { display:inline-flex; align-items:center; gap:7px; font-size:10.5px; font-weight:800; color:#6B1E2D; letter-spacing:0.18em; text-transform:uppercase; align-self:flex-start; }
+        .aor-tag-dot { width:6px; height:6px; background:#6B1E2D; transform:rotate(45deg); border-radius:1px; }
 
-        .aor-card-title { font-family:'El Messiri','Cairo',serif; font-size:19px; font-weight:700; color:#1B1810; margin:4px 0 0; line-height:1.4; }
-        .aor-card-sub { font-size:13.5px; color:#5E4A20; font-weight:600; margin:0; line-height:1.7; }
-        .aor-card-desc { font-size:12.5px; color:#7A6440; margin:0; line-height:1.75; font-style:italic; }
+        .aor-card-title { font-family:'El Messiri','Cairo',serif; font-size:19px; font-weight:700; color:#32101A; margin:4px 0 0; line-height:1.4; }
+        .aor-card-sub { font-size:13.5px; color:#6B1E2D; font-weight:600; margin:0; line-height:1.7; }
+        .aor-card-desc { font-size:12.5px; color:#796A62; margin:0; line-height:1.75; font-style:italic; }
 
-        .aor-meta { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:11.5px; color:#8B6915; margin-top:8px; padding-top:10px; border-top:1px solid rgba(194,160,89,0.32); }
-        .aor-meta strong { color:#6B4F1E; font-weight:800; }
-        .aor-issuer { color:#7A1E1E; font-weight:800; letter-spacing:0.04em; }
-        .aor-open { font-size:12.5px; font-weight:800; color:#6B4F1E; margin-top:6px; }
+        .aor-meta { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; font-size:11.5px; color:#8F765B; margin-top:8px; padding-top:10px; border-top:1px solid rgba(194,160,89,0.32); }
+        .aor-meta strong { color:#6B1E2D; font-weight:800; }
+        .aor-issuer { color:#6B1E2D; font-weight:800; letter-spacing:0.04em; }
+        .aor-open { font-size:12.5px; font-weight:800; color:#6B1E2D; margin-top:6px; }
       `}</style>
     </div>
   );

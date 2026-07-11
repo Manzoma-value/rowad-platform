@@ -24,11 +24,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING_INTAKE: "#7A1E1E",
-  INTAKE_SUBMITTED: "#C8A96A",
-  SCHOOL_ASSIGNED: "#080B0C",
-  SCHOOL_PLACEMENT_SUBMITTED: "#E5B93C",
-  CLASS_ASSIGNED: "#C8A96A",
+  PENDING_INTAKE: "#6B1E2D",
+  INTAKE_SUBMITTED: "#B8A082",
+  SCHOOL_ASSIGNED: "#1A1A1A",
+  SCHOOL_PLACEMENT_SUBMITTED: "#B8A082",
+  CLASS_ASSIGNED: "#B8A082",
 };
 
 function MandalaLoader() {
@@ -67,45 +67,45 @@ function MandalaLoader() {
         <div className="ml-canvas">
           {mounted ? (
             <svg width="220" height="220" viewBox="0 0 220 220">
-              <circle cx="110" cy="110" r="100" stroke="rgba(200,169,106,0.06)" strokeWidth="1" fill="none" />
-              <circle cx="110" cy="110" r="95"  stroke="rgba(200,169,106,0.04)" strokeWidth="0.5" fill="none" />
+              <circle cx="110" cy="110" r="100" stroke="rgba(184,160,130,0.06)" strokeWidth="1" fill="none" />
+              <circle cx="110" cy="110" r="95"  stroke="rgba(184,160,130,0.04)" strokeWidth="0.5" fill="none" />
               {rings.map((ring, ri) => {
                 const circumference = 2 * Math.PI * ring.r;
                 const offset = (phase * ring.speed) % circumference;
                 return (
                   <circle key={ri} cx="110" cy="110" r={ring.r} fill="none"
-                    stroke="#C8A96A" strokeWidth={ring.strokeW} opacity={ring.opacity}
+                    stroke="#B8A082" strokeWidth={ring.strokeW} opacity={ring.opacity}
                     strokeDasharray={`${ring.dashLen} ${ring.gapLen}`} strokeDashoffset={-offset} />
                 );
               })}
               {Array.from({ length: 8 }).map((_, i) => {
                 const a = (i * 45 * Math.PI) / 180;
                 return <circle key={i} cx={110 + 36 * Math.sin(a)} cy={110 - 36 * Math.cos(a)}
-                  r={36} fill="none" stroke="#C8A96A" strokeWidth="0.5" opacity="0.14" />;
+                  r={36} fill="none" stroke="#B8A082" strokeWidth="0.5" opacity="0.14" />;
               })}
               {Array.from({ length: 12 }).map((_, i) => {
                 const a = ((i * 30 + phase * 0.15) * Math.PI) / 180;
                 const brightness = 0.06 + 0.14 * Math.abs(Math.sin(((i * 30 + phase * 0.5) * Math.PI) / 180));
                 return <line key={i} x1={110 + 22 * Math.sin(a)} y1={110 - 22 * Math.cos(a)}
                   x2={110 + 82 * Math.sin(a)} y2={110 - 82 * Math.cos(a)}
-                  stroke="#C8A96A" strokeWidth="0.5" opacity={brightness} />;
+                  stroke="#B8A082" strokeWidth="0.5" opacity={brightness} />;
               })}
               {Array.from({ length: 6 }).map((_, i) => {
                 const a1 = ((i * 60 + phase * 0.25) * Math.PI) / 180;
                 const a2 = ((i * 60 + 30 + phase * 0.25) * Math.PI) / 180;
                 return <line key={i} x1={110 + 36 * Math.sin(a1)} y1={110 - 36 * Math.cos(a1)}
                   x2={110 + 22 * Math.sin(a2)} y2={110 - 22 * Math.cos(a2)}
-                  stroke="#E5B93C" strokeWidth="0.7" opacity="0.3" />;
+                  stroke="#B8A082" strokeWidth="0.7" opacity="0.3" />;
               })}
               {Array.from({ length: 8 }).map((_, i) => {
                 const a = ((i * 45 + phase * 0.3) * Math.PI) / 180;
                 return <rect key={i} x={110 + 90 * Math.sin(a) - 2.5} y={110 - 90 * Math.cos(a) - 2.5}
-                  width="5" height="5" fill="none" stroke="#C8A96A" strokeWidth="0.6" opacity="0.18"
+                  width="5" height="5" fill="none" stroke="#B8A082" strokeWidth="0.6" opacity="0.18"
                   transform={`rotate(45 ${110 + 90 * Math.sin(a)} ${110 - 90 * Math.cos(a)})`} />;
               })}
-              <circle cx="110" cy="110" r="8" fill="none" stroke="#C8A96A" strokeWidth="0.6" opacity="0.25" />
-              <circle cx="110" cy="110" r="4" fill="none" stroke="#E5B93C" strokeWidth="0.8" opacity="0.4" />
-              <circle cx="110" cy="110" r="2" fill="#C8A96A" opacity={0.4 + 0.3 * Math.sin(phase * 0.06)} />
+              <circle cx="110" cy="110" r="8" fill="none" stroke="#B8A082" strokeWidth="0.6" opacity="0.25" />
+              <circle cx="110" cy="110" r="4" fill="none" stroke="#B8A082" strokeWidth="0.8" opacity="0.4" />
+              <circle cx="110" cy="110" r="2" fill="#B8A082" opacity={0.4 + 0.3 * Math.sin(phase * 0.06)} />
             </svg>
           ) : (
             <div style={{ width: 220, height: 220 }} />
@@ -127,15 +127,15 @@ function MandalaLoader() {
         @keyframes mlDotBlink { 0%,80%,100%{opacity:0.2;transform:scaleY(0.6)} 40%{opacity:1;transform:scaleY(1)} }
         @keyframes mlPanelIn { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
         .ml-backdrop { display:flex;align-items:center;justify-content:center;min-height:480px;width:100%; }
-        .ml-panel { display:flex;flex-direction:column;align-items:center;padding:32px 40px 28px;background:#FFFFFF;border:1px solid #E2D9CA;border-top:2px solid #C8A96A;border-radius:12px;box-shadow:0 8px 32px rgba(11,11,12,0.08);animation:mlPanelIn 0.4s cubic-bezier(0.4,0,0.2,1);min-width:300px; }
+        .ml-panel { display:flex;flex-direction:column;align-items:center;padding:32px 40px 28px;background:#FFFFFF;border:1px solid #E2D9CA;border-top:2px solid #B8A082;border-radius:12px;box-shadow:0 8px 32px rgba(11,11,12,0.08);animation:mlPanelIn 0.4s cubic-bezier(0.4,0,0.2,1);min-width:300px; }
         .ml-crest { display:flex;align-items:center;width:100%;margin-bottom:20px; }
-        .ml-crest-line { flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(200,169,106,0.25),transparent); }
-        .ml-crest-diamond { width:5px;height:5px;background:rgba(200,169,106,0.4);transform:rotate(45deg);margin:0 10px;flex-shrink:0; }
+        .ml-crest-line { flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.25),transparent); }
+        .ml-crest-diamond { width:5px;height:5px;background:rgba(184,160,130,0.4);transform:rotate(45deg);margin:0 10px;flex-shrink:0; }
         .ml-canvas { margin:0 0 16px;display:flex;align-items:center;justify-content:center; }
         .ml-text { display:flex;flex-direction:column;align-items:center;gap:10px; }
         .ml-label { font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;color:#8A7A5A; }
         .ml-dots { display:flex;gap:5px;align-items:center;height:16px; }
-        .ml-dot { width:3px;height:14px;border-radius:2px;background:#C8A96A;opacity:0.2;animation:mlDotBlink 1.2s ease-in-out infinite; }
+        .ml-dot { width:3px;height:14px;border-radius:2px;background:#B8A082;opacity:0.2;animation:mlDotBlink 1.2s ease-in-out infinite; }
       `}</style>
     </div>
   );
@@ -172,10 +172,10 @@ export default function OwnerDashboardPage() {
   );
 
   const statCards = [
-    { label: "الجهات",          value: stats.schoolCount,        href: "/owner/schools",                  accent: "#7A1E1E", sub: "جهة مسجّلة",  icon: "🏫" },
-    { label: "المشرفون",         value: stats.teacherCount,       href: "/owner/schools",                  accent: "#080B0C", sub: "مشرف نشط",       icon: "👨‍🏫" },
-    { label: "المستفيدين",           value: stats.studentCount,       href: "/owner/submissions",              accent: "#C8A96A", sub: "مستفيد مسجّل",     icon: "🎓" },
-    { label: "بانتظار المراجعة", value: stats.pendingSubmissions, href: "/owner/submissions?status=PENDING", accent: "#7A1E1E", sub: "إجابة معلّقة", icon: "⏳", alert: stats.pendingSubmissions > 0 },
+    { label: "الجهات",          value: stats.schoolCount,        href: "/owner/schools",                  accent: "#6B1E2D", sub: "جهة مسجّلة",  icon: "🏫" },
+    { label: "المشرفون",         value: stats.teacherCount,       href: "/owner/schools",                  accent: "#1A1A1A", sub: "مشرف نشط",       icon: "👨‍🏫" },
+    { label: "المستفيدين",           value: stats.studentCount,       href: "/owner/submissions",              accent: "#B8A082", sub: "مستفيد مسجّل",     icon: "🎓" },
+    { label: "بانتظار المراجعة", value: stats.pendingSubmissions, href: "/owner/submissions?status=PENDING", accent: "#6B1E2D", sub: "إجابة معلّقة", icon: "⏳", alert: stats.pendingSubmissions > 0 },
   ];
 
   return (
@@ -343,7 +343,7 @@ export default function OwnerDashboardPage() {
 
 const dashCSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-  :root { --gold:#C8A96A;--gold2:#E5B93C;--black:#0A0A0B;--off-white:#F6F3EE;--text:#0B0B0C;--text2:#3E3526;--text3:#8A7A5A;--surface:#FFFFFF;--surface2:#FAF8F4;--surface3:#F3EEE5;--border:#E2D9CA;--border2:#CEC2AD;--success:#1a6b3c;--success-bg:rgba(26,107,60,0.07);--warning:#9a6200;--warning-bg:rgba(154,98,0,0.07);--danger:#8b1a1a;--danger-bg:rgba(139,26,26,0.07);--radius:10px;--shadow-sm:0 1px 4px rgba(11,11,12,0.05);--shadow:0 4px 16px rgba(11,11,12,0.08);--shadow-md:0 8px 28px rgba(11,11,12,0.10); }
+  :root { --gold:#B8A082;--gold2:#B8A082;--black:#0A0A0B;--off-white:#F6F3EE;--text:#1A1A1A;--text2:#3E3526;--text3:#8A7A5A;--surface:#FFFFFF;--surface2:#FAF8F4;--surface3:#F3EEE5;--border:#E2D9CA;--border2:#CEC2AD;--success:#1B5E20;--success-bg:rgba(26,107,60,0.07);--warning:#9a6200;--warning-bg:rgba(154,98,0,0.07);--danger:#6B1E2D;--danger-bg:rgba(139,26,26,0.07);--radius:10px;--shadow-sm:0 1px 4px rgba(11,11,12,0.05);--shadow:0 4px 16px rgba(11,11,12,0.08);--shadow-md:0 8px 28px rgba(11,11,12,0.10); }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   @keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   @keyframes pipeIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
@@ -353,12 +353,12 @@ const dashCSS = `
   .dash-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;padding-bottom:24px;border-bottom:1px solid var(--border);position:relative}
   .dash-header::after{content:'';position:absolute;bottom:-1px;right:0;width:80px;height:2px;background:linear-gradient(90deg,var(--gold),transparent)}
   .dash-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-  .dash-eyebrow-line{flex:1;height:1px;max-width:24px;background:rgba(200,169,106,0.35)}
+  .dash-eyebrow-line{flex:1;height:1px;max-width:24px;background:rgba(184,160,130,0.35)}
   .dash-eyebrow span{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold)}
   .dash-title{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-0.6px;line-height:1.05}
   .dash-subtitle{font-size:13px;color:var(--text3);margin-top:5px;font-weight:500}
-  .dash-cta-btn{display:flex;align-items:center;gap:8px;padding:11px 20px;border-radius:var(--radius);background:var(--black);color:var(--gold);text-decoration:none;font-size:13px;font-weight:700;border:1px solid rgba(200,169,106,0.25);transition:all 0.18s}
-  .dash-cta-btn:hover{background:#1a1a1e;border-color:rgba(200,169,106,0.45)}
+  .dash-cta-btn{display:flex;align-items:center;gap:8px;padding:11px 20px;border-radius:var(--radius);background:var(--black);color:var(--gold);text-decoration:none;font-size:13px;font-weight:700;border:1px solid rgba(184,160,130,0.25);transition:all 0.18s}
+  .dash-cta-btn:hover{background:#1A1A1A;border-color:rgba(184,160,130,0.45)}
   .alert-banner{display:flex;align-items:center;gap:14px;border-radius:var(--radius);padding:14px 18px;border:1px solid;position:relative;overflow:hidden}
   .alert-banner::before{content:'';position:absolute;right:0;top:0;bottom:0;width:3px}
   .alert-banner.danger{background:var(--danger-bg);border-color:rgba(139,26,26,0.18);color:var(--danger)}
@@ -395,7 +395,7 @@ const dashCSS = `
   .section-card-head-left{display:flex;flex-direction:column;gap:3px}
   .section-card-title{font-size:15px;font-weight:800;color:var(--text)}
   .section-card-desc{font-size:12px;color:var(--text3);font-weight:500}
-  .section-badge{font-size:11px;font-weight:700;background:rgba(200,169,106,0.1);color:var(--gold);border:1px solid rgba(200,169,106,0.22);padding:4px 12px;border-radius:20px;white-space:nowrap}
+  .section-badge{font-size:11px;font-weight:700;background:rgba(184,160,130,0.1);color:var(--gold);border:1px solid rgba(184,160,130,0.22);padding:4px 12px;border-radius:20px;white-space:nowrap}
   .pipeline{display:flex;flex-direction:column;gap:16px}
   .pipeline-item{display:flex;flex-direction:column;gap:7px;animation:pipeIn 0.4s ease both}
   .pipeline-head{display:flex;align-items:center;gap:8px}
@@ -409,7 +409,7 @@ const dashCSS = `
   .quick-links{display:flex;flex-direction:column;gap:10px}
   .quick-link{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:9px;padding:13px 14px;text-decoration:none;color:var(--text);transition:all 0.18s;background:var(--surface);animation:cardIn 0.4s ease both;position:relative;overflow:hidden}
   .quick-link::after{content:'';position:absolute;right:0;top:0;bottom:0;width:2px;background:var(--gold);opacity:0;transition:opacity 0.18s}
-  .quick-link:hover{border-color:rgba(200,169,106,0.3);background:var(--surface2)}
+  .quick-link:hover{border-color:rgba(184,160,130,0.3);background:var(--surface2)}
   .quick-link:hover::after{opacity:1}
   .ql-icon{font-size:22px;flex-shrink:0;line-height:1}
   .ql-body{flex:1;min-width:0}

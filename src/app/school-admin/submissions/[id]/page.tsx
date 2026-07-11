@@ -494,7 +494,7 @@ export default function SchoolAdminSubmissionDetailPage() {
         .sr-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
         .status-chip { font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 7px; margin-inline-start: auto; }
         .status-chip.pending { background: rgba(245,158,11,0.1); color: #b45309; border: 1px solid rgba(245,158,11,0.2); }
-        .status-chip.reviewed { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+        .status-chip.reviewed { background: rgba(16,185,129,0.1); color: #1B5E20; border: 1px solid rgba(16,185,129,0.2); }
 
         .score-banner { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
         .score-big { display: flex; align-items: baseline; gap: 3px; }
@@ -515,35 +515,35 @@ export default function SchoolAdminSubmissionDetailPage() {
         .a-header { display: flex; align-items: center; gap: 7px; }
         .q-num { font-size: 10px; font-weight: 700; color: var(--text3); background: var(--surface2); padding: 2px 7px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
         .q-type-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; }
-        .q-type-badge.t-mcq { background: rgba(37,99,235,0.1); color: #2563eb; }
-        .q-type-badge.t-tf { background: rgba(16,185,129,0.1); color: #10b981; }
+        .q-type-badge.t-mcq { background: rgba(37,99,235,0.1); color: #6B1E2D; }
+        .q-type-badge.t-tf { background: rgba(16,185,129,0.1); color: #1B5E20; }
         .q-type-badge.t-written { background: rgba(245,158,11,0.1); color: #b45309; }
         .result-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 5px; }
-        .result-chip.correct { background: rgba(16,185,129,0.1); color: #10b981; }
-        .result-chip.wrong { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .result-chip.correct { background: rgba(16,185,129,0.1); color: #1B5E20; }
+        .result-chip.wrong { background: rgba(239,68,68,0.1); color: #6B1E2D; }
         .q-text { font-size: 13.5px; color: var(--text); line-height: 1.55; }
 
         .mcq-opts { display: flex; flex-direction: column; gap: 5px; }
         .mcq-opt { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 7px; font-size: 12.5px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
         .mcq-opt.student { border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.05); color: var(--text); }
-        .mcq-opt.correct { border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.06); color: #10b981; }
+        .mcq-opt.correct { border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.06); color: #1B5E20; }
         .mcq-opt.student.correct { border-color: rgba(16,185,129,0.45); background: rgba(16,185,129,0.1); }
         .opt-ind { width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .student-tag { margin-inline-start: auto; font-size: 9.5px; color: var(--text3); font-style: italic; }
 
         .tf-row { display: flex; gap: 7px; }
         .tf-pill { font-size: 12px; font-weight: 600; padding: 4px 11px; border-radius: 7px; }
-        .tf-pill.correct { background: rgba(16,185,129,0.1); color: #10b981; }
-        .tf-pill.wrong { background: rgba(239,68,68,0.1); color: #ef4444; }
-        .tf-pill.correct-ans { background: rgba(16,185,129,0.06); color: #10b981; border: 1px dashed rgba(16,185,129,0.3); }
+        .tf-pill.correct { background: rgba(16,185,129,0.1); color: #1B5E20; }
+        .tf-pill.wrong { background: rgba(239,68,68,0.1); color: #6B1E2D; }
+        .tf-pill.correct-ans { background: rgba(16,185,129,0.06); color: #1B5E20; border: 1px dashed rgba(16,185,129,0.3); }
 
         .written-section { display: flex; flex-direction: column; gap: 8px; }
         .written-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; font-size: 13px; color: var(--text); line-height: 1.6; min-height: 50px; white-space: pre-wrap; }
         .grade-row { display: flex; align-items: center; gap: 9px; }
         .grade-label { font-size: 12px; color: var(--text2); font-weight: 600; }
         .grade-btn { display: flex; align-items: center; gap: 5px; padding: 5px 13px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); transition: all 0.15s; font-family: 'Tajawal', sans-serif; }
-        .grade-btn.g-correct.sel { background: rgba(16,185,129,0.1); border-color: #10b981; color: #10b981; }
-        .grade-btn.g-wrong.sel { background: rgba(239,68,68,0.1); border-color: #ef4444; color: #ef4444; }
+        .grade-btn.g-correct.sel { background: rgba(16,185,129,0.1); border-color: #1B5E20; color: #1B5E20; }
+        .grade-btn.g-wrong.sel { background: rgba(239,68,68,0.1); border-color: #6B1E2D; color: #6B1E2D; }
 
         .review-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; position: sticky; top: 70px; }
         .review-panel.done { border-color: rgba(16,185,129,0.3); }

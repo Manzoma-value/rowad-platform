@@ -309,7 +309,7 @@ export default function RowadBoard({
             <div className="rbx-brand">
               <div className="rbx-brand-emblem" aria-hidden>
                 <svg width="36" height="36" viewBox="0 0 40 40">
-                  <circle cx="20" cy="20" r="18" fill="#2b2417" />
+                  <circle cx="20" cy="20" r="18" fill="#4A0E1C" />
                   <circle cx="20" cy="20" r="18" fill="url(#rbxg)" />
                   <defs>
                     <radialGradient id="rbxg" cx="0.4" cy="0.35" r="0.7">
@@ -434,13 +434,13 @@ const styles = `
   @keyframes rbx-pulse{0%,100%{box-shadow:0 0 0 0 rgba(194,160,89,0.0)}50%{box-shadow:0 0 0 6px rgba(194,160,89,0.18)}}
 
   .rbx-wrap{
-    --cream-0:#F6EEDC;--cream-1:#EFE6D1;--cream-2:#E7DDC4;
-    --gold:#C2A059;--gold-soft:#D8C49A;--gold-line:#C0A063;--gold-deep:#9A7833;
-    --ink:#3B2F1C;--brown:#5A4A30;--brown-soft:#7A6440;--label:#A9863F;--level:#7C5A38;
+    --cream-0:#F6EEDC;--cream-1:#E5E0D5;--cream-2:#E7DDC4;
+    --gold:#B8A082;--gold-soft:#D8C49A;--gold-line:#B8A082;--gold-deep:#9A7833;
+    --ink:#3B2F1C;--brown:#5A4A30;--brown-soft:#796A62;--label:#A9863F;--level:#7C5A38;
     position:relative;min-height:100%;font-family:'Cairo','Tajawal',sans-serif;color:var(--ink);
     background:
-      radial-gradient(ellipse at 50% 12%, #F8F1E0 0%, transparent 55%),
-      linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%);
+      radial-gradient(ellipse at 50% 12%, #F7F3EB 0%, transparent 55%),
+      linear-gradient(160deg,#E5E0D5 0%,#E5E0D5 100%);
   }
   .rbx-inner{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:26px 16px 50px}
 
@@ -458,7 +458,7 @@ const styles = `
   .rbx-card{
     position:relative;display:inline-flex;align-items:center;gap:9px;
     cursor:grab;user-select:none;
-    background:linear-gradient(160deg,#FFFCF1 0%,#F7EDD3 100%);
+    background:linear-gradient(160deg,#FFFBF5 0%,#F7EDD3 100%);
     border:1.5px solid var(--gold-soft);
     border-radius:14px;
     padding:10px 16px 10px 14px;
@@ -498,7 +498,7 @@ const styles = `
   .rbx-frame{position:relative;border-radius:16px;padding:24px 28px 28px;overflow:hidden;
     background:
       radial-gradient(ellipse at 50% 0%, #F8F1E1 0%, transparent 60%),
-      linear-gradient(160deg,#F4ECD9 0%,#EDE3CC 100%);
+      linear-gradient(160deg,#F7F3EB 0%,#EDE3CC 100%);
     border:1.5px solid var(--gold-line);
     box-shadow:
       0 10px 40px rgba(150,115,50,0.12),
@@ -608,16 +608,16 @@ const styles = `
   .rbx-progress-bar{height:7px;background:rgba(194,160,89,0.14);border:1px solid rgba(194,160,89,0.25);
     border-radius:99px;overflow:hidden}
   .rbx-progress-fill{height:100%;border-radius:99px;transition:width .35s ease;
-    background:linear-gradient(90deg,#B8963A,#C2A059,#E0C277)}
+    background:linear-gradient(90deg,#B8963A,#B8A082,#D9C9B0)}
   .rbx-submit{display:flex;align-items:center;gap:10px;padding:13px 34px;border-radius:11px;
     font-size:14.5px;font-weight:900;font-family:inherit;letter-spacing:0.4px;cursor:pointer;transition:all .18s;
-    background:linear-gradient(135deg,#2b2417,#3a2e1a);color:#E0C277;
+    background:linear-gradient(135deg,#4A0E1C,#3a2e1a);color:#D9C9B0;
     border:1px solid rgba(194,160,89,0.5);box-shadow:0 6px 20px rgba(120,90,40,0.22)}
   .rbx-submit:hover:not(:disabled){color:#F0D690;transform:translateY(-1px);box-shadow:0 10px 28px rgba(120,90,40,0.3)}
   .rbx-submit:disabled{background:rgba(194,160,89,0.12);color:rgba(124,90,56,0.45);
     border-color:rgba(194,160,89,0.2);box-shadow:none;cursor:not-allowed}
   .rbx-spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(224,194,119,0.3);
-    border-top-color:#E0C277;animation:rbx-spin .8s linear infinite}
+    border-top-color:#D9C9B0;animation:rbx-spin .8s linear infinite}
 
   /* Modal (light) */
   .rbx-modal-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;
@@ -626,9 +626,9 @@ const styles = `
     background:linear-gradient(160deg,#F6EEDC,#EFE5CE);border:1.5px solid var(--gold-line);border-radius:18px;
     box-shadow:0 30px 80px rgba(80,60,20,0.3)}
   .rbx-modal-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;
-    background:linear-gradient(135deg,#2b2417,#3a2e1a)}
-  .rbx-modal-head h3{font-size:19px;font-weight:900;color:#E0C277;margin:0}
-  .rbx-modal-close{background:rgba(224,194,119,0.16);color:#E0C277;border:1px solid rgba(224,194,119,0.3);
+    background:linear-gradient(135deg,#4A0E1C,#3a2e1a)}
+  .rbx-modal-head h3{font-size:19px;font-weight:900;color:#D9C9B0;margin:0}
+  .rbx-modal-close{background:rgba(224,194,119,0.16);color:#D9C9B0;border:1px solid rgba(224,194,119,0.3);
     border-radius:9px;padding:6px 16px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer}
   .rbx-modal-body{padding:20px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:15px}
   .rbx-detail-label{display:inline-block;font-size:11px;font-weight:800;color:var(--label);

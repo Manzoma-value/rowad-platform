@@ -185,7 +185,7 @@ export default function TeacherLessonsPage() {
                 {lesson.is_published && lesson._count.attempts > 0 && (
                   <span className="lb-card-chip">{Icons.award} {lesson._count.attempts} {t.attemptsShort}</span>
                 )}
-                <span className="lb-card-chip" style={{ background: lesson.is_graded ? "var(--gold-l)" : "var(--purple-l)", color: lesson.is_graded ? "#7A6020" : "var(--purple)" }}>
+                <span className="lb-card-chip" style={{ background: lesson.is_graded ? "var(--gold-l)" : "var(--purple-l)", color: lesson.is_graded ? "#8F765B" : "var(--purple)" }}>
                   {lesson.is_graded ? Icons.award : Icons.zap}
                   {lesson.is_graded ? t.gradedShort : t.practiceShort}
                 </span>

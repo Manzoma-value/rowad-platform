@@ -82,12 +82,12 @@ function PasswordStrength({ password, lang }: { password: string; lang: "ar" | "
   const score = checks.filter(Boolean).length;
   const T = S[lang];
   const labels = ["", T.pwWeak, T.pwFair, T.pwGood, T.pwStrong];
-  const colors = ["", "#7A1E1E", "#C8A96A", "#A8863E", "#2D8A4A"];
+  const colors = ["", "#6B1E2D", "#B8A082", "#8F765B", "#1B5E20"];
   return (
     <div className="rp-strength">
       <div className="rp-strength-bars">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rp-strength-bar" style={{ background: i <= score ? colors[score] : "#E4DDD0" }} />
+          <div key={i} className="rp-strength-bar" style={{ background: i <= score ? colors[score] : "#E5E0D5" }} />
         ))}
       </div>
       <span className="rp-strength-label" style={{ color: colors[score] }}>{labels[score]}</span>
@@ -190,10 +190,10 @@ export default function ResetPasswordPage() {
             <div className="rp-success-icon">
               <svg width="48" height="48" viewBox="0 0 72 72">
                 <circle cx="36" cy="36" r="32" stroke="rgba(45,138,74,0.2)" strokeWidth="2" fill="none" />
-                <circle cx="36" cy="36" r="32" stroke="#2D8A4A" strokeWidth="2.5" fill="none"
+                <circle cx="36" cy="36" r="32" stroke="#1B5E20" strokeWidth="2.5" fill="none"
                   strokeLinecap="round" strokeDasharray="201" strokeDashoffset="0"
                   style={{ transform: "rotate(-90deg)", transformOrigin: "36px 36px" }} />
-                <polyline points="22,36 31,45 50,27" stroke="#2D8A4A" strokeWidth="3"
+                <polyline points="22,36 31,45 50,27" stroke="#1B5E20" strokeWidth="3"
                   fill="none" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
@@ -320,16 +320,16 @@ const css = `
 @keyframes pop{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
 
 :root{
-  --gold:#C8A96A;--gold2:#E5B93C;
-  --black:#0B0B0C;--text:#1E1C18;--text2:#3A3020;--text3:#8A7860;
-  --surface:#FFFFFF;--bg:#F5F3EE;--border:#E4DDD0;
-  --red:#7A1E1E;--red-l:rgba(122,30,30,0.07);--red-b:rgba(122,30,30,0.2);
+  --gold:#B8A082;--gold2:#B8A082;
+  --black:#4A0E1C;--text:#1A1A1A;--text2:#4A0E1C;--text3:#796A62;
+  --surface:#FFFFFF;--bg:#F7F3EB;--border:#E5E0D5;
+  --red:#6B1E2D;--red-l:rgba(107,30,45,0.07);--red-b:rgba(107,30,45,0.2);
   --font:'Cairo',sans-serif;
 }
 
 .rp-shell{min-height:100vh;background:var(--bg);font-family:var(--font);display:flex;flex-direction:column}
 
-.rp-nav{height:56px;padding:0 24px;display:flex;align-items:center;background:rgba(245,243,238,0.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(200,169,106,0.12)}
+.rp-nav{height:56px;padding:0 24px;display:flex;align-items:center;background:rgba(245,243,238,0.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(184,160,130,0.12)}
 .rp-nav-back{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--text3);text-decoration:none;transition:color 0.15s}
 .rp-nav-back:hover{color:var(--text2)}
 
@@ -355,7 +355,7 @@ const css = `
 
 .rp-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold)}
 .rp-title{font-size:22px;font-weight:900;color:var(--black);letter-spacing:-0.3px;margin-top:-4px}
-.rp-title--success{color:#1a6b3c}
+.rp-title--success{color:#1B5E20}
 .rp-sub{font-size:13.5px;color:var(--text3);line-height:1.65;margin-top:-4px}
 
 .rp-rule{display:flex;align-items:center;gap:10px;margin:4px 0}
@@ -371,7 +371,7 @@ const css = `
   font-family:var(--font);font-size:14px;color:var(--text);background:#FAFAF7;
   outline:none;transition:border-color 0.15s,box-shadow 0.15s;
 }
-.rp-input:focus{border-color:rgba(200,169,106,0.5);box-shadow:0 0 0 3px rgba(200,169,106,0.1);background:var(--surface)}
+.rp-input:focus{border-color:rgba(184,160,130,0.5);box-shadow:0 0 0 3px rgba(184,160,130,0.1);background:var(--surface)}
 .rp-input--error{border-color:var(--red-b);background:var(--red-l)}
 .rp-eye{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);display:flex;padding:2px;transition:color 0.15s}
 .rp-eye:hover{color:var(--text2)}
@@ -395,13 +395,13 @@ const css = `
   font-family:var(--font);font-size:14px;font-weight:800;
   cursor:pointer;transition:all 0.18s;border:1px solid;text-decoration:none;
 }
-.rp-btn--dark{background:var(--black);color:var(--gold);border-color:rgba(200,169,106,0.25);width:100%}
-.rp-btn--dark:hover:not(:disabled){background:#1a1a1e;border-color:rgba(200,169,106,0.5);color:var(--gold2)}
+.rp-btn--dark{background:var(--black);color:var(--gold);border-color:rgba(184,160,130,0.25);width:100%}
+.rp-btn--dark:hover:not(:disabled){background:#1A1A1A;border-color:rgba(184,160,130,0.5);color:var(--gold2)}
 .rp-btn--dark:disabled{opacity:0.45;cursor:not-allowed}
 .rp-btn--gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--black);border-color:transparent}
-.rp-btn--gold:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,169,106,0.35)}
+.rp-btn--gold:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(184,160,130,0.35)}
 
-.rp-spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(200,169,106,0.25);border-top-color:var(--gold);border-radius:50%;animation:rp-spin 0.65s linear infinite;flex-shrink:0}
+.rp-spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(184,160,130,0.25);border-top-color:var(--gold);border-radius:50%;animation:rp-spin 0.65s linear infinite;flex-shrink:0}
 
 .rp-success-icon{margin-bottom:4px}
 .rp-error-icon{font-size:48px;margin-bottom:4px}

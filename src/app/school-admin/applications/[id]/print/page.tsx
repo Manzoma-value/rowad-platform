@@ -269,24 +269,24 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
         .pr-page {
           font-family: 'Cairo', 'Tajawal', sans-serif;
           max-width: 800px; margin: 24px auto; padding: 30px;
-          color: #1B1810; background: #FFF; line-height: 1.85;
+          color: #32101A; background: #FFF; line-height: 1.85;
         }
         .pr-head {
           display: flex; align-items: flex-start; gap: 20px;
-          padding-bottom: 18px; border-bottom: 3px double #B89B5E;
+          padding-bottom: 18px; border-bottom: 3px double #B8A082;
           margin-bottom: 22px;
         }
         .pr-head > div { flex: 1; }
-        .pr-title { font-size: 22px; font-weight: 900; margin: 0 0 4px; color: #6B4F1E; }
-        .pr-sub { font-size: 12.5px; color: #7A6440; margin: 0; }
+        .pr-title { font-size: 22px; font-weight: 900; margin: 0 0 4px; color: #6B1E2D; }
+        .pr-sub { font-size: 12.5px; color: #796A62; margin: 0; }
         .pr-name { text-align: end; font-size: 14px; }
-        .pr-name-label { display: block; font-size: 10.5px; color: #8A7B60; letter-spacing: 0.1em; text-transform: uppercase; }
-        .pr-name strong { font-size: 16px; color: #1B1810; }
+        .pr-name-label { display: block; font-size: 10.5px; color: #796A62; letter-spacing: 0.1em; text-transform: uppercase; }
+        .pr-name strong { font-size: 16px; color: #32101A; }
 
         .pr-section { margin-bottom: 18px; page-break-inside: avoid; }
         .pr-section-title {
           font-size: 13.5px; font-weight: 800; color: #FFF;
-          background: #B89B5E; padding: 6px 12px; border-radius: 6px;
+          background: #B8A082; padding: 6px 12px; border-radius: 6px;
           margin: 0 0 10px;
         }
         .pr-kv {
@@ -294,11 +294,11 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
           font-size: 12.5px; align-items: baseline;
         }
         .pr-kv-label {
-          min-width: 130px; font-weight: 700; color: #6B4F1E;
+          min-width: 130px; font-weight: 700; color: #6B1E2D;
           font-size: 11.5px; letter-spacing: 0.02em;
         }
-        .pr-kv-value { color: #1B1810; font-weight: 600; white-space: pre-wrap; }
-        .pr-list { font-size: 12.5px; color: #1B1810; margin: 4px 0; font-weight: 600; }
+        .pr-kv-value { color: #32101A; font-weight: 600; white-space: pre-wrap; }
+        .pr-list { font-size: 12.5px; color: #32101A; margin: 4px 0; font-weight: 600; }
         .pr-langs { list-style: disc; padding-inline-start: 20px; margin: 4px 0; font-size: 12.5px; }
 
         @media print {

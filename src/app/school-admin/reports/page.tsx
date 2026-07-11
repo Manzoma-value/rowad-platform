@@ -105,7 +105,7 @@ const MAQSAD_COLORS: Record<
   string,
   { color: string; bg: string; fill: string }
 > = {
-  DEEN: { color: "#78590A", bg: "rgba(229,185,60,0.12)", fill: "#E5B93C" },
+  DEEN: { color: "#78590A", bg: "rgba(184,160,130,0.12)", fill: "#B8A082" },
   AQL: { color: "#4A2595", bg: "rgba(91,53,160,0.10)", fill: "#7C4DFF" },
   NAFS: { color: "#115C35", bg: "rgba(26,107,66,0.10)", fill: "#1DB85A" },
   NASL: { color: "#7A1818", bg: "rgba(139,30,30,0.10)", fill: "#E03535" },
@@ -176,7 +176,7 @@ function RingChart({
         </span>
       </div>
     );
-  const color = pct >= 75 ? "#4ADE80" : pct >= 50 ? "#C8A96A" : "#EF4444";
+  const color = pct >= 75 ? "#1B5E20" : pct >= 50 ? "#B8A082" : "#6B1E2D";
   const offset = circ - (Math.min(animated, 100) / 100) * circ;
   return (
     <div
@@ -225,7 +225,7 @@ function RingChart({
 
 function SparkBar({ data }: { data: number[] }) {
   const max = Math.max(...data, 1);
-  const colors = ["#EF4444", "#C8A96A", "#E5B93C", "#4ADE80"];
+  const colors = ["#6B1E2D", "#B8A082", "#B8A082", "#1B5E20"];
   return (
     <div
       style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 32 }}
@@ -248,7 +248,7 @@ function SparkBar({ data }: { data: number[] }) {
 
 function DistBar({ data }: { data: DistributionItem[] }) {
   const max = Math.max(...data.map((d) => d.count), 1);
-  const colors = ["#EF4444", "#C8A96A", "#E5B93C", "#4ADE80"];
+  const colors = ["#6B1E2D", "#B8A082", "#B8A082", "#1B5E20"];
   const labels = ["0–25%", "26–50%", "51–75%", "76–100%"];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -319,7 +319,7 @@ function Sparkline({ points }: { points: number[] }) {
     .map((x, i) => `${i === 0 ? "M" : "L"}${x.toFixed(1)},${ys[i].toFixed(1)}`)
     .join(" ");
   const last = points[points.length - 1];
-  const color = last >= 75 ? "#4ADE80" : last >= 50 ? "#C8A96A" : "#EF4444";
+  const color = last >= 75 ? "#1B5E20" : last >= 50 ? "#B8A082" : "#6B1E2D";
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
       <path
@@ -367,13 +367,13 @@ function Heatmap({
       : v >= 75
         ? "rgba(74,222,128,0.18)"
         : v >= 50
-          ? "rgba(200,169,106,0.28)"
+          ? "rgba(184,160,130,0.28)"
           : "rgba(239,68,68,0.18)";
   const getTextColor = (v: number | null) =>
     v === null
       ? "var(--dim)"
       : v >= 75
-        ? "#2D8A4A"
+        ? "#1B5E20"
         : v >= 50
           ? "#8B6914"
           : "#8B1E1E";
@@ -534,8 +534,8 @@ function TraitRadar({
       ))}
       <polygon
         points={pts}
-        fill="rgba(200,169,106,0.12)"
-        stroke="#C8A96A"
+        fill="rgba(184,160,130,0.12)"
+        stroke="#B8A082"
         strokeWidth="2"
       />
       {data.map((d, i) => {
@@ -546,7 +546,7 @@ function TraitRadar({
         const cfg = MAQSAD_COLORS[d.maqsad];
         return (
           <g key={i}>
-            <circle cx={x} cy={y} r="4" fill={cfg?.fill ?? "#C8A96A"} />
+            <circle cx={x} cy={y} r="4" fill={cfg?.fill ?? "#B8A082"} />
             <text
               x={lx}
               y={ly}
@@ -607,7 +607,7 @@ function TraitBars({
                 fontWeight: 800,
                 padding: "2px 8px",
                 borderRadius: 5,
-                background: cfg?.bg ?? "rgba(200,169,106,0.1)",
+                background: cfg?.bg ?? "rgba(184,160,130,0.1)",
                 color: cfg?.color ?? "#8B6914",
                 flexShrink: 0,
                 minWidth: 44,
@@ -640,7 +640,7 @@ function TraitBars({
                 style={{
                   height: "100%",
                   width: `${val}%`,
-                  background: cfg?.fill ?? "#C8A96A",
+                  background: cfg?.fill ?? "#B8A082",
                   borderRadius: 99,
                   transition: "width 0.8s cubic-bezier(0.34,1.56,0.64,1)",
                 }}
@@ -651,7 +651,7 @@ function TraitBars({
                 fontSize: 12,
                 fontWeight: 800,
                 color:
-                  val >= 75 ? "#2D8A4A" : val >= 50 ? "#8B6914" : "#8B1E1E",
+                  val >= 75 ? "#1B5E20" : val >= 50 ? "#8B6914" : "#8B1E1E",
                 width: 36,
                 textAlign: "end",
                 flexShrink: 0,
@@ -802,14 +802,14 @@ export default function SchoolAdminReportsPage() {
             label: "الفصول",
             value: classes.length,
             suffix: "",
-            accent: "#C8A96A",
+            accent: "#B8A082",
             icon: "🏛",
           },
           {
             label: "الطلاب",
             value: totalStudents,
             suffix: "",
-            accent: "#E5B93C",
+            accent: "#B8A082",
             icon: "👤",
           },
           {
@@ -823,7 +823,7 @@ export default function SchoolAdminReportsPage() {
             label: "متوسط المدرسة",
             value: schoolAvg ?? 0,
             suffix: "%",
-            accent: "#4ADE80",
+            accent: "#1B5E20",
             icon: "◎",
           },
         ].map((k, i) => (
@@ -1031,7 +1031,7 @@ export default function SchoolAdminReportsPage() {
                             </span>
                             <span
                               className="rp-td-num"
-                              style={{ color: "#4ADE80" }}
+                              style={{ color: "#1B5E20" }}
                             >
                               {s.passed_count}
                             </span>
@@ -1112,10 +1112,10 @@ export default function SchoolAdminReportsPage() {
                               {currentStudent.timeline?.map((item, i) => {
                                 const color =
                                   item.score_pct >= 75
-                                    ? "#4ADE80"
+                                    ? "#1B5E20"
                                     : item.score_pct >= 50
-                                      ? "#C8A96A"
-                                      : "#EF4444";
+                                      ? "#B8A082"
+                                      : "#6B1E2D";
                                 return (
                                   <div
                                     key={i}
@@ -1410,7 +1410,7 @@ export default function SchoolAdminReportsPage() {
                                               t.average >= 75
                                                 ? "#1DB85A"
                                                 : t.average >= 50
-                                                  ? "#C8A96A"
+                                                  ? "#B8A082"
                                                   : "#E03535",
                                             borderRadius: 99,
                                             transition: "width 0.8s ease",
@@ -1423,7 +1423,7 @@ export default function SchoolAdminReportsPage() {
                                           fontWeight: 800,
                                           color:
                                             t.average >= 75
-                                              ? "#2D8A4A"
+                                              ? "#1B5E20"
                                               : t.average >= 50
                                                 ? "#8B6914"
                                                 : "#8B1E1E",
@@ -1468,17 +1468,17 @@ const css = `
 @keyframes glow{0%,100%{opacity:0.4}50%{opacity:0.8}}
 
 :root{
-  --bg:#F5F3EE;--surface:#FFFFFF;--surface2:#FAF8F4;
-  --border:rgba(200,169,106,0.18);--border2:rgba(0,0,0,0.07);
+  --bg:#F7F3EB;--surface:#FFFFFF;--surface2:#FAF8F4;
+  --border:rgba(184,160,130,0.18);--border2:rgba(0,0,0,0.07);
   --text:#16120C;--text2:#42392A;--text3:#8A7A5A;--dim:#8A7A5A;
-  --gold:#C8A96A;--gold-b:#E5B93C;
+  --gold:#B8A082;--gold-b:#B8A082;
   --font:'Cairo',sans-serif;
 }
 
 .rp-page{display:flex;flex-direction:column;gap:28px;font-family:var(--font);color:var(--text);background:var(--bg);min-height:100vh;padding:32px 36px 60px;animation:fadeIn 0.4s ease}
 
 .rp-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:200px;color:var(--dim);font-size:14px}
-.rp-spinner{width:24px;height:24px;border:2.5px solid rgba(200,169,106,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
+.rp-spinner{width:24px;height:24px;border:2.5px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
 .rp-empty{text-align:center;color:var(--dim);font-size:14px;padding:48px;border:1px dashed var(--border);border-radius:12px}
 
 /* Masthead */
@@ -1506,13 +1506,13 @@ const css = `
 .rp-section-head{display:flex;align-items:center;gap:14px}
 .rp-sh-line{flex:1;height:1px;background:var(--border)}
 .rp-sh-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--dim);white-space:nowrap}
-.rp-sh-count{width:22px;height:22px;border-radius:6px;background:var(--gold);color:#0B0B0C;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rp-sh-count{width:22px;height:22px;border-radius:6px;background:var(--gold);color:#1A1A1A;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 /* Class cards */
 .rp-classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
 .rp-class-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;cursor:pointer;text-align:right;display:flex;flex-direction:column;gap:14px;font-family:var(--font);transition:all 0.2s cubic-bezier(0.4,0,0.2,1);animation:fadeUp 0.5s ease backwards;position:relative;overflow:hidden}
 .rp-class-card:hover{border-color:var(--border);transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,0.08)}
-.rp-class-card.active{border-color:rgba(200,169,106,0.4);box-shadow:0 0 0 1px rgba(200,169,106,0.2),0 12px 40px rgba(0,0,0,0.08)}
+.rp-class-card.active{border-color:rgba(184,160,130,0.4);box-shadow:0 0 0 1px rgba(184,160,130,0.2),0 12px 40px rgba(0,0,0,0.08)}
 .rp-cc-header{display:flex;flex-direction:column;gap:3px;position:relative}
 .rp-cc-name{font-size:16px;font-weight:800;color:var(--text)}
 .rp-cc-teacher{font-size:12px;color:var(--dim);font-weight:500}
@@ -1533,14 +1533,14 @@ const css = `
 .rp-dp-header{display:flex;align-items:flex-start;justify-content:space-between}
 .rp-dp-title{font-size:22px;font-weight:900;color:var(--text);margin-top:4px}
 .rp-close-btn{width:32px;height:32px;border-radius:8px;background:var(--surface2);border:1px solid var(--border2);color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
-.rp-close-btn:hover{border-color:rgba(239,68,68,0.4);color:#EF4444}
+.rp-close-btn:hover{border-color:rgba(239,68,68,0.4);color:#6B1E2D}
 
 /* Tabs */
 .rp-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border2);padding-bottom:0}
 .rp-tab{padding:9px 18px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;color:var(--dim);transition:all 0.15s;display:flex;align-items:center;gap:7px;margin-bottom:-1px}
 .rp-tab:hover{color:var(--text)}
 .rp-tab.active{color:var(--text);border-bottom-color:var(--gold);font-weight:800}
-.rp-tab-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(200,169,106,0.15);color:#78590A;border:1px solid rgba(200,169,106,0.25)}
+.rp-tab-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(184,160,130,0.15);color:#78590A;border:1px solid rgba(184,160,130,0.25)}
 
 /* Charts row */
 .rp-charts-row{display:grid;grid-template-columns:1fr 2fr;gap:14px;align-items:start}
@@ -1553,15 +1553,15 @@ const css = `
 .rp-table{display:flex;flex-direction:column;gap:2px}
 .rp-table-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr;gap:8px;padding:6px 12px;font-size:9px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
 .rp-table-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1.5fr;gap:8px;padding:10px 12px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:all 0.15s;align-items:center;animation:fadeUp 0.4s ease backwards}
-.rp-table-row:hover{background:rgba(200,169,106,0.05);border-color:var(--border)}
-.rp-table-row.active{background:rgba(200,169,106,0.08);border-color:rgba(200,169,106,0.2)}
+.rp-table-row:hover{background:rgba(184,160,130,0.05);border-color:var(--border)}
+.rp-table-row.active{background:rgba(184,160,130,0.08);border-color:rgba(184,160,130,0.2)}
 .rp-td-name{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--text)}
 .rp-td-num{font-size:14px;font-weight:700;color:var(--text2);display:flex;align-items:center}
-.rp-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-b));color:#0B0B0C;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rp-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-b));color:#1A1A1A;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 /* Timeline */
 .rp-close-sm{background:none;border:none;cursor:pointer;color:var(--dim);font-size:14px;padding:2px 6px;border-radius:4px;transition:color 0.15s}
-.rp-close-sm:hover{color:#EF4444}
+.rp-close-sm:hover{color:#6B1E2D}
 .rp-timeline{display:flex;flex-direction:column;gap:0;max-height:340px;overflow-y:auto;padding-right:4px}
 .rp-tl-item{display:flex;align-items:flex-start;gap:12px;position:relative;animation:fadeUp 0.4s ease backwards;padding-bottom:12px}
 .rp-tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:6px;position:relative;z-index:1}

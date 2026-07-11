@@ -116,7 +116,7 @@ const MAQSAD_LABELS: Record<string, Record<string, string>> = {
 };
 
 const MAQSAD: Record<string,{color:string;bg:string;track:string;fill:string}> = {
-  DEEN: { color:"#78590A", bg:"#FDF6E3", track:"#F5E7B2", fill:"#E5B93C"  },
+  DEEN: { color:"#78590A", bg:"#FDF6E3", track:"#F5E7B2", fill:"#B8A082"  },
   AQL:  { color:"#4A2595", bg:"#F2EDFD", track:"#D8C8F8", fill:"#7C4DFF"  },
   NAFS: { color:"#115C35", bg:"#E8F7EF", track:"#B4E6CC", fill:"#1DB85A"  },
   NASL: { color:"#7A4040", bg:"#FDF0F0", track:"#F5CCCC", fill:"#C06070"  },
@@ -139,9 +139,9 @@ function TraitSlider({
 }) {
   const cfg = mq(maqsad);
   const pct = max > 0 ? (value / max) * 100 : 0;
-  const fillColor = isMain ? "#E5B93C" : cfg.fill;
+  const fillColor = isMain ? "#B8A082" : cfg.fill;
   const fillGrad  = isMain
-    ? "linear-gradient(90deg,#C8A96A,#E5B93C)"
+    ? "linear-gradient(90deg,#B8A082,#B8A082)"
     : `linear-gradient(90deg,${cfg.fill}88,${cfg.fill})`;
 
   return (
@@ -172,12 +172,12 @@ function TraitSlider({
 
 function Arc({ score, max }: { score: number; max: number }) {
   const pct = max > 0 ? (score / max) * 100 : 0;
-  const color = pct >= 75 ? "#2D8A4A" : pct >= 40 ? "#C8A96A" : pct > 0 ? "#9A8A70" : "#D0C8BE";
+  const color = pct >= 75 ? "#1B5E20" : pct >= 40 ? "#B8A082" : pct > 0 ? "#796A62" : "#D0C8BE";
   const r = 30, circ = 2 * Math.PI * r;
   return (
     <div className="arc-wrap">
       <svg width="76" height="76" viewBox="0 0 76 76">
-        <circle cx="38" cy="38" r={r} fill="none" stroke="rgba(200,169,106,0.12)" strokeWidth="6"/>
+        <circle cx="38" cy="38" r={r} fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="6"/>
         <circle cx="38" cy="38" r={r} fill="none" stroke={color} strokeWidth="6"
           strokeLinecap="round" strokeDasharray={circ}
           strokeDashoffset={circ*(1-pct/100)} transform="rotate(-90 38 38)"
@@ -210,7 +210,7 @@ function TraitCard({
     <div className={`tcard${isMain ? " tcard-main" : ""}`}>
       {/* Colored left-side accent border */}
       <div className="tcard-accent" style={{background:isMain
-        ? "linear-gradient(180deg,#C8A96A,#E5B93C)"
+        ? "linear-gradient(180deg,#B8A082,#B8A082)"
         : `linear-gradient(180deg,${cfg.fill}88,${cfg.fill})`
       }}/>
 
@@ -290,7 +290,7 @@ function TotalBanner({
 }) {
   const tr = getTR(lang);
   const pct = Math.min(total, 100);
-  const color = total >= 75 ? "#2D8A4A" : total >= 50 ? "#C8A96A" : total > 0 ? "#9A8A70" : "#C8A96A";
+  const color = total >= 75 ? "#1B5E20" : total >= 50 ? "#B8A082" : total > 0 ? "#796A62" : "#B8A082";
   const r = 38, circ = 2 * Math.PI * r;
 
   const label = total === 0
@@ -306,7 +306,7 @@ function TotalBanner({
       {/* Big animated ring */}
       <div className="tb-ring-wrap">
         <svg width="96" height="96" viewBox="0 0 96 96">
-          <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(200,169,106,0.12)" strokeWidth="7"/>
+          <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="7"/>
           <circle cx="48" cy="48" r={r} fill="none" stroke={color} strokeWidth="7"
             strokeLinecap="round" strokeDasharray={circ}
             strokeDashoffset={circ*(1-pct/100)} transform="rotate(-90 48 48)"
@@ -338,7 +338,7 @@ function TotalBanner({
           const lbl = mqLabel(t.maqsad, lang);
           return (
             <div key={t.id} className="tb-dot-col" title={t.name}>
-              <div className="tb-dot-ring" style={{borderColor: p>0 ? cfg.fill : "rgba(200,169,106,0.2)"}}>
+              <div className="tb-dot-ring" style={{borderColor: p>0 ? cfg.fill : "rgba(184,160,130,0.2)"}}>
                 <div className="tb-dot-fill" style={{
                   background:cfg.fill, opacity:p>0?p:0.1, transform:`scaleY(${p})`,
                 }}/>
@@ -516,11 +516,11 @@ const css = `
 @keyframes tef-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 :root{
-  --tef-gold:#C8A96A;--tef-gold2:#E5B93C;
-  --tef-black:#0B0B0C;
-  --tef-bg:#FFFDF8;--tef-bg2:#F6F4EE;--tef-bg3:#F0EDE6;
-  --tef-border:rgba(200,169,106,0.15);
-  --tef-text:#16120C;--tef-text2:#42392A;--tef-text3:#9A8A70;
+  --tef-gold:#B8A082;--tef-gold2:#B8A082;
+  --tef-black:#1A1A1A;
+  --tef-bg:#FFFBF5;--tef-bg2:#EFEAE0;--tef-bg3:#F0EDE6;
+  --tef-border:rgba(184,160,130,0.15);
+  --tef-text:#16120C;--tef-text2:#42392A;--tef-text3:#796A62;
   --tef-font:'Cairo',sans-serif;
 }
 
@@ -529,7 +529,7 @@ const css = `
 
 /* Loading */
 .tef-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;height:260px;font-family:var(--tef-font);font-size:13px;color:var(--tef-text3)}
-.tef-spinner{width:30px;height:30px;border:3px solid rgba(200,169,106,0.15);border-top-color:var(--tef-gold);border-radius:50%;animation:tef-spin 0.7s linear infinite}
+.tef-spinner{width:30px;height:30px;border:3px solid rgba(184,160,130,0.15);border-top-color:var(--tef-gold);border-radius:50%;animation:tef-spin 0.7s linear infinite}
 
 /* Header */
 .tef-hdr{
@@ -544,7 +544,7 @@ const css = `
 .tef-hdr-sep{color:var(--tef-text3);opacity:0.4;font-size:13px}
 .tef-hdr-mod{font-size:18px;font-weight:900;color:var(--tef-black);letter-spacing:-0.3px}
 .tef-hdr-sub{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--tef-text3);font-weight:600}
-.tef-edit-chip{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(229,185,60,0.12);color:#78590A;border:1px solid rgba(229,185,60,0.28)}
+.tef-edit-chip{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(184,160,130,0.12);color:#78590A;border:1px solid rgba(184,160,130,0.28)}
 .tef-close{width:32px;height:32px;border-radius:50%;background:var(--tef-bg2);border:1px solid var(--tef-border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tef-text3);transition:all 0.15s;flex-shrink:0}
 .tef-close:hover{background:var(--tef-bg3);color:var(--tef-text)}
 
@@ -562,7 +562,7 @@ const css = `
 .tb-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .tb-label{font-size:15px;font-weight:900;line-height:1.2}
 .tb-sub{font-size:10.5px;color:var(--tef-text3);font-weight:600;margin-bottom:3px}
-.tb-bar{height:5px;background:rgba(200,169,106,0.12);border-radius:99px;overflow:hidden}
+.tb-bar{height:5px;background:rgba(184,160,130,0.12);border-radius:99px;overflow:hidden}
 .tb-bar-fill{height:100%;border-radius:99px;transition:width 0.6s cubic-bezier(0.22,1,0.36,1),background 0.3s}
 .tb-bar-pct{font-size:10.5px;font-weight:700;margin-top:3px}
 .tb-dots{display:flex;gap:10px;flex-shrink:0;align-items:center}
@@ -597,7 +597,7 @@ const css = `
 .tcard-main-tag{
   display:inline-flex;align-items:center;gap:4px;
   font-size:10.5px;font-weight:700;color:#78590A;
-  background:rgba(229,185,60,0.14);border:1px solid rgba(229,185,60,0.3);
+  background:rgba(184,160,130,0.14);border:1px solid rgba(184,160,130,0.3);
   border-radius:7px;padding:4px 10px;
 }
 .tcard-main-tag b{font-weight:900}
@@ -618,7 +618,7 @@ const css = `
 .sl-track{
   position:absolute;top:50%;transform:translateY(-50%);
   left:0;right:0;height:10px;
-  background:rgba(200,169,106,0.1);border-radius:99px;
+  background:rgba(184,160,130,0.1);border-radius:99px;
 }
 .sl-fill{
   position:absolute;left:0;top:0;bottom:0;
@@ -646,9 +646,9 @@ const css = `
   font-family:var(--tef-font);font-size:12px;font-weight:700;
   color:var(--tef-text3);cursor:pointer;transition:all 0.15s;width:fit-content;
 }
-.tcard-elem-btn:hover{border-color:rgba(200,169,106,0.4);color:var(--tef-text);background:rgba(200,169,106,0.04)}
+.tcard-elem-btn:hover{border-color:rgba(184,160,130,0.4);color:var(--tef-text);background:rgba(184,160,130,0.04)}
 .tcard-elems{
-  background:rgba(200,169,106,0.04);border:1px solid rgba(200,169,106,0.15);
+  background:rgba(184,160,130,0.04);border:1px solid rgba(184,160,130,0.15);
   border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px;
   margin-top:8px;animation:tef-in 0.2s ease;
 }
@@ -663,8 +663,8 @@ const css = `
   border-radius:10px;font-family:var(--tef-font);font-size:13px;color:var(--tef-text);
   outline:none;transition:border-color 0.15s,box-shadow 0.15s;
 }
-.tcard-note:focus{border-color:rgba(200,169,106,0.45);box-shadow:0 0 0 3px rgba(200,169,106,0.1)}
-.tcard-note::placeholder{color:rgba(8,11,12,0.2)}
+.tcard-note:focus{border-color:rgba(184,160,130,0.45);box-shadow:0 0 0 3px rgba(184,160,130,0.1)}
+.tcard-note::placeholder{color:rgba(26,26,26,0.2)}
 
 /* General note */
 .tef-gnote{padding:18px 22px;border-top:1px solid var(--tef-border);display:flex;flex-direction:column;gap:8px;background:var(--tef-bg)}
@@ -676,13 +676,13 @@ const css = `
   outline:none;resize:vertical;min-height:80px;line-height:1.7;
   transition:border-color 0.15s,box-shadow 0.15s;
 }
-.tef-gnote-ta:focus{border-color:rgba(200,169,106,0.45);box-shadow:0 0 0 3px rgba(200,169,106,0.1)}
-.tef-gnote-ta::placeholder{color:rgba(8,11,12,0.2)}
+.tef-gnote-ta:focus{border-color:rgba(184,160,130,0.45);box-shadow:0 0 0 3px rgba(184,160,130,0.1)}
+.tef-gnote-ta::placeholder{color:rgba(26,26,26,0.2)}
 
 /* Error */
 .tef-err{
   margin:0 22px;padding:12px 16px;
-  background:rgba(200,169,106,0.06);border:1px solid rgba(200,169,106,0.22);
+  background:rgba(184,160,130,0.06);border:1px solid rgba(184,160,130,0.22);
   border-radius:10px;display:flex;align-items:center;gap:9px;
   font-size:13px;color:var(--tef-text2);font-weight:600;
 }
@@ -699,11 +699,11 @@ const css = `
   background:var(--tef-black);border:none;color:var(--tef-gold);
   font-family:var(--tef-font);font-size:15px;font-weight:800;
   cursor:pointer;transition:all 0.2s;
-  box-shadow:0 4px 18px rgba(8,11,12,0.18);
+  box-shadow:0 4px 18px rgba(26,26,26,0.18);
 }
-.tef-save:hover:not(:disabled){background:#1c1c1e;box-shadow:0 6px 24px rgba(8,11,12,0.25);transform:translateY(-1px)}
+.tef-save:hover:not(:disabled){background:#1c1c1e;box-shadow:0 6px 24px rgba(26,26,26,0.25);transform:translateY(-1px)}
 .tef-save:disabled{opacity:0.45;cursor:not-allowed;transform:none}
-.tef-spin{width:15px;height:15px;border:2.5px solid rgba(200,169,106,0.2);border-top-color:var(--tef-gold);border-radius:50%;animation:tef-spin 0.7s linear infinite}
+.tef-spin{width:15px;height:15px;border:2.5px solid rgba(184,160,130,0.2);border-top-color:var(--tef-gold);border-radius:50%;animation:tef-spin 0.7s linear infinite}
 .tef-cancel{padding:14px 24px;border-radius:14px;border:1.5px solid var(--tef-border);background:none;font-family:var(--tef-font);font-size:14px;font-weight:700;color:var(--tef-text3);cursor:pointer;transition:all 0.15s}
-.tef-cancel:hover{border-color:rgba(200,169,106,0.35);color:var(--tef-text)}
+.tef-cancel:hover{border-color:rgba(184,160,130,0.35);color:var(--tef-text)}
 `;

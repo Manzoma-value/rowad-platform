@@ -8,7 +8,7 @@ const DEFAULTS: QRCode.QRCodeToStringOptions = {
   errorCorrectionLevel: "M",
   margin: 1,
   width: 320,
-  color: { dark: "#0B0B0C", light: "#FFFFFF" },
+  color: { dark: "#1A1A1A", light: "#FFFFFF" },
 };
 
 /** Generate the raw SVG markup for a QR encoding `text`. Cheap enough
@@ -23,7 +23,7 @@ export async function qrDataUri(text: string, opts?: Partial<QRCode.QRCodeToData
     errorCorrectionLevel: "M",
     margin: 1,
     width: 320,
-    color: { dark: "#0B0B0C", light: "#FFFFFF" },
+    color: { dark: "#1A1A1A", light: "#FFFFFF" },
     ...opts,
   });
 }

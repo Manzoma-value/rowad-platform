@@ -197,24 +197,24 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
         html, body { background: linear-gradient(160deg,#F7EFDD 0%,#EEE1C2 100%); min-height: 100vh; margin: 0; }
         .ws-page { min-height: 100vh; padding: 24px 16px 40px; font-family: 'Cairo', 'Tajawal', sans-serif; display: flex; flex-direction: column; align-items: center; }
         .ws-lang { display: flex; gap: 6px; align-self: flex-end; margin-bottom: 16px; }
-        .ws-lang button { background: rgba(255,255,255,0.6); border: 1px solid rgba(184,155,94,0.32); color: #6B4F1E; padding: 6px 14px; border-radius: 99px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
-        .ws-lang button.on { background: #0B0B0C; color: #E5B93C; border-color: transparent; }
+        .ws-lang button { background: rgba(255,255,255,0.6); border: 1px solid rgba(184,155,94,0.32); color: #6B1E2D; padding: 6px 14px; border-radius: 99px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+        .ws-lang button.on { background: #1A1A1A; color: #B8A082; border-color: transparent; }
 
-        .ws-card { width: 100%; max-width: 440px; background: #FFFDF8; border: 1.5px solid #C0A063; border-radius: 20px; padding: 34px 26px 26px; box-shadow: 0 20px 60px rgba(150,115,50,0.18), inset 0 0 0 4px #EFE6D1, inset 0 0 0 5.5px rgba(194,160,89,0.4); }
-        .ws-mark { text-align: center; font-size: 26px; color: #7A1E1E; margin-bottom: 6px; }
-        .ws-title { text-align: center; font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
-        .ws-sub { text-align: center; font-size: 13px; color: #5E4A20; line-height: 1.85; margin: 0 0 20px; }
-        .ws-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B4F1E; margin: 12px 0 4px; letter-spacing: 0.02em; }
+        .ws-card { width: 100%; max-width: 440px; background: #FFFBF5; border: 1.5px solid #B8A082; border-radius: 20px; padding: 34px 26px 26px; box-shadow: 0 20px 60px rgba(150,115,50,0.18), inset 0 0 0 4px #E5E0D5, inset 0 0 0 5.5px rgba(194,160,89,0.4); }
+        .ws-mark { text-align: center; font-size: 26px; color: #6B1E2D; margin-bottom: 6px; }
+        .ws-title { text-align: center; font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
+        .ws-sub { text-align: center; font-size: 13px; color: #6B1E2D; line-height: 1.85; margin: 0 0 20px; }
+        .ws-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B1E2D; margin: 12px 0 4px; letter-spacing: 0.02em; }
         .ws-input { width: 100%; padding: 11px 14px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px; font-family: inherit; font-size: 14px; background: #FFF; outline: none; transition: border-color .15s; }
-        .ws-input:focus { border-color: #B89B5E; }
+        .ws-input:focus { border-color: #B8A082; }
         .ws-password-wrap { position: relative; }
         .ws-password-input { padding-inline-end: 48px; }
-        .ws-eye-btn { position: absolute; top: 50%; inset-inline-end: 10px; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: #8B6915; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .ws-eye-btn { position: absolute; top: 50%; inset-inline-end: 10px; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: #8F765B; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .ws-eye-btn:hover { background: rgba(194,160,89,0.10); color: #4A0E1C; }
-        .ws-err { background: rgba(139,26,26,0.06); border: 1px solid rgba(139,26,26,0.32); color: #7A1E1E; font-weight: 700; font-size: 12.5px; padding: 8px 12px; border-radius: 10px; margin-top: 12px; }
-        .ws-btn { display: block; width: 100%; margin-top: 18px; background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border: none; padding: 12px; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 900; cursor: pointer; letter-spacing: 0.02em; box-shadow: 0 8px 20px rgba(0,0,0,0.14); }
+        .ws-err { background: rgba(139,26,26,0.06); border: 1px solid rgba(139,26,26,0.32); color: #6B1E2D; font-weight: 700; font-size: 12.5px; padding: 8px 12px; border-radius: 10px; margin-top: 12px; }
+        .ws-btn { display: block; width: 100%; margin-top: 18px; background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border: none; padding: 12px; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 900; cursor: pointer; letter-spacing: 0.02em; box-shadow: 0 8px 20px rgba(0,0,0,0.14); }
         .ws-btn:disabled { opacity: 0.6; cursor: progress; }
-        .ws-footer { text-align: center; font-size: 10.5px; color: #8B6915; margin-top: 18px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 800; }
+        .ws-footer { text-align: center; font-size: 10.5px; color: #8F765B; margin-top: 18px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 800; }
       `}</style>
     </div>
   );

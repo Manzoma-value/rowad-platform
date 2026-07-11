@@ -75,16 +75,16 @@ export default function StudentWelcomePage() {
 
   const scoreColor =
     pct === null
-      ? "#C8A96A"
+      ? "#B8A082"
       : pct >= 70
         ? "#2D7A4F"
         : pct >= 50
-          ? "#A8863E"
-          : "#C0392B";
+          ? "#8F765B"
+          : "#6B1E2D";
 
   const scoreBg =
     pct === null
-      ? "rgba(200,169,106,0.1)"
+      ? "rgba(184,160,130,0.1)"
       : pct >= 70
         ? "rgba(45,122,79,0.08)"
         : pct >= 50
@@ -328,8 +328,8 @@ const baseStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-    --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7; --border: #E8D9B8;
+    --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+    --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7; --border: #E8D9B8;
   }
   .shell {
     min-height: 100vh; background: var(--gold-pale);

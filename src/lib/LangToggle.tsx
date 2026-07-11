@@ -86,7 +86,7 @@ const css = `
     background:
       linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
       rgba(15,17,20,0.45);
-    border: 1px solid rgba(200,169,106,0.18);
+    border: 1px solid rgba(184,160,130,0.18);
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,0.04),
       0 2px 12px rgba(0,0,0,0.18);
@@ -110,9 +110,9 @@ const css = `
     left: 4px;
     width: calc(50% - 4px);
     border-radius: 9px;
-    background: linear-gradient(135deg, #E0C788 0%, #C8A96A 50%, #B89B5E 100%);
+    background: linear-gradient(135deg, #D9C9B0 0%, #B8A082 50%, #B8A082 100%);
     box-shadow:
-      0 2px 8px rgba(200,169,106,0.35),
+      0 2px 8px rgba(184,160,130,0.35),
       inset 0 1px 0 rgba(255,255,255,0.25),
       inset 0 -1px 0 rgba(0,0,0,0.08);
     transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -135,7 +135,7 @@ const css = `
     font-weight: 700;
     letter-spacing: 0.02em;
     line-height: 1;
-    color: rgba(232, 220, 188, 0.85);  /* cream — clearly readable */
+    color: rgba(255, 247, 237, 0.85);  /* cream — clearly readable */
     transition: color 0.22s ease, transform 0.18s ease;
     user-select: none;
     display: inline-flex;
@@ -147,7 +147,7 @@ const css = `
 
   .ltg-btn:hover:not(.ltg-btn--on) { color: rgba(255, 248, 230, 0.95); }
   .ltg-btn:active { transform: scale(0.97); }
-  .ltg-btn--on { color: #0B0B0C; }
+  .ltg-btn--on { color: #1A1A1A; }
   .ltg-btn-text { position: relative; }
 
   /* ────────── LIGHT VARIANT (on cream backgrounds) ────────── */
@@ -170,12 +170,12 @@ const css = `
     color: #3D3320;
   }
   .ltg-wrap:not(.ltg-wrap--dark) .ltg-btn--on {
-    color: #0B0B0C;
+    color: #1A1A1A;
   }
 
   /* Subtle accessibility focus ring */
   .ltg-btn:focus-visible {
-    outline: 2px solid rgba(200,169,106,0.55);
+    outline: 2px solid rgba(184,160,130,0.55);
     outline-offset: 2px;
   }
 

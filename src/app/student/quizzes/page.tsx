@@ -96,7 +96,7 @@ export default function StudentQuizzesPage() {
   if (result && activeQuiz) {
     const pct = Math.round((result.score / result.total) * 100);
     const passed = pct >= 50;
-    const ringColor = passed ? "#2D8A4A" : "#C8A96A";
+    const ringColor = passed ? "#1B5E20" : "#B8A082";
     const circ = 251.2;
     const offset = circ - (circ * pct) / 100;
 
@@ -104,7 +104,7 @@ export default function StudentQuizzesPage() {
       <div className="qs-shell result-shell" dir={dir}>
         <div className="result-card">
           <svg width="110" height="110" viewBox="0 0 110 110" className="result-ring">
-            <circle cx="55" cy="55" r="40" fill="none" stroke="rgba(200,169,106,0.12)" strokeWidth="8"/>
+            <circle cx="55" cy="55" r="40" fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="8"/>
             <circle cx="55" cy="55" r="40" fill="none" stroke={ringColor} strokeWidth="8"
               strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
               transform="rotate(-90 55 55)" style={{ transition: "stroke-dashoffset 1s ease" }}/>
@@ -117,7 +117,7 @@ export default function StudentQuizzesPage() {
             {tr.answeredCorrectly} <strong>{result.score}</strong> {tr.outOf} <strong>{result.total}</strong> {tr.question}
           </p>
 
-          <div className="result-verdict" style={{ background: passed ? "rgba(45,138,74,0.08)" : "rgba(200,169,106,0.1)", borderColor: passed ? "rgba(45,138,74,0.25)" : "rgba(200,169,106,0.25)", color: passed ? "#2D8A4A" : "#A8863E" }}>
+          <div className="result-verdict" style={{ background: passed ? "rgba(45,138,74,0.08)" : "rgba(184,160,130,0.1)", borderColor: passed ? "rgba(45,138,74,0.25)" : "rgba(184,160,130,0.25)", color: passed ? "#1B5E20" : "#8F765B" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               {passed ? <polyline points="20 6 9 17 4 12"/> : <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>}
             </svg>
@@ -159,7 +159,7 @@ export default function StudentQuizzesPage() {
 
         {/* Progress bar */}
         <div className="quiz-prog-track">
-          <div className="quiz-prog-fill" style={{ width: `${progress}%`, background: allDone ? "#2D8A4A" : "#C8A96A" }}/>
+          <div className="quiz-prog-fill" style={{ width: `${progress}%`, background: allDone ? "#1B5E20" : "#B8A082" }}/>
         </div>
 
         {/* Questions */}
@@ -260,14 +260,14 @@ export default function StudentQuizzesPage() {
             const done = !!attempt;
             const pct = done ? Math.round((attempt.score / attempt.total) * 100) : null;
             const passed = pct !== null && pct >= 50;
-            const scoreColor = passed ? "#2D8A4A" : "#B85C38";
+            const scoreColor = passed ? "#1B5E20" : "#B85C38";
 
             return (
               <div key={quiz.id} className={`quiz-row ${done ? "quiz-done" : "quiz-pending"}`} style={{ animationDelay: `${i * 48}ms` }}>
                 <div className="quiz-row-icon" style={{
-                  background: done ? (passed ? "rgba(45,138,74,0.09)" : "rgba(184,92,56,0.08)") : "rgba(200,169,106,0.1)",
-                  border: `1px solid ${done ? (passed ? "rgba(45,138,74,0.22)" : "rgba(184,92,56,0.2)") : "rgba(200,169,106,0.2)"}`,
-                  color: done ? scoreColor : "#A8863E",
+                  background: done ? (passed ? "rgba(45,138,74,0.09)" : "rgba(184,92,56,0.08)") : "rgba(184,160,130,0.1)",
+                  border: `1px solid ${done ? (passed ? "rgba(45,138,74,0.22)" : "rgba(184,92,56,0.2)") : "rgba(184,160,130,0.2)"}`,
+                  color: done ? scoreColor : "#8F765B",
                 }}>
                   {done ? (
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -316,105 +316,105 @@ const styles = `
   @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   @keyframes popIn{from{opacity:0;transform:scale(0.88)}to{opacity:1;transform:scale(1)}}
 
-  .qs-shell{min-height:100%;background:#F6F4EE;font-family:'Cairo',Tajawal,sans-serif;padding:28px 20px}
+  .qs-shell{min-height:100%;background:#EFEAE0;font-family:'Cairo',Tajawal,sans-serif;padding:28px 20px}
   .list-shell,.quiz-shell{display:flex;flex-direction:column;gap:16px;max-width:680px;margin:0 auto}
   .result-shell{display:flex;align-items:center;justify-content:center}
 
   /* Loading */
-  .qs-loading{display:flex;align-items:center;gap:12px;color:#9A8A70;font-size:14px;padding:80px;justify-content:center}
-  .qs-spinner{width:20px;height:20px;border:2px solid rgba(200,169,106,0.2);border-top-color:#C8A96A;border-radius:50%;animation:spin 0.7s linear infinite}
+  .qs-loading{display:flex;align-items:center;gap:12px;color:#796A62;font-size:14px;padding:80px;justify-content:center}
+  .qs-spinner{width:20px;height:20px;border:2px solid rgba(184,160,130,0.2);border-top-color:#B8A082;border-radius:50%;animation:spin 0.7s linear infinite}
 
   /* Result */
   .result-card{
-    background:#FFFDF8;border:1px solid rgba(200,169,106,0.18);border-radius:24px;
+    background:#FFFBF5;border:1px solid rgba(184,160,130,0.18);border-radius:24px;
     padding:38px 32px;width:100%;max-width:420px;
     display:flex;flex-direction:column;align-items:center;gap:16px;
-    box-shadow:0 12px 40px rgba(8,11,12,0.09);
+    box-shadow:0 12px 40px rgba(26,26,26,0.09);
     animation:popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;
   }
   .result-ring{overflow:visible}
-  .result-quiz-name{font-size:18px;font-weight:800;color:#0B0B0C;text-align:center}
-  .result-score-text{font-size:13px;color:#9A8A70;text-align:center}
-  .result-score-text strong{color:#0B0B0C}
+  .result-quiz-name{font-size:18px;font-weight:800;color:#1A1A1A;text-align:center}
+  .result-score-text{font-size:13px;color:#796A62;text-align:center}
+  .result-score-text strong{color:#1A1A1A}
   .result-verdict{display:flex;align-items:center;gap:8px;justify-content:center;width:100%;padding:11px 16px;border-radius:12px;border:1px solid;font-size:13.5px;font-weight:700}
-  .result-back{width:100%;padding:13px;border-radius:12px;border:1.5px solid rgba(200,169,106,0.2);background:#FFFDF8;color:#3D2E10;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif}
-  .result-back:hover{border-color:rgba(200,169,106,0.4);background:rgba(200,169,106,0.06)}
+  .result-back{width:100%;padding:13px;border-radius:12px;border:1.5px solid rgba(184,160,130,0.2);background:#FFFBF5;color:#4A0E1C;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif}
+  .result-back:hover{border-color:rgba(184,160,130,0.4);background:rgba(184,160,130,0.06)}
 
   /* List header */
-  .list-header{background:#0B0B0C;border-radius:20px;padding:22px 26px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;overflow:hidden;border:1px solid rgba(200,169,106,0.1)}
-  .list-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#C8A96A 30%,#E5B93C 60%,transparent)}
-  .list-eyebrow{font-size:10px;font-weight:700;color:rgba(200,169,106,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+  .list-header{background:#1A1A1A;border-radius:20px;padding:22px 26px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;overflow:hidden;border:1px solid rgba(184,160,130,0.1)}
+  .list-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#B8A082 30%,#B8A082 60%,transparent)}
+  .list-eyebrow{font-size:10px;font-weight:700;color:rgba(184,160,130,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
   .list-title{font-size:22px;font-weight:900;color:#FFFFFF}
   .list-sub{font-size:12px;color:rgba(255,255,255,0.38);margin-top:4px}
   .list-stat{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0}
-  .list-stat-num{font-size:30px;font-weight:900;color:#C8A96A;line-height:1}
+  .list-stat-num{font-size:30px;font-weight:900;color:#B8A082;line-height:1}
   .list-stat-label{font-size:10.5px;color:rgba(255,255,255,0.38);margin-top:2px}
 
   /* Overall progress */
   .overall-wrap{display:flex;flex-direction:column;gap:8px}
-  .overall-legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#9A8A70}
+  .overall-legend{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#796A62}
   .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
-  .leg-dot.gold{background:#C8A96A}
-  .leg-dot.muted{background:rgba(200,169,106,0.2)}
-  .overall-track{height:5px;background:rgba(200,169,106,0.15);border-radius:99px;overflow:hidden}
-  .overall-fill{height:100%;background:linear-gradient(90deg,#C8A96A,#E5B93C);border-radius:99px;transition:width 0.6s ease}
+  .leg-dot.gold{background:#B8A082}
+  .leg-dot.muted{background:rgba(184,160,130,0.2)}
+  .overall-track{height:5px;background:rgba(184,160,130,0.15);border-radius:99px;overflow:hidden}
+  .overall-fill{height:100%;background:linear-gradient(90deg,#B8A082,#B8A082);border-radius:99px;transition:width 0.6s ease}
 
   /* Empty */
-  .qs-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 28px;text-align:center;background:#FFFDF8;border:1px dashed rgba(200,169,106,0.2);border-radius:18px}
-  .qs-empty-icon{color:rgba(200,169,106,0.4)}
-  .qs-empty p{font-size:13.5px;color:#9A8A70}
+  .qs-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px 28px;text-align:center;background:#FFFBF5;border:1px dashed rgba(184,160,130,0.2);border-radius:18px}
+  .qs-empty-icon{color:rgba(184,160,130,0.4)}
+  .qs-empty p{font-size:13.5px;color:#796A62}
 
   /* Quiz rows */
   .quiz-grid{display:flex;flex-direction:column;gap:10px}
-  .quiz-row{background:#FFFDF8;border:1px solid rgba(200,169,106,0.14);border-radius:15px;padding:14px 16px;display:flex;align-items:center;gap:13px;transition:all 0.18s;animation:fadeUp 0.3s ease both}
-  .quiz-pending:hover{border-color:rgba(200,169,106,0.35);box-shadow:0 4px 16px rgba(8,11,12,0.06)}
+  .quiz-row{background:#FFFBF5;border:1px solid rgba(184,160,130,0.14);border-radius:15px;padding:14px 16px;display:flex;align-items:center;gap:13px;transition:all 0.18s;animation:fadeUp 0.3s ease both}
+  .quiz-pending:hover{border-color:rgba(184,160,130,0.35);box-shadow:0 4px 16px rgba(26,26,26,0.06)}
   .quiz-row-icon{width:44px;height:44px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
   .quiz-row-body{flex:1;min-width:0}
-  .quiz-row-name{font-size:14px;font-weight:700;color:#0B0B0C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .quiz-row-meta{font-size:11.5px;color:#9A8A70;margin-top:2px}
+  .quiz-row-name{font-size:14px;font-weight:700;color:#1A1A1A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .quiz-row-meta{font-size:11.5px;color:#796A62;margin-top:2px}
   .quiz-score{text-align:center;flex-shrink:0}
   .quiz-score-pct{font-size:20px;font-weight:800;line-height:1}
-  .quiz-score-frac{font-size:11px;color:#9A8A70;margin-top:2px}
-  .quiz-start{display:flex;align-items:center;gap:6px;flex-shrink:0;background:#0B0B0C;color:#FFFFFF;padding:9px 16px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif;white-space:nowrap}
-  .quiz-start:hover{background:#C8A96A;color:#0B0B0C}
+  .quiz-score-frac{font-size:11px;color:#796A62;margin-top:2px}
+  .quiz-start{display:flex;align-items:center;gap:6px;flex-shrink:0;background:#1A1A1A;color:#FFFFFF;padding:9px 16px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif;white-space:nowrap}
+  .quiz-start:hover{background:#B8A082;color:#1A1A1A}
 
   /* Active quiz header */
-  .quiz-header{background:#0B0B0C;border-radius:20px;padding:20px 26px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;overflow:hidden;border:1px solid rgba(200,169,106,0.1)}
-  .quiz-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#C8A96A 30%,#E5B93C 60%,transparent)}
-  .quiz-eyebrow{font-size:10px;font-weight:700;color:rgba(200,169,106,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
+  .quiz-header{background:#1A1A1A;border-radius:20px;padding:20px 26px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;position:relative;overflow:hidden;border:1px solid rgba(184,160,130,0.1)}
+  .quiz-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#B8A082 30%,#B8A082 60%,transparent)}
+  .quiz-eyebrow{font-size:10px;font-weight:700;color:rgba(184,160,130,0.5);letter-spacing:2px;text-transform:uppercase;margin-bottom:5px}
   .quiz-title{font-size:19px;font-weight:800;color:#FFFFFF}
   .quiz-progress-label{font-size:11.5px;color:rgba(255,255,255,0.38);margin-top:4px}
   .quiz-cancel{display:flex;align-items:center;gap:6px;flex-shrink:0;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.55);font-size:12px;font-weight:700;padding:7px 13px;border-radius:9px;cursor:pointer;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif;margin-top:3px}
   .quiz-cancel:hover{background:rgba(255,255,255,0.12);color:#FFFFFF}
 
   /* Progress bar */
-  .quiz-prog-track{height:5px;background:rgba(200,169,106,0.15);border-radius:99px;overflow:hidden}
+  .quiz-prog-track{height:5px;background:rgba(184,160,130,0.15);border-radius:99px;overflow:hidden}
   .quiz-prog-fill{height:100%;border-radius:99px;transition:width 0.4s ease,background 0.3s ease}
 
   /* Question cards */
   .q-list{display:flex;flex-direction:column;gap:12px}
-  .q-card{background:#FFFDF8;border:1.5px solid rgba(200,169,106,0.14);border-radius:17px;padding:18px;display:flex;flex-direction:column;gap:14px;transition:border-color 0.2s;animation:fadeUp 0.3s ease both}
-  .q-card.done{border-color:rgba(200,169,106,0.35)}
+  .q-card{background:#FFFBF5;border:1.5px solid rgba(184,160,130,0.14);border-radius:17px;padding:18px;display:flex;flex-direction:column;gap:14px;transition:border-color 0.2s;animation:fadeUp 0.3s ease both}
+  .q-card.done{border-color:rgba(184,160,130,0.35)}
   .q-top{display:flex;align-items:center;gap:10px}
-  .q-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:rgba(200,169,106,0.1);border:1px solid rgba(200,169,106,0.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#A8863E}
-  .q-card.done .q-num{background:#C8A96A;color:#0B0B0C;border-color:#A8863E}
-  .q-type{font-size:10.5px;font-weight:700;color:#A8863E;background:rgba(200,169,106,0.1);border:1px solid rgba(200,169,106,0.2);padding:3px 10px;border-radius:99px}
-  .q-text{font-size:15px;font-weight:700;color:#0B0B0C;line-height:1.65}
+  .q-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;background:rgba(184,160,130,0.1);border:1px solid rgba(184,160,130,0.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#8F765B}
+  .q-card.done .q-num{background:#B8A082;color:#1A1A1A;border-color:#8F765B}
+  .q-type{font-size:10.5px;font-weight:700;color:#8F765B;background:rgba(184,160,130,0.1);border:1px solid rgba(184,160,130,0.2);padding:3px 10px;border-radius:99px}
+  .q-text{font-size:15px;font-weight:700;color:#1A1A1A;line-height:1.65}
   .q-opts{display:flex;flex-direction:column;gap:8px}
-  .q-opt{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;border:1.5px solid rgba(200,169,106,0.14);cursor:pointer;background:#FEFCF8;transition:all 0.15s;user-select:none}
-  .q-opt:hover{border-color:rgba(200,169,106,0.3);background:rgba(200,169,106,0.05)}
-  .q-opt.selected{background:#0B0B0C;border-color:#0B0B0C}
+  .q-opt{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;border:1.5px solid rgba(184,160,130,0.14);cursor:pointer;background:#FEFCF8;transition:all 0.15s;user-select:none}
+  .q-opt:hover{border-color:rgba(184,160,130,0.3);background:rgba(184,160,130,0.05)}
+  .q-opt.selected{background:#1A1A1A;border-color:#1A1A1A}
   .q-radio-hidden{display:none}
-  .q-ring{width:18px;height:18px;border-radius:50%;border:2px solid rgba(200,169,106,0.25);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s}
+  .q-ring{width:18px;height:18px;border-radius:50%;border:2px solid rgba(184,160,130,0.25);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s}
   .q-opt.selected .q-ring{border-color:rgba(255,255,255,0.4)}
   .q-ring-fill{width:8px;height:8px;border-radius:50%;background:#FFFFFF}
-  .q-opt-text{font-size:14px;font-weight:500;color:#3D2E10}
+  .q-opt-text{font-size:14px;font-weight:500;color:#4A0E1C}
   .q-opt.selected .q-opt-text{color:#FFFFFF;font-weight:700}
 
   /* Submit */
-  .quiz-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;border-radius:13px;border:none;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.18s;font-family:'Cairo',Tajawal,sans-serif;background:rgba(200,169,106,0.15);color:#9A8A70}
-  .quiz-submit.ready{background:#0B0B0C;color:#FFFFFF}
-  .quiz-submit.ready:hover{background:#C8A96A;color:#0B0B0C}
+  .quiz-submit{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;border-radius:13px;border:none;font-size:15px;font-weight:800;cursor:pointer;transition:all 0.18s;font-family:'Cairo',Tajawal,sans-serif;background:rgba(184,160,130,0.15);color:#796A62}
+  .quiz-submit.ready{background:#1A1A1A;color:#FFFFFF}
+  .quiz-submit.ready:hover{background:#B8A082;color:#1A1A1A}
   .quiz-submit:disabled{opacity:0.5;cursor:not-allowed}
   .btn-spin{width:15px;height:15px;border:2px solid rgba(255,255,255,0.25);border-top-color:#FFFFFF;border-radius:50%;animation:spin 0.7s linear infinite}
 

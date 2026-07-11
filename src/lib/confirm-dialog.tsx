@@ -209,8 +209,8 @@ const styles = `
 
 .cf-card {
   max-width: 440px; width: 100%;
-  background: linear-gradient(160deg, #FFFCF1 0%, #F4ECD9 100%);
-  border: 1.5px solid rgba(200,169,106,0.45);
+  background: linear-gradient(160deg, #FFFBF5 0%, #F7F3EB 100%);
+  border: 1.5px solid rgba(184,160,130,0.45);
   border-radius: 22px;
   padding: 30px 28px 22px;
   box-shadow: 0 28px 72px rgba(80,60,20,0.32), inset 0 1px 0 rgba(255,255,255,0.55);
@@ -219,8 +219,8 @@ const styles = `
   animation: cfCardIn 0.22s cubic-bezier(.22,1.4,.36,1);
   position: relative;
 }
-.cf-card.cf-danger  { border-color: rgba(122,30,30,0.40); }
-.cf-card.cf-warning { border-color: rgba(200,169,106,0.55); }
+.cf-card.cf-danger  { border-color: rgba(107,30,45,0.40); }
+.cf-card.cf-warning { border-color: rgba(184,160,130,0.55); }
 
 .cf-icon {
   width: 60px; height: 60px; border-radius: 50%;
@@ -229,16 +229,16 @@ const styles = `
   background: rgba(255,255,255,0.6);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 4px 12px rgba(80,60,20,0.10);
 }
-.cf-card.cf-danger  .cf-icon { color: #A33333; background: rgba(163,51,51,0.10); }
-.cf-card.cf-warning .cf-icon { color: #B89B5E; background: rgba(194,160,89,0.16); }
-.cf-card.cf-normal  .cf-icon { color: #2b2417; background: rgba(194,160,89,0.16); }
+.cf-card.cf-danger  .cf-icon { color: #6B1E2D; background: rgba(163,51,51,0.10); }
+.cf-card.cf-warning .cf-icon { color: #B8A082; background: rgba(194,160,89,0.16); }
+.cf-card.cf-normal  .cf-icon { color: #4A0E1C; background: rgba(194,160,89,0.16); }
 
 .cf-title {
   font-family: 'El Messiri','Cairo',serif;
-  font-size: 22px; font-weight: 800; color: #2b2417;
+  font-size: 22px; font-weight: 800; color: #4A0E1C;
   margin: 0; letter-spacing: -.3px; line-height: 1.25;
 }
-.cf-card.cf-danger .cf-title { color: #7A1E1E; }
+.cf-card.cf-danger .cf-title { color: #6B1E2D; }
 
 .cf-message {
   font-size: 14.5px; font-weight: 600; color: #5A4A30;
@@ -256,7 +256,7 @@ const styles = `
 .cf-card.cf-danger .cf-irrev {
   background: rgba(163,51,51,0.10);
   border-color: rgba(163,51,51,0.30);
-  color: #A33333;
+  color: #6B1E2D;
 }
 
 .cf-actions {
@@ -274,26 +274,26 @@ const styles = `
 
 .cf-btn-cancel {
   background: rgba(255,255,255,0.7);
-  border: 1.5px solid rgba(200,169,106,0.32);
+  border: 1.5px solid rgba(184,160,130,0.32);
   color: #5A4A30;
 }
-.cf-btn-cancel:hover  { background: #FFFCF1; border-color: #C2A059; color: #2b2417; }
-.cf-btn-cancel:focus-visible { outline: 2px solid #C2A059; outline-offset: 2px; }
+.cf-btn-cancel:hover  { background: #FFFBF5; border-color: #B8A082; color: #4A0E1C; }
+.cf-btn-cancel:focus-visible { outline: 2px solid #B8A082; outline-offset: 2px; }
 
 .cf-btn-confirm { border: 1px solid; }
 .cf-btn-danger {
-  background: linear-gradient(135deg,#8E2424,#7A1E1E);
+  background: linear-gradient(135deg,#8E2424,#6B1E2D);
   color: #FFE9D6; border-color: rgba(255,200,170,0.45);
-  box-shadow: 0 6px 18px rgba(122,30,30,0.32);
+  box-shadow: 0 6px 18px rgba(107,30,45,0.32);
 }
 .cf-btn-danger:hover {
   background: linear-gradient(135deg,#9C2A2A,#882323);
   transform: translateY(-1px);
-  box-shadow: 0 10px 26px rgba(122,30,30,0.42);
+  box-shadow: 0 10px 26px rgba(107,30,45,0.42);
 }
 .cf-btn-warning {
-  background: linear-gradient(135deg,#2b2417,#3a2e1a);
-  color: #E0C277; border-color: rgba(224,194,119,0.45);
+  background: linear-gradient(135deg,#4A0E1C,#3a2e1a);
+  color: #D9C9B0; border-color: rgba(224,194,119,0.45);
   box-shadow: 0 6px 18px rgba(120,90,40,0.28);
 }
 .cf-btn-warning:hover {
@@ -301,10 +301,10 @@ const styles = `
   box-shadow: 0 10px 26px rgba(120,90,40,0.38);
 }
 .cf-btn-normal {
-  background: linear-gradient(135deg,#9A7833,#C8A96A);
-  color: #2b2417; border-color: rgba(0,0,0,0.10);
+  background: linear-gradient(135deg,#9A7833,#B8A082);
+  color: #4A0E1C; border-color: rgba(0,0,0,0.10);
 }
-.cf-btn-confirm:focus-visible { outline: 2px solid #2b2417; outline-offset: 3px; }
+.cf-btn-confirm:focus-visible { outline: 2px solid #4A0E1C; outline-offset: 3px; }
 
 @media(max-width:420px){
   .cf-card { padding: 24px 20px 18px; border-radius: 18px; }

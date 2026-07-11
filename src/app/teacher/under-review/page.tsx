@@ -64,15 +64,15 @@ export default function UnderReviewPage() {
           min-height: 78vh; display:flex; align-items:center; justify-content:center;
           padding: 24px; font-family:'Cairo','Tajawal',sans-serif;
           background:
-            radial-gradient(ellipse at 50% 10%, #F8F1E0 0%, transparent 55%),
-            linear-gradient(160deg,#EFE6D2 0%,#E9DFC7 100%);
+            radial-gradient(ellipse at 50% 10%, #F7F3EB 0%, transparent 55%),
+            linear-gradient(160deg,#E5E0D5 0%,#E5E0D5 100%);
         }
         .ur-card {
           max-width: 520px; text-align:center;
           background: linear-gradient(160deg,#F8F1E1,#EFE5CE);
-          border: 1.5px solid #C0A063; border-radius: 22px; padding: 50px 42px;
+          border: 1.5px solid #B8A082; border-radius: 22px; padding: 50px 42px;
           box-shadow: 0 10px 40px rgba(150,115,50,0.12),
-            inset 0 0 0 5px #EFE6D1, inset 0 0 0 6.5px rgba(194,160,89,0.4);
+            inset 0 0 0 5px #E5E0D5, inset 0 0 0 6.5px rgba(194,160,89,0.4);
         }
         .ur-icon {
           width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 20px;
@@ -88,10 +88,10 @@ export default function UnderReviewPage() {
           border:1px solid rgba(194,160,89,0.3);
         }
         .ur-title { font-size:22px; font-weight:900; color:#3B2F1C; margin:0 0 14px; }
-        .ur-body  { font-size:14.5px; color:#7A6440; line-height:1.95; margin:0 0 22px; }
+        .ur-body  { font-size:14.5px; color:#796A62; line-height:1.95; margin:0 0 22px; }
         .ur-dots { display:flex; gap:8px; justify-content:center; }
         .ur-dots span {
-          width:8px; height:8px; border-radius:50%; background:#C2A059;
+          width:8px; height:8px; border-radius:50%; background:#B8A082;
           animation: urp 1.5s ease-in-out infinite;
         }
         .ur-dots span:nth-child(2) { animation-delay:.2s; }

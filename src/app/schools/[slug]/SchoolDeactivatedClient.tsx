@@ -102,9 +102,9 @@ export default function SchoolDeactivatedClient({
           font-family: 'Cairo', sans-serif;
           background:
             radial-gradient(ellipse at 50% 20%, rgba(139,26,26,0.08), transparent 60%),
-            radial-gradient(ellipse at 50% 80%, rgba(200,169,106,0.06), transparent 50%),
-            #0B0B0C;
-          color: #FFFDF8;
+            radial-gradient(ellipse at 50% 80%, rgba(184,160,130,0.06), transparent 50%),
+            #1A1A1A;
+          color: #FFFBF5;
         }
 
         .sd-card {
@@ -123,13 +123,13 @@ export default function SchoolDeactivatedClient({
           display: flex; justify-content: flex-end; margin-bottom: 20px;
         }
         .sd-lang-btn {
-          background: rgba(200,169,106,0.10); border: 1px solid rgba(200,169,106,0.25);
-          color: rgba(200,169,106,0.7); border-radius: 8px;
+          background: rgba(184,160,130,0.10); border: 1px solid rgba(184,160,130,0.25);
+          color: rgba(184,160,130,0.7); border-radius: 8px;
           padding: 5px 14px; font-size: 11px; font-weight: 800;
           letter-spacing: 0.08em; cursor: pointer;
           font-family: 'Cairo', sans-serif; transition: all 0.18s;
         }
-        .sd-lang-btn:hover { background: rgba(200,169,106,0.18); color: #C8A96A; }
+        .sd-lang-btn:hover { background: rgba(184,160,130,0.18); color: #B8A082; }
 
         .sd-icon-wrap {
           width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px;
@@ -144,7 +144,7 @@ export default function SchoolDeactivatedClient({
         }
 
         .sd-school-name {
-          font-size: 15px; font-weight: 700; color: rgba(200,169,106,0.70);
+          font-size: 15px; font-weight: 700; color: rgba(184,160,130,0.70);
           margin-bottom: 16px;
         }
 
@@ -167,7 +167,7 @@ export default function SchoolDeactivatedClient({
         .sd-footer {
           margin-top: 32px;
           font-size: 10px; font-weight: 500; letter-spacing: 0.2em;
-          text-transform: uppercase; color: rgba(200,169,106,0.3);
+          text-transform: uppercase; color: rgba(184,160,130,0.3);
         }
 
         @media (max-width: 480px) {

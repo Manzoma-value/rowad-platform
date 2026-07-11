@@ -11,7 +11,7 @@ export default function GlobalLoading() {
         alignItems: "center",
         justifyContent: "center",
         background:
-          "radial-gradient(ellipse at center, rgba(200,169,106,0.06), transparent 60%), #F6F4EE",
+          "radial-gradient(ellipse at center, rgba(184,160,130,0.06), transparent 60%), #EFEAE0",
       }}
     >
       <MandalaLoader />

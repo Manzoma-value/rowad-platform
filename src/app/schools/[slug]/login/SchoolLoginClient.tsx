@@ -51,7 +51,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="92"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.3"
           opacity="0.08"
         />
@@ -59,7 +59,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="86"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.3"
           opacity="0.06"
         />
@@ -69,7 +69,7 @@ function Mandala({
             cx={p.cx}
             cy={p.cy}
             r="52"
-            stroke="#C8A96A"
+            stroke="#B8A082"
             strokeWidth="0.5"
             opacity="0.13"
             fill="none"
@@ -79,7 +79,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="74"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.4"
           opacity="0.16"
           strokeDasharray="3 8"
@@ -88,7 +88,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="62"
-          stroke="#E5B93C"
+          stroke="#B8A082"
           strokeWidth="0.35"
           opacity="0.13"
         />
@@ -96,7 +96,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="50"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.5"
           opacity="0.18"
           strokeDasharray="5 5"
@@ -105,7 +105,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="38"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.35"
           opacity="0.15"
         />
@@ -113,7 +113,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="28"
-          stroke="#E5B93C"
+          stroke="#B8A082"
           strokeWidth="0.45"
           opacity="0.22"
           strokeDasharray="3 4"
@@ -122,7 +122,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="18"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.35"
           opacity="0.24"
         />
@@ -130,7 +130,7 @@ function Mandala({
           cx="100"
           cy="100"
           r="9"
-          stroke="#E5B93C"
+          stroke="#B8A082"
           strokeWidth="0.55"
           opacity="0.30"
         />
@@ -141,7 +141,7 @@ function Mandala({
             y1={l.y1}
             x2={l.x2}
             y2={l.y2}
-            stroke="#C8A96A"
+            stroke="#B8A082"
             strokeWidth="0.35"
             opacity="0.16"
           />
@@ -152,7 +152,7 @@ function Mandala({
             cx={p.cx}
             cy={p.cy}
             r="24"
-            stroke="#C8A96A"
+            stroke="#B8A082"
             strokeWidth="0.45"
             opacity="0.20"
             fill="none"
@@ -163,7 +163,7 @@ function Mandala({
           y1="73"
           x2="100"
           y2="127"
-          stroke="#E5B93C"
+          stroke="#B8A082"
           strokeWidth="0.6"
           opacity="0.24"
         />
@@ -172,7 +172,7 @@ function Mandala({
           y1="87"
           x2="124"
           y2="113"
-          stroke="#E5B93C"
+          stroke="#B8A082"
           strokeWidth="0.6"
           opacity="0.24"
         />
@@ -181,7 +181,7 @@ function Mandala({
           y1="87"
           x2="76"
           y2="113"
-          stroke="#E5B93C"
+          stroke="#B8A082"
           strokeWidth="0.6"
           opacity="0.24"
         />
@@ -190,7 +190,7 @@ function Mandala({
           cy="100"
           r="7"
           fill="none"
-          stroke="#E5B93C"
+          stroke="#B8A082"
           strokeWidth="0.7"
           opacity="0.45"
         />
@@ -199,11 +199,11 @@ function Mandala({
           cy="100"
           r="4"
           fill="none"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.45"
           opacity="0.55"
         />
-        <circle cx="100" cy="100" r="2" fill="#E5B93C" opacity="0.7" />
+        <circle cx="100" cy="100" r="2" fill="#B8A082" opacity="0.7" />
       </svg>
     </div>
   );
@@ -211,7 +211,7 @@ function Mandala({
 
 /* ─── Rule ornament ─── */
 function Rule({ dim = false }: { dim?: boolean }) {
-  const c = dim ? "rgba(200,169,106,0.35)" : "rgba(200,169,106,0.5)";
+  const c = dim ? "rgba(184,160,130,0.35)" : "rgba(184,160,130,0.5)";
   return (
     <div className="lp-rule">
       <div
@@ -438,7 +438,7 @@ export default function SchoolLoginClient({ school }: { school: School }) {
               <p className="lp-panel-quote">
                 {L.poweredBy}{" "}
                 <span
-                  style={{ color: "rgba(200,169,106,0.5)", fontWeight: 700 }}
+                  style={{ color: "rgba(184,160,130,0.5)", fontWeight: 700 }}
                 >
                   بناء الأهلية
                 </span>
@@ -632,10 +632,10 @@ const css = `
   @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
 
   :root {
-    --gold:      #C8A96A;
-    --gold2:     #E5B93C;
-    --black:     #0B0B0C;
-    --off-white: #F5F3EE;
+    --gold:      #B8A082;
+    --gold2:     #B8A082;
+    --black:     #4A0E1C;
+    --off-white: #F7F3EB;
     --cream:     #EDE8DF;
     --text:      #1a1610;
     --text2:     #4a3f2e;
@@ -669,14 +669,14 @@ const css = `
     content: '';
     position: absolute; inset: 0;
     background:
-      radial-gradient(ellipse at 50% 20%, rgba(200,169,106,0.10) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 80%, rgba(229,185,60,0.06) 0%, transparent 50%);
+      radial-gradient(ellipse at 50% 20%, rgba(184,160,130,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(184,160,130,0.06) 0%, transparent 50%);
     pointer-events: none;
   }
 
   .lp-corner { position: absolute; width: 80px; height: 80px; pointer-events: none; }
-  .lp-corner-tl { top: 0; right: 0; border-top: 1px solid rgba(200,169,106,0.25); border-right: 1px solid rgba(200,169,106,0.25); }
-  .lp-corner-br { bottom: 0; left: 0; border-bottom: 1px solid rgba(200,169,106,0.25); border-left: 1px solid rgba(200,169,106,0.25); }
+  .lp-corner-tl { top: 0; right: 0; border-top: 1px solid rgba(184,160,130,0.25); border-right: 1px solid rgba(184,160,130,0.25); }
+  .lp-corner-br { bottom: 0; left: 0; border-bottom: 1px solid rgba(184,160,130,0.25); border-left: 1px solid rgba(184,160,130,0.25); }
 
   .lp-panel-inner {
     flex: 1;
@@ -704,12 +704,12 @@ const css = `
   .lp-school-badge {
     width: 48px; height: 48px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #C8A96A 0%, #E5B93C 100%);
+    background: linear-gradient(135deg, #B8A082 0%, #B8A082 100%);
     display: flex; align-items: center; justify-content: center;
     font-size: 22px; font-weight: 900;
     color: var(--black);
     margin: 4px 0;
-    box-shadow: 0 4px 16px rgba(200,169,106,0.25);
+    box-shadow: 0 4px 16px rgba(184,160,130,0.25);
   }
 
   .lp-brand-name {
@@ -722,7 +722,7 @@ const css = `
 
   .lp-brand-desc {
     font-size: 12px;
-    color: rgba(200,169,106,0.45);
+    color: rgba(184,160,130,0.45);
     font-weight: 500;
     max-width: 280px;
     line-height: 1.6;
@@ -735,18 +735,18 @@ const css = `
   }
   .lp-panel-quote {
     font-size: 11px;
-    color: rgba(200,169,106,0.22);
+    color: rgba(184,160,130,0.22);
     font-weight: 400;
   }
 
   .lp-rule { display: flex; align-items: center; width: 100%; }
   .lp-rule-line {
     flex: 1; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(200,169,106,0.35), transparent);
+    background: linear-gradient(90deg, transparent, rgba(184,160,130,0.35), transparent);
   }
   .lp-rule-diamond {
     width: 5px; height: 5px;
-    background: rgba(200,169,106,0.5);
+    background: rgba(184,160,130,0.5);
     transform: rotate(45deg);
     margin: 0 10px; flex-shrink: 0;
   }
@@ -756,7 +756,7 @@ const css = `
     display: flex;
     align-items: center;
     background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(200,169,106,0.2);
+    border: 1px solid rgba(184,160,130,0.2);
     border-radius: 10px;
     padding: 3px;
   }
@@ -769,7 +769,7 @@ const css = `
     border-radius: 7px;
     border: none;
     background: transparent;
-    color: rgba(200,169,106,0.4);
+    color: rgba(184,160,130,0.4);
     font-size: 12px;
     font-weight: 700;
     font-family: 'Cairo', sans-serif;
@@ -779,13 +779,13 @@ const css = `
     line-height: 1;
   }
   .lp-lang-btn:hover:not(.lp-lang-btn--active) {
-    color: rgba(200,169,106,0.7);
-    background: rgba(200,169,106,0.07);
+    color: rgba(184,160,130,0.7);
+    background: rgba(184,160,130,0.07);
   }
   .lp-lang-btn--active {
-    background: rgba(200,169,106,0.16);
+    background: rgba(184,160,130,0.16);
     color: var(--gold);
-    box-shadow: inset 0 1px 0 rgba(200,169,106,0.1);
+    box-shadow: inset 0 1px 0 rgba(184,160,130,0.1);
   }
 
   .lp-lang-flag { font-size: 15px; line-height: 1; }
@@ -793,7 +793,7 @@ const css = `
 
   .lp-lang-sep {
     width: 1px; height: 18px;
-    background: rgba(200,169,106,0.15);
+    background: rgba(184,160,130,0.15);
     flex-shrink: 0;
   }
 
@@ -806,7 +806,7 @@ const css = `
   /* On mobile the toggle goes on the light side — restyle for light bg */
   .lp-lang-toggle-mobile .lp-lang-toggle {
     background: rgba(11,11,12,0.04);
-    border-color: rgba(200,169,106,0.3);
+    border-color: rgba(184,160,130,0.3);
   }
   .lp-lang-toggle-mobile .lp-lang-btn { color: var(--text3); }
   .lp-lang-toggle-mobile .lp-lang-btn--active {
@@ -836,7 +836,7 @@ const css = `
     position: absolute;
     top: -100px; left: -100px;
     width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(200,169,106,0.04) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(184,160,130,0.04) 0%, transparent 65%);
     pointer-events: none;
   }
   .lp-form-side::after {
@@ -844,7 +844,7 @@ const css = `
     position: absolute;
     bottom: -60px; right: -60px;
     width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(229,185,60,0.03) 0%, transparent 65%);
+    background: radial-gradient(circle, rgba(184,160,130,0.03) 0%, transparent 65%);
     pointer-events: none;
   }
 
@@ -886,7 +886,7 @@ const css = `
   .lp-label-icon {
     display: flex; align-items: center; justify-content: center;
     width: 20px; height: 20px;
-    background: rgba(200,169,106,0.12);
+    background: rgba(184,160,130,0.12);
     border-radius: 5px;
     color: var(--gold);
     flex-shrink: 0;
@@ -907,7 +907,7 @@ const css = `
   }
   .lp-input:focus {
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(200,169,106,0.12), 0 1px 3px rgba(11,11,12,0.04);
+    box-shadow: 0 0 0 3px rgba(184,160,130,0.12), 0 1px 3px rgba(11,11,12,0.04);
     background: #FFFDF9;
   }
   .lp-input::placeholder { color: #bbb0a0; }
@@ -921,14 +921,14 @@ const css = `
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: background 0.18s, color 0.18s, opacity 0.18s;
   }
-  .lp-eye-btn:hover:not(:disabled) { background: rgba(200,169,106,0.10); color: var(--text2); }
+  .lp-eye-btn:hover:not(:disabled) { background: rgba(184,160,130,0.10); color: var(--text2); }
   .lp-eye-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .lp-input--error {
-    border-color: #c0392b !important;
+    border-color: #6B1E2D !important;
     box-shadow: 0 0 0 3px rgba(192,57,43,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
   }
   .lp-input--valid {
-    border-color: #27ae60 !important;
+    border-color: #1B5E20 !important;
     box-shadow: 0 0 0 3px rgba(39,174,96,0.10), 0 1px 3px rgba(11,11,12,0.04) !important;
   }
   .lp-field-msg {
@@ -936,14 +936,14 @@ const css = `
     display: flex; align-items: center; gap: 5px;
     margin-top: 2px;
   }
-  .lp-field-msg--error { color: #c0392b; }
-  .lp-field-msg--success { color: #27ae60; }
+  .lp-field-msg--error { color: #6B1E2D; }
+  .lp-field-msg--success { color: #1B5E20; }
 
   .lp-error {
     display: flex; align-items: center; gap: 8px;
     background: rgba(139,26,26,0.06);
     border: 1px solid rgba(139,26,26,0.2);
-    color: #8b1a1a;
+    color: #6B1E2D;
     font-size: 12.5px;
     padding: 11px 14px;
     border-radius: 9px;
@@ -955,7 +955,7 @@ const css = `
     width: 100%; padding: 14px;
     background: var(--black);
     color: var(--gold);
-    border: 1px solid rgba(200,169,106,0.25);
+    border: 1px solid rgba(184,160,130,0.25);
     border-radius: 10px;
     font-size: 15px; font-weight: 800;
     cursor: pointer;
@@ -968,12 +968,12 @@ const css = `
   .lp-btn::before {
     content: '';
     position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(200,169,106,0.08) 0%, transparent 60%);
+    background: linear-gradient(135deg, rgba(184,160,130,0.08) 0%, transparent 60%);
     pointer-events: none;
   }
   .lp-btn:hover:not(:disabled) {
-    background: #1a1a1e;
-    border-color: rgba(200,169,106,0.5);
+    background: #1A1A1A;
+    border-color: rgba(184,160,130,0.5);
     box-shadow: 0 4px 20px rgba(11,11,12,0.15);
     color: var(--gold2);
   }
@@ -981,7 +981,7 @@ const css = `
 
   .lp-spin {
     display: inline-block; width: 14px; height: 14px;
-    border: 2px solid rgba(200,169,106,0.25);
+    border: 2px solid rgba(184,160,130,0.25);
     border-top-color: var(--gold);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;

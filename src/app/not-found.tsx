@@ -59,12 +59,12 @@ export default function NotFound() {
         fill="none"
         aria-hidden="true"
       >
-        <circle cx="200" cy="200" r="180" stroke="#C8A96A" strokeWidth="0.6" opacity="0.10" />
-        <circle cx="200" cy="200" r="150" stroke="#C8A96A" strokeWidth="0.4" opacity="0.14" strokeDasharray="2 6" />
-        <circle cx="200" cy="200" r="120" stroke="#C8A96A" strokeWidth="0.6" opacity="0.18" />
-        <circle cx="200" cy="200" r="90"  stroke="#E5B93C" strokeWidth="0.5" opacity="0.16" strokeDasharray="4 4" />
-        <circle cx="200" cy="200" r="60"  stroke="#C8A96A" strokeWidth="0.7" opacity="0.22" />
-        <circle cx="200" cy="200" r="30"  stroke="#E5B93C" strokeWidth="0.6" opacity="0.24" />
+        <circle cx="200" cy="200" r="180" stroke="#B8A082" strokeWidth="0.6" opacity="0.10" />
+        <circle cx="200" cy="200" r="150" stroke="#B8A082" strokeWidth="0.4" opacity="0.14" strokeDasharray="2 6" />
+        <circle cx="200" cy="200" r="120" stroke="#B8A082" strokeWidth="0.6" opacity="0.18" />
+        <circle cx="200" cy="200" r="90"  stroke="#B8A082" strokeWidth="0.5" opacity="0.16" strokeDasharray="4 4" />
+        <circle cx="200" cy="200" r="60"  stroke="#B8A082" strokeWidth="0.7" opacity="0.22" />
+        <circle cx="200" cy="200" r="30"  stroke="#B8A082" strokeWidth="0.6" opacity="0.24" />
         {Array.from({ length: 12 }).map((_, i) => {
           const a = (i * 30 * Math.PI) / 180;
           const x1 = 200 + 35 * Math.sin(a);
@@ -76,7 +76,7 @@ export default function NotFound() {
               key={i}
               x1={x1.toFixed(2)} y1={y1.toFixed(2)}
               x2={x2.toFixed(2)} y2={y2.toFixed(2)}
-              stroke="#C8A96A" strokeWidth="0.35" opacity="0.12"
+              stroke="#B8A082" strokeWidth="0.35" opacity="0.12"
             />
           );
         })}
@@ -136,9 +136,9 @@ const css = `
   .nf-root {
     min-height: 100vh;
     background:
-      radial-gradient(ellipse at 20% 10%, rgba(200,169,106,0.10), transparent 50%),
-      radial-gradient(ellipse at 80% 90%, rgba(229,185,60,0.08), transparent 55%),
-      linear-gradient(180deg, #050708 0%, #0B0B0C 50%, #060809 100%);
+      radial-gradient(ellipse at 20% 10%, rgba(184,160,130,0.10), transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(184,160,130,0.08), transparent 55%),
+      linear-gradient(180deg, #050708 0%, #1A1A1A 50%, #060809 100%);
     color: #fff;
     font-family: 'Cairo', sans-serif;
     position: relative;
@@ -156,7 +156,7 @@ const css = `
     width: 720px; height: 720px;
     max-width: 100vw; max-height: 100vw;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(200,169,106,0.12), transparent 70%);
+    background: radial-gradient(circle, rgba(184,160,130,0.12), transparent 70%);
     transform: translate(-50%, -50%);
     pointer-events: none;
     animation: nf-glow 5s ease-in-out infinite;
@@ -178,18 +178,18 @@ const css = `
     position: absolute; top: 20px; inset-inline-end: 22px;
     z-index: 2;
     display: flex; gap: 2px;
-    background: rgba(200,169,106,0.07);
-    border: 1px solid rgba(200,169,106,0.16);
+    background: rgba(184,160,130,0.07);
+    border: 1px solid rgba(184,160,130,0.16);
     border-radius: 9px; padding: 3px;
   }
   .nf-lang-btn {
     padding: 5px 12px; border-radius: 7px; border: none;
-    background: transparent; color: rgba(200,169,106,0.45);
+    background: transparent; color: rgba(184,160,130,0.45);
     font-size: 11px; font-weight: 800; cursor: pointer;
     font-family: 'Cairo', sans-serif;
     transition: all 0.15s;
   }
-  .nf-lang-btn--on { background: rgba(200,169,106,0.20); color: #C8A96A; }
+  .nf-lang-btn--on { background: rgba(184,160,130,0.20); color: #B8A082; }
 
   /* Card */
   .nf-card {
@@ -197,10 +197,10 @@ const css = `
     z-index: 1;
     max-width: 580px;
     width: 100%;
-    background: rgba(8,11,12,0.55);
+    background: rgba(26,26,26,0.55);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(200,169,106,0.18);
+    border: 1px solid rgba(184,160,130,0.18);
     border-radius: 24px;
     padding: 48px 36px 40px;
     text-align: center;
@@ -212,13 +212,13 @@ const css = `
   }
   .nf-card::before {
     content: ''; position: absolute; top: 0; left: 18%; right: 18%; height: 2px;
-    background: linear-gradient(90deg, transparent, #C8A96A 30%, #E5B93C 60%, transparent);
+    background: linear-gradient(90deg, transparent, #B8A082 30%, #B8A082 60%, transparent);
     border-radius: 0 0 2px 2px;
   }
 
   .nf-eyebrow {
     font-size: 11px; letter-spacing: 0.32em;
-    color: rgba(200,169,106,0.7);
+    color: rgba(184,160,130,0.7);
     font-weight: 800; text-transform: uppercase;
     margin-bottom: 10px;
   }
@@ -226,19 +226,19 @@ const css = `
     font-family: 'El Messiri', 'Cairo', serif;
     font-size: clamp(96px, 22vw, 168px);
     font-weight: 700;
-    background: linear-gradient(180deg, #E5B93C 0%, #C8A96A 50%, #8A7860 100%);
+    background: linear-gradient(180deg, #B8A082 0%, #B8A082 50%, #8A7860 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     line-height: 1;
     letter-spacing: -4px;
-    text-shadow: 0 4px 30px rgba(200,169,106,0.18);
+    text-shadow: 0 4px 30px rgba(184,160,130,0.18);
     user-select: none;
   }
 
   .nf-rule { display: flex; align-items: center; gap: 10px; width: 180px; margin: 18px auto 22px; }
-  .nf-rule-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,169,106,0.48), transparent); }
-  .nf-rule-gem { width: 6px; height: 6px; background: #C8A96A; transform: rotate(45deg); opacity: 0.9; flex-shrink: 0; }
+  .nf-rule-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(184,160,130,0.48), transparent); }
+  .nf-rule-gem { width: 6px; height: 6px; background: #B8A082; transform: rotate(45deg); opacity: 0.9; flex-shrink: 0; }
 
   .nf-title {
     font-family: 'El Messiri', 'Cairo', serif;
@@ -266,20 +266,20 @@ const css = `
   }
   .nf-cta-gold {
     padding: 13px 30px; border-radius: 12px;
-    background: linear-gradient(135deg, #C8A96A, #E5B93C);
-    color: #0B0B0C;
+    background: linear-gradient(135deg, #B8A082, #B8A082);
+    color: #1A1A1A;
     font-size: 14px; font-weight: 900;
     border: none;
-    box-shadow: 0 4px 18px rgba(200,169,106,0.32);
+    box-shadow: 0 4px 18px rgba(184,160,130,0.32);
   }
-  .nf-cta-gold:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(200,169,106,0.42); }
+  .nf-cta-gold:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(184,160,130,0.42); }
   .nf-cta-outline {
     padding: 13px 26px; border-radius: 12px;
-    background: rgba(8,11,12,0.4);
-    border: 1px solid rgba(200,169,106,0.32);
-    color: #C8A96A; font-size: 14px; font-weight: 700;
+    background: rgba(26,26,26,0.4);
+    border: 1px solid rgba(184,160,130,0.32);
+    color: #B8A082; font-size: 14px; font-weight: 700;
   }
-  .nf-cta-outline:hover { border-color: #C8A96A; background: rgba(200,169,106,0.10); }
+  .nf-cta-outline:hover { border-color: #B8A082; background: rgba(184,160,130,0.10); }
 
   /* Footer rights */
   .nf-rights {
@@ -288,7 +288,7 @@ const css = `
     font-size: 11px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgba(200,169,106,0.30);
+    color: rgba(184,160,130,0.30);
     text-align: center;
   }
 

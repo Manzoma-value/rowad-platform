@@ -126,7 +126,7 @@ export default function CardGamePlay({
     );
   }
   if (loadError) {
-    return <div style={{ padding: 40, textAlign: "center", color: "#8b1a1a", fontWeight: 700 }}>{loadError}</div>;
+    return <div style={{ padding: 40, textAlign: "center", color: "#6B1E2D", fontWeight: 700 }}>{loadError}</div>;
   }
   if (!data) return null;
 
@@ -197,13 +197,13 @@ const cg_styles = `
     min-height: 78vh; display: flex; align-items: center; justify-content: center;
     padding: 30px; font-family: 'Cairo', sans-serif;
     background:
-      radial-gradient(ellipse at 50% 10%, #F8F1E0 0%, transparent 55%),
-      linear-gradient(160deg,#EFE6D2,#E9DFC7);
+      radial-gradient(ellipse at 50% 10%, #F7F3EB 0%, transparent 55%),
+      linear-gradient(160deg,#E5E0D5,#E5E0D5);
   }
   .cg-res-card {
     max-width: 560px; text-align: center;
     background: linear-gradient(160deg, #FDF8E9, #F4E9CD);
-    border: 1.5px solid #C0A063; border-radius: 22px;
+    border: 1.5px solid #B8A082; border-radius: 22px;
     padding: 44px clamp(20px, 4vw, 42px);
     box-shadow: 0 14px 50px rgba(150,115,50,.14),
       inset 0 0 0 5px #F2E6CC, inset 0 0 0 6.5px rgba(194,160,89,.42);
@@ -219,25 +219,25 @@ const cg_styles = `
     display: flex; align-items: center; justify-content: center; gap: 4px;
     border-radius: 50%; position: relative;
     background:
-      conic-gradient(#B89B5E calc(var(--pct) * 1%), rgba(194,160,89,0.18) 0);
+      conic-gradient(#B8A082 calc(var(--pct) * 1%), rgba(194,160,89,0.18) 0);
     box-shadow: inset 0 0 0 8px #FDF8E9, 0 4px 18px rgba(184,155,94,0.18);
   }
   .cg-res-score { font-size: 48px; font-weight: 900; color: #3B2A0E; line-height: 1; }
-  .cg-res-tot { font-size: 16px; font-weight: 700; color: #7A6440; }
+  .cg-res-tot { font-size: 16px; font-weight: 700; color: #796A62; }
   .cg-res-title { font-size: 22px; font-weight: 900; color: #3B2F1C; margin: 0 0 10px; }
   .cg-res-best {
     display: inline-flex; gap: 8px; padding: 7px 16px; border-radius: 99px;
     background: rgba(194,160,89,0.12); border: 1px solid rgba(194,160,89,0.30);
-    font-size: 13px; color: #7A6440; margin-bottom: 16px;
+    font-size: 13px; color: #796A62; margin-bottom: 16px;
   }
   .cg-res-best strong { color: #3B2A0E; font-weight: 900; }
   .cg-res-msg  { font-size: 14px; color: #5A4318; line-height: 1.9; margin: 0 0 10px; font-weight: 600; }
-  .cg-res-note { font-size: 12.5px; color: #8A7B60; line-height: 1.8; margin: 0 0 24px; font-style: italic; }
+  .cg-res-note { font-size: 12.5px; color: #796A62; line-height: 1.8; margin: 0 0 24px; font-style: italic; }
   .cg-res-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .cg-btn-primary {
     padding: 12px 30px; font-size: 14px; font-weight: 900;
-    background: linear-gradient(180deg, #D8B96A, #B89B5E);
-    color: #1E1605; border: none; border-radius: 12px; cursor: pointer;
+    background: linear-gradient(180deg, #D8B96A, #B8A082);
+    color: #4A0E1C; border: none; border-radius: 12px; cursor: pointer;
     font-family: inherit;
     box-shadow: 0 6px 18px rgba(184,155,94,0.32), inset 0 1.5px 0 rgba(255,250,235,0.4);
     transition: transform 0.18s;
@@ -245,9 +245,9 @@ const cg_styles = `
   .cg-btn-primary:hover { transform: translateY(-2px); }
   .cg-btn-ghost {
     padding: 12px 26px; font-size: 14px; font-weight: 800;
-    background: transparent; color: #6B4F1E;
+    background: transparent; color: #6B1E2D;
     border: 1.5px solid rgba(184,155,94,0.45); border-radius: 12px; cursor: pointer;
     font-family: inherit;
   }
-  .cg-btn-ghost:hover { background: rgba(194,160,89,0.08); border-color: #B89B5E; }
+  .cg-btn-ghost:hover { background: rgba(194,160,89,0.08); border-color: #B8A082; }
 `;

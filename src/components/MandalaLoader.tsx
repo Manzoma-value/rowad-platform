@@ -94,8 +94,8 @@ export default function MandalaLoader({
           <div className="ml-rule" aria-hidden="true">
             <div className="ml-rule-line" />
             <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
-              <path d="M12 1 L22 6 L12 11 L2 6 Z" stroke="#C8A96A" strokeWidth="0.8" fill="rgba(200,169,106,0.12)" />
-              <circle cx="12" cy="6" r="1.5" fill="#C8A96A" opacity="0.7" />
+              <path d="M12 1 L22 6 L12 11 L2 6 Z" stroke="#B8A082" strokeWidth="0.8" fill="rgba(184,160,130,0.12)" />
+              <circle cx="12" cy="6" r="1.5" fill="#B8A082" opacity="0.7" />
             </svg>
             <div className="ml-rule-line" />
           </div>
@@ -105,47 +105,47 @@ export default function MandalaLoader({
           <svg viewBox="0 0 260 260" fill="none" style={{ width: "100%", height: "auto", display: "block" }} aria-hidden="true">
             <defs>
               <radialGradient id="mlGoldGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#E5B93C" stopOpacity="0.15" />
-                <stop offset="60%" stopColor="#C8A96A" stopOpacity="0.06" />
-                <stop offset="100%" stopColor="#C8A96A" stopOpacity="0" />
+                <stop offset="0%" stopColor="#B8A082" stopOpacity="0.15" />
+                <stop offset="60%" stopColor="#B8A082" stopOpacity="0.06" />
+                <stop offset="100%" stopColor="#B8A082" stopOpacity="0" />
               </radialGradient>
               <radialGradient id="mlCenterGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#E5B93C" stopOpacity="0.5" />
-                <stop offset="100%" stopColor="#C8A96A" stopOpacity="0" />
+                <stop offset="0%" stopColor="#B8A082" stopOpacity="0.5" />
+                <stop offset="100%" stopColor="#B8A082" stopOpacity="0" />
               </radialGradient>
             </defs>
 
             <circle cx="130" cy="130" r="125" fill="url(#mlGoldGlow)" />
 
             {/* Boundary (static) */}
-            <circle cx="130" cy="130" r="124" stroke="#C8A96A" strokeWidth="0.3" opacity="0.08" />
+            <circle cx="130" cy="130" r="124" stroke="#B8A082" strokeWidth="0.3" opacity="0.08" />
             <g className="ml-r1 ml-heavy">
-              <circle cx="130" cy="130" r="120" stroke="#C8A96A" strokeWidth="0.4" opacity="0.12" strokeDasharray="2 6" />
+              <circle cx="130" cy="130" r="120" stroke="#B8A082" strokeWidth="0.4" opacity="0.12" strokeDasharray="2 6" />
             </g>
 
             {/* Outer dot ring */}
             <g className="ml-r2">
               {DOT_RING.map((d, i) => (
-                <circle key={i} cx={d.cx} cy={d.cy} r={i % 4 === 0 ? 2.2 : 1.4} fill="#C8A96A" opacity="0.32" />
+                <circle key={i} cx={d.cx} cy={d.cy} r={i % 4 === 0 ? 2.2 : 1.4} fill="#B8A082" opacity="0.32" />
               ))}
             </g>
 
             {/* 16-point star (heavy on mobile) */}
             <g className="ml-rStar ml-heavy">
-              <polygon points={STAR_16.map(p => `${p.x},${p.y}`).join(" ")} stroke="#C8A96A" strokeWidth="0.5" fill="none" opacity="0.18" />
+              <polygon points={STAR_16.map(p => `${p.x},${p.y}`).join(" ")} stroke="#B8A082" strokeWidth="0.5" fill="none" opacity="0.18" />
             </g>
 
             {/* Outer rings */}
-            <circle cx="130" cy="130" r="108" stroke="#C8A96A" strokeWidth="0.6" opacity="0.15" />
+            <circle cx="130" cy="130" r="108" stroke="#B8A082" strokeWidth="0.6" opacity="0.15" />
             <g className="ml-r2 ml-heavy">
-              <circle cx="130" cy="130" r="100" stroke="#C8A96A" strokeWidth="0.4" strokeDasharray="4 3" opacity="0.1" />
+              <circle cx="130" cy="130" r="100" stroke="#B8A082" strokeWidth="0.4" strokeDasharray="4 3" opacity="0.1" />
             </g>
-            <circle cx="130" cy="130" r="92" stroke="#E5B93C" strokeWidth="0.5" opacity="0.12" />
+            <circle cx="130" cy="130" r="92" stroke="#B8A082" strokeWidth="0.5" opacity="0.12" />
 
             {/* 12 petals (heavy) */}
             <g className="ml-rPetals ml-heavy" opacity="0.12">
               {PETALS.map((p, i) => (
-                <circle key={i} cx={p.cx} cy={p.cy} r="24" stroke="#C8A96A" strokeWidth="0.5" fill="none" />
+                <circle key={i} cx={p.cx} cy={p.cy} r="24" stroke="#B8A082" strokeWidth="0.5" fill="none" />
               ))}
             </g>
 
@@ -153,58 +153,58 @@ export default function MandalaLoader({
             <g className="ml-rSpokes ml-heavy">
               {SPOKES.map((s, i) => (
                 <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2}
-                  stroke="#C8A96A" strokeWidth={i % 6 === 0 ? 0.6 : 0.3}
+                  stroke="#B8A082" strokeWidth={i % 6 === 0 ? 0.6 : 0.3}
                   opacity={i % 6 === 0 ? 0.2 : 0.08} />
               ))}
             </g>
 
             {/* Mid rings */}
             <g className="ml-r3">
-              <circle cx="130" cy="130" r="82" stroke="#C8A96A" strokeWidth="0.5" opacity="0.18" strokeDasharray="3 5" />
+              <circle cx="130" cy="130" r="82" stroke="#B8A082" strokeWidth="0.5" opacity="0.18" strokeDasharray="3 5" />
             </g>
-            <circle cx="130" cy="130" r="74" stroke="#C8A96A" strokeWidth="0.7" opacity="0.2" />
+            <circle cx="130" cy="130" r="74" stroke="#B8A082" strokeWidth="0.7" opacity="0.2" />
             <g className="ml-r2 ml-heavy">
-              <circle cx="130" cy="130" r="66" stroke="#E5B93C" strokeWidth="0.4" strokeDasharray="6 4" opacity="0.14" />
+              <circle cx="130" cy="130" r="66" stroke="#B8A082" strokeWidth="0.4" strokeDasharray="6 4" opacity="0.14" />
             </g>
 
             {/* Second dot ring */}
             <g className="ml-r4">
               {DOT_RING_2.map((d, i) => (
-                <circle key={i} cx={d.cx} cy={d.cy} r="2" fill="#E5B93C" opacity="0.4" />
+                <circle key={i} cx={d.cx} cy={d.cy} r="2" fill="#B8A082" opacity="0.4" />
               ))}
             </g>
 
             {/* Inner star */}
             <g className="ml-rStar2">
-              <polygon points={STAR_8.map(p => `${p.x},${p.y}`).join(" ")} stroke="#E5B93C" strokeWidth="0.6" fill="rgba(229,185,60,0.03)" opacity="0.28" />
+              <polygon points={STAR_8.map(p => `${p.x},${p.y}`).join(" ")} stroke="#B8A082" strokeWidth="0.6" fill="rgba(184,160,130,0.03)" opacity="0.28" />
             </g>
 
             {/* Inner petals */}
             <g className="ml-r5 ml-heavy" opacity="0.14">
               {PETALS_INNER.map((p, i) => (
-                <circle key={i} cx={p.cx} cy={p.cy} r="16" stroke="#E5B93C" strokeWidth="0.5" fill="none" />
+                <circle key={i} cx={p.cx} cy={p.cy} r="16" stroke="#B8A082" strokeWidth="0.5" fill="none" />
               ))}
             </g>
 
             {/* Inner rings */}
             <g className="ml-r3">
-              <circle cx="130" cy="130" r="56" stroke="#C8A96A" strokeWidth="0.6" opacity="0.22" strokeDasharray="2 4" />
+              <circle cx="130" cy="130" r="56" stroke="#B8A082" strokeWidth="0.6" opacity="0.22" strokeDasharray="2 4" />
             </g>
-            <circle cx="130" cy="130" r="46" stroke="#C8A96A" strokeWidth="0.8" opacity="0.28" />
+            <circle cx="130" cy="130" r="46" stroke="#B8A082" strokeWidth="0.8" opacity="0.28" />
             <g className="ml-r4">
-              <circle cx="130" cy="130" r="36" stroke="#E5B93C" strokeWidth="0.5" strokeDasharray="4 3" opacity="0.2" />
+              <circle cx="130" cy="130" r="36" stroke="#B8A082" strokeWidth="0.5" strokeDasharray="4 3" opacity="0.2" />
             </g>
-            <circle cx="130" cy="130" r="26" stroke="#C8A96A" strokeWidth="0.6" opacity="0.35" />
+            <circle cx="130" cy="130" r="26" stroke="#B8A082" strokeWidth="0.6" opacity="0.35" />
             <g className="ml-r5">
-              <circle cx="130" cy="130" r="17" stroke="#E5B93C" strokeWidth="0.7" strokeDasharray="3 2" opacity="0.3" />
+              <circle cx="130" cy="130" r="17" stroke="#B8A082" strokeWidth="0.7" strokeDasharray="3 2" opacity="0.3" />
             </g>
 
             {/* Pulsing center */}
             <circle cx="130" cy="130" r="14" fill="url(#mlCenterGlow)" />
-            <circle className="ml-pulse2" cx="130" cy="130" r="10" stroke="#C8A96A" strokeWidth="0.5" fill="none" />
-            <circle className="ml-pulse"  cx="130" cy="130" r="6"  stroke="#E5B93C" strokeWidth="0.8" fill="none" />
-            <circle className="ml-pulse"  cx="130" cy="130" r="3.5" fill="#C8A96A" />
-            <circle className="ml-pulse-fast" cx="130" cy="130" r="1.5" fill="#E5B93C" />
+            <circle className="ml-pulse2" cx="130" cy="130" r="10" stroke="#B8A082" strokeWidth="0.5" fill="none" />
+            <circle className="ml-pulse"  cx="130" cy="130" r="6"  stroke="#B8A082" strokeWidth="0.8" fill="none" />
+            <circle className="ml-pulse"  cx="130" cy="130" r="3.5" fill="#B8A082" />
+            <circle className="ml-pulse-fast" cx="130" cy="130" r="1.5" fill="#B8A082" />
           </svg>
         </div>
 
@@ -212,10 +212,10 @@ export default function MandalaLoader({
           <div className="ml-rule" aria-hidden="true">
             <div className="ml-rule-line" />
             <svg width="32" height="10" viewBox="0 0 32 10" fill="none">
-              <line x1="0" y1="5" x2="10" y2="5" stroke="#C8A96A" strokeWidth="0.6" opacity="0.4" />
-              <circle cx="16" cy="5" r="2" stroke="#C8A96A" strokeWidth="0.8" fill="none" opacity="0.5" />
-              <circle cx="16" cy="5" r="0.8" fill="#C8A96A" opacity="0.6" />
-              <line x1="22" y1="5" x2="32" y2="5" stroke="#C8A96A" strokeWidth="0.6" opacity="0.4" />
+              <line x1="0" y1="5" x2="10" y2="5" stroke="#B8A082" strokeWidth="0.6" opacity="0.4" />
+              <circle cx="16" cy="5" r="2" stroke="#B8A082" strokeWidth="0.8" fill="none" opacity="0.5" />
+              <circle cx="16" cy="5" r="0.8" fill="#B8A082" opacity="0.6" />
+              <line x1="22" y1="5" x2="32" y2="5" stroke="#B8A082" strokeWidth="0.6" opacity="0.4" />
             </svg>
             <div className="ml-rule-line" />
           </div>
@@ -271,8 +271,8 @@ const css = `
     width: min(500px, 130vw); height: min(500px, 130vw);
     border-radius: 50%;
     background: radial-gradient(circle,
-      rgba(200,169,106,0.07) 0%,
-      rgba(229,185,60,0.03) 40%,
+      rgba(184,160,130,0.07) 0%,
+      rgba(184,160,130,0.03) 40%,
       transparent 70%);
     transform: translate(-50%, -50%);
     pointer-events: none;
@@ -288,7 +288,7 @@ const css = `
     max-width: min(360px, calc(100vw - 32px));
     background: #FFFFFF; border: 1px solid #E2D9CA; border-radius: 16px;
     box-shadow:
-      0 2px 0 rgba(200,169,106,0.10),
+      0 2px 0 rgba(184,160,130,0.10),
       0 8px 32px rgba(11,11,12,0.07),
       0 24px 64px rgba(11,11,12,0.04),
       inset 0 1px 0 rgba(255,255,255,0.8);
@@ -302,9 +302,9 @@ const css = `
     content: '';
     position: absolute; top: 0; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg,
-      transparent 0%, rgba(200,169,106,0.35) 15%,
-      rgba(229,185,60,0.65) 40%, #E5B93C 50%,
-      rgba(229,185,60,0.65) 60%, rgba(200,169,106,0.35) 85%,
+      transparent 0%, rgba(184,160,130,0.35) 15%,
+      rgba(184,160,130,0.65) 40%, #B8A082 50%,
+      rgba(184,160,130,0.65) 60%, rgba(184,160,130,0.35) 85%,
       transparent 100%);
   }
   .ml-root--bare .ml-card::before { display: none; }
@@ -316,14 +316,14 @@ const css = `
   .ml-rule:last-of-type {
     margin-bottom: 0; margin-top: clamp(12px, 3vw, 20px);
   }
-  .ml-rule-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,169,106,0.22), transparent); }
+  .ml-rule-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(184,160,130,0.22), transparent); }
 
   /* Mandala — sized to the card */
   .ml-mandala-wrap {
     position: relative; width: 100%;
     max-width: clamp(140px, 55vw, 220px);
     display: flex; align-items: center; justify-content: center;
-    filter: drop-shadow(0 6px 24px rgba(200,169,106,0.10));
+    filter: drop-shadow(0 6px 24px rgba(184,160,130,0.10));
   }
   .ml-root--compact .ml-mandala-wrap { max-width: 110px; }
   .ml-root--bare .ml-mandala-wrap    { max-width: 100%; filter: none; }
@@ -358,7 +358,7 @@ const css = `
 
   /* Animated bottom dots */
   .ml-dots-row { display: flex; align-items: center; gap: 4px; margin-top: 12px; height: 16px; }
-  .ml-dot      { width: 3px; height: 14px; border-radius: 2px; background: #C8A96A; opacity: 0.2; animation: ml-dot 1.4s ease-in-out infinite; }
+  .ml-dot      { width: 3px; height: 14px; border-radius: 2px; background: #B8A082; opacity: 0.2; animation: ml-dot 1.4s ease-in-out infinite; }
   .ml-root--bare .ml-dots-row { display: none; }
 
   /* ─── MOBILE: strip the heaviest decoration layers ───
@@ -367,7 +367,7 @@ const css = `
   @media (max-width: 500px) {
     .ml-heavy { display: none; }
     .ml-mandala-wrap { max-width: 140px; filter: none; }
-    .ml-card { box-shadow: 0 2px 0 rgba(200,169,106,0.10), 0 4px 16px rgba(11,11,12,0.05); }
+    .ml-card { box-shadow: 0 2px 0 rgba(184,160,130,0.10), 0 4px 16px rgba(11,11,12,0.05); }
     /* Slow rotations a bit on small screens for smoother frames */
     .ml-r1      { animation-duration: 80s; }
     .ml-r2      { animation-duration: 55s; }

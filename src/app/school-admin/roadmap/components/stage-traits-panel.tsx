@@ -8,8 +8,8 @@ const MAQASID: { value: Maqsad; label: string; color: string; bg: string }[] = [
   {
     value: "DEEN",
     label: "الدين",
-    color: "#7A6020",
-    bg: "rgba(229,185,60,0.10)",
+    color: "#8F765B",
+    bg: "rgba(184,160,130,0.10)",
   },
   {
     value: "AQL",
@@ -26,8 +26,8 @@ const MAQASID: { value: Maqsad; label: string; color: string; bg: string }[] = [
   {
     value: "NASL",
     label: "النسل",
-    color: "#7A1E1E",
-    bg: "rgba(122,30,30,0.08)",
+    color: "#6B1E2D",
+    bg: "rgba(107,30,45,0.08)",
   },
   { value: "MAL", label: "المال", color: "#5A4A10", bg: "rgba(154,98,0,0.09)" },
 ];
@@ -750,7 +750,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
 
 const traitsCSS = `
 .traits-panel {
-  border-top: 1px solid rgba(229,185,60,0.15);
+  border-top: 1px solid rgba(184,160,130,0.15);
   background: rgba(11,11,12,0.97);
 }
 
@@ -766,7 +766,7 @@ const traitsCSS = `
   font-family: 'Tajawal', sans-serif;
   transition: background 0.15s;
 }
-.traits-toggle:hover { background: rgba(229,185,60,0.04); }
+.traits-toggle:hover { background: rgba(184,160,130,0.04); }
 
 .traits-toggle-left {
   display: flex;
@@ -776,9 +776,9 @@ const traitsCSS = `
 .traits-icon-wrap {
   width: 28px; height: 28px;
   border-radius: 8px;
-  background: rgba(229,185,60,0.10);
+  background: rgba(184,160,130,0.10);
   display: flex; align-items: center; justify-content: center;
-  color: #E5B93C;
+  color: #B8A082;
   flex-shrink: 0;
 }
 .traits-toggle-label {
@@ -789,11 +789,11 @@ const traitsCSS = `
 .traits-count-pill {
   font-size: 10px;
   font-weight: 700;
-  background: rgba(229,185,60,0.12);
-  color: #C8A96A;
+  background: rgba(184,160,130,0.12);
+  color: #B8A082;
   padding: 2px 8px;
   border-radius: 100px;
-  border: 1px solid rgba(229,185,60,0.2);
+  border: 1px solid rgba(184,160,130,0.2);
 }
 
 .traits-body {
@@ -853,7 +853,7 @@ const traitsCSS = `
   overflow: hidden;
   transition: border-color 0.15s;
 }
-.trait-card:hover { border-color: rgba(229,185,60,0.2); }
+.trait-card:hover { border-color: rgba(184,160,130,0.2); }
 
 .trait-card-head {
   display: flex;
@@ -931,7 +931,7 @@ const traitsCSS = `
 .elements-label {
   font-size: 10px;
   font-weight: 800;
-  color: rgba(200,169,106,0.5);
+  color: rgba(184,160,130,0.5);
   text-transform: uppercase;
   letter-spacing: 1px;
   display: flex;
@@ -959,12 +959,12 @@ const traitsCSS = `
   border: 1px solid transparent;
   transition: border-color 0.13s;
 }
-.element-row:hover { border-color: rgba(229,185,60,0.15); }
+.element-row:hover { border-color: rgba(184,160,130,0.15); }
 .element-num {
   width: 18px; height: 18px;
   border-radius: 5px;
-  background: rgba(229,185,60,0.1);
-  color: #C8A96A;
+  background: rgba(184,160,130,0.1);
+  color: #B8A082;
   font-size: 10px;
   font-weight: 800;
   display: flex; align-items: center; justify-content: center;
@@ -998,10 +998,10 @@ const traitsCSS = `
 }
 .element-add-btn {
   width: 100%;
-  border: 1.5px dashed rgba(229,185,60,0.2);
+  border: 1.5px dashed rgba(184,160,130,0.2);
   border-radius: 7px;
-  background: rgba(229,185,60,0.04);
-  color: rgba(200,169,106,0.5);
+  background: rgba(184,160,130,0.04);
+  color: rgba(184,160,130,0.5);
   font-size: 11.5px;
   font-weight: 700;
   font-family: 'Tajawal', sans-serif;
@@ -1014,15 +1014,15 @@ const traitsCSS = `
   transition: all 0.15s;
 }
 .element-add-btn:hover {
-  border-color: rgba(229,185,60,0.4);
-  color: #C8A96A;
-  background: rgba(229,185,60,0.07);
+  border-color: rgba(184,160,130,0.4);
+  color: #B8A082;
+  background: rgba(184,160,130,0.07);
 }
 
 /* Add trait form */
 .trait-add-form {
   background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(229,185,60,0.15);
+  border: 1px solid rgba(184,160,130,0.15);
   border-radius: 10px;
   padding: 16px;
   display: flex;
@@ -1051,15 +1051,15 @@ const traitsCSS = `
   cursor: pointer;
   transition: all 0.15s;
 }
-.maqsad-option:hover { border-color: rgba(229,185,60,0.3); color: rgba(255,255,255,0.7); }
+.maqsad-option:hover { border-color: rgba(184,160,130,0.3); color: rgba(255,255,255,0.7); }
 .maqsad-option.active { font-weight: 800; }
 
 .trait-add-trigger {
   width: 100%;
-  border: 2px dashed rgba(229,185,60,0.2);
+  border: 2px dashed rgba(184,160,130,0.2);
   border-radius: 9px;
-  background: rgba(229,185,60,0.04);
-  color: rgba(200,169,106,0.5);
+  background: rgba(184,160,130,0.04);
+  color: rgba(184,160,130,0.5);
   font-size: 12.5px;
   font-weight: 700;
   font-family: 'Tajawal', sans-serif;
@@ -1072,9 +1072,9 @@ const traitsCSS = `
   transition: all 0.15s;
 }
 .trait-add-trigger:hover {
-  border-color: rgba(229,185,60,0.45);
-  color: #C8A96A;
-  background: rgba(229,185,60,0.07);
+  border-color: rgba(184,160,130,0.45);
+  color: #B8A082;
+  background: rgba(184,160,130,0.07);
 }
 
 .traits-complete {
@@ -1103,8 +1103,8 @@ const traitsCSS = `
 }
 .traits-panel .rb-input:focus,
 .traits-panel .rb-textarea:focus {
-  border-color: rgba(229,185,60,0.5);
-  box-shadow: 0 0 0 3px rgba(229,185,60,0.08);
+  border-color: rgba(184,160,130,0.5);
+  box-shadow: 0 0 0 3px rgba(184,160,130,0.08);
 }
 .traits-panel .rb-label {
   color: rgba(255,255,255,0.45);
@@ -1127,8 +1127,8 @@ const traitsCSS = `
   border-color: rgba(255,255,255,0.1);
 }
 .traits-panel .rb-icon-btn.danger:hover {
-  background: rgba(122,30,30,0.2);
+  background: rgba(107,30,45,0.2);
   color: #e57373;
-  border-color: rgba(122,30,30,0.3);
+  border-color: rgba(107,30,45,0.3);
 }
 `;

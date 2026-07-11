@@ -253,10 +253,10 @@ export default function ApplicationsListPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
         .ap-page { font-family: 'Cairo', sans-serif; }
         .ap-hero { margin-bottom: 22px; }
-        .ap-title { font-size: 24px; font-weight: 900; color: #1B1810; margin: 0 0 6px; }
-        .ap-sub { font-size: 13.5px; color: #5E5A52; max-width: 740px; line-height: 1.85; margin: 0; }
+        .ap-title { font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
+        .ap-sub { font-size: 13.5px; color: #655B53; max-width: 740px; line-height: 1.85; margin: 0; }
         .ap-toolbar {
-          background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07);
+          background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07);
           border-radius: 14px; padding: 14px; margin-bottom: 18px;
           display: flex; flex-direction: column; gap: 12px;
         }
@@ -266,40 +266,40 @@ export default function ApplicationsListPage() {
           background: #FFF; font-family: inherit; outline: none;
           transition: border-color 0.15s;
         }
-        .ap-search:focus { border-color: #B89B5E; }
+        .ap-search:focus { border-color: #B8A082; }
         .ap-filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .ap-select {
           padding: 8px 12px; font-size: 13px; font-family: inherit;
           border: 1.5px solid rgba(194,160,89,0.32); border-radius: 10px;
-          background: #FFF; color: #2E2210; cursor: pointer; outline: none;
+          background: #FFF; color: #4A0E1C; cursor: pointer; outline: none;
         }
-        .ap-table-wrap { background: #FFFDF8; border: 1px solid rgba(8,11,12,0.07); border-radius: 14px; overflow: auto; }
-        .ap-empty { padding: 60px 20px; text-align: center; color: #8A8478; font-weight: 700; }
+        .ap-table-wrap { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; overflow: auto; }
+        .ap-empty { padding: 60px 20px; text-align: center; color: #8C8274; font-weight: 700; }
         .ap-table { width: 100%; border-collapse: collapse; min-width: 800px; }
         .ap-table th {
           text-align: start; padding: 12px 14px; font-size: 11.5px;
-          color: #6B4F1E; font-weight: 800; text-transform: uppercase;
+          color: #6B1E2D; font-weight: 800; text-transform: uppercase;
           letter-spacing: 0.06em; border-bottom: 1px solid rgba(194,160,89,0.22);
           background: rgba(194,160,89,0.06);
         }
         .ap-table td {
-          padding: 14px; font-size: 13.5px; color: #2E2210;
-          border-bottom: 1px solid rgba(8,11,12,0.06); vertical-align: top;
+          padding: 14px; font-size: 13.5px; color: #4A0E1C;
+          border-bottom: 1px solid rgba(26,26,26,0.06); vertical-align: top;
         }
-        .ap-name { font-weight: 800; color: #1B1810; }
+        .ap-name { font-weight: 800; color: #32101A; }
         .ap-sub-text { font-size: 12px; color: #7A7468; margin-top: 2px; }
         .ap-status {
           display: inline-block; padding: 3px 10px; border-radius: 99px;
           font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em;
         }
-        .ap-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B4F1E; }
+        .ap-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B1E2D; }
         .ap-status.st-WAITING_LIST { background: rgba(184,160,130,0.18); color: #4A0E1C; }
-        .ap-status.st-ACTIVE { background: rgba(45,138,74,0.12); color: #1E5C2E; }
-        .ap-status.st-REJECTED { background: rgba(139,26,26,0.10); color: #7A1E1E; }
-        .ap-status.st-PENDING_APPLICATION { background: rgba(8,11,12,0.06); color: #5E5A52; }
+        .ap-status.st-ACTIVE { background: rgba(45,138,74,0.12); color: #1B5E20; }
+        .ap-status.st-REJECTED { background: rgba(139,26,26,0.10); color: #6B1E2D; }
+        .ap-status.st-PENDING_APPLICATION { background: rgba(26,26,26,0.06); color: #655B53; }
         .ap-view {
           display: inline-block; padding: 7px 14px;
-          background: linear-gradient(180deg,#D8B96A,#B89B5E); color: #1E1605;
+          background: linear-gradient(180deg,#D8B96A,#B8A082); color: #4A0E1C;
           border-radius: 9px; font-size: 12.5px; font-weight: 800;
           text-decoration: none; white-space: nowrap;
         }

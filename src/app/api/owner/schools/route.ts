@@ -68,9 +68,9 @@ export async function POST(req: Request) {
       name: name.trim(), slug,
       description: description?.trim() || null,
       language,
-      color_primary: body.color_primary || "#C8A96A",
-      color_secondary: body.color_secondary || "#E5B93C",
-      color_bg: body.color_bg || "#0B0B0C",
+      color_primary: body.color_primary || "#B8A082",
+      color_secondary: body.color_secondary || "#B8A082",
+      color_bg: body.color_bg || "#1A1A1A",
       // If an admin_id is provided at creation time, add a membership row
       ...(admin_id ? {
         admins: { create: { profile_id: admin_id } },

@@ -172,8 +172,8 @@ export default function StudentWaitingClassPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --gold: #C8A96A; --gold-dark: #A8863E; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-          --ink: #1A1208; --ink2: #3D2E10; --muted: #7A6540; --surface: #FEFCF7; --border: #E8D9B8;
+          --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
+          --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7; --border: #E8D9B8;
         }
         .shell {
           min-height: 100vh; background: var(--gold-pale);
@@ -191,14 +191,14 @@ export default function StudentWaitingClassPage() {
         }
         .header-icon {
           width: 56px; height: 56px; border-radius: 14px; flex-shrink: 0;
-          background: rgba(200,169,106,0.18); border: 1px solid rgba(200,169,106,0.3);
+          background: rgba(184,160,130,0.18); border: 1px solid rgba(184,160,130,0.3);
           display: flex; align-items: center; justify-content: center; color: var(--gold);
         }
         .header-label { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
         .header-title { font-size: 19px; font-weight: 800; color: #fff; }
         .school-pill {
           display: inline-flex; margin-top: 7px;
-          background: rgba(200,169,106,0.15); border: 1px solid rgba(200,169,106,0.3);
+          background: rgba(184,160,130,0.15); border: 1px solid rgba(184,160,130,0.3);
           color: var(--gold-light); font-size: 12px; font-weight: 700;
           padding: 3px 12px; border-radius: 99px;
         }
@@ -211,7 +211,7 @@ export default function StudentWaitingClassPage() {
         .step-line { width: 2px; height: 16px; background: var(--border); margin: 0 auto; }
         .line-done { background: var(--gold); }
         .dot-done { background: var(--gold); color: var(--ink); }
-        .dot-active { background: rgba(200,169,106,0.12); border: 2px solid var(--gold); }
+        .dot-active { background: rgba(184,160,130,0.12); border: 2px solid var(--gold); }
         .dot-pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); animation: dp 1.6s ease infinite; }
         @keyframes dp { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.8)} }
         .step-text { flex: 1; }
@@ -222,7 +222,7 @@ export default function StudentWaitingClassPage() {
         .divider { height: 1px; background: var(--border); }
         .note-bar {
           display: flex; align-items: center; gap: 9px;
-          background: rgba(200,169,106,0.08); border: 1px solid rgba(200,169,106,0.25);
+          background: rgba(184,160,130,0.08); border: 1px solid rgba(184,160,130,0.25);
           color: var(--muted); font-size: 12.5px; padding: 11px 15px; border-radius: 10px;
         }
         .note-bar svg { flex-shrink: 0; color: var(--gold-dark); }

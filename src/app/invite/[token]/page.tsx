@@ -252,7 +252,7 @@ function MiniMandala() {
           cx="160"
           cy="160"
           r={r}
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth={i === 0 ? 0.7 : 0.4}
           opacity={0.08 + i * 0.08}
           strokeDasharray={i % 3 === 1 ? "3 5" : i % 3 === 2 ? "1 4" : "none"}
@@ -265,7 +265,7 @@ function MiniMandala() {
           y1="160"
           x2={s.x2}
           y2={s.y2}
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.4"
           opacity="0.1"
         />
@@ -276,13 +276,13 @@ function MiniMandala() {
           cx={p.cx}
           cy={p.cy}
           r="28"
-          stroke="#C8A96A"
+          stroke="#B8A082"
           strokeWidth="0.4"
           opacity="0.08"
         />
       ))}
-      <circle cx="160" cy="160" r="8" fill="none" stroke="#E5B93C" strokeWidth="0.6" opacity="0.3" />
-      <circle cx="160" cy="160" r="3.5" fill="#E5B93C" opacity="0.5" />
+      <circle cx="160" cy="160" r="8" fill="none" stroke="#B8A082" strokeWidth="0.6" opacity="0.3" />
+      <circle cx="160" cy="160" r="3.5" fill="#B8A082" opacity="0.5" />
     </svg>
   );
 }
@@ -464,7 +464,7 @@ function PasswordStrength({ password, lang }: { password: string; lang: Lang }) 
   ];
   const score = checks.filter(Boolean).length;
   const labels = ["", S[lang].pwWeak, S[lang].pwFair, S[lang].pwGood, S[lang].pwStrong];
-  const colors = ["", "#7A1E1E", "#C8A96A", "#A8863E", "#2D8A4A"];
+  const colors = ["", "#6B1E2D", "#B8A082", "#8F765B", "#1B5E20"];
   return (
     <div className="if-strength">
       <div className="if-strength-bars">
@@ -760,7 +760,7 @@ export default function InvitePage() {
         <div className="if-center">
           <div className="if-email-sent-card">
             <div className="if-email-icon">
-              <svg width="52" height="52" fill="none" viewBox="0 0 24 24" stroke="#C8A96A" strokeWidth={1.4}>
+              <svg width="52" height="52" fill="none" viewBox="0 0 24 24" stroke="#B8A082" strokeWidth={1.4}>
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
@@ -802,7 +802,7 @@ export default function InvitePage() {
                   cx="36"
                   cy="36"
                   r="32"
-                  stroke="#2D8A4A"
+                  stroke="#1B5E20"
                   strokeWidth="2.5"
                   fill="none"
                   strokeLinecap="round"
@@ -812,7 +812,7 @@ export default function InvitePage() {
                 />
                 <polyline
                   points="22,36 31,45 50,27"
-                  stroke="#2D8A4A"
+                  stroke="#1B5E20"
                   strokeWidth="3"
                   fill="none"
                   strokeLinecap="round"
@@ -1030,11 +1030,11 @@ const css = `
 @keyframes step-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
 :root{
-  --gold:#C8A96A;--gold2:#E5B93C;--gold-l:rgba(200,169,106,0.08);--gold-b:rgba(200,169,106,0.18);
-  --black:#0B0B0C;--text:#1E1C18;--text2:#3A3020;--text3:#8A7860;
-  --surface:#FFFFFF;--border:#E4DDD0;--bg:#F5F3EE;
-  --red:#7A1E1E;--red-l:rgba(122,30,30,0.07);--red-b:rgba(122,30,30,0.2);
-  --green:#2D8A4A;
+  --gold:#B8A082;--gold2:#B8A082;--gold-l:rgba(184,160,130,0.08);--gold-b:rgba(184,160,130,0.18);
+  --black:#4A0E1C;--text:#1A1A1A;--text2:#4A0E1C;--text3:#796A62;
+  --surface:#FFFFFF;--border:#E5E0D5;--bg:#F7F3EB;
+  --red:#6B1E2D;--red-l:rgba(107,30,45,0.07);--red-b:rgba(107,30,45,0.2);
+  --green:#1B5E20;
   --font:'Cairo','Tajawal',sans-serif;
 }
 
@@ -1042,13 +1042,13 @@ const css = `
 .if-shell{min-height:100dvh;background:var(--bg);font-family:var(--font);display:flex;flex-direction:column;position:relative;overflow-x:hidden;color:var(--text)}
 .if-bg-mandala{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:float-m 14s ease-in-out infinite;z-index:0;will-change:transform}
 
-.if-nav{position:sticky;top:0;z-index:20;min-height:56px;padding:10px 16px;display:flex;align-items:center;justify-content:flex-end;background:rgba(245,243,238,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(200,169,106,0.12)}
+.if-nav{position:sticky;top:0;z-index:20;min-height:56px;padding:10px 16px;display:flex;align-items:center;justify-content:flex-end;background:rgba(245,243,238,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(184,160,130,0.12)}
 @media(min-width:520px){.if-nav{padding:10px 24px}}
 .if-nav-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .if-nav-login{font-size:13px;font-weight:700;color:var(--text3);text-decoration:none;border:1px solid var(--border);padding:7px 14px;border-radius:9px;transition:all 0.15s;white-space:nowrap}
 .if-nav-login:hover{border-color:var(--gold-b);color:var(--text2)}
 .if-lang-toggle{background:var(--gold-l);border:1px solid var(--gold-b);color:var(--gold);padding:7px 14px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);transition:all 0.15s;letter-spacing:0.02em;white-space:nowrap}
-.if-lang-toggle:hover{background:rgba(200,169,106,0.15);border-color:var(--gold)}
+.if-lang-toggle:hover{background:rgba(184,160,130,0.15);border-color:var(--gold)}
 .if-lang-toggle:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
 .if-center{flex:1;display:flex;align-items:center;justify-content:center;padding:28px 16px;position:relative;z-index:1;width:100%}
@@ -1065,7 +1065,7 @@ const css = `
 .if-back-btn:hover{background:#1a1a1f}
 
 /* Email sent */
-.if-email-sent-card{background:var(--surface);border:1px solid rgba(200,169,106,0.25);border-radius:20px;padding:40px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:440px;width:100%;box-shadow:0 4px 24px rgba(200,169,106,0.1);animation:success-pop 0.5s cubic-bezier(0.22,1,0.36,1)}
+.if-email-sent-card{background:var(--surface);border:1px solid rgba(184,160,130,0.25);border-radius:20px;padding:40px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:440px;width:100%;box-shadow:0 4px 24px rgba(184,160,130,0.1);animation:success-pop 0.5s cubic-bezier(0.22,1,0.36,1)}
 .if-email-icon{width:80px;height:80px;border-radius:50%;background:var(--gold-l);border:1.5px solid var(--gold-b);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .if-email-title{font-size:21px;font-weight:900;color:var(--black);letter-spacing:-0.3px;line-height:1.3}
 .if-email-sub{font-size:14px;color:var(--text3);line-height:1.7;word-break:break-word}
@@ -1077,8 +1077,8 @@ const css = `
 .if-success-anim{margin-bottom:2px}
 .if-success-title{font-size:21px;font-weight:900;color:var(--black);line-height:1.3}
 .if-success-sub{font-size:14px;color:var(--text3);line-height:1.75}
-.if-login-btn{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--black);padding:13px 28px;border-radius:12px;font-size:14px;font-weight:900;text-decoration:none;margin-top:4px;transition:all 0.18s;box-shadow:0 4px 16px rgba(200,169,106,0.3)}
-.if-login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(200,169,106,0.45)}
+.if-login-btn{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--black);padding:13px 28px;border-radius:12px;font-size:14px;font-weight:900;text-decoration:none;margin-top:4px;transition:all 0.18s;box-shadow:0 4px 16px rgba(184,160,130,0.3)}
+.if-login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(184,160,130,0.45)}
 .if-login-btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 
 /* Form card */
@@ -1125,15 +1125,15 @@ const css = `
 .if-hint{font-size:11.5px;color:var(--text3);margin-top:-2px}
 .if-input-wrap{position:relative}
 .if-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:16px;font-family:var(--font);color:var(--text);background:#FAFAF7;outline:none;transition:border-color 0.15s,background 0.15s,box-shadow 0.15s}
-.if-input:focus{border-color:var(--gold-b);background:var(--surface);box-shadow:0 0 0 3px rgba(200,169,106,0.08)}
+.if-input:focus{border-color:var(--gold-b);background:var(--surface);box-shadow:0 0 0 3px rgba(184,160,130,0.08)}
 .if-input.error{border-color:var(--red-b);background:var(--red-l)}
-.if-input.success{border-color:#27ae60;box-shadow:0 0 0 3px rgba(39,174,96,0.10)}
+.if-input.success{border-color:#1B5E20;box-shadow:0 0 0 3px rgba(39,174,96,0.10)}
 .if-input::placeholder{color:var(--text3)}
 .if-eye{position:absolute;inset-inline-end:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);display:flex;padding:6px;transition:color 0.15s;border-radius:6px}
 .if-eye:hover{color:var(--text2);background:rgba(0,0,0,0.04)}
 .if-field-msg{font-size:11.5px;font-weight:600;line-height:1.4}
 .if-field-msg--error{color:var(--red)}
-.if-field-msg--success{color:#27ae60}
+.if-field-msg--success{color:#1B5E20}
 
 /* Password strength */
 .if-strength{display:flex;align-items:center;gap:10px;margin-top:-4px}
@@ -1148,10 +1148,10 @@ const css = `
 
 /* Buttons */
 .if-next-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--black);color:var(--gold);border:none;padding:14px;border-radius:11px;font-size:14.5px;font-weight:800;font-family:var(--font);cursor:pointer;transition:all 0.18s;margin-top:4px;min-height:48px}
-.if-next-btn:hover{background:#1a1a1f;box-shadow:0 4px 16px rgba(200,169,106,0.2)}
+.if-next-btn:hover{background:#1a1a1f;box-shadow:0 4px 16px rgba(184,160,130,0.2)}
 .if-next-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.if-submit-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--black);border:none;padding:14px;border-radius:11px;font-size:14.5px;font-weight:900;font-family:var(--font);cursor:pointer;transition:all 0.18s;box-shadow:0 4px 16px rgba(200,169,106,0.25);min-height:48px}
-.if-submit-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 24px rgba(200,169,106,0.4)}
+.if-submit-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--black);border:none;padding:14px;border-radius:11px;font-size:14.5px;font-weight:900;font-family:var(--font);cursor:pointer;transition:all 0.18s;box-shadow:0 4px 16px rgba(184,160,130,0.25);min-height:48px}
+.if-submit-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 24px rgba(184,160,130,0.4)}
 .if-submit-btn:disabled{opacity:0.55;cursor:not-allowed;transform:none;box-shadow:none}
 .if-submit-btn:focus-visible{outline:2px solid var(--black);outline-offset:3px}
 .if-back-step{display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);color:var(--text3);font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer;font-family:var(--font);transition:all 0.15s;width:fit-content}
