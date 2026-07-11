@@ -35,28 +35,21 @@ export default function IdentityBackdrop() {
           inset: 0;
           background-image: url('/IdentityBG.png');
           background-repeat: no-repeat;
-          background-position: center 38%;
-          /* Large but bounded so the mandala stays a graceful centrepiece
-             rather than pixel-stretching across ultrawide monitors. */
-          background-size: min(1150px, 115vmin) auto;
-          opacity: 0.16;
-          /* Melt the artwork's edges into the page — no visible frame. */
-          -webkit-mask-image: radial-gradient(
-            ellipse 68% 66% at 50% 40%,
-            #000 46%,
-            transparent 82%
-          );
-          mask-image: radial-gradient(
-            ellipse 68% 66% at 50% 40%,
-            #000 46%,
-            transparent 82%
-          );
+          background-position: center 42%;
+          /* Large centrepiece — its rings reach into the page margins and the
+             gaps between cards, which is where it's actually seen. Bounded so
+             it doesn't pixel-stretch on ultrawide monitors. */
+          background-size: min(1400px, 132vmin) auto;
+          /* The artwork's own field is the same cream as the page, so a
+             confident opacity still reads as a soft watermark — the cream
+             blends away and only the mandala's ink shows through. */
+          opacity: 0.55;
         }
         @media (max-width: 767px) {
           .identity-backdrop__art {
-            background-size: 150vw auto;
-            background-position: center 30%;
-            opacity: 0.12;
+            background-size: 175vw auto;
+            background-position: center 34%;
+            opacity: 0.5;
           }
         }
       `}</style>
