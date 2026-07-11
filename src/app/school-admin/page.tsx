@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
+import IdentityStar from "@/components/IdentityStar";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useViewOnly } from "@/lib/view-only-context";
 
@@ -111,8 +112,14 @@ export default function SchoolAdminDashboard() {
   return (
     <div className="school-dashboard-page" dir={dir}>
       <section className="school-dashboard-hero">
+        <div className="school-dashboard-hero-star" aria-hidden="true">
+          <IdentityStar size={330} strokeWidth={0.9} color="#D9C9B0" />
+        </div>
         <div className="school-dashboard-hero-copy">
-          <span>{labels.eyebrow}</span>
+          <span>
+            <IdentityStar size={12} strokeWidth={5} color="#D9C9B0" />
+            {labels.eyebrow}
+          </span>
           <h1>{schoolName}</h1>
           <p>{labels.subtitle}</p>
         </div>
@@ -125,6 +132,9 @@ export default function SchoolAdminDashboard() {
       <section className="school-dashboard-kpis">
         {kpis.map((card) => (
           <Link key={card.href} href={card.href} className={`school-dashboard-kpi ${card.tone}`}>
+            <span className="school-dashboard-kpi-star" aria-hidden="true">
+              <IdentityStar size={120} strokeWidth={1.6} opacity={0.08} color="#4A0E1C" />
+            </span>
             <span>{card.label}</span>
             <strong>{card.value}</strong>
             <em>{labels.open}</em>
@@ -161,7 +171,10 @@ export default function SchoolAdminDashboard() {
       </section>
 
       <section className="school-dashboard-modules" data-testid="platform-map">
-        <div className="school-dashboard-section-title"><h2>{labels.ecosystem}</h2></div>
+        <div className="school-dashboard-section-title">
+          <IdentityStar size={16} strokeWidth={4} />
+          <h2>{labels.ecosystem}</h2>
+        </div>
         <div className="school-dashboard-module-grid" data-testid="platform-map-grid">
           {modules.map((module) => (
             <article key={module.title} className="school-dashboard-module">
@@ -181,16 +194,67 @@ export default function SchoolAdminDashboard() {
 }
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@500;700&family=Cairo:wght@400;600;700;800&display=swap');
   @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-  .school-dashboard-page{font-family:'Cairo',sans-serif;display:flex;flex-direction:column;gap:18px;color:#1A1A1A;animation:rise .35s ease both}
+  .school-dashboard-page{--font-head:'Noto Kufi Arabic','Cairo',sans-serif;font-family:'Cairo',sans-serif;display:flex;flex-direction:column;gap:20px;color:#1A1A1A;animation:rise .35s ease both}
   .school-dashboard-error{padding:40px;text-align:center;color:#796A62;font-family:'Cairo',sans-serif}
-  .school-dashboard-hero{position:relative;overflow:hidden;border-radius:28px;padding:30px;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:22px;align-items:end;background:radial-gradient(circle at 12% 12%,rgba(184,160,130,.22),transparent 30%),linear-gradient(135deg,#08111B,#1A1A1A 62%,#1A160E);border:1px solid rgba(184,160,130,.24);box-shadow:0 18px 50px rgba(26,26,26,.14)}
-  .school-dashboard-hero:after{content:"";position:absolute;inset-inline-end:-120px;top:-140px;width:360px;height:360px;border-radius:999px;border:1px solid rgba(184,160,130,.16);box-shadow:inset 0 0 80px rgba(184,160,130,.08)}
-  .school-dashboard-hero-copy,.school-dashboard-hero-side{position:relative;z-index:1}.school-dashboard-hero-copy span{display:block;color:#D9C9B0;font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.school-dashboard-hero h1{margin:7px 0 8px;color:#fff;font-size:34px;font-weight:900;letter-spacing:-.6px}.school-dashboard-hero p{max-width:720px;margin:0;color:rgba(255,255,255,.72);font-size:14px;line-height:1.8}.school-dashboard-hero-side{padding:18px;border-radius:20px;background:rgba(255,255,255,.07);border:1px solid rgba(184,160,130,.18);backdrop-filter:blur(10px)}.school-dashboard-hero-side strong{display:block;color:#B8A082;font-size:13px}.school-dashboard-hero-side span{display:block;margin-top:6px;color:#fff;font-size:18px;font-weight:900}
-  .school-dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.school-dashboard-kpi{position:relative;overflow:hidden;min-height:128px;border-radius:22px;padding:18px;background:linear-gradient(180deg,#FBF8F1,#F1EBDD);border:1px solid rgba(184,160,130,.26);text-decoration:none;color:#1A1A1A;box-shadow:0 10px 28px rgba(74,14,28,.045);transition:.2s ease}.school-dashboard-kpi:hover{transform:translateY(-3px);border-color:rgba(107,30,45,.25);box-shadow:0 16px 34px rgba(74,14,28,.08)}.school-dashboard-kpi:before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#6B1E2D,#B8A082)}.school-dashboard-kpi span{display:block;color:#7B6B52;font-size:12px;font-weight:900}.school-dashboard-kpi strong{display:block;margin-top:14px;font-size:38px;line-height:1;font-weight:900}.school-dashboard-kpi em{position:absolute;bottom:16px;inset-inline-start:18px;color:#6B1E2D;font-size:11px;font-style:normal;font-weight:900}.school-dashboard-kpi.alert:before{background:#6B1E2D}
-  .school-dashboard-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}.school-dashboard-panel{border-radius:24px;background:#FFFBF5;border:1px solid rgba(184,160,130,.16);padding:18px;box-shadow:0 10px 28px rgba(26,26,26,.045)}.school-dashboard-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.school-dashboard-panel-head h2{margin:0;font-size:16px;font-weight:900}.school-dashboard-panel-head span{padding:4px 10px;border-radius:999px;background:rgba(184,160,130,.14);color:#6B1E2D;font-size:11px;font-weight:900}.school-dashboard-priority{display:flex;justify-content:space-between;gap:12px;padding:13px 14px;border-radius:16px;text-decoration:none;background:rgba(184,160,130,.10);border:1px solid rgba(184,160,130,.20);color:#4B3511;margin-top:9px}.school-dashboard-priority.red{background:rgba(107,30,45,.06);border-color:rgba(107,30,45,.18);color:#6B1E2D}.school-dashboard-priority strong{font-size:12.5px}.school-dashboard-priority span{font-size:12px;font-weight:900}.school-dashboard-calm{margin:0;padding:22px;border-radius:18px;background:rgba(184,160,130,.10);color:#4A0E1C;font-size:13px;font-weight:900;text-align:center}.school-dashboard-status-row{display:flex;flex-direction:column;gap:7px;margin-top:10px}.school-dashboard-status-row>div:first-child{display:flex;justify-content:space-between;gap:12px;color:#3D3526;font-size:12px;font-weight:900}.school-dashboard-status-row span{color:#796A62}.school-dashboard-track{height:8px;border-radius:99px;background:#EFE6D4;overflow:hidden}.school-dashboard-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6B1E2D,#B8A082)}
-  .school-dashboard-modules{display:flex;flex-direction:column;gap:12px}.school-dashboard-section-title h2{margin:0;font-size:18px;font-weight:900}.school-dashboard-module-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.school-dashboard-module{min-height:220px;border-radius:24px;padding:18px;background:linear-gradient(180deg,#FFFBF5,#F8F1E5);border:1px solid rgba(184,160,130,.17);box-shadow:0 10px 28px rgba(26,26,26,.045)}.school-dashboard-module h3{margin:0;color:#1A1A1A;font-size:16px;font-weight:900}.school-dashboard-module p{margin:8px 0 16px;color:#7D6E55;font-size:12.5px;line-height:1.75;font-weight:700}.school-dashboard-module div{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.school-dashboard-module a{display:inline-flex;padding:8px 10px;border-radius:999px;text-decoration:none;background:#0B1118;color:#D9C9B0;font-size:11px;font-weight:900;border:1px solid rgba(184,160,130,.18)}
+
+  /* ── Hero — identity dark mode: deep burgundy + thin gold linework ── */
+  .school-dashboard-hero{position:relative;overflow:hidden;border-radius:26px;padding:32px 34px;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px;align-items:end;background:radial-gradient(circle at 85% -30%,rgba(184,160,130,.22),transparent 44%),radial-gradient(circle at 10% 120%,rgba(107,30,45,.55),transparent 46%),linear-gradient(140deg,#32101A 0%,#4A0E1C 55%,#5B1526 100%);border:1px solid rgba(184,160,130,.38);box-shadow:0 24px 60px rgba(50,16,26,.25),inset 0 1px 0 rgba(217,201,176,.12)}
+  .school-dashboard-hero:before{content:"";position:absolute;top:0;inset-inline:30px;height:1.5px;background:linear-gradient(90deg,transparent,rgba(217,201,176,.55) 30%,rgba(217,201,176,.55) 70%,transparent)}
+  .school-dashboard-hero-star{position:absolute;inset-inline-end:-85px;top:50%;transform:translateY(-50%);opacity:.14;pointer-events:none}
+  .school-dashboard-hero-copy,.school-dashboard-hero-side{position:relative;z-index:1}
+  .school-dashboard-hero-copy span{display:inline-flex;align-items:center;gap:8px;color:#D9C9B0;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase}
+  .school-dashboard-hero h1{margin:10px 0;color:#FFFBF5;font-family:var(--font-head);font-size:30px;font-weight:700;line-height:1.4}
+  .school-dashboard-hero p{max-width:720px;margin:0;color:rgba(239,234,224,.72);font-size:13.5px;line-height:1.9;font-weight:400}
+  .school-dashboard-hero-side{padding:18px 20px;border-radius:18px;background:rgba(50,16,26,.45);border:1px solid rgba(184,160,130,.30);backdrop-filter:blur(12px);box-shadow:inset 0 1px 0 rgba(217,201,176,.10)}
+  .school-dashboard-hero-side strong{display:block;color:#B8A082;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .school-dashboard-hero-side span{display:block;margin-top:8px;color:#FFFBF5;font-family:var(--font-head);font-size:17px;font-weight:700}
+
+  /* ── KPI cards — cream, gold top hairline, star watermark ── */
+  .school-dashboard-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+  .school-dashboard-kpi{position:relative;overflow:hidden;min-height:132px;border-radius:20px;padding:20px;background:linear-gradient(180deg,#FFFBF5,#F7F3EB);border:1px solid rgba(184,160,130,.28);text-decoration:none;color:#1A1A1A;box-shadow:0 12px 30px rgba(50,16,26,.05);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
+  .school-dashboard-kpi:hover{transform:translateY(-4px);border-color:rgba(184,160,130,.60);box-shadow:0 18px 40px rgba(50,16,26,.10)}
+  .school-dashboard-kpi:before{content:"";position:absolute;top:0;inset-inline:18px;height:2px;background:linear-gradient(90deg,transparent,#B8A082,transparent)}
+  .school-dashboard-kpi span{display:block;color:#8F765B;font-size:11.5px;font-weight:700;letter-spacing:.06em}
+  .school-dashboard-kpi strong{display:block;margin-top:12px;font-family:var(--font-head);font-size:38px;line-height:1.15;font-weight:700;color:#4A0E1C}
+  .school-dashboard-kpi em{position:absolute;bottom:16px;inset-inline-start:20px;color:#6B1E2D;font-size:11px;font-style:normal;font-weight:700;letter-spacing:.04em}
+  .school-dashboard-kpi-star{position:absolute;inset-inline-end:-26px;bottom:-26px;pointer-events:none}
+  .school-dashboard-kpi.alert{border-color:rgba(107,30,45,.35)}
+  .school-dashboard-kpi.alert strong{color:#6B1E2D}
+
+  /* ── Panels ── */
+  .school-dashboard-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}
+  .school-dashboard-panel{border-radius:22px;background:#FFFBF5;border:1px solid rgba(184,160,130,.22);padding:20px;box-shadow:0 12px 30px rgba(50,16,26,.045)}
+  .school-dashboard-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(184,160,130,.18)}
+  .school-dashboard-panel-head h2{margin:0;font-family:var(--font-head);font-size:15px;font-weight:700}
+  .school-dashboard-panel-head span{padding:4px 12px;border-radius:999px;background:rgba(184,160,130,.14);border:1px solid rgba(184,160,130,.25);color:#6B1E2D;font-size:11px;font-weight:700}
+  .school-dashboard-priority{display:flex;justify-content:space-between;gap:12px;padding:13px 15px;border-radius:14px;text-decoration:none;background:rgba(184,160,130,.10);border:1px solid rgba(184,160,130,.22);color:#655B53;margin-top:9px;transition:border-color .18s}
+  .school-dashboard-priority:hover{border-color:rgba(184,160,130,.5)}
+  .school-dashboard-priority.red{background:rgba(107,30,45,.06);border-color:rgba(107,30,45,.20);color:#6B1E2D}
+  .school-dashboard-priority strong{font-size:12.5px;font-weight:700}
+  .school-dashboard-priority span{font-size:12px;font-weight:700;color:#6B1E2D;white-space:nowrap}
+  .school-dashboard-calm{margin:0;padding:22px;border-radius:16px;background:rgba(184,160,130,.10);border:1px dashed rgba(184,160,130,.35);color:#4A0E1C;font-size:13px;font-weight:600;text-align:center}
+  .school-dashboard-status-row{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+  .school-dashboard-status-row>div:first-child{display:flex;justify-content:space-between;gap:12px;color:#655B53;font-size:12px;font-weight:700}
+  .school-dashboard-status-row span{color:#796A62;font-weight:600}
+  .school-dashboard-track{height:7px;border-radius:99px;background:#E5E0D5;overflow:hidden}
+  .school-dashboard-track i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#6B1E2D,#B8A082)}
+
+  /* ── Platform map — star bullet + fading gold rule ── */
+  .school-dashboard-modules{display:flex;flex-direction:column;gap:14px}
+  .school-dashboard-section-title{display:flex;align-items:center;gap:10px}
+  .school-dashboard-section-title h2{margin:0;font-family:var(--font-head);font-size:17px;font-weight:700}
+  .school-dashboard-section-title:after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(184,160,130,.5),transparent)}
+  .school-dashboard-module-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+  .school-dashboard-module{display:flex;flex-direction:column;min-height:220px;border-radius:20px;padding:20px;background:linear-gradient(180deg,#FFFBF5,#F7F3EB);border:1px solid rgba(184,160,130,.24);box-shadow:0 12px 30px rgba(50,16,26,.045);transition:transform .22s ease,border-color .22s ease}
+  .school-dashboard-module:hover{transform:translateY(-3px);border-color:rgba(184,160,130,.55)}
+  .school-dashboard-module h3{margin:0;color:#1A1A1A;font-family:var(--font-head);font-size:14.5px;font-weight:700}
+  .school-dashboard-module p{margin:9px 0 16px;color:#796A62;font-size:12.5px;line-height:1.8;font-weight:400}
+  .school-dashboard-module div{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+  .school-dashboard-module a{display:inline-flex;padding:8px 12px;border-radius:999px;text-decoration:none;background:#4A0E1C;color:#D9C9B0;font-size:11px;font-weight:700;border:1px solid rgba(184,160,130,.30);transition:background .18s}
+  .school-dashboard-module a:hover{background:#6B1E2D}
+
   @media(max-width:1100px){.school-dashboard-hero,.school-dashboard-grid{grid-template-columns:1fr}.school-dashboard-kpis,.school-dashboard-module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-  @media(max-width:640px){.school-dashboard-page{gap:14px}.school-dashboard-hero{padding:22px;border-radius:22px}.school-dashboard-hero h1{font-size:26px}.school-dashboard-kpis,.school-dashboard-module-grid{grid-template-columns:1fr}.school-dashboard-kpi{min-height:112px}.school-dashboard-grid{gap:12px}.school-dashboard-panel,.school-dashboard-module{border-radius:20px}}
+  @media(max-width:640px){.school-dashboard-page{gap:14px}.school-dashboard-hero{padding:24px;border-radius:22px}.school-dashboard-hero h1{font-size:23px}.school-dashboard-hero-star{display:none}.school-dashboard-kpis,.school-dashboard-module-grid{grid-template-columns:1fr}.school-dashboard-kpi{min-height:116px}.school-dashboard-grid{gap:12px}.school-dashboard-panel,.school-dashboard-module{border-radius:18px}}
 `;

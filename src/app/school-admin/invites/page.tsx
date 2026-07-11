@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import IdentityStar from "@/components/IdentityStar";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -331,7 +332,10 @@ export default function InvitesPage() {
       {/* Header */}
       <div className="inv-header">
         <div>
-          <p className="inv-eyebrow">إدارة الوصول</p>
+          <p className="inv-eyebrow">
+            <IdentityStar size={11} strokeWidth={5} />
+            إدارة الوصول
+          </p>
           <h1 className="inv-title">دعوات المعلمين</h1>
         </div>
         <button
@@ -515,7 +519,7 @@ export default function InvitesPage() {
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@500;700&family=Cairo:wght@400;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -527,14 +531,15 @@ const css = `
   --surface:#FFFFFF;--border:#E5E0D5;--bg:#F7F3EB;
   --red:#6B1E2D;--red-l:rgba(107,30,45,0.07);
   --font:'Cairo',sans-serif;
+  --font-head:'Noto Kufi Arabic','Cairo',sans-serif;
 }
 
 .inv-page{display:flex;flex-direction:column;gap:20px;font-family:var(--font);color:var(--text);animation:fadeUp 0.35s ease}
 
 /* Header */
 .inv-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.inv-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
-.inv-title{font-size:26px;font-weight:900;color:var(--black);letter-spacing:-0.5px}
+.inv-eyebrow{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.inv-title{font-family:var(--font-head);font-size:24px;font-weight:700;color:var(--black)}
 
 /* Rule */
 .inv-rule{display:flex;align-items:center;gap:10px}
@@ -542,8 +547,8 @@ const css = `
 .inv-rule-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);opacity:0.5;flex-shrink:0}
 
 /* Create button */
-.inv-create-btn{display:flex;align-items:center;gap:8px;background:var(--black);color:var(--gold);border:none;padding:11px 20px;border-radius:10px;font-size:13.5px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;white-space:nowrap}
-.inv-create-btn:hover:not(:disabled){background:#1a1a1f;box-shadow:0 4px 16px rgba(184,160,130,0.2)}
+.inv-create-btn{display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#5B1526,#32101A);color:#D9C9B0;border:1px solid rgba(184,160,130,0.35);padding:11px 22px;border-radius:12px;font-size:13.5px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;white-space:nowrap;box-shadow:inset 0 1px 0 rgba(217,201,176,0.12)}
+.inv-create-btn:hover:not(:disabled){background:linear-gradient(180deg,#6B1E2D,#4A0E1C);box-shadow:0 6px 20px rgba(184,160,130,0.28)}
 .inv-create-btn:disabled{opacity:0.55;cursor:not-allowed}
 
 /* How it works */
@@ -552,7 +557,7 @@ const css = `
 .inv-how-it-works strong{color:var(--black);font-weight:800}
 
 /* New invite flash */
-.inv-new-flash{background:var(--black);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;animation:flash-in 0.3s ease;border:1px solid rgba(184,160,130,0.2)}
+.inv-new-flash{background:radial-gradient(circle at 85% -30%,rgba(184,160,130,0.20),transparent 45%),linear-gradient(140deg,#32101A,#4A0E1C);border-radius:14px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;animation:flash-in 0.3s ease;border:1px solid rgba(184,160,130,0.35);box-shadow:inset 0 1px 0 rgba(217,201,176,0.12)}
 .inv-new-flash-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .inv-new-flash-icon{color:var(--gold);font-size:16px}
 .inv-new-flash-title{font-size:14px;font-weight:800;color:var(--gold)}
@@ -575,7 +580,7 @@ const css = `
 /* Section */
 .inv-section{display:flex;flex-direction:column;gap:12px}
 .inv-section-hd{display:flex;align-items:center;gap:10px}
-.inv-section-title{font-size:11px;font-weight:800;color:var(--text);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
+.inv-section-title{font-family:var(--font-head);font-size:12px;font-weight:700;color:var(--text);letter-spacing:0.12em;text-transform:uppercase;white-space:nowrap}
 .inv-section-count{font-size:11px;font-weight:800;color:var(--gold);background:var(--gold-l);border:1px solid var(--gold-b);padding:1px 8px;border-radius:99px}
 .inv-section-count.muted{color:var(--text3);background:transparent;border-color:var(--border)}
 .inv-section-rule{flex:1;height:1px;background:var(--border)}
