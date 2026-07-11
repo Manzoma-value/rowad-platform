@@ -13,6 +13,7 @@ import { t } from "@/lib/translations";
 import Image from "next/image";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
+import IdentityBackdrop from "@/components/IdentityBackdrop";
 import {
   LayoutDashboard,
   Users,
@@ -314,6 +315,10 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="sl-shell" dir={isRtl ? "rtl" : "ltr"}>
+      {/* Identity artwork watermark behind everything — hidden on the
+          community/hub page (its chat-style feed keeps a clean surface). */}
+      {pathname !== "/student/hub" && <IdentityBackdrop />}
+
       {sidebarOpen && (
         <div className="sl-overlay" onClick={() => setSidebarOpen(false)} />
       )}

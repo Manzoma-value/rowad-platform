@@ -14,6 +14,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
+import IdentityBackdrop from "@/components/IdentityBackdrop";
 import {
   LayoutDashboard,
   Users,
@@ -440,6 +441,10 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
   return (
     <div className="tl-shell" dir={isRtl ? "rtl" : "ltr"}>
+      {/* Identity artwork watermark behind everything — hidden on the
+          community/hub page (its chat-style feed keeps a clean surface). */}
+      {pathname !== "/teacher/hub" && <IdentityBackdrop />}
+
       {sidebarOpen && (
         <div className="tl-overlay" onClick={() => setSidebarOpen(false)} />
       )}
