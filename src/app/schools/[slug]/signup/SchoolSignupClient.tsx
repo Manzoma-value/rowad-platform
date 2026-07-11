@@ -174,6 +174,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [city, setCity] = useState("");
   const [age, setAge] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -431,7 +432,38 @@ export default function SchoolSignupClient({ school }: { school: School }) {
                   </span>
                   {L.passLabel}
                 </label>
-                <input type="password" className="sp-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} dir="ltr" suppressHydrationWarning />
+                <div className="sp-password-wrap">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="sp-input sp-password-input"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    dir="ltr"
+                    suppressHydrationWarning
+                  />
+                  <button
+                    type="button"
+                    className="sp-eye-btn"
+                    onClick={() => setShowPassword((value) => !value)}
+                    disabled={loading}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.58 10.58a2 2 0 002.83 2.83" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.88 4.24A10.9 10.9 0 0112 4c5.52 0 9 5 9 8a8.7 8.7 0 01-2.36 4.75M6.61 6.61C4.31 8.09 3 10.29 3 12c0 3 3.48 8 9 8 1.56 0 2.96-.4 4.17-1.03" />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.5-7 9.75-7 9.75 7 9.75 7-3.5 7-9.75 7-9.75-7-9.75-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <div className="sp-row">
@@ -629,6 +661,17 @@ const css = `
   .sp-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(200,169,106,0.12); background: #FFFDF9; }
   .sp-input::placeholder { color: #bbb0a0; }
   .sp-input:disabled { opacity: 0.55; cursor: not-allowed; background: var(--cream); }
+  .sp-password-wrap { position: relative; }
+  .sp-password-input { padding-inline-end: 48px; }
+  .sp-eye-btn {
+    position: absolute; top: 50%; inset-inline-end: 10px; transform: translateY(-50%);
+    width: 34px; height: 34px; border: 0; border-radius: 9px;
+    background: transparent; color: var(--text3);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.18s, color 0.18s, opacity 0.18s;
+  }
+  .sp-eye-btn:hover:not(:disabled) { background: rgba(200,169,106,0.10); color: var(--text2); }
+  .sp-eye-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .sp-input--error {
     border-color: #c0392b !important;
     box-shadow: 0 0 0 3px rgba(192,57,43,0.10) !important;

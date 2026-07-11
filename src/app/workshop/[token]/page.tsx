@@ -67,6 +67,7 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Persist language preference on this device.
   useEffect(() => {
@@ -146,15 +147,37 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
         />
 
         <label className="ws-lbl">{T.password}</label>
-        <input
-          className="ws-input"
-          type="password"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-          autoComplete="new-password"
-          dir="ltr"
-          minLength={8}
-        />
+        <div className="ws-password-wrap">
+          <input
+            className="ws-input ws-password-input"
+            type={showPassword ? "text" : "password"}
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            autoComplete="new-password"
+            dir="ltr"
+            minLength={8}
+          />
+          <button
+            type="button"
+            className="ws-eye-btn"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C7 20 2.73 16.89 1 12a11.7 11.7 0 0 1 5.06-5.94" />
+                <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+                <path d="M3 3l18 18" />
+                <path d="M9.9 4.24A10.77 10.77 0 0 1 12 4c5 0 9.27 3.11 11 8a11.76 11.76 0 0 1-2.23 3.4" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </button>
+        </div>
 
         {err && <div className="ws-err">{err}</div>}
 
@@ -184,6 +207,10 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
         .ws-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B4F1E; margin: 12px 0 4px; letter-spacing: 0.02em; }
         .ws-input { width: 100%; padding: 11px 14px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px; font-family: inherit; font-size: 14px; background: #FFF; outline: none; transition: border-color .15s; }
         .ws-input:focus { border-color: #B89B5E; }
+        .ws-password-wrap { position: relative; }
+        .ws-password-input { padding-inline-end: 48px; }
+        .ws-eye-btn { position: absolute; top: 50%; inset-inline-end: 10px; transform: translateY(-50%); width: 34px; height: 34px; border: 0; border-radius: 9px; background: transparent; color: #8B6915; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .ws-eye-btn:hover { background: rgba(194,160,89,0.10); color: #4A0E1C; }
         .ws-err { background: rgba(139,26,26,0.06); border: 1px solid rgba(139,26,26,0.32); color: #7A1E1E; font-weight: 700; font-size: 12.5px; padding: 8px 12px; border-radius: 10px; margin-top: 12px; }
         .ws-btn { display: block; width: 100%; margin-top: 18px; background: linear-gradient(180deg,#1E2329,#11151A); color: #E5B93C; border: none; padding: 12px; border-radius: 12px; font-family: inherit; font-size: 15px; font-weight: 900; cursor: pointer; letter-spacing: 0.02em; box-shadow: 0 8px 20px rgba(0,0,0,0.14); }
         .ws-btn:disabled { opacity: 0.6; cursor: progress; }
