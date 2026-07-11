@@ -14,6 +14,7 @@ import { ViewOnlyProvider } from "@/lib/view-only-context";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
+import IdentityBackdrop from "@/components/IdentityBackdrop";
 import {
   LayoutDashboard,
   Users,
@@ -482,6 +483,9 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`sa-shell${viewOnly ? " sa-shell--view-only" : ""}`} dir={isRtl ? "rtl" : "ltr"}>
+      {/* Identity artwork watermark behind everything */}
+      <IdentityBackdrop />
+
       {sidebarOpen && (
         <div className="sa-overlay" onClick={() => setSidebarOpen(false)} />
       )}

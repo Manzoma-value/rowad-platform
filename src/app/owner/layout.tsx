@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
 import { cachedFetch, clearCache } from "@/lib/api-cache";
+import IdentityBackdrop from "@/components/IdentityBackdrop";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -392,6 +393,9 @@ export default function OwnerLayout({
 
   return (
     <div className="ow-shell" dir="rtl">
+      {/* Identity artwork watermark behind everything */}
+      <IdentityBackdrop />
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="ow-overlay" onClick={() => setSidebarOpen(false)} />
