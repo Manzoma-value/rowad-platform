@@ -483,8 +483,9 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`sa-shell${viewOnly ? " sa-shell--view-only" : ""}`} dir={isRtl ? "rtl" : "ltr"}>
-      {/* Identity artwork watermark behind everything */}
-      <IdentityBackdrop />
+      {/* Identity artwork watermark behind everything — hidden on the
+          community/hub page (its chat-style feed keeps a clean surface). */}
+      {pathname !== "/school-admin/hub" && <IdentityBackdrop />}
 
       {sidebarOpen && (
         <div className="sa-overlay" onClick={() => setSidebarOpen(false)} />
