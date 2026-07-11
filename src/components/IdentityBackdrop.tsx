@@ -39,27 +39,16 @@ export default function IdentityBackdrop() {
           justify-content: center;
         }
         .identity-backdrop__art {
-          /* Keep the artwork at its natural aspect ratio, sized to sit
-             comfortably inside the content area on any screen. */
+          /* The PNG has a true transparent background (alpha extracted from
+             the original artwork), so its smoke fades out naturally — no
+             mask needed and no visible edges at any size. */
           width: min(86%, 92vmin, 900px);
-          aspect-ratio: 715 / 682;
+          aspect-ratio: 1 / 1;
           background-image: url('/IdentityBG.png');
           background-repeat: no-repeat;
           background-position: center;
           background-size: contain;
           opacity: 0.5;
-          /* Soft circular fade — dissolves the image's rectangular edges
-             into the page so no border/seam is ever visible. */
-          -webkit-mask-image: radial-gradient(
-            ellipse 50% 50% at 50% 50%,
-            #000 52%,
-            transparent 76%
-          );
-          mask-image: radial-gradient(
-            ellipse 50% 50% at 50% 50%,
-            #000 52%,
-            transparent 76%
-          );
         }
         @media (max-width: 767px) {
           /* Sidebar is off-canvas on mobile — use the full viewport. */
