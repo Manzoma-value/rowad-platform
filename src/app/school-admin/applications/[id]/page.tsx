@@ -325,12 +325,12 @@ function ApplicationDetailPageInner({
     teacher.onboarding_status === "REJECTED" ? T.rejected : T.underReview;
 
   return (
-    <div className="ad-page" dir={dir}>
-      <div className="ad-bar">
-        <Link href="/school-admin/applications" className="ad-back">{T.back}</Link>
-        <div className="ad-bar-spacer" />
+    <div className="teacher-application-detail-page" dir={dir} data-testid="teacher-application-detail">
+      <div className="teacher-application-detail-bar">
+        <Link href="/school-admin/applications" className="teacher-application-detail-back">{T.back}</Link>
+        <div className="teacher-application-detail-bar-spacer" />
         <a
-          className="ad-print-btn"
+          className="teacher-application-detail-print-btn"
           href={`/school-admin/applications/${id}/print`}
           target="_blank"
           rel="noopener noreferrer"
@@ -339,12 +339,12 @@ function ApplicationDetailPageInner({
         </a>
       </div>
 
-      <header className="ad-head">
+      <header className="teacher-application-detail-head">
         <div>
-          <h1 className="ad-name">{a.full_name}</h1>
-          <p className="ad-meta">{a.email} · {a.phone}</p>
+          <h1 className="teacher-application-detail-name">{a.full_name}</h1>
+          <p className="teacher-application-detail-meta">{a.email} · {a.phone}</p>
         </div>
-        <span className={`ad-status st-${teacher.onboarding_status}`}>{statusLabel}</span>
+        <span className={`teacher-application-detail-status st-${teacher.onboarding_status}`}>{statusLabel}</span>
       </header>
 
       <Section title={T.sectionPersonal}>
@@ -422,7 +422,7 @@ function ApplicationDetailPageInner({
         {a.languages.length === 0 ? (
           <Item label="" value={T.none} />
         ) : (
-          <ul className="ad-langs">
+          <ul className="teacher-application-detail-langs">
             {a.languages.map((l) => (
               <li key={l.lang}>
                 <strong>{LANGUAGE_L[l.lang]?.[L] ?? l.lang}</strong>
@@ -465,28 +465,28 @@ function ApplicationDetailPageInner({
         )}
 
         {(
-          <div className="ad-decision">
-            <div className="ad-group-pick">
-              <div className="ad-group-pick-head">
-                <span className="ad-notes-label">{T.assignGroups}</span>
+          <div className="teacher-application-detail-decision">
+            <div className="teacher-application-detail-group-pick">
+              <div className="teacher-application-detail-group-pick-head">
+                <span className="teacher-application-detail-notes-label">{T.assignGroups}</span>
                 <p>{T.assignGroupsHint}</p>
               </div>
               {groupOptions.length === 0 ? (
-                <div className="ad-group-empty">{T.noTeacherGroups}</div>
+                <div className="teacher-application-detail-group-empty">{T.noTeacherGroups}</div>
               ) : (
-                <div className="ad-group-options">
+                <div className="teacher-application-detail-group-options">
                   {groupOptions.map((group) => {
                     const checked = selectedGroupIds.includes(group.id);
                     return (
                       <button
                         key={group.id}
                         type="button"
-                        className={`ad-group-option${checked ? " selected" : ""}`}
+                        className={`teacher-application-detail-group-option${checked ? " selected" : ""}`}
                         onClick={() => toggleGroup(group.id)}
                         disabled={viewOnly || saving}
                       >
-                        <span className="ad-group-check">{checked ? "✓" : "+"}</span>
-                        <span className="ad-group-info">
+                        <span className="teacher-application-detail-group-check">{checked ? "✓" : "+"}</span>
+                        <span className="teacher-application-detail-group-info">
                           <strong>{group.name}</strong>
                           <small>{group._count.members} {L === "ar" ? "أعضاء" : "anëtarë"}</small>
                         </span>
@@ -496,23 +496,23 @@ function ApplicationDetailPageInner({
                 </div>
               )}
             </div>
-            <label className="ad-notes-label">{T.notes}</label>
+            <label className="teacher-application-detail-notes-label">{T.notes}</label>
             <textarea
-              className="ad-notes"
+              className="teacher-application-detail-notes"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
-            {error && <div className="ad-err">{error}</div>}
+            {error && <div className="teacher-application-detail-err">{error}</div>}
             {!viewOnly && (
-              <div className="ad-actions">
-                <button className="ad-btn approve" onClick={() => decide("approve")} disabled={saving}>
+              <div className="teacher-application-detail-actions">
+                <button className="teacher-application-detail-btn approve" onClick={() => decide("approve")} disabled={saving}>
                   ✓ {saving ? T.saving : T.approve}
                 </button>
-                <button className="ad-btn waitlist" onClick={() => decide("waitlist")} disabled={saving}>
+                <button className="teacher-application-detail-btn waitlist" onClick={() => decide("waitlist")} disabled={saving}>
                   {saving ? T.saving : (L === "ar" ? "قائمة الانتظار" : "Në pritje")}
                 </button>
-                <button className="ad-btn reject" onClick={() => decide("reject")} disabled={saving}>
+                <button className="teacher-application-detail-btn reject" onClick={() => decide("reject")} disabled={saving}>
                   ✕ {saving ? T.saving : T.reject}
                 </button>
               </div>
@@ -523,98 +523,98 @@ function ApplicationDetailPageInner({
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-        .ad-page { font-family: 'Cairo', sans-serif; max-width: 920px; margin: 0 auto; }
-        .ad-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-        .ad-back { text-decoration: none; color: #6B1E2D; font-weight: 800; font-size: 13.5px; }
-        .ad-back:hover { color: #B8A082; }
-        .ad-bar-spacer { flex: 1; }
-        .ad-print-btn {
+        .teacher-application-detail-page { font-family: 'Cairo', sans-serif; max-width: 920px; margin: 0 auto; }
+        .teacher-application-detail-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+        .teacher-application-detail-back { text-decoration: none; color: #6B1E2D; font-weight: 800; font-size: 13.5px; }
+        .teacher-application-detail-back:hover { color: #B8A082; }
+        .teacher-application-detail-bar-spacer { flex: 1; }
+        .teacher-application-detail-print-btn {
           padding: 8px 16px; background: #FFFBF5; border: 1.5px solid #B8A082;
           color: #6B1E2D; border-radius: 10px; text-decoration: none;
           font-size: 13px; font-weight: 800;
         }
-        .ad-print-btn:hover { background: #B8A082; color: #FFF8E2; }
+        .teacher-application-detail-print-btn:hover { background: #B8A082; color: #FFF8E2; }
 
-        .ad-head {
+        .teacher-application-detail-head {
           display: flex; align-items: center; gap: 14px;
           background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px;
           padding: 20px; margin-bottom: 18px;
         }
-        .ad-head > div { flex: 1; min-width: 0; }
-        .ad-name { font-size: 22px; font-weight: 900; color: #32101A; margin: 0 0 4px; }
-        .ad-meta { font-size: 13px; color: #655B53; margin: 0; }
-        .ad-status {
+        .teacher-application-detail-head > div { flex: 1; min-width: 0; }
+        .teacher-application-detail-name { font-size: 22px; font-weight: 900; color: #32101A; margin: 0 0 4px; }
+        .teacher-application-detail-meta { font-size: 13px; color: #655B53; margin: 0; }
+        .teacher-application-detail-status {
           padding: 5px 14px; border-radius: 99px; font-size: 12px; font-weight: 800;
           letter-spacing: 0.04em; text-transform: uppercase; flex-shrink: 0;
         }
-        .ad-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B1E2D; }
-        .ad-status.st-WAITING_LIST  { background: rgba(184,160,130,0.18); color: #4A0E1C; }
-        .ad-status.st-ACTIVE       { background: rgba(45,138,74,0.12); color: #1B5E20; }
-        .ad-status.st-REJECTED     { background: rgba(139,26,26,0.10); color: #6B1E2D; }
+        .teacher-application-detail-status.st-UNDER_REVIEW { background: rgba(194,160,89,0.16); color: #6B1E2D; }
+        .teacher-application-detail-status.st-WAITING_LIST  { background: rgba(184,160,130,0.18); color: #4A0E1C; }
+        .teacher-application-detail-status.st-ACTIVE       { background: rgba(45,138,74,0.12); color: #1B5E20; }
+        .teacher-application-detail-status.st-REJECTED     { background: rgba(139,26,26,0.10); color: #6B1E2D; }
 
-        .ad-section {
+        .teacher-application-detail-section {
           background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07);
           border-radius: 14px; padding: 18px; margin-bottom: 14px;
         }
-        .ad-section-title {
+        .teacher-application-detail-section-title {
           font-size: 14px; font-weight: 900; color: #6B1E2D; margin: 0 0 12px;
           padding-bottom: 8px; border-bottom: 1px solid rgba(194,160,89,0.18);
         }
-        .ad-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-        .ad-item { margin-bottom: 10px; }
-        .ad-item-label { display: block; font-size: 11px; font-weight: 800; color: #796A62; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
-        .ad-item-value { font-size: 13.5px; color: #4A0E1C; font-weight: 600; line-height: 1.7; white-space: pre-wrap; }
+        .teacher-application-detail-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        .teacher-application-detail-item { margin-bottom: 10px; }
+        .teacher-application-detail-item-label { display: block; font-size: 11px; font-weight: 800; color: #796A62; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 3px; }
+        .teacher-application-detail-item-value { font-size: 13.5px; color: #4A0E1C; font-weight: 600; line-height: 1.7; white-space: pre-wrap; }
 
-        .ad-langs { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #4A0E1C; }
+        .teacher-application-detail-langs { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #4A0E1C; }
 
-        .ad-decision { margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(194,160,89,0.32); }
-        .ad-group-pick { margin-bottom: 14px; }
-        .ad-group-pick-head p { margin: -2px 0 10px; color: #796A62; font-size: 12.5px; line-height: 1.7; }
-        .ad-group-empty {
+        .teacher-application-detail-decision { margin-top: 14px; padding-top: 14px; border-top: 1px dashed rgba(194,160,89,0.32); }
+        .teacher-application-detail-group-pick { margin-bottom: 14px; }
+        .teacher-application-detail-group-pick-head p { margin: -2px 0 10px; color: #796A62; font-size: 12.5px; line-height: 1.7; }
+        .teacher-application-detail-group-empty {
           padding: 12px; border-radius: 10px; border: 1px dashed rgba(194,160,89,0.32);
           color: #796A62; font-size: 12.5px; font-weight: 800; background: rgba(194,160,89,0.04);
         }
-        .ad-group-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin-bottom: 8px; }
-        .ad-group-option {
+        .teacher-application-detail-group-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin-bottom: 8px; }
+        .teacher-application-detail-group-option {
           display: flex; align-items: center; gap: 10px; text-align: start;
           padding: 10px 12px; border-radius: 11px; border: 1.5px solid rgba(194,160,89,0.28);
           background: #FFF; cursor: pointer; font-family: inherit; transition: border-color .15s, background .15s;
         }
-        .ad-group-option:hover:not(:disabled), .ad-group-option.selected {
+        .teacher-application-detail-group-option:hover:not(:disabled), .teacher-application-detail-group-option.selected {
           border-color: #B8A082; background: linear-gradient(165deg,#FFFBF5,#F7F3EB);
         }
-        .ad-group-option:disabled { opacity: 0.6; cursor: not-allowed; }
-        .ad-group-check {
+        .teacher-application-detail-group-option:disabled { opacity: 0.6; cursor: not-allowed; }
+        .teacher-application-detail-group-check {
           width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
           background: rgba(194,160,89,0.14); color: #8F765B; font-weight: 900; flex-shrink: 0;
         }
-        .ad-group-option.selected .ad-group-check { background: #B8A082; color: #4A0E1C; }
-        .ad-group-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-        .ad-group-info strong { color: #32101A; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
-        .ad-group-info small { color: #796A62; font-size: 11.5px; font-weight: 800; }
-        .ad-notes-label { display: block; font-size: 12.5px; font-weight: 800; color: #6B1E2D; margin-bottom: 6px; }
-        .ad-notes {
+        .teacher-application-detail-group-option.selected .teacher-application-detail-group-check { background: #B8A082; color: #4A0E1C; }
+        .teacher-application-detail-group-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+        .teacher-application-detail-group-info strong { color: #32101A; font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+        .teacher-application-detail-group-info small { color: #796A62; font-size: 11.5px; font-weight: 800; }
+        .teacher-application-detail-notes-label { display: block; font-size: 12.5px; font-weight: 800; color: #6B1E2D; margin-bottom: 6px; }
+        .teacher-application-detail-notes {
           width: 100%; padding: 10px 12px; font-family: inherit; font-size: 13.5px;
           border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px;
           background: #FFFCEF; outline: none; resize: vertical;
         }
-        .ad-notes:focus { border-color: #B8A082; }
-        .ad-err { color: #6B1E2D; font-size: 13px; font-weight: 700; margin-top: 8px; }
-        .ad-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
-        .ad-btn {
+        .teacher-application-detail-notes:focus { border-color: #B8A082; }
+        .teacher-application-detail-err { color: #6B1E2D; font-size: 13px; font-weight: 700; margin-top: 8px; }
+        .teacher-application-detail-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        .teacher-application-detail-btn {
           padding: 11px 22px; border-radius: 11px; font-weight: 900; font-size: 14px;
           border: none; cursor: pointer; font-family: inherit;
         }
-        .ad-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-        .ad-btn.approve {
+        .teacher-application-detail-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .teacher-application-detail-btn.approve {
           background: linear-gradient(180deg, #4FA465, #1B5E20); color: #F0F8E8;
           box-shadow: 0 4px 14px rgba(45,138,74,0.32);
         }
-        .ad-btn.reject {
+        .teacher-application-detail-btn.reject {
           background: linear-gradient(180deg, #C24F4F, #6B1E2D); color: #FFF0E2;
           box-shadow: 0 4px 14px rgba(163,51,51,0.32);
         }
-        .ad-btn.waitlist {
+        .teacher-application-detail-btn.waitlist {
           background: #4A0E1C; color: #D9C9B0;
           box-shadow: 0 4px 14px rgba(74,14,28,0.22);
         }
@@ -625,20 +625,20 @@ function ApplicationDetailPageInner({
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="ad-section">
-      {title && <h2 className="ad-section-title">{title}</h2>}
+    <section className="teacher-application-detail-section">
+      {title && <h2 className="teacher-application-detail-section-title">{title}</h2>}
       {children}
     </section>
   );
 }
 function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="ad-grid">{children}</div>;
+  return <div className="teacher-application-detail-grid">{children}</div>;
 }
 function Item({ label, value }: { label: string; value: string }) {
   return (
-    <div className="ad-item">
-      {label && <span className="ad-item-label">{label}</span>}
-      <div className="ad-item-value">{value}</div>
+    <div className="teacher-application-detail-item">
+      {label && <span className="teacher-application-detail-item-label">{label}</span>}
+      <div className="teacher-application-detail-item-value">{value}</div>
     </div>
   );
 }

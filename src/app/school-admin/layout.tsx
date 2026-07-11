@@ -1386,7 +1386,7 @@ const brandStyles = `
     color: #4A0E1C !important;
   }
 
-  .sa-shell :is(.ad-hero,.te-hero) {
+  .sa-shell :is(.school-dashboard-hero,.te-hero) {
     background:
       radial-gradient(circle at 12% 14%, rgba(217,201,176,0.18), transparent 30%),
       linear-gradient(135deg,#1A1A1A,#4A0E1C 58%,#6B1E2D) !important;
@@ -1395,18 +1395,18 @@ const brandStyles = `
     color: #EFEAE0 !important;
   }
 
-  .sa-shell :is(.ad-hero-copy span,.te-eyebrow,.ad-hero-side strong,.te-metric strong) {
+  .sa-shell :is(.school-dashboard-hero-copy span,.te-eyebrow,.school-dashboard-hero-side strong,.te-metric strong) {
     color: #D9C9B0 !important;
   }
 
-  .sa-shell :is(.ad-kpi,.ad-panel,.ad-module,.te-card,.te-empty,.ap-toolbar,.ap-table-wrap,.ap-empty,.cl-card,.gs-toolbar,.gs-empty,.gs-table-wrap,.gs-history-list,.inv-card,.pf-card,.pf-panel,.rp-card,.rq-card,.tg-side,.tg-detail,.tg-dialog,.ws-card,.ws-panel,.workshop-card,.sub-card,.sub-table-wrap,.aor-card,.aor-empty,.rb-card,.rb-stat,.rb-panel) {
+  .sa-shell :is(.school-dashboard-kpi,.school-dashboard-panel,.school-dashboard-module,.te-card,.te-empty,.ap-toolbar,.ap-table-wrap,.ap-empty,.cl-card,.gs-toolbar,.gs-empty,.gs-table-wrap,.gs-history-list,.inv-card,.pf-card,.pf-panel,.rp-card,.rq-card,.tg-side,.tg-detail,.tg-dialog,.ws-card,.ws-panel,.workshop-card,.sub-card,.sub-table-wrap,.aor-card,.aor-empty,.rb-card,.rb-stat,.rb-panel) {
     background: #FBF8F1 !important;
     border-color: rgba(184,160,130,0.22) !important;
     box-shadow: 0 10px 28px rgba(74,14,28,0.045) !important;
     color: #1A1A1A !important;
   }
 
-  .sa-shell .ad-modules {
+  .sa-shell .school-dashboard-modules {
     display: flex !important;
     flex-direction: column !important;
     gap: 14px !important;
@@ -1416,7 +1416,7 @@ const brandStyles = `
     visibility: visible !important;
   }
 
-  .sa-shell .ad-module-grid {
+  .sa-shell .school-dashboard-module-grid {
     display: grid !important;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
     gap: 14px !important;
@@ -1425,7 +1425,7 @@ const brandStyles = `
     visibility: visible !important;
   }
 
-  .sa-shell .ad-module {
+  .sa-shell .school-dashboard-module {
     display: flex !important;
     flex-direction: column !important;
     min-height: 210px !important;
@@ -1439,17 +1439,17 @@ const brandStyles = `
     transform: none !important;
   }
 
-  .sa-shell .ad-module h3 {
+  .sa-shell .school-dashboard-module h3 {
     display: block !important;
     color: #1A1A1A !important;
   }
 
-  .sa-shell .ad-module p {
+  .sa-shell .school-dashboard-module p {
     display: block !important;
     color: #5D554A !important;
   }
 
-  .sa-shell .ad-module div {
+  .sa-shell .school-dashboard-module div {
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 8px !important;
@@ -1465,31 +1465,31 @@ const brandStyles = `
     box-shadow: 0 0 0 3px rgba(107,30,45,0.08) !important;
   }
 
-  .sa-shell :is(.ad-module a,.te-toolbar a,.gs-toggle.active,.gs-open,.tg-btn-primary,.tg-ann-composer button,.inv-create-btn,.ap-view,.ad-print-btn,.cl-btn-primary,.pf-upload-btn,.rb-primary,.ws-primary,.hub-send,.admin-send) {
+  .sa-shell :is(.school-dashboard-module a,.te-toolbar a,.gs-toggle.active,.gs-open,.tg-btn-primary,.tg-ann-composer button,.inv-create-btn,.ap-view,.teacher-application-detail-print-btn,.cl-btn-primary,.pf-uploteacher-application-detail-btn,.rb-primary,.ws-primary,.hub-send,.admin-send) {
     background: #4A0E1C !important;
     color: #D9C9B0 !important;
     border-color: rgba(217,201,176,0.24) !important;
   }
 
-  .sa-shell :is(.ad-kpi em,.ad-panel-head span,.te-status,.te-pill,.te-group-chip,.ap-status,.tg-list-meta,.tg-member-filter span,.inv-status,.gs-num,.gs-table th,.cl-eyebrow,.rb-eyebrow) {
+  .sa-shell :is(.school-dashboard-kpi em,.school-dashboard-panel-head span,.te-status,.te-pill,.te-group-chip,.ap-status,.tg-list-meta,.tg-member-filter span,.inv-status,.gs-num,.gs-table th,.cl-eyebrow,.rb-eyebrow) {
     color: #6B1E2D !important;
   }
 
-  .sa-shell :is(.ad-track i,.cl-card-accent,.rb-progress-fill) {
+  .sa-shell :is(.school-dashboard-track i,.cl-card-accent,.rb-progress-fill) {
     background: linear-gradient(90deg,#6B1E2D,#B8A082) !important;
   }
 
-  .sa-shell :is(.te-status.good,.te-pill.good,.ad-calm,.gs-score--great) {
+  .sa-shell :is(.te-status.good,.te-pill.good,.school-dashboard-calm,.gs-score--great) {
     color: #1B5E20 !important;
   }
 
-  .sa-shell :is(.te-toggle.on,.ad-btn.approve) {
+  .sa-shell :is(.te-toggle.on,.teacher-application-detail-btn.approve) {
     color: #1B5E20 !important;
     background: rgba(27,94,32,0.08) !important;
     border-color: rgba(27,94,32,0.20) !important;
   }
 
-  .sa-shell :is(.te-toggle.off,.ad-btn.reject,.tg-btn-danger,.tg-mini-x,.tg-ann-delete) {
+  .sa-shell :is(.te-toggle.off,.teacher-application-detail-btn.reject,.tg-btn-danger,.tg-mini-x,.tg-ann-delete) {
     color: #6B1E2D !important;
     background: rgba(107,30,45,0.08) !important;
     border-color: rgba(107,30,45,0.20) !important;
