@@ -2,7 +2,7 @@
  * IdentityBackdrop
  * ────────────────
  * A fixed, full-viewport watermark that paints the platform's identity
- * artwork (`/IdentityBG.png` — the burgundy/gold Islamic mandala on a cream
+ * artwork (`/newIdentityBG.png` — the burgundy/gold Islamic mandala on a cream
  * field) softly behind every screen.
  *
  * Design intent
@@ -44,7 +44,7 @@ export default function IdentityBackdrop() {
              mask needed and no visible edges at any size. */
           width: min(86%, 92vmin, 900px);
           aspect-ratio: 1 / 1;
-          background-image: url('/IdentityBG.png');
+          background-image: url('/newIdentityBG.png');
           background-repeat: no-repeat;
           background-position: center;
           background-size: contain;
