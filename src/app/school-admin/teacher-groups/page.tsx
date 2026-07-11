@@ -563,7 +563,7 @@ export default function TeacherGroupsPage() {
                         <div className="tg-ann-body">
                           <div className="tg-ann-meta">
                             <strong>{announcement.author.full_name}</strong>
-                            <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" })}</span>
+                            <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { month: "short", day: "numeric" })}</span>
                           </div>
                           <p>{announcement.content}</p>
                         </div>

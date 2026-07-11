@@ -333,7 +333,7 @@ function SubmissionsContent() {
                         <rect x="3" y="4" width="18" height="18" rx="2" />
                         <path d="M16 2v4M8 2v4M3 10h18" />
                       </svg>
-                      {new Date(s.submitted_at).toLocaleDateString("ar-SA", {
+                      {new Date(s.submitted_at).toLocaleDateString("ar-SA-u-nu-latn", {
                         month: "long",
                         day: "numeric",
                         year: "numeric",

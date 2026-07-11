@@ -129,7 +129,7 @@ export default function ApplicationsListPage() {
   function fmtDate(s: string | null | undefined) {
     if (!s) return "—";
     try {
-      return new Date(s).toLocaleDateString(L === "ar" ? "ar" : "sq");
+      return new Date(s).toLocaleDateString(L === "ar" ? "ar-u-nu-latn" : "sq");
     } catch {
       return s;
     }

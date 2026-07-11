@@ -56,7 +56,7 @@ export default function AdminOwnerReportsListPage() {
 
   function fmt(s: string | null) {
     if (!s) return "";
-    try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL", { year: "numeric", month: "long", day: "numeric" }); } catch { return s; }
+    try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { year: "numeric", month: "long", day: "numeric" }); } catch { return s; }
   }
 
   if (loading) return <MandalaLoader />;

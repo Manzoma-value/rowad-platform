@@ -152,7 +152,7 @@ export default function StudentClassPage() {
                         {a.teacher.profile.full_name}
                       </span>
                       <span className="cls-ann-date">
-                        {new Date(a.created_at).toLocaleDateString(lang === "ar" ? "ar" : "sq")}
+                        {new Date(a.created_at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "sq")}
                       </span>
                     </div>
                   </div>

@@ -266,7 +266,7 @@ export default function AdminAssessmentsPage({ params }: { params: Promise<{ id:
                       <span className="aa-list-count">{a._count.ratings} {T.ratingsCount}</span>
                     </div>
                     <div className="aa-list-title">{a.title}</div>
-                    <div className="aa-list-date">{new Date(a.created_at).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL")}</div>
+                    <div className="aa-list-date">{new Date(a.created_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL")}</div>
                   </button>
                 </li>
               ))}

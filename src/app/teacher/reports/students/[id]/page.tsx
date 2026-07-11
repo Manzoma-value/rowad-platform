@@ -326,7 +326,7 @@ export default function StudentReportPage() {
                             {item.score}/{item.total} · {item.score_pct}%
                           </span>
                           <span className="sp-tl-date">
-                            {new Date(item.date).toLocaleDateString(lang==="ar"?"ar-SA":"sq-AL",{month:"short",day:"numeric"})}
+                            {new Date(item.date).toLocaleDateString(lang==="ar"?"ar-SA-u-nu-latn":"sq-AL",{month:"short",day:"numeric"})}
                           </span>
                         </div>
                       </div>

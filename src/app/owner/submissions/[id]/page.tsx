@@ -168,7 +168,7 @@ export default function OwnerSubmissionDetailPage() {
             <p className="sr-sub">
               {attempt.assessment.title}
               <span className="sr-sep"> · </span>
-              {new Date(attempt.submitted_at).toLocaleDateString("ar-SA", {
+              {new Date(attempt.submitted_at).toLocaleDateString("ar-SA-u-nu-latn", {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
@@ -491,7 +491,7 @@ export default function OwnerSubmissionDetailPage() {
                     ? {
                         label: "تاريخ المراجعة",
                         val: new Date(attempt.reviewed_at).toLocaleDateString(
-                          "ar-SA",
+                          "ar-SA-u-nu-latn",
                           { month: "long", day: "numeric", year: "numeric" },
                         ),
                       }

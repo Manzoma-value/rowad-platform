@@ -237,7 +237,7 @@ export default function SchoolAdminTeachersPage() {
                       <span>{teacher.application.specialization}</span>
                       <span>{teacher.application.qualification.replaceAll("_", " ")}</span>
                       <span>{teacher.application.years_of_experience.replaceAll("_", " ")}</span>
-                      <span>{new Date(teacher.application.submitted_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "sq-AL")}</span>
+                      <span>{new Date(teacher.application.submitted_at).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL")}</span>
                     </div>
                   ) : (
                     <p className="te-muted">{labels.noApplication}</p>

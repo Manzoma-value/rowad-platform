@@ -193,7 +193,7 @@ export default function OwnerDashboardPage() {
               {card.alert && <div className="stat-alert-dot" />}
             </div>
             <div className="stat-value">
-              {card.value.toLocaleString("ar-SA")}
+              {card.value.toLocaleString("ar-SA-u-nu-latn")}
             </div>
             <div className="stat-label">{card.label}</div>
             <div className="stat-desc">{card.desc}</div>

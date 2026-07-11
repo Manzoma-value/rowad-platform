@@ -193,7 +193,7 @@ export default function OwnerSchoolDetailPage() {
               )}
               <span className="sd-sep"> · </span>
               أُنشئت{" "}
-              {new Date(school.created_at).toLocaleDateString("ar-SA", {
+              {new Date(school.created_at).toLocaleDateString("ar-SA-u-nu-latn", {
                 year: "numeric",
                 month: "long",
               })}

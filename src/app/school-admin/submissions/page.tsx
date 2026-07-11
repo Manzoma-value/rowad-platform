@@ -141,7 +141,7 @@ function SubmissionsContent() {
                 <div className="sub-meta">
                   <span>
                     {new Date(s.submitted_at).toLocaleDateString(
-                      lang === "ar" ? "ar-SA" : "sq-AL",
+                      lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL",
                       { month: "short", day: "numeric", year: "numeric" },
                     )}
                   </span>

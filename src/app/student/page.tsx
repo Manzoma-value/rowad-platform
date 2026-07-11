@@ -140,7 +140,7 @@ export default function StudentPage() {
                       <p>{announcement.content}</p>
                       <div>
                         <span>{announcement.teacher.profile.full_name}</span>
-                        <span>{new Date(announcement.created_at).toLocaleDateString(lang === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" })}</span>
+                        <span>{new Date(announcement.created_at).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { month: "short", day: "numeric" })}</span>
                       </div>
                     </div>
                   ))}

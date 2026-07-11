@@ -205,7 +205,7 @@ function InviteCard({
             <circle cx="12" cy="12" r="10" />
             <path d="M12 6v6l4 2" />
           </svg>
-          {new Date(invite.created_at).toLocaleDateString("ar-SA", {
+          {new Date(invite.created_at).toLocaleDateString("ar-SA-u-nu-latn", {
             year: "numeric",
             month: "short",
             day: "numeric",
@@ -227,7 +227,7 @@ function InviteCard({
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             تنتهي{" "}
-            {new Date(invite.expires_at).toLocaleDateString("ar-SA", {
+            {new Date(invite.expires_at).toLocaleDateString("ar-SA-u-nu-latn", {
               month: "short",
               day: "numeric",
             })}

@@ -191,7 +191,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
 
   function fmtDate(value: string | null) {
     if (!value) return "-";
-    return new Date(value).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL");
+    return new Date(value).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL");
   }
 
   if (loading) {

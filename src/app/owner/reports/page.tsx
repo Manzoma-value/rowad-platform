@@ -107,7 +107,7 @@ export default function OwnerReportsPage() {
 
   function fmtDate(s: string | null) {
     if (!s) return "—";
-    try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL"); } catch { return s; }
+    try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL"); } catch { return s; }
   }
 
   async function create() {

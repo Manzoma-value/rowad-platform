@@ -78,7 +78,7 @@ function formatDate(d: string, lang: Lang) {
   const date = new Date(d);
   const now  = new Date();
   const diff = Math.floor((now.getTime() - date.getTime()) / 86400000);
-  const loc  = lang === "ar" ? "ar-SA" : "sq-AL";
+  const loc  = lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL";
   const time = date.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit", hour12: lang === "ar" });
   if (diff === 0) return time;
   if (diff === 1) return `${T[lang].yesterday} · ${time}`;
@@ -92,7 +92,7 @@ function getDayLabel(d: string, lang: Lang) {
   const diff = Math.floor((now.getTime() - date.getTime()) / 86400000);
   if (diff === 0) return T[lang].today;
   if (diff === 1) return T[lang].yesterday;
-  const loc = lang === "ar" ? "ar-SA" : "sq-AL";
+  const loc = lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL";
   return date.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long" });
 }
 

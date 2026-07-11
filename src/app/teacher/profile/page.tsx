@@ -25,7 +25,7 @@ function getInitials(name: string) {
 }
 
 function formatDate(d: string, lang: string) {
-  return new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA" : "sq-AL", {
+  return new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", {
     year: "numeric",
     month: "long",
     day: "numeric",

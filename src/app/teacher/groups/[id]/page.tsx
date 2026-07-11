@@ -328,7 +328,7 @@ export default function TeacherGroupDetailPage() {
                     <span className={`gd-assess-tag gd-assess-${a.status}`}>
                       {a.status === "OPEN" ? T.assessmentOpenStatus : T.assessmentClosed}
                     </span>
-                    <span className="gd-assess-date">{new Date(a.created_at).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL")}</span>
+                    <span className="gd-assess-date">{new Date(a.created_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL")}</span>
                   </div>
                   <h3 className="gd-assess-title">{a.title}</h3>
                   <span className="gd-assess-open">{T.assessmentOpen} →</span>
@@ -377,7 +377,7 @@ export default function TeacherGroupDetailPage() {
                 <div className="gd-ann-body">
                   <div className="gd-ann-meta">
                     <strong>{announcement.author.full_name}</strong>
-                    <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" })}</span>
+                    <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { month: "short", day: "numeric" })}</span>
                   </div>
                   <p>{announcement.content}</p>
                 </div>

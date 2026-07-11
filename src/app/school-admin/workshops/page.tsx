@@ -102,7 +102,7 @@ export default function WorkshopsPage() {
 
   function fmt(s: string | null) {
     if (!s) return "—";
-    try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA" : "sq-AL"); } catch { return s; }
+    try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL"); } catch { return s; }
   }
 
   const visible = useMemo(() => rows, [rows]);

@@ -172,7 +172,7 @@ export default function SchoolAdminSubmissionDetailPage() {
             <p className="sr-sub">
               {attempt.assessment.title} ·{" "}
               {new Date(attempt.submitted_at).toLocaleDateString(
-                lang === "ar" ? "ar-SA" : "sq-AL",
+                lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL",
                 { month: "long", day: "numeric", year: "numeric" },
               )}
             </p>
@@ -462,7 +462,7 @@ export default function SchoolAdminSubmissionDetailPage() {
                     <span className="done-label">{tr.reviewDate}</span>
                     <span className="done-val">
                       {new Date(attempt.reviewed_at).toLocaleDateString(
-                        lang === "ar" ? "ar-SA" : "sq-AL",
+                        lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL",
                       )}
                     </span>
                   </div>

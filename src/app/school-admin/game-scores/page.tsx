@@ -102,7 +102,7 @@ export default function GameScoresPage() {
 
   function fmtDate(s: string | null | undefined) {
     if (!s) return "—";
-    try { return new Date(s).toLocaleString(L === "ar" ? "ar" : "sq"); } catch { return s; }
+    try { return new Date(s).toLocaleString(L === "ar" ? "ar-u-nu-latn" : "sq"); } catch { return s; }
   }
 
   function roleLabel(r: string) {

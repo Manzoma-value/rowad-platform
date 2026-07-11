@@ -36,7 +36,7 @@ export type ReportViewData = {
 function fmt(d: string | Date | null | undefined, lang: RLang): string {
   if (!d) return "—";
   try {
-    return new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA" : "sq-AL", {
+    return new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", {
       year: "numeric", month: "long", day: "numeric",
     });
   } catch { return ""; }

@@ -22,7 +22,7 @@ const S = {
     postBtn: "نشر الإعلان",
     noAnnouncements: "لا توجد إعلانات بعد",
     delete: "حذف",
-    dateLocale: "ar-SA",
+    dateLocale: "ar-SA-u-nu-latn",
   },
   sq: {
     loading: "Duke ngarkuar...",

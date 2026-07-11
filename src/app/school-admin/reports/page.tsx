@@ -1141,7 +1141,7 @@ export default function SchoolAdminReportsPage() {
                                         <span className="rp-tl-date">
                                           {new Date(
                                             item.date,
-                                          ).toLocaleDateString("ar-SA", {
+                                          ).toLocaleDateString("ar-SA-u-nu-latn", {
                                             month: "short",
                                             day: "numeric",
                                           })}

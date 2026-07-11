@@ -418,7 +418,7 @@ function StudentCard({
                     <div className="sc-att-right">
                       <ScoreChip pct={a.score_pct} />
                       <span className="sc-att-date">
-                        {new Date(a.date).toLocaleDateString("ar-SA", {
+                        {new Date(a.date).toLocaleDateString("ar-SA-u-nu-latn", {
                           month: "short",
                           day: "numeric",
                         })}

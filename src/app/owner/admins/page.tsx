@@ -163,7 +163,7 @@ interface AdminInvite {
 
 function fmtDate(iso: string | null, lang: "ar" | "en") {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+  return new Date(iso).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "en-US", {
     year: "numeric", month: "short", day: "numeric",
   });
 }

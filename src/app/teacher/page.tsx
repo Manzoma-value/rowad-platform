@@ -172,7 +172,7 @@ function initials(name: string) {
 }
 
 function formatDate(value: string, lang: "ar" | "sq") {
-  return new Date(value).toLocaleDateString(lang === "ar" ? "ar-SA" : "sq-AL", { month: "short", day: "numeric" });
+  return new Date(value).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { month: "short", day: "numeric" });
 }
 
 function Skeleton() {
