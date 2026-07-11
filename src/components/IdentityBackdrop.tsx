@@ -26,30 +26,49 @@ export default function IdentityBackdrop() {
         .identity-backdrop {
           position: fixed;
           inset: 0;
+          /* Clear the fixed sidebar so the artwork centres in the CONTENT
+             area, not the raw viewport. Logical property = it follows the
+             sidebar to the other side when the language/direction flips.
+             (Both admin shells set dir on the wrapper, so this inherits.) */
+          inset-inline-start: 286px;
           z-index: 0;
           pointer-events: none;
           overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .identity-backdrop__art {
-          position: absolute;
-          inset: 0;
+          /* Keep the artwork at its natural aspect ratio, sized to sit
+             comfortably inside the content area on any screen. */
+          width: min(86%, 92vmin, 900px);
+          aspect-ratio: 715 / 682;
           background-image: url('/IdentityBG.png');
           background-repeat: no-repeat;
-          background-position: center 42%;
-          /* Large centrepiece — its rings reach into the page margins and the
-             gaps between cards, which is where it's actually seen. Bounded so
-             it doesn't pixel-stretch on ultrawide monitors. */
-          background-size: min(1400px, 132vmin) auto;
-          /* The artwork's own field is the same cream as the page, so a
-             confident opacity still reads as a soft watermark — the cream
-             blends away and only the mandala's ink shows through. */
-          opacity: 0.55;
+          background-position: center;
+          background-size: contain;
+          opacity: 0.5;
+          /* Soft circular fade — dissolves the image's rectangular edges
+             into the page so no border/seam is ever visible. */
+          -webkit-mask-image: radial-gradient(
+            ellipse 50% 50% at 50% 50%,
+            #000 52%,
+            transparent 76%
+          );
+          mask-image: radial-gradient(
+            ellipse 50% 50% at 50% 50%,
+            #000 52%,
+            transparent 76%
+          );
         }
         @media (max-width: 767px) {
+          /* Sidebar is off-canvas on mobile — use the full viewport. */
+          .identity-backdrop {
+            inset-inline-start: 0;
+          }
           .identity-backdrop__art {
-            background-size: 175vw auto;
-            background-position: center 34%;
-            opacity: 0.5;
+            width: 105vw;
+            opacity: 0.45;
           }
         }
       `}</style>
