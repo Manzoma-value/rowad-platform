@@ -116,11 +116,11 @@ const MAQSAD_LABELS: Record<string, Record<string, string>> = {
 };
 
 const MAQSAD: Record<string,{color:string;bg:string;track:string;fill:string}> = {
-  DEEN: { color:"#78590A", bg:"#FDF6E3", track:"#F5E7B2", fill:"#B8A082"  },
-  AQL:  { color:"#4A2595", bg:"#F2EDFD", track:"#D8C8F8", fill:"#7C4DFF"  },
-  NAFS: { color:"#115C35", bg:"#E8F7EF", track:"#B4E6CC", fill:"#1DB85A"  },
-  NASL: { color:"#7A4040", bg:"#FDF0F0", track:"#F5CCCC", fill:"#C06070"  },
-  MAL:  { color:"#5C3D08", bg:"#FBF2E3", track:"#EDD89A", fill:"#C47F0A"  },
+  DEEN: { color:"#6B1E2D", bg:"#F7F3EB", track:"#E5E0D5", fill:"#B8A082"  },
+  AQL:  { color:"#655B53", bg:"#F7F3EB", track:"#E5E0D5", fill:"#8C8274"  },
+  NAFS: { color:"#1B5E20", bg:"#F7F3EB", track:"#E5E0D5", fill:"#1B5E20"  },
+  NASL: { color:"#6B1E2D", bg:"#F7F3EB", track:"#E5E0D5", fill:"#6B1E2D"  },
+  MAL:  { color:"#6B1E2D", bg:"#F7F3EB", track:"#D9C9B0", fill:"#6B1E2D"  },
 };
 
 function mq(maqsad: string) { return MAQSAD[maqsad] ?? MAQSAD.DEEN; }
@@ -152,7 +152,7 @@ function TraitSlider({
           <div className="sl-fill" style={{ width:`${pct}%`, background:fillGrad }}/>
           <div className="sl-thumb" style={{
             left:`${pct}%`, borderColor:fillColor,
-            boxShadow:`0 0 0 5px ${fillColor}22,0 2px 8px rgba(0,0,0,0.15)`,
+            boxShadow:`0 0 0 5px ${fillColor}22,0 2px 8px rgba(26,26,26,0.15)`,
           }}/>
         </div>
         <input type="range" className="sl-input" min={0} max={max} step={0.5}
@@ -172,7 +172,7 @@ function TraitSlider({
 
 function Arc({ score, max }: { score: number; max: number }) {
   const pct = max > 0 ? (score / max) * 100 : 0;
-  const color = pct >= 75 ? "#1B5E20" : pct >= 40 ? "#B8A082" : pct > 0 ? "#796A62" : "#D0C8BE";
+  const color = pct >= 75 ? "#1B5E20" : pct >= 40 ? "#B8A082" : pct > 0 ? "#796A62" : "#D9C9B0";
   const r = 30, circ = 2 * Math.PI * r;
   return (
     <div className="arc-wrap">
@@ -518,9 +518,9 @@ const css = `
 :root{
   --tef-gold:#B8A082;--tef-gold2:#B8A082;
   --tef-black:#1A1A1A;
-  --tef-bg:#FFFBF5;--tef-bg2:#EFEAE0;--tef-bg3:#F0EDE6;
+  --tef-bg:#FFFBF5;--tef-bg2:#EFEAE0;--tef-bg3:#EFEAE0;
   --tef-border:rgba(184,160,130,0.15);
-  --tef-text:#16120C;--tef-text2:#42392A;--tef-text3:#796A62;
+  --tef-text:#6B1E2D;--tef-text2:#5B1526;--tef-text3:#796A62;
   --tef-font:'Cairo',sans-serif;
 }
 
@@ -544,7 +544,7 @@ const css = `
 .tef-hdr-sep{color:var(--tef-text3);opacity:0.4;font-size:13px}
 .tef-hdr-mod{font-size:18px;font-weight:900;color:var(--tef-black);letter-spacing:-0.3px}
 .tef-hdr-sub{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--tef-text3);font-weight:600}
-.tef-edit-chip{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(184,160,130,0.12);color:#78590A;border:1px solid rgba(184,160,130,0.28)}
+.tef-edit-chip{font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;background:rgba(184,160,130,0.12);color:#6B1E2D;border:1px solid rgba(184,160,130,0.28)}
 .tef-close{width:32px;height:32px;border-radius:50%;background:var(--tef-bg2);border:1px solid var(--tef-border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--tef-text3);transition:all 0.15s;flex-shrink:0}
 .tef-close:hover{background:var(--tef-bg3);color:var(--tef-text)}
 
@@ -581,7 +581,7 @@ const css = `
   display:flex;
   transition:background 0.15s;
 }
-.tcard-main{background:linear-gradient(180deg,rgba(253,246,227,0.55),var(--tef-bg))}
+.tcard-main{background:linear-gradient(180deg,rgba(247,243,235,0.55),var(--tef-bg))}
 
 /* Colored left accent stripe */
 .tcard-accent{
@@ -596,7 +596,7 @@ const css = `
 .tcard-mq{font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:7px;border:1px solid;flex-shrink:0}
 .tcard-main-tag{
   display:inline-flex;align-items:center;gap:4px;
-  font-size:10.5px;font-weight:700;color:#78590A;
+  font-size:10.5px;font-weight:700;color:#6B1E2D;
   background:rgba(184,160,130,0.14);border:1px solid rgba(184,160,130,0.3);
   border-radius:7px;padding:4px 10px;
 }
@@ -701,7 +701,7 @@ const css = `
   cursor:pointer;transition:all 0.2s;
   box-shadow:0 4px 18px rgba(26,26,26,0.18);
 }
-.tef-save:hover:not(:disabled){background:#1c1c1e;box-shadow:0 6px 24px rgba(26,26,26,0.25);transform:translateY(-1px)}
+.tef-save:hover:not(:disabled){background:#1A1A1A;box-shadow:0 6px 24px rgba(26,26,26,0.25);transform:translateY(-1px)}
 .tef-save:disabled{opacity:0.45;cursor:not-allowed;transform:none}
 .tef-spin{width:15px;height:15px;border:2.5px solid rgba(184,160,130,0.2);border-top-color:var(--tef-gold);border-radius:50%;animation:tef-spin 0.7s linear infinite}
 .tef-cancel{padding:14px 24px;border-radius:14px;border:1.5px solid var(--tef-border);background:none;font-family:var(--tef-font);font-size:14px;font-weight:700;color:var(--tef-text3);cursor:pointer;transition:all 0.15s}

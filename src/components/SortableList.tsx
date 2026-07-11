@@ -208,7 +208,7 @@ export function SortableList<T extends SortableItem>({
               zIndex: isDragging ? 100 : 1,
               willChange: isDragging ? "transform" : "auto",
               boxShadow: isDragging
-                ? "0 14px 38px rgba(11, 11, 12, 0.18), 0 4px 10px rgba(184, 160, 130, 0.12)"
+                ? "0 14px 38px rgba(26,26,26,0.18), 0 4px 10px rgba(184, 160, 130, 0.12)"
                 : "none",
               borderRadius: "inherit",
               opacity: isDragging ? 0.97 : 1,

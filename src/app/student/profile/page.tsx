@@ -648,7 +648,7 @@ export default function StudentProfilePage() {
               <div className="pf-stat">
                 <div
                   className="pf-stat-ico"
-                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#8B6F32" }}
+                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#6B1E2D" }}
                 >
                   <svg
                     width="18"
@@ -665,7 +665,7 @@ export default function StudentProfilePage() {
                 </div>
                 <span
                   className="pf-stat-val"
-                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#8B6F32" }}
+                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#6B1E2D" }}
                 >
                   {profile.avatar_url ? tr.complete : pct}
                 </span>
@@ -731,14 +731,14 @@ const styles = `
 .pf-av-spin{width:36px;height:36px;border:2.5px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:sp 0.75s linear infinite}
 
 .pf-av-name{font-size:18px;font-weight:900;color:var(--text);margin-bottom:9px;letter-spacing:-0.2px;position:relative;z-index:1}
-.pf-av-badge{display:inline-block;font-size:11px;font-weight:700;color:#8B6F32;background:rgba(184,160,130,0.13);border:1px solid rgba(184,160,130,0.24);border-radius:999px;padding:4px 14px;letter-spacing:0.5px;margin-bottom:22px;position:relative;z-index:1}
+.pf-av-badge{display:inline-block;font-size:11px;font-weight:700;color:#6B1E2D;background:rgba(184,160,130,0.13);border:1px solid rgba(184,160,130,0.24);border-radius:999px;padding:4px 14px;letter-spacing:0.5px;margin-bottom:22px;position:relative;z-index:1}
 .pf-sep{display:flex;align-items:center;gap:8px;margin:0 0 22px}
 .pf-sep-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.15),transparent)}
 .pf-sep-dot{width:4px;height:4px;background:rgba(184,160,130,0.3);transform:rotate(45deg);flex-shrink:0}
 
 .pf-actions{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
 .pf-btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:999px;background:var(--text);color:#FFFBF5;border:none;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;box-shadow:0 8px 24px rgba(26,26,26,0.14)}
-.pf-btn-primary:hover:not(:disabled){background:#1F2328;transform:translateY(-1px);box-shadow:0 12px 30px rgba(26,26,26,0.2)}
+.pf-btn-primary:hover:not(:disabled){background:#1A1A1A;transform:translateY(-1px);box-shadow:0 12px 30px rgba(26,26,26,0.2)}
 .pf-btn-primary:disabled{opacity:0.5;cursor:not-allowed}
 .pf-btn-danger{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 22px;border-radius:999px;background:transparent;color:rgba(107,30,45,0.65);border:1px solid rgba(107,30,45,0.16);font-size:12.5px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.18s}
 .pf-btn-danger:hover:not(:disabled){background:rgba(107,30,45,0.05);color:#6B1E2D;border-color:rgba(107,30,45,0.28)}
@@ -771,7 +771,7 @@ const styles = `
 .pf-row-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
 .pf-row-lbl{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:0.3px}
 .pf-row-val{font-size:14px;font-weight:700;color:var(--text)}
-.pf-role-pill{display:inline-block;font-size:12px;font-weight:700;color:#8B6F32;background:rgba(184,160,130,0.12);border-radius:6px;padding:3px 10px}
+.pf-role-pill{display:inline-block;font-size:12px;font-weight:700;color:#6B1E2D;background:rgba(184,160,130,0.12);border-radius:6px;padding:3px 10px}
 .pf-sec-row{display:flex;align-items:center;gap:14px}
 .pf-sec-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;background:rgba(26,26,26,0.03);border:1px solid var(--border-med);display:flex;align-items:center;justify-content:center;color:var(--text2)}
 .pf-sec-body{flex:1;display:flex;flex-direction:column;gap:3px}
@@ -790,7 +790,7 @@ const styles = `
 
 /* Toast */
 .pf-toast{position:fixed;top:24px;left:28px;z-index:9999;display:flex;align-items:center;gap:10px;padding:13px 20px;border-radius:12px;font-size:13.5px;font-weight:700;font-family:var(--font);box-shadow:0 16px 44px rgba(26,26,26,0.14);animation:toastIn 0.28s cubic-bezier(0.22,1,0.36,1)}
-.pf-ok{background:#FFFBF5;border:1px solid rgba(31,78,82,0.22);color:#6B1E2D}
+.pf-ok{background:#FFFBF5;border:1px solid rgba(27,94,32,0.22);color:#6B1E2D}
 .pf-err{background:#FFFBF5;border:1px solid rgba(107,30,45,0.22);color:#6B1E2D}
 .pf-toast-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 .pf-ok .pf-toast-dot{background:#6B1E2D}

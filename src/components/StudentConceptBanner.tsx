@@ -166,7 +166,7 @@ function BannerStyles() {
       .scb {
         position: relative;
         background: linear-gradient(165deg, #5B1526 0%, #32101A 100%);
-        color: #F7EFE3;
+        color: #F7F3EB;
         border: 1px solid rgba(184,160,130,0.42);
         border-radius: 18px;
         padding: 22px 24px;
@@ -186,35 +186,35 @@ function BannerStyles() {
       }
       .scb-inner { position: relative; z-index: 1; }
       .scb-row1 { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 8px; }
-      .scb-trail { display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 800; color: rgba(232,194,127,0.85); letter-spacing: 0.04em; text-transform: uppercase; }
+      .scb-trail { display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 800; color: rgba(107,30,45,0.85); letter-spacing: 0.04em; text-transform: uppercase; }
       .scb-stage { background: rgba(184,160,130,0.16); padding: 3px 11px; border-radius: 99px; }
-      .scb-mnum { color: rgba(232,194,127,0.7); }
+      .scb-mnum { color: rgba(107,30,45,0.7); }
       .scb-sep { opacity: 0.4; }
       .scb-overall { display: flex; align-items: baseline; gap: 8px; }
       .scb-overall-pct { font-size: 22px; font-weight: 900; color: #B8A082; }
-      .scb-overall-lbl { font-size: 11.5px; color: rgba(232,194,127,0.7); font-weight: 600; }
+      .scb-overall-lbl { font-size: 11.5px; color: rgba(107,30,45,0.7); font-weight: 600; }
       .scb-title { font-size: 22px; font-weight: 900; margin: 4px 0 8px; line-height: 1.35; display: flex; flex-direction: column; gap: 4px; }
       .scb--compact .scb-title { font-size: 17px; }
-      .scb-prefix { font-size: 12px; font-weight: 700; color: rgba(232,194,127,0.65); letter-spacing: 0.04em; text-transform: uppercase; }
-      .scb-concept { color: #F7EFE3; }
+      .scb-prefix { font-size: 12px; font-weight: 700; color: rgba(107,30,45,0.65); letter-spacing: 0.04em; text-transform: uppercase; }
+      .scb-concept { color: #F7F3EB; }
       .scb-title--done { font-size: 22px; }
-      .scb-desc { font-size: 13.5px; color: rgba(245,229,188,0.78); margin: 0 0 14px; line-height: 1.85; max-width: 700px; }
+      .scb-desc { font-size: 13.5px; color: rgba(229,224,213,0.78); margin: 0 0 14px; line-height: 1.85; max-width: 700px; }
       .scb-sub { font-size: 14px; color: rgba(255,255,255,0.88); margin: 4px 0 0; line-height: 1.85; }
       .scb-reqs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
       .scb-req {
-        background: rgba(245,229,188,0.06);
+        background: rgba(229,224,213,0.06);
         border: 1px solid rgba(184,160,130,0.22);
         border-radius: 11px; padding: 10px 12px;
         display: flex; flex-direction: column; gap: 3px;
         transition: all 0.15s;
       }
-      .scb-req.is-done { background: rgba(45,138,74,0.20); border-color: rgba(45,138,74,0.5); }
+      .scb-req.is-done { background: rgba(27,94,32,0.20); border-color: rgba(27,94,32,0.5); }
       .scb-req.is-empty { opacity: 0.5; }
       .scb-req-num { font-size: 17px; font-weight: 900; color: #B8A082; }
-      .scb-req.is-done .scb-req-num { color: #6FCB87; }
-      .scb-req-lbl { font-size: 11px; font-weight: 700; color: rgba(232,194,127,0.65); letter-spacing: 0.04em; text-transform: uppercase; }
+      .scb-req.is-done .scb-req-num { color: #1B5E20; }
+      .scb-req-lbl { font-size: 11px; font-weight: 700; color: rgba(107,30,45,0.65); letter-spacing: 0.04em; text-transform: uppercase; }
       .scb-bar {
-        height: 6px; background: rgba(245,229,188,0.10); border-radius: 99px;
+        height: 6px; background: rgba(229,224,213,0.10); border-radius: 99px;
         overflow: hidden; margin-top: 14px;
       }
       .scb-bar-fill {

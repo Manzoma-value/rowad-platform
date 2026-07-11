@@ -148,36 +148,36 @@ const styles = `
     background: rgba(184,160,130,0.12); color: #B8A082; border: 1px solid rgba(184,160,130,0.22); flex-shrink: 0;
   }
   .tg-title { margin: 0 0 4px; font-size: 23px; font-weight: 900; color: #B8A082; }
-  .tg-sub { margin: 0; font-size: 13.5px; line-height: 1.7; color: rgba(255,247,237,0.72); }
+  .tg-sub { margin: 0; font-size: 13.5px; line-height: 1.7; color: rgba(255,251,245,0.72); }
   .tg-count {
     display: flex; flex-direction: column; align-items: center; gap: 2px;
     padding: 10px 18px; border-radius: 12px; background: rgba(184,160,130,0.08); border: 1px solid rgba(184,160,130,0.16);
   }
   .tg-count strong { font-size: 25px; line-height: 1; color: #B8A082; }
-  .tg-count span { font-size: 11.5px; font-weight: 700; color: rgba(255,247,237,0.64); }
+  .tg-count span { font-size: 11.5px; font-weight: 700; color: rgba(255,251,245,0.64); }
   .tg-filter { margin: 0 0 16px; }
   .tg-filter input {
-    width: min(520px, 100%); border: 1.5px solid rgba(184,155,94,0.24); border-radius: 14px;
+    width: min(520px, 100%); border: 1.5px solid rgba(107,30,45,0.24); border-radius: 14px;
     background: #FFFBF5; padding: 12px 15px; font: inherit; font-size: 14px; outline: none;
     box-shadow: 0 10px 24px rgba(26,26,26,0.04);
   }
-  .tg-filter input:focus { border-color: rgba(184,155,94,0.62); box-shadow: 0 0 0 4px rgba(184,155,94,0.10); }
+  .tg-filter input:focus { border-color: rgba(107,30,45,0.62); box-shadow: 0 0 0 4px rgba(107,30,45,0.10); }
   .tg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
   .tg-card {
     display: flex; flex-direction: column; min-height: 190px; padding: 17px; text-decoration: none;
     background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 12px;
     transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
   }
-  .tg-card:hover { transform: translateY(-2px); border-color: rgba(184,155,94,0.55); box-shadow: 0 10px 24px rgba(26,26,26,0.08); }
+  .tg-card:hover { transform: translateY(-2px); border-color: rgba(107,30,45,0.55); box-shadow: 0 10px 24px rgba(26,26,26,0.08); }
   .tg-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
   .tg-card-icon { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: #1A1A1A; color: #B8A082; }
   .tg-open { color: #B8A082; }
   .tg-card-title { margin: 0 0 8px; font-size: 16px; font-weight: 900; color: #32101A; }
-  .tg-card-desc { margin: 0; color: #625A4E; font-size: 13px; line-height: 1.7; flex: 1; }
+  .tg-card-desc { margin: 0; color: #655B53; font-size: 13px; line-height: 1.7; flex: 1; }
   .tg-card-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; color: #8F765B; font-size: 12px; font-weight: 800; }
   .tg-empty {
     min-height: 320px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-    text-align: center; border: 1px dashed rgba(184,155,94,0.34); border-radius: 14px; background: #FFFBF5; color: #796A62; padding: 32px;
+    text-align: center; border: 1px dashed rgba(107,30,45,0.34); border-radius: 14px; background: #FFFBF5; color: #796A62; padding: 32px;
   }
   .tg-empty h2 { margin: 0; color: #32101A; font-size: 17px; font-weight: 900; }
   .tg-empty p { margin: 0; max-width: 360px; font-size: 13.5px; line-height: 1.8; }

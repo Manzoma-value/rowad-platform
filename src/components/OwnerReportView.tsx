@@ -345,9 +345,9 @@ const css = `
   border-radius: 18px;
   padding: 56px 56px 48px;
   box-shadow:
-    0 14px 50px rgba(150,115,50,0.15),
+    0 14px 50px rgba(107,30,45,0.15),
     inset 0 0 0 5px #E5E0D5,
-    inset 0 0 0 6.5px rgba(194,160,89,0.4);
+    inset 0 0 0 6.5px rgba(107,30,45,0.4);
 }
 
 /* corner ornaments */
@@ -369,7 +369,7 @@ const css = `
 .orv-rule--foot   { margin: 28px 0 8px; }
 .orv-line {
   flex: 1; max-width: 220px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(194,160,89,0.65), transparent);
+  background: linear-gradient(90deg, transparent, rgba(107,30,45,0.65), transparent);
 }
 .orv-diamond {
   width: 6px; height: 6px; background: #B8A082; transform: rotate(45deg);
@@ -433,7 +433,7 @@ const css = `
   background: linear-gradient(180deg,#D9C9B0,#B8A082);
 }
 .orv-section-h--standalone {
-  border-top: 1px solid rgba(194,160,89,0.32);
+  border-top: 1px solid rgba(107,30,45,0.32);
   margin-top: 36px; padding-top: 22px;
 }
 
@@ -443,8 +443,8 @@ const css = `
 
 /* HIGHLIGHT */
 .orv-highlight {
-  background: linear-gradient(165deg,#FFF4D2,#FCE9A8);
-  border: 1.5px solid rgba(194,160,89,0.55);
+  background: linear-gradient(165deg,#EFEAE0,#D9C9B0);
+  border: 1.5px solid rgba(107,30,45,0.55);
   border-radius: 14px; padding: 18px 22px;
   margin: 22px 0;
   position: relative;
@@ -458,7 +458,7 @@ const css = `
   font-size: 13px; font-weight: 800; color: #6B1E2D;
   letter-spacing: 0.04em; margin-bottom: 6px;
 }
-.orv-highlight-body { font-size: 14px; color: #5A1818; line-height: 1.85; }
+.orv-highlight-body { font-size: 14px; color: #6B1E2D; line-height: 1.85; }
 
 /* LIST */
 .orv-list { list-style: none; padding: 0; margin: 0; }
@@ -480,8 +480,8 @@ const css = `
 .orv-fig { margin: 0; display: flex; flex-direction: column; gap: 6px; }
 .orv-fig-link {
   display: block; overflow: hidden; border-radius: 12px;
-  border: 1px solid rgba(194,160,89,0.35);
-  box-shadow: 0 6px 18px rgba(150,115,50,0.10);
+  border: 1px solid rgba(107,30,45,0.35);
+  box-shadow: 0 6px 18px rgba(107,30,45,0.10);
   background: #FFF;
 }
 .orv-img {
@@ -496,30 +496,30 @@ const css = `
 .orv-file {
   display: flex; align-items: center; gap: 14px;
   background: #FFFBF5;
-  border: 1.5px solid rgba(194,160,89,0.32);
+  border: 1.5px solid rgba(107,30,45,0.32);
   border-radius: 13px; padding: 14px 18px;
   text-decoration: none; color: inherit;
   transition: all 0.18s;
 }
 .orv-file:hover {
   border-color: #B8A082;
-  box-shadow: 0 6px 18px rgba(150,115,50,0.12);
+  box-shadow: 0 6px 18px rgba(107,30,45,0.12);
   transform: translateY(-1px);
 }
 .orv-file-icon {
   flex-shrink: 0; color: #6B1E2D;
   width: 44px; height: 44px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(194,160,89,0.10);
-  border: 1px solid rgba(194,160,89,0.32);
+  background: rgba(107,30,45,0.10);
+  border: 1px solid rgba(107,30,45,0.32);
 }
 .orv-file-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .orv-file-name { font-weight: 800; color: #32101A; font-size: 14px; word-break: break-word; }
 .orv-file-size { font-size: 12px; color: #8F765B; font-weight: 600; }
 .orv-file-dl {
   font-size: 12px; font-weight: 800; color: #6B1E2D;
-  background: rgba(194,160,89,0.16);
-  border: 1px solid rgba(194,160,89,0.42);
+  background: rgba(107,30,45,0.16);
+  border: 1px solid rgba(107,30,45,0.42);
   padding: 6px 12px; border-radius: 99px;
   white-space: nowrap;
 }
@@ -529,14 +529,14 @@ const css = `
 .orv-link {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   background: #FFFBF5;
-  border: 1.5px solid rgba(194,160,89,0.32);
+  border: 1.5px solid rgba(107,30,45,0.32);
   border-radius: 13px; padding: 14px 18px;
   text-decoration: none; color: inherit;
   transition: all 0.18s;
 }
 .orv-link:hover {
   border-color: #B8A082;
-  box-shadow: 0 6px 18px rgba(150,115,50,0.12);
+  box-shadow: 0 6px 18px rgba(107,30,45,0.12);
   transform: translateY(-1px);
 }
 .orv-link-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }

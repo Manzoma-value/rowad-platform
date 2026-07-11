@@ -309,7 +309,7 @@ export default function TeacherQuizzesPage() {
                     <div className="tq-results-list">
                       {detail.attempts.map((a) => {
                         const pct = a.total > 0 ? Math.round((a.score / a.total) * 100) : 0;
-                        const color = pct >= 70 ? "#1B5E20" : pct >= 50 ? "#8F765B" : "#B85C38";
+                        const color = pct >= 70 ? "#1B5E20" : pct >= 50 ? "#8F765B" : "#6B1E2D";
                         return (
                           <div key={a.id} className="tq-result-row">
                             <div className="tq-result-av">{a.student.profile.full_name.charAt(0)}</div>
@@ -380,23 +380,23 @@ const styles = `
   .tq-q-num{font-size:10.5px;font-weight:800;color:#796A62;background:rgba(184,160,130,0.1);border:1px solid rgba(184,160,130,0.18);padding:2px 8px;border-radius:5px}
   .tq-q-type{font-size:11px;font-weight:700;color:#8F765B;background:rgba(184,160,130,0.1);border:1px solid rgba(184,160,130,0.2);padding:2px 8px;border-radius:5px}
   .tq-del-q{margin-right:auto;background:none;border:1px solid rgba(184,160,130,0.18);color:#796A62;cursor:pointer;padding:4px 6px;border-radius:6px;display:flex;align-items:center;transition:all 0.14s}
-  .tq-del-q:hover{border-color:rgba(184,92,56,0.3);color:#B85C38;background:rgba(184,92,56,0.06)}
+  .tq-del-q:hover{border-color:rgba(107,30,45,0.3);color:#6B1E2D;background:rgba(107,30,45,0.06)}
 
   .tq-opts{display:flex;flex-direction:column;gap:6px}
   .tq-opt-row{display:flex;align-items:center;gap:8px}
   .tq-radio{width:22px;height:22px;border-radius:50%;border:2px solid rgba(184,160,130,0.25);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#1B5E20;flex-shrink:0;transition:all 0.14s}
-  .tq-radio.selected{border-color:#1B5E20;background:rgba(45,138,74,0.1)}
+  .tq-radio.selected{border-color:#1B5E20;background:rgba(27,94,32,0.1)}
   .opt-inp{flex:1}
   .tq-opt-hint{font-size:11px;color:#796A62}
   .tq-tf-row{display:flex;gap:10px}
   .tq-tf-btn{flex:1;padding:10px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid rgba(184,160,130,0.18);background:#EFEAE0;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif;color:#4A0E1C}
-  .tq-tf-btn.selected.true-btn{background:rgba(45,138,74,0.09);border-color:rgba(45,138,74,0.3);color:#1B5E20}
-  .tq-tf-btn.selected.false-btn{background:rgba(184,92,56,0.09);border-color:rgba(184,92,56,0.28);color:#B85C38}
+  .tq-tf-btn.selected.true-btn{background:rgba(27,94,32,0.09);border-color:rgba(27,94,32,0.3);color:#1B5E20}
+  .tq-tf-btn.selected.false-btn{background:rgba(107,30,45,0.09);border-color:rgba(107,30,45,0.28);color:#6B1E2D}
 
   .tq-add-row{display:flex;gap:8px}
   .tq-add-btn{background:none;border:1.5px dashed rgba(184,160,130,0.25);color:#796A62;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Cairo',Tajawal,sans-serif;transition:all 0.15s}
   .tq-add-btn:hover{border-color:rgba(184,160,130,0.45);color:#8F765B}
-  .tq-error{background:rgba(184,92,56,0.07);border:1px solid rgba(184,92,56,0.2);color:#B85C38;font-size:13px;padding:11px 13px;border-radius:9px}
+  .tq-error{background:rgba(107,30,45,0.07);border:1px solid rgba(107,30,45,0.2);color:#6B1E2D;font-size:13px;padding:11px 13px;border-radius:9px}
 
   /* Empty */
   .tq-empty{background:#FFFBF5;border:1px solid rgba(184,160,130,0.14);border-radius:18px;padding:56px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;animation:fadeUp 0.4s ease both}
@@ -418,7 +418,7 @@ const styles = `
   .tq-dot-sep{width:3px;height:3px;border-radius:50%;background:rgba(184,160,130,0.3)}
   .tq-quiz-actions{display:flex;gap:8px;flex-shrink:0}
   .tq-del-quiz-btn{background:none;border:1.5px solid rgba(184,160,130,0.2);color:#796A62;padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif}
-  .tq-del-quiz-btn:hover:not(:disabled){border-color:rgba(184,92,56,0.3);color:#B85C38;background:rgba(184,92,56,0.06)}
+  .tq-del-quiz-btn:hover:not(:disabled){border-color:rgba(107,30,45,0.3);color:#6B1E2D;background:rgba(107,30,45,0.06)}
   .tq-del-quiz-btn:disabled{opacity:0.4;cursor:not-allowed}
 
   /* Results panel */

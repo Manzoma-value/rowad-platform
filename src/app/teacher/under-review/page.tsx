@@ -69,25 +69,25 @@ export default function UnderReviewPage() {
         }
         .ur-card {
           max-width: 520px; text-align:center;
-          background: linear-gradient(160deg,#F8F1E1,#EFE5CE);
+          background: linear-gradient(160deg,#F7F3EB,#E5E0D5);
           border: 1.5px solid #B8A082; border-radius: 22px; padding: 50px 42px;
-          box-shadow: 0 10px 40px rgba(150,115,50,0.12),
-            inset 0 0 0 5px #E5E0D5, inset 0 0 0 6.5px rgba(194,160,89,0.4);
+          box-shadow: 0 10px 40px rgba(107,30,45,0.12),
+            inset 0 0 0 5px #E5E0D5, inset 0 0 0 6.5px rgba(107,30,45,0.4);
         }
         .ur-icon {
           width: 92px; height: 92px; border-radius: 50%; margin: 0 auto 20px;
           display:flex; align-items:center; justify-content:center;
-          background: rgba(194,160,89,0.1); color: #A9863F;
-          border: 1.5px solid rgba(194,160,89,0.42);
-          box-shadow: 0 4px 18px rgba(150,115,50,0.12);
+          background: rgba(107,30,45,0.1); color: #6B1E2D;
+          border: 1.5px solid rgba(107,30,45,0.42);
+          box-shadow: 0 4px 18px rgba(107,30,45,0.12);
         }
         .ur-badge {
-          display:inline-block; font-size:12px; font-weight:800; color:#A9863F;
-          background:rgba(194,160,89,.12); padding:4px 16px; border-radius:99px;
+          display:inline-block; font-size:12px; font-weight:800; color:#6B1E2D;
+          background:rgba(107,30,45,.12); padding:4px 16px; border-radius:99px;
           margin-bottom:14px; letter-spacing:1.6px; text-transform:uppercase;
-          border:1px solid rgba(194,160,89,0.3);
+          border:1px solid rgba(107,30,45,0.3);
         }
-        .ur-title { font-size:22px; font-weight:900; color:#3B2F1C; margin:0 0 14px; }
+        .ur-title { font-size:22px; font-weight:900; color:#6B1E2D; margin:0 0 14px; }
         .ur-body  { font-size:14.5px; color:#796A62; line-height:1.95; margin:0 0 22px; }
         .ur-dots { display:flex; gap:8px; justify-content:center; }
         .ur-dots span {

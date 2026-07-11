@@ -55,7 +55,7 @@ export default function PlatformErrorFallback({
           border: 1px solid rgba(184,160,130,.38);
           border-radius: 28px;
           background: rgba(255,251,245,.94);
-          box-shadow: 0 24px 70px rgba(74,14,28,.12);
+          box-shadow: 0 24px 70px rgba(107,30,45,.12);
           text-align: center;
         }
         .platform-error-mark {

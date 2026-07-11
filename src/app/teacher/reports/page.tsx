@@ -100,7 +100,7 @@ function ScoreRing({ pct, size = 52 }: { pct: number | null; size?: number }) {
   const r = (size - 8) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
-  const color = pct >= 75 ? "#1B5E20" : pct >= 50 ? "#B8A082" : "#64748B";
+  const color = pct >= 75 ? "#1B5E20" : pct >= 50 ? "#B8A082" : "#796A62";
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
@@ -341,7 +341,7 @@ const css = `
   --rp-gold:#B8A082; --rp-gold2:#B8A082;
   --rp-black:#1A1A1A; --rp-bg:#EFEAE0;
   --rp-card:#FFFBF5; --rp-border:rgba(184,160,130,0.14);
-  --rp-text:#1A1A1A; --rp-text2:#3D3526; --rp-text3:#796A62;
+  --rp-text:#1A1A1A; --rp-text2:#32101A; --rp-text3:#796A62;
   --rp-font:'Cairo',sans-serif;
 }
 
@@ -432,7 +432,7 @@ const css = `
   background:var(--rp-card);border:1.5px solid var(--rp-border);
   border-radius:18px;padding:18px 20px;
   position:relative;overflow:hidden;
-  box-shadow:0 2px 10px rgba(0,0,0,0.04);
+  box-shadow:0 2px 10px rgba(26,26,26,0.04);
   transition:all 0.2s ease;
 }
 .rp-stat:hover{border-color:rgba(184,160,130,0.28);box-shadow:0 4px 16px rgba(184,160,130,0.1)}
@@ -444,7 +444,7 @@ const css = `
 .rp-stat-score{gap:12px}
 .rp-stat-icon{
   width:40px;height:40px;border-radius:12px;flex-shrink:0;
-  background:#F0EDE6;border:1px solid rgba(184,160,130,0.2);
+  background:#EFEAE0;border:1px solid rgba(184,160,130,0.2);
   display:flex;align-items:center;justify-content:center;
   color:var(--rp-text3);
 }
@@ -479,7 +479,7 @@ const css = `
   border-radius:22px;cursor:pointer;font-family:var(--rp-font);text-align:center;
   transition:all 0.22s cubic-bezier(0.22,1,0.36,1);
   animation:rp-cardIn 0.38s ease both;
-  box-shadow:0 2px 10px rgba(0,0,0,0.04);
+  box-shadow:0 2px 10px rgba(26,26,26,0.04);
   overflow:hidden;
 }
 .rp-card::before{
@@ -490,7 +490,7 @@ const css = `
 .rp-card:hover{
   border-color:rgba(184,160,130,0.35);
   transform:translateY(-4px);
-  box-shadow:0 14px 36px rgba(0,0,0,0.1),0 4px 14px rgba(184,160,130,0.1);
+  box-shadow:0 14px 36px rgba(26,26,26,0.1),0 4px 14px rgba(184,160,130,0.1);
 }
 .rp-card:hover::before{transform:scaleX(1)}
 
@@ -509,7 +509,7 @@ const css = `
   background:var(--rp-black);color:var(--rp-gold);
   display:flex;align-items:center;justify-content:center;
   font-size:24px;font-weight:900;flex-shrink:0;
-  box-shadow:0 4px 14px rgba(0,0,0,0.15);
+  box-shadow:0 4px 14px rgba(26,26,26,0.15);
 }
 
 .rp-card-name{font-size:14px;font-weight:800;color:var(--rp-black);line-height:1.3}

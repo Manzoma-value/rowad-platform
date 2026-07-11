@@ -170,11 +170,11 @@ const css = `
   --gold-pale:rgba(184,160,130,0.06);
   --gold-border:rgba(184,160,130,0.20);
   --black:#1A1A1A;
-  --text:#1E1C18; --text2:#3A3020; --text3:#8A7860;
-  --bg:#EFEAE0; --surface:#FFFFFF; --surface2:#FAFAF7;
+  --text:#1A1A1A; --text2:#6B1E2D; --text3:#8F765B;
+  --bg:#EFEAE0; --surface:#FFFFFF; --surface2:#FFFBF5;
   --border:rgba(26,26,26,0.07);
-  --green:#1B5E20; --green-l:rgba(45,138,74,0.08);
-  --purple:#6D3FB3; --purple-l:rgba(109,63,179,0.07);
+  --green:#1B5E20; --green-l:rgba(27,94,32,0.08);
+  --purple:#796A62; --purple-l:rgba(121,106,98,0.07);
   --font:'Cairo',sans-serif;
 }
 
@@ -226,10 +226,10 @@ const css = `
   transition:all .22s cubic-bezier(0.22,1,0.36,1);
   position:relative; overflow:hidden;
   animation:sll-fadeup .4s ease both;
-  box-shadow:0 1px 3px rgba(0,0,0,0.04);
+  box-shadow:0 1px 3px rgba(26,26,26,0.04);
 }
 .sll-card:hover{
-  transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08);
+  transform:translateY(-3px); box-shadow:0 8px 24px rgba(26,26,26,0.08);
   border-color:var(--gold-border);
 }
 .sll-card::before{
@@ -238,7 +238,7 @@ const css = `
   opacity:0; transition:opacity .22s;
 }
 .sll-card:hover::before{opacity:1}
-.sll-card--done{background:linear-gradient(180deg, rgba(45,138,74,0.03), var(--surface))}
+.sll-card--done{background:linear-gradient(180deg, rgba(27,94,32,0.03), var(--surface))}
 
 .sll-card-head{display:flex;gap:6px;flex-wrap:wrap}
 .sll-chip{
@@ -247,8 +247,8 @@ const css = `
   letter-spacing:.02em;
 }
 .sll-chip--gold{background:var(--gold-pale); color:#8F765B; border:1px solid var(--gold-border)}
-.sll-chip--purple{background:var(--purple-l); color:var(--purple); border:1px solid rgba(109,63,179,0.18)}
-.sll-chip--green{background:var(--green-l); color:var(--green); border:1px solid rgba(45,138,74,0.2)}
+.sll-chip--purple{background:var(--purple-l); color:var(--purple); border:1px solid rgba(121,106,98,0.18)}
+.sll-chip--green{background:var(--green-l); color:var(--green); border:1px solid rgba(27,94,32,0.2)}
 
 .sll-card-title{font-size:15.5px;font-weight:800;color:var(--black);line-height:1.4}
 .sll-card-desc{

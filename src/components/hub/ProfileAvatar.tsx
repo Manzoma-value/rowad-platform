@@ -35,14 +35,14 @@ interface HubProfile extends HubAuthor {
 }
 
 const AV_COLORS = [
-  { bg: "#D4A96A", text: "#3D1A00" },
-  { bg: "#7BAF7B", text: "#0D2A0D" },
-  { bg: "#B87A6B", text: "#2A0D0A" },
-  { bg: "#9B7BB8", text: "#1A0A2A" },
-  { bg: "#B8A46B", text: "#2A1F00" },
-  { bg: "#6BA8A8", text: "#0A2020" },
-  { bg: "#B86B8A", text: "#2A0A15" },
-  { bg: "#6B9BB8", text: "#0A2535" },
+  { bg: "#6B1E2D", text: "#6B1E2D" },
+  { bg: "#1B5E20", text: "#1B5E20" },
+  { bg: "#6B1E2D", text: "#6B1E2D" },
+  { bg: "#8C8274", text: "#1A1A1A" },
+  { bg: "#B8A082", text: "#6B1E2D" },
+  { bg: "#8C8274", text: "#1A1A1A" },
+  { bg: "#6B1E2D", text: "#6B1E2D" },
+  { bg: "#8C8274", text: "#1A1A1A" },
 ];
 
 function initials(name: string) {
@@ -50,7 +50,7 @@ function initials(name: string) {
 }
 
 function getAvColor(name: string, role: string) {
-  if (role === "SCHOOL_ADMIN") return { bg: "linear-gradient(135deg,#B8A082,#B8A082)", text: "#1A0D00" };
+  if (role === "SCHOOL_ADMIN") return { bg: "linear-gradient(135deg,#B8A082,#B8A082)", text: "#6B1E2D" };
   if (role === "TEACHER") return { bg: "#1A1A1A", text: "#B8A082" };
   let h = 0;
   for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
@@ -250,7 +250,7 @@ const css = `
   position: fixed; inset: 0; z-index: 1000;
   display: flex; align-items: center; justify-content: center;
   padding: 20px;
-  background: rgba(11,11,12,0.55);
+  background: rgba(26,26,26,0.55);
   backdrop-filter: blur(8px);
   animation: hpa-fade .18s ease;
   font-family: 'Cairo', 'Tajawal', sans-serif;
@@ -262,12 +262,12 @@ const css = `
   width: 100%; max-width: 380px;
   border-radius: 20px;
   overflow: hidden;
-  background: linear-gradient(165deg, #FFFBF5 0%, #F7F1E3 100%);
+  background: linear-gradient(165deg, #FFFBF5 0%, #F7F3EB 100%);
   border: 1.5px solid #B8A082;
   box-shadow:
-    0 22px 70px rgba(0,0,0,0.32),
+    0 22px 70px rgba(26,26,26,0.32),
     inset 0 0 0 4px #E5E0D5,
-    inset 0 0 0 5.5px rgba(194,160,89,0.4);
+    inset 0 0 0 5.5px rgba(107,30,45,0.4);
   animation: hpa-pop .22s cubic-bezier(.22,1,.36,1);
 }
 @keyframes hpa-pop {
@@ -277,7 +277,7 @@ const css = `
 
 .hpa-band {
   height: 70px;
-  background: linear-gradient(135deg, #32101A 0%, #4B3718 100%);
+  background: linear-gradient(135deg, #32101A 0%, #6B1E2D 100%);
 }
 .hpa-x {
   position: absolute; top: 10px; inset-inline-end: 12px; z-index: 2;
@@ -300,31 +300,31 @@ const css = `
 .hpa-big-av {
   width: 78px !important; height: 78px !important; min-width: 78px;
   font-size: 26px !important;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.25), 0 0 0 4px #FFFBF5;
+  box-shadow: 0 10px 24px rgba(26,26,26,0.25), 0 0 0 4px #FFFBF5;
 }
 .hpa-role-pill {
   margin-bottom: 4px;
   font-size: 11px; font-weight: 900; letter-spacing: 0.04em;
   padding: 5px 12px; border-radius: 999px;
 }
-.hpa-role-TEACHER      { background: rgba(20,80,140,0.12); color: #14528C; }
+.hpa-role-TEACHER      { background: rgba(101,91,83,0.12); color: #655B53; }
 .hpa-role-SCHOOL_ADMIN { background: rgba(184,160,130,0.20); color: #8F765B; }
 .hpa-role-STUDENT      { background: rgba(107,30,45,0.10); color: #6B1E2D; }
 .hpa-role-OWNER        { background: rgba(26,26,26,0.10);   color: #32101A; }
 
 .hpa-name-wrap { margin-top: 14px; }
 .hpa-name { font-size: 18px; font-weight: 900; color: #32101A; line-height: 1.3; word-break: break-word; }
-.hpa-email { margin-top: 4px; color: #85745D; font-size: 12.5px; word-break: break-word; }
+.hpa-email { margin-top: 4px; color: #8F765B; font-size: 12.5px; word-break: break-word; }
 
 .hpa-blocks { margin-top: 14px; display: grid; gap: 10px; }
 .hpa-block {
   border-radius: 12px;
-  background: rgba(246,240,230,0.76);
+  background: rgba(247,243,235,0.76);
   padding: 10px 12px;
-  border: 1px solid rgba(184,155,94,0.18);
+  border: 1px solid rgba(107,30,45,0.18);
 }
 .hpa-block-label {
-  font-size: 10.5px; font-weight: 900; color: #9A7A35;
+  font-size: 10.5px; font-weight: 900; color: #6B1E2D;
   text-transform: uppercase; letter-spacing: 0.06em;
 }
 .hpa-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
@@ -332,8 +332,8 @@ const css = `
   border-radius: 999px;
   padding: 4px 10px;
   background: #fff;
-  border: 1px solid rgba(184,155,94,0.32);
-  color: #2A1A0A;
+  border: 1px solid rgba(107,30,45,0.32);
+  color: #6B1E2D;
   font-size: 12px; font-weight: 800;
 }
 `;

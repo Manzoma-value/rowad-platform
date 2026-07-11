@@ -84,17 +84,17 @@ export default function RejectedPage() {
           min-height: 78vh; display:flex; align-items:center; justify-content:center;
           padding: 24px; font-family:'Cairo','Tajawal',sans-serif;
           background:
-            radial-gradient(ellipse at 50% 10%, #F8E0DE 0%, transparent 55%),
+            radial-gradient(ellipse at 50% 10%, #EFEAE0 0%, transparent 55%),
             linear-gradient(160deg,#E5E0D5 0%,#E5E0D5 100%);
         }
         .rj-card {
           max-width: 560px; text-align:center;
-          background: linear-gradient(160deg,#FFF4E5 0%,#FBEDD2 100%);
+          background: linear-gradient(160deg,#F7F3EB 0%,#EFEAE0 100%);
           border: 1.5px solid rgba(107,30,45,0.32); border-radius: 22px;
           padding: 48px 40px;
           box-shadow: 0 10px 40px rgba(107,30,45,0.10),
-            inset 0 0 0 5px rgba(255,248,236,0.55);
-          color: #5A1818;
+            inset 0 0 0 5px rgba(247,243,235,0.55);
+          color: #6B1E2D;
         }
         .rj-icon {
           width: 88px; height: 88px; border-radius: 50%; margin: 0 auto 18px;
@@ -108,24 +108,24 @@ export default function RejectedPage() {
           margin-bottom:14px; letter-spacing:1.5px; text-transform:uppercase;
           border:1px solid rgba(107,30,45,0.30);
         }
-        .rj-title { font-size:22px; font-weight:900; color:#5A1818; margin:0 0 14px; }
-        .rj-body  { font-size:14px; color:#6F2A2A; line-height:1.9; margin:0 0 22px; }
+        .rj-title { font-size:22px; font-weight:900; color:#6B1E2D; margin:0 0 14px; }
+        .rj-body  { font-size:14px; color:#6B1E2D; line-height:1.9; margin:0 0 22px; }
         .rj-notes-block {
-          background: #FFF8EC; border:1px solid rgba(107,30,45,0.20);
+          background: #F7F3EB; border:1px solid rgba(107,30,45,0.20);
           border-radius:12px; padding:14px 16px; text-align:start;
         }
         .rj-notes-label {
           font-size: 11px; font-weight:800; color:#8F765B;
           letter-spacing:1.2px; text-transform:uppercase; margin-bottom:6px;
         }
-        .rj-notes       { font-size:13.5px; color:#2E1A0F; line-height:1.85; font-weight:600; white-space:pre-wrap; }
+        .rj-notes       { font-size:13.5px; color:#6B1E2D; line-height:1.85; font-weight:600; white-space:pre-wrap; }
         .rj-notes.empty { color:#796A62; font-style:italic; font-weight:500; }
         .rj-error { margin-top: 12px; color: #6B1E2D; font-size: 13px; font-weight: 800; }
         .rj-retry {
           margin-top: 18px; border: 0; border-radius: 12px; padding: 12px 24px;
           background: #4A0E1C; color: #D9C9B0; font-family: inherit;
           font-size: 14px; font-weight: 900; cursor: pointer;
-          box-shadow: 0 10px 24px rgba(74,14,28,0.18);
+          box-shadow: 0 10px 24px rgba(107,30,45,0.18);
         }
         .rj-retry:disabled { opacity: 0.6; cursor: progress; }
       `}</style>

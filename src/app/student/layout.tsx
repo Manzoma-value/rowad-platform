@@ -598,7 +598,7 @@ const styles = `
 
   :root {
     --sl-bg-main:        #EFEAE0;
-    --sl-bg-soft:        #FBFAF6;
+    --sl-bg-soft:        #FFFBF5;
     --sl-bg-card:        #FFFBF5;
 
     --sl-graphite:       #1A1A1A;
@@ -712,7 +712,7 @@ const styles = `
     padding: 0 24px 10px;
     font-family: var(--sl-font-mono); font-size: 9.5px; font-weight: 700;
     letter-spacing: 0.22em; text-transform: uppercase;
-    color: rgba(255, 247, 237, 0.45);
+    color: rgba(255,251,245,0.45);
   }
 
   /* Nav */
@@ -732,22 +732,22 @@ const styles = `
     position: relative; display: flex; align-items: center; gap: 11px;
     padding: 10px 12px; border-radius: 14px;
     text-decoration: none; border: 1px solid transparent;
-    color: rgba(255, 247, 237, 0.70);
+    color: rgba(255,251,245,0.70);
     transition: all 0.2s var(--sl-ease-out); overflow: hidden;
     flex-shrink: 0;
     min-height: 52px;
   }
   .sl-nav-item:hover {
-    background: rgba(255, 247, 237, 0.06);
-    color: rgba(255, 248, 230, 0.95);
+    background: rgba(255,251,245,0.06);
+    color: rgba(247,243,235,0.95);
     border-color: rgba(184,160,130,0.16);
   }
   .sl-nav-item.active {
     background: linear-gradient(180deg, rgba(184,160,130,0.18), rgba(184,160,130,0.08));
-    color: #F7EFE3;
+    color: #F7F3EB;
     border-color: rgba(184,160,130,0.42);
     box-shadow:
-      0 4px 14px rgba(0,0,0,0.25),
+      0 4px 14px rgba(26,26,26,0.25),
       inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
@@ -760,12 +760,12 @@ const styles = `
   .sl-nav-icon-wrap {
     display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    background: rgba(255, 247, 237, 0.06);
+    background: rgba(255,251,245,0.06);
     border: 1px solid rgba(184,160,130,0.06);
     transition: all 0.18s;
   }
   .sl-nav-item:hover  .sl-nav-icon-wrap {
-    background: rgba(255, 247, 237, 0.12);
+    background: rgba(255,251,245,0.12);
     border-color: rgba(184,160,130,0.18);
   }
   .sl-nav-item.active .sl-nav-icon-wrap {
@@ -785,11 +785,11 @@ const styles = `
   .sl-user {
     display: flex; align-items: center; gap: 10px;
     padding: 11px 13px; border-radius: 16px;
-    background: rgba(255,247,237,0.05);
+    background: rgba(255,251,245,0.05);
     border: 1px solid rgba(184,160,130,0.20);
     transition: all 0.2s;
   }
-  .sl-user:hover { background: rgba(255,247,237,0.10); border-color: rgba(184,160,130,0.35); }
+  .sl-user:hover { background: rgba(255,251,245,0.10); border-color: rgba(184,160,130,0.35); }
 
   .sl-user-clickable {
     display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
@@ -804,16 +804,16 @@ const styles = `
   }
   .sl-user-initial { font-size: 16px; font-weight: 900; color: var(--sl-graphite); font-family: var(--sl-font-heading); }
   .sl-user-info    { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .sl-user-name    { font-size: 13px; font-weight: 700; color: rgba(255,250,235,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sl-user-name    { font-size: 13px; font-weight: 700; color: rgba(255,251,245,0.95); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sl-user-role    { font-family: var(--sl-font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(184,160,130,0.70); }
 
   .sl-logout-btn {
     display: flex; align-items: center; justify-content: center;
     width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    background: rgba(255,247,237,0.04);
+    background: rgba(255,251,245,0.04);
     border: 1px solid rgba(184,160,130,0.10);
     cursor: pointer;
-    color: rgba(255,247,237,0.65); transition: all 0.18s;
+    color: rgba(255,251,245,0.65); transition: all 0.18s;
   }
   .sl-logout-btn:hover:not(:disabled) { background: rgba(184,160,130,0.15); color: var(--sl-gold); border-color: rgba(184,160,130,0.32); }
   .sl-logout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -828,7 +828,7 @@ const styles = `
     position: sticky; top: 0; z-index: 40;
     height: var(--sl-topbar-h); display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
-    background: rgba(251,250,246,0.82);
+    background: rgba(255,251,245,0.82);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(26,26,26,0.07);
     box-shadow: 0 1px 0 rgba(26,26,26,0.04), 0 6px 24px rgba(26,26,26,0.025);

@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run check:ui-identifiers && prisma generate && next build",
+    "build": "npm run check:ui-identifiers && npm run check:theme-colors && prisma generate && next build",
     "check:ui-identifiers": "node scripts/check-adblock-safe-ui.mjs",
+    "check:theme-colors": "node scripts/check-theme-colors.mjs",
+    "fix:theme-colors": "node scripts/check-theme-colors.mjs --fix",
     "start": "next start",
     "lint": "eslint"
   },

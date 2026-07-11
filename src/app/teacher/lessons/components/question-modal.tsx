@@ -165,7 +165,7 @@ export function QuestionModal({ lessonId, question, onClose, onSaved }: Props) {
     <div className="lb-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="lb-modal wide">
         <div className="lb-modal-hd">
-          <div className="lb-modal-icon" style={{ color: type === "MATCHING" ? "#4A2080" : "var(--gold)" }}>
+          <div className="lb-modal-icon" style={{ color: type === "MATCHING" ? "#655B53" : "var(--gold)" }}>
             {Icons.questions}
           </div>
           <div className="lb-modal-hd-text">

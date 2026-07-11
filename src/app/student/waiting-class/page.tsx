@@ -172,8 +172,8 @@ export default function StudentWaitingClassPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-          --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7; --border: #E8D9B8;
+          --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #D9C9B0; --gold-pale: #EFEAE0;
+          --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FFFBF5; --border: #D9C9B0;
         }
         .shell {
           min-height: 100vh; background: var(--gold-pale);
@@ -183,7 +183,7 @@ export default function StudentWaitingClassPage() {
         .card {
           background: #fff; border: 1px solid var(--border); border-radius: 22px;
           width: 100%; max-width: 480px; overflow: hidden;
-          box-shadow: 0 4px 32px rgba(26,18,8,0.08);
+          box-shadow: 0 4px 32px rgba(107,30,45,0.08);
         }
         .card-header {
           background: var(--ink); padding: 24px 28px;

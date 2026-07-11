@@ -330,7 +330,7 @@ export default function LessonEditorPage({
                 {isPublished ? t.statusLive : t.statusDraft}
               </span>
               {savingMeta && <span className="lb-page-sub" style={{ marginTop: 0 }}>{t.saving}</span>}
-              {savedFlash && <span style={{ fontSize: 11, color: "#6BD489", fontWeight: 700 }}>{t.saved}</span>}
+              {savedFlash && <span style={{ fontSize: 11, color: "#1B5E20", fontWeight: 700 }}>{t.saved}</span>}
             </div>
             <p className="lb-page-sub">{t.eyebrow}</p>
           </div>

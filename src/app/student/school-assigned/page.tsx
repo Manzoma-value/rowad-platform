@@ -83,7 +83,7 @@ export default function StudentSchoolAssignedPage() {
     pct === null
       ? "#B8A082"
       : pct >= 70
-        ? "#2D7A4F"
+        ? "#1B5E20"
         : pct >= 50
           ? "#8F765B"
           : "#6B1E2D";
@@ -240,8 +240,8 @@ const baseStyles = `
   @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=JetBrains+Mono:wght@700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-    --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7; --border: #E8D9B8;
+    --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #D9C9B0; --gold-pale: #EFEAE0;
+    --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FFFBF5; --border: #D9C9B0;
   }
   .shell {
     min-height: 100vh; background: var(--gold-pale);
@@ -254,7 +254,7 @@ const baseStyles = `
     background: #fff; border: 1px solid var(--border); border-radius: 22px;
     width: 100%; max-width: 460px; overflow: hidden;
     display: flex; flex-direction: column; gap: 0;
-    box-shadow: 0 8px 32px rgba(26,18,8,0.08);
+    box-shadow: 0 8px 32px rgba(107,30,45,0.08);
   }
 `;
 

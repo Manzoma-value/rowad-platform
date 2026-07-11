@@ -210,7 +210,7 @@ const styles = `
   .cls-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:10px;transition:background 0.14s}
   .cls-row:hover{background:rgba(184,160,130,0.06)}
   .cls-row.is-me{background:#1A1A1A}
-  .cls-row.is-me:hover{background:#141008}
+  .cls-row.is-me:hover{background:#6B1E2D}
   .cls-av{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:rgba(184,160,130,0.1);border:1.5px solid rgba(184,160,130,0.18);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#8F765B}
   .cls-row.is-me .cls-av{background:rgba(184,160,130,0.14);border-color:rgba(184,160,130,0.28);color:#B8A082}
   .cls-row-name{flex:1;font-size:13px;font-weight:600;color:#4A0E1C}

@@ -241,7 +241,7 @@ export function ImageModal({
               <img src={preview} alt="preview" className="lb-img-preview" style={{ borderRadius: 0, border: "none" }} />
               <div style={{
                 position: "absolute", bottom: 0, left: 0, right: 0,
-                background: "linear-gradient(transparent, rgba(11,11,12,0.8))",
+                background: "linear-gradient(transparent, rgba(26,26,26,0.8))",
                 padding: "24px 16px 14px",
                 display: "flex", alignItems: "center", justifyContent: "space-between",
               }}>
@@ -380,7 +380,7 @@ export function VideoModal({
               <img src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} alt="YouTube preview" style={{ width: "100%", display: "block" }} />
               <div style={{
                 position: "absolute", bottom: 12, right: 12,
-                background: "rgba(11,11,12,0.75)", backdropFilter: "blur(8px)",
+                background: "rgba(26,26,26,0.75)", backdropFilter: "blur(8px)",
                 border: "1px solid rgba(255,255,255,0.1)",
                 borderRadius: 8, padding: "5px 12px",
                 fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.8)",

@@ -117,7 +117,7 @@ export default function StudentQuizzesPage() {
             {tr.answeredCorrectly} <strong>{result.score}</strong> {tr.outOf} <strong>{result.total}</strong> {tr.question}
           </p>
 
-          <div className="result-verdict" style={{ background: passed ? "rgba(45,138,74,0.08)" : "rgba(184,160,130,0.1)", borderColor: passed ? "rgba(45,138,74,0.25)" : "rgba(184,160,130,0.25)", color: passed ? "#1B5E20" : "#8F765B" }}>
+          <div className="result-verdict" style={{ background: passed ? "rgba(27,94,32,0.08)" : "rgba(184,160,130,0.1)", borderColor: passed ? "rgba(27,94,32,0.25)" : "rgba(184,160,130,0.25)", color: passed ? "#1B5E20" : "#8F765B" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               {passed ? <polyline points="20 6 9 17 4 12"/> : <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>}
             </svg>
@@ -260,13 +260,13 @@ export default function StudentQuizzesPage() {
             const done = !!attempt;
             const pct = done ? Math.round((attempt.score / attempt.total) * 100) : null;
             const passed = pct !== null && pct >= 50;
-            const scoreColor = passed ? "#1B5E20" : "#B85C38";
+            const scoreColor = passed ? "#1B5E20" : "#6B1E2D";
 
             return (
               <div key={quiz.id} className={`quiz-row ${done ? "quiz-done" : "quiz-pending"}`} style={{ animationDelay: `${i * 48}ms` }}>
                 <div className="quiz-row-icon" style={{
-                  background: done ? (passed ? "rgba(45,138,74,0.09)" : "rgba(184,92,56,0.08)") : "rgba(184,160,130,0.1)",
-                  border: `1px solid ${done ? (passed ? "rgba(45,138,74,0.22)" : "rgba(184,92,56,0.2)") : "rgba(184,160,130,0.2)"}`,
+                  background: done ? (passed ? "rgba(27,94,32,0.09)" : "rgba(107,30,45,0.08)") : "rgba(184,160,130,0.1)",
+                  border: `1px solid ${done ? (passed ? "rgba(27,94,32,0.22)" : "rgba(107,30,45,0.2)") : "rgba(184,160,130,0.2)"}`,
                   color: done ? scoreColor : "#8F765B",
                 }}>
                   {done ? (
@@ -401,7 +401,7 @@ const styles = `
   .q-type{font-size:10.5px;font-weight:700;color:#8F765B;background:rgba(184,160,130,0.1);border:1px solid rgba(184,160,130,0.2);padding:3px 10px;border-radius:99px}
   .q-text{font-size:15px;font-weight:700;color:#1A1A1A;line-height:1.65}
   .q-opts{display:flex;flex-direction:column;gap:8px}
-  .q-opt{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;border:1.5px solid rgba(184,160,130,0.14);cursor:pointer;background:#FEFCF8;transition:all 0.15s;user-select:none}
+  .q-opt{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:11px;border:1.5px solid rgba(184,160,130,0.14);cursor:pointer;background:#FFFBF5;transition:all 0.15s;user-select:none}
   .q-opt:hover{border-color:rgba(184,160,130,0.3);background:rgba(184,160,130,0.05)}
   .q-opt.selected{background:#1A1A1A;border-color:#1A1A1A}
   .q-radio-hidden{display:none}

@@ -339,7 +339,7 @@ const styles = `
   .tc-composer{padding:14px 16px;border-bottom:1px solid rgba(184,160,130,0.09);display:flex;flex-direction:column;gap:10px}
   .tc-textarea{width:100%;padding:11px 13px;background:#EFEAE0;border:1.5px solid rgba(184,160,130,0.15);border-radius:10px;font-size:13px;font-family:'Cairo',Tajawal,sans-serif;color:#1A1A1A;outline:none;resize:none;line-height:1.65;transition:border-color 0.15s,box-shadow 0.15s}
   .tc-textarea:focus{border-color:rgba(184,160,130,0.35);background:#FFFBF5;box-shadow:0 0 0 3px rgba(184,160,130,0.07)}
-  .tc-textarea::placeholder{color:#B0A090}
+  .tc-textarea::placeholder{color:#B8A082}
   .tc-post-btn{display:flex;align-items:center;justify-content:center;gap:7px;background:#1A1A1A;color:#B8A082;padding:10px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'Cairo',Tajawal,sans-serif}
   .tc-post-btn:hover:not(:disabled){background:#B8A082;color:#1A1A1A}
   .tc-post-btn:disabled{opacity:0.4;cursor:not-allowed}

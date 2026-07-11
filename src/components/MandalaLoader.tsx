@@ -286,11 +286,11 @@ const css = `
     padding: clamp(18px, 4vw, 28px) clamp(20px, 6vw, 40px) clamp(22px, 4vw, 32px);
     width: 100%;
     max-width: min(360px, calc(100vw - 32px));
-    background: #FFFFFF; border: 1px solid #E2D9CA; border-radius: 16px;
+    background: #FFFFFF; border: 1px solid #E5E0D5; border-radius: 16px;
     box-shadow:
       0 2px 0 rgba(184,160,130,0.10),
-      0 8px 32px rgba(11,11,12,0.07),
-      0 24px 64px rgba(11,11,12,0.04),
+      0 8px 32px rgba(26,26,26,0.07),
+      0 24px 64px rgba(26,26,26,0.04),
       inset 0 1px 0 rgba(255,255,255,0.8);
     animation: ml-fadein 0.4s cubic-bezier(0.22,1,0.36,1) both;
     overflow: hidden;
@@ -353,8 +353,8 @@ const css = `
 
   /* Label */
   .ml-label-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 4px; }
-  .ml-label    { font-size: clamp(12px, 3.5vw, 14px); font-weight: 700; color: #4a3f2a; letter-spacing: 0.3px; text-align: center; }
-  .ml-sublabel { font-size: clamp(10px, 2.8vw, 11.5px); font-weight: 500; color: #8A7A5A; text-align: center; }
+  .ml-label    { font-size: clamp(12px, 3.5vw, 14px); font-weight: 700; color: #5B1526; letter-spacing: 0.3px; text-align: center; }
+  .ml-sublabel { font-size: clamp(10px, 2.8vw, 11.5px); font-weight: 500; color: #8F765B; text-align: center; }
 
   /* Animated bottom dots */
   .ml-dots-row { display: flex; align-items: center; gap: 4px; margin-top: 12px; height: 16px; }
@@ -367,7 +367,7 @@ const css = `
   @media (max-width: 500px) {
     .ml-heavy { display: none; }
     .ml-mandala-wrap { max-width: 140px; filter: none; }
-    .ml-card { box-shadow: 0 2px 0 rgba(184,160,130,0.10), 0 4px 16px rgba(11,11,12,0.05); }
+    .ml-card { box-shadow: 0 2px 0 rgba(184,160,130,0.10), 0 4px 16px rgba(26,26,26,0.05); }
     /* Slow rotations a bit on small screens for smoother frames */
     .ml-r1      { animation-duration: 80s; }
     .ml-r2      { animation-duration: 55s; }

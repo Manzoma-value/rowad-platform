@@ -318,9 +318,9 @@ function Shell({ children, dir = "rtl" }: { children: React.ReactNode; dir?: str
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;700;800&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #E8D09A; --gold-pale: #F5EDDA;
-          --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FEFCF7;
-          --border: #E8D9B8; --success: #2D7A4F; --danger: #6B1E2D;
+          --gold: #B8A082; --gold-dark: #8F765B; --gold-light: #D9C9B0; --gold-pale: #EFEAE0;
+          --ink: #4A0E1C; --ink2: #4A0E1C; --muted: #796A62; --surface: #FFFBF5;
+          --border: #D9C9B0; --success: #1B5E20; --danger: #6B1E2D;
         }
         .p-shell {
           min-height: 100vh; background: var(--gold-pale);
@@ -335,7 +335,7 @@ function Shell({ children, dir = "rtl" }: { children: React.ReactNode; dir?: str
 function Spinner({ label = "..." }: { label?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#796A62", fontSize: 14, padding: "80px 0" }}>
-      <div style={{ width: 20, height: 20, border: "2px solid #E8D9B8", borderTopColor: "#B8A082", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+      <div style={{ width: 20, height: 20, border: "2px solid #D9C9B0", borderTopColor: "#B8A082", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
       {label}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -373,10 +373,10 @@ const styles = `
   .q-dot.answered { background: var(--gold); }
   .q-dot.current { background: var(--ink); transform: scaleY(1.4); }
 
-  .q-card { background: #fff; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: 0 2px 16px rgba(26,18,8,0.06); animation: fadeUp 0.22s ease both; }
+  .q-card { background: #fff; border: 1px solid var(--border); border-radius: 18px; overflow: hidden; box-shadow: 0 2px 16px rgba(107,30,45,0.06); animation: fadeUp 0.22s ease both; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
   .q-card-top { background: var(--gold-pale); border-bottom: 1px solid var(--border); padding: 13px 22px; display: flex; align-items: center; justify-content: space-between; }
-  .q-type-pill { font-size: 10.5px; font-weight: 700; color: var(--gold-dark); background: rgba(168,134,62,0.12); border: 1px solid rgba(168,134,62,0.25); padding: 4px 12px; border-radius: 99px; }
+  .q-type-pill { font-size: 10.5px; font-weight: 700; color: var(--gold-dark); background: rgba(107,30,45,0.12); border: 1px solid rgba(107,30,45,0.25); padding: 4px 12px; border-radius: 99px; }
   .q-num-label { font-size: 11px; color: var(--muted); font-weight: 600; }
   .q-card-body { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
   .q-text { font-size: 17px; font-weight: 700; color: var(--ink); line-height: 1.65; }
@@ -401,8 +401,8 @@ const styles = `
     transition: all 0.15s; font-family: 'Tajawal', sans-serif; color: var(--ink2);
   }
   .tf-btn:hover { border-color: var(--gold); }
-  .tf-btn.sel-true { background: rgba(45,122,79,0.08); border-color: #2D7A4F; color: #1A4D30; }
-  .tf-btn.sel-false { background: rgba(192,57,43,0.08); border-color: #6B1E2D; color: #7B1A12; }
+  .tf-btn.sel-true { background: rgba(27,94,32,0.08); border-color: #1B5E20; color: #1B5E20; }
+  .tf-btn.sel-false { background: rgba(107,30,45,0.08); border-color: #6B1E2D; color: #6B1E2D; }
 
   .written-inp {
     width: 100%; padding: 13px 15px; background: var(--surface); border: 1.5px solid var(--border);
@@ -423,7 +423,7 @@ const styles = `
   .nav-submit.ready:hover { background: var(--gold-dark); color: #fff; }
   .nav-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .p-error { background: rgba(192,57,43,0.07); border: 1px solid rgba(192,57,43,0.2); color: var(--danger); font-size: 13px; padding: 10px 14px; border-radius: 10px; text-align: center; }
+  .p-error { background: rgba(107,30,45,0.07); border: 1px solid rgba(107,30,45,0.2); color: var(--danger); font-size: 13px; padding: 10px 14px; border-radius: 10px; text-align: center; }
 
   .p-empty {
     display: flex; flex-direction: column; align-items: center; gap: 12px;

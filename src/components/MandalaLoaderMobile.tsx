@@ -126,7 +126,7 @@ const css = `
   .mlm-label {
     font-size: 12.5px;
     font-weight: 600;
-    color: #6B5A38;
+    color: #6B1E2D;
     letter-spacing: 0.04em;
     text-align: center;
     line-height: 1.4;

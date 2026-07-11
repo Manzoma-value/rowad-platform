@@ -151,10 +151,10 @@ export default function TeacherRoadmapPage() {
         .tr-stage-badge { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; padding: 4px 12px; border-radius: 99px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.04em; }
         .tr-stage-title { font-size: 18px; font-weight: 900; color: #32101A; margin: 0; }
         .tr-modules { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 14px; }
-        .tr-module { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1.5px solid rgba(194,160,89,0.30); border-radius: 14px; background: linear-gradient(165deg,#FFF7E5,#FBEDD2); text-decoration: none; color: inherit; transition: all .18s; box-shadow: 0 4px 12px rgba(150,115,50,0.06); }
-        .tr-module:hover { border-color: rgba(194,160,89,0.65); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(150,115,50,0.16); }
+        .tr-module { display: flex; flex-direction: column; gap: 8px; padding: 16px; border: 1.5px solid rgba(107,30,45,0.30); border-radius: 14px; background: linear-gradient(165deg,#F7F3EB,#EFEAE0); text-decoration: none; color: inherit; transition: all .18s; box-shadow: 0 4px 12px rgba(107,30,45,0.06); }
+        .tr-module:hover { border-color: rgba(107,30,45,0.65); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(107,30,45,0.16); }
         .tr-module-head { display: flex; flex-direction: column; gap: 4px; }
-        .tr-mod-badge { background: rgba(194,160,89,0.16); color: #6B1E2D; padding: 2px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; align-self: flex-start; }
+        .tr-mod-badge { background: rgba(107,30,45,0.16); color: #6B1E2D; padding: 2px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; align-self: flex-start; }
         .tr-mod-title { font-size: 15px; font-weight: 900; color: #32101A; margin: 0; line-height: 1.3; }
         .tr-mod-desc { font-size: 12.5px; color: #6B1E2D; line-height: 1.7; margin: 0; }
         .tr-mod-meta { font-size: 11.5px; color: #8F765B; font-weight: 700; }

@@ -332,14 +332,14 @@ const css = `
 
   :root{
     --gold:#B8A082; --gold2:#B8A082; --red:#6B1E2D;
-    --black:#1A1A1A; --ow:#F7F3EB; --cream:#EDE9E0;
-    --text:#1A1A1A; --text2:#3E3526; --text3:#8A7A5A;
-    --sur:#FFFFFF; --bdr:#DDD5C4; --bdr2:#CEC2AC;
+    --black:#1A1A1A; --ow:#F7F3EB; --cream:#EFEAE0;
+    --text:#1A1A1A; --text2:#32101A; --text3:#8F765B;
+    --sur:#FFFFFF; --bdr:#E5E0D5; --bdr2:#D9C9B0;
     --gm:rgba(184,160,130,0.09); --gm2:rgba(184,160,130,0.18); --gbdr:rgba(184,160,130,0.24);
     --rm:rgba(107,30,45,0.08); --rbdr:rgba(107,30,45,0.2);
     --success:#1B5E20; --danger:#6B1E2D;
-    --sh:0 4px 20px rgba(11,11,12,0.07);
-    --shsm:0 1px 4px rgba(11,11,12,0.05);
+    --sh:0 4px 20px rgba(26,26,26,0.07);
+    --shsm:0 1px 4px rgba(26,26,26,0.05);
   }
 
   .pg-shell{
@@ -472,7 +472,7 @@ const css = `
     display:flex;align-items:center;justify-content:center;gap:8px;
   }
   .tf-btn:hover{border-color:var(--gold);background:var(--gm)}
-  .tf-btn.sel.tf-true{background:rgba(26,107,60,0.09);border-color:rgba(26,107,60,0.35);color:var(--success,#1B5E20)}
+  .tf-btn.sel.tf-true{background:rgba(27,94,32,0.09);border-color:rgba(27,94,32,0.35);color:var(--success,#1B5E20)}
   .tf-btn.sel.tf-false{background:var(--rm);border-color:var(--rbdr);color:var(--red)}
   .tf-icon{font-size:14px}
 

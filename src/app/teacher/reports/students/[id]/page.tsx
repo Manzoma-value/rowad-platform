@@ -123,10 +123,10 @@ const MAQSAD_LABELS: Record<string, Record<string, string>> = {
 
 const MAQSAD_COLORS: Record<string,{color:string;bg:string}> = {
   DEEN:{color:"#8F765B",bg:"rgba(184,160,130,0.10)"},
-  AQL:{color:"#4A2080",bg:"rgba(74,32,128,0.08)"},
-  NAFS:{color:"#1A5C3A",bg:"rgba(26,92,58,0.09)"},
-  NASL:{color:"#7A4040",bg:"rgba(122,64,64,0.08)"},
-  MAL:{color:"#5A4A10",bg:"rgba(154,98,0,0.09)"},
+  AQL:{color:"#655B53",bg:"rgba(101,91,83,0.08)"},
+  NAFS:{color:"#1B5E20",bg:"rgba(27,94,32,0.09)"},
+  NASL:{color:"#6B1E2D",bg:"rgba(107,30,45,0.08)"},
+  MAL:{color:"#6B1E2D",bg:"rgba(107,30,45,0.09)"},
 };
 
 // ─── SCORE RING ───────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ function ScoreRing({pct,size=52}:{pct:number|null;size?:number}){
     </div>
   );
   const r=(size-8)/2,circ=2*Math.PI*r,offset=circ-(pct/100)*circ;
-  const color=pct>=75?"#1B5E20":pct>=50?"#B8A082":"#64748B";
+  const color=pct>=75?"#1B5E20":pct>=50?"#B8A082":"#796A62";
   return (
     <div style={{position:"relative",width:size,height:size,flexShrink:0}}>
       <svg width={size} height={size} style={{transform:"rotate(-90deg)"}}>
@@ -223,7 +223,7 @@ export default function StudentReportPage() {
 
   const {student}=data;
 
-  const scoreColor=(pct:number)=>pct>=75?"#1B5E20":pct>=50?"#B8A082":"#64748B";
+  const scoreColor=(pct:number)=>pct>=75?"#1B5E20":pct>=50?"#B8A082":"#796A62";
 
   return (
     <div className="sp-shell" dir={dir}>
@@ -519,9 +519,9 @@ export default function StudentReportPage() {
                         <div className="sp-bar-track">
                           <div className="sp-bar-fill" style={{
                             width:`${item.pct}%`,
-                            background:item.pct>=75?"linear-gradient(90deg,#1B5E20,#4AAD6A)":
+                            background:item.pct>=75?"linear-gradient(90deg,#1B5E20,#1B5E20)":
                               item.pct>=50?"linear-gradient(90deg,#B8A082,#B8A082)":
-                              "linear-gradient(90deg,#94A3B8,#64748B)",
+                              "linear-gradient(90deg,#B8A082,#796A62)",
                           }}/>
                         </div>
                         <span className="sp-bar-pct" style={{color:scoreColor(item.pct)}}>{item.pct}%</span>
@@ -548,9 +548,9 @@ export default function StudentReportPage() {
                       <div className="sp-bar-track">
                         <div className="sp-bar-fill" style={{
                           width:`${s.avg_score??0}%`,
-                          background:(s.avg_score??0)>=75?"linear-gradient(90deg,#1B5E20,#4AAD6A)":
+                          background:(s.avg_score??0)>=75?"linear-gradient(90deg,#1B5E20,#1B5E20)":
                             (s.avg_score??0)>=50?"linear-gradient(90deg,#B8A082,#B8A082)":
-                            "linear-gradient(90deg,#94A3B8,#64748B)",
+                            "linear-gradient(90deg,#B8A082,#796A62)",
                         }}/>
                       </div>
                       <span className="sp-bar-pct" style={{color:scoreColor(s.avg_score??0)}}>
@@ -610,7 +610,7 @@ const css = `
   --sp-gold:#B8A082; --sp-gold2:#B8A082;
   --sp-black:#1A1A1A; --sp-bg:#EFEAE0;
   --sp-card:#FFFBF5; --sp-border:rgba(184,160,130,0.14);
-  --sp-text:#1A1A1A; --sp-text2:#3D3526; --sp-text3:#796A62;
+  --sp-text:#1A1A1A; --sp-text2:#32101A; --sp-text3:#796A62;
   --sp-font:'Cairo',sans-serif;
 }
 
@@ -700,7 +700,7 @@ const css = `
   flex:1;margin-bottom:14px;
   background:var(--sp-card);border:1.5px solid var(--sp-border);
   border-radius:16px;overflow:hidden;
-  box-shadow:0 2px 8px rgba(0,0,0,0.04);
+  box-shadow:0 2px 8px rgba(26,26,26,0.04);
   transition:border-color 0.18s;
 }
 .sp-tl-card:hover{border-color:rgba(184,160,130,0.3)}
@@ -715,7 +715,7 @@ const css = `
 .sp-tl-done{
   display:inline-flex;align-items:center;gap:6px;
   font-size:11.5px;font-weight:700;color:#1B5E20;
-  background:rgba(45,138,74,0.08);border-radius:7px;padding:4px 11px;
+  background:rgba(27,94,32,0.08);border-radius:7px;padding:4px 11px;
 }
 .sp-tl-eval-btn{
   display:inline-flex;align-items:center;gap:6px;
@@ -754,15 +754,15 @@ const css = `
   background:var(--sp-black);border:none;color:var(--sp-gold);
   font-family:var(--sp-font);font-size:13px;font-weight:700;cursor:pointer;
   transition:all 0.18s;flex-shrink:0;
-  box-shadow:0 3px 12px rgba(0,0,0,0.15);
+  box-shadow:0 3px 12px rgba(26,26,26,0.15);
 }
-.sp-eval-btn:hover{background:#4A0E1C;box-shadow:0 5px 18px rgba(0,0,0,0.22)}
+.sp-eval-btn:hover{background:#4A0E1C;box-shadow:0 5px 18px rgba(26,26,26,0.22)}
 
 /* ── RADAR ── */
 .sp-radar-card{
   background:var(--sp-card);border:1.5px solid var(--sp-border);
   border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:16px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.04);
+  box-shadow:0 2px 10px rgba(26,26,26,0.04);
 }
 .sp-radar-body{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
 .sp-radar-legend{display:flex;flex-direction:column;gap:9px;flex:1;min-width:160px}
@@ -777,7 +777,7 @@ const css = `
 .sp-assessed-card{
   background:var(--sp-card);border:1.5px solid var(--sp-border);
   border-radius:18px;overflow:hidden;
-  box-shadow:0 2px 10px rgba(0,0,0,0.04);
+  box-shadow:0 2px 10px rgba(26,26,26,0.04);
 }
 .sp-assessed-hd{
   display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
@@ -807,14 +807,14 @@ const css = `
 .sp-note{
   margin:0 18px 14px;padding:10px 14px;
   font-size:12.5px;color:var(--sp-text3);font-style:italic;line-height:1.6;
-  background:#FAFAF8;border-radius:10px;border-left:2.5px solid rgba(184,160,130,0.3);
+  background:#FFFBF5;border-radius:10px;border-left:2.5px solid rgba(184,160,130,0.3);
 }
 
 /* ── STATS ── */
 .sp-stat-panel{
   background:var(--sp-card);border:1.5px solid var(--sp-border);
   border-radius:18px;padding:20px 22px;display:flex;flex-direction:column;gap:16px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.04);
+  box-shadow:0 2px 10px rgba(26,26,26,0.04);
 }
 .sp-bar-list{display:flex;flex-direction:column;gap:12px}
 .sp-bar-row{display:flex;align-items:center;gap:10px}
@@ -836,7 +836,7 @@ const css = `
   background:var(--sp-bg);border-radius:24px 24px 0 0;
   width:100%;max-width:700px;max-height:92vh;overflow-y:auto;
   animation:sp-panelIn 0.28s cubic-bezier(0.22,1,0.36,1);
-  box-shadow:0 -4px 40px rgba(0,0,0,0.25);
+  box-shadow:0 -4px 40px rgba(26,26,26,0.25);
 }
 @media(min-width:768px){.sp-overlay-panel{border-radius:24px;max-height:88vh}}
 
