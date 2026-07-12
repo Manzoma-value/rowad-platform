@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import type { WorkshopMaterial } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
-const BUCKET = "owner-reports";
+const BUCKET = "workshop-materials";
 const MAX_FILE = 40 * 1024 * 1024;
 
 function adminSupabase() {
@@ -34,7 +34,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     const path = `workshops/${id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const admin = adminSupabase();
     const { error } = await admin.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("[workshop-materials upload]", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     const { data: { publicUrl } } = admin.storage.from(BUCKET).getPublicUrl(path);
     material = {
       id: crypto.randomUUID(),
