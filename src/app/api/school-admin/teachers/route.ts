@@ -44,7 +44,14 @@ export async function GET() {
           reviewed_at: true,
         },
       },
-      workshop_signup: { select: { id: true, title: true } },
+      workshop_signup: { select: { id: true, title: true, status: true } },
+      workshop_attendance: {
+        select: {
+          day_date: true,
+          workshop: { select: { id: true, title: true, status: true } },
+        },
+        orderBy: { day_date: "desc" },
+      },
       _count: { select: { lessons: true, quizzes: true, announcements: true } },
     },
   });
