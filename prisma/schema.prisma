@@ -502,6 +502,9 @@ model TeacherGroup {
   members     TeacherGroupMember[]
   assessments GroupAssessment[]
   announcements TeacherGroupAnnouncement[]
+  // Additional groups an assessment targets, beyond its legacy `group_id`
+  // primary group — lets one measurement model span several groups at once.
+  assessment_links GroupAssessmentGroup[]
 
   @@index([school_id, updated_at(sort: Desc)])
   @@map("teacher_groups")
@@ -520,10 +523,15 @@ model TeacherGroupMember {
   @@map("teacher_group_members")
 }
 
-// ─── Rowad First-Stage Assessment — peer scoring inside a teacher group.
-//     Each member distributes 100 points across the 5 fixed trait statements
-//     for every group member (including themselves). Always-live updates;
-//     admin can close to lock the snapshot. ───
+// ─── Measurement models — peer scoring inside one or more teacher groups.
+//     Each model owns its own ordered set of traits (AssessmentTrait) that
+//     the admin fully authors per model — label, rating statement, color.
+//     Every member distributes 100 points across that model's traits for
+//     every target in scope (their groups' combined membership, including
+//     themselves). Always-live updates; admin can close to lock the
+//     snapshot. The five-column layout below predates per-model traits and
+//     is kept only for historical rollback safety — the app reads/writes
+//     `AssessmentRating.scores` exclusively. ───
 enum GroupAssessmentStatus {
   OPEN
   CLOSED
@@ -531,6 +539,8 @@ enum GroupAssessmentStatus {
 
 model GroupAssessment {
   id         String                @id @default(uuid()) @db.Uuid
+  // Legacy "primary group" pointer — the first group selected at creation.
+  // Superseded by `target_groups` for member sourcing, kept for back-compat.
   group_id   String                @db.Uuid
   school_id  String                @db.Uuid
   created_by String                @db.Uuid
@@ -540,26 +550,68 @@ model GroupAssessment {
   updated_at DateTime              @updatedAt
   closed_at  DateTime?
 
-  group   TeacherGroup       @relation(fields: [group_id], references: [id], onDelete: Cascade)
-  author  Profile            @relation("GroupAssessmentAuthor", fields: [created_by], references: [id])
-  ratings AssessmentRating[]
+  group         TeacherGroup           @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  author        Profile                @relation("GroupAssessmentAuthor", fields: [created_by], references: [id])
+  ratings       AssessmentRating[]
+  traits        AssessmentTrait[]
+  target_groups GroupAssessmentGroup[]
 
   @@index([group_id, created_at(sort: Desc)])
   @@index([school_id])
   @@map("group_assessments")
 }
 
+// One row per group this model draws members/targets from. A model with a
+// single row behaves exactly like the old single-group design; the admin
+// can pick several groups (or all of them) at creation.
+model GroupAssessmentGroup {
+  assessment_id String @db.Uuid
+  group_id      String @db.Uuid
+
+  assessment GroupAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  group      TeacherGroup    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+
+  @@id([assessment_id, group_id])
+  @@index([group_id])
+  @@map("group_assessment_groups")
+}
+
+// One row per trait the admin defined for this specific model, in the
+// order the 100-point distributor and every report renders them.
+// `position` is the stable index used to align AssessmentRating.scores.
+model AssessmentTrait {
+  id            String   @id @default(uuid()) @db.Uuid
+  assessment_id String   @db.Uuid
+  position      Int
+  label_ar      String
+  label_sq      String
+  statement_ar  String
+  statement_sq  String
+  color         String   @default("#6B1E2D")
+  created_at    DateTime @default(now())
+
+  assessment GroupAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+
+  @@unique([assessment_id, position])
+  @@index([assessment_id])
+  @@map("assessment_traits")
+}
+
 model AssessmentRating {
   assessment_id     String   @db.Uuid
   rater_teacher_id  String   @db.Uuid
   target_teacher_id String   @db.Uuid
-  // The five trait scores in canonical order — sum must equal 100. Stored
-  // as small ints to keep the matrix queries cheap.
+  // LEGACY five-column layout — superseded by `scores` below. Left in place
+  // (unused by the app) purely so a historical row is never destructively
+  // altered; do not read or write these from application code.
   s_lineage   Int
   s_atonement Int
   s_awareness Int
   s_zeal      Int
   s_distinct  Int
+  // Ordered scores aligned to this assessment's AssessmentTrait.position —
+  // length equals the model's trait count, sums to 100.
+  scores      Json
   updated_at  DateTime @updatedAt
 
   assessment GroupAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)

@@ -1,8 +1,9 @@
-// Rowad First-Stage assessment — fixed trait + statement set + derivation logic.
-// The 5 traits are canonical and ordered; their indices are stable across the
-// codebase (DB columns, JSON arrays, UI components all rely on this order).
-//
-// Source: the in-person methodology HTML used by the team. Bilingual AR/SQ.
+// Rowad assessment — peer-scoring "distribute 100 points" methodology.
+// Traits are now authored per assessment model by the admin (see
+// AssessmentTrait in schema.prisma); the five below are only the
+// *starting template* offered when creating a new model, preserved
+// exactly as the original canonical Rowad First-Stage set so existing
+// models keep behaving identically after the migration to custom traits.
 
 export type TraitKey = "lineage" | "atonement" | "awareness" | "zeal" | "distinct";
 
@@ -10,7 +11,9 @@ export const TRAIT_KEYS: readonly TraitKey[] = [
   "lineage", "atonement", "awareness", "zeal", "distinct",
 ] as const;
 
-export const TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
+// The original fixed five — kept as the default template for new models
+// and for any legacy code path that still wants the classic set.
+export const DEFAULT_TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
   { key: "lineage",   ar: "النسل",     sq: "Pasardhësia", color: "#6B1E2D" },
   { key: "atonement", ar: "الكفارات", sq: "Shlyerja",    color: "#B8A082" },
   { key: "awareness", ar: "الدراية",   sq: "Vetëdija",    color: "#8F765B" },
@@ -18,7 +21,7 @@ export const TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] 
   { key: "distinct",  ar: "التمييز",  sq: "Dallimi",     color: "#A55A68" },
 ];
 
-export const STATEMENTS = {
+export const DEFAULT_STATEMENTS = {
   ar: [
     "أعتبر نفسي فردًا يحمل واجبًا، يلتزم به بوصفه أمانة الاستخلاف، ويؤديه تجاه النسل والأمة.",
     "أربط التقصير في واجبي بما شرعه الله من تكفير وجبر للتقصير.",
@@ -35,39 +38,34 @@ export const STATEMENTS = {
   ],
 } as const;
 
+/** Ready-to-submit shape for a brand-new model's trait editor, pairing each
+ *  default trait with its statement. */
+export function defaultTraitDrafts(): TraitDraft[] {
+  return DEFAULT_TRAITS.map((t, i) => ({
+    label_ar: t.ar,
+    label_sq: t.sq,
+    statement_ar: DEFAULT_STATEMENTS.ar[i],
+    statement_sq: DEFAULT_STATEMENTS.sq[i],
+    color: t.color,
+  }));
+}
+
+export type TraitDraft = {
+  label_ar: string;
+  label_sq: string;
+  statement_ar: string;
+  statement_sq: string;
+  color: string;
+};
+
 export type AssessLang = "ar" | "sq";
 export const pickAssessLang = (l: string): AssessLang => (l === "sq" ? "sq" : "ar");
 
-// A scores tuple is always five non-negative numbers. Sums to 100 by rule —
-// callers must validate before persisting. We don't enforce the sum here
-// because we also call derivePresentation() on AVERAGES which can be any
-// non-negative reals.
-export type ScoresTuple = [number, number, number, number, number];
+// A scores array — one entry per trait, in the assessment's trait order.
+// Sums to 100 by rule; callers must validate before persisting.
+export type ScoresTuple = number[];
 
-export type RawScores = {
-  s_lineage:   number;
-  s_atonement: number;
-  s_awareness: number;
-  s_zeal:      number;
-  s_distinct:  number;
-};
-
-export function rawToTuple(r: RawScores): ScoresTuple {
-  return [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct];
-}
-
-export function tupleToRaw(t: ScoresTuple): RawScores {
-  return {
-    s_lineage:   t[0],
-    s_atonement: t[1],
-    s_awareness: t[2],
-    s_zeal:      t[3],
-    s_distinct:  t[4],
-  };
-}
-
-// ── The Rowad derivation rule, applied identically to a single rating or to
-//    an averaged one:
+// ── The Rowad derivation rule, generalized to N traits:
 //    - Core (السمة الجوهرية)  = the index of the top score IF that score >= 50
 //    - Collective (الجماعية)  = the index of the next-highest score
 //                              (if no Core exists, this is simply the top)
@@ -77,7 +75,7 @@ export type Derivation = {
   coreIdx: number | null;
   collectiveIdx: number;
   supportingIdxs: number[];
-  sortedIdxs: number[];     // all five indices ranked by score desc
+  sortedIdxs: number[];
 };
 
 const CORE_THRESHOLD = 50;
@@ -89,11 +87,9 @@ export function derive(scores: ScoresTuple): Derivation {
   const sortedIdxs = ranked.map((r) => r.idx);
 
   const top = ranked[0];
-  const hasCore = top.s >= CORE_THRESHOLD;
+  const hasCore = !!top && top.s >= CORE_THRESHOLD;
   const coreIdx = hasCore ? top.idx : null;
-  // Collective is the next ranked entry; if there's no Core, the top is the
-  // Collective per the methodology.
-  const collectiveIdx = hasCore ? ranked[1].idx : ranked[0].idx;
+  const collectiveIdx = hasCore && ranked[1] ? ranked[1].idx : ranked[0]?.idx ?? 0;
   const supportingIdxs = sortedIdxs.filter(
     (i) => i !== coreIdx && i !== collectiveIdx,
   );
@@ -101,24 +97,23 @@ export function derive(scores: ScoresTuple): Derivation {
   return { hasCore, coreIdx, collectiveIdx, supportingIdxs, sortedIdxs };
 }
 
-// Average a list of scores tuples element-wise. Returns null when the list
-// is empty (so callers can render "no ratings yet" cleanly).
+// Average a list of scores arrays element-wise. Returns null when the list
+// is empty. All rows must be the same length (guaranteed within one
+// assessment, since every rating is validated against that model's trait
+// count at write time).
 export function averageTuples(rows: ScoresTuple[]): ScoresTuple | null {
   if (rows.length === 0) return null;
-  const sums: ScoresTuple = [0, 0, 0, 0, 0];
-  for (const r of rows) for (let i = 0; i < 5; i++) sums[i] += r[i];
-  return [
-    sums[0] / rows.length,
-    sums[1] / rows.length,
-    sums[2] / rows.length,
-    sums[3] / rows.length,
-    sums[4] / rows.length,
-  ];
+  const len = rows[0].length;
+  const sums = new Array(len).fill(0);
+  for (const r of rows) for (let i = 0; i < len; i++) sums[i] += r[i] ?? 0;
+  return sums.map((s) => s / rows.length);
 }
 
-export function isValid100(scores: ScoresTuple): boolean {
+export function isValid100(scores: ScoresTuple, expectedLength?: number): boolean {
+  if (expectedLength !== undefined && scores.length !== expectedLength) return false;
+  if (scores.length === 0) return false;
   if (scores.some((s) => !Number.isInteger(s) || s < 0 || s > 100)) return false;
-  return scores[0] + scores[1] + scores[2] + scores[3] + scores[4] === 100;
+  return scores.reduce((a, b) => a + b, 0) === 100;
 }
 
 // UI string bundle — separated from the components so the API can also
@@ -151,8 +146,3 @@ export const ASSESS_UI = {
     selfBy:           (name: string) => `${name} (vetëvlerësim)`,
   },
 } as const;
-
-export function traitLabel(idx: number, lang: AssessLang): string {
-  const t = TRAITS[idx];
-  return t ? t[lang] : "—";
-}

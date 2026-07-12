@@ -1,28 +1,35 @@
 "use client";
 
-// 100-point distributor — five sliders for the Rowad traits, with live total,
-// status pill (Ok / Over / Under), and a live readout of Core/Collective/
-// Supporting derived from the current distribution.
+// 100-point distributor — one slider per trait defined on the assessment,
+// with live total, status pill (Ok / Over / Under), and a live readout of
+// Core/Collective/Supporting derived from the current distribution.
 //
 // Mirrors the JS simulator in the methodology HTML the team uses in-person.
+// Traits are supplied by the caller (each assessment model owns its own
+// ordered set) rather than imported from a fixed global list.
 //
 // Props:
-//   - value: current scores (5-tuple). If sum != 100, the status pill turns red.
-//   - onChange: called on every slider change with the new tuple (NOT debounced).
+//   - traits: this assessment's ordered traits (label + statement + color).
+//   - value: current scores, one entry per trait. If sum != 100, the status
+//            pill turns red.
+//   - onChange: called on every slider change with the new array (NOT debounced).
 //   - lang: "ar" | "sq"
 //   - disabled: lock all sliders (used when the assessment is CLOSED).
 //   - onCommit: called when the user releases a slider. Caller can debounce or
-//               throttle persistence here. Only called if the new tuple is valid (sum=100).
+//               throttle persistence here. Only called if the new array is valid (sum=100).
 
 import { useMemo } from "react";
 import {
-  TRAITS, STATEMENTS, ASSESS_UI,
+  ASSESS_UI,
   derive, isValid100, type ScoresTuple, type AssessLang,
 } from "@/lib/rowad-assessment";
 
+export type DistributorTrait = { label: string; statement: string; color: string };
+
 export default function RowadDistributor({
-  value, onChange, lang, disabled, onCommit, hideReadout, compact,
+  traits, value, onChange, lang, disabled, onCommit, hideReadout, compact,
 }: {
+  traits: DistributorTrait[];
   value: ScoresTuple;
   onChange: (next: ScoresTuple) => void;
   lang: AssessLang;
@@ -32,11 +39,11 @@ export default function RowadDistributor({
    *  (the rating page renders that on the sidebar instead so the form
    *  fits on one screen). */
   hideReadout?: boolean;
-  /** Tighten row spacing/font so all 5 sliders + status fit above the fold. */
+  /** Tighten row spacing/font so all sliders + status fit above the fold. */
   compact?: boolean;
 }) {
   const T = ASSESS_UI[lang];
-  const total = value[0] + value[1] + value[2] + value[3] + value[4];
+  const total = value.reduce((a, b) => a + b, 0);
   const status: "ok" | "over" | "under" =
     total === 100 ? "ok" : total > 100 ? "over" : "under";
 
@@ -44,19 +51,17 @@ export default function RowadDistributor({
 
   function setIdx(i: number, raw: number) {
     if (disabled) return;
-    const next = [...value] as ScoresTuple;
+    const next = [...value];
     next[i] = Math.max(0, Math.min(100, Math.round(raw)));
     onChange(next);
   }
 
   function commitIdx(i: number, raw: number) {
     if (disabled || !onCommit) return;
-    const next = [...value] as ScoresTuple;
+    const next = [...value];
     next[i] = Math.max(0, Math.min(100, Math.round(raw)));
-    if (isValid100(next)) onCommit(next);
+    if (isValid100(next, traits.length)) onCommit(next);
   }
-
-  const statementBundle = STATEMENTS[lang];
 
   return (
     <div className={`rwd ${disabled ? "rwd-disabled" : ""}`}>
@@ -71,17 +76,17 @@ export default function RowadDistributor({
       </div>
 
       <div className="rwd-sliders">
-        {TRAITS.map((trait, i) => (
-          <div key={trait.key} className="rwd-row">
+        {traits.map((trait, i) => (
+          <div key={i} className="rwd-row">
             <div className="rwd-row-head">
               <span className="rwd-dot" style={{ background: trait.color }} />
-              <span className="rwd-tname">{trait[lang]}</span>
-              <span className="rwd-tval">{value[i]}</span>
+              <span className="rwd-tname">{trait.label}</span>
+              <span className="rwd-tval">{value[i] ?? 0}</span>
             </div>
-            <div className="rwd-stmt">{statementBundle[i]}</div>
+            <div className="rwd-stmt">{trait.statement}</div>
             <input
               type="range" min={0} max={100} step={1}
-              value={value[i]}
+              value={value[i] ?? 0}
               disabled={disabled}
               onChange={(e) => setIdx(i, Number(e.target.value))}
               onMouseUp={(e) => commitIdx(i, Number((e.target as HTMLInputElement).value))}
@@ -92,7 +97,7 @@ export default function RowadDistributor({
             />
             <input
               type="number" min={0} max={100} step={1}
-              value={value[i]}
+              value={value[i] ?? 0}
               disabled={disabled}
               onChange={(e) => setIdx(i, Number(e.target.value))}
               onBlur={(e) => commitIdx(i, Number(e.target.value))}
@@ -102,28 +107,30 @@ export default function RowadDistributor({
         ))}
       </div>
 
-      <div className="rwd-readout">
-        <div className="rwd-rb rwd-rb-core">
-          <div className="rwd-rb-lbl">{T.coreLabel}</div>
-          <div className="rwd-rb-val">
-            {derivation.hasCore && derivation.coreIdx !== null
-              ? <>{TRAITS[derivation.coreIdx][lang]} · <b>{value[derivation.coreIdx]}</b></>
-              : T.noCore}
+      {!hideReadout && (
+        <div className="rwd-readout">
+          <div className="rwd-rb rwd-rb-core">
+            <div className="rwd-rb-lbl">{T.coreLabel}</div>
+            <div className="rwd-rb-val">
+              {derivation.hasCore && derivation.coreIdx !== null
+                ? <>{traits[derivation.coreIdx]?.label} · <b>{value[derivation.coreIdx]}</b></>
+                : T.noCore}
+            </div>
+          </div>
+          <div className="rwd-rb rwd-rb-collective">
+            <div className="rwd-rb-lbl">{T.collectiveLabel}</div>
+            <div className="rwd-rb-val">
+              {traits[derivation.collectiveIdx]?.label} · <b>{value[derivation.collectiveIdx]}</b>
+            </div>
+          </div>
+          <div className="rwd-rb rwd-rb-support">
+            <div className="rwd-rb-lbl">{T.supportingLabel}</div>
+            <div className="rwd-rb-val">
+              {derivation.supportingIdxs.map((i) => traits[i]?.label).join(lang === "ar" ? "، " : ", ")}
+            </div>
           </div>
         </div>
-        <div className="rwd-rb rwd-rb-collective">
-          <div className="rwd-rb-lbl">{T.collectiveLabel}</div>
-          <div className="rwd-rb-val">
-            {TRAITS[derivation.collectiveIdx][lang]} · <b>{value[derivation.collectiveIdx]}</b>
-          </div>
-        </div>
-        <div className="rwd-rb rwd-rb-support">
-          <div className="rwd-rb-lbl">{T.supportingLabel}</div>
-          <div className="rwd-rb-val">
-            {derivation.supportingIdxs.map((i) => TRAITS[i][lang]).join(lang === "ar" ? "، " : ", ")}
-          </div>
-        </div>
-      </div>
+      )}
 
       <style>{`
         .rwd { background: linear-gradient(180deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(107,30,45,0.32); border-radius:14px; padding:14px; font-family:'Cairo',sans-serif; }
@@ -153,6 +160,7 @@ export default function RowadDistributor({
         .rwd-num:focus { border-color:#B8A082; }
 
         .rwd-readout { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:10px; }
+        ${compact ? ".rwd-readout { margin-top:6px; }" : ""}
         @media (max-width: 900px) { .rwd-sliders { grid-template-columns: 1fr; } }
         @media (max-width: 680px) { .rwd-readout { grid-template-columns: 1fr; } }
         .rwd-rb { border:1px solid rgba(107,30,45,0.28); border-radius:10px; padding:10px 12px; background:#FFF; }

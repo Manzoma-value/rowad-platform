@@ -1,4 +1,7 @@
-// GET /api/teacher/groups/[id]/assessments — list assessments in MY group.
+// GET /api/teacher/groups/[id]/assessments — list assessments visible from
+// MY group. A model can target several groups at once, so this matches on
+// the join table (target_groups) rather than the legacy single group_id —
+// a multi-group model shows up in every one of its groups' lists.
 // Hard membership guard: caller must be a member of the group.
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
@@ -38,7 +41,7 @@ export async function GET(
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const assessments = await prisma.groupAssessment.findMany({
-    where: { group_id: id },
+    where: { target_groups: { some: { group_id: id } } },
     orderBy: [{ created_at: "desc" }],
     select: {
       id: true,
@@ -46,7 +49,7 @@ export async function GET(
       status: true,
       created_at: true,
       closed_at: true,
-      _count: { select: { ratings: true } },
+      _count: { select: { ratings: true, traits: true } },
     },
   });
   return NextResponse.json({ assessments, openVisibility, is_member: !!membership });

@@ -1,5 +1,7 @@
 // GET /api/teacher/groups/[id]/assessments/[aid] — the calling teacher's view:
-//   - the list of group members (their rating targets, with my saved scores)
+//   - this model's ordered traits (label + statement + color per trait)
+//   - the list of rating targets — the UNION of every group this model
+//     targets (a model can span several groups), not just the URL's group
 //   - ratings RECEIVED about me (each rater named) for the "My Results" panel
 //   - status flag so the UI can lock when CLOSED
 //
@@ -10,6 +12,8 @@ import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+type ScoresArray = number[];
 
 export async function GET(
   _req: Request,
@@ -37,25 +41,32 @@ export async function GET(
   if (!membership && !openVisibility) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const assessment = await prisma.groupAssessment.findFirst({
-    where: { id: aid, group_id: id, school_id: auth.teacher.school_id },
+    where: {
+      id: aid,
+      school_id: auth.teacher.school_id,
+      target_groups: { some: { group_id: id } },
+    },
     select: {
       id: true,
       title: true,
       status: true,
       created_at: true,
       closed_at: true,
-      group: {
+      group: { select: { id: true, name: true, description: true } },
+      traits: {
+        orderBy: { position: "asc" },
+        select: { position: true, label_ar: true, label_sq: true, statement_ar: true, statement_sq: true, color: true },
+      },
+      target_groups: {
         select: {
-          id: true,
-          name: true,
-          description: true,
-          members: {
-            orderBy: { joined_at: "asc" },
+          group: {
             select: {
-              teacher: {
+              members: {
+                orderBy: { joined_at: "asc" },
                 select: {
-                  id: true,
-                  profile: { select: { id: true, full_name: true } },
+                  teacher: {
+                    select: { id: true, profile: { select: { id: true, full_name: true } } },
+                  },
                 },
               },
             },
@@ -66,28 +77,28 @@ export async function GET(
   });
   if (!assessment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // My ratings GIVEN (one per target). Used to pre-fill the distributor sliders.
+  // Union of members across every group this model targets, deduped.
+  const memberMap = new Map<string, { teacher_id: string; profile: { id: string; full_name: string } }>();
+  for (const link of assessment.target_groups) {
+    for (const m of link.group.members) {
+      memberMap.set(m.teacher.id, { teacher_id: m.teacher.id, profile: m.teacher.profile });
+    }
+  }
+  const members = Array.from(memberMap.values());
+
+  const scoresSelect = { target_teacher_id: true, scores: true, updated_at: true } as const;
+
   const myGiven = await prisma.assessmentRating.findMany({
     where: { assessment_id: aid, rater_teacher_id: auth.teacher.id },
-    select: {
-      target_teacher_id: true,
-      s_lineage: true, s_atonement: true, s_awareness: true, s_zeal: true, s_distinct: true,
-      updated_at: true,
-    },
+    select: scoresSelect,
   });
 
-  // Ratings RECEIVED about me. Includes self-rating (rater == target == me).
-  // Each row carries the rater's name + the 5 scores, no aggregation here.
   const myReceived = await prisma.assessmentRating.findMany({
     where: { assessment_id: aid, target_teacher_id: auth.teacher.id },
     orderBy: { updated_at: "desc" },
     select: {
-      rater_teacher_id: true,
-      s_lineage: true, s_atonement: true, s_awareness: true, s_zeal: true, s_distinct: true,
-      updated_at: true,
-      rater: {
-        select: { profile: { select: { full_name: true } } },
-      },
+      rater_teacher_id: true, scores: true, updated_at: true,
+      rater: { select: { profile: { select: { full_name: true } } } },
     },
   });
 
@@ -96,10 +107,7 @@ export async function GET(
         where: { assessment_id: aid },
         orderBy: { updated_at: "desc" },
         select: {
-          rater_teacher_id: true,
-          target_teacher_id: true,
-          s_lineage: true, s_atonement: true, s_awareness: true, s_zeal: true, s_distinct: true,
-          updated_at: true,
+          rater_teacher_id: true, target_teacher_id: true, scores: true, updated_at: true,
           rater: { select: { profile: { select: { full_name: true } } } },
           target: { select: { profile: { select: { full_name: true } } } },
         },
@@ -113,26 +121,19 @@ export async function GET(
       status: assessment.status,
       created_at: assessment.created_at,
       closed_at: assessment.closed_at,
-      group: {
-        id: assessment.group.id,
-        name: assessment.group.name,
-        description: assessment.group.description,
-      },
-      members: assessment.group.members.map((m) => ({
-        teacher_id: m.teacher.id,
-        profile: m.teacher.profile,
-        is_self: m.teacher.id === auth.teacher.id,
+      group: assessment.group,
+      traits: assessment.traits,
+      members: members.map((m) => ({ ...m, is_self: m.teacher_id === auth.teacher.id })),
+      my_ratings_given: myGiven.map((r) => ({
+        target_teacher_id: r.target_teacher_id,
+        scores: r.scores as ScoresArray,
+        updated_at: r.updated_at,
       })),
-      my_ratings_given: myGiven,
       my_ratings_received: myReceived.map((r) => ({
         rater_teacher_id: r.rater_teacher_id,
         rater_name: r.rater.profile.full_name,
         is_self: r.rater_teacher_id === auth.teacher.id,
-        s_lineage: r.s_lineage,
-        s_atonement: r.s_atonement,
-        s_awareness: r.s_awareness,
-        s_zeal: r.s_zeal,
-        s_distinct: r.s_distinct,
+        scores: r.scores as ScoresArray,
         updated_at: r.updated_at,
       })),
       all_ratings: allRatings.map((r) => ({
@@ -140,11 +141,7 @@ export async function GET(
         rater_name: r.rater.profile.full_name,
         target_teacher_id: r.target_teacher_id,
         target_name: r.target.profile.full_name,
-        s_lineage: r.s_lineage,
-        s_atonement: r.s_atonement,
-        s_awareness: r.s_awareness,
-        s_zeal: r.s_zeal,
-        s_distinct: r.s_distinct,
+        scores: r.scores as ScoresArray,
         updated_at: r.updated_at,
       })),
       openVisibility,

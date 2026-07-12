@@ -9,12 +9,12 @@ import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
 import IdentityMandala from "@/components/IdentityMandala";
 import {
-  TRAITS, ASSESS_UI, derive, averageTuples, pickAssessLang,
-  type ScoresTuple,
+  ASSESS_UI, derive, averageTuples, pickAssessLang, defaultTraitDrafts,
+  type ScoresTuple, type TraitDraft,
 } from "@/lib/rowad-assessment";
 import {
   SlidersHorizontal, X, Search, Plus, Pencil, Download, Lock, Unlock,
-  Trash2, Users2, ClipboardList, Target,
+  Trash2, Users2, ClipboardList, Target, GripVertical, CheckSquare, Square,
 } from "lucide-react";
 
 // ── Types ──
@@ -26,30 +26,32 @@ type AssessmentRow = {
   created_at: string;
   updated_at: string;
   closed_at: string | null;
-  group: GroupRef;
-  _count: { ratings: number };
+  groups: GroupRef[];
+  _count: { ratings: number; traits: number };
 };
 
+type Trait = { id: string; position: number; label_ar: string; label_sq: string; statement_ar: string; statement_sq: string; color: string };
 type Member = { teacher_id: string; profile: { id: string; full_name: string; email: string | null } };
-type RatingRow = {
-  rater_teacher_id: string; target_teacher_id: string;
-  s_lineage: number; s_atonement: number; s_awareness: number; s_zeal: number; s_distinct: number;
-  updated_at: string;
-};
+type RatingRow = { rater_teacher_id: string; target_teacher_id: string; scores: ScoresTuple; updated_at: string };
 type AssessmentFull = {
   id: string;
   title: string;
   status: "OPEN" | "CLOSED";
-  group: { id: string; name: string };
+  groups: GroupRef[];
+  traits: Trait[];
   members: Member[];
   ratings: RatingRow[];
 };
+
+function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
+
+const SWATCHES = ["#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0"];
 
 const UI = {
   ar: {
     eyebrow: "لوحة النماذج",
     title: "نماذج القياس",
-    sub: "تتبَّع نتائج السمات لكل مجموعات المعلمين من مكان واحد — أنشئ نموذجاً جديداً، صفِّه، أو صدِّره كتقرير جاهز.",
+    sub: "تتبَّع نتائج السمات لكل مجموعات المعلمين من مكان واحد — أنشئ نموذجاً جديداً بسماته الخاصة، صفِّه، أو صدِّره كتقرير جاهز.",
     metricModels: "نموذج",
     metricOpen: "مفتوح",
     metricClosed: "مغلق",
@@ -66,22 +68,34 @@ const UI = {
     result: "نتيجة",
     listEmpty: "لا توجد نماذج قياس بعد.",
     noResults: "لا يوجد نموذج مطابق لخيارات التصفية الحالية.",
-    open: "افتح",
     statusOPEN: "مفتوح",
     statusCLOSED: "مغلق",
     ratingsCount: "تقييمات",
     dlgCreateTitle: "أنشئ نموذج قياس جديد",
-    dlgRenameTitle: "إعادة تسمية النموذج",
+    dlgEditTitle: "تعديل النموذج",
     titleLbl: "عنوان النموذج",
     titlePh: "مثال: نموذج قياس السمات (المرحلة الأولى) — مارس 2026",
-    groupPickLbl: "المجموعة",
-    groupPickPh: "اختر مجموعة المعلمين",
+    groupsPickLbl: "المجموعات المستهدفة",
+    groupsPickSub: "كل الأعضاء في المجموعات المختارة سيقيّمون بعضهم بعضاً كمجموعة واحدة. الكل مُحدَّد افتراضياً.",
+    selectAll: "تحديد الكل",
+    deselectAll: "إلغاء تحديد الكل",
+    traitsLbl: "سمات النموذج",
+    traitsSub: "خصّص العدد والعناوين والعبارات كما تشاء — تبدأ مسبقة التعبئة بسمات نموذج الرواد الافتراضي ويمكنك تعديلها أو حذفها أو إضافة غيرها.",
+    traitLabelAr: "الاسم (عربي)",
+    traitLabelSq: "الاسم (ألباني)",
+    traitStatementAr: "عبارة التقييم (عربي)",
+    traitStatementSq: "عبارة التقييم (ألباني)",
+    addTrait: "+ إضافة سمة",
+    removeTrait: "حذف السمة",
+    minTraitsWarn: "يلزم سمة واحدة على الأقل.",
+    lockedEditNote: "بدأ المعلمون بالتقييم على هذا النموذج، لذا لا يمكن تعديل السمات أو المجموعات المستهدفة بعد الآن — يمكنك تغيير العنوان فقط. أنشئ نموذجاً جديداً لتخصيص مختلف.",
     cancel: "إلغاء",
     submit: "إنشاء",
     save: "حفظ",
     detailEmptyTitle: "اختر نموذجاً لعرض تفاصيله",
     detailEmptySub: "من القائمة على اليسار، اختر أي نموذج قياس لرؤية نتائجه الكاملة.",
-    matrixOf: (n: number) => `${n} عضواً في المجموعة`,
+    matrixOf: (n: number) => `${n} عضواً`,
+    groupsOf: (n: number) => `${n} مجموعة`,
     raterCol: "المقَيِّم",
     targetCol: "الهدف",
     closeBtn: "إغلاق النموذج",
@@ -89,12 +103,12 @@ const UI = {
     deleteBtn: "حذف النموذج",
     exportBtn: "تصدير PDF",
     exporting: "جارٍ التصدير…",
-    renameBtn: "إعادة تسمية",
+    editBtn: "تعديل",
     confirmClose: "إغلاق هذا النموذج سيمنع المعلمين من تعديل تقييماتهم. متابعة؟",
     confirmReopen: "إعادة فتح هذا النموذج تسمح بالتعديل من جديد. متابعة؟",
     confirmDelete: "حذف هذا النموذج نهائيًا مع كل بياناته؟ هذا الإجراء لا يمكن التراجع عنه.",
     matrixHead: "المصفوفة الكاملة",
-    matrixSub: "كل خانة تعرض الدرجات الخمس التي أعطاها المقَيِّم للهدف.",
+    matrixSub: "كل خانة تعرض درجات السمات التي أعطاها المقَيِّم للهدف.",
     showMatrix: "عرض المصفوفة الكاملة",
     hideMatrix: "إخفاء المصفوفة",
     aggHead: "نتائج الأعضاء",
@@ -109,7 +123,7 @@ const UI = {
   sq: {
     eyebrow: "Paneli i Modeleve",
     title: "Modelet e Matjes",
-    sub: "Ndiq rezultatet e tipareve për të gjitha grupet e mësuesve nga një vend — krijo model të ri, filtroje, ose eksportoje si raport.",
+    sub: "Ndiq rezultatet e tipareve për të gjitha grupet e mësuesve nga një vend — krijo model të ri me tiparet e tij, filtroje, ose eksportoje si raport.",
     metricModels: "modele",
     metricOpen: "të hapura",
     metricClosed: "të mbyllura",
@@ -126,22 +140,34 @@ const UI = {
     result: "rezultate",
     listEmpty: "Nuk ka modele matjeje ende.",
     noResults: "Asnjë model nuk përputhet me filtrat aktualë.",
-    open: "Hap",
     statusOPEN: "I hapur",
     statusCLOSED: "I mbyllur",
     ratingsCount: "vlerësime",
     dlgCreateTitle: "Krijo model matjeje të ri",
-    dlgRenameTitle: "Riemërto modelin",
+    dlgEditTitle: "Modifiko modelin",
     titleLbl: "Titulli",
     titlePh: "Shembull: Modeli i Tipareve (Faza 1) — Mars 2026",
-    groupPickLbl: "Grupi",
-    groupPickPh: "Zgjidh grupin e mësuesve",
+    groupsPickLbl: "Grupet e synuara",
+    groupsPickSub: "Të gjithë anëtarët e grupeve të zgjedhura do të vlerësojnë njëri-tjetrin si një grup i vetëm. Të gjitha janë të zgjedhura si parazgjedhje.",
+    selectAll: "Zgjidh të gjitha",
+    deselectAll: "Hiq zgjedhjen",
+    traitsLbl: "Tiparet e modelit",
+    traitsSub: "Personalizo numrin, titujt dhe pohimet si të duash — fillon e mbushur me tiparet e modelit standard Rowad dhe mund t'i ndryshosh, fshish, ose shtosh të tjera.",
+    traitLabelAr: "Emri (arabisht)",
+    traitLabelSq: "Emri (shqip)",
+    traitStatementAr: "Pohimi (arabisht)",
+    traitStatementSq: "Pohimi (shqip)",
+    addTrait: "+ Shto tipar",
+    removeTrait: "Fshi tiparin",
+    minTraitsWarn: "Duhet të paktën një tipar.",
+    lockedEditNote: "Mësuesit kanë filluar të vlerësojnë në këtë model, kështu që tiparet ose grupet e synuara nuk mund të ndryshohen më — mund të ndryshosh vetëm titullin. Krijo një model të ri për personalizim tjetër.",
     cancel: "Anulo",
     submit: "Krijo",
     save: "Ruaj",
     detailEmptyTitle: "Zgjidh një model për të parë detajet",
     detailEmptySub: "Nga lista majtas, zgjidh çdo model matjeje për të parë rezultatet e plota.",
-    matrixOf: (n: number) => `${n} anëtarë të grupit`,
+    matrixOf: (n: number) => `${n} anëtarë`,
+    groupsOf: (n: number) => `${n} grupe`,
     raterCol: "Vlerësuesi",
     targetCol: "Synimi",
     closeBtn: "Mbyll modelin",
@@ -149,12 +175,12 @@ const UI = {
     deleteBtn: "Fshi modelin",
     exportBtn: "Eksporto PDF",
     exporting: "Po eksportohet…",
-    renameBtn: "Riemërto",
+    editBtn: "Modifiko",
     confirmClose: "Mbyllja do parandalojë mësuesit të redaktojnë. Të vazhdohet?",
     confirmReopen: "Rihapja do lejojë redaktimin sërish. Të vazhdohet?",
     confirmDelete: "Të fshihet ky model përfundimisht me të gjitha të dhënat? Ky veprim nuk mund të zhbëhet.",
     matrixHead: "Matrica e Plotë",
-    matrixSub: "Çdo qelizë tregon pesë pikët që vlerësuesi i ka dhënë synimit.",
+    matrixSub: "Çdo qelizë tregon pikët e tipareve që vlerësuesi i ka dhënë synimit.",
     showMatrix: "Shfaq matricën e plotë",
     hideMatrix: "Fshih matricën",
     aggHead: "Rezultatet e Anëtarëve",
@@ -194,9 +220,10 @@ export default function AssessmentsHubPage() {
   const [traitFilter, setTraitFilter] = useState<number | null>(null);
   const [showMatrix, setShowMatrix] = useState(false);
 
-  const [dlg, setDlg] = useState<{ mode: "create" | "rename" } | null>(null);
-  const [form, setForm] = useState({ title: "", groupId: "" });
+  const [dlg, setDlg] = useState<{ mode: "create" | "edit" } | null>(null);
+  const [form, setForm] = useState<{ title: string; groupIds: string[]; traits: TraitDraft[] }>({ title: "", groupIds: [], traits: [] });
   const [saving, setSaving] = useState(false);
+  const [dlgError, setDlgError] = useState("");
   const [exporting, setExporting] = useState(false);
 
   const exportRef = useRef<HTMLDivElement>(null);
@@ -240,10 +267,10 @@ export default function AssessmentsHubPage() {
   const filteredList = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return list.filter((a) => {
-      if (fGroup && a.group.id !== fGroup) return false;
+      if (fGroup && !a.groups.some((g) => g.id === fGroup)) return false;
       if (fStatus && a.status !== fStatus) return false;
       if (!needle) return true;
-      return `${a.title} ${a.group.name}`.toLowerCase().includes(needle);
+      return `${a.title} ${a.groups.map((g) => g.name).join(" ")}`.toLowerCase().includes(needle);
     });
   }, [list, query, fGroup, fStatus]);
 
@@ -257,39 +284,83 @@ export default function AssessmentsHubPage() {
   const hasActiveFilters = Boolean(query.trim() || fGroup || fStatus);
   const resetFilters = () => { setQuery(""); setFGroup(""); setFStatus(""); };
 
-  async function openCreateDialog() {
-    setForm({ title: "", groupId: fGroup || groups[0]?.id || "" });
+  function openCreateDialog() {
+    setForm({ title: "", groupIds: groups.map((g) => g.id), traits: defaultTraitDrafts() });
+    setDlgError("");
     setDlg({ mode: "create" });
   }
-  function openRenameDialog() {
+  function openEditDialog() {
     if (!detail) return;
-    setForm({ title: detail.title, groupId: detail.group.id });
-    setDlg({ mode: "rename" });
+    setForm({
+      title: detail.title,
+      groupIds: detail.groups.map((g) => g.id),
+      traits: detail.traits.map((t) => ({ label_ar: t.label_ar, label_sq: t.label_sq, statement_ar: t.statement_ar, statement_sq: t.statement_sq, color: t.color })),
+    });
+    setDlgError("");
+    setDlg({ mode: "edit" });
+  }
+
+  const editLocked = dlg?.mode === "edit" && (detail?.ratings.length ?? 0) > 0;
+
+  function toggleGroup(id: string) {
+    setForm((f) => ({
+      ...f,
+      groupIds: f.groupIds.includes(id) ? f.groupIds.filter((g) => g !== id) : [...f.groupIds, id],
+    }));
+  }
+  function toggleAllGroups() {
+    setForm((f) => ({ ...f, groupIds: f.groupIds.length === groups.length ? [] : groups.map((g) => g.id) }));
+  }
+  function updateTrait(idx: number, patch: Partial<TraitDraft>) {
+    setForm((f) => ({ ...f, traits: f.traits.map((t, i) => (i === idx ? { ...t, ...patch } : t)) }));
+  }
+  function addTrait() {
+    setForm((f) => ({
+      ...f,
+      traits: [...f.traits, { label_ar: "", label_sq: "", statement_ar: "", statement_sq: "", color: SWATCHES[f.traits.length % SWATCHES.length] }],
+    }));
+  }
+  function removeTrait(idx: number) {
+    setForm((f) => ({ ...f, traits: f.traits.filter((_, i) => i !== idx) }));
   }
 
   async function submitDialog() {
     if (!form.title.trim()) return;
+    if (!editLocked) {
+      if (form.groupIds.length === 0) { setDlgError(L === "ar" ? "اختر مجموعة واحدة على الأقل" : "Zgjidh të paktën një grup"); return; }
+      const cleanTraits = form.traits.map((t) => ({ ...t, label_ar: t.label_ar.trim(), label_sq: t.label_sq.trim(), statement_ar: t.statement_ar.trim(), statement_sq: t.statement_sq.trim() }));
+      if (cleanTraits.length === 0 || cleanTraits.some((t) => !t.label_ar || !t.label_sq || !t.statement_ar || !t.statement_sq)) {
+        setDlgError(L === "ar" ? "أكمل اسم وعبارة كل سمة (عربي وألباني) قبل الحفظ" : "Plotëso emrin dhe pohimin e çdo tipari (arabisht dhe shqip) para se të ruash");
+        return;
+      }
+    }
+    setDlgError("");
     setSaving(true);
     try {
       if (dlg?.mode === "create") {
-        if (!form.groupId) return;
         const r = await fetch(`/api/school-admin/assessments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: form.title, group_id: form.groupId }),
+          body: JSON.stringify({ title: form.title, group_ids: form.groupIds, traits: form.traits }),
         });
-        if (!r.ok) return;
-        const d = await r.json();
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) { setDlgError(d.error ?? ""); return; }
         setDlg(null);
         await loadList();
         setSelectedId(d?.assessment?.id ?? null);
-      } else if (dlg?.mode === "rename" && selectedId) {
+      } else if (dlg?.mode === "edit" && selectedId) {
+        const payload: Record<string, unknown> = { title: form.title };
+        if (!editLocked) {
+          payload.group_ids = form.groupIds;
+          payload.traits = form.traits;
+        }
         const r = await fetch(`/api/school-admin/assessments/${selectedId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: form.title }),
+          body: JSON.stringify(payload),
         });
-        if (!r.ok) return;
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) { setDlgError(d.error ?? ""); return; }
         setDlg(null);
         await loadList();
         await loadDetail(selectedId);
@@ -335,7 +406,7 @@ export default function AssessmentsHubPage() {
     const byTarget = new Map<string, ScoresTuple[]>();
     for (const r of detail.ratings) {
       const arr = byTarget.get(r.target_teacher_id) ?? [];
-      arr.push([r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct]);
+      arr.push(r.scores);
       byTarget.set(r.target_teacher_id, arr);
     }
     return detail.members.map((m) => {
@@ -486,7 +557,7 @@ export default function AssessmentsHubPage() {
                     <div className="am-list-title">{a.title}</div>
                     <div className="am-list-meta">
                       <Users2 size={11} strokeWidth={2} />
-                      {a.group.name}
+                      {a.groups.length <= 1 ? (a.groups[0]?.name ?? "—") : T.groupsOf(a.groups.length)}
                     </div>
                   </button>
                 </li>
@@ -509,13 +580,14 @@ export default function AssessmentsHubPage() {
                   <div className="am-detail-title-row">
                     <h2 className="am-detail-title">{detail.title}</h2>
                     {!viewOnly && (
-                      <button className="am-icon-btn" onClick={openRenameDialog} title={T.renameBtn} data-write="true">
+                      <button className="am-icon-btn" onClick={openEditDialog} title={T.editBtn} data-write="true">
                         <Pencil size={13} strokeWidth={2} />
                       </button>
                     )}
                   </div>
                   <span className="am-detail-meta">
-                    <Users2 size={12} strokeWidth={2} /> {detail.group.name} · {T.matrixOf(detail.members.length)}
+                    <Users2 size={12} strokeWidth={2} />
+                    {detail.groups.map((g) => g.name).join(" · ")} · {T.matrixOf(detail.members.length)}
                   </span>
                 </div>
                 <div className="am-detail-actions">
@@ -551,14 +623,14 @@ export default function AssessmentsHubPage() {
                   >
                     {T.resultFilterAll}
                   </button>
-                  {TRAITS.map((tr, i) => (
+                  {detail.traits.map((tr, i) => (
                     <button
-                      key={tr.key}
+                      key={tr.id}
                       className={`am-trait-chip ${traitFilter === i ? "active" : ""}`}
                       style={traitFilter === i ? { background: tr.color, borderColor: tr.color, color: "#FFFBF5" } : undefined}
                       onClick={() => setTraitFilter(i)}
                     >
-                      {tr[L]}
+                      {traitLabel(tr, L)}
                     </button>
                   ))}
                 </div>
@@ -586,21 +658,21 @@ export default function AssessmentsHubPage() {
                           ) : (
                             <>
                               <div className="am-agg-bars">
-                                {TRAITS.map((tr, i) => {
+                                {detail.traits.map((tr, i) => {
                                   const isCore = d.coreIdx === i && d.hasCore;
                                   const isColl = d.collectiveIdx === i;
                                   return (
-                                    <div key={tr.key} className="am-agg-row">
-                                      <span className={`am-agg-trait ${isCore ? "core" : isColl ? "coll" : ""}`}>{tr[L]}</span>
-                                      <div className="am-agg-track"><div className="am-agg-fill" style={{ width: `${Math.min(100, avg[i])}%`, background: tr.color }} /></div>
-                                      <span className="am-agg-val">{avg[i].toFixed(1)}</span>
+                                    <div key={tr.id} className="am-agg-row">
+                                      <span className={`am-agg-trait ${isCore ? "core" : isColl ? "coll" : ""}`}>{traitLabel(tr, L)}</span>
+                                      <div className="am-agg-track"><div className="am-agg-fill" style={{ width: `${Math.min(100, avg[i] ?? 0)}%`, background: tr.color }} /></div>
+                                      <span className="am-agg-val">{(avg[i] ?? 0).toFixed(1)}</span>
                                     </div>
                                   );
                                 })}
                               </div>
                               <div className="am-agg-derived">
-                                <span className="am-agg-derived-core"><b>{AT.coreLabel}:</b> {d.hasCore && d.coreIdx !== null ? TRAITS[d.coreIdx][L] : AT.noCore}</span>
-                                <span><b>{AT.collectiveLabel}:</b> {TRAITS[d.collectiveIdx][L]}</span>
+                                <span className="am-agg-derived-core"><b>{AT.coreLabel}:</b> {d.hasCore && d.coreIdx !== null ? traitLabel(detail.traits[d.coreIdx], L) : AT.noCore}</span>
+                                <span><b>{AT.collectiveLabel}:</b> {traitLabel(detail.traits[d.collectiveIdx], L)}</span>
                               </div>
                             </>
                           )}
@@ -617,15 +689,15 @@ export default function AssessmentsHubPage() {
                         <thead>
                           <tr>
                             <th>{T.targetCol}</th>
-                            {TRAITS.map((tr) => <th key={tr.key}>{tr[L]}</th>)}
+                            {detail.traits.map((tr) => <th key={tr.id}>{traitLabel(tr, L)}</th>)}
                           </tr>
                         </thead>
                         <tbody>
                           {visibleAggregation.map(({ member, avg }) => (
                             <tr key={member.teacher_id}>
                               <td className="am-name-cell">{member.profile.full_name}</td>
-                              {(avg ?? [0, 0, 0, 0, 0]).map((v, i) => (
-                                <td key={i}>{avg ? v.toFixed(1) : T.noRating}</td>
+                              {detail.traits.map((_, i) => (
+                                <td key={i}>{avg ? (avg[i] ?? 0).toFixed(1) : T.noRating}</td>
                               ))}
                             </tr>
                           ))}
@@ -660,16 +732,15 @@ export default function AssessmentsHubPage() {
                                   {matrixMembers.map((target) => {
                                     const r = ratingFor(rater.teacher_id, target.teacher_id);
                                     if (!r) return <td key={target.teacher_id} className="am-empty-cell">{T.noRating}</td>;
-                                    const tuple: ScoresTuple = [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct];
-                                    const d = derive(tuple);
+                                    const d = derive(r.scores);
                                     return (
                                       <td key={target.teacher_id} className={rater.teacher_id === target.teacher_id ? "am-self-cell" : ""}>
                                         <div className="am-cell-scores">
-                                          {tuple.map((v, i) => {
+                                          {r.scores.map((v, i) => {
                                             const isCore = d.coreIdx === i && d.hasCore;
                                             const isColl = d.collectiveIdx === i;
                                             return (
-                                              <span key={i} className={`am-score ${isCore ? "am-score-core" : isColl ? "am-score-coll" : ""}`} title={TRAITS[i][L]}>
+                                              <span key={i} className={`am-score ${isCore ? "am-score-core" : isColl ? "am-score-coll" : ""}`} title={detail.traits[i] ? traitLabel(detail.traits[i], L) : ""}>
                                                 {v}
                                               </span>
                                             );
@@ -696,26 +767,109 @@ export default function AssessmentsHubPage() {
       {dlg && !viewOnly && (
         <div className="am-overlay" onClick={() => !saving && setDlg(null)}>
           <div className="am-dlg" onClick={(e) => e.stopPropagation()}>
-            <h3 className="am-dlg-title">{dlg.mode === "create" ? T.dlgCreateTitle : T.dlgRenameTitle}</h3>
+            <h3 className="am-dlg-title">{dlg.mode === "create" ? T.dlgCreateTitle : T.dlgEditTitle}</h3>
+
             <label className="am-dlg-lbl">{T.titleLbl}</label>
             <input className="am-dlg-input" placeholder={T.titlePh} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} autoFocus />
-            {dlg.mode === "create" && (
+
+            {editLocked ? (
+              <p className="am-dlg-note">{T.lockedEditNote}</p>
+            ) : (
               <>
-                <label className="am-dlg-lbl">{T.groupPickLbl}</label>
-                <select className="am-dlg-input" value={form.groupId} onChange={(e) => setForm((f) => ({ ...f, groupId: e.target.value }))}>
-                  <option value="" disabled>{T.groupPickPh}</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name} ({g._count?.members ?? 0})</option>
+                {/* ── Target groups ── */}
+                <div className="am-dlg-section-head">
+                  <div>
+                    <label className="am-dlg-lbl" style={{ margin: 0 }}>{T.groupsPickLbl}</label>
+                    <p className="am-dlg-hint">{T.groupsPickSub}</p>
+                  </div>
+                  <button type="button" className="am-dlg-linkbtn" onClick={toggleAllGroups}>
+                    {form.groupIds.length === groups.length
+                      ? <><Square size={13} strokeWidth={2} />{T.deselectAll}</>
+                      : <><CheckSquare size={13} strokeWidth={2} />{T.selectAll}</>}
+                  </button>
+                </div>
+                <div className="am-group-grid">
+                  {groups.map((g) => {
+                    const checked = form.groupIds.includes(g.id);
+                    return (
+                      <label key={g.id} className={`am-group-chk ${checked ? "checked" : ""}`}>
+                        <input type="checkbox" checked={checked} onChange={() => toggleGroup(g.id)} />
+                        <span>{g.name}</span>
+                        <em>{g._count?.members ?? 0}</em>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {/* ── Traits editor ── */}
+                <div className="am-dlg-section-head">
+                  <div>
+                    <label className="am-dlg-lbl" style={{ margin: 0 }}>{T.traitsLbl}</label>
+                    <p className="am-dlg-hint">{T.traitsSub}</p>
+                  </div>
+                </div>
+                <div className="am-trait-editor">
+                  {form.traits.map((t, i) => (
+                    <div key={i} className="am-trait-row">
+                      <div className="am-trait-row-head">
+                        <GripVertical size={14} strokeWidth={2} className="am-trait-grip" />
+                        <input
+                          type="color"
+                          className="am-trait-color"
+                          value={t.color}
+                          onChange={(e) => updateTrait(i, { color: e.target.value })}
+                        />
+                        <input
+                          className="am-trait-input am-trait-label"
+                          placeholder={T.traitLabelAr}
+                          value={t.label_ar}
+                          onChange={(e) => updateTrait(i, { label_ar: e.target.value })}
+                          dir="rtl"
+                        />
+                        <input
+                          className="am-trait-input am-trait-label"
+                          placeholder={T.traitLabelSq}
+                          value={t.label_sq}
+                          onChange={(e) => updateTrait(i, { label_sq: e.target.value })}
+                        />
+                        <button type="button" className="am-trait-remove" onClick={() => removeTrait(i)} title={T.removeTrait}>
+                          <Trash2 size={13} strokeWidth={2} />
+                        </button>
+                      </div>
+                      <textarea
+                        className="am-trait-input am-trait-statement"
+                        placeholder={T.traitStatementAr}
+                        value={t.statement_ar}
+                        onChange={(e) => updateTrait(i, { statement_ar: e.target.value })}
+                        dir="rtl"
+                        rows={2}
+                      />
+                      <textarea
+                        className="am-trait-input am-trait-statement"
+                        placeholder={T.traitStatementSq}
+                        value={t.statement_sq}
+                        onChange={(e) => updateTrait(i, { statement_sq: e.target.value })}
+                        rows={2}
+                      />
+                    </div>
                   ))}
-                </select>
+                  <button type="button" className="am-add-trait" onClick={addTrait}>
+                    <Plus size={14} strokeWidth={2.4} />
+                    {T.addTrait}
+                  </button>
+                  {form.traits.length === 0 && <p className="am-dlg-warn">{T.minTraitsWarn}</p>}
+                </div>
               </>
             )}
+
+            {dlgError && <p className="am-dlg-err">{dlgError}</p>}
+
             <div className="am-dlg-actions">
               <button className="am-btn" onClick={() => setDlg(null)} disabled={saving}>{T.cancel}</button>
               <button
                 className="am-btn am-btn-primary"
                 onClick={submitDialog}
-                disabled={saving || !form.title.trim() || (dlg.mode === "create" && !form.groupId)}
+                disabled={saving || !form.title.trim()}
               >
                 {saving ? T.creating : dlg.mode === "create" ? T.submit : T.save}
               </button>
@@ -733,7 +887,7 @@ export default function AssessmentsHubPage() {
               <div>
                 <div className="am-export-eyebrow">{T.title}</div>
                 <div className="am-export-title">{detail.title}</div>
-                <div className="am-export-sub">{detail.group.name} · {T.matrixOf(detail.members.length)}</div>
+                <div className="am-export-sub">{detail.groups.map((g) => g.name).join(" · ")} · {T.matrixOf(detail.members.length)}</div>
               </div>
               <span className={`am-export-status am-export-status-${detail.status}`}>
                 {detail.status === "OPEN" ? T.statusOPEN : T.statusCLOSED}
@@ -750,18 +904,18 @@ export default function AssessmentsHubPage() {
                     <div className="am-export-noresult">{T.noRating}</div>
                   ) : (
                     <>
-                      {TRAITS.map((tr, i) => {
+                      {detail.traits.map((tr, i) => {
                         const isCore = d.coreIdx === i && d.hasCore;
                         return (
-                          <div key={tr.key} className="am-export-row">
-                            <span className={isCore ? "am-export-trait-core" : ""}>{tr[L]}</span>
-                            <div className="am-export-track"><div className="am-export-fill" style={{ width: `${Math.min(100, avg[i])}%`, background: tr.color }} /></div>
-                            <b>{avg[i].toFixed(1)}</b>
+                          <div key={tr.id} className="am-export-row">
+                            <span className={isCore ? "am-export-trait-core" : ""}>{traitLabel(tr, L)}</span>
+                            <div className="am-export-track"><div className="am-export-fill" style={{ width: `${Math.min(100, avg[i] ?? 0)}%`, background: tr.color }} /></div>
+                            <b>{(avg[i] ?? 0).toFixed(1)}</b>
                           </div>
                         );
                       })}
                       <div className="am-export-footer">
-                        {d.hasCore && d.coreIdx !== null ? `${AT.coreLabel}: ${TRAITS[d.coreIdx][L]}` : AT.noCore}
+                        {d.hasCore && d.coreIdx !== null ? `${AT.coreLabel}: ${traitLabel(detail.traits[d.coreIdx], L)}` : AT.noCore}
                       </div>
                     </>
                   )}
@@ -919,18 +1073,46 @@ const styles = `
   .am-name-cell { font-family:'Cairo',sans-serif !important; font-weight:700 !important; text-align:start !important; padding-inline-start:14px !important; color:#1A1A1A; background:rgba(184,160,130,.04); }
   .am-empty-cell { color:#C9BFAF !important; }
   .am-self-cell { background:rgba(107,30,45,.04); }
-  .am-cell-scores { display:flex; gap:3px; justify-content:center; }
+  .am-cell-scores { display:flex; gap:3px; justify-content:center; flex-wrap:wrap; }
   .am-score { padding:1px 5px; border-radius:5px; background:rgba(26,26,26,.05); color:#4A0E1C; font-size:10.5px; min-width:22px; }
   .am-score-core { background:rgba(107,30,45,.18); color:#6B1E2D; }
   .am-score-coll { background:rgba(184,160,130,.28); color:#8F765B; }
 
   .am-overlay { position:fixed; inset:0; background:rgba(26,17,14,.55); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; backdrop-filter:blur(5px); }
-  .am-dlg { background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:18px; padding:24px; max-width:440px; width:100%; box-shadow:0 26px 64px rgba(50,16,26,.28); }
+  .am-dlg { background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:18px; padding:24px; max-width:640px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 26px 64px rgba(50,16,26,.28); }
   .am-dlg-title { font-family:var(--font-head); font-size:16.5px; font-weight:700; color:#4A0E1C; margin:0 0 14px; }
   .am-dlg-lbl { display:block; font-size:11.5px; font-weight:800; color:#6B1E2D; margin:10px 0 5px; }
+  .am-dlg-hint { margin:2px 0 0; font-size:11px; color:#8F765B; font-weight:600; line-height:1.6; max-width:440px; }
   .am-dlg-input { width:100%; padding:10px 13px; border:1.5px solid rgba(184,160,130,.32); border-radius:11px; font-family:inherit; font-size:13px; background:#FFF; outline:none; }
   .am-dlg-input:focus { border-color:#B8A082; }
+  .am-dlg-note { margin:12px 0 0; padding:12px 14px; border-radius:12px; background:rgba(184,160,130,.10); border:1px dashed rgba(184,160,130,.35); color:#4A0E1C; font-size:12.5px; font-weight:600; line-height:1.75; }
+  .am-dlg-section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-top:16px; }
+  .am-dlg-linkbtn { display:inline-flex; align-items:center; gap:5px; background:none; border:1px solid rgba(184,160,130,.30); border-radius:999px; padding:5px 12px; color:#6B1E2D; font:700 11px 'Cairo',sans-serif; cursor:pointer; white-space:nowrap; transition:background .16s ease; }
+  .am-dlg-linkbtn:hover { background:rgba(184,160,130,.10); }
+  .am-dlg-err { margin:12px 0 0; padding:10px 13px; border-radius:11px; background:rgba(107,30,45,.08); border:1px solid rgba(107,30,45,.24); color:#6B1E2D; font-size:12.5px; font-weight:700; }
+  .am-dlg-warn { margin:8px 0 0; font-size:12px; font-weight:700; color:#8F765B; }
   .am-dlg-actions { display:flex; gap:9px; justify-content:flex-end; margin-top:18px; }
+
+  .am-group-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:8px; }
+  .am-group-chk { display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:12px; border:1.5px solid rgba(184,160,130,.26); background:#FFF; cursor:pointer; transition:all .16s ease; }
+  .am-group-chk.checked { border-color:rgba(107,30,45,.4); background:rgba(107,30,45,.05); }
+  .am-group-chk input { accent-color:#6B1E2D; }
+  .am-group-chk span { flex:1; font-size:12.5px; font-weight:700; color:#1A1A1A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .am-group-chk em { font-style:normal; font-size:10.5px; color:#8F765B; font-weight:700; }
+
+  .am-trait-editor { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .am-trait-row { border:1.5px solid rgba(184,160,130,.26); border-radius:14px; padding:10px; background:#FFF; display:flex; flex-direction:column; gap:8px; }
+  .am-trait-row-head { display:flex; align-items:center; gap:8px; }
+  .am-trait-grip { color:#C9BFAF; flex-shrink:0; }
+  .am-trait-color { width:30px; height:30px; border-radius:8px; border:1.5px solid rgba(184,160,130,.3); padding:2px; cursor:pointer; flex-shrink:0; }
+  .am-trait-input { border:1.5px solid rgba(184,160,130,.26); border-radius:9px; padding:7px 10px; font-family:'Cairo',sans-serif; font-size:12.5px; background:#FBF8F1; outline:none; transition:border-color .16s ease; }
+  .am-trait-input:focus { border-color:#B8A082; background:#FFF; }
+  .am-trait-label { flex:1; min-width:0; }
+  .am-trait-statement { resize:vertical; min-height:44px; line-height:1.5; }
+  .am-trait-remove { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:rgba(107,30,45,.06); border:1px solid rgba(107,30,45,.20); color:#6B1E2D; cursor:pointer; flex-shrink:0; transition:background .16s ease; }
+  .am-trait-remove:hover { background:rgba(107,30,45,.14); }
+  .am-add-trait { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; background:rgba(184,160,130,.10); border:1px dashed rgba(184,160,130,.4); border-radius:11px; padding:8px 16px; color:#6B1E2D; font:700 12px 'Cairo',sans-serif; cursor:pointer; transition:background .16s ease; }
+  .am-add-trait:hover { background:rgba(184,160,130,.18); }
 
   /* ── Hidden PDF export sheet ── */
   .am-export-mount { position:fixed; inset-inline-start:-9999px; top:0; z-index:-1; }
@@ -950,7 +1132,7 @@ const styles = `
   .am-export-card-head span { font-size:10.5px; color:#8F765B; font-weight:700; }
   .am-export-noresult { font-size:11.5px; color:#8C8274; font-weight:700; padding:8px 0; }
   .am-export-row { display:grid; grid-template-columns:58px 1fr 30px; align-items:center; gap:6px; margin-bottom:4px; }
-  .am-export-row span { font-size:10px; font-weight:700; color:#4A0E1C; }
+  .am-export-row span { font-size:10px; font-weight:700; color:#4A0E1C; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .am-export-trait-core { color:#6B1E2D !important; font-weight:800 !important; }
   .am-export-track { height:6px; background:rgba(184,160,130,.18); border-radius:99px; overflow:hidden; }
   .am-export-fill { height:100%; border-radius:99px; }
@@ -963,5 +1145,6 @@ const styles = `
     .am-hero-metrics { grid-template-columns:repeat(2,1fr); }
     .am-detail { padding:16px; }
     .am-agg-grid { grid-template-columns:1fr; }
+    .am-group-grid { grid-template-columns:1fr; }
   }
 `;

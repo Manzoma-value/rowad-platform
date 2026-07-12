@@ -7,20 +7,21 @@ import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import RowadDistributor from "@/components/RowadDistributor";
 import {
-  TRAITS, ASSESS_UI, derive, averageTuples, pickAssessLang,
+  ASSESS_UI, derive, averageTuples, pickAssessLang,
   type ScoresTuple,
 } from "@/lib/rowad-assessment";
 
+type Trait = { position: number; label_ar: string; label_sq: string; statement_ar: string; statement_sq: string; color: string };
 type Member = { teacher_id: string; profile: { full_name: string }; is_self: boolean };
-type Given  = { target_teacher_id: string; s_lineage: number; s_atonement: number; s_awareness: number; s_zeal: number; s_distinct: number; updated_at: string };
+type Given  = { target_teacher_id: string; scores: ScoresTuple; updated_at: string };
 type Received = {
   rater_teacher_id: string; rater_name: string; is_self: boolean;
-  s_lineage: number; s_atonement: number; s_awareness: number; s_zeal: number; s_distinct: number;
-  updated_at: string;
+  scores: ScoresTuple; updated_at: string;
 };
 type AssessmentData = {
   id: string; title: string; status: "OPEN" | "CLOSED";
   group: { id: string; name: string; description: string | null };
+  traits: Trait[];
   members: Member[];
   my_ratings_given: Given[];
   my_ratings_received: Received[];
@@ -63,14 +64,22 @@ const UI = {
   },
 } as const;
 
-const EMPTY_SCORES: ScoresTuple = [20, 20, 20, 20, 20];
-
 /** Reorder members so the "self" entry is always first (matches the
  *  methodology: the supervisor rates themselves before their colleagues). */
 function membersSelfFirst<T extends { is_self: boolean }>(list: T[]): T[] {
   const self = list.find((m) => m.is_self);
   const others = list.filter((m) => !m.is_self);
   return self ? [self, ...others] : list;
+}
+
+function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
+function traitStatement(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.statement_ar : t.statement_sq; }
+function evenSplit(n: number): ScoresTuple {
+  if (n <= 0) return [];
+  const base = Math.floor(100 / n);
+  const arr = new Array(n).fill(base);
+  arr[0] += 100 - base * n;
+  return arr;
 }
 
 export default function AssessmentPage({ params }: { params: Promise<{ id: string; aid: string }> }) {
@@ -109,18 +118,17 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
       const d = await r.json();
       const a: AssessmentData = d?.assessment;
       setData(a);
-      // Seed sliders from existing ratings, default to [20,20,20,20,20]
+      const emptyScores = evenSplit(a.traits.length);
       const map: Record<string, ScoresTuple> = {};
       const sav: Record<string, "saved"> = {};
       for (const m of a.members) {
         const g = a.my_ratings_given.find((x) => x.target_teacher_id === m.teacher_id);
         if (g) {
-          const t: ScoresTuple = [g.s_lineage, g.s_atonement, g.s_awareness, g.s_zeal, g.s_distinct];
-          map[m.teacher_id] = t;
-          lastSaved.current[m.teacher_id] = t.join(",");
+          map[m.teacher_id] = g.scores;
+          lastSaved.current[m.teacher_id] = g.scores.join(",");
           sav[m.teacher_id] = "saved";
         } else {
-          map[m.teacher_id] = [...EMPTY_SCORES];
+          map[m.teacher_id] = [...emptyScores];
         }
       }
       setScoresByTarget(map);
@@ -143,13 +151,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
       const r = await fetch(`/api/teacher/groups/${id}/assessments/${aid}/ratings/${targetId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          s_lineage:   next[0],
-          s_atonement: next[1],
-          s_awareness: next[2],
-          s_zeal:      next[3],
-          s_distinct:  next[4],
-        }),
+        body: JSON.stringify({ scores: next }),
       });
       if (!r.ok) { setSaveState((prev) => ({ ...prev, [targetId]: "err" })); return; }
       lastSaved.current[targetId] = sig;
@@ -159,12 +161,15 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
     }
   }, [id, aid]);
 
+  const traits = useMemo(() => data?.traits ?? [], [data?.traits]);
+  const distributorTraits = useMemo(
+    () => traits.map((t) => ({ label: traitLabel(t, L), statement: traitStatement(t, L), color: t.color })),
+    [traits, L],
+  );
+
   // ── My received panel: compute average across all rows, then derive.
   const received = useMemo(() => data?.my_ratings_received ?? [], [data?.my_ratings_received]);
-  const avg = useMemo(
-    () => averageTuples(received.map((r) => [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct])),
-    [received],
-  );
+  const avg = useMemo(() => averageTuples(received.map((r) => r.scores)), [received]);
   const avgDerive = avg ? derive(avg) : null;
   const completedCount = useMemo(() => {
     if (!data) return 0;
@@ -229,9 +234,9 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         const safeIdx = Math.min(Math.max(0, currentIdx), Math.max(0, orderedMembers.length - 1));
         const current = orderedMembers[safeIdx];
         if (!current) return null;
-        const scores = scoresByTarget[current.teacher_id] ?? [...EMPTY_SCORES];
+        const scores = scoresByTarget[current.teacher_id] ?? evenSplit(traits.length);
         const state = saveState[current.teacher_id];
-        const total = scores[0] + scores[1] + scores[2] + scores[3] + scores[4];
+        const total = scores.reduce((a, b) => a + b, 0);
         const goPrev = () => setCurrentIdx((i) => Math.max(0, i - 1));
         const goNext = () => setCurrentIdx((i) => Math.min(orderedMembers.length - 1, i + 1));
         return (
@@ -277,6 +282,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
             <div className="ap-focus">
               <div className="ap-focus-main">
                 <RowadDistributor
+                  traits={distributorTraits}
                   value={scores}
                   lang={L}
                   disabled={locked}
@@ -305,21 +311,21 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               <div className="ap-result-hero">
                 <div className="ap-result-chip ap-result-core">
                   <span>{AT.coreLabel}</span>
-                  <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? TRAITS[avgDerive.coreIdx][L] : AT.noCore}</strong>
+                  <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? traitLabel(traits[avgDerive.coreIdx], L) : AT.noCore}</strong>
                 </div>
                 <div className="ap-result-chip ap-result-coll">
                   <span>{AT.collectiveLabel}</span>
-                  <strong>{TRAITS[avgDerive.collectiveIdx][L]} · {avg[avgDerive.collectiveIdx].toFixed(1)}</strong>
+                  <strong>{traitLabel(traits[avgDerive.collectiveIdx], L)} · {avg[avgDerive.collectiveIdx].toFixed(1)}</strong>
                 </div>
               </div>
               <div className="ap-bars ap-bars-compact">
-                {TRAITS.map((t, i) => {
+                {traits.map((t, i) => {
                   const v = avg[i];
                   const isCore = avgDerive.coreIdx === i && avgDerive.hasCore;
                   const isCollective = avgDerive.collectiveIdx === i;
                   return (
-                    <div key={t.key} className={`ap-bar ${isCore ? "ap-core" : isCollective ? "ap-coll" : ""}`}>
-                      <span className="ap-bar-name">{t[L]}</span>
+                    <div key={i} className={`ap-bar ${isCore ? "ap-core" : isCollective ? "ap-coll" : ""}`}>
+                      <span className="ap-bar-name">{traitLabel(t, L)}</span>
                       <div className="ap-bar-track">
                         <span className="ap-bar-fill" style={{ width: `${Math.min(100, v)}%`, background: t.color }} />
                       </div>
@@ -329,7 +335,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                 })}
               </div>
               <div className="ap-avg-derived">
-                <span><strong>{AT.supportingLabel}:</strong> {avgDerive.supportingIdxs.map((i) => TRAITS[i][L]).join(L === "ar" ? "، " : ", ")}</span>
+                <span><strong>{AT.supportingLabel}:</strong> {avgDerive.supportingIdxs.map((i) => traitLabel(traits[i], L)).join(L === "ar" ? "، " : ", ")}</span>
               </div>
             </div>
           )}
@@ -338,19 +344,18 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               <thead>
                 <tr>
                   <th>{T.raterCol}</th>
-                  {TRAITS.map((t) => <th key={t.key}>{t[L]}</th>)}
+                  {traits.map((t, i) => <th key={i}>{traitLabel(t, L)}</th>)}
                 </tr>
               </thead>
               <tbody>
                 {received.map((r) => {
-                  const tuple: ScoresTuple = [r.s_lineage, r.s_atonement, r.s_awareness, r.s_zeal, r.s_distinct];
-                  const d = derive(tuple);
+                  const d = derive(r.scores);
                   return (
                     <tr key={r.rater_teacher_id}>
                       <td className="ap-rater-cell">
                         {r.is_self ? <span className="ap-self-row">{AT.selfBy(r.rater_name)}</span> : r.rater_name}
                       </td>
-                      {tuple.map((v, i) => {
+                      {r.scores.map((v, i) => {
                         const isCore = d.coreIdx === i && d.hasCore;
                         const isCollective = d.collectiveIdx === i;
                         const cls = isCore ? "ap-cell-core" : isCollective ? "ap-cell-coll" : "";
@@ -437,46 +442,6 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
 
         .ap-focus { display: block; }
         .ap-focus-main { min-width: 0; }
-
-        .ap-focus-side {
-          background: #FFFBF5; border: 1px solid rgba(107,30,45,0.28); border-radius: 14px;
-          padding: 14px;
-          display: flex; flex-direction: column; gap: 10px;
-          align-self: start; position: sticky; top: 12px;
-        }
-        .ap-side-h { font-size: 13px; font-weight: 900; color: #32101A; margin: 0; letter-spacing: .02em; }
-        .ap-side-empty { padding: 22px; text-align: center; color: #8C8274; font-weight: 700; font-size: 12px; background: rgba(107,30,45,0.04); border: 1px dashed rgba(107,30,45,0.32); border-radius: 10px; }
-        .ap-side-hero { display: grid; grid-template-columns: 1fr; gap: 6px; }
-        .ap-side-chip { background: #FFF; border: 1.5px solid rgba(107,30,45,0.28); border-radius: 10px; padding: 8px 12px; }
-        .ap-side-chip span { display: block; font-size: 9.5px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #6B1E2D; margin-bottom: 3px; }
-        .ap-side-chip strong { display: block; font-size: 14px; font-weight: 900; color: #32101A; }
-        .ap-side-core { border-color: rgba(107,30,45,0.35); background: linear-gradient(160deg,rgba(107,30,45,0.08),#FFF); }
-        .ap-side-core span { color: #6B1E2D; }
-        .ap-side-coll { border-color: rgba(107,30,45,0.46); background: linear-gradient(160deg,rgba(107,30,45,0.14),#FFF); }
-        .ap-side-coll span { color: #8F765B; }
-        .ap-side-bars { display: flex; flex-direction: column; gap: 4px; padding-top: 4px; border-top: 1px dashed rgba(107,30,45,0.32); }
-        .ap-side-bar { display: grid; grid-template-columns: 78px 1fr 34px; align-items: center; gap: 6px; }
-        .ap-side-bar-n { font-size: 11px; font-weight: 700; color: #4A0E1C; }
-        .ap-side-bar.core .ap-side-bar-n { color: #6B1E2D; font-weight: 900; }
-        .ap-side-bar.coll .ap-side-bar-n { color: #8F765B; font-weight: 900; }
-        .ap-side-bar-track { height: 6px; background: rgba(107,30,45,0.18); border-radius: 99px; overflow: hidden; }
-        .ap-side-bar-fill { height: 100%; border-radius: 99px; transition: width .25s; }
-        .ap-side-bar-v { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 11px; font-weight: 800; color: #32101A; text-align: center; }
-        .ap-side-count { font-size: 11px; color: #8F765B; font-weight: 700; text-align: center; padding-top: 4px; border-top: 1px dashed rgba(107,30,45,0.32); }
-
-        /* legacy grid — retained for print/backup only */
-        .ap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px,1fr)); gap: 16px; }
-        @media (max-width: 760px) { .ap-grid { grid-template-columns: 1fr; } }
-        .ap-target { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; padding: 14px; }
-        .ap-target-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; position: sticky; top: 0; z-index: 2; background: rgba(255,251,245,.92); backdrop-filter: blur(8px); padding: 2px 0 8px; }
-        .ap-target-name { font-size: 14.5px; font-weight: 900; color: #32101A; display: flex; align-items: center; gap: 8px; }
-        .ap-target-step { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: #1A1A1A; color: #B8A082; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 900; }
-        .ap-self-tag { font-size: 10.5px; padding: 2px 10px; background: rgba(107,30,45,0.10); color: #6B1E2D; border-radius: 99px; font-weight: 800; }
-        .ap-save { font-size: 11.5px; font-weight: 800; padding: 4px 10px; border-radius: 99px; }
-        .ap-save-saved  { background: rgba(27,94,32,0.14); color: #1B5E20; }
-        .ap-save-saving { background: rgba(107,30,45,0.16); color: #8F765B; }
-        .ap-save-err    { background: rgba(107,30,45,0.12); color: #6B1E2D; }
-        .ap-save-dirty  { background: rgba(26,26,26,0.06); color: #655B53; }
 
         .ap-empty { padding: 40px; text-align: center; color: #8C8274; font-weight: 700; background: rgba(107,30,45,0.04); border: 1px dashed rgba(107,30,45,0.32); border-radius: 12px; }
 
