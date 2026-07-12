@@ -28,6 +28,7 @@ import {
   Mail,
   LayoutGrid,
   Gamepad2,
+  Target,
   Globe2,
   Menu,
   LogOut,
@@ -113,7 +114,7 @@ interface NavItem {
   sublabel: string;
   exact: boolean;
   icon: LucideIcon;
-  group?: "teachers" | "learning" | "reports" | "operations";
+  group?: "teachers" | "learning" | "models" | "reports" | "operations";
   /** When set, the item is hidden unless the school has this feature enabled. */
   feature?: FeatureKey;
   /** When true, the item is hidden for view-only (investor demo) accounts. */
@@ -182,7 +183,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/workshops", sublabel: "Workshops", exact: false, icon: QrCode,
       label: lang === "ar" ? "الورش التدريبية" : lang === "sq" ? "Punëtoritë" : "Workshops",
-      group: "operations",
+      group: "teachers",
     },
     {
       href: "/school-admin/classes", sublabel: "Classes", exact: false, icon: BookOpen,
@@ -216,7 +217,12 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/game-scores", sublabel: "Model game scores", exact: false, icon: Gamepad2,
       label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
-      group: "learning",
+      group: "models",
+    },
+    {
+      href: "/school-admin/assessments", sublabel: "Measurement Models", exact: false, icon: Target,
+      label: lang === "ar" ? "نماذج القياس" : lang === "sq" ? "Modelet e Matjes" : "Measurement Models",
+      group: "models",
     },
     {
       href: "/school-admin/owner-reports", sublabel: "Owner Reports", exact: false, icon: FileText,
@@ -407,8 +413,13 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       sublabel: "Classes",
     },
     {
+      key: "models",
+      label: lang === "ar" ? "النماذج" : lang === "sq" ? "Modelet" : "Models",
+      sublabel: "Models",
+    },
+    {
       key: "reports",
-      label: lang === "ar" ? "التقارير والقياس" : lang === "sq" ? "Raportet" : "Reports",
+      label: lang === "ar" ? "التقارير" : lang === "sq" ? "Raportet" : "Reports",
       sublabel: "Reports",
     },
     {

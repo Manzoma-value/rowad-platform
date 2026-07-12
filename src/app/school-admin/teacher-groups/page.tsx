@@ -474,7 +474,7 @@ export default function TeacherGroupsPage() {
                       </button>
                     </>
                   )}
-                  <Link className="tg-btn" href={`/school-admin/teacher-groups/${detail.id}/assessments`}>
+                  <Link className="tg-btn" href={`/school-admin/assessments?group=${detail.id}`}>
                     {T.assessments} →
                   </Link>
                   <span className="tg-spacer" />
