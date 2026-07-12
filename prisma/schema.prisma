@@ -1189,8 +1189,15 @@ model Workshop {
   school_id     String         @db.Uuid
   title         String
   description   String?
+  audience      String[]       @default(["TEACHERS"])
+  audience_other String?
   start_date    DateTime?      @db.Date
   end_date      DateTime?      @db.Date
+  // Ordered entries: [{date,type:"WORK"|"REST",start_time?,end_time?,label?}]
+  schedule      Json           @default("[]")
+  notes         String?
+  // Ordered entries: [{id,type:"FILE"|"IMAGE"|"VIDEO"|"LINK",title,url,path?,mime?,size?}]
+  materials     Json           @default("[]")
   status        WorkshopStatus @default(OPEN)
   // Public random slug used in the signup URL and encoded in the signup QR.
   // Kept unique globally so /workshop/[token] doesn't need the school in the URL.

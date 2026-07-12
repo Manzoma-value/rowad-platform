@@ -3,208 +3,60 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { CalendarDays, Check, Filter, Plus, Search, Users, X } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
 import MandalaLoader from "@/components/MandalaLoader";
+import type { WorkshopDay } from "@/lib/workshops";
 
-type Row = {
-  id: string;
-  title: string;
-  description: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  status: "OPEN" | "CLOSED";
-  signup_token: string;
-  created_at: string;
-  _count: { signed_up_teachers: number; attendance: number };
-};
-
-const UI = {
-  ar: {
-    title: "الورش التدريبية",
-    sub: "أنشئ ورشة، شارك رمز QR للتسجيل، ثم اعرض رمز الحضور اليومي. جميع بيانات المشاركة والغياب تظهر لك مباشرة.",
-    create: "+ ورشة جديدة",
-    empty: "لا توجد ورش بعد. ابدأ بإنشاء واحدة!",
-    statusOPEN: "مفتوحة",
-    statusCLOSED: "مغلقة",
-    signed: "مسجّلون",
-    attend: "حضور",
-    open: "تفاصيل الورشة",
-    newTitle: "أنشئ ورشة جديدة",
-    lblName: "اسم الورشة",
-    lblDesc: "الوصف",
-    lblStart: "تاريخ البداية",
-    lblEnd: "تاريخ النهاية",
-    cancel: "إلغاء",
-    submit: "إنشاء",
-    creating: "جارٍ الإنشاء…",
-  },
-  sq: {
-    title: "Punëtoritë",
-    sub: "Krijo një punëtori, ndaj kodin QR të regjistrimit, pastaj shfaq kodin ditor të pranisë. Të gjitha të dhënat shfaqen këtu.",
-    create: "+ Punëtori e re",
-    empty: "Nuk ka punëtori ende.",
-    statusOPEN: "E hapur",
-    statusCLOSED: "E mbyllur",
-    signed: "Të regjistruar",
-    attend: "Prania",
-    open: "Detajet",
-    newTitle: "Krijo një punëtori",
-    lblName: "Titulli",
-    lblDesc: "Përshkrimi",
-    lblStart: "Data e fillimit",
-    lblEnd: "Data e mbarimit",
-    cancel: "Anulo",
-    submit: "Krijo",
-    creating: "Po krijohet…",
-  },
+type Row = { id:string; title:string; description:string|null; audience:string[]; audience_other:string|null; start_date:string|null; end_date:string|null; schedule:WorkshopDay[]; materials:unknown[]; status:"OPEN"|"CLOSED"; created_at:string; _count:{signed_up_teachers:number;attendance:number} };
+const audienceKeys = ["TEACHERS","SUPERVISORS","ADMINS","PARENTS","STUDENTS","OTHER"];
+const copy = {
+  ar:{title:"الورش التدريبية",sub:"مسار زمني متكامل للورش، الحضور، والمواد التدريبية.",create:"ورشة جديدة",search:"ابحث عن ورشة",all:"كل الحالات",open:"مفتوحة",closed:"مغلقة",from:"من تاريخ",to:"إلى تاريخ",audience:"الفئة المستهدفة",teachers:"المعلمون",supervisors:"المشرفون",admins:"الإداريون",parents:"أولياء الأمور",students:"الطلاب",other:"أخرى",reset:"مسح الفلاتر",empty:"لا توجد ورش مطابقة.",registered:"مسجل",materials:"مادة",day:"يوم",work:"تدريب",rest:"إجازة / راحة",newTitle:"إنشاء ورشة",name:"اسم الورشة",description:"الوصف",notes:"ملاحظات تظهر للحاضرين",start:"تاريخ البداية (ميلادي)",end:"تاريخ النهاية (ميلادي)",times:"أيام البرنامج",customAudience:"اسم الفئة الأخرى",cancel:"إلغاء",save:"إنشاء الورشة",saving:"جاري الإنشاء..."},
+  sq:{title:"Punëtoritë",sub:"Rrjedha e plotë e punëtorive, pranisë dhe materialeve.",create:"Punëtori e re",search:"Kërko punëtori",all:"Të gjitha",open:"E hapur",closed:"E mbyllur",from:"Nga data",to:"Deri më",audience:"Audienca",teachers:"Mësuesit",supervisors:"Mbikëqyrësit",admins:"Administrata",parents:"Prindërit",students:"Nxënësit",other:"Tjetër",reset:"Pastro filtrat",empty:"Nuk ka rezultate.",registered:"regjistruar",materials:"materiale",day:"ditë",work:"Trajnim",rest:"Pushim",newTitle:"Krijo punëtori",name:"Titulli",description:"Përshkrimi",notes:"Shënime për pjesëmarrësit",start:"Data e fillimit (Gregorian)",end:"Data e mbarimit (Gregorian)",times:"Ditët e programit",customAudience:"Emri i audiencës",cancel:"Anulo",save:"Krijo",saving:"Duke krijuar..."},
 } as const;
 
-export default function WorkshopsPage() {
-  const { lang } = useLang();
-  const L = lang === "sq" ? "sq" : "ar";
-  const T = UI[L];
-  const dir = L === "ar" ? "rtl" : "ltr";
-  const viewOnly = useViewOnly();
-
-  const [rows, setRows] = useState<Row[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dlg, setDlg] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", start_date: "", end_date: "" });
-  const [creating, setCreating] = useState(false);
-
-  function load() {
-    setLoading(true);
-    fetch("/api/school-admin/workshops", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => setRows(d?.workshops ?? []))
-      .catch(() => setRows([]))
-      .finally(() => setLoading(false));
-  }
-  useEffect(load, []);
-
-  async function create() {
-    if (!form.title.trim()) return;
-    setCreating(true);
-    try {
-      const r = await fetch("/api/school-admin/workshops", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (r.ok) {
-        setDlg(false);
-        setForm({ title: "", description: "", start_date: "", end_date: "" });
-        load();
-      }
-    } finally { setCreating(false); }
-  }
-
-  function fmt(s: string | null) {
-    if (!s) return "—";
-    try { return new Date(s).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL"); } catch { return s; }
-  }
-
-  const visible = useMemo(() => rows, [rows]);
-
-  return (
-    <div className="ws" dir={dir}>
-      <header className="ws-hero">
-        <div>
-          <h1 className="ws-title">{T.title}</h1>
-          <p className="ws-sub">{T.sub}</p>
-        </div>
-        {!viewOnly && (
-          <button className="ws-new" onClick={() => setDlg(true)} data-write="true">{T.create}</button>
-        )}
-      </header>
-
-      {loading ? <MandalaLoader />
-       : visible.length === 0 ? <div className="ws-empty">{T.empty}</div>
-       : (
-        <div className="ws-grid">
-          {visible.map((w) => (
-            <Link key={w.id} href={`/school-admin/workshops/${w.id}`} className="ws-card">
-              <div className="ws-card-top">
-                <span className={`ws-tag ws-tag-${w.status}`}>
-                  {w.status === "OPEN" ? T.statusOPEN : T.statusCLOSED}
-                </span>
-                <span className="ws-card-date">{fmt(w.created_at)}</span>
-              </div>
-              <h2 className="ws-card-title">{w.title}</h2>
-              {w.description && <p className="ws-card-desc">{w.description}</p>}
-              <div className="ws-card-stats">
-                <span><strong>{w._count.signed_up_teachers}</strong> {T.signed}</span>
-                <span><strong>{w._count.attendance}</strong> {T.attend}</span>
-              </div>
-              <span className="ws-card-open">{T.open} →</span>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {dlg && !viewOnly && (
-        <div className="ws-overlay" onClick={() => !creating && setDlg(false)}>
-          <div className="ws-dlg" onClick={(e) => e.stopPropagation()}>
-            <h3 className="ws-dlg-title">{T.newTitle}</h3>
-            <label className="ws-lbl">{T.lblName}</label>
-            <input className="ws-input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} autoFocus />
-            <label className="ws-lbl">{T.lblDesc}</label>
-            <textarea className="ws-input ws-ta" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <div className="ws-dlg-row">
-              <div style={{ flex: 1 }}>
-                <label className="ws-lbl">{T.lblStart}</label>
-                <input className="ws-input" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label className="ws-lbl">{T.lblEnd}</label>
-                <input className="ws-input" type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-              </div>
-            </div>
-            <div className="ws-dlg-actions">
-              <button className="ws-btn" onClick={() => setDlg(false)} disabled={creating}>{T.cancel}</button>
-              <button className="ws-btn ws-btn-primary" onClick={create} disabled={creating || !form.title.trim()}>
-                {creating ? T.creating : T.submit}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-        .ws { font-family: 'Cairo', sans-serif; }
-        .ws-hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
-        .ws-title { font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
-        .ws-sub { font-size: 13.5px; color: #655B53; max-width: 680px; line-height: 1.85; margin: 0; }
-        .ws-new { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border: none; padding: 10px 18px; border-radius: 11px; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; }
-        .ws-empty { padding: 60px 20px; text-align: center; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; color: #8C8274; font-weight: 700; }
-        .ws-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 14px; }
-        .ws-card { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px; background: linear-gradient(165deg,#FFFBF5,#F7F3EB); border: 1.5px solid rgba(194,160,89,0.32); border-radius: 14px; text-decoration: none; color: inherit; transition: all .18s; box-shadow: 0 4px 14px rgba(150,115,50,0.06); }
-        .ws-card:hover { transform: translateY(-2px); border-color: #B8A082; box-shadow: 0 10px 26px rgba(150,115,50,0.16); }
-        .ws-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .ws-tag { font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 99px; letter-spacing: 0.04em; }
-        .ws-tag-OPEN   { background: rgba(76,107,60,0.16); color: #1B5E20; }
-        .ws-tag-CLOSED { background: rgba(26,26,26,0.08); color: #655B53; }
-        .ws-card-date { font-size: 11.5px; color: #8F765B; font-weight: 700; }
-        .ws-card-title { font-size: 17px; font-weight: 900; color: #32101A; margin: 0; line-height: 1.4; }
-        .ws-card-desc { font-size: 13px; color: #6B1E2D; margin: 0; line-height: 1.75; }
-        .ws-card-stats { display: flex; gap: 14px; font-size: 12.5px; color: #796A62; padding-top: 6px; }
-        .ws-card-stats strong { color: #32101A; font-weight: 900; font-family: 'JetBrains Mono', ui-monospace, monospace; }
-        .ws-card-open { font-size: 12px; font-weight: 800; color: #6B1E2D; margin-top: auto; }
-
-        .ws-overlay { position: fixed; inset: 0; background: rgba(26,26,26,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
-        .ws-dlg { background: #FFFBF5; border-radius: 16px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .ws-dlg-title { font-size: 17px; font-weight: 900; color: #32101A; margin: 0 0 14px; }
-        .ws-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B1E2D; margin: 10px 0 4px; }
-        .ws-input { width: 100%; padding: 10px 13px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; }
-        .ws-input:focus { border-color: #B8A082; }
-        .ws-ta { resize: vertical; min-height: 50px; line-height: 1.7; }
-        .ws-dlg-row { display: flex; gap: 10px; }
-        .ws-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-        .ws-btn { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #6B1E2D; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
-        .ws-btn-primary { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border-color: transparent; }
-      `}</style>
-    </div>
-  );
+function isoDate(value:string|null){ return value ? value.slice(0,10) : ""; }
+function makeDays(start:string,end:string, previous:WorkshopDay[]=[]):WorkshopDay[]{
+  if(!start||!end||end<start) return [];
+  const old=new Map(previous.map(d=>[d.date,d])); const days:WorkshopDay[]=[]; const cur=new Date(`${start}T12:00:00Z`); const last=new Date(`${end}T12:00:00Z`);
+  while(cur<=last&&days.length<180){ const date=cur.toISOString().slice(0,10); days.push(old.get(date)??{date,type:"WORK",start_time:"09:00",end_time:"15:00"}); cur.setUTCDate(cur.getUTCDate()+1); }
+  return days;
 }
+
+export default function WorkshopsPage(){
+  const {lang}=useLang(); const L=lang==="sq"?"sq":"ar"; const T=copy[L]; const rtl=L==="ar"; const viewOnly=useViewOnly();
+  const [rows,setRows]=useState<Row[]>([]),[loading,setLoading]=useState(true),[dialog,setDialog]=useState(false),[creating,setCreating]=useState(false);
+  const [query,setQuery]=useState(""),[status,setStatus]=useState("ALL"),[from,setFrom]=useState(""),[to,setTo]=useState(""),[audienceFilter,setAudienceFilter]=useState<string[]>([]);
+  const [form,setForm]=useState({title:"",description:"",notes:"",start_date:"",end_date:"",audience:["TEACHERS"],audience_other:"",schedule:[] as WorkshopDay[]});
+  const load=()=>{setLoading(true);fetch("/api/school-admin/workshops",{cache:"no-store"}).then(r=>r.json()).then(d=>setRows(d.workshops??[])).finally(()=>setLoading(false));};
+  useEffect(()=>{fetch("/api/school-admin/workshops",{cache:"no-store"}).then(r=>r.json()).then(d=>setRows(d.workshops??[])).finally(()=>setLoading(false));},[]);
+  const labels:Record<string,string>={TEACHERS:T.teachers,SUPERVISORS:T.supervisors,ADMINS:T.admins,PARENTS:T.parents,STUDENTS:T.students,OTHER:T.other};
+  const filtered=useMemo(()=>rows.filter(w=>{
+    const hay=`${w.title} ${w.description??""}`.toLowerCase(); const start=isoDate(w.start_date),end=isoDate(w.end_date)||start;
+    return (!query||hay.includes(query.toLowerCase()))&&(status==="ALL"||w.status===status)&&(!from||end>=from)&&(!to||start<=to)&&audienceFilter.every(a=>w.audience.includes(a));
+  }),[rows,query,status,from,to,audienceFilter]);
+  function toggleAudience(key:string, target:"filter"|"form"){
+    if(target==="filter") setAudienceFilter(v=>v.includes(key)?v.filter(x=>x!==key):[...v,key]);
+    else setForm(v=>({...v,audience:v.audience.includes(key)?v.audience.filter(x=>x!==key):[...v.audience,key]}));
+  }
+  async function create(){ if(!form.title.trim()||!form.audience.length||!form.schedule.length)return; setCreating(true); const r=await fetch("/api/school-admin/workshops",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)}); setCreating(false); if(r.ok){setDialog(false);setForm({title:"",description:"",notes:"",start_date:"",end_date:"",audience:["TEACHERS"],audience_other:"",schedule:[]});load();}}
+  const fmt=(s:string)=>new Date(`${s.slice(0,10)}T12:00:00Z`).toLocaleDateString(L==="ar"?"ar-SA-u-ca-gregory-nu-latn":"sq-AL",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
+  return <div className="wp" dir={rtl?"rtl":"ltr"}>
+    <header className="wp-head"><div><h1>{T.title}</h1><p>{T.sub}</p></div>{!viewOnly&&<button className="primary" onClick={()=>setDialog(true)}><Plus size={17}/>{T.create}</button>}</header>
+    <section className="filters">
+      <div className="search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={T.search}/></div>
+      <select value={status} onChange={e=>setStatus(e.target.value)}><option value="ALL">{T.all}</option><option value="OPEN">{T.open}</option><option value="CLOSED">{T.closed}</option></select>
+      <label><span>{T.from}</span><input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label><span>{T.to}</span><input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
+      <div className="aud-filter"><span><Filter size={14}/>{T.audience}</span><div>{audienceKeys.map(k=><button key={k} className={audienceFilter.includes(k)?"on":""} onClick={()=>toggleAudience(k,"filter")}>{audienceFilter.includes(k)&&<Check size={13}/>} {labels[k]}</button>)}</div></div>
+      {(query||status!=="ALL"||from||to||audienceFilter.length>0)&&<button className="reset" onClick={()=>{setQuery("");setStatus("ALL");setFrom("");setTo("");setAudienceFilter([])}}><X size={14}/>{T.reset}</button>}
+    </section>
+    {loading?<MandalaLoader/>:filtered.length===0?<div className="empty">{T.empty}</div>:<div className="timeline">{filtered.map((w,i)=>{const days=w.schedule.filter(d=>d.type==="WORK").length,rests=w.schedule.filter(d=>d.type==="REST").length;return <div className="event" key={w.id}><div className="rail"><span>{i+1}</span></div><Link href={`/school-admin/workshops/${w.id}`} className="event-body"><div className="event-top"><div className="date"><CalendarDays size={15}/>{w.start_date?fmt(w.start_date):"-"}{w.end_date&&w.end_date!==w.start_date?` - ${fmt(w.end_date)}`:""}</div><span className={`status ${w.status.toLowerCase()}`}>{w.status==="OPEN"?T.open:T.closed}</span></div><h2>{w.title}</h2>{w.description&&<p>{w.description}</p>}<div className="chips">{w.audience.map(a=><span key={a}><Users size={13}/>{a==="OTHER"&&w.audience_other?w.audience_other:labels[a]}</span>)}</div><div className="meta"><b>{days}</b> {T.day} {T.work}{rests>0&&<> · <b>{rests}</b> {T.rest}</>} · <b>{w._count.signed_up_teachers}</b> {T.registered} · <b>{w.materials.length}</b> {T.materials}</div></Link></div>})}</div>}
+    {dialog&&<div className="overlay" onClick={()=>!creating&&setDialog(false)}><div className="dialog" onClick={e=>e.stopPropagation()}><div className="dialog-head"><h2>{T.newTitle}</h2><button onClick={()=>setDialog(false)} aria-label={T.cancel}><X size={19}/></button></div><label>{T.name}<input autoFocus value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label><label>{T.description}<textarea rows={2} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label><fieldset><legend>{T.audience}</legend><div className="choices">{audienceKeys.map(k=><button type="button" key={k} className={form.audience.includes(k)?"on":""} onClick={()=>toggleAudience(k,"form")}>{form.audience.includes(k)&&<Check size={14}/>} {labels[k]}</button>)}</div>{form.audience.includes("OTHER")&&<input placeholder={T.customAudience} value={form.audience_other} onChange={e=>setForm({...form,audience_other:e.target.value})}/>}</fieldset><div className="date-row"><label>{T.start}<input type="date" value={form.start_date} onChange={e=>{const start=e.target.value;setForm(v=>({...v,start_date:start,schedule:makeDays(start,v.end_date,v.schedule)}))}}/></label><label>{T.end}<input type="date" min={form.start_date} value={form.end_date} onChange={e=>{const end=e.target.value;setForm(v=>({...v,end_date:end,schedule:makeDays(v.start_date,end,v.schedule)}))}}/></label></div>{form.schedule.length>0&&<fieldset><legend>{T.times}</legend><div className="days">{form.schedule.map((d,idx)=><div className={`day-row ${d.type.toLowerCase()}`} key={d.date}><span>{fmt(d.date)}</span><button type="button" onClick={()=>setForm(v=>({...v,schedule:v.schedule.map((x,j)=>j===idx?{...x,type:x.type==="WORK"?"REST":"WORK"}:x)}))}>{d.type==="WORK"?T.work:T.rest}</button>{d.type==="WORK"&&<><input type="time" value={d.start_time} onChange={e=>setForm(v=>({...v,schedule:v.schedule.map((x,j)=>j===idx?{...x,start_time:e.target.value}:x)}))}/><input type="time" value={d.end_time} onChange={e=>setForm(v=>({...v,schedule:v.schedule.map((x,j)=>j===idx?{...x,end_time:e.target.value}:x)}))}/></>}</div>)}</div></fieldset>}<label>{T.notes}<textarea rows={3} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></label><div className="actions"><button onClick={()=>setDialog(false)}>{T.cancel}</button><button className="primary" onClick={create} disabled={creating||!form.title.trim()||!form.schedule.length||!form.audience.length}>{creating?T.saving:T.save}</button></div></div></div>}
+    <style>{styles}</style>
+  </div>;
+}
+
+const styles=`
+.wp{font-family:'Cairo',sans-serif;color:#32101A}.wp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}.wp-head h1{font-size:26px;margin:0 0 4px}.wp-head p{margin:0;color:#655B53}.primary{display:inline-flex;align-items:center;gap:7px;background:#4A0E1C!important;color:#F3E4C2!important;border-color:#4A0E1C!important}.filters{display:grid;grid-template-columns:minmax(220px,1.4fr) 160px 160px 160px;gap:10px;background:#FFFBF5;border:1px solid #DED4C4;padding:14px;margin-bottom:22px}.filters input,.filters select,.dialog input,.dialog textarea{width:100%;border:1px solid #D7CBB9;background:#fff;padding:9px 11px;font:inherit;font-size:13px}.filters label>span{display:block;font-size:10px;font-weight:800;color:#765E45;margin-bottom:2px}.search{display:flex;align-items:center;gap:8px;border:1px solid #D7CBB9;background:#fff;padding-inline:10px}.search input{border:0;padding-inline:0;outline:0}.aud-filter{grid-column:1/-1}.aud-filter>span{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;margin-bottom:7px}.aud-filter div,.choices,.chips{display:flex;gap:6px;flex-wrap:wrap}.aud-filter button,.choices button,.chips span,.day-row button{border:1px solid #D8CCBA;background:#fff;color:#5A4035;padding:5px 9px;font:inherit;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:3px}.aud-filter button.on,.choices button.on{background:#E9E1D3;border-color:#9C7A4B;color:#4A0E1C}.reset{justify-self:start;display:flex;gap:5px;align-items:center;border:0;background:none;color:#8B2B38;font:inherit;font-size:11px;font-weight:800;cursor:pointer}.timeline{position:relative}.event{display:grid;grid-template-columns:48px 1fr;min-height:170px}.rail{position:relative;display:flex;justify-content:center}.rail:after{content:'';position:absolute;top:38px;bottom:0;width:2px;background:#CBB994}.event:last-child .rail:after{display:none}.rail span{z-index:1;width:34px;height:34px;display:grid;place-items:center;background:#32101A;color:#DCC79C;font-weight:900;border:4px solid #F2EEE7;border-radius:50%}.event-body{display:block;text-decoration:none;color:inherit;background:#FFFBF5;border:1px solid #DED4C4;padding:17px 20px;margin-bottom:14px;transition:.16s}.event-body:hover{border-color:#9C7A4B;box-shadow:0 8px 24px rgba(60,35,18,.1)}.event-top{display:flex;justify-content:space-between;gap:10px}.date{display:flex;align-items:center;gap:6px;color:#7A6044;font-size:12px;font-weight:800}.status{font-size:10px;font-weight:900;padding:3px 9px}.status.open{background:#DFE8D9;color:#315128}.status.closed{background:#E8E4DF;color:#5D554E}.event h2{font-size:19px;margin:9px 0 4px}.event p{font-size:13px;color:#675E57;margin:0 0 9px}.chips span{background:#F2EBDD}.meta{margin-top:10px;padding-top:9px;border-top:1px solid #EBE3D7;color:#796A62;font-size:12px}.empty{padding:60px;text-align:center;border:1px dashed #CABB9F;background:#FFFBF5}.overlay{position:fixed;inset:0;z-index:100;background:rgba(20,15,12,.62);display:grid;place-items:center;padding:18px}.dialog{width:min(720px,100%);max-height:92vh;overflow:auto;background:#FFFBF5;border:1px solid #A98A59;padding:22px}.dialog-head{display:flex;justify-content:space-between;align-items:center}.dialog-head h2{margin:0}.dialog-head button{border:0;background:none;cursor:pointer}.dialog>label,.date-row label{display:block;font-size:12px;font-weight:900;margin-top:12px}.dialog fieldset{border:1px solid #DED4C4;margin-top:14px;padding:12px}.dialog legend{font-size:12px;font-weight:900}.date-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.days{display:grid;gap:6px}.day-row{display:grid;grid-template-columns:minmax(150px,1fr) 95px 105px 105px;gap:7px;align-items:center;background:#F7F2EA;padding:7px}.day-row.rest{grid-template-columns:minmax(150px,1fr) 95px;background:#EEECE8}.day-row span{font-size:12px;font-weight:800}.day-row button{justify-content:center}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.actions button,.wp-head button{border:1px solid #D7CBB9;background:#fff;padding:9px 14px;font:inherit;font-size:12px;font-weight:900;cursor:pointer}.actions button:disabled{opacity:.5}.wp button{border-radius:7px}.filters,.event-body,.dialog,.empty{border-radius:8px}@media(max-width:850px){.filters{grid-template-columns:1fr 1fr}.search,.aud-filter{grid-column:1/-1}.date-row{grid-template-columns:1fr}.day-row{grid-template-columns:1fr 80px 1fr 1fr}.wp-head{align-items:stretch}.wp-head .primary{white-space:nowrap}}@media(max-width:520px){.filters{grid-template-columns:1fr}.filters>*{grid-column:1!important}.event{grid-template-columns:38px 1fr}.rail span{width:30px;height:30px}.event-body{padding:14px}.day-row{grid-template-columns:1fr 80px}.day-row input{grid-row:2}.wp-head{flex-direction:column}}
+`;

@@ -27,7 +27,7 @@ export async function GET(
 
   const workshop = await prisma.workshop.findFirst({
     where: { id, school_id: auth.school.id },
-    select: { id: true, title: true, start_date: true, end_date: true },
+    select: { id: true, title: true, start_date: true, end_date: true, schedule: true },
   });
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -58,12 +58,14 @@ export async function GET(
     select: { teacher_id: true, day_date: true, checked_in_at: true },
   });
 
-  // Days = every date that has at least one check-in (sorted asc). If the
-  // workshop has start/end dates, we also seed the full range so empty days
-  // still show up as columns.
+  // Scheduled work days are attendance days. Rest/vacation entries never
+  // count as absences. Legacy workshops still fall back to their date range.
   const days = new Set<string>();
   for (const a of attendance) days.add(dayKey(a.day_date));
-  if (workshop.start_date && workshop.end_date) {
+  const schedule = Array.isArray(workshop.schedule) ? workshop.schedule as Array<{ date?: string; type?: string }> : [];
+  if (schedule.length) {
+    for (const day of schedule) if (day.type === "WORK" && /^\d{4}-\d{2}-\d{2}$/.test(day.date ?? "")) days.add(day.date!);
+  } else if (workshop.start_date && workshop.end_date) {
     const cur = new Date(workshop.start_date);
     const end = new Date(workshop.end_date);
     while (cur <= end) {

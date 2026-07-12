@@ -29,6 +29,7 @@ import {
   Sparkles,
   Gamepad2,
   MapPin,
+  CalendarRange,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -113,7 +114,7 @@ interface NavItem {
 }
 
 interface NavItem2 extends Omit<NavItem, "key"> {
-  key: NavItem["key"] | "games" | "groups";
+  key: NavItem["key"] | "games" | "groups" | "workshops";
   labelAr?: string;
   labelSq?: string;
   labelEn?: string;
@@ -131,6 +132,10 @@ const navItems: NavItem2[] = [
     labelAr: "مجموعاتي",
     labelSq: "Grupet e mia",
     labelEn: "My Groups",
+  },
+  {
+    href: "/teacher/workshops", key: "workshops", sublabel: "Workshops", exact: false, icon: CalendarRange,
+    labelAr: "الورش التدريبية", labelSq: "Punëtoritë", labelEn: "Workshops",
   },
   {
     href: "/teacher/roadmap",  key: "roadmap",   sublabel: "Roadmap",   exact: false, icon: MapPin,
@@ -294,7 +299,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
       if (lang === "sq") return item.labelSq!;
       return item.labelEn ?? item.labelAr;
     }
-    return tr[item.key as Exclude<NavItem2["key"], "games" | "roadmap" | "groups">];
+    return tr[item.key as Exclude<NavItem2["key"], "games" | "roadmap" | "groups" | "workshops">];
   };
 
   const currentLabel = (() => {

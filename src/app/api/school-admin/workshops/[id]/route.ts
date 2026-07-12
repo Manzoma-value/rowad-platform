@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { qrDataUri } from "@/lib/qr";
+import { AUDIENCES, cleanSchedule, workshopDates } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
 
@@ -33,8 +34,13 @@ export async function GET(
       id: true,
       title: true,
       description: true,
+      audience: true,
+      audience_other: true,
       start_date: true,
       end_date: true,
+      schedule: true,
+      notes: true,
+      materials: true,
       status: true,
       signup_token: true,
       created_at: true,
@@ -57,7 +63,7 @@ export async function PATCH(
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await context.params;
 
-  let body: { title?: string; description?: string | null; start_date?: string | null; end_date?: string | null; status?: "OPEN" | "CLOSED" };
+  let body: { title?: string; description?: string | null; audience?: string[]; audience_other?: string | null; start_date?: string | null; end_date?: string | null; schedule?: unknown; notes?: string | null; status?: "OPEN" | "CLOSED" };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
 
   const existing = await prisma.workshop.findFirst({
@@ -74,6 +80,20 @@ export async function PATCH(
   if (body.description !== undefined) {
     data.description = body.description?.toString().trim().slice(0, 1000) || null;
   }
+  if (body.audience !== undefined) {
+    const audience = Array.from(new Set(body.audience.filter((item) => AUDIENCES.includes(item as typeof AUDIENCES[number]))));
+    if (!audience.length) return NextResponse.json({ error: "audience required" }, { status: 400 });
+    data.audience = audience;
+    data.audience_other = audience.includes("OTHER") ? body.audience_other?.trim().slice(0, 120) || null : null;
+  }
+  if (body.schedule !== undefined) {
+    const schedule = cleanSchedule(body.schedule);
+    const dates = workshopDates(schedule, body.start_date, body.end_date);
+    data.schedule = schedule;
+    data.start_date = dates.start ? new Date(`${dates.start}T00:00:00Z`) : null;
+    data.end_date = dates.end ? new Date(`${dates.end}T00:00:00Z`) : null;
+  }
+  if (body.notes !== undefined) data.notes = body.notes?.trim().slice(0, 5000) || null;
   if (body.start_date !== undefined) data.start_date = body.start_date ? new Date(body.start_date) : null;
   if (body.end_date !== undefined)   data.end_date   = body.end_date   ? new Date(body.end_date)   : null;
   if (body.status === "OPEN" || body.status === "CLOSED") data.status = body.status;
