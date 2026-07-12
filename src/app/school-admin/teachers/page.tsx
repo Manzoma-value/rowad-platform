@@ -27,6 +27,8 @@ import {
   Users,
   Sparkles,
   Trash2,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 
 type TeacherClass = {
@@ -125,6 +127,10 @@ function currentRoleLabel(code: string, lang: string) {
   return entry ? entry[lang === "sq" ? "sq" : "ar"] : code;
 }
 
+// Keep the experience filter's options in the enum's natural order.
+const EXPERIENCE_ORDER = ["LT_3", "Y_3_5", "Y_6_10", "Y_11_15", "GT_15"];
+const QUALIFICATION_ORDER = ["DIPLOMA", "BACHELOR", "HIGHER_DIPLOMA", "MASTER", "PHD"];
+
 // ── Collapse the raw attendance log into one row per workshop ──
 type WorkshopSummary = { id: string; title: string; status: string; days: number; lastDate: string; isCurrent: boolean };
 
@@ -165,6 +171,12 @@ export default function SchoolAdminTeachersPage() {
   const [toggling, setToggling] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState("");
 
+  // ── Filters ──
+  const [fLocation, setFLocation] = useState("");
+  const [fQualification, setFQualification] = useState("");
+  const [fExperience, setFExperience] = useState("");
+  const [fStatus, setFStatus] = useState("");
+
   const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -199,7 +211,16 @@ export default function SchoolAdminTeachersPage() {
     quizzes: lang === "ar" ? "اختبارات" : lang === "sq" ? "kuize" : "quizzes",
     activate: lang === "ar" ? "تفعيل" : lang === "sq" ? "Aktivizo" : "Activate",
     deactivate: lang === "ar" ? "تعطيل" : lang === "sq" ? "Çaktivizo" : "Deactivate",
-    deleteTeacher: lang === "ar" ? "حذف المعلم" : lang === "sq" ? "Fshi mësuesin" : "Delete teacher",
+    deleteTeacher: lang === "ar" ? "حذف" : lang === "sq" ? "Fshi" : "Delete",
+    filters: lang === "ar" ? "تصفية النتائج" : lang === "sq" ? "Filtrimi" : "Filters",
+    allLocations: lang === "ar" ? "كل المواقع" : lang === "sq" ? "Të gjitha vendndodhjet" : "All locations",
+    allQualifications: lang === "ar" ? "كل المؤهلات" : lang === "sq" ? "Të gjitha kualifikimet" : "All qualifications",
+    allExperience: lang === "ar" ? "كل مستويات الخبرة" : lang === "sq" ? "Çdo nivel përvoje" : "Any experience",
+    allStatuses: lang === "ar" ? "كل الحالات" : lang === "sq" ? "Të gjitha statuset" : "All statuses",
+    statusLbl: lang === "ar" ? "الحالة" : lang === "sq" ? "Statusi" : "Status",
+    resetFilters: lang === "ar" ? "مسح التصفية" : lang === "sq" ? "Pastro filtrat" : "Clear filters",
+    result: lang === "ar" ? "نتيجة" : lang === "sq" ? "rezultate" : "results",
+    noResults: lang === "ar" ? "لا يوجد معلمون مطابقون لخيارات التصفية الحالية." : lang === "sq" ? "Asnjë mësues nuk përputhet me filtrat aktualë." : "No teachers match the current filters.",
   };
 
   useEffect(() => {
@@ -209,10 +230,44 @@ export default function SchoolAdminTeachersPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  // ── Distinct filter options, derived from the actual data ──
+  const locationOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const teacher of teachers) {
+      if (teacher.application) set.add(`${teacher.application.city}, ${teacher.application.country}`);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "ar"));
+  }, [teachers]);
+
+  const qualificationOptions = useMemo(() => {
+    const present = new Set(teachers.map((teacher) => teacher.application?.qualification).filter(Boolean) as string[]);
+    return QUALIFICATION_ORDER.filter((code) => present.has(code));
+  }, [teachers]);
+
+  const experienceOptions = useMemo(() => {
+    const present = new Set(teachers.map((teacher) => teacher.application?.years_of_experience).filter(Boolean) as string[]);
+    return EXPERIENCE_ORDER.filter((code) => present.has(code));
+  }, [teachers]);
+
+  const hasActiveFilters = Boolean(fLocation || fQualification || fExperience || fStatus || query.trim());
+
+  const resetFilters = () => {
+    setFLocation("");
+    setFQualification("");
+    setFExperience("");
+    setFStatus("");
+    setQuery("");
+  };
+
   const filteredTeachers = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return teachers;
     return teachers.filter((teacher) => {
+      if (fLocation && `${teacher.application?.city}, ${teacher.application?.country}` !== fLocation) return false;
+      if (fQualification && teacher.application?.qualification !== fQualification) return false;
+      if (fExperience && teacher.application?.years_of_experience !== fExperience) return false;
+      if (fStatus === "active" && !teacher.profile.is_active) return false;
+      if (fStatus === "inactive" && teacher.profile.is_active) return false;
+      if (!needle) return true;
       const haystack = [
         teacher.profile.full_name,
         teacher.profile.email,
@@ -228,7 +283,7 @@ export default function SchoolAdminTeachersPage() {
         .toLowerCase();
       return haystack.includes(needle);
     });
-  }, [query, teachers]);
+  }, [query, teachers, fLocation, fQualification, fExperience, fStatus]);
 
   const totals = useMemo(() => {
     const active = teachers.filter((teacher) => teacher.profile.is_active).length;
@@ -329,45 +384,89 @@ export default function SchoolAdminTeachersPage() {
         <Link href="/school-admin/teacher-groups">{labels.groups}</Link>
       </section>
 
+      {/* ── Filters ── */}
+      <section className="te-filters">
+        <div className="te-filters-head">
+          <SlidersHorizontal size={14} strokeWidth={2} />
+          <span>{labels.filters}</span>
+          <em className="te-filters-count">{filteredTeachers.length} {labels.result}</em>
+          {hasActiveFilters && (
+            <button type="button" className="te-filters-reset" onClick={resetFilters}>
+              <X size={12} strokeWidth={2.4} />
+              {labels.resetFilters}
+            </button>
+          )}
+        </div>
+        <div className="te-filters-row">
+          <label className="te-filter">
+            <span>{labels.location}</span>
+            <select value={fLocation} onChange={(e) => setFLocation(e.target.value)}>
+              <option value="">{labels.allLocations}</option>
+              {locationOptions.map((loc) => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+          </label>
+          <label className="te-filter">
+            <span>{labels.qualification}</span>
+            <select value={fQualification} onChange={(e) => setFQualification(e.target.value)}>
+              <option value="">{labels.allQualifications}</option>
+              {qualificationOptions.map((code) => (
+                <option key={code} value={code}>{qualificationLabel(code, lang)}</option>
+              ))}
+            </select>
+          </label>
+          <label className="te-filter">
+            <span>{labels.experience}</span>
+            <select value={fExperience} onChange={(e) => setFExperience(e.target.value)}>
+              <option value="">{labels.allExperience}</option>
+              {experienceOptions.map((code) => (
+                <option key={code} value={code}>{experienceLabel(code, lang)}</option>
+              ))}
+            </select>
+          </label>
+          <label className="te-filter">
+            <span>{labels.statusLbl}</span>
+            <select value={fStatus} onChange={(e) => setFStatus(e.target.value)}>
+              <option value="">{labels.allStatuses}</option>
+              <option value="active">{labels.active}</option>
+              <option value="inactive">{labels.inactive}</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
       {toggleError && <div className="te-error">{toggleError}</div>}
 
       {filteredTeachers.length === 0 ? (
-        <div className="te-empty">{tr.noTeachers}</div>
+        <div className="te-empty">
+          <p>{hasActiveFilters ? labels.noResults : tr.noTeachers}</p>
+          {hasActiveFilters && (
+            <button type="button" className="te-empty-reset" onClick={resetFilters}>{labels.resetFilters}</button>
+          )}
+        </div>
       ) : (
         <div className="te-grid">
           {filteredTeachers.map((teacher, index) => {
             const workshopSummaries = summarizeWorkshops(teacher);
             return (
-              <article key={teacher.id} className="te-card" style={{ animationDelay: `${index * 35}ms` }}>
+              <article key={teacher.id} className={`te-card ${teacher.profile.is_active ? "" : "is-inactive"}`} style={{ animationDelay: `${index * 35}ms` }}>
                 <div className="te-card-watermark" aria-hidden="true">
-                  <IdentityMandala size={130} stroke="#4A0E1C" opacity={0.05} />
+                  <IdentityMandala size={150} stroke="#4A0E1C" opacity={0.05} />
                 </div>
 
-                <button
-                  type="button"
-                  data-write="true"
-                  className="te-delete-btn"
-                  onClick={() => { setDeleteTarget(teacher); setDeleteError(""); }}
-                  title={labels.deleteTeacher}
-                  aria-label={labels.deleteTeacher}
-                >
-                  <Trash2 size={15} strokeWidth={1.8} />
-                </button>
-
+                {/* ── Header ── */}
                 <div className="te-card-top">
                   <Avatar teacher={teacher} />
                   <div className="te-identity">
                     <div className="te-name-row">
                       <h2>{teacher.profile.full_name}</h2>
-                    </div>
-                    <div className="te-badge-row">
-                      <span className={`te-status ${teacher.profile.is_active ? "good" : "bad"}`}>
-                        <span className="te-status-dot" />
-                        {teacher.profile.is_active ? labels.active : labels.inactive}
-                      </span>
                       <span className={`te-pill ${onboardingTone[teacher.onboarding_status] ?? ""}`}>
                         {onboardingLabel(teacher.onboarding_status, lang)}
                       </span>
+                      {!teacher.profile.is_active && (
+                        <span className="te-pill bad">{labels.inactive}</span>
+                      )}
                     </div>
                     <div className="te-contact">
                       {teacher.profile.email && <span><Mail size={12} strokeWidth={2} />{teacher.profile.email}</span>}
@@ -375,14 +474,32 @@ export default function SchoolAdminTeachersPage() {
                       {teacher.application && <span><MapPin size={12} strokeWidth={2} />{teacher.application.city}, {teacher.application.country}</span>}
                     </div>
                   </div>
-                  <button
-                    data-write="true"
-                    className={`te-toggle ${teacher.profile.is_active ? "off" : "on"}`}
-                    onClick={() => toggleTeacher(teacher.id, teacher.profile.is_active)}
-                    disabled={toggling === teacher.id}
-                  >
-                    {toggling === teacher.id ? "..." : teacher.profile.is_active ? labels.deactivate : labels.activate}
-                  </button>
+                  <div className="te-btn-group" data-write-area="true">
+                    <button
+                      data-write="true"
+                      className={`te-toggle ${teacher.profile.is_active ? "off" : "on"}`}
+                      onClick={() => toggleTeacher(teacher.id, teacher.profile.is_active)}
+                      disabled={toggling === teacher.id}
+                    >
+                      {toggling === teacher.id ? "..." : teacher.profile.is_active ? labels.deactivate : labels.activate}
+                    </button>
+                    <button
+                      type="button"
+                      data-write="true"
+                      className="te-delete"
+                      onClick={() => { setDeleteTarget(teacher); setDeleteError(""); }}
+                    >
+                      <Trash2 size={13} strokeWidth={2} />
+                      {labels.deleteTeacher}
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Gold rule ── */}
+                <div className="te-rule" aria-hidden="true">
+                  <i className="te-rule-line" />
+                  <i className="te-rule-diamond" />
+                  <i className="te-rule-line" />
                 </div>
 
                 <div className="te-sections">
@@ -645,58 +762,99 @@ const styles = `
   .te-toolbar input:focus { border-color:rgba(184,160,130,.55); box-shadow:0 0 0 4px rgba(184,160,130,.10); }
   .te-toolbar a { height:48px; display:inline-flex; align-items:center; justify-content:center; padding:0 18px; border-radius:16px; background:linear-gradient(180deg,#5B1526,#32101A); border:1px solid rgba(184,160,130,.35); color:#D9C9B0; font-size:12px; font-weight:700; text-decoration:none; transition:box-shadow .18s ease, transform .18s ease; }
   .te-toolbar a:hover { box-shadow:0 6px 20px rgba(184,160,130,.25); transform:translateY(-1px); }
-  .te-error { padding:12px 14px; border-radius:14px; color:#6B1E2D; background:rgba(107,30,45,.07); border:1px solid rgba(107,30,45,.18); font-size:13px; font-weight:800; }
-  .te-empty { padding:60px; text-align:center; border-radius:22px; background:#FFFBF5; border:1px solid rgba(184,160,130,.16); color:#796A62; font-weight:800; }
 
+  /* ── Filters ── */
+  .te-filters {
+    border-radius:20px; padding:16px 18px;
+    background:linear-gradient(180deg,#FFFBF5,#F7F3EB);
+    border:1px solid rgba(184,160,130,.26);
+    box-shadow:0 10px 26px rgba(50,16,26,.045);
+    position:relative; overflow:hidden;
+  }
+  .te-filters:before { content:""; position:absolute; top:0; inset-inline:18px; height:2px; background:linear-gradient(90deg,transparent,#B8A082,transparent); }
+  .te-filters-head { display:flex; align-items:center; gap:8px; margin-bottom:13px; color:#655B53; }
+  .te-filters-head svg { color:#B8A082; }
+  .te-filters-head > span { font-family:var(--font-head); font-size:12.5px; font-weight:700; }
+  .te-filters-count { font-style:normal; font-size:11px; font-weight:700; color:#6B1E2D; background:rgba(184,160,130,.14); border:1px solid rgba(184,160,130,.25); border-radius:999px; padding:2px 10px; }
+  .te-filters-reset {
+    margin-inline-start:auto; display:inline-flex; align-items:center; gap:5px;
+    background:none; border:1px solid rgba(107,30,45,.22); border-radius:999px;
+    padding:4px 12px; color:#6B1E2D; font:700 11px 'Cairo',sans-serif; cursor:pointer;
+    transition:background .16s ease;
+  }
+  .te-filters-reset:hover { background:rgba(107,30,45,.07); }
+  .te-filters-row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+  .te-filter { display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .te-filter > span { font-size:10.5px; font-weight:700; letter-spacing:.04em; color:#8F765B; }
+  .te-filter select {
+    height:42px; border-radius:13px; padding:0 12px;
+    border:1px solid rgba(184,160,130,.30); background:#FFFFFF;
+    font:700 12.5px 'Cairo',sans-serif; color:#1A1A1A; cursor:pointer; outline:none;
+    transition:border-color .18s ease, box-shadow .18s ease;
+  }
+  .te-filter select:hover { border-color:rgba(184,160,130,.5); }
+  .te-filter select:focus { border-color:rgba(184,160,130,.6); box-shadow:0 0 0 4px rgba(184,160,130,.10); }
+
+  .te-error { padding:12px 14px; border-radius:14px; color:#6B1E2D; background:rgba(107,30,45,.07); border:1px solid rgba(107,30,45,.18); font-size:13px; font-weight:800; }
+  .te-empty { display:flex; flex-direction:column; align-items:center; gap:14px; padding:60px; text-align:center; border-radius:22px; background:#FFFBF5; border:1px solid rgba(184,160,130,.16); color:#796A62; font-weight:800; }
+  .te-empty p { margin:0; }
+  .te-empty-reset { background:linear-gradient(180deg,#5B1526,#32101A); color:#D9C9B0; border:1px solid rgba(184,160,130,.35); border-radius:12px; padding:10px 22px; font:700 12.5px 'Cairo',sans-serif; cursor:pointer; }
+
+  /* ── Cards ── */
   .te-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
   .te-card {
     position:relative; overflow:hidden;
-    display:flex; flex-direction:column; gap:14px; padding:20px;
-    border-radius:24px; background:linear-gradient(180deg,#FFFBF5,#FBF8F1);
-    border:1px solid rgba(184,160,130,.20);
-    box-shadow:0 14px 34px rgba(50,16,26,.06);
+    display:flex; flex-direction:column; gap:13px; padding:22px;
+    border-radius:24px; background:linear-gradient(180deg,#FFFBF5 0%,#FBF8F1 70%,#F7F3EB 100%);
+    border:1px solid rgba(184,160,130,.24);
+    box-shadow:0 14px 34px rgba(50,16,26,.06), inset 0 1px 0 rgba(255,255,255,.7);
     animation:fadeUp .35s ease both;
     transition:transform .22s cubic-bezier(.22,1,.36,1), border-color .22s ease, box-shadow .22s ease;
   }
-  .te-card:hover { transform:translateY(-3px); border-color:rgba(184,160,130,.42); box-shadow:0 20px 44px rgba(50,16,26,.11); }
-  .te-card:before { content:""; position:absolute; top:0; inset-inline:20px; height:2px; background:linear-gradient(90deg,transparent,#B8A082,transparent); }
-  .te-card-watermark { position:absolute; inset-inline-end:-24px; bottom:-24px; pointer-events:none; z-index:0; }
+  .te-card:hover { transform:translateY(-4px); border-color:rgba(184,160,130,.5); box-shadow:0 24px 52px rgba(50,16,26,.12), inset 0 1px 0 rgba(255,255,255,.7); }
+  .te-card:before { content:""; position:absolute; top:0; inset-inline:22px; height:2px; background:linear-gradient(90deg,transparent,#B8A082,transparent); }
+  .te-card.is-inactive { filter:saturate(.75); }
+  .te-card.is-inactive:after { content:""; position:absolute; top:0; inset-inline:0; height:3px; background:linear-gradient(90deg,transparent,rgba(107,30,45,.5),transparent); }
+  .te-card-watermark { position:absolute; inset-inline-end:-30px; bottom:-30px; pointer-events:none; z-index:0; }
 
-  .te-delete-btn {
-    position:absolute; top:14px; inset-inline-end:14px; z-index:2;
-    display:flex; align-items:center; justify-content:center;
-    width:32px; height:32px; border-radius:10px;
-    background:rgba(255,255,255,.7); border:1px solid rgba(184,160,130,.22);
-    color:#8F765B; cursor:pointer; transition:all .18s ease;
-  }
-  .te-delete-btn:hover { background:rgba(107,30,45,.08); border-color:rgba(107,30,45,.30); color:#6B1E2D; transform:scale(1.06); }
-
-  .te-card-top { position:relative; z-index:1; display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:14px; align-items:center; }
-  .te-avatar { width:68px; height:68px; border-radius:18px; overflow:hidden; background:linear-gradient(150deg,#4A0E1C,#32101A); color:#D9C9B0; display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:21px; font-weight:700; border:1px solid rgba(184,160,130,.30); box-shadow:0 6px 18px rgba(50,16,26,.18), inset 0 1px 0 rgba(217,201,176,.14); flex-shrink:0; }
+  .te-card-top { position:relative; z-index:1; display:grid; grid-template-columns:auto minmax(0,1fr); gap:14px; align-items:start; }
+  .te-avatar { width:68px; height:68px; border-radius:20px; overflow:hidden; background:linear-gradient(150deg,#4A0E1C,#32101A); color:#D9C9B0; display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:21px; font-weight:700; border:1px solid rgba(184,160,130,.35); box-shadow:0 8px 20px rgba(50,16,26,.20), inset 0 1px 0 rgba(217,201,176,.16); flex-shrink:0; }
   .te-avatar img { width:100%; height:100%; object-fit:cover; }
   .te-identity { min-width:0; }
   .te-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .te-name-row h2 { margin:0; font-family:var(--font-head); font-size:16.5px; font-weight:700; color:#1A1A1A; }
-  .te-badge-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .te-name-row h2 { margin:0; font-family:var(--font-head); font-size:17px; font-weight:700; color:#1A1A1A; }
   .te-contact { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
   .te-contact span { display:inline-flex; align-items:center; gap:5px; color:#796A62; font-size:11.5px; font-weight:700; }
   .te-contact svg { color:#B8A082; flex-shrink:0; }
 
-  .te-status, .te-pill { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px; font-size:10.5px; font-weight:800; border:1px solid rgba(184,160,130,.18); background:rgba(184,160,130,.08); color:#8F765B; }
-  .te-status-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
-  .te-status.good, .te-pill.good { color:#1B5E20; background:rgba(27,94,32,.09); border-color:rgba(27,94,32,.18); }
-  .te-status.bad, .te-pill.bad { color:#6B1E2D; background:rgba(107,30,45,.08); border-color:rgba(107,30,45,.18); }
+  .te-pill { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 10px; font-size:10.5px; font-weight:800; border:1px solid rgba(184,160,130,.18); background:rgba(184,160,130,.08); color:#8F765B; }
+  .te-pill.good { color:#1B5E20; background:rgba(27,94,32,.09); border-color:rgba(27,94,32,.18); }
+  .te-pill.bad { color:#6B1E2D; background:rgba(107,30,45,.08); border-color:rgba(107,30,45,.18); }
   .te-pill.warn { color:#8F765B; background:rgba(184,160,130,.12); border-color:rgba(184,160,130,.22); }
 
-  .te-toggle { position:relative; z-index:1; border:1px solid; border-radius:14px; min-width:80px; height:38px; padding:0 14px; font:800 11px 'Cairo',sans-serif; cursor:pointer; transition:.18s ease; }
-  .te-toggle.off { color:#6B1E2D; background:rgba(107,30,45,.06); border-color:rgba(107,30,45,.18); }
-  .te-toggle.off:hover:not(:disabled) { background:rgba(107,30,45,.11); }
-  .te-toggle.on { color:#1B5E20; background:rgba(27,94,32,.08); border-color:rgba(27,94,32,.20); }
+  /* Action buttons — side by side, full row under the header */
+  .te-btn-group { grid-column:1 / -1; display:flex; gap:9px; margin-top:2px; }
+  .te-toggle, .te-delete {
+    flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border:1px solid; border-radius:13px; height:40px; padding:0 14px;
+    font:800 12px 'Cairo',sans-serif; cursor:pointer;
+    transition:all .18s cubic-bezier(.22,1,.36,1);
+  }
+  .te-toggle.off { color:#8F765B; background:rgba(184,160,130,.08); border-color:rgba(184,160,130,.30); }
+  .te-toggle.off:hover:not(:disabled) { background:rgba(184,160,130,.16); border-color:rgba(184,160,130,.5); color:#655B53; }
+  .te-toggle.on { color:#1B5E20; background:rgba(27,94,32,.08); border-color:rgba(27,94,32,.22); }
   .te-toggle.on:hover:not(:disabled) { background:rgba(27,94,32,.14); }
   .te-toggle:disabled { opacity:.55; cursor:not-allowed; }
+  .te-delete { color:#6B1E2D; background:rgba(107,30,45,.05); border-color:rgba(107,30,45,.20); }
+  .te-delete:hover { background:rgba(107,30,45,.11); border-color:rgba(107,30,45,.38); transform:translateY(-1px); box-shadow:0 6px 14px rgba(107,30,45,.12); }
+
+  /* Gold separator rule */
+  .te-rule { position:relative; z-index:1; display:flex; align-items:center; gap:7px; margin:2px 0; }
+  .te-rule-line { flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(184,160,130,.35),transparent); }
+  .te-rule-diamond { width:5px; height:5px; border-radius:1px; background:rgba(184,160,130,.55); transform:rotate(45deg); flex-shrink:0; }
 
   .te-sections { position:relative; z-index:1; display:grid; grid-template-columns:1fr; gap:10px; }
-  .te-info { border:1px solid rgba(184,160,130,.14); border-radius:18px; padding:14px; background:rgba(255,255,255,.55); }
+  .te-info { border:1px solid rgba(184,160,130,.16); border-radius:18px; padding:14px 15px; background:rgba(255,255,255,.6); box-shadow:inset 0 1px 0 rgba(255,255,255,.8); }
   .te-info h3 { display:flex; align-items:center; gap:7px; margin:0 0 11px; color:#655B53; font-family:var(--font-head); font-size:12px; font-weight:700; }
   .te-info h3 svg { color:#B8A082; }
 
@@ -728,10 +886,12 @@ const styles = `
   .te-card-footer { position:relative; z-index:1; display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:auto; padding-top:12px; border-top:1px dashed rgba(184,160,130,.22); color:#796A62; font-size:11.5px; font-weight:700; }
   .te-card-footer strong { color:#1A1A1A; }
 
-  @media(max-width:1100px){ .te-grid{grid-template-columns:1fr} .te-hero{grid-template-columns:1fr} .te-hero-metrics{grid-template-columns:repeat(4,1fr)} }
+  @media(max-width:1100px){ .te-grid{grid-template-columns:1fr} .te-hero{grid-template-columns:1fr} .te-hero-metrics{grid-template-columns:repeat(4,1fr)} .te-filters-row{grid-template-columns:repeat(2,minmax(0,1fr))} }
   @media(max-width:700px){
     .te-hero{padding:20px;border-radius:20px}.te-hero h1{font-size:24px}.te-hero-metrics{grid-template-columns:repeat(2,1fr)}
-    .te-toolbar input{min-width:100%}.te-toolbar a{flex:1}.te-card{padding:16px}.te-card-top{grid-template-columns:auto minmax(0,1fr)}.te-toggle{grid-column:1/-1;width:100%}
+    .te-toolbar input{min-width:100%}.te-toolbar a{flex:1}.te-card{padding:16px}
+    .te-filters{padding:14px}.te-filters-row{grid-template-columns:1fr}
+    .te-btn-group{flex-direction:row}
     .te-class-chip,.te-info-grid{grid-template-columns:1fr}.te-card-footer{gap:7px}
   }
 `;
@@ -764,6 +924,7 @@ const tdelStyles = `
   .tdel-title { font-family: 'Noto Kufi Arabic','Cairo',sans-serif; font-size: 19px; font-weight: 700; color: #6B1E2D; margin: 0; }
 
   .tdel-teacher { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 12px 14px; border-radius: 16px; background: rgba(255,255,255,.55); border: 1px solid rgba(184,160,130,.22); text-align: start; }
+  .tdel-teacher .te-avatar { width: 46px; height: 46px; border-radius: 14px; font-size: 15px; }
   .tdel-teacher-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .tdel-teacher-text strong { font-size: 13.5px; font-weight: 700; color: #1A1A1A; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tdel-teacher-text span { font-size: 11.5px; color: #796A62; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
