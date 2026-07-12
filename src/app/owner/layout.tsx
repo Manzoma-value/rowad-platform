@@ -655,6 +655,39 @@ const styles = `
   @keyframes ow-fadein  { from { opacity: 0 }               to { opacity: 1 } }
   @keyframes ow-slidein { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
   @keyframes ow-pulse   { 0%, 100% { opacity: 1 } 55% { opacity: 0.30 } }
+  @keyframes ow-stagger { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes ow-shimmer { 0%, 15% { background-position: 0 0, -60% 0 } 65%, 100% { background-position: 0 0, 160% 0 } }
+  @keyframes ow-breathe { 0%, 100% { opacity: 0.70; transform: scale(1) } 50% { opacity: 0.92; transform: scale(1.035) } }
+
+  /* ══ PLATFORM-WIDE MOTION ══
+     Applies automatically to every page rendered inside this shell — no
+     per-page wiring needed. Top-level sections of each page (hero, KPI
+     row, panels, module grid, ...) cascade in one after another instead
+     of appearing as a single flat block. */
+  .ow-content-inner > * > * {
+    animation: ow-stagger 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .ow-content-inner > * > *:nth-child(1) { animation-delay: .02s }
+  .ow-content-inner > * > *:nth-child(2) { animation-delay: .08s }
+  .ow-content-inner > * > *:nth-child(3) { animation-delay: .14s }
+  .ow-content-inner > * > *:nth-child(4) { animation-delay: .20s }
+  .ow-content-inner > * > *:nth-child(5) { animation-delay: .26s }
+  .ow-content-inner > * > *:nth-child(6) { animation-delay: .32s }
+  .ow-content-inner > * > *:nth-child(n+7) { animation-delay: .36s }
+
+  /* Sidebar mandala watermark — gentle breathing instead of a static mark */
+  .ow-mandala-wrap svg { animation: ow-breathe 8s ease-in-out infinite; transform-origin: center; }
+
+  /* Nav icon micro-interaction (property doesn't collide with the base rule below) */
+  .ow-nav-item:hover .ow-nav-icon-wrap { transform: scale(1.08) rotate(-4deg); }
+  .ow-nav-item.active .ow-nav-icon-wrap { transform: scale(1.04); }
+
+  /* KPI / metric numerals settle in with a touch of spring */
+  .ow-content-inner strong { transition: color 0.2s ease; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ow-content-inner > * > *, .ow-topbar-accent, .ow-mandala-wrap svg { animation: none !important; }
+  }
 
   /* ── Design tokens ── */
   :root {
@@ -981,7 +1014,17 @@ const styles = `
       rgba(184,160,130,0.55) 50%,
       rgba(184,160,130,0.30) 85%,
       transparent
+    ),
+    linear-gradient(
+      100deg, transparent 40%,
+      rgba(217,201,176,0.9) 48%,
+      rgba(217,201,176,0.9) 52%,
+      transparent 60%
     );
+    background-size: 100% 100%, 55% 100%;
+    background-repeat: no-repeat, no-repeat;
+    background-position: 0 0, -60% 0;
+    animation: ow-shimmer 6.5s ease-in-out infinite;
   }
 
   /* Hamburger */

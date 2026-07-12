@@ -7,6 +7,7 @@ import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
+import IdentityMandala from "@/components/IdentityMandala";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useViewOnly } from "@/lib/view-only-context";
 
@@ -113,7 +114,7 @@ export default function SchoolAdminDashboard() {
     <div className="school-dashboard-page" dir={dir}>
       <section className="school-dashboard-hero">
         <div className="school-dashboard-hero-star" aria-hidden="true">
-          <IdentityStar size={330} strokeWidth={0.9} color="#D9C9B0" />
+          <IdentityMandala size={340} stroke="#D9C9B0" opacity={0.9} spin spinDuration={140} />
         </div>
         <div className="school-dashboard-hero-copy">
           <span>
@@ -133,7 +134,7 @@ export default function SchoolAdminDashboard() {
         {kpis.map((card) => (
           <Link key={card.href} href={card.href} className={`school-dashboard-kpi ${card.tone}`}>
             <span className="school-dashboard-kpi-star" aria-hidden="true">
-              <IdentityStar size={120} strokeWidth={1.6} opacity={0.08} color="#4A0E1C" />
+              <IdentityMandala size={140} stroke="#4A0E1C" opacity={0.09} spin spinDuration={110} />
             </span>
             <span>{card.label}</span>
             <strong>{card.value}</strong>

@@ -8,6 +8,7 @@ import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
+import IdentityMandala from "@/components/IdentityMandala";
 import { useConfirm } from "@/lib/confirm-dialog";
 
 type TeacherClass = {
@@ -175,7 +176,7 @@ export default function SchoolAdminTeachersPage() {
     <div className="te-page" dir={dir}>
       <section className="te-hero">
         <div className="te-hero-star" aria-hidden="true">
-          <IdentityStar size={260} strokeWidth={0.9} color="#D9C9B0" />
+          <IdentityMandala size={270} stroke="#D9C9B0" opacity={0.9} spin spinDuration={130} />
         </div>
         <div>
           <p className="te-eyebrow">

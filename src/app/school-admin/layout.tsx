@@ -782,6 +782,36 @@ const styles = `
   @keyframes sa-fadein  { from { opacity: 0 }               to { opacity: 1 } }
   @keyframes sa-slidein { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
   @keyframes sa-spin    { to { transform: rotate(360deg) } }
+  @keyframes sa-stagger { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes sa-shimmer { 0%, 15% { background-position: 0 0, -60% 0 } 65%, 100% { background-position: 0 0, 160% 0 } }
+  @keyframes sa-breathe { 0%, 100% { opacity: 0.70; transform: scale(1) } 50% { opacity: 0.92; transform: scale(1.035) } }
+
+  /* ══ PLATFORM-WIDE MOTION ══
+     Applies automatically to every page rendered inside this shell — no
+     per-page wiring needed. Top-level sections of each page (hero, KPI
+     row, panels, module grid, ...) cascade in one after another instead
+     of appearing as a single flat block. */
+  .sa-content-inner > * > * {
+    animation: sa-stagger 0.55s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .sa-content-inner > * > *:nth-child(1) { animation-delay: .02s }
+  .sa-content-inner > * > *:nth-child(2) { animation-delay: .08s }
+  .sa-content-inner > * > *:nth-child(3) { animation-delay: .14s }
+  .sa-content-inner > * > *:nth-child(4) { animation-delay: .20s }
+  .sa-content-inner > * > *:nth-child(5) { animation-delay: .26s }
+  .sa-content-inner > * > *:nth-child(6) { animation-delay: .32s }
+  .sa-content-inner > * > *:nth-child(n+7) { animation-delay: .36s }
+
+  /* Sidebar mandala watermark — gentle breathing instead of a static mark */
+  .sa-mandala-wrap svg { animation: sa-breathe 8s ease-in-out infinite; transform-origin: center; }
+
+  /* Nav icon micro-interaction (property doesn't collide with base rules) */
+  .sa-nav-item:hover .sa-nav-icon-wrap { transform: scale(1.08) rotate(-4deg); }
+  .sa-nav-item.active .sa-nav-icon-wrap { transform: scale(1.04); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sa-content-inner > * > *, .sa-topbar-accent, .sa-mandala-wrap svg { animation: none !important; }
+  }
 
   :root {
     --sa-bg-main:        #EFEAE0;
@@ -1381,7 +1411,14 @@ const brandStyles = `
   }
 
   .sa-topbar-accent {
-    background: linear-gradient(90deg, transparent, rgba(184,160,130,0.35) 15%, rgba(107,30,45,0.58) 50%, rgba(184,160,130,0.35) 85%, transparent) !important;
+    background:
+      linear-gradient(90deg, transparent, rgba(184,160,130,0.35) 15%, rgba(107,30,45,0.58) 50%, rgba(184,160,130,0.35) 85%, transparent),
+      linear-gradient(100deg, transparent 40%, rgba(217,201,176,0.9) 48%, rgba(217,201,176,0.9) 52%, transparent 60%)
+      !important;
+    background-size: 100% 100%, 55% 100% !important;
+    background-repeat: no-repeat, no-repeat !important;
+    background-position: 0 0, -60% 0 !important;
+    animation: sa-shimmer 6.5s ease-in-out infinite !important;
   }
 
   .sa-hamburger:hover,
