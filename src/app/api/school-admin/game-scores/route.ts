@@ -24,6 +24,7 @@ export async function GET(req: Request) {
         stage: true,
         score: true,
         total: true,
+        answers: true,
         created_at: true,
       },
     });

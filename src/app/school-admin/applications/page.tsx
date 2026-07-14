@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import {
   APP_CURRENT_ROLES,
@@ -62,6 +63,8 @@ const UI = {
     statusCol: "الحالة",
     view: "عرض الطلب",
     yetToApply: "(لم يقدم بعد)",
+    exportExcel: "تصدير كل الطلبات Excel",
+    exporting: "جاري التصدير...",
   },
   sq: {
     title: "Aplikimet e mësuesve",
@@ -87,6 +90,8 @@ const UI = {
     statusCol: "Statusi",
     view: "Shih aplikimin",
     yetToApply: "(Nuk ka aplikuar ende)",
+    exportExcel: "Eksporto të gjitha në Excel",
+    exporting: "Duke eksportuar...",
   },
 } as const;
 
@@ -105,6 +110,7 @@ export default function ApplicationsListPage() {
   const [years, setYears] = useState("");
   const [gender, setGender] = useState("");
   const [country, setCountry] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   const params = useMemo(() => {
     const u = new URLSearchParams();
@@ -135,6 +141,65 @@ export default function ApplicationsListPage() {
     }
   }
 
+  async function exportAllApplications() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const response = await fetch("/api/school-admin/applications?export=1", { cache: "no-store" });
+      if (!response.ok) throw new Error("export_failed");
+      const payload = await response.json() as {
+        teachers?: Array<{
+          id: string;
+          onboarding_status: string;
+          created_at: string;
+          profile: { full_name: string; email: string | null; is_active: boolean };
+          application: Record<string, unknown> | null;
+        }>;
+      };
+      const XLSX = await import("xlsx");
+      const cell = (value: unknown) => {
+        if (value == null) return "";
+        if (Array.isArray(value)) return value.map((item) => typeof item === "object" ? JSON.stringify(item) : String(item)).join(" | ");
+        if (typeof value === "object") return JSON.stringify(value);
+        return String(value);
+      };
+      const rowsForExport = (payload.teachers ?? []).map((teacher) => {
+        const a = teacher.application;
+        return {
+          [L === "ar" ? "الاسم" : "Emri"]: cell(a?.full_name ?? teacher.profile.full_name),
+          [L === "ar" ? "البريد الإلكتروني" : "E-mail"]: cell(a?.email ?? teacher.profile.email),
+          [L === "ar" ? "الهاتف" : "Telefoni"]: cell(a?.phone),
+          [L === "ar" ? "الحالة" : "Statusi"]: teacher.onboarding_status,
+          [L === "ar" ? "الحساب نشط" : "Llogaria aktive"]: teacher.profile.is_active ? (L === "ar" ? "نعم" : "Po") : (L === "ar" ? "لا" : "Jo"),
+          [L === "ar" ? "العمر" : "Mosha"]: cell(a?.age),
+          [L === "ar" ? "الجنس" : "Gjinia"]: cell(a?.gender),
+          [L === "ar" ? "الدولة" : "Shteti"]: cell(a?.country),
+          [L === "ar" ? "المدينة" : "Qyteti"]: cell(a?.city),
+          [L === "ar" ? "الدور الحالي" : "Roli aktual"]: cell(a?.current_role),
+          [L === "ar" ? "المؤهل" : "Kualifikimi"]: cell(a?.qualification),
+          [L === "ar" ? "التخصص" : "Specializimi"]: cell(a?.specialization),
+          [L === "ar" ? "جهة التخرج" : "Institucioni"]: cell(a?.graduation_institution),
+          [L === "ar" ? "سنوات الخبرة" : "Vitet e përvojës"]: cell(a?.years_of_experience),
+          [L === "ar" ? "مجالات الخبرة" : "Fushat e përvojës"]: cell(a?.experience_areas),
+          [L === "ar" ? "الفئات المستهدفة" : "Grupet e synuara"]: cell(a?.target_groups),
+          [L === "ar" ? "المساهمات" : "Kontributet"]: cell(a?.contributions),
+          [L === "ar" ? "اللغات" : "Gjuhët"]: cell(a?.languages),
+          [L === "ar" ? "نبذة وملاحظات" : "Shënime"]: cell(a?.notes),
+          [L === "ar" ? "تاريخ التقديم" : "Data e aplikimit"]: cell(a?.submitted_at),
+          [L === "ar" ? "تاريخ المراجعة" : "Data e shqyrtimit"]: cell(a?.reviewed_at),
+          [L === "ar" ? "ملاحظات المراجع" : "Shënimet e shqyrtuesit"]: cell(a?.reviewer_notes),
+        };
+      });
+      const sheet = XLSX.utils.json_to_sheet(rowsForExport);
+      sheet["!cols"] = Object.keys(rowsForExport[0] ?? {}).map((key) => ({ wch: Math.min(44, Math.max(14, key.length + 5)) }));
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, sheet, L === "ar" ? "طلبات المعلمين" : "Aplikimet");
+      XLSX.writeFile(workbook, `teacher-applications-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="ap-page" dir={dir}>
       <header className="ap-hero">
@@ -143,12 +208,17 @@ export default function ApplicationsListPage() {
       </header>
 
       <div className="ap-toolbar">
+        <div className="ap-toolbar-top">
         <input
           className="ap-search"
           placeholder={T.search}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <button className="ap-export" type="button" onClick={() => void exportAllApplications()} disabled={exporting}>
+          <Download size={16} />{exporting ? T.exporting : T.exportExcel}
+        </button>
+        </div>
         <div className="ap-filter-row">
           <select className="ap-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="UNDER_REVIEW">{T.statusUnderReview}</option>
@@ -261,12 +331,15 @@ export default function ApplicationsListPage() {
           display: flex; flex-direction: column; gap: 12px;
         }
         .ap-search {
-          width: 100%; padding: 10px 14px; font-size: 14px;
+          flex: 1; min-width: 240px; padding: 10px 14px; font-size: 14px;
           border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px;
           background: #FFF; font-family: inherit; outline: none;
           transition: border-color 0.15s;
         }
         .ap-search:focus { border-color: #B8A082; }
+        .ap-toolbar-top { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .ap-export { min-height:43px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 16px; border-radius:11px; border:1px solid rgba(184,160,130,.38); background:linear-gradient(180deg,#5B1526,#32101A); color:#D9C9B0; font:800 12.5px 'Cairo',sans-serif; cursor:pointer; white-space:nowrap; }
+        .ap-export:disabled { opacity:.6; cursor:wait; }
         .ap-filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .ap-select {
           padding: 8px 12px; font-size: 13px; font-family: inherit;
@@ -304,6 +377,7 @@ export default function ApplicationsListPage() {
           text-decoration: none; white-space: nowrap;
         }
         .ap-view:hover { transform: translateY(-1px); }
+        @media(max-width:620px){ .ap-export{width:100%}.ap-search{min-width:100%} }
       `}</style>
     </div>
   );

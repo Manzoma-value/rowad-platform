@@ -56,7 +56,17 @@ export async function POST(req: Request) {
 
   const model = await prisma.rowadModel.findUnique({
     where: { school_id: player.school_id },
-    select: { concepts: { select: { id: true, maqsad: true, level: true } } },
+    select: {
+      concepts: {
+        select: {
+          id: true,
+          maqsad: true,
+          level: true,
+          name_ar: true,
+          name_sq: true,
+        },
+      },
+    },
   });
   if (!model) return NextResponse.json({ error: "no_model" }, { status: 404 });
 
@@ -65,6 +75,16 @@ export async function POST(req: Request) {
   const seenCells = new Set<string>();
 
   let score = 0;
+  const answers: Array<{
+    concept_id: string;
+    name_ar: string;
+    name_sq: string | null;
+    selected_maqsad: Maqsad;
+    selected_level: number;
+    correct_maqsad: Maqsad;
+    correct_level: number;
+    is_correct: boolean;
+  }> = [];
   for (const p of placements) {
     const concept = answerKey.get(p.concept_id);
     if (!concept) return NextResponse.json({ error: "invalid_card" }, { status: 400 });
@@ -77,7 +97,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "duplicate_cell" }, { status: 400 });
     seenConcepts.add(p.concept_id);
     seenCells.add(cellKey);
-    if (concept.maqsad === p.maqsad && concept.level === p.level) score++;
+    const isCorrect = concept.maqsad === p.maqsad && concept.level === p.level;
+    if (isCorrect) score++;
+    answers.push({
+      concept_id: concept.id,
+      name_ar: concept.name_ar,
+      name_sq: concept.name_sq,
+      selected_maqsad: p.maqsad,
+      selected_level: p.level,
+      correct_maqsad: concept.maqsad,
+      correct_level: concept.level,
+      is_correct: isCorrect,
+    });
   }
 
   // Persist this session so admins can review per-user scores. Errors here
@@ -90,6 +121,7 @@ export async function POST(req: Request) {
         stage: stage as RowadStage,
         score,
         total: TOTAL_CELLS,
+        answers,
       },
     });
   } catch (err) {

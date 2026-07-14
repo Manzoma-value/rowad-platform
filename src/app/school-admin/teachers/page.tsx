@@ -29,6 +29,7 @@ import {
   Trash2,
   SlidersHorizontal,
   X,
+  Download,
 } from "lucide-react";
 
 type TeacherClass = {
@@ -168,6 +169,8 @@ export default function SchoolAdminTeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const [exportingExcel, setExportingExcel] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState("");
 
@@ -221,6 +224,19 @@ export default function SchoolAdminTeachersPage() {
     resetFilters: lang === "ar" ? "مسح التصفية" : lang === "sq" ? "Pastro filtrat" : "Clear filters",
     result: lang === "ar" ? "نتيجة" : lang === "sq" ? "rezultate" : "results",
     noResults: lang === "ar" ? "لا يوجد معلمون مطابقون لخيارات التصفية الحالية." : lang === "sq" ? "Asnjë mësues nuk përputhet me filtrat aktualë." : "No teachers match the current filters.",
+    readMore: lang === "ar" ? "عرض التفاصيل" : lang === "sq" ? "Shfaq detajet" : "Read more",
+    readLess: lang === "ar" ? "إخفاء التفاصيل" : lang === "sq" ? "Fshih detajet" : "Show less",
+    exportExcel: lang === "ar" ? "تصدير كل المعلمين Excel" : lang === "sq" ? "Eksporto mësuesit në Excel" : "Export all teachers",
+    exporting: lang === "ar" ? "جاري التصدير..." : lang === "sq" ? "Duke eksportuar..." : "Exporting...",
+  };
+
+  const toggleExpanded = (teacherId: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(teacherId)) next.delete(teacherId);
+      else next.add(teacherId);
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -291,6 +307,39 @@ export default function SchoolAdminTeachersPage() {
     const withGroups = teachers.filter((teacher) => teacher.group_memberships.length > 0).length;
     return { active, withClasses, withGroups };
   }, [teachers]);
+
+  const exportTeachersExcel = async () => {
+    if (exportingExcel) return;
+    setExportingExcel(true);
+    try {
+      const XLSX = await import("xlsx");
+      const rows = teachers.map((teacher) => ({
+        [lang === "ar" ? "الاسم" : "Name"]: teacher.profile.full_name,
+        [lang === "ar" ? "البريد الإلكتروني" : "Email"]: teacher.profile.email ?? "",
+        [lang === "ar" ? "الحالة" : "Status"]: onboardingLabel(teacher.onboarding_status, lang),
+        [lang === "ar" ? "الحساب نشط" : "Active account"]: teacher.profile.is_active ? (lang === "ar" ? "نعم" : "Yes") : (lang === "ar" ? "لا" : "No"),
+        [lang === "ar" ? "الهاتف" : "Phone"]: teacher.application?.phone ?? "",
+        [lang === "ar" ? "الدولة" : "Country"]: teacher.application?.country ?? "",
+        [lang === "ar" ? "المدينة" : "City"]: teacher.application?.city ?? "",
+        [lang === "ar" ? "المؤهل" : "Qualification"]: teacher.application ? qualificationLabel(teacher.application.qualification, lang) : "",
+        [lang === "ar" ? "التخصص" : "Specialization"]: teacher.application?.specialization ?? "",
+        [lang === "ar" ? "الخبرة" : "Experience"]: teacher.application ? experienceLabel(teacher.application.years_of_experience, lang) : "",
+        [lang === "ar" ? "الدور الحالي" : "Current role"]: teacher.application ? currentRoleLabel(teacher.application.current_role, lang) : "",
+        [lang === "ar" ? "الفصول" : "Classes"]: teacher.classes.map((klass) => klass.name).join(" | "),
+        [lang === "ar" ? "المجموعات" : "Groups"]: teacher.group_memberships.map((membership) => membership.group.name).join(" | "),
+        [lang === "ar" ? "الورش" : "Workshops"]: summarizeWorkshops(teacher).map((workshop) => workshop.title).join(" | "),
+        [lang === "ar" ? "عدد الدروس" : "Lessons"]: teacher._count.lessons,
+        [lang === "ar" ? "عدد الاختبارات" : "Quizzes"]: teacher._count.quizzes,
+      }));
+      const sheet = XLSX.utils.json_to_sheet(rows);
+      sheet["!cols"] = Object.keys(rows[0] ?? {}).map((key) => ({ wch: Math.min(42, Math.max(14, key.length + 4)) }));
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, sheet, lang === "ar" ? "المعلمون" : "Teachers");
+      XLSX.writeFile(workbook, `teachers-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } finally {
+      setExportingExcel(false);
+    }
+  };
 
   const toggleTeacher = async (teacherId: string, currentActive: boolean) => {
     if (currentActive) {
@@ -380,6 +429,9 @@ export default function SchoolAdminTeachersPage() {
 
       <section className="te-toolbar">
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={labels.search} />
+        <button type="button" onClick={() => void exportTeachersExcel()} disabled={exportingExcel}>
+          <Download size={15} />{exportingExcel ? labels.exporting : labels.exportExcel}
+        </button>
         <Link href="/school-admin/applications">{labels.teacherInfo}</Link>
         <Link href="/school-admin/teacher-groups">{labels.groups}</Link>
       </section>
@@ -449,8 +501,9 @@ export default function SchoolAdminTeachersPage() {
         <div className="te-grid">
           {filteredTeachers.map((teacher, index) => {
             const workshopSummaries = summarizeWorkshops(teacher);
+            const expanded = expandedIds.has(teacher.id);
             return (
-              <article key={teacher.id} className={`te-card ${teacher.profile.is_active ? "" : "is-inactive"}`} style={{ animationDelay: `${index * 35}ms` }}>
+              <article key={teacher.id} className={`te-card ${expanded ? "is-expanded" : "is-compact"} ${teacher.profile.is_active ? "" : "is-inactive"}`} style={{ animationDelay: `${index * 35}ms` }}>
                 <div className="te-card-watermark" aria-hidden="true">
                   <IdentityMandala size={150} stroke="#4A0E1C" opacity={0.05} />
                 </div>
@@ -476,6 +529,14 @@ export default function SchoolAdminTeachersPage() {
                   </div>
                   <div className="te-btn-group" data-write-area="true">
                     <button
+                      type="button"
+                      className="te-read-more"
+                      onClick={() => toggleExpanded(teacher.id)}
+                      aria-expanded={expanded}
+                    >
+                      {expanded ? labels.readLess : labels.readMore}
+                    </button>
+                    <button
                       data-write="true"
                       className={`te-toggle ${teacher.profile.is_active ? "off" : "on"}`}
                       onClick={() => toggleTeacher(teacher.id, teacher.profile.is_active)}
@@ -495,6 +556,14 @@ export default function SchoolAdminTeachersPage() {
                   </div>
                 </div>
 
+                <div className="te-compact-summary">
+                  <span><GraduationCap size={12} />{teacher.application ? qualificationLabel(teacher.application.qualification, lang) : labels.noApplication}</span>
+                  <span><BookOpen size={12} />{teacher.classes.length} {labels.classes}</span>
+                  <span><Users size={12} />{teacher.group_memberships.length} {labels.groups}</span>
+                  <span><Sparkles size={12} />{workshopSummaries.length} {labels.workshops}</span>
+                </div>
+
+                {expanded && <>
                 {/* ── Gold rule ── */}
                 <div className="te-rule" aria-hidden="true">
                   <i className="te-rule-line" />
@@ -576,6 +645,7 @@ export default function SchoolAdminTeachersPage() {
                   <strong>{teacher._count.quizzes} {labels.quizzes}</strong>
                   <strong>{teacher._count.announcements} {lang === "ar" ? "إعلانات" : lang === "sq" ? "njoftime" : "announcements"}</strong>
                 </div>
+                </>}
               </article>
             );
           })}
@@ -760,8 +830,9 @@ const styles = `
   .te-toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
   .te-toolbar input { flex:1; min-width:260px; height:48px; border-radius:16px; border:1px solid rgba(184,160,130,.22); background:#FFFBF5; padding:0 16px; font:700 13px 'Cairo',sans-serif; color:#1A1A1A; outline:none; transition:border-color .18s, box-shadow .18s; }
   .te-toolbar input:focus { border-color:rgba(184,160,130,.55); box-shadow:0 0 0 4px rgba(184,160,130,.10); }
-  .te-toolbar a { height:48px; display:inline-flex; align-items:center; justify-content:center; padding:0 18px; border-radius:16px; background:linear-gradient(180deg,#5B1526,#32101A); border:1px solid rgba(184,160,130,.35); color:#D9C9B0; font-size:12px; font-weight:700; text-decoration:none; transition:box-shadow .18s ease, transform .18s ease; }
-  .te-toolbar a:hover { box-shadow:0 6px 20px rgba(184,160,130,.25); transform:translateY(-1px); }
+  .te-toolbar a, .te-toolbar button { height:48px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 18px; border-radius:16px; background:linear-gradient(180deg,#5B1526,#32101A); border:1px solid rgba(184,160,130,.35); color:#D9C9B0; font:700 12px 'Cairo',sans-serif; text-decoration:none; cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
+  .te-toolbar a:hover, .te-toolbar button:hover:not(:disabled) { box-shadow:0 6px 20px rgba(184,160,130,.25); transform:translateY(-1px); }
+  .te-toolbar button:disabled { opacity:.6; cursor:wait; }
 
   /* ── Filters ── */
   .te-filters {
@@ -804,7 +875,7 @@ const styles = `
   .te-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
   .te-card {
     position:relative; overflow:hidden;
-    display:flex; flex-direction:column; gap:13px; padding:22px;
+    display:flex; flex-direction:column; gap:11px; padding:17px 18px;
     border-radius:24px; background:linear-gradient(180deg,#FFFBF5 0%,#FBF8F1 70%,#F7F3EB 100%);
     border:1px solid rgba(184,160,130,.24);
     box-shadow:0 14px 34px rgba(50,16,26,.06), inset 0 1px 0 rgba(255,255,255,.7);
@@ -812,13 +883,14 @@ const styles = `
     transition:transform .22s cubic-bezier(.22,1,.36,1), border-color .22s ease, box-shadow .22s ease;
   }
   .te-card:hover { transform:translateY(-4px); border-color:rgba(184,160,130,.5); box-shadow:0 24px 52px rgba(50,16,26,.12), inset 0 1px 0 rgba(255,255,255,.7); }
+  .te-card.is-compact:hover { transform:translateY(-2px); }
   .te-card:before { content:""; position:absolute; top:0; inset-inline:22px; height:2px; background:linear-gradient(90deg,transparent,#B8A082,transparent); }
   .te-card.is-inactive { filter:saturate(.75); }
   .te-card.is-inactive:after { content:""; position:absolute; top:0; inset-inline:0; height:3px; background:linear-gradient(90deg,transparent,rgba(107,30,45,.5),transparent); }
   .te-card-watermark { position:absolute; inset-inline-end:-30px; bottom:-30px; pointer-events:none; z-index:0; }
 
   .te-card-top { position:relative; z-index:1; display:grid; grid-template-columns:auto minmax(0,1fr); gap:14px; align-items:start; }
-  .te-avatar { width:68px; height:68px; border-radius:20px; overflow:hidden; background:linear-gradient(150deg,#4A0E1C,#32101A); color:#D9C9B0; display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:21px; font-weight:700; border:1px solid rgba(184,160,130,.35); box-shadow:0 8px 20px rgba(50,16,26,.20), inset 0 1px 0 rgba(217,201,176,.16); flex-shrink:0; }
+  .te-avatar { width:48px; height:48px; border-radius:15px; overflow:hidden; background:linear-gradient(150deg,#4A0E1C,#32101A); color:#D9C9B0; display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:16px; font-weight:700; border:1px solid rgba(184,160,130,.35); box-shadow:0 7px 16px rgba(50,16,26,.16), inset 0 1px 0 rgba(217,201,176,.16); flex-shrink:0; }
   .te-avatar img { width:100%; height:100%; object-fit:cover; }
   .te-identity { min-width:0; }
   .te-name-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -834,9 +906,9 @@ const styles = `
 
   /* Action buttons — side by side, full row under the header */
   .te-btn-group { grid-column:1 / -1; display:flex; gap:9px; margin-top:2px; }
-  .te-toggle, .te-delete {
+  .te-toggle, .te-delete, .te-read-more {
     flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    border:1px solid; border-radius:13px; height:40px; padding:0 14px;
+    border:1px solid; border-radius:12px; height:36px; padding:0 12px;
     font:800 12px 'Cairo',sans-serif; cursor:pointer;
     transition:all .18s cubic-bezier(.22,1,.36,1);
   }
@@ -847,6 +919,12 @@ const styles = `
   .te-toggle:disabled { opacity:.55; cursor:not-allowed; }
   .te-delete { color:#6B1E2D; background:rgba(107,30,45,.05); border-color:rgba(107,30,45,.20); }
   .te-delete:hover { background:rgba(107,30,45,.11); border-color:rgba(107,30,45,.38); transform:translateY(-1px); box-shadow:0 6px 14px rgba(107,30,45,.12); }
+  .te-read-more { color:#F7F3EB; background:linear-gradient(180deg,#5B1526,#32101A); border-color:rgba(184,160,130,.34); }
+  .te-read-more:hover { color:#FFF; border-color:rgba(217,201,176,.68); box-shadow:0 7px 18px rgba(50,16,26,.18); }
+
+  .te-compact-summary { position:relative; z-index:1; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .te-compact-summary span { display:inline-flex; align-items:center; gap:5px; max-width:100%; padding:5px 9px; border-radius:999px; background:rgba(184,160,130,.10); border:1px solid rgba(184,160,130,.17); color:#655B53; font-size:10.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .te-compact-summary svg { color:#B8A082; flex-shrink:0; }
 
   /* Gold separator rule */
   .te-rule { position:relative; z-index:1; display:flex; align-items:center; gap:7px; margin:2px 0; }

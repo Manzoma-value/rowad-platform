@@ -4,6 +4,18 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
+import { COLUMN_LABELS } from "@/lib/rowad";
+
+type ModelAnswer = {
+  concept_id: string;
+  name_ar: string;
+  name_sq: string | null;
+  selected_maqsad: keyof typeof COLUMN_LABELS;
+  selected_level: number;
+  correct_maqsad: keyof typeof COLUMN_LABELS;
+  correct_level: number;
+  is_correct: boolean;
+};
 
 type Row = {
   profile_id: string;
@@ -21,6 +33,7 @@ type HistoryEntry = {
   stage: "STAGE1" | "STAGE2";
   score: number;
   total: number;
+  answers: ModelAnswer[] | null;
   created_at: string;
 };
 
@@ -50,6 +63,13 @@ const UI = {
     score: "النتيجة",
     stage1Lbl: "الأولى",
     stage2Lbl: "الثانية",
+    answers: "تفاصيل الإجابات",
+    correct: "إجابة صحيحة",
+    wrong: "إجابة خاطئة",
+    selected: "إجابة المشارك",
+    expected: "الإجابة الصحيحة",
+    level: "المستوى",
+    legacy: "هذه المحاولة قديمة وتم تسجيل الدرجة فقط قبل إضافة تفاصيل الإجابات.",
   },
   sq: {
     title: "Modeli Edukativ — Rezultatet e lojës",
@@ -76,6 +96,13 @@ const UI = {
     score: "Rezultati",
     stage1Lbl: "1",
     stage2Lbl: "2",
+    answers: "Detajet e përgjigjeve",
+    correct: "Përgjigje e saktë",
+    wrong: "Përgjigje e gabuar",
+    selected: "Përgjigjja e pjesëmarrësit",
+    expected: "Përgjigjja e saktë",
+    level: "Niveli",
+    legacy: "Kjo përpjekje është e vjetër dhe ka ruajtur vetëm rezultatin.",
   },
 } as const;
 
@@ -145,13 +172,48 @@ export default function GameScoresPage() {
           : (
             <div className="gs-history-list">
               {detail.history.map((h) => (
-                <div key={h.id} className="gs-history-row">
-                  <span className={`gs-stage-tag stage-${h.stage}`}>
-                    {h.stage === "STAGE1" ? T.stage1Lbl : T.stage2Lbl}
-                  </span>
-                  <span className="gs-history-score">{h.score} / {h.total}</span>
-                  <span className="gs-history-when">{fmtDate(h.created_at)}</span>
-                </div>
+                <details key={h.id} className="gs-attempt">
+                  <summary className="gs-history-row">
+                    <span className={`gs-stage-tag stage-${h.stage}`}>
+                      {h.stage === "STAGE1" ? T.stage1Lbl : T.stage2Lbl}
+                    </span>
+                    <span className="gs-history-score">{h.score} / {h.total}</span>
+                    <span className="gs-history-when">{fmtDate(h.created_at)}</span>
+                    <strong className="gs-answer-link">{T.answers}</strong>
+                  </summary>
+                  <div className="gs-answer-panel">
+                    {!Array.isArray(h.answers) || h.answers.length === 0 ? (
+                      <div className="gs-legacy">{T.legacy}</div>
+                    ) : (
+                      <div className="gs-answer-grid">
+                        {h.answers.map((answer, index) => {
+                          const selectedColumn = COLUMN_LABELS[answer.selected_maqsad]?.[L] ?? answer.selected_maqsad;
+                          const correctColumn = COLUMN_LABELS[answer.correct_maqsad]?.[L] ?? answer.correct_maqsad;
+                          const conceptName = L === "sq" && answer.name_sq ? answer.name_sq : answer.name_ar;
+                          return (
+                            <article key={`${answer.concept_id}-${index}`} className={`gs-answer ${answer.is_correct ? "is-correct" : "is-wrong"}`}>
+                              <div className="gs-answer-head">
+                                <span>{index + 1}</span>
+                                <h3>{conceptName}</h3>
+                                <strong>{answer.is_correct ? T.correct : T.wrong}</strong>
+                              </div>
+                              <div className="gs-answer-comparison">
+                                <div>
+                                  <small>{T.selected}</small>
+                                  <b>{selectedColumn} · {T.level} {answer.selected_level}</b>
+                                </div>
+                                <div>
+                                  <small>{T.expected}</small>
+                                  <b>{correctColumn} · {T.level} {answer.correct_level}</b>
+                                </div>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </details>
               ))}
             </div>
           )}
@@ -272,13 +334,35 @@ function Styles() {
       .gs-dash { color: #BFB6A8; }
       .gs-open { background: linear-gradient(180deg,#D8B96A,#B8A082); color: #4A0E1C; border: none; padding: 6px 14px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
       .gs-history-list { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; overflow: hidden; }
-      .gs-history-row { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 16px; border-bottom: 1px solid rgba(26,26,26,0.06); font-size: 13.5px; }
-      .gs-history-row:last-child { border-bottom: none; }
+      .gs-attempt { border-bottom:1px solid rgba(26,26,26,.07); }
+      .gs-attempt:last-child { border-bottom:none; }
+      .gs-history-row { display: grid; grid-template-columns: auto minmax(80px,1fr) auto auto; gap: 14px; align-items: center; padding: 14px 16px; font-size: 13.5px; cursor:pointer; list-style:none; }
+      .gs-history-row::-webkit-details-marker { display:none; }
+      .gs-answer-link { color:#6B1E2D; font-size:11.5px; border-bottom:1px solid rgba(107,30,45,.28); }
       .gs-stage-tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 800; }
       .gs-stage-tag.stage-STAGE1 { background: rgba(20,80,140,0.10); color: #14528C; }
       .gs-stage-tag.stage-STAGE2 { background: rgba(107,30,45,0.10); color: #6B1E2D; }
       .gs-history-score { font-weight: 800; color: #32101A; font-variant-numeric: tabular-nums; }
       .gs-history-when { color: #7A7468; font-size: 12px; }
+      .gs-answer-panel { padding:0 16px 18px; background:linear-gradient(180deg,rgba(247,243,235,.5),rgba(239,234,224,.45)); }
+      .gs-answer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding-top:12px; }
+      .gs-answer { border:1px solid; border-radius:14px; padding:12px; background:#FFF; }
+      .gs-answer.is-correct { border-color:rgba(27,94,32,.22); box-shadow:inset 3px 0 0 rgba(27,94,32,.62); }
+      [dir="rtl"] .gs-answer.is-correct { box-shadow:inset -3px 0 0 rgba(27,94,32,.62); }
+      .gs-answer.is-wrong { border-color:rgba(107,30,45,.22); box-shadow:inset 3px 0 0 rgba(107,30,45,.62); }
+      [dir="rtl"] .gs-answer.is-wrong { box-shadow:inset -3px 0 0 rgba(107,30,45,.62); }
+      .gs-answer-head { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:8px; align-items:center; margin-bottom:10px; }
+      .gs-answer-head > span { width:24px; height:24px; border-radius:8px; display:grid; place-items:center; background:#F7F3EB; color:#6B1E2D; font-size:10px; font-weight:900; }
+      .gs-answer-head h3 { margin:0; color:#32101A; font-size:12.5px; line-height:1.6; }
+      .gs-answer-head strong { font-size:10px; padding:3px 8px; border-radius:99px; }
+      .is-correct .gs-answer-head strong { color:#1B5E20; background:rgba(27,94,32,.10); }
+      .is-wrong .gs-answer-head strong { color:#6B1E2D; background:rgba(107,30,45,.09); }
+      .gs-answer-comparison { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+      .gs-answer-comparison div { padding:8px 9px; border-radius:10px; background:#F7F3EB; min-width:0; }
+      .gs-answer-comparison small { display:block; color:#8F765B; font-size:9.5px; font-weight:700; margin-bottom:3px; }
+      .gs-answer-comparison b { display:block; color:#4A0E1C; font-size:11px; line-height:1.55; }
+      .gs-legacy { margin-top:12px; padding:14px; border-radius:12px; background:rgba(184,160,130,.12); color:#655B53; font-size:12px; font-weight:700; text-align:center; }
+      @media(max-width:760px){ .gs-answer-grid{grid-template-columns:1fr}.gs-history-row{grid-template-columns:auto 1fr auto}.gs-answer-link{grid-column:2 / -1}.gs-answer-comparison{grid-template-columns:1fr} }
     `}</style>
   );
 }

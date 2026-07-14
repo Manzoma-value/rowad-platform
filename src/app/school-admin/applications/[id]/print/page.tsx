@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { Component, type ReactNode, use, useEffect, useState } from "react";
+import { Component, type ReactNode, use, useEffect, useRef, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import {
   pickLang,
@@ -79,6 +79,9 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
 
   const [app, setApp] = useState<App | null>(null);
   const [name, setName] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const pageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(`/api/school-admin/applications/${id}`, { cache: "no-store" })
@@ -99,15 +102,6 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
       })
       .catch(() => {});
   }, [id]);
-
-  // Auto-open print dialog once data is ready.
-  useEffect(() => {
-    if (!app) return;
-    const id = setTimeout(() => {
-      try { window.print(); } catch { /* ignore */ }
-    }, 400);
-    return () => clearTimeout(id);
-  }, [app]);
 
   if (!app) {
     return <div style={{ padding: 40, textAlign: "center" }}>…</div>;
@@ -151,8 +145,64 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
         none: "—",
       };
 
+  const downloadPdf = async () => {
+    const element = pageRef.current;
+    if (!element || exporting) return;
+    setExporting(true);
+    setExportError("");
+    try {
+      await document.fonts.ready;
+      const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas"),
+      ]);
+      const canvas = await html2canvas(element, {
+        scale: Math.max(2, window.devicePixelRatio || 1),
+        useCORS: true,
+        backgroundColor: "#FFFFFF",
+        logging: false,
+        windowWidth: element.scrollWidth,
+      });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+      const margin = 8;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imageWidth = pageWidth - margin * 2;
+      const imageHeight = (canvas.height * imageWidth) / canvas.width;
+      const printableHeight = pageHeight - margin * 2;
+      const image = canvas.toDataURL("image/jpeg", 0.96);
+      let consumed = 0;
+      let pageIndex = 0;
+      while (consumed < imageHeight - 0.1) {
+        if (pageIndex > 0) pdf.addPage();
+        pdf.addImage(image, "JPEG", margin, margin - consumed, imageWidth, imageHeight, undefined, "FAST");
+        consumed += printableHeight;
+        pageIndex += 1;
+      }
+      const safeName = (name || app.full_name || "application").replace(/[\\/:*?"<>|]+/g, "-").trim();
+      pdf.save(`${safeName}-application.pdf`);
+    } catch (error) {
+      console.error("[application pdf export]", error);
+      setExportError(L === "ar" ? "تعذر إنشاء ملف PDF. حاول مرة أخرى." : "PDF-ja nuk u krijua. Provo përsëri.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <div className="pr-page" dir={dir}>
+    <>
+    <div className="pr-actions" dir={dir} data-html2canvas-ignore="true">
+      <button type="button" className="pr-download" onClick={() => void downloadPdf()} disabled={exporting}>
+        {exporting
+          ? (L === "ar" ? "جاري تجهيز PDF..." : "Duke përgatitur PDF...")
+          : (L === "ar" ? "تنزيل PDF" : "Shkarko PDF")}
+      </button>
+      <button type="button" className="pr-print" onClick={() => window.print()}>
+        {L === "ar" ? "طباعة" : "Printo"}
+      </button>
+      {exportError && <span>{exportError}</span>}
+    </div>
+    <div ref={pageRef} className="pr-page" dir={dir}>
       <header className="pr-head">
         <div>
           <h1 className="pr-title">{labels.title}</h1>
@@ -266,6 +316,12 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
         html, body { background: #FFF; }
+        .pr-actions { position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; padding:12px 18px; background:rgba(247,243,235,.96); border-bottom:1px solid rgba(184,160,130,.3); backdrop-filter:blur(12px); font-family:'Cairo',sans-serif; }
+        .pr-actions button { min-height:42px; padding:0 20px; border-radius:11px; font:800 13px 'Cairo',sans-serif; cursor:pointer; }
+        .pr-download { color:#F7F3EB; background:linear-gradient(180deg,#5B1526,#32101A); border:1px solid rgba(184,160,130,.4); }
+        .pr-download:disabled { opacity:.6; cursor:wait; }
+        .pr-print { color:#6B1E2D; background:#FFF; border:1px solid rgba(107,30,45,.22); }
+        .pr-actions span { width:100%; text-align:center; color:#6B1E2D; font-size:12px; font-weight:700; }
         .pr-page {
           font-family: 'Cairo', 'Tajawal', sans-serif;
           max-width: 800px; margin: 24px auto; padding: 30px;
@@ -306,10 +362,12 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
           /* Hide the admin chrome — only the printable page shows. */
           body * { visibility: hidden; }
           .pr-page, .pr-page * { visibility: visible; }
+          .pr-actions { display:none !important; }
           .pr-page { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none; max-width: 100%; }
         }
       `}</style>
     </div>
+    </>
   );
 }
 

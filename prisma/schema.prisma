@@ -188,6 +188,7 @@ model RowadGameSubmission {
   stage      RowadStage
   score      Int
   total      Int        @default(25)
+  answers    Json?      @db.JsonB
   created_at DateTime   @default(now())
 
   school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)

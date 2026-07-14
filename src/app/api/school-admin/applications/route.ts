@@ -31,6 +31,25 @@ export async function GET(req: Request) {
   const years = url.searchParams.get("years");
   const gender = url.searchParams.get("gender");
   const country = url.searchParams.get("country")?.trim() ?? "";
+  const exportAll = url.searchParams.get("export") === "1";
+
+  if (exportAll) {
+    const teachers = await prisma.teacher.findMany({
+      where: { school_id: auth.school.id },
+      select: {
+        id: true,
+        onboarding_status: true,
+        created_at: true,
+        profile: { select: { full_name: true, email: true, is_active: true } },
+        application: true,
+      },
+      orderBy: [
+        { application: { submitted_at: "desc" } },
+        { created_at: "desc" },
+      ],
+    });
+    return NextResponse.json({ teachers });
+  }
 
   const where: Prisma.TeacherWhereInput = {
     school_id: auth.school.id,
