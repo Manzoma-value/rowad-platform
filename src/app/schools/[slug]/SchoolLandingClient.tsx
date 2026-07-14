@@ -121,40 +121,37 @@ export default function SchoolLandingClient({ school }: { school: School }) {
           </div>
         </nav>
 
-        {/* ══ HERO ══ */}
+        {/* ══ HERO — the artwork as a true full-bleed background ══ */}
         <section className="lp-hero">
-          <div className="lp-hero-glow" aria-hidden="true" />
-          <div className="lp-hero-grid">
-            <div className="lp-hero-text">
-              <p className="lp-eyebrow a1">
-                <IdentityStar size={12} strokeWidth={5} color="#8F765B" />
-                {tr.eyebrow}
-              </p>
-              <h1 className="lp-title a2">{displayName}</h1>
+          <Image
+            src="/landingpage.png"
+            alt=""
+            fill
+            sizes="100vw"
+            className="lp-hero-bg"
+            priority
+          />
+          <div className="lp-hero-wash" aria-hidden="true" />
 
-              <div className="lp-divider a3">
-                <span className="lp-dline" />
-                <span className="lp-gem" />
-                <span className="lp-dline" />
-              </div>
+          <div className="lp-hero-panel">
+            <p className="lp-eyebrow a1">
+              <IdentityStar size={12} strokeWidth={5} color="#8F765B" />
+              {tr.eyebrow}
+            </p>
+            <h1 className="lp-title a2">{displayName}</h1>
 
-              <p className="lp-tagline a3">{tr.vision}</p>
-              <p className="lp-sub a4">{tr.sub}</p>
-
-              <div className="lp-cta a5">
-                <button className="lp-cta-outline" onClick={goLogin}>{tr.loginBtn}</button>
-                <button className="lp-cta-gold" onClick={goSignup}>{tr.signupBtn}</button>
-              </div>
+            <div className="lp-divider a3">
+              <span className="lp-dline" />
+              <span className="lp-gem" />
+              <span className="lp-dline" />
             </div>
 
-            <div className="lp-hero-art a4">
-              <div className="lp-art-frame">
-                <Image src="/landingpage.png" alt={displayName} fill sizes="(max-width: 900px) 90vw, 44vw" className="lp-art-img" priority />
-                <div className="lp-art-frame-glow" aria-hidden="true" />
-              </div>
-              <div className="lp-art-badge" aria-hidden="true">
-                <IdentityMandala size={68} stroke="#B8A082" opacity={0.95} spin spinDuration={90} />
-              </div>
+            <p className="lp-tagline a3">{tr.vision}</p>
+            <p className="lp-sub a4">{tr.sub}</p>
+
+            <div className="lp-cta a5">
+              <button className="lp-cta-outline" onClick={goLogin}>{tr.loginBtn}</button>
+              <button className="lp-cta-gold" onClick={goSignup}>{tr.signupBtn}</button>
             </div>
           </div>
         </section>
@@ -235,8 +232,6 @@ html{scroll-behavior:smooth;}
 }
 
 @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-@keyframes lp-shimmer{0%,15%{background-position:0 0,-60% 0}65%,100%{background-position:0 0,160% 0}}
-@keyframes lp-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
 .a1{animation:fu .9s .05s both cubic-bezier(.22,1,.36,1)}
 .a2{animation:fu .9s .18s both cubic-bezier(.22,1,.36,1)}
@@ -310,52 +305,64 @@ html{scroll-behavior:smooth;}
 ════════════════ */
 .lp-hero{
   position:relative;min-height:100vh;
-  display:flex;align-items:center;
-  overflow:hidden;padding:110px 36px 70px;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;padding:110px 24px 70px;
 }
-.lp-hero-glow{
-  position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse 60% 55% at 78% 30%, rgba(184,160,130,.16), transparent 60%);
+.lp-hero-bg{
+  object-fit:cover;object-position:center;
+  z-index:0;
 }
-.lp-hero-grid{
-  position:relative;z-index:2;width:100%;max-width:1180px;margin:0 auto;
-  display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;
+.lp-hero-wash{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  /* Light cream wash — heavier at the top/bottom for nav and CTA
+     legibility, sheer through the middle so the artwork itself, which
+     is already cream/burgundy/gold, stays the star of the section. */
+  background:linear-gradient(
+    180deg,
+    rgba(239,234,224,.65) 0%,
+    rgba(239,234,224,.18) 26%,
+    rgba(239,234,224,.12) 60%,
+    rgba(239,234,224,.55) 100%
+  );
 }
-/* Grid items default to min-width:auto, which — combined with a flex
-   child sized entirely off aspect-ratio (no intrinsic width of its own)
-   — collapses the whole column to 0 in some browsers. Both rules below
-   break that circularity. */
-.lp-hero-grid > *{min-width:0;}
 
-.lp-hero-text{text-align:start;}
+.lp-hero-panel{
+  position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  max-width:640px;margin:0 auto;
+  padding:44px 52px;border-radius:28px;
+  background:rgba(255,251,245,.62);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(184,160,130,.38);
+  box-shadow:0 30px 70px rgba(74,14,28,.14), inset 0 1px 0 rgba(255,255,255,.6);
+}
 .lp-eyebrow{
   display:inline-flex;align-items:center;gap:9px;
   font-size:11px;letter-spacing:.28em;color:var(--gold-dk);
-  font-weight:800;text-transform:uppercase;margin-bottom:22px;
+  font-weight:800;text-transform:uppercase;margin-bottom:20px;
 }
 .lp-title{
   font-family:var(--font-h);
-  font-size:clamp(34px,5.4vw,58px);font-weight:800;
-  color:var(--ink);line-height:1.12;margin-bottom:20px;
+  font-size:clamp(32px,5.6vw,54px);font-weight:800;
+  color:var(--ink);line-height:1.14;margin-bottom:18px;
+  text-shadow:0 2px 24px rgba(255,255,255,.6);
 }
-.lp-divider{display:flex;align-items:center;gap:10px;width:160px;margin-bottom:22px;}
-.lp-dline{flex:1;height:1px;background:linear-gradient(90deg,rgba(184,160,130,.55),transparent);}
+.lp-divider{display:flex;align-items:center;gap:10px;width:160px;margin:0 auto 20px;}
+.lp-dline{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,.55),transparent);}
 .lp-gem{width:5px;height:5px;background:var(--burgundy);transform:rotate(45deg);flex-shrink:0;}
 
 .lp-tagline{
-  font-size:clamp(16px,2vw,20px);color:var(--burgundy);
-  font-weight:700;margin-bottom:12px;line-height:1.55;font-family:var(--font-h);
+  font-size:clamp(15px,1.9vw,19px);color:var(--burgundy);
+  font-weight:700;margin-bottom:10px;line-height:1.55;font-family:var(--font-h);
 }
 .lp-sub{
-  font-size:clamp(13.5px,1.4vw,15px);color:var(--ink-muted);
-  font-weight:500;max-width:460px;line-height:1.95;margin-bottom:38px;
+  font-size:clamp(13px,1.3vw,14.5px);color:var(--ink-muted);
+  font-weight:500;max-width:440px;line-height:1.9;margin-bottom:34px;
 }
 
-.lp-cta{display:flex;gap:12px;flex-wrap:wrap;}
-.lp-hero-text .lp-cta{justify-content:flex-start;}
+.lp-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
 .lp-cta-outline{
   padding:13px 34px;border:1.5px solid rgba(107,30,45,.30);border-radius:12px;
-  background:rgba(255,251,245,.6);backdrop-filter:blur(6px);
+  background:rgba(255,251,245,.7);backdrop-filter:blur(6px);
   color:var(--burgundy);font-size:14px;font-weight:800;
   cursor:pointer;font-family:var(--font);transition:all .2s;
 }
@@ -369,29 +376,6 @@ html{scroll-behavior:smooth;}
   box-shadow:0 10px 30px rgba(74,14,28,.22);
 }
 .lp-cta-gold:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(74,14,28,.32);}
-
-/* Hero artwork frame */
-.lp-hero-art{position:relative;width:100%;display:flex;align-items:center;justify-content:center;}
-.lp-art-frame{
-  position:relative;width:100%;aspect-ratio:1672/941;border-radius:26px;overflow:hidden;
-  border:1.5px solid rgba(184,160,130,.4);
-  box-shadow:0 30px 70px rgba(74,14,28,.16), 0 4px 0 rgba(255,255,255,.5) inset;
-  animation:lp-float 7s ease-in-out infinite;
-}
-.lp-art-img{object-fit:cover;}
-.lp-art-frame-glow{
-  position:absolute;inset:0;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
-  background:linear-gradient(160deg, rgba(255,255,255,.10), transparent 40%);
-}
-.lp-art-badge{
-  position:absolute;bottom:-18px;inset-inline-start:-18px;
-  width:76px;height:76px;border-radius:50%;
-  background:linear-gradient(160deg,#4A0E1C,#32101A);
-  border:1px solid rgba(184,160,130,.45);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 14px 32px rgba(74,14,28,.30);
-}
 
 /* ════════════════
    PILLARS
@@ -480,12 +464,7 @@ html{scroll-behavior:smooth;}
    RESPONSIVE
 ════════════════ */
 @media(max-width:980px){
-  .lp-hero-grid{grid-template-columns:1fr;gap:44px;}
-  .lp-hero-text{text-align:center;}
-  .lp-eyebrow,.lp-divider{margin-inline:auto;}
-  .lp-sub{margin-inline:auto;}
-  .lp-hero-text .lp-cta{justify-content:center;}
-  .lp-hero-art{order:-1;max-width:520px;margin:0 auto;}
+  .lp-hero-panel{padding:36px 32px;}
 }
 
 @media(max-width:760px){
@@ -497,6 +476,7 @@ html{scroll-behavior:smooth;}
   .lp-lang-btn{padding:4px 10px;font-size:10.5px;}
 
   .lp-hero{padding:88px 18px 50px;}
+  .lp-hero-panel{padding:28px 22px;border-radius:22px;}
   .lp-title{font-size:clamp(30px,8vw,44px);}
   .lp-cta{flex-direction:column;align-items:stretch;width:100%;max-width:320px;margin-inline:auto;}
   .lp-cta-outline,.lp-cta-gold{width:100%;padding:13px 22px;font-size:13.5px;}
