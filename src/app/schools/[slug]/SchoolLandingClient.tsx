@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { HeartHandshake, BookOpen, Compass } from "lucide-react";
+import IdentityStar from "@/components/IdentityStar";
+import IdentityMandala from "@/components/IdentityMandala";
 
 interface School {
   id: string;
@@ -26,8 +29,14 @@ const T = {
     vision: "تمكين الإنسان · بناء المستقبل",
     sub: "منصة تعليمية متكاملة تجمع بين الأخلاق والعلم والقيادة",
     students: "طالب", teachers: "معلم", classes: "فصل",
-    content: "محتوى", levels: "مراحل", models: "نموذج قياس",
     loginBtn: "تسجيل الدخول", signupBtn: "إنشاء حساب",
+    pillarsEyebrow: "ركائزنا",
+    pillarsTitle: "ثلاث ركائز، رؤية واحدة",
+    pillars: [
+      { title: "الأخلاق", desc: "نغرس القيم والمبادئ التي تبني الإنسان قبل أن تبني المتعلم." },
+      { title: "العلم", desc: "محتوى تعليمي متدرّج يوازن بين الأصالة والحداثة في كل مرحلة." },
+      { title: "القيادة", desc: "نُعِدّ جيلاً قادراً على الريادة وصناعة الأثر في مجتمعه." },
+    ],
     joinTitle: "ابدأ رحلتك معنا",
     joinSub: "كن جزءًا من جيل يصنع المستقبل",
     poweredBy: "جميع الحقوق محفوظة © منظومة - 2026",
@@ -38,8 +47,14 @@ const T = {
     vision: "Fuqizimi i Njeriut · Ndërtimi i së Ardhmes",
     sub: "Platformë edukative që kombinon vlerat morale, dijen dhe lidershipin",
     students: "nxënës", teachers: "mësues", classes: "klasë",
-    content: "përmbajtje", levels: "faza", models: "modele vlerësimi",
     loginBtn: "Hyrje", signupBtn: "Regjistrohu",
+    pillarsEyebrow: "Shtyllat Tona",
+    pillarsTitle: "Tri shtylla, një vizion",
+    pillars: [
+      { title: "Vlerat morale", desc: "Mbjellim vlerat dhe parimet që ndërtojnë njeriun para se të ndërtojnë nxënësin." },
+      { title: "Dija", desc: "Përmbajtje edukative e gradualizuar, që balancon autenticitetin me modernitetin." },
+      { title: "Lidershipi", desc: "Përgatisim një brez të aftë të udhëheqë dhe të krijojë ndikim në komunitetin e tij." },
+    ],
     joinTitle: "Filloni Udhëtimin",
     joinSub: "Bëhuni pjesë e gjeneratës që ndërton të ardhmen",
     poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma - 2026",
@@ -82,6 +97,8 @@ export default function SchoolLandingClient({ school }: { school: School }) {
       ? school.name_alt
       : school.name;
 
+  const pillarIcons = [HeartHandshake, BookOpen, Compass];
+
   return (
     <>
       <style>{css}</style>
@@ -89,10 +106,8 @@ export default function SchoolLandingClient({ school }: { school: School }) {
 
         {/* ══ NAVBAR ══ */}
         <nav className={`lp-nav${scrolled ? " lp-scrolled" : ""}`}>
-          {/* School name centred */}
           <span className="lp-nav-name">{displayName}</span>
 
-          {/* Right actions */}
           <div className="lp-nav-actions" dir="ltr">
             <div className="lp-lang-pill">
               {(["ar", "sq"] as Lang[]).map((l) => (
@@ -108,36 +123,71 @@ export default function SchoolLandingClient({ school }: { school: School }) {
 
         {/* ══ HERO ══ */}
         <section className="lp-hero">
-          <div className="lp-hero-overlay" />
+          <div className="lp-hero-glow" aria-hidden="true" />
+          <div className="lp-hero-grid">
+            <div className="lp-hero-text">
+              <p className="lp-eyebrow a1">
+                <IdentityStar size={12} strokeWidth={5} color="#8F765B" />
+                {tr.eyebrow}
+              </p>
+              <h1 className="lp-title a2">{displayName}</h1>
 
-          <div className="lp-hero-body">
-            <p  className="lp-eyebrow a1">{tr.eyebrow}</p>
-            <h1 className="lp-title a2">{displayName}</h1>
+              <div className="lp-divider a3">
+                <span className="lp-dline" />
+                <span className="lp-gem" />
+                <span className="lp-dline" />
+              </div>
 
-            <div className="lp-divider a3">
-              <span className="lp-dline" />
-              <span className="lp-gem"  />
-              <span className="lp-dline" />
+              <p className="lp-tagline a3">{tr.vision}</p>
+              <p className="lp-sub a4">{tr.sub}</p>
+
+              <div className="lp-cta a5">
+                <button className="lp-cta-outline" onClick={goLogin}>{tr.loginBtn}</button>
+                <button className="lp-cta-gold" onClick={goSignup}>{tr.signupBtn}</button>
+              </div>
             </div>
 
-            <p className="lp-tagline a3">{tr.vision}</p>
-            <p className="lp-sub    a4">{tr.sub}</p>
-
-<div className="lp-cta a5">
-              <button className="lp-cta-outline" onClick={goLogin}>{tr.loginBtn}</button>
-              <button className="lp-cta-gold"    onClick={goSignup}>{tr.signupBtn}</button>
+            <div className="lp-hero-art a4">
+              <div className="lp-art-frame">
+                <Image src="/landingpage.png" alt={displayName} fill sizes="(max-width: 900px) 90vw, 44vw" className="lp-art-img" priority />
+                <div className="lp-art-frame-glow" aria-hidden="true" />
+              </div>
+              <div className="lp-art-badge" aria-hidden="true">
+                <IdentityMandala size={68} stroke="#B8A082" opacity={0.95} spin spinDuration={90} />
+              </div>
             </div>
           </div>
+        </section>
 
-          <div className="lp-scroll-pip" aria-hidden="true" />
+        {/* ══ PILLARS ══ */}
+        <section className="lp-pillars">
+          <div className="lp-pillars-head">
+            <p className="lp-pillars-eyebrow">
+              <IdentityStar size={11} strokeWidth={5} color="#B8A082" />
+              {tr.pillarsEyebrow}
+            </p>
+            <h2>{tr.pillarsTitle}</h2>
+          </div>
+          <div className="lp-pillars-grid">
+            {tr.pillars.map((p, i) => {
+              const Icon = pillarIcons[i];
+              return (
+                <div key={p.title} className="lp-pillar">
+                  <div className="lp-pillar-icon"><Icon size={22} strokeWidth={1.7} /></div>
+                  <h3>{p.title}</h3>
+                  <p>{p.desc}</p>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
         {/* ══ NUMBERS STRIP ══ */}
         <div className="lp-strip">
           {[
-            { n: "25", l: tr.content },
-            { n: "5",  l: tr.levels  },
-            { n: "75", l: tr.models  },
+            { n: school.student_count, l: tr.students },
+            { n: school.teacher_count, l: tr.teachers },
+            { n: school.class_count, l: tr.classes },
           ].map(({ n, l }, i) => (
             <div key={i} className="lp-num">
               <span className="lp-num-n">{n}</span>
@@ -149,13 +199,18 @@ export default function SchoolLandingClient({ school }: { school: School }) {
         {/* ══ FOOTER CTA ══ */}
         <footer className="lp-footer">
           <div className="lp-footer-glow" />
-          <h2 className="lp-footer-title">{tr.joinTitle}</h2>
-          <p className="lp-footer-sub">{tr.joinSub}</p>
-          <div className="lp-cta">
-            <button className="lp-cta-outline" onClick={goLogin}>{tr.loginBtn}</button>
-            <button className="lp-cta-gold"    onClick={goSignup}>{tr.signupBtn}</button>
+          <div className="lp-footer-mandala" aria-hidden="true">
+            <IdentityMandala size={340} stroke="#D9C9B0" opacity={0.85} spin spinDuration={150} />
           </div>
-          <p className="lp-credit">{tr.poweredBy}</p>
+          <div className="lp-footer-body">
+            <h2 className="lp-footer-title">{tr.joinTitle}</h2>
+            <p className="lp-footer-sub">{tr.joinSub}</p>
+            <div className="lp-cta">
+              <button className="lp-cta-outline lp-cta-outline--dark" onClick={goLogin}>{tr.loginBtn}</button>
+              <button className="lp-cta-gold" onClick={goSignup}>{tr.signupBtn}</button>
+            </div>
+            <p className="lp-credit">{tr.poweredBy}</p>
+          </div>
         </footer>
 
       </div>
@@ -167,18 +222,21 @@ export default function SchoolLandingClient({ school }: { school: School }) {
    CSS
 ══════════════════════════════════════════════════════════ */
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=El+Messiri:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Noto+Kufi+Arabic:wght@500;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 
 :root{
-  --gold:#B8A082; --gold2:#B8A082; --gold-dk:#8F765B;
-  --ink:#1A1A1A;  --ink2:#0F1114;
-  --font:'Cairo',sans-serif; --font-h:'El Messiri','Cairo',serif;
+  --gold:#B8A082; --gold-soft:#D9C9B0; --gold-dk:#8F765B;
+  --burgundy:#6B1E2D; --burgundy-deep:#4A0E1C; --burgundy-darkest:#32101A; --burgundy-mid:#5B1526;
+  --cream:#EFEAE0; --cream-soft:#FBF8F1; --cream-card:#FFFBF5;
+  --ink:#1A1A1A; --ink-muted:#655B53; --ink-soft:#8C8274;
+  --font:'Cairo',sans-serif; --font-h:'Noto Kufi Arabic','Cairo',sans-serif;
 }
 
 @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pip{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(7px)}}
+@keyframes lp-shimmer{0%,15%{background-position:0 0,-60% 0}65%,100%{background-position:0 0,160% 0}}
+@keyframes lp-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 
 .a1{animation:fu .9s .05s both cubic-bezier(.22,1,.36,1)}
 .a2{animation:fu .9s .18s both cubic-bezier(.22,1,.36,1)}
@@ -187,7 +245,14 @@ html{scroll-behavior:smooth;}
 .a5{animation:fu .9s .58s both cubic-bezier(.22,1,.36,1)}
 
 /* ── Root ── */
-.lp-root{font-family:var(--font);background:var(--ink);color:#fff;overflow-x:hidden;}
+.lp-root{
+  font-family:var(--font);color:var(--ink);overflow-x:hidden;
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(184,160,130,.10), transparent 32%),
+    radial-gradient(ellipse at 92% 18%, rgba(107,30,45,.06), transparent 34%),
+    radial-gradient(ellipse at 15% 85%, rgba(184,160,130,.08), transparent 30%),
+    var(--cream);
+}
 
 /* ════════════════
    NAVBAR
@@ -196,191 +261,233 @@ html{scroll-behavior:smooth;}
   position:fixed;top:0;left:0;right:0;z-index:300;
   height:74px;padding:0 36px;
   display:flex;align-items:center;justify-content:space-between;gap:20px;
-  background:rgba(26,26,26,0);
+  background:rgba(239,234,224,0);
   border-bottom:1px solid transparent;
   transition:background .4s,border-color .4s,backdrop-filter .4s;
 }
-.lp-nav::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(184,160,130,0),transparent);
-  transition:background .4s;
-}
 .lp-scrolled{
-  background:rgba(26,26,26,0.90)!important;
-  backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
-  border-bottom-color:rgba(184,160,130,0.10)!important;
-}
-.lp-scrolled::after{
-  background:linear-gradient(90deg,transparent,rgba(184,160,130,0.18),transparent)!important;
+  background:rgba(251,248,241,0.86)!important;
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border-bottom-color:rgba(184,160,130,0.22)!important;
+  box-shadow:0 6px 24px rgba(74,14,28,.05);
 }
 
-
-/* School name (centred) */
 .lp-nav-name{
-  font-family:var(--font-h);font-size:15px;font-weight:600;
-  color:var(--gold);white-space:nowrap;
+  font-family:var(--font-h);font-size:15px;font-weight:700;
+  color:var(--burgundy);white-space:nowrap;
   position:absolute;left:50%;transform:translateX(-50%);
 }
 
 .lp-nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 
 .lp-lang-pill{
-  display:flex;background:rgba(184,160,130,0.07);
-  border:1px solid rgba(184,160,130,0.14);border-radius:8px;padding:3px;gap:2px;
+  display:flex;background:rgba(184,160,130,0.10);
+  border:1px solid rgba(184,160,130,0.24);border-radius:8px;padding:3px;gap:2px;
 }
 .lp-lang-btn{
   padding:4px 12px;border-radius:6px;border:none;
-  background:transparent;color:rgba(184,160,130,0.38);
+  background:transparent;color:rgba(107,30,45,0.42);
   font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);
   transition:all .15s;
 }
-.lp-lang-btn.on{background:rgba(184,160,130,0.18);color:var(--gold);}
+.lp-lang-btn.on{background:rgba(107,30,45,0.12);color:var(--burgundy);}
 
 .lp-ghost{
-  padding:7px 18px;border:1px solid rgba(184,160,130,0.26);border-radius:9px;
-  background:transparent;color:var(--gold);font-size:13px;font-weight:700;
+  padding:7px 18px;border:1.5px solid rgba(107,30,45,0.26);border-radius:9px;
+  background:transparent;color:var(--burgundy);font-size:13px;font-weight:700;
   cursor:pointer;font-family:var(--font);transition:all .18s;
 }
-.lp-ghost:hover{background:rgba(184,160,130,0.08);border-color:rgba(184,160,130,0.5);}
+.lp-ghost:hover{background:rgba(107,30,45,0.06);border-color:rgba(107,30,45,0.5);}
 .lp-gold{
-  padding:7px 20px;background:var(--gold);border-radius:9px;border:none;
-  color:var(--ink);font-size:13px;font-weight:800;
+  padding:7px 20px;background:linear-gradient(180deg,#5B1526,#32101A);border-radius:9px;border:1px solid rgba(184,160,130,.35);
+  color:var(--gold-soft);font-size:13px;font-weight:800;
   cursor:pointer;font-family:var(--font);transition:all .18s;
 }
-.lp-gold:hover{background:var(--gold2);box-shadow:0 4px 18px rgba(184,160,130,0.3);}
+.lp-gold:hover{box-shadow:0 6px 20px rgba(74,14,28,.30);transform:translateY(-1px);}
 
 /* ════════════════
    HERO
 ════════════════ */
 .lp-hero{
   position:relative;min-height:100vh;
-  display:flex;align-items:center;justify-content:center;
-  background:url('/landingpage.png') center/cover no-repeat;
-  overflow:hidden;
+  display:flex;align-items:center;
+  overflow:hidden;padding:110px 36px 70px;
 }
-.lp-hero-overlay{
-  position:absolute;inset:0;
-  background:linear-gradient(
-    180deg,
-    rgba(26,26,26,.60) 0%,
-    rgba(26,26,26,.28) 35%,
-    rgba(26,26,26,.42) 65%,
-    rgba(26,26,26,.95) 100%
-  );
+.lp-hero-glow{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 55% at 78% 30%, rgba(184,160,130,.16), transparent 60%);
 }
+.lp-hero-grid{
+  position:relative;z-index:2;width:100%;max-width:1180px;margin:0 auto;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;
+}
+/* Grid items default to min-width:auto, which — combined with a flex
+   child sized entirely off aspect-ratio (no intrinsic width of its own)
+   — collapses the whole column to 0 in some browsers. Both rules below
+   break that circularity. */
+.lp-hero-grid > *{min-width:0;}
 
-.lp-hero-body{
-  position:relative;z-index:2;
-  display:flex;flex-direction:column;align-items:center;
-  text-align:center;padding:110px 32px 90px;
-  max-width:800px;margin:0 auto;width:100%;
-}
-
+.lp-hero-text{text-align:start;}
 .lp-eyebrow{
-  font-size:11px;letter-spacing:.34em;color:rgba(184,160,130,.60);
-  font-weight:700;text-transform:uppercase;margin-bottom:22px;
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:11px;letter-spacing:.28em;color:var(--gold-dk);
+  font-weight:800;text-transform:uppercase;margin-bottom:22px;
 }
 .lp-title{
   font-family:var(--font-h);
-  font-size:clamp(38px,7.5vw,80px);font-weight:700;
-  color:#fff;line-height:1.05;margin-bottom:22px;
-  text-shadow:0 4px 32px rgba(0,0,0,.55);
+  font-size:clamp(34px,5.4vw,58px);font-weight:800;
+  color:var(--ink);line-height:1.12;margin-bottom:20px;
 }
-
-.lp-divider{display:flex;align-items:center;gap:10px;width:180px;margin:0 auto 24px;}
-.lp-dline{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,.48),transparent);}
-.lp-gem{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;opacity:.8;}
+.lp-divider{display:flex;align-items:center;gap:10px;width:160px;margin-bottom:22px;}
+.lp-dline{flex:1;height:1px;background:linear-gradient(90deg,rgba(184,160,130,.55),transparent);}
+.lp-gem{width:5px;height:5px;background:var(--burgundy);transform:rotate(45deg);flex-shrink:0;}
 
 .lp-tagline{
-  font-size:clamp(15px,2.2vw,20px);color:rgba(184,160,130,.85);
-  font-weight:600;margin-bottom:10px;line-height:1.55;
+  font-size:clamp(16px,2vw,20px);color:var(--burgundy);
+  font-weight:700;margin-bottom:12px;line-height:1.55;font-family:var(--font-h);
 }
 .lp-sub{
-  font-size:clamp(13px,1.5vw,15px);color:rgba(255,255,255,.42);
-  font-weight:400;max-width:460px;line-height:1.95;margin-bottom:46px;
+  font-size:clamp(13.5px,1.4vw,15px);color:var(--ink-muted);
+  font-weight:500;max-width:460px;line-height:1.95;margin-bottom:38px;
 }
 
-
-/* CTA row */
-.lp-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+.lp-cta{display:flex;gap:12px;flex-wrap:wrap;}
+.lp-hero-text .lp-cta{justify-content:flex-start;}
 .lp-cta-outline{
-  padding:13px 38px;border:1.5px solid rgba(184,160,130,.36);border-radius:12px;
-  background:rgba(26,26,26,.45);backdrop-filter:blur(8px);
-  color:var(--gold);font-size:14px;font-weight:700;
+  padding:13px 34px;border:1.5px solid rgba(107,30,45,.30);border-radius:12px;
+  background:rgba(255,251,245,.6);backdrop-filter:blur(6px);
+  color:var(--burgundy);font-size:14px;font-weight:800;
   cursor:pointer;font-family:var(--font);transition:all .2s;
 }
-.lp-cta-outline:hover{border-color:var(--gold);background:rgba(184,160,130,.10);}
+.lp-cta-outline:hover{border-color:var(--burgundy);background:rgba(107,30,45,.06);}
+.lp-cta-outline--dark{border-color:rgba(217,201,176,.4);background:rgba(255,255,255,.06);color:var(--gold-soft);}
+.lp-cta-outline--dark:hover{border-color:var(--gold-soft);background:rgba(255,255,255,.10);}
 .lp-cta-gold{
-  padding:13px 40px;background:var(--gold);border-radius:12px;border:none;
-  color:var(--ink);font-size:14px;font-weight:900;
+  padding:13px 38px;background:linear-gradient(180deg,#5B1526,#32101A);border-radius:12px;border:1px solid rgba(184,160,130,.4);
+  color:var(--gold-soft);font-size:14px;font-weight:800;
   cursor:pointer;font-family:var(--font);transition:all .2s;
-  box-shadow:0 6px 28px rgba(184,160,130,.30);
+  box-shadow:0 10px 30px rgba(74,14,28,.22);
 }
-.lp-cta-gold:hover{background:var(--gold2);transform:translateY(-2px);box-shadow:0 12px 36px rgba(184,160,130,.42);}
+.lp-cta-gold:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(74,14,28,.32);}
 
-/* Scroll pip */
-.lp-scroll-pip{
-  position:absolute;bottom:28px;left:50%;
-  width:6px;height:6px;border-radius:50%;background:var(--gold);
-  opacity:.5;
-  animation:pip 1.9s ease-in-out infinite;
+/* Hero artwork frame */
+.lp-hero-art{position:relative;width:100%;display:flex;align-items:center;justify-content:center;}
+.lp-art-frame{
+  position:relative;width:100%;aspect-ratio:1672/941;border-radius:26px;overflow:hidden;
+  border:1.5px solid rgba(184,160,130,.4);
+  box-shadow:0 30px 70px rgba(74,14,28,.16), 0 4px 0 rgba(255,255,255,.5) inset;
+  animation:lp-float 7s ease-in-out infinite;
 }
+.lp-art-img{object-fit:cover;}
+.lp-art-frame-glow{
+  position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.35);
+  background:linear-gradient(160deg, rgba(255,255,255,.10), transparent 40%);
+}
+.lp-art-badge{
+  position:absolute;bottom:-18px;inset-inline-start:-18px;
+  width:76px;height:76px;border-radius:50%;
+  background:linear-gradient(160deg,#4A0E1C,#32101A);
+  border:1px solid rgba(184,160,130,.45);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 14px 32px rgba(74,14,28,.30);
+}
+
+/* ════════════════
+   PILLARS
+════════════════ */
+.lp-pillars{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:90px 36px 30px;}
+.lp-pillars-head{text-align:center;margin-bottom:40px;}
+.lp-pillars-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:10.5px;letter-spacing:.26em;color:var(--gold-dk);
+  font-weight:800;text-transform:uppercase;margin-bottom:12px;
+}
+.lp-pillars-head h2{font-family:var(--font-h);font-size:clamp(24px,3.6vw,34px);font-weight:800;color:var(--ink);}
+
+.lp-pillars-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;}
+.lp-pillar{
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,var(--cream-card),var(--cream-soft));
+  border:1px solid rgba(184,160,130,.28);border-radius:20px;padding:28px 24px;
+  text-align:center;box-shadow:0 12px 30px rgba(74,14,28,.05);
+  transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+.lp-pillar:before{content:"";position:absolute;top:0;inset-inline:22px;height:2px;background:linear-gradient(90deg,transparent,#B8A082,transparent);}
+.lp-pillar:hover{transform:translateY(-5px);border-color:rgba(184,160,130,.55);box-shadow:0 20px 42px rgba(74,14,28,.10);}
+.lp-pillar-icon{
+  width:56px;height:56px;margin:0 auto 16px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(160deg,rgba(107,30,45,.10),rgba(184,160,130,.14));
+  color:var(--burgundy);border:1px solid rgba(184,160,130,.3);
+}
+.lp-pillar h3{font-family:var(--font-h);font-size:17px;font-weight:800;color:var(--ink);margin-bottom:8px;}
+.lp-pillar p{font-size:13px;color:var(--ink-muted);line-height:1.85;}
 
 /* ════════════════
    NUMBERS STRIP
 ════════════════ */
 .lp-strip{
-  display:flex;justify-content:center;align-items:stretch;
-  background:var(--ink2);
-  border-top:1px solid rgba(184,160,130,.07);
-  border-bottom:1px solid rgba(184,160,130,.07);
+  position:relative;z-index:2;max-width:1000px;margin:60px auto 0;padding:0 36px;
+  display:flex;justify-content:center;align-items:stretch;gap:16px;
 }
 .lp-num{
-  flex:1;max-width:280px;padding:44px 24px;
+  flex:1;max-width:280px;padding:30px 24px;
   display:flex;flex-direction:column;align-items:center;gap:8px;
-  border-inline-end:1px solid rgba(184,160,130,.07);
-  transition:background .22s;
+  background:var(--cream-card);border:1px solid rgba(184,160,130,.28);border-radius:20px;
+  box-shadow:0 12px 28px rgba(74,14,28,.05);
+  transition:transform .2s ease,box-shadow .2s ease;
 }
-.lp-num:last-child{border-inline-end:none;}
-.lp-num:hover{background:rgba(184,160,130,.04);}
+.lp-num:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(74,14,28,.09);}
 .lp-num-n{
-  font-size:54px;font-weight:900;color:var(--gold);
-  line-height:1;font-family:var(--font-h);letter-spacing:-1px;
+  font-size:44px;font-weight:800;color:var(--burgundy);
+  line-height:1;font-family:var(--font-h);
 }
-.lp-num-l{font-size:13px;color:rgba(255,255,255,.32);font-weight:600;letter-spacing:.04em;}
+.lp-num-l{font-size:12.5px;color:var(--ink-soft);font-weight:700;letter-spacing:.03em;}
 
 /* ════════════════
    FOOTER
 ════════════════ */
 .lp-footer{
-  position:relative;overflow:hidden;
-  background:#060809;
-  padding:90px 24px 64px;
+  position:relative;overflow:hidden;margin-top:90px;
+  background:radial-gradient(circle at 85% -20%, rgba(184,160,130,.18), transparent 42%), radial-gradient(circle at 10% 110%, rgba(107,30,45,.5), transparent 44%), linear-gradient(150deg,#32101A 0%,#4A0E1C 55%,#5B1526 100%);
+  padding:96px 24px 56px;
   display:flex;flex-direction:column;align-items:center;
   text-align:center;
-  border-top:1px solid rgba(184,160,130,.06);
 }
+.lp-footer:before{content:"";position:absolute;top:0;inset-inline:0;height:2px;background:linear-gradient(90deg,transparent,rgba(217,201,176,.65) 30%,rgba(217,201,176,.65) 70%,transparent);}
 .lp-footer-glow{
   position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 60%,rgba(184,160,130,.08),transparent 55%);
+  background:radial-gradient(ellipse at 50% 40%,rgba(184,160,130,.10),transparent 55%);
 }
+.lp-footer-mandala{position:absolute;inset-inline-end:-60px;bottom:-60px;pointer-events:none;opacity:.5;}
+.lp-footer-body{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
 .lp-footer-title{
   font-family:var(--font-h);
-  font-size:clamp(28px,5vw,50px);font-weight:700;
-  color:var(--gold);margin-bottom:12px;position:relative;
+  font-size:clamp(26px,4.4vw,42px);font-weight:800;
+  color:#FFFBF5;margin-bottom:12px;
 }
 .lp-footer-sub{
-  font-size:15px;color:rgba(255,255,255,.32);
-  max-width:420px;line-height:1.9;margin-bottom:36px;position:relative;
+  font-size:14.5px;color:rgba(239,234,224,.68);
+  max-width:420px;line-height:1.9;margin-bottom:32px;
 }
 .lp-credit{
-  margin-top:52px;font-size:11px;color:rgba(184,160,130,.18);
-  letter-spacing:.18em;text-transform:uppercase;position:relative;
+  margin-top:46px;font-size:10.5px;color:rgba(217,201,176,.42);
+  letter-spacing:.16em;text-transform:uppercase;
 }
 
 /* ════════════════
    RESPONSIVE
 ════════════════ */
+@media(max-width:980px){
+  .lp-hero-grid{grid-template-columns:1fr;gap:44px;}
+  .lp-hero-text{text-align:center;}
+  .lp-eyebrow,.lp-divider{margin-inline:auto;}
+  .lp-sub{margin-inline:auto;}
+  .lp-hero-text .lp-cta{justify-content:center;}
+  .lp-hero-art{order:-1;max-width:520px;margin:0 auto;}
+}
+
 @media(max-width:760px){
   .lp-nav{padding:0 14px;height:60px;gap:8px;}
   .lp-nav-name{display:none;}
@@ -389,35 +496,24 @@ html{scroll-behavior:smooth;}
   .lp-lang-pill{padding:2px;}
   .lp-lang-btn{padding:4px 10px;font-size:10.5px;}
 
-  .lp-hero-body{padding:90px 20px 76px;}
-  .lp-eyebrow{font-size:10px;letter-spacing:.26em;margin-bottom:18px;}
-  .lp-title{font-size:clamp(34px,9vw,52px);margin-bottom:18px;}
-  .lp-divider{width:140px;margin:0 auto 20px;}
-  .lp-tagline{font-size:15px;margin-bottom:8px;}
-  .lp-sub{font-size:13px;line-height:1.85;margin-bottom:34px;max-width:380px;}
-
-.lp-cta{flex-direction:column;align-items:stretch;width:100%;max-width:300px;margin:0 auto;}
+  .lp-hero{padding:88px 18px 50px;}
+  .lp-title{font-size:clamp(30px,8vw,44px);}
+  .lp-cta{flex-direction:column;align-items:stretch;width:100%;max-width:320px;margin-inline:auto;}
   .lp-cta-outline,.lp-cta-gold{width:100%;padding:13px 22px;font-size:13.5px;}
 
-  .lp-strip{flex-direction:column;}
-  .lp-num{
-    max-width:100%;border-inline-end:none;
-    border-bottom:1px solid rgba(184,160,130,.07);padding:28px 24px;
-  }
-  .lp-num:last-child{border-bottom:none;}
-  .lp-num-n{font-size:44px;}
-  .lp-num-l{font-size:12px;}
+  .lp-pillars{padding:60px 18px 10px;}
+  .lp-pillars-grid{grid-template-columns:1fr;}
 
-  .lp-footer{padding:68px 20px 52px;}
-  .lp-footer-title{font-size:clamp(26px,7vw,40px);}
-  .lp-footer-sub{font-size:13.5px;margin-bottom:28px;}
-  .lp-credit{margin-top:42px;font-size:10.5px;}
+  .lp-strip{flex-direction:column;padding:0 18px;margin-top:40px;}
+  .lp-num{max-width:100%;padding:22px 20px;}
+  .lp-num-n{font-size:36px;}
+
+  .lp-footer{padding:70px 20px 44px;margin-top:60px;}
+  .lp-footer-sub{margin-bottom:26px;}
 }
 
 @media(max-width:400px){
   .lp-nav{padding:0 10px;height:56px;}
   .lp-gold{padding:6px 12px;font-size:11.5px;}
-  .lp-hero-body{padding:84px 14px 68px;}
-.lp-num-n{font-size:38px;}
 }
 `;
