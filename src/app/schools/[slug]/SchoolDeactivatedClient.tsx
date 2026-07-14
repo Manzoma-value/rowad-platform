@@ -37,9 +37,9 @@ export default function SchoolDeactivatedClient({
   schoolNameAlt: string | null;
   schoolLang: string;
 }) {
-  const [lang, setLang] = useState<Lang>(
-    schoolLang === "sq" ? "sq" : schoolLang === "en" ? "en" : "ar",
-  );
+  // Arabic is the platform default regardless of the school's own
+  // configured language — visitors can still switch via the language toggle.
+  const [lang, setLang] = useState<Lang>("ar");
   const t = T[lang];
   const dir = lang === "ar" ? "rtl" : "ltr";
   const displayName =

@@ -176,7 +176,7 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
 function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const router = useRouter();
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const tr = t[lang];
   const isRtl = lang === "ar";
 
@@ -247,10 +247,10 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           );
         }
         if (d?.school?.language) {
-          const savedLang = localStorage.getItem("lang");
-          if (!savedLang) setLang(d.school.language as "ar" | "sq" | "en");
           // Use the school's secondary language as the alternate option.
           // If the school IS Arabic, default the secondary to Albanian.
+          // Arabic stays the platform default — we no longer auto-switch to
+          // the school's language on first load.
           setSchoolLang(d.school.language === "ar" ? "sq" : d.school.language);
         }
         setOnboardingStatus(d?.onboarding_status ?? null);

@@ -170,7 +170,9 @@ function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
 }
 
 export default function SchoolSignupClient({ school }: { school: School }) {
-  const [lang, setLang] = useState<Lang>(school.language === "sq" ? "sq" : "ar");
+  // Arabic is the platform default regardless of the school's own
+  // configured language — visitors can still switch via the AR/SQ toggle.
+  const [lang, setLang] = useState<Lang>("ar");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

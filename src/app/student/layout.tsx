@@ -234,8 +234,9 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
 
         if (data.school?.language && !langInitialized.current) {
           langInitialized.current = true;
-          const savedLang = localStorage.getItem("lang");
-          if (!savedLang) setLang(data.school.language as "ar" | "sq" | "en");
+          // Arabic stays the platform default — we no longer auto-switch to
+          // the school's language on first load, only track it as the
+          // alternate option for the language toggle.
           setSchoolLang(data.school.language === "ar" ? "sq" : data.school.language);
         }
 

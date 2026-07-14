@@ -135,7 +135,7 @@ export default function SchoolAdminLayout({ children }: { children: React.ReactN
 function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { lang, setLang } = useLang();
+  const { lang } = useLang();
   const tr = t[lang];
   const isRtl = lang === "ar";
 
@@ -290,15 +290,14 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
             schoolSlugRef.current = d.school.slug;
             enforceTenantSubdomain(d.school.slug);
           }
-          // Inherit the school's default language so the admin sees the
-          // same locale teachers + students see (AR for ar-schools, SQ for
-          // albanian-schools). Stored choice in localStorage wins.
+          // Track the school's configured language for the alternate-
+          // language toggle button, but Arabic stays the platform default —
+          // we no longer auto-switch to it on first load. Stored choice in
+          // localStorage still wins if the admin picked a language before.
           if (d.school.language) {
-            const savedLang = localStorage.getItem("lang");
             const sl = d.school.language;
             if (sl === "ar" || sl === "sq" || sl === "en") {
               setSchoolLang(sl);
-              if (!savedLang) setLang(sl);
             }
           }
         }
