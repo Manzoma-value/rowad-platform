@@ -421,11 +421,6 @@ export default function SchoolLoginClient({ school }: { school: School }) {
           <div className="lp-corner lp-corner-br" />
 
           <div className="lp-panel-inner">
-            <div className="lp-location" dir="ltr">
-              <span className="lp-location-dot" />
-              TIRANË <span>41.3275° N · 19.8187° E</span>
-            </div>
-
             <div className="lp-brand-emblem">
               <Mandala size={220} className="lp-mandala" />
               <div className="lp-school-badge">{displayName.charAt(0)}</div>
@@ -441,11 +436,6 @@ export default function SchoolLoginClient({ school }: { school: School }) {
                 <p className="lp-brand-desc">{school.description}</p>
               )}
               <Rule />
-            </div>
-
-            <div className="lp-albanian-values" dir="ltr">
-              <span className="lp-albania-monogram">AL</span>
-              <span>DIJE · VLERË · E ARDHME</span>
             </div>
 
             {/* Toggle lives in the dark panel on desktop */}
@@ -471,7 +461,6 @@ export default function SchoolLoginClient({ school }: { school: School }) {
               <span className="lp-form-eyebrow">
                 {lang === "sq" ? "Mirë se u riktheve" : "مرحبًا بعودتك"}
               </span>
-              <span className="lp-secure-badge"><i /> SECURE PORTAL</span>
             </div>
             {/* Mobile-only toggle — shown above the form on small screens */}
             <div className="lp-lang-toggle-mobile">
