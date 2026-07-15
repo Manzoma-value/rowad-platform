@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { authPremiumCss } from "@/lib/auth-premium-css";
 
 /* ─── Geometry ─── */
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
@@ -43,6 +44,9 @@ const STRINGS = {
     dir: "rtl" as const,
     brand: "بناء الأهلية",
     tagline: "جيل الرواد · تمكين الإنسان · بناء المستقبل",
+    albania: "من ألبانيا إلى مستقبلٍ يصنعه الرواد",
+    albanianValues: "Dije · Vlerë · E ardhme",
+    welcome: "ابدأ رحلتك معنا",
     signupTitle: "إنشاء حساب",
     sub: "أنشئ حسابك للانضمام إلى المنصة",
     nameLabel: "الاسم الكامل",
@@ -70,6 +74,9 @@ const STRINGS = {
     dir: "ltr" as const,
     brand: "Binaa Al-Ahliya",
     tagline: "Pioneers · Empowering people · Building the future",
+    albania: "From Albania to a future built by pioneers",
+    albanianValues: "Knowledge · Values · Future",
+    welcome: "Begin your journey",
     signupTitle: "Create account",
     sub: "Sign up to start your journey",
     nameLabel: "Full name",
@@ -181,16 +188,29 @@ export default function SignupPage() {
   return (
     <>
       <main className="lp-shell" dir={L.dir}>
+        <div className="lp-identity-watermark" aria-hidden="true"/>
         {/* ── Brand panel ── */}
         <div className="lp-panel">
           <div className="lp-corner lp-corner-tl"/><div className="lp-corner lp-corner-br"/>
           <div className="lp-panel-inner">
-            <Mandala size={220} className="lp-mandala"/>
+            <div className="lp-location" dir="ltr">
+              <span className="lp-location-dot"/>
+              TIRANË <span>41.3275° N · 19.8187° E</span>
+            </div>
+            <div className="lp-brand-emblem">
+              <Mandala size={176} className="lp-mandala"/>
+              <span className="lp-brand-letter">ب</span>
+            </div>
             <div className="lp-brand-text">
               <Rule/>
+              <p className="lp-brand-kicker">{L.albania}</p>
               <h2 className="lp-brand-name">{L.brand}</h2>
               <p className="lp-brand-tag">{L.tagline}</p>
               <Rule/>
+            </div>
+            <div className="lp-albanian-values" dir="ltr">
+              <span className="lp-albania-monogram">AL</span>
+              <span>{L.albanianValues}</span>
             </div>
             <LangToggle lang={lang} onChange={handleLangChange}/>
             <div className="lp-panel-footer">
@@ -202,6 +222,10 @@ export default function SignupPage() {
         {/* ── Form panel ── */}
         <div className="lp-form-side">
           <div className="lp-form-wrap">
+            <div className="lp-form-topline">
+              <span className="lp-form-eyebrow">{L.welcome}</span>
+              <span className="lp-secure-badge"><i/> SECURE PORTAL</span>
+            </div>
             <div className="lp-lang-toggle-mobile">
               <LangToggle lang={lang} onChange={handleLangChange}/>
             </div>
@@ -518,4 +542,4 @@ const css = `
     .lp-lang-toggle{width:100px;}
     .lp-lang-btn{padding:6px 0;font-size:11.5px;}
   }
-`;
+` + authPremiumCss;
