@@ -77,6 +77,10 @@ interface Teacher {
   _count: { lessons: number; quizzes: number; announcements: number };
 }
 
+function isActiveTeacher(teacher: Teacher) {
+  return teacher.onboarding_status === "ACTIVE" && teacher.profile.is_active;
+}
+
 // ── Real onboarding-status enum values (TeacherOnboardingStatus) ──
 const onboardingTone: Record<string, string> = {
   ACTIVE: "good",
@@ -283,8 +287,8 @@ export default function SchoolAdminTeachersPage() {
       if (fLocation && `${teacher.application?.city}, ${teacher.application?.country}` !== fLocation) return false;
       if (fQualification && teacher.application?.qualification !== fQualification) return false;
       if (fExperience && teacher.application?.years_of_experience !== fExperience) return false;
-      if (fStatus === "active" && !teacher.profile.is_active) return false;
-      if (fStatus === "inactive" && teacher.profile.is_active) return false;
+      if (fStatus === "active" && !isActiveTeacher(teacher)) return false;
+      if (fStatus === "inactive" && isActiveTeacher(teacher)) return false;
       if (!needle) return true;
       const haystack = [
         teacher.profile.full_name,
@@ -304,7 +308,7 @@ export default function SchoolAdminTeachersPage() {
   }, [query, teachers, fLocation, fQualification, fExperience, fStatus]);
 
   const totals = useMemo(() => {
-    const active = teachers.filter((teacher) => teacher.profile.is_active).length;
+    const active = teachers.filter(isActiveTeacher).length;
     const withClasses = teachers.filter((teacher) => teacher.classes.length > 0).length;
     const withGroups = teachers.filter((teacher) => teacher.group_memberships.length > 0).length;
     return { active, withClasses, withGroups };

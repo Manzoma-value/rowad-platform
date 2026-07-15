@@ -36,7 +36,13 @@ export async function GET() {
   // Batch 1 — counts
   const [teacherCount, studentCount, classCount, pendingPlacements] =
     await Promise.all([
-      prisma.teacher.count({ where: { school_id: school.id } }),
+      prisma.teacher.count({
+        where: {
+          school_id: school.id,
+          onboarding_status: "ACTIVE",
+          profile: { is_active: true },
+        },
+      }),
       prisma.student.count({ where: { school_id: school.id } }),
       prisma.class.count({ where: { school_id: school.id } }),
       prisma.assessmentAttempt.count({

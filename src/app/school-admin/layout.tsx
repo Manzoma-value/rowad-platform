@@ -670,9 +670,6 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="sa-breadcrumb-wrap">
-            <div className="sa-breadcrumb-geo">
-              <Image src="/headerlogo.png" alt="" fill sizes="36px" className="sa-breadcrumb-logo" aria-hidden="true" />
-            </div>
             <div className="sa-breadcrumb">
               <span className="sa-bc-cur">{currentLabel}</span>
             </div>
@@ -1153,13 +1150,6 @@ const styles = `
   @media (min-width: 768px) { .sa-hamburger { display: none; } }
 
   .sa-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
-  .sa-breadcrumb-geo  {
-    display: none; align-items: center; justify-content: center; position: relative; overflow: hidden;
-    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
-    border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.07); opacity: 1;
-  }
-  .sa-breadcrumb-logo { object-fit: cover; object-position: left center; }
-  @media (min-width: 640px) { .sa-breadcrumb-geo { display: flex; } }
   .sa-breadcrumb { display: flex; align-items: center; gap: 8px; }
   .sa-bc-root { font-size: 12.5px; font-weight: 600; color: var(--sa-gold-soft); opacity: .76; }
   .sa-bc-sep  { color: var(--sa-gold-soft); opacity: 0.42; flex-shrink: 0; }
@@ -1411,6 +1401,31 @@ const brandStyles = `
     background: rgba(239,234,224,0.88) !important;
     border-bottom-color: rgba(74,14,28,0.08) !important;
     box-shadow: 0 1px 0 rgba(74,14,28,0.04), 0 6px 24px rgba(74,14,28,0.035) !important;
+  }
+
+  .sa-bc-cur,
+  .sa-topbar-name {
+    color: #32101A !important;
+  }
+
+  .sa-topbar-sub {
+    color: #6B1E2D !important;
+    opacity: 0.82 !important;
+  }
+
+  .sa-hamburger,
+  .sa-bell-btn {
+    color: #6B1E2D !important;
+  }
+
+  .sa-bell-btn,
+  .sa-topbar-user-pill {
+    background: rgba(255,251,245,0.72) !important;
+    border-color: rgba(107,30,45,0.16) !important;
+  }
+
+  .sa-topbar-divider {
+    background: rgba(107,30,45,0.16) !important;
   }
 
   .sa-topbar-accent {

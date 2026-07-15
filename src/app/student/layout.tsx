@@ -469,9 +469,6 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="sl-breadcrumb-wrap">
-            <div className="sl-breadcrumb-geo">
-              <Image src="/headerlogo.png" alt="" fill sizes="36px" className="sl-breadcrumb-logo" aria-hidden="true" />
-            </div>
             <div className="sl-breadcrumb">
               <span className="sl-bc-cur">{currentLabel}</span>
             </div>
@@ -842,13 +839,6 @@ const styles = `
   @media (min-width: 768px) { .sl-hamburger { display: none; } }
 
   .sl-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
-  .sl-breadcrumb-geo  {
-    display: none; align-items: center; justify-content: center; position: relative; overflow: hidden;
-    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
-    border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.07); opacity: 1;
-  }
-  .sl-breadcrumb-logo { object-fit: cover; object-position: left center; }
-  @media (min-width: 640px) { .sl-breadcrumb-geo { display: flex; } }
   .sl-breadcrumb { display: flex; align-items: center; gap: 8px; }
   .sl-bc-root { font-size: 12.5px; font-weight: 600; color: var(--sl-gold-soft); opacity: .76; white-space: nowrap; }
   .sl-bc-sep  { color: var(--sl-gold-soft); opacity: 0.42; flex-shrink: 0; }

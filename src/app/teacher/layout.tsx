@@ -619,9 +619,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           </button>
 
           <div className="tl-breadcrumb-wrap">
-            <div className="tl-breadcrumb-geo">
-              <Image src="/headerlogo.png" alt="" fill sizes="36px" className="tl-breadcrumb-logo" aria-hidden="true" />
-            </div>
             <div className="tl-breadcrumb">
               <span className="tl-bc-cur">{currentLabel}</span>
             </div>
@@ -1066,13 +1063,6 @@ const styles = `
   @media (min-width: 768px) { .tl-hamburger { display: none; } }
 
   .tl-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
-  .tl-breadcrumb-geo  {
-    display: none; align-items: center; justify-content: center; position: relative; overflow: hidden;
-    width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
-    border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.07); opacity: 1;
-  }
-  .tl-breadcrumb-logo { object-fit: cover; object-position: left center; }
-  @media (min-width: 640px) { .tl-breadcrumb-geo { display: flex; } }
   .tl-breadcrumb { display: flex; align-items: center; gap: 8px; }
   .tl-bc-root { font-size: 12.5px; font-weight: 600; color: var(--tl-gold-soft); opacity: .76; white-space: nowrap; }
   .tl-bc-sep  { color: var(--tl-gold-soft); opacity: 0.42; flex-shrink: 0; }

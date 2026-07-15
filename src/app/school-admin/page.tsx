@@ -8,7 +8,6 @@ import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
 import IdentityMandala from "@/components/IdentityMandala";
-import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useViewOnly } from "@/lib/view-only-context";
 
 interface Stats {
@@ -38,7 +37,6 @@ export default function SchoolAdminDashboard() {
     subtitle: lang === "ar" ? "نظرة تنفيذية على المعلمين، الطلاب، الفصول، التقييمات والمجتمع من مكان واحد." : lang === "sq" ? "Pamje ekzekutive për mësuesit, nxënësit, klasat, vlerësimet dhe komunitetin." : "An executive view of teachers, students, classes, assessments and community work.",
     urgent: lang === "ar" ? "الأولويات الآن" : lang === "sq" ? "Prioritetet tani" : "Priorities now",
     ecosystem: lang === "ar" ? "خريطة المنصة" : lang === "sq" ? "Harta e platformës" : "Platform map",
-    open: lang === "ar" ? "فتح" : lang === "sq" ? "Hap" : "Open",
     healthy: lang === "ar" ? "مستقر" : lang === "sq" ? "Në rregull" : "Healthy",
     setupNeeded: lang === "ar" ? "يحتاج إعداد" : lang === "sq" ? "Kërkon konfigurim" : "Setup needed",
     pending: lang === "ar" ? "قيد المراجعة" : lang === "sq" ? "Në shqyrtim" : "Pending",
@@ -47,7 +45,11 @@ export default function SchoolAdminDashboard() {
 
   const [retryTick, setRetryTick] = useState(0);
   useEffect(() => {
-    cachedFetch<Stats>("/api/school-admin/stats", 60_000)
+    fetch("/api/school-admin/stats", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Failed to load dashboard stats");
+        return response.json() as Promise<Stats>;
+      })
       .then((d) => {
         if (d?.school) setStats(d);
         else setError(true);
@@ -57,7 +59,8 @@ export default function SchoolAdminDashboard() {
   }, [retryTick]);
 
   function retry() {
-    invalidateCache("/api/school-admin/stats");
+    setError(false);
+    setLoading(true);
     setRetryTick((n) => n + 1);
   }
 
@@ -138,7 +141,6 @@ export default function SchoolAdminDashboard() {
             </span>
             <span>{card.label}</span>
             <strong>{card.value}</strong>
-            <em>{labels.open}</em>
           </Link>
         ))}
       </section>
@@ -219,7 +221,6 @@ const styles = `
   .school-dashboard-kpi:before{content:"";position:absolute;top:0;inset-inline:18px;height:2px;background:linear-gradient(90deg,transparent,#B8A082,transparent)}
   .school-dashboard-kpi span{display:block;color:#8F765B;font-size:11.5px;font-weight:700;letter-spacing:.06em}
   .school-dashboard-kpi strong{display:block;margin-top:12px;font-family:var(--font-head);font-size:38px;line-height:1.15;font-weight:700;color:#4A0E1C}
-  .school-dashboard-kpi em{position:absolute;bottom:16px;inset-inline-start:20px;color:#6B1E2D;font-size:11px;font-style:normal;font-weight:700;letter-spacing:.04em}
   .school-dashboard-kpi-star{position:absolute;inset-inline-end:-26px;bottom:-26px;pointer-events:none}
   .school-dashboard-kpi.alert{border-color:rgba(107,30,45,.35)}
   .school-dashboard-kpi.alert strong{color:#6B1E2D}
