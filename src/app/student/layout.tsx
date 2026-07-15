@@ -320,7 +320,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
             src="/headerlogo.png"
             alt="بناء الأهلية"
             fill
-            style={{ objectFit: "contain", objectPosition: "center" }}
+            style={{ objectFit: "cover", objectPosition: "center" }}
             priority
           />
           <div className="sl-logo-frame" aria-hidden="true" />
