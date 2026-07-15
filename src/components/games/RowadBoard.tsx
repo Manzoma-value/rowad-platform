@@ -26,6 +26,7 @@ export type Card = {
 
 export type Placement = { concept_id: string; maqsad: Maqsad; level: number };
 type LevelRow = { order: number; name_ar: string; name_sq: string | null };
+type PlacedMap = Record<string, { level: number; maqsad: Maqsad }>;
 
 const cellKey = (level: number, maqsad: Maqsad) => `${level}:${maqsad}`;
 const loc = (lang: Lang, ar?: string | null, sq?: string | null) =>
@@ -56,6 +57,17 @@ const STR = {
     fruit: "الثمرة",
     verification: "مؤشر التحقق",
     levelFallback: (n: number) => `المستوى ${n}`,
+    stepOne: "1. اختر بطاقة",
+    stepTwo: "2. اختر المقصد والمستوى",
+    stepThree: "3. راجع ثم أرسل",
+    selectedLabel: "البطاقة المختارة",
+    chooseCell: "اختر الآن خانة فارغة في النموذج لوضع البطاقة.",
+    cancelSelection: "إلغاء الاختيار",
+    searchPlaceholder: "ابحث في البطاقات...",
+    undo: "تراجع",
+    clear: "تفريغ اللوحة",
+    noCards: "لا توجد بطاقات مطابقة للبحث.",
+    horizontalHint: "حرّك الجدول أفقيًا لرؤية جميع المقاصد",
   },
   sq: {
     brand: "Bina Al-Ahlia",
@@ -81,6 +93,17 @@ const STR = {
     fruit: "Fryti",
     verification: "Treguesi i verifikimit",
     levelFallback: (n: number) => `Niveli ${n}`,
+    stepOne: "1. Zgjidh një kartë",
+    stepTwo: "2. Zgjidh qëllimin dhe nivelin",
+    stepThree: "3. Kontrollo dhe dërgo",
+    selectedLabel: "Karta e zgjedhur",
+    chooseCell: "Tani zgjidh një qelizë të lirë në model.",
+    cancelSelection: "Anulo zgjedhjen",
+    searchPlaceholder: "Kërko kartat...",
+    undo: "Zhbëj",
+    clear: "Pastro tabelën",
+    noCards: "Nuk ka karta që përputhen me kërkimin.",
+    horizontalHint: "Lëviz tabelën horizontalisht për të parë të gjitha qëllimet",
   },
 } as const;
 
@@ -126,14 +149,16 @@ export default function RowadBoard({
   const tr = STR[lang === "sq" ? "sq" : "ar"];
   const dir = lang === "ar" ? "rtl" : "ltr";
 
-  const [placed, setPlaced] = useState<Record<string, { level: number; maqsad: Maqsad }>>(() => {
-    const m: Record<string, { level: number; maqsad: Maqsad }> = {};
+  const [placed, setPlaced] = useState<PlacedMap>(() => {
+    const m: PlacedMap = {};
     for (const p of initial) m[p.concept_id] = { level: p.level, maqsad: p.maqsad };
     return m;
   });
   const [selected, setSelected] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [detailCard, setDetailCard] = useState<Card | null>(null);
+  const [history, setHistory] = useState<PlacedMap[]>([]);
+  const [query, setQuery] = useState("");
 
   const cardById = useMemo(() => {
     const m: Record<string, Card> = {};
@@ -148,6 +173,11 @@ export default function RowadBoard({
   }, [placed]);
 
   const tray = useMemo(() => cards.filter((c) => !placed[c.id]), [cards, placed]);
+  const visibleTray = useMemo(() => {
+    const q = query.trim().toLocaleLowerCase();
+    if (!q) return tray;
+    return tray.filter((c) => `${c.name_ar} ${c.name_sq ?? ""}`.toLocaleLowerCase().includes(q));
+  }, [query, tray]);
   const placedCount = Object.keys(placed).length;
   const allPlaced = placedCount === cards.length && cards.length > 0;
   const progress = (placedCount / Math.max(cards.length, 1)) * 100;
@@ -167,6 +197,7 @@ export default function RowadBoard({
 
   function placeCard(cid: string, level: number, maqsad: Maqsad) {
     setPlaced((prev) => {
+      setHistory((h) => [...h.slice(-19), prev]);
       const next = { ...prev };
       const from = next[cid];
       const occupant = Object.entries(next).find(([id, pos]) => pos.level === level && pos.maqsad === maqsad && id !== cid);
@@ -181,7 +212,20 @@ export default function RowadBoard({
     setSelected(null);
   }
   function returnToTray(cid: string) {
-    setPlaced((prev) => { const n = { ...prev }; delete n[cid]; return n; });
+    setPlaced((prev) => { setHistory((h) => [...h.slice(-19), prev]); const n = { ...prev }; delete n[cid]; return n; });
+    setSelected(null);
+  }
+  function undoLast() {
+    const previous = history.at(-1);
+    if (!previous) return;
+    setPlaced(previous);
+    setHistory((h) => h.slice(0, -1));
+    setSelected(null);
+  }
+  function clearBoard() {
+    if (placedCount === 0) return;
+    setHistory((h) => [...h.slice(-19), placed]);
+    setPlaced({});
     setSelected(null);
   }
   function onDragStart(e: React.DragEvent, id: string) {
@@ -265,17 +309,44 @@ export default function RowadBoard({
   return (
     <div className="rbx-wrap" dir={dir}>
       <div className="rbx-inner">
+        <div className="rbx-guide" aria-label={tr.instructions}>
+          <div className={`rbx-guide-step${placedCount === 0 ? " active" : " done"}`}><b>1</b><span>{tr.stepOne}</span></div>
+          <i />
+          <div className={`rbx-guide-step${placedCount > 0 && !allPlaced ? " active" : allPlaced ? " done" : ""}`}><b>2</b><span>{tr.stepTwo}</span></div>
+          <i />
+          <div className={`rbx-guide-step${allPlaced ? " active" : ""}`}><b>3</b><span>{tr.stepThree}</span></div>
+        </div>
+
         {/* Cards tray */}
         <div className="rbx-tray" onDragOver={(e) => e.preventDefault()} onDrop={onTrayDrop}>
-          <div className="rbx-tray-head">
-            <span className="rbx-tray-title">{tr.cards}</span>
-            <span className="rbx-tray-count">{tray.length === 0 ? tr.done : `${tray.length} ${tr.remaining}`}</span>
+          <div className="rbx-tray-top">
+            <div className="rbx-tray-head">
+              <span className="rbx-tray-title">{tr.cards}</span>
+              <span className="rbx-tray-count">{tray.length === 0 ? tr.done : `${tray.length} ${tr.remaining}`}</span>
+            </div>
+            <div className="rbx-tools">
+              <label className="rbx-search">
+                <span aria-hidden>⌕</span>
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr.searchPlaceholder} />
+              </label>
+              <button type="button" className="rbx-tool-btn" onClick={undoLast} disabled={history.length === 0}>↶ {tr.undo}</button>
+              <button type="button" className="rbx-tool-btn danger" onClick={clearBoard} disabled={placedCount === 0}>{tr.clear}</button>
+            </div>
           </div>
+          {selected && cardById[selected] && (
+            <div className="rbx-selected-banner">
+              <div><small>{tr.selectedLabel}</small><strong>{loc(lang, cardById[selected].name_ar, cardById[selected].name_sq)}</strong></div>
+              <p>{tr.chooseCell}</p>
+              <button type="button" onClick={() => setSelected(null)}>{tr.cancelSelection}</button>
+            </div>
+          )}
           <div className="rbx-tray-cards">
             {tray.length === 0 ? (
               <span className="rbx-tray-empty">{tr.allPlaced}</span>
+            ) : visibleTray.length === 0 ? (
+              <span className="rbx-tray-empty muted">{tr.noCards}</span>
             ) : (
-              tray.map((c) => (
+              visibleTray.map((c) => (
                 <div
                   key={c.id}
                   className={`rbx-card${selected === c.id ? " sel" : ""}`}
@@ -301,6 +372,8 @@ export default function RowadBoard({
         </div>
 
         {/* ── Framed model document ── */}
+        <p className="rbx-scroll-hint">↔ {tr.horizontalHint}</p>
+        <div className="rbx-board-scroll">
         <div className="rbx-frame">
           <Seal />
 
@@ -365,6 +438,7 @@ export default function RowadBoard({
 
           {/* Rows 3–5 */}
           <div className="rbx-section">{sortedLevels.filter((l) => l.order >= 3).map(renderRow)}</div>
+        </div>
         </div>
 
         {/* Instructions */}
@@ -662,5 +736,28 @@ const styles = `
     .rbx-cellwrap{padding:3px}
     .rbx-card{padding:9px 13px;font-size:12px}
     .rbx-card::before{top:6px;bottom:6px}
+  }
+
+  /* Guided, reversible interaction layer */
+  .rbx-inner{max-width:1360px;padding-top:20px}
+  .rbx-guide{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 16px;padding:12px 18px;max-width:760px;border-radius:17px;background:rgba(255,251,245,.78);border:1px solid rgba(184,160,130,.30);box-shadow:0 8px 22px rgba(74,14,28,.055);backdrop-filter:blur(12px)}
+  .rbx-guide>i{width:clamp(22px,5vw,72px);height:2px;background:rgba(184,160,130,.28)}
+  .rbx-guide-step{display:flex;align-items:center;gap:7px;color:#9a8a7c;font-size:11px;font-weight:800;white-space:nowrap}.rbx-guide-step b{display:grid;place-items:center;width:27px;height:27px;border-radius:9px;background:#eee7dc;border:1px solid rgba(184,160,130,.32);font-size:10px}.rbx-guide-step.active{color:#4a0e1c}.rbx-guide-step.active b{color:#d9c9b0;background:linear-gradient(145deg,#6b1e2d,#32101a);border-color:#6b1e2d;box-shadow:0 5px 13px rgba(74,14,28,.20)}.rbx-guide-step.done b{font-size:0;color:white;background:#1b5e20;border-color:#1b5e20}.rbx-guide-step.done b::after{content:'✓';font-size:11px}
+
+  .rbx-tray{position:relative;padding:16px 18px 18px;margin-bottom:14px;border:1px solid rgba(184,160,130,.36);border-radius:20px;background:linear-gradient(145deg,rgba(255,253,248,.90),rgba(238,231,220,.82));box-shadow:0 14px 36px rgba(74,14,28,.075),inset 0 1px 0 #fff}
+  .rbx-tray-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:13px}.rbx-tray-head{margin:0;gap:9px}.rbx-tray-title{font-size:13px}.rbx-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+  .rbx-search{display:flex;align-items:center;gap:7px;min-width:220px;height:36px;padding:0 11px;border-radius:11px;background:rgba(255,255,255,.72);border:1px solid rgba(184,160,130,.32);color:#8a796c}.rbx-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#4a0e1c;font:600 12px 'Cairo',sans-serif}.rbx-search input::placeholder{color:#a5978a}
+  .rbx-tool-btn{height:36px;padding:0 12px;border-radius:11px;border:1px solid rgba(107,30,45,.18);background:rgba(255,255,255,.68);color:#6b1e2d;font:800 11px 'Cairo',sans-serif;cursor:pointer;transition:.16s}.rbx-tool-btn:hover:not(:disabled){transform:translateY(-1px);background:#fff;border-color:rgba(107,30,45,.34)}.rbx-tool-btn.danger{color:#7b3040;background:rgba(107,30,45,.045)}.rbx-tool-btn:disabled{opacity:.38;cursor:not-allowed}
+  .rbx-selected-banner{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;margin:0 0 13px;padding:12px 14px;border-radius:14px;color:#f8efe2;background:linear-gradient(115deg,#4a0e1c,#762438);border:1px solid rgba(217,201,176,.38);box-shadow:0 9px 20px rgba(74,14,28,.18);animation:rbx-chipin .2s ease}.rbx-selected-banner div{display:flex;flex-direction:column}.rbx-selected-banner small{color:#cdb898;font-size:9px;font-weight:800;letter-spacing:.06em}.rbx-selected-banner strong{font-size:13px}.rbx-selected-banner p{margin:0;color:rgba(255,247,237,.76);font-size:11.5px;text-align:center}.rbx-selected-banner button{border:1px solid rgba(217,201,176,.32);border-radius:9px;background:rgba(255,255,255,.08);color:#efe2cf;padding:7px 10px;font:700 10px 'Cairo',sans-serif;cursor:pointer}
+  .rbx-tray-cards{max-height:210px;overflow-y:auto;align-content:flex-start;padding:2px 3px 5px;scrollbar-width:thin;scrollbar-color:#b8a082 transparent}.rbx-card{border-radius:13px;padding-block:9px}.rbx-card.sel{color:#f8efe2!important;background:linear-gradient(135deg,#6b1e2d,#32101a)!important;border-color:#b8a082!important;box-shadow:0 10px 22px rgba(74,14,28,.28)!important}.rbx-tray-empty.muted{color:#8f7f73}
+  .rbx-scroll-hint{display:none;margin:4px 0 9px;color:#75655e;font-size:10.5px;font-weight:700;text-align:center}
+  .rbx-board-scroll{width:100%;overflow-x:auto;padding-bottom:7px;scrollbar-width:thin;scrollbar-color:#b8a082 rgba(184,160,130,.12)}
+  .rbx-frame{box-shadow:0 20px 55px rgba(74,14,28,.11),inset 0 1px 0 #fff}
+  .rbx-instructions{max-width:760px;margin:14px auto;color:#6f5f57;background:rgba(255,251,245,.62);border:1px solid rgba(184,160,130,.23);border-radius:12px;padding:10px 14px}
+  .rbx-footer{position:sticky;bottom:10px;z-index:25;margin:14px auto 0;max-width:980px;padding:13px 15px;border-radius:18px;background:rgba(255,251,245,.90);border:1px solid rgba(184,160,130,.38);box-shadow:0 16px 38px rgba(74,14,28,.17);backdrop-filter:blur(16px)}
+  .rbx-submit{min-width:190px;border-radius:13px;padding:13px 20px}
+
+  @media(max-width:760px){
+    .rbx-guide{gap:5px;padding:10px}.rbx-guide>i{width:18px}.rbx-guide-step span{display:none}.rbx-tray{padding:13px;border-radius:17px}.rbx-tray-top{align-items:stretch;flex-direction:column}.rbx-tools{justify-content:stretch}.rbx-search{min-width:0;flex:1}.rbx-tool-btn{padding-inline:10px}.rbx-selected-banner{grid-template-columns:1fr auto}.rbx-selected-banner p{grid-column:1/-1;grid-row:2;text-align:start}.rbx-tray-cards{max-height:178px}.rbx-scroll-hint{display:block}.rbx-frame{min-width:850px}.rbx-footer{bottom:6px;flex-direction:column;gap:10px}.rbx-progress,.rbx-submit{width:100%;min-width:0}.rbx-instructions{font-size:11px}
   }
 `;

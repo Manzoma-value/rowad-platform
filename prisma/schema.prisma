@@ -1255,6 +1255,9 @@ model Workshop {
   // Public random slug used in the signup URL and encoded in the signup QR.
   // Kept unique globally so /workshop/[token] doesn't need the school in the URL.
   signup_token  String         @unique
+  // Permanent attendance URL token. The scan date is resolved at check-in time,
+  // so one printed QR serves every scheduled work day in this workshop.
+  attendance_token String?     @unique
   created_by    String         @db.Uuid
   created_at    DateTime       @default(now())
   updated_at    DateTime       @updatedAt

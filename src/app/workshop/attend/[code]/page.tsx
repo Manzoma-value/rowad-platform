@@ -6,9 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-// Attendance scan landing. The QR the admin shows encodes this URL. When
-// the teacher scans, we POST to /api/workshop-attend/[code] which verifies
-// the code is today's and records their attendance.
+// Attendance scan landing. The QR is permanent for the workshop; the API
+// resolves the current scheduled work day when the teacher scans it.
 //
 // If the visitor is NOT signed in we send them to /login first (with a
 // return_to param). Otherwise we POST immediately and show the result.
@@ -22,7 +21,7 @@ const UI = {
     err_not_signed_in: "الرجاء تسجيل الدخول أولاً.",
     err_not_a_teacher: "الحساب المستخدم ليس حساب معلم.",
     err_invalid_code: "رمز QR غير معروف — تأكد من صحة الرابط.",
-    err_expired_code: "هذا الرمز لم يعد صالحاً. اطلب من المشرف عرض رمز اليوم.",
+    err_not_training_day: "اليوم ليس يوم تدريب مجدولاً لهذه الورشة.",
     err_wrong_school: "هذه الورشة تخص مدرسة أخرى.",
     err_workshop_closed: "الورشة مغلقة.",
     err_default: "حدث خطأ غير متوقع. حاول مرة أخرى.",
@@ -36,7 +35,7 @@ const UI = {
     err_not_signed_in: "Të lutem hyr fillimisht.",
     err_not_a_teacher: "Ky nuk është llogari mësuesi.",
     err_invalid_code: "Kodi QR nuk njihet — kontrollo lidhjen.",
-    err_expired_code: "Ky kod nuk është më i vlefshëm. Kërko kodin e sotëm.",
+    err_not_training_day: "Sot nuk është ditë trajnimi e planifikuar për këtë punëtori.",
     err_wrong_school: "Kjo punëtori i përket një shkolle tjetër.",
     err_workshop_closed: "Punëtoria është e mbyllur.",
     err_default: "Diçka shkoi keq. Provo përsëri.",

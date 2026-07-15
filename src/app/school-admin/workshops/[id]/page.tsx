@@ -57,12 +57,11 @@ const UI = {
     back: "العودة للورش",
     signupQr: "QR التسجيل في الورشة",
     signupSub: "هذا الرمز ثابت. اعرضه في الورشة ليُنشئ المعلم حسابه ثم يكمل نموذج التقديم.",
-    attendanceQr: "QR الحضور اليومي",
-    attendanceSub: "أنشئ رمز حضور جديد لكل يوم تدريب. عند إعادة التوليد، يتوقف الرمز السابق لهذا اليوم.",
-    generate: "توليد رمز اليوم",
-    regenerate: "إعادة توليد رمز اليوم",
+    attendanceQr: "QR الحضور الدائم",
+    attendanceSub: "رمز واحد ثابت لكل أيام الورشة. عند المسح، يسجل النظام حضور المعلم تلقائياً في تاريخ اليوم.",
+    generate: "إنشاء رمز الحضور",
     generating: "جاري التوليد...",
-    noCode: "لم يتم توليد رمز حضور لهذا اليوم بعد.",
+    noCode: "لم يتم إنشاء رمز الحضور الدائم بعد.",
     open: "مفتوحة",
     closed: "مغلقة",
     close: "إغلاق الورشة",
@@ -89,12 +88,11 @@ const UI = {
     back: "Kthehu te punëtoritë",
     signupQr: "QR i regjistrimit",
     signupSub: "Ky kod është i përhershëm. Shfaqe në punëtori që mësuesi të krijojë llogarinë dhe të plotësojë aplikimin.",
-    attendanceQr: "QR i pranisë ditore",
-    attendanceSub: "Gjenero një kod të ri për çdo ditë trajnimi. Kur rigjenerohet, kodi i mëparshëm i ditës ndalon.",
-    generate: "Gjenero kodin e sotëm",
-    regenerate: "Rigjenero kodin e sotëm",
+    attendanceQr: "QR i përhershëm i pranisë",
+    attendanceSub: "Një kod i vetëm për çdo ditë të punëtorisë. Sistemi regjistron automatikisht praninë në datën e skanimit.",
+    generate: "Krijo kodin e pranisë",
     generating: "Duke gjeneruar...",
-    noCode: "Nuk ka kod pranie për sot ende.",
+    noCode: "Kodi i përhershëm i pranisë nuk është krijuar ende.",
     open: "E hapur",
     closed: "E mbyllur",
     close: "Mbyll punëtorinë",
@@ -320,9 +318,9 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
               <h2>{T.attendanceQr}</h2>
               <p>{T.attendanceSub}</p>
             </div>
-            {!viewOnly && (
+            {!viewOnly && !code.code && (
               <button className="wd-small-btn" onClick={generateCode} disabled={busyCode || detail.workshop.status === "CLOSED"} data-write="true">
-                {busyCode ? T.generating : code.code ? T.regenerate : T.generate}
+                {busyCode ? T.generating : T.generate}
               </button>
             )}
           </div>

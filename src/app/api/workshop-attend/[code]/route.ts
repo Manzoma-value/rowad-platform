@@ -1,10 +1,5 @@
-// POST /api/workshop-attend/[code]
-// The teacher scans the daily QR (which resolves to /workshop/attend/[code]).
-// That page issues this POST once the user is authenticated. We then verify:
-//   - Code exists AND its day_date == today
-//   - The workshop still OPEN
-//   - The caller is a teacher of the same school
-// and upsert a WorkshopAttendance row (unique on workshop×teacher×day).
+// The permanent QR identifies the workshop. The server resolves the current
+// calendar day on every scan and records at most one check-in per teacher/day.
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
@@ -12,14 +7,37 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 function todayDate(): Date {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const timeZone = process.env.WORKSHOP_TIME_ZONE ?? "Europe/Tirane";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return new Date(`${value("year")}-${value("month")}-${value("day")}T00:00:00.000Z`);
 }
 
-export async function POST(
-  _req: Request,
-  context: { params: Promise<{ code: string }> },
+function isScheduledWorkDay(
+  scheduleValue: unknown,
+  today: Date,
+  startDate: Date | null,
+  endDate: Date | null,
 ) {
+  const key = today.toISOString().slice(0, 10);
+  if (Array.isArray(scheduleValue) && scheduleValue.length > 0) {
+    return scheduleValue.some((raw) => {
+      if (!raw || typeof raw !== "object") return false;
+      const day = raw as { date?: unknown; type?: unknown };
+      return day.date === key && day.type === "WORK";
+    });
+  }
+  if (startDate && key < startDate.toISOString().slice(0, 10)) return false;
+  if (endDate && key > endDate.toISOString().slice(0, 10)) return false;
+  return !!(startDate || endDate);
+}
+
+export async function POST(_req: Request, context: { params: Promise<{ code: string }> }) {
   const { code } = await context.params;
   if (!code) return NextResponse.json({ error: "no_code" }, { status: 400 });
 
@@ -30,61 +48,57 @@ export async function POST(
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
     select: {
-      id: true, role: true, is_active: true,
-      teacher: { select: { id: true, school_id: true, onboarding_status: true } },
+      role: true,
+      is_active: true,
+      teacher: { select: { id: true, school_id: true } },
     },
   });
   if (!profile?.is_active || profile.role !== "TEACHER" || !profile.teacher) {
     return NextResponse.json({ error: "not_a_teacher" }, { status: 403 });
   }
 
-  const entry = await prisma.workshopAttendanceCode.findUnique({
-    where: { code },
+  const workshop = await prisma.workshop.findUnique({
+    where: { attendance_token: code },
     select: {
-      code: true,
-      day_date: true,
-      workshop: {
-        select: { id: true, school_id: true, status: true, title: true },
-      },
+      id: true,
+      school_id: true,
+      status: true,
+      title: true,
+      schedule: true,
+      start_date: true,
+      end_date: true,
     },
   });
-  if (!entry) return NextResponse.json({ error: "invalid_code" }, { status: 404 });
-  if (entry.workshop.school_id !== profile.teacher.school_id) {
+  if (!workshop) return NextResponse.json({ error: "invalid_code" }, { status: 404 });
+  if (workshop.school_id !== profile.teacher.school_id) {
     return NextResponse.json({ error: "wrong_school" }, { status: 403 });
   }
-  if (entry.workshop.status === "CLOSED") {
+  if (workshop.status === "CLOSED") {
     return NextResponse.json({ error: "workshop_closed" }, { status: 410 });
   }
 
   const today = todayDate();
-  if (
-    entry.day_date.getFullYear() !== today.getFullYear() ||
-    entry.day_date.getMonth() !== today.getMonth() ||
-    entry.day_date.getDate() !== today.getDate()
-  ) {
-    return NextResponse.json({ error: "expired_code" }, { status: 410 });
+  if (!isScheduledWorkDay(workshop.schedule, today, workshop.start_date, workshop.end_date)) {
+    return NextResponse.json({ error: "not_training_day" }, { status: 409 });
   }
 
-  // Upsert on (workshop, teacher, day) — first scan of the day wins,
-  // repeated scans are no-ops.
-  await prisma.workshopAttendance.upsert({
-    where: {
-      workshop_id_teacher_id_day_date: {
-        workshop_id: entry.workshop.id,
-        teacher_id: profile.teacher.id,
-        day_date: today,
-      },
-    },
-    create: {
-      workshop_id: entry.workshop.id,
-      teacher_id: profile.teacher.id,
-      day_date: today,
-    },
-    update: {}, // no-op — keep original checked_in_at
+  const key = {
+    workshop_id: workshop.id,
+    teacher_id: profile.teacher.id,
+    day_date: today,
+  };
+  const existing = await prisma.workshopAttendance.findUnique({
+    where: { workshop_id_teacher_id_day_date: key },
+    select: { id: true },
   });
+  if (!existing) {
+    await prisma.workshopAttendance.create({ data: key });
+  }
 
   return NextResponse.json({
     success: true,
-    workshop_title: entry.workshop.title,
+    already_recorded: !!existing,
+    attendance_date: today.toISOString().slice(0, 10),
+    workshop_title: workshop.title,
   });
 }
