@@ -4,7 +4,8 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
-import { COLUMN_LABELS } from "@/lib/rowad";
+import { Check, MapPin, X } from "lucide-react";
+import { COLUMN_LABELS, COLUMN_ORDER } from "@/lib/rowad";
 
 type ModelAnswer = {
   concept_id: string;
@@ -69,6 +70,12 @@ const UI = {
     selected: "إجابة المشارك",
     expected: "الإجابة الصحيحة",
     level: "المستوى",
+    exactModel: "النموذج الذي رتّبه المشارك",
+    exactModelSub: "كل بطاقة تظهر في الخانة التي اختارها المشارك فعليًا.",
+    correctCount: "صحيحة",
+    wrongCount: "خاطئة",
+    expectedAt: "مكانها الصحيح",
+    emptyCell: "خانة فارغة",
     legacy: "هذه المحاولة قديمة وتم تسجيل الدرجة فقط قبل إضافة تفاصيل الإجابات.",
   },
   sq: {
@@ -102,6 +109,12 @@ const UI = {
     selected: "Përgjigjja e pjesëmarrësit",
     expected: "Përgjigjja e saktë",
     level: "Niveli",
+    exactModel: "Modeli i plotësuar nga pjesëmarrësi",
+    exactModelSub: "Çdo kartë shfaqet pikërisht në qelizën që zgjodhi pjesëmarrësi.",
+    correctCount: "Saktë",
+    wrongCount: "Gabim",
+    expectedAt: "Vendi i saktë",
+    emptyCell: "Qelizë bosh",
     legacy: "Kjo përpjekje është e vjetër dhe ka ruajtur vetëm rezultatin.",
   },
 } as const;
@@ -171,8 +184,8 @@ export default function GameScoresPage() {
           : detail.history.length === 0 ? <div className="gs-empty">{T.noHistory}</div>
           : (
             <div className="gs-history-list">
-              {detail.history.map((h) => (
-                <details key={h.id} className="gs-attempt">
+              {detail.history.map((h, attemptIndex) => (
+                <details key={h.id} className="gs-attempt" open={attemptIndex === 0}>
                   <summary className="gs-history-row">
                     <span className={`gs-stage-tag stage-${h.stage}`}>
                       {h.stage === "STAGE1" ? T.stage1Lbl : T.stage2Lbl}
@@ -185,32 +198,21 @@ export default function GameScoresPage() {
                     {!Array.isArray(h.answers) || h.answers.length === 0 ? (
                       <div className="gs-legacy">{T.legacy}</div>
                     ) : (
-                      <div className="gs-answer-grid">
-                        {h.answers.map((answer, index) => {
-                          const selectedColumn = COLUMN_LABELS[answer.selected_maqsad]?.[L] ?? answer.selected_maqsad;
-                          const correctColumn = COLUMN_LABELS[answer.correct_maqsad]?.[L] ?? answer.correct_maqsad;
-                          const conceptName = L === "sq" && answer.name_sq ? answer.name_sq : answer.name_ar;
-                          return (
-                            <article key={`${answer.concept_id}-${index}`} className={`gs-answer ${answer.is_correct ? "is-correct" : "is-wrong"}`}>
-                              <div className="gs-answer-head">
-                                <span>{index + 1}</span>
-                                <h3>{conceptName}</h3>
-                                <strong>{answer.is_correct ? T.correct : T.wrong}</strong>
-                              </div>
-                              <div className="gs-answer-comparison">
-                                <div>
-                                  <small>{T.selected}</small>
-                                  <b>{selectedColumn} · {T.level} {answer.selected_level}</b>
-                                </div>
-                                <div>
-                                  <small>{T.expected}</small>
-                                  <b>{correctColumn} · {T.level} {answer.correct_level}</b>
-                                </div>
-                              </div>
-                            </article>
-                          );
-                        })}
-                      </div>
+                      <SubmissionBoard
+                        answers={h.answers}
+                        lang={L}
+                        score={h.score}
+                        total={h.total}
+                        labels={{
+                          title: T.exactModel,
+                          sub: T.exactModelSub,
+                          correct: T.correctCount,
+                          wrong: T.wrongCount,
+                          expectedAt: T.expectedAt,
+                          level: T.level,
+                          emptyCell: T.emptyCell,
+                        }}
+                      />
                     )}
                   </div>
                 </details>
@@ -301,6 +303,106 @@ function Score({ n, total }: { n: number | null; total: number }) {
   );
 }
 
+function SubmissionBoard({
+  answers,
+  lang,
+  score,
+  total,
+  labels,
+}: {
+  answers: ModelAnswer[];
+  lang: "ar" | "sq";
+  score: number;
+  total: number;
+  labels: {
+    title: string;
+    sub: string;
+    correct: string;
+    wrong: string;
+    expectedAt: string;
+    level: string;
+    emptyCell: string;
+  };
+}) {
+  const byCell = new Map(
+    answers.map((answer) => [`${answer.selected_level}:${answer.selected_maqsad}`, answer]),
+  );
+  const correct = answers.filter((answer) => answer.is_correct).length;
+  const wrong = answers.length - correct;
+  const pct = total > 0 ? Math.round((score / total) * 100) : 0;
+
+  return (
+    <section className="gs-model-review">
+      <header className="gs-model-head">
+        <div>
+          <span className="gs-model-kicker">5 × 5</span>
+          <h2>{labels.title}</h2>
+          <p>{labels.sub}</p>
+        </div>
+        <div className="gs-model-score" aria-label={`${score} / ${total}`}>
+          <strong>{score}<small>/{total}</small></strong>
+          <span>{pct}%</span>
+        </div>
+      </header>
+
+      <div className="gs-model-legend">
+        <span className="correct"><Check size={14} strokeWidth={2.5} />{correct} {labels.correct}</span>
+        <span className="wrong"><X size={14} strokeWidth={2.5} />{wrong} {labels.wrong}</span>
+      </div>
+
+      <div className="gs-model-scroll">
+        <table className="gs-model-table">
+          <thead>
+            <tr>
+              <th className="gs-model-corner">{labels.level}</th>
+              {COLUMN_ORDER.map((maqsad) => (
+                <th key={maqsad} scope="col">
+                  <span>{COLUMN_LABELS[maqsad][lang]}</span>
+                  <small>{maqsad}</small>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[1, 2, 3, 4, 5].map((level) => (
+              <tr key={level}>
+                <th scope="row" className="gs-model-level">
+                  <strong>{level}</strong>
+                  <span>{labels.level}</span>
+                </th>
+                {COLUMN_ORDER.map((maqsad) => {
+                  const answer = byCell.get(`${level}:${maqsad}`);
+                  if (!answer) {
+                    return <td key={maqsad}><div className="gs-model-empty">{labels.emptyCell}</div></td>;
+                  }
+                  const conceptName = lang === "sq" && answer.name_sq ? answer.name_sq : answer.name_ar;
+                  const expectedColumn = COLUMN_LABELS[answer.correct_maqsad]?.[lang] ?? answer.correct_maqsad;
+                  return (
+                    <td key={maqsad} className={answer.is_correct ? "is-correct" : "is-wrong"}>
+                      <article className="gs-model-card">
+                        <span className="gs-model-card-state" aria-label={answer.is_correct ? labels.correct : labels.wrong}>
+                          {answer.is_correct ? <Check size={14} strokeWidth={3} /> : <X size={14} strokeWidth={3} />}
+                        </span>
+                        <h3>{conceptName}</h3>
+                        {!answer.is_correct && (
+                          <div className="gs-model-expected">
+                            <MapPin size={12} strokeWidth={2.2} />
+                            <span><small>{labels.expectedAt}</small>{expectedColumn} · {labels.level} {answer.correct_level}</span>
+                          </div>
+                        )}
+                      </article>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function Styles() {
   return (
     <style>{`
@@ -345,24 +447,32 @@ function Styles() {
       .gs-history-score { font-weight: 800; color: #32101A; font-variant-numeric: tabular-nums; }
       .gs-history-when { color: #7A7468; font-size: 12px; }
       .gs-answer-panel { padding:0 16px 18px; background:linear-gradient(180deg,rgba(247,243,235,.5),rgba(239,234,224,.45)); }
-      .gs-answer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding-top:12px; }
-      .gs-answer { border:1px solid; border-radius:14px; padding:12px; background:#FFF; }
-      .gs-answer.is-correct { border-color:rgba(27,94,32,.22); box-shadow:inset 3px 0 0 rgba(27,94,32,.62); }
-      [dir="rtl"] .gs-answer.is-correct { box-shadow:inset -3px 0 0 rgba(27,94,32,.62); }
-      .gs-answer.is-wrong { border-color:rgba(107,30,45,.22); box-shadow:inset 3px 0 0 rgba(107,30,45,.62); }
-      [dir="rtl"] .gs-answer.is-wrong { box-shadow:inset -3px 0 0 rgba(107,30,45,.62); }
-      .gs-answer-head { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:8px; align-items:center; margin-bottom:10px; }
-      .gs-answer-head > span { width:24px; height:24px; border-radius:8px; display:grid; place-items:center; background:#F7F3EB; color:#6B1E2D; font-size:10px; font-weight:900; }
-      .gs-answer-head h3 { margin:0; color:#32101A; font-size:12.5px; line-height:1.6; }
-      .gs-answer-head strong { font-size:10px; padding:3px 8px; border-radius:99px; }
-      .is-correct .gs-answer-head strong { color:#1B5E20; background:rgba(27,94,32,.10); }
-      .is-wrong .gs-answer-head strong { color:#6B1E2D; background:rgba(107,30,45,.09); }
-      .gs-answer-comparison { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-      .gs-answer-comparison div { padding:8px 9px; border-radius:10px; background:#F7F3EB; min-width:0; }
-      .gs-answer-comparison small { display:block; color:#8F765B; font-size:9.5px; font-weight:700; margin-bottom:3px; }
-      .gs-answer-comparison b { display:block; color:#4A0E1C; font-size:11px; line-height:1.55; }
+      .gs-model-review { padding-top:14px; }
+      .gs-model-head { display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:20px 22px;background:linear-gradient(120deg,#32101A,#4A0E1C 66%,#5B1526);border:1px solid rgba(184,160,130,.42);border-radius:8px 8px 0 0;color:#FFFBF5; }
+      .gs-model-kicker { display:block;color:#B8A082;font-size:10px;font-weight:900;letter-spacing:.2em; }
+      .gs-model-head h2 { margin:5px 0 3px;font-size:18px;line-height:1.5; }
+      .gs-model-head p { margin:0;color:rgba(239,234,224,.72);font-size:11.5px; }
+      .gs-model-score { display:flex;align-items:baseline;gap:9px;flex-shrink:0;padding-inline-start:20px;border-inline-start:1px solid rgba(217,201,176,.28);font-variant-numeric:tabular-nums; }
+      .gs-model-score strong { font-size:31px;line-height:1;color:#FFFBF5; }.gs-model-score strong small{font-size:14px;color:#B8A082}.gs-model-score>span{font-size:11px;font-weight:900;color:#D9C9B0}
+      .gs-model-legend { display:flex;align-items:center;gap:10px;padding:10px 12px;background:#EFEAE0;border-inline:1px solid rgba(184,160,130,.30); }
+      .gs-model-legend span { display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:5px;font-size:10.5px;font-weight:900; }.gs-model-legend .correct{color:#1B5E20;background:rgba(27,94,32,.10)}.gs-model-legend .wrong{color:#6B1E2D;background:rgba(107,30,45,.09)}
+      .gs-model-scroll { overflow-x:auto;border:1px solid rgba(184,160,130,.30);border-top:0;background:#E5E0D5; }
+      .gs-model-table { width:100%;min-width:960px;border-collapse:separate;border-spacing:1px;table-layout:fixed;background:rgba(184,160,130,.34); }
+      .gs-model-table th,.gs-model-table td { padding:0;background:#FFFBF5; }
+      .gs-model-table thead th { height:62px;padding:8px;text-align:center;background:#EFEAE0;color:#4A0E1C; }
+      .gs-model-table thead th span { display:block;font-size:13px;font-weight:900; }.gs-model-table thead th small{display:block;margin-top:2px;color:#8F765B;font-size:8px;letter-spacing:.1em}
+      .gs-model-table .gs-model-corner { width:82px;color:#8F765B;font-size:10px;letter-spacing:.08em; }
+      .gs-model-level { width:82px;text-align:center;background:#EFEAE0!important; }.gs-model-level strong{display:grid;place-items:center;width:30px;height:30px;margin:0 auto 3px;border-radius:6px;background:#4A0E1C;color:#D9C9B0;font-size:13px}.gs-model-level span{display:block;color:#8F765B;font-size:8.5px;font-weight:800}
+      .gs-model-table td { height:124px;vertical-align:stretch; }
+      .gs-model-card { position:relative;height:100%;min-height:124px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px 10px 10px;text-align:center;border-top:3px solid transparent;background:#FFFBF5; }
+      .gs-model-card-state { position:absolute;top:7px;inset-inline-end:7px;width:23px;height:23px;display:grid;place-items:center;border-radius:50%; }
+      td.is-correct .gs-model-card { border-top-color:#1B5E20;background:linear-gradient(180deg,rgba(27,94,32,.06),#FFFBF5 44%); }.is-correct .gs-model-card-state{color:#FFFFFF;background:#1B5E20;box-shadow:0 3px 9px rgba(27,94,32,.22)}
+      td.is-wrong .gs-model-card { border-top-color:#6B1E2D;background:linear-gradient(180deg,rgba(107,30,45,.07),#FFFBF5 44%); }.is-wrong .gs-model-card-state{color:#FFFFFF;background:#6B1E2D;box-shadow:0 3px 9px rgba(107,30,45,.22)}
+      .gs-model-card h3 { margin:10px 0 0;color:#32101A;font-size:11.5px;line-height:1.55;overflow-wrap:anywhere; }
+      .gs-model-expected { width:100%;display:flex;align-items:center;justify-content:center;gap:5px;padding:6px;background:rgba(107,30,45,.07);color:#6B1E2D;border:1px solid rgba(107,30,45,.12);border-radius:5px;font-size:9px;font-weight:800;line-height:1.45; }.gs-model-expected span{min-width:0}.gs-model-expected small{display:block;color:#8F765B;font-size:7.5px;font-weight:800}
+      .gs-model-empty { height:124px;display:grid;place-items:center;color:#8C8274;font-size:9px;background:#F7F3EB; }
       .gs-legacy { margin-top:12px; padding:14px; border-radius:12px; background:rgba(184,160,130,.12); color:#655B53; font-size:12px; font-weight:700; text-align:center; }
-      @media(max-width:760px){ .gs-answer-grid{grid-template-columns:1fr}.gs-history-row{grid-template-columns:auto 1fr auto}.gs-answer-link{grid-column:2 / -1}.gs-answer-comparison{grid-template-columns:1fr} }
+      @media(max-width:760px){ .gs-history-row{grid-template-columns:auto 1fr auto}.gs-answer-link{grid-column:2 / -1}.gs-answer-panel{padding-inline:8px}.gs-model-head{align-items:flex-start;padding:16px;flex-direction:column}.gs-model-score{padding-inline-start:0;border-inline-start:0}.gs-model-table{min-width:820px}.gs-model-table td,.gs-model-card,.gs-model-empty{height:112px;min-height:112px} }
     `}</style>
   );
 }
