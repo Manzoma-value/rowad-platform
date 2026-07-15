@@ -26,6 +26,8 @@ import {
   BookOpen,
   Users,
   Sparkles,
+  Ban,
+  CheckCircle2,
   Trash2,
   SlidersHorizontal,
   X,
@@ -529,32 +531,36 @@ export default function SchoolAdminTeachersPage() {
                   </div>
                   <div className="te-btn-group" data-write-area="true">
                     <button
-                      type="button"
-                      className="te-read-more"
-                      onClick={() => toggleExpanded(teacher.id)}
-                      aria-expanded={expanded}
-                    >
-                      {expanded ? labels.readLess : labels.readMore}
-                    </button>
-                    <button
                       data-write="true"
                       className={`te-toggle ${teacher.profile.is_active ? "off" : "on"}`}
                       onClick={() => toggleTeacher(teacher.id, teacher.profile.is_active)}
                       disabled={toggling === teacher.id}
+                      aria-label={teacher.profile.is_active ? labels.deactivate : labels.activate}
+                      title={teacher.profile.is_active ? labels.deactivate : labels.activate}
                     >
-                      {toggling === teacher.id ? "..." : teacher.profile.is_active ? labels.deactivate : labels.activate}
+                      {toggling === teacher.id ? "..." : teacher.profile.is_active ? <Ban size={14} strokeWidth={2.2} /> : <CheckCircle2 size={14} strokeWidth={2.2} />}
                     </button>
                     <button
                       type="button"
                       data-write="true"
                       className="te-delete"
                       onClick={() => { setDeleteTarget(teacher); setDeleteError(""); }}
+                      aria-label={labels.deleteTeacher}
+                      title={labels.deleteTeacher}
                     >
                       <Trash2 size={13} strokeWidth={2} />
-                      {labels.deleteTeacher}
                     </button>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  className="te-read-more"
+                  onClick={() => toggleExpanded(teacher.id)}
+                  aria-expanded={expanded}
+                >
+                  {expanded ? labels.readLess : labels.readMore}
+                </button>
 
                 <div className="te-compact-summary">
                   <span><GraduationCap size={12} />{teacher.application ? qualificationLabel(teacher.application.qualification, lang) : labels.noApplication}</span>
@@ -889,7 +895,7 @@ const styles = `
   .te-card.is-inactive:after { content:""; position:absolute; top:0; inset-inline:0; height:3px; background:linear-gradient(90deg,transparent,rgba(107,30,45,.5),transparent); }
   .te-card-watermark { position:absolute; inset-inline-end:-30px; bottom:-30px; pointer-events:none; z-index:0; }
 
-  .te-card-top { position:relative; z-index:1; display:grid; grid-template-columns:auto minmax(0,1fr); gap:14px; align-items:start; }
+  .te-card-top { position:relative; z-index:1; display:grid; grid-template-columns:auto minmax(0,1fr); gap:14px; align-items:start; padding-inline-end:58px; }
   .te-avatar { width:48px; height:48px; border-radius:15px; overflow:hidden; background:linear-gradient(150deg,#4A0E1C,#32101A); color:#D9C9B0; display:flex; align-items:center; justify-content:center; font-family:var(--font-head); font-size:16px; font-weight:700; border:1px solid rgba(184,160,130,.35); box-shadow:0 7px 16px rgba(50,16,26,.16), inset 0 1px 0 rgba(217,201,176,.16); flex-shrink:0; }
   .te-avatar img { width:100%; height:100%; object-fit:cover; }
   .te-identity { min-width:0; }
@@ -904,11 +910,11 @@ const styles = `
   .te-pill.bad { color:#6B1E2D; background:rgba(107,30,45,.08); border-color:rgba(107,30,45,.18); }
   .te-pill.warn { color:#8F765B; background:rgba(184,160,130,.12); border-color:rgba(184,160,130,.22); }
 
-  /* Action buttons — side by side, full row under the header */
-  .te-btn-group { grid-column:1 / -1; display:flex; gap:9px; margin-top:2px; }
+  /* Tiny corner actions keep the card calm while preserving discoverable tooltips. */
+  .te-btn-group { position:absolute; inset-inline-end:0; top:-2px; display:flex; align-items:center; gap:5px; }
   .te-toggle, .te-delete, .te-read-more {
-    flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px;
-    border:1px solid; border-radius:12px; height:36px; padding:0 12px;
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border:1px solid; border-radius:9px; height:28px; width:28px; padding:0;
     font:800 12px 'Cairo',sans-serif; cursor:pointer;
     transition:all .18s cubic-bezier(.22,1,.36,1);
   }
@@ -919,7 +925,7 @@ const styles = `
   .te-toggle:disabled { opacity:.55; cursor:not-allowed; }
   .te-delete { color:#6B1E2D; background:rgba(107,30,45,.05); border-color:rgba(107,30,45,.20); }
   .te-delete:hover { background:rgba(107,30,45,.11); border-color:rgba(107,30,45,.38); transform:translateY(-1px); box-shadow:0 6px 14px rgba(107,30,45,.12); }
-  .te-read-more { color:#F7F3EB; background:linear-gradient(180deg,#5B1526,#32101A); border-color:rgba(184,160,130,.34); }
+  .te-read-more { grid-column:1 / -1; width:auto; min-width:96px; height:34px; padding:0 12px; color:#F7F3EB; background:linear-gradient(180deg,#5B1526,#32101A); border-color:rgba(184,160,130,.34); }
   .te-read-more:hover { color:#FFF; border-color:rgba(217,201,176,.68); box-shadow:0 7px 18px rgba(50,16,26,.18); }
 
   .te-compact-summary { position:relative; z-index:1; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
@@ -969,7 +975,7 @@ const styles = `
     .te-hero{padding:20px;border-radius:20px}.te-hero h1{font-size:24px}.te-hero-metrics{grid-template-columns:repeat(2,1fr)}
     .te-toolbar input{min-width:100%}.te-toolbar a{flex:1}.te-card{padding:16px}
     .te-filters{padding:14px}.te-filters-row{grid-template-columns:1fr}
-    .te-btn-group{flex-direction:row}
+    .te-btn-group{top:0}
     .te-class-chip,.te-info-grid{grid-template-columns:1fr}.te-card-footer{gap:7px}
   }
 `;
