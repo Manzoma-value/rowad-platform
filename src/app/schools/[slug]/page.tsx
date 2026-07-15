@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SchoolLandingClient from "./SchoolLandingClient";
 import SchoolDeactivatedClient from "./SchoolDeactivatedClient";
+import SchoolLoginClient from "./login/SchoolLoginClient";
+import { resolveLandingFlow } from "@/lib/landing-flow";
 
 export const dynamic = "force-dynamic";
 
@@ -32,15 +34,24 @@ export default async function SchoolLandingPage({ params }: Props) {
     );
   }
 
+  const landingFlow = resolveLandingFlow(school.features);
+  const publicSchool = {
+    id: school.id,
+    name: school.name,
+    name_alt: school.name_alt ?? null,
+    slug: school.slug,
+    description: school.description ?? null,
+    language: school.language ?? "ar",
+  };
+
+  if (landingFlow === "teacher") {
+    return <SchoolLoginClient school={publicSchool} landingFlow="teacher" />;
+  }
+
   return (
     <SchoolLandingClient
       school={{
-        id: school.id,
-        name: school.name,
-        name_alt: school.name_alt ?? null,
-        slug: school.slug,
-        description: school.description ?? null,
-        language: school.language ?? "ar",
+        ...publicSchool,
         admin_name: school.admins[0]?.profile?.full_name ?? null,
         student_count: school._count.students,
         teacher_count: school._count.teachers,

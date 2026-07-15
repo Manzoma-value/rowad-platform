@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { authPremiumCss } from "@/lib/auth-premium-css";
+import type { LandingFlow } from "@/lib/landing-flow";
 
 interface School {
   id: string;
@@ -318,7 +319,7 @@ function LangToggle({
 }
 
 /* ─── Main component ─── */
-export default function SchoolLoginClient({ school }: { school: School }) {
+export default function SchoolLoginClient({ school, landingFlow = "student" }: { school: School; landingFlow?: LandingFlow }) {
   // Arabic is the platform default regardless of the school's own
   // configured language — visitors can still switch via the AR/SQ toggle.
   const [lang, setLang] = useState<Lang>("ar");
@@ -605,28 +606,34 @@ export default function SchoolLoginClient({ school }: { school: School }) {
               </button>
             </div>
 
-            <div className="lp-divider">
-              <div className="lp-divider-line" />
-              <span className="lp-divider-text">{L.or}</span>
-              <div className="lp-divider-line" />
-            </div>
+            {landingFlow === "student" && (
+              <>
+                <div className="lp-divider">
+                  <div className="lp-divider-line" />
+                  <span className="lp-divider-text">{L.or}</span>
+                  <div className="lp-divider-line" />
+                </div>
 
-            <p className="lp-footer-text">
-              {L.haveAccount}{" "}
-              <Link href={signupPath} className="lp-link">
-                {L.signup}
-              </Link>
-            </p>
+                <p className="lp-footer-text">
+                  {L.haveAccount}{" "}
+                  <Link href={signupPath} className="lp-link">
+                    {L.signup}
+                  </Link>
+                </p>
+              </>
+            )}
 
             <div className="lp-form-ornament" style={{ marginTop: 28 }}>
               <Rule dim />
             </div>
 
-            <div style={{ textAlign: "center", marginTop: 14 }}>
-              <Link href={landingPath} className="lp-back-link">
-                ← {L.backTo}
-              </Link>
-            </div>
+            {landingFlow === "student" && (
+              <div style={{ textAlign: "center", marginTop: 14 }}>
+                <Link href={landingPath} className="lp-back-link">
+                  ← {L.backTo}
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </main>

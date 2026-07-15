@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { requestOrigin } from "@/lib/request-origin";
+import { resolveLandingFlow } from "@/lib/landing-flow";
 import { z } from "zod";
 
 const SchoolSignupSchema = z.object({
@@ -34,11 +35,18 @@ export async function POST(req: Request) {
     // Verify school exists
     const school = await prisma.school.findUnique({
       where: { slug: school_slug },
-      select: { id: true },
+      select: { id: true, features: true },
     });
 
     if (!school) {
       return NextResponse.json({ error: "المدرسة غير موجودة" }, { status: 404 });
+    }
+
+    if (resolveLandingFlow(school.features) === "teacher") {
+      return NextResponse.json(
+        { error: "التسجيل العام للطلاب مغلق حالياً", code: "student_signup_closed" },
+        { status: 403 },
+      );
     }
 
     // signUp() is the only flow that triggers Supabase's confirmation email.

@@ -88,20 +88,6 @@ function Mandala({ size = 160, stroke = "rgba(184,160,130,0.32)", className = ""
   );
 }
 
-function GeoMark({ size = 22, color = "var(--tl-gold)" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 22 22" fill="none">
-      <circle cx="11" cy="11" r="9.5" stroke={color} strokeWidth="0.7" opacity="0.65" />
-      <circle cx="11" cy="11" r="6.5" stroke={color} strokeWidth="0.6" opacity="0.55" />
-      <circle cx="11" cy="11" r="3.2" stroke={color} strokeWidth="0.55" opacity="0.65" />
-      <line x1="11" y1="1" x2="11" y2="21" stroke={color} strokeWidth="0.45" opacity="0.40" />
-      <line x1="1" y1="11" x2="21" y2="11" stroke={color} strokeWidth="0.45" opacity="0.40" />
-      <line x1="3.7" y1="3.7" x2="18.3" y2="18.3" stroke={color} strokeWidth="0.35" opacity="0.28" />
-      <line x1="18.3" y1="3.7" x2="3.7" y2="18.3" stroke={color} strokeWidth="0.35" opacity="0.28" />
-    </svg>
-  );
-}
-
 /* ─── Nav ─── */
 interface NavItem {
   href: string;
@@ -634,7 +620,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
           <div className="tl-breadcrumb-wrap">
             <div className="tl-breadcrumb-geo">
-              <GeoMark size={18} color="var(--tl-gold-deep)" />
+              <Image src="/headerlogo.png" alt="" fill sizes="36px" className="tl-breadcrumb-logo" aria-hidden="true" />
             </div>
             <div className="tl-breadcrumb">
               <span className="tl-bc-cur">{currentLabel}</span>
@@ -1081,10 +1067,11 @@ const styles = `
 
   .tl-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
   .tl-breadcrumb-geo  {
-    display: none; align-items: center; justify-content: center;
+    display: none; align-items: center; justify-content: center; position: relative; overflow: hidden;
     width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
     border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.07); opacity: 1;
   }
+  .tl-breadcrumb-logo { object-fit: cover; object-position: left center; }
   @media (min-width: 640px) { .tl-breadcrumb-geo { display: flex; } }
   .tl-breadcrumb { display: flex; align-items: center; gap: 8px; }
   .tl-bc-root { font-size: 12.5px; font-weight: 600; color: var(--tl-gold-soft); opacity: .76; white-space: nowrap; }

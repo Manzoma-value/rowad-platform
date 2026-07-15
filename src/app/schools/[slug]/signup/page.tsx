@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import SchoolSignupClient from "./SchoolSignupClient";
 import SchoolDeactivatedClient from "../SchoolDeactivatedClient";
+import { resolveLandingFlow } from "@/lib/landing-flow";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function SchoolSignupPage({ params }: Props) {
 
   const school = await prisma.school.findUnique({
     where: { slug },
-    select: { id: true, name: true, name_alt: true, slug: true, language: true, description: true, is_active: true },
+    select: { id: true, name: true, name_alt: true, slug: true, language: true, description: true, is_active: true, features: true },
   });
 
   if (!school) notFound();
@@ -27,6 +28,10 @@ export default async function SchoolSignupPage({ params }: Props) {
         schoolLang={school.language ?? "ar"}
       />
     );
+  }
+
+  if (resolveLandingFlow(school.features) === "teacher") {
+    redirect(`/schools/${school.slug}/login`);
   }
 
   return <SchoolSignupClient school={school} />;
