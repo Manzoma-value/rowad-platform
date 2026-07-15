@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
+import { schoolAuthPremiumCss } from "@/lib/auth-premium-css";
 
 interface School {
   id: string;
@@ -277,17 +278,29 @@ export default function SchoolSignupClient({ school }: { school: School }) {
     return (
       <>
         <main className="sp-shell" dir={dir}>
+          <div className="sp-identity-watermark" aria-hidden="true" />
           <div className="sp-panel">
             <div className="sp-corner sp-corner-tl" />
             <div className="sp-corner sp-corner-br" />
             <div className="sp-panel-inner">
-              <Mandala size={200} className="sp-mandala" />
+              <div className="sp-location" dir="ltr">
+                <span className="sp-location-dot" />
+                TIRANË <span>41.3275° N · 19.8187° E</span>
+              </div>
+              <div className="sp-brand-emblem">
+                <Mandala size={200} className="sp-mandala" />
+                <div className="sp-school-badge">{displayName.charAt(0)}</div>
+              </div>
               <div className="sp-brand-text">
                 <Rule />
-                <div className="sp-school-badge">{displayName.charAt(0)}</div>
+                <p className="sp-brand-kicker">{lang === "sq" ? "Nga Shqipëria drejt së ardhmes" : "من ألبانيا إلى مستقبلٍ يصنعه الرواد"}</p>
                 <h2 className="sp-brand-name">{displayName}</h2>
                 {school.description && <p className="sp-brand-desc">{school.description}</p>}
                 <Rule />
+              </div>
+              <div className="sp-albanian-values" dir="ltr">
+                <span className="sp-albania-monogram">AL</span>
+                <span>DIJE · VLERË · E ARDHME</span>
               </div>
               <div className="sp-panel-footer">
                 <p className="sp-panel-quote">
@@ -299,6 +312,10 @@ export default function SchoolSignupClient({ school }: { school: School }) {
           </div>
           <div className="sp-form-side">
             <div className="sp-form-wrap">
+              <div className="sp-form-topline">
+                <span className="sp-form-eyebrow">{lang === "sq" ? "Llogaria juaj është gati" : "حسابك أصبح جاهزًا"}</span>
+                <span className="sp-secure-badge"><i /> SECURE PORTAL</span>
+              </div>
               <div className="sp-confirm-card">
                 <div className="sp-confirm-icon">
                   <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -323,18 +340,30 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   return (
     <>
       <main className="sp-shell" dir={dir}>
+        <div className="sp-identity-watermark" aria-hidden="true" />
         {/* ── Brand panel ── */}
         <div className="sp-panel">
           <div className="sp-corner sp-corner-tl" />
           <div className="sp-corner sp-corner-br" />
           <div className="sp-panel-inner">
-            <Mandala size={200} className="sp-mandala" />
+            <div className="sp-location" dir="ltr">
+              <span className="sp-location-dot" />
+              TIRANË <span>41.3275° N · 19.8187° E</span>
+            </div>
+            <div className="sp-brand-emblem">
+              <Mandala size={200} className="sp-mandala" />
+              <div className="sp-school-badge">{displayName.charAt(0)}</div>
+            </div>
             <div className="sp-brand-text">
               <Rule />
-              <div className="sp-school-badge">{displayName.charAt(0)}</div>
+              <p className="sp-brand-kicker">{lang === "sq" ? "Nga Shqipëria drejt së ardhmes" : "من ألبانيا إلى مستقبلٍ يصنعه الرواد"}</p>
               <h2 className="sp-brand-name">{displayName}</h2>
               {school.description && <p className="sp-brand-desc">{school.description}</p>}
               <Rule />
+            </div>
+            <div className="sp-albanian-values" dir="ltr">
+              <span className="sp-albania-monogram">AL</span>
+              <span>DIJE · VLERË · E ARDHME</span>
             </div>
             <LangToggle lang={lang} onChange={(l) => { setLang(l); setError(""); }} />
             <div className="sp-panel-footer">
@@ -349,6 +378,10 @@ export default function SchoolSignupClient({ school }: { school: School }) {
         {/* ── Form panel ── */}
         <div className="sp-form-side">
           <div className="sp-form-wrap">
+            <div className="sp-form-topline">
+              <span className="sp-form-eyebrow">{lang === "sq" ? "Fillo udhëtimin tënd" : "ابدأ رحلتك معنا"}</span>
+              <span className="sp-secure-badge"><i /> SECURE PORTAL</span>
+            </div>
             <div className="sp-lang-toggle-mobile">
               <LangToggle lang={lang} onChange={(l) => { setLang(l); setError(""); }} />
             </div>
@@ -828,4 +861,4 @@ const css = `
   .sp-confirm-sub { font-size: 14px; color: var(--text2); font-weight: 500; line-height: 1.6; }
   .sp-confirm-email { color: var(--text); font-weight: 800; word-break: break-all; }
   .sp-confirm-note { font-size: 13px; color: var(--text3); font-weight: 500; line-height: 1.7; max-width: 340px; }
-`;
+` + schoolAuthPremiumCss;

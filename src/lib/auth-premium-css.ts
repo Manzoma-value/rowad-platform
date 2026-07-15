@@ -42,14 +42,17 @@ export const authPremiumCss = `
   }
   .lp-location span:last-child{color:rgba(217,201,176,.48);font-weight:500;letter-spacing:.1em;}
   .lp-location-dot{width:7px;height:7px;border-radius:50%;background:#bb1e2d;box-shadow:0 0 0 5px rgba(187,30,45,.14),0 0 18px rgba(187,30,45,.8);}
-  .lp-brand-emblem{width:176px;height:176px;position:relative;display:grid;place-items:center;margin-bottom:2px;}
-  .lp-brand-emblem::before,.lp-brand-emblem::after{content:'';position:absolute;border:1px solid rgba(217,201,176,.22);border-radius:50%;}
-  .lp-brand-emblem::before{inset:13px;}
-  .lp-brand-emblem::after{inset:25px;border-style:dashed;animation:spin 35s linear infinite;}
-  .lp-mandala{position:absolute;inset:0;opacity:.8;}
+  .lp-brand-emblem{width:92px;height:92px;position:relative;display:grid;place-items:center;margin:10px 0 12px;}
+  .lp-brand-emblem::before,.lp-brand-emblem::after{display:none;}
+  .lp-mandala{display:none!important;}
   .lp-brand-letter{
     position:relative;z-index:2;display:grid;place-items:center;width:68px;height:68px;border-radius:22px;
     color:#4a0e1c;background:linear-gradient(145deg,#efe4d2,#b8a082);font-size:31px;font-weight:900;
+    box-shadow:0 16px 40px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.62);transform:rotate(-2deg);
+  }
+  .lp-brand-emblem .lp-school-badge{
+    width:72px;height:72px;margin:0;border-radius:23px;font-size:28px;
+    color:#4a0e1c;background:linear-gradient(145deg,#efe4d2,#b8a082);
     box-shadow:0 16px 40px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.62);transform:rotate(-2deg);
   }
   .lp-brand-text{gap:8px;max-width:560px;}
@@ -128,3 +131,5 @@ export const authPremiumCss = `
   }
   @media(prefers-reduced-motion:reduce){.lp-identity-watermark,.lp-brand-emblem::after{animation:none}.lp-form-wrap{animation:none}}
 `;
+
+export const schoolAuthPremiumCss = authPremiumCss.replaceAll(".lp-", ".sp-");

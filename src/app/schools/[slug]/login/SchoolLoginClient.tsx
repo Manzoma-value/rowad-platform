@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { authPremiumCss } from "@/lib/auth-premium-css";
 
 interface School {
   id: string;
@@ -413,22 +414,38 @@ export default function SchoolLoginClient({ school }: { school: School }) {
   return (
     <>
       <main className="lp-shell" dir={dir}>
+        <div className="lp-identity-watermark" aria-hidden="true" />
         {/* ── Brand panel ── */}
         <div className="lp-panel">
           <div className="lp-corner lp-corner-tl" />
           <div className="lp-corner lp-corner-br" />
 
           <div className="lp-panel-inner">
-            <Mandala size={220} className="lp-mandala" />
+            <div className="lp-location" dir="ltr">
+              <span className="lp-location-dot" />
+              TIRANË <span>41.3275° N · 19.8187° E</span>
+            </div>
+
+            <div className="lp-brand-emblem">
+              <Mandala size={220} className="lp-mandala" />
+              <div className="lp-school-badge">{displayName.charAt(0)}</div>
+            </div>
 
             <div className="lp-brand-text">
               <Rule />
-              <div className="lp-school-badge">{displayName.charAt(0)}</div>
+              <p className="lp-brand-kicker">
+                {lang === "sq" ? "Nga Shqipëria drejt së ardhmes" : "من ألبانيا إلى مستقبلٍ يصنعه الرواد"}
+              </p>
               <h2 className="lp-brand-name">{displayName}</h2>
               {school.description && (
                 <p className="lp-brand-desc">{school.description}</p>
               )}
               <Rule />
+            </div>
+
+            <div className="lp-albanian-values" dir="ltr">
+              <span className="lp-albania-monogram">AL</span>
+              <span>DIJE · VLERË · E ARDHME</span>
             </div>
 
             {/* Toggle lives in the dark panel on desktop */}
@@ -450,6 +467,12 @@ export default function SchoolLoginClient({ school }: { school: School }) {
         {/* ── Form panel ── */}
         <div className="lp-form-side">
           <div className="lp-form-wrap">
+            <div className="lp-form-topline">
+              <span className="lp-form-eyebrow">
+                {lang === "sq" ? "Mirë se u riktheve" : "مرحبًا بعودتك"}
+              </span>
+              <span className="lp-secure-badge"><i /> SECURE PORTAL</span>
+            </div>
             {/* Mobile-only toggle — shown above the form on small screens */}
             <div className="lp-lang-toggle-mobile">
               <LangToggle lang={lang} onChange={handleLangChange} />
@@ -1102,4 +1125,4 @@ const css = `
     .lp-lang-btn { padding: 7px 10px; }
     .lp-lang-flag { font-size: 13px; }
   }
-`;
+` + authPremiumCss;
