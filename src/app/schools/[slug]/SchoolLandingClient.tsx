@@ -97,6 +97,9 @@ export default function SchoolLandingClient({ school }: { school: School }) {
     lang !== "ar" && school.name_alt && school.name_alt.trim()
       ? school.name_alt
       : school.name;
+  const arabicNameParts = lang === "ar" ? displayName.trim().match(/^(.*?)\s*(\([^)]*\))$/) : null;
+  const heroName = arabicNameParts?.[1]?.trim() || displayName;
+  const heroSignature = arabicNameParts?.[2]?.replace(/[()]/g, "").trim() || null;
 
   const pillarIcons = [HeartHandshake, BookOpen, Compass];
 
@@ -139,7 +142,16 @@ export default function SchoolLandingClient({ school }: { school: School }) {
               <IdentityStar size={12} strokeWidth={5} color="#8F765B" />
               {tr.eyebrow}
             </p>
-            <h1 className="lp-title a2">{displayName}</h1>
+            <h1 className="lp-title a2">
+              <span className="lp-title-main">{heroName}</span>
+              {heroSignature && (
+                <span className="lp-title-signature">
+                  <i aria-hidden="true" />
+                  <b>{heroSignature}</b>
+                  <i aria-hidden="true" />
+                </span>
+              )}
+            </h1>
 
             <div className="lp-divider a3">
               <span className="lp-dline" />
@@ -227,7 +239,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
    CSS
 ══════════════════════════════════════════════════════════ */
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Readex+Pro:wght@500;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 
@@ -238,6 +250,7 @@ html{scroll-behavior:smooth;}
   --ink:#1A1A1A; --ink-muted:#655B53; --ink-soft:#8C8274;
   --font:'IBM Plex Sans Arabic','Manrope',sans-serif;
   --font-h:'Alexandria','IBM Plex Sans Arabic','Manrope',sans-serif;
+  --font-hero:'Readex Pro','IBM Plex Sans Arabic','Manrope',sans-serif;
 }
 
 @keyframes fu{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
@@ -324,35 +337,33 @@ html{scroll-behavior:smooth;}
 }
 .lp-hero-wash{
   position:absolute;inset:0;z-index:1;pointer-events:none;
-  /* Light cream wash — heavier at the top/bottom for nav and CTA
-     legibility, sheer through the middle so the artwork itself, which
-     is already cream/burgundy/gold, stays the star of the section. */
-  background:linear-gradient(
-    180deg,
-    rgba(239,234,224,.65) 0%,
-    rgba(239,234,224,.18) 26%,
-    rgba(239,234,224,.12) 60%,
-    rgba(239,234,224,.55) 100%
-  );
+  background:
+    radial-gradient(ellipse at 50% 48%,rgba(255,251,245,.82) 0%,rgba(255,251,245,.48) 34%,rgba(239,234,224,.08) 67%,transparent 78%),
+    linear-gradient(180deg,rgba(239,234,224,.68) 0%,rgba(239,234,224,.14) 28%,rgba(239,234,224,.10) 62%,rgba(239,234,224,.56) 100%);
 }
 
 .lp-hero-panel{
   position:relative;z-index:2;
   display:flex;flex-direction:column;align-items:center;text-align:center;
-  max-width:760px;margin:0 auto;padding:44px 42px;
+  width:min(100%,680px);margin:0 auto;padding:50px 42px 46px;
 }
+.lp-hero-panel:before{content:"";width:72px;height:2px;margin-bottom:22px;background:linear-gradient(90deg,transparent,#B8A082,transparent);}
 .lp-eyebrow{
   display:inline-flex;align-items:center;gap:9px;
-  font-size:11px;letter-spacing:.28em;color:var(--gold-dk);
-  font-weight:800;text-transform:uppercase;margin-bottom:20px;
+  font-size:10.5px;letter-spacing:.18em;color:var(--gold-dk);
+  font-weight:700;text-transform:uppercase;margin-bottom:22px;
 }
 .lp-title{
-  font-family:var(--font-h);
-  font-size:clamp(34px,5.4vw,58px);font-weight:700;
-  color:var(--ink);line-height:1.28;margin-bottom:20px;letter-spacing:0;
+  width:100%;font-family:var(--font-hero);
+  color:var(--ink);margin:0 0 20px;letter-spacing:0;
   text-shadow:0 2px 24px rgba(255,255,255,.6);
 }
-.lp-divider{display:flex;align-items:center;gap:10px;width:160px;margin:0 auto 20px;}
+.lp-title-main{display:block;font-size:58px;font-weight:600;line-height:1.32;letter-spacing:0;}
+.lp-title-signature{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:8px;color:var(--burgundy);font-size:18px;line-height:1.5;text-shadow:none;}
+.lp-title-signature i{display:block;width:48px;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,.86));}
+.lp-title-signature i:last-child{background:linear-gradient(90deg,rgba(184,160,130,.86),transparent);}
+.lp-title-signature b{font-weight:600;letter-spacing:.08em;}
+.lp-divider{display:flex;align-items:center;gap:10px;width:130px;margin:0 auto 24px;}
 .lp-dline{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,.55),transparent);}
 .lp-gem{width:5px;height:5px;background:var(--burgundy);transform:rotate(45deg);flex-shrink:0;}
 
@@ -458,7 +469,8 @@ html{scroll-behavior:smooth;}
    RESPONSIVE
 ════════════════ */
 @media(max-width:980px){
-  .lp-hero-panel{padding:36px 32px;}
+  .lp-hero-panel{padding:42px 32px;}
+  .lp-title-main{font-size:50px;}
 }
 
 @media(max-width:760px){
@@ -470,8 +482,9 @@ html{scroll-behavior:smooth;}
   .lp-lang-btn{padding:4px 10px;font-size:10.5px;}
 
   .lp-hero{padding:88px 18px 50px;}
-  .lp-hero-panel{padding:28px 22px;}
-  .lp-title{font-size:clamp(30px,8vw,44px);}
+  .lp-hero-panel{padding:32px 18px;}
+  .lp-title-main{font-size:40px;line-height:1.4;}
+  .lp-title-signature{font-size:15px;margin-top:5px;}.lp-title-signature i{width:34px;}
   .lp-cta{flex-direction:column;align-items:stretch;width:100%;max-width:320px;margin-inline:auto;}
   .lp-cta-outline,.lp-cta-gold{width:100%;padding:13px 22px;font-size:13.5px;}
 
@@ -491,5 +504,6 @@ html{scroll-behavior:smooth;}
 @media(max-width:400px){
   .lp-nav{padding:0 10px;height:56px;}
   .lp-gold{padding:6px 12px;font-size:11.5px;}
+  .lp-title-main{font-size:34px;}
 }
 `;
