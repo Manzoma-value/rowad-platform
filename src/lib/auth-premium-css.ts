@@ -50,6 +50,10 @@ export const authPremiumCss = `
     color:#4a0e1c;background:linear-gradient(145deg,#efe4d2,#b8a082);font-size:31px;font-weight:900;
     box-shadow:0 16px 40px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.62);transform:rotate(-2deg);
   }
+  .lp-brand-logo{
+    object-fit:contain;transform:scale(1.35);
+    filter:drop-shadow(0 16px 24px rgba(0,0,0,.34));
+  }
   .lp-brand-emblem .lp-school-badge{
     width:72px;height:72px;margin:0;border-radius:23px;font-size:28px;
     color:#4a0e1c;background:linear-gradient(145deg,#efe4d2,#b8a082);

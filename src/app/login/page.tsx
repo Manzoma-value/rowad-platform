@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { createClient } from "../../lib/supabase/client";
 import MandalaLoader from "@/components/MandalaLoader";
@@ -238,7 +239,7 @@ export default function LoginPage() {
             </div>
             <div className="lp-brand-emblem">
               <Mandala size={176} className="lp-mandala"/>
-              <span className="lp-brand-letter">ب</span>
+              <Image src="/newIdentityBG.png" alt="" fill sizes="92px" className="lp-brand-logo" aria-hidden="true" priority />
             </div>
             <div className="lp-brand-text">
               <Rule/>

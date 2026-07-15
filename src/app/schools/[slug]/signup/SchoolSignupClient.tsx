@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRef, useState, useEffect } from "react";
 import { schoolAuthPremiumCss } from "@/lib/auth-premium-css";
 
@@ -289,7 +290,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
               </div>
               <div className="sp-brand-emblem">
                 <Mandala size={200} className="sp-mandala" />
-                <div className="sp-school-badge">{displayName.charAt(0)}</div>
+                <Image src="/newIdentityBG.png" alt="" fill sizes="92px" className="sp-brand-logo" aria-hidden="true" priority />
               </div>
               <div className="sp-brand-text">
                 <Rule />
@@ -352,7 +353,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
             </div>
             <div className="sp-brand-emblem">
               <Mandala size={200} className="sp-mandala" />
-              <div className="sp-school-badge">{displayName.charAt(0)}</div>
+              <Image src="/newIdentityBG.png" alt="" fill sizes="92px" className="sp-brand-logo" aria-hidden="true" priority />
             </div>
             <div className="sp-brand-text">
               <Rule />

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { authPremiumCss } from "@/lib/auth-premium-css";
@@ -424,7 +425,7 @@ export default function SchoolLoginClient({ school, landingFlow = "student" }: {
           <div className="lp-panel-inner">
             <div className="lp-brand-emblem">
               <Mandala size={220} className="lp-mandala" />
-              <div className="lp-school-badge">{displayName.charAt(0)}</div>
+              <Image src="/newIdentityBG.png" alt="" fill sizes="92px" className="lp-brand-logo" aria-hidden="true" priority />
             </div>
 
             <div className="lp-brand-text">
