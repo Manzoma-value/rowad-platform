@@ -26,9 +26,9 @@ const T = {
   ar: {
     dir: "rtl" as const,
     eyebrow: "أكاديمية الرواد · ألبانيا",
-    vision: "تمكين الإنسان · بناء المستقبل",
-    sub: "منصة تعليمية متكاملة تجمع بين الأخلاق والعلم والقيادة",
-    students: "طالب", teachers: "معلم", classes: "فصل",
+    identityLabel: "جيل الرواد",
+    identityTitle: "هوية تُرى، وقيم تُعاش",
+    identitySub: "مساحة واحدة تلتقي فيها الأخلاق والعلم والقيادة.",
     loginBtn: "تسجيل الدخول", signupBtn: "إنشاء حساب",
     pillarsEyebrow: "ركائزنا",
     pillarsTitle: "ثلاث ركائز، رؤية واحدة",
@@ -44,9 +44,9 @@ const T = {
   sq: {
     dir: "ltr" as const,
     eyebrow: "Akademia Alrowad · Shqipëri",
-    vision: "Fuqizimi i Njeriut · Ndërtimi i së Ardhmes",
-    sub: "Platformë edukative që kombinon vlerat morale, dijen dhe lidershipin",
-    students: "nxënës", teachers: "mësues", classes: "klasë",
+    identityLabel: "Gjenerata e Pionierëve",
+    identityTitle: "Identitet që shihet, vlera që jetohen",
+    identitySub: "Një hapësirë ku takohen vlerat, dija dhe lidershipi.",
     loginBtn: "Hyrje", signupBtn: "Regjistrohu",
     pillarsEyebrow: "Shtyllat Tona",
     pillarsTitle: "Tri shtylla, një vizion",
@@ -148,10 +148,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
               <span className="lp-dline" />
             </div>
 
-            <p className="lp-tagline a3">{tr.vision}</p>
-            <p className="lp-sub a4">{tr.sub}</p>
-
-            <div className="lp-cta a5">
+            <div className="lp-cta a4">
               <button className="lp-cta-outline" onClick={goLogin}>{tr.loginBtn}</button>
               <button className="lp-cta-gold" onClick={goSignup}>{tr.signupBtn}</button>
             </div>
@@ -181,19 +178,23 @@ export default function SchoolLandingClient({ school }: { school: School }) {
           </div>
         </section>
 
-        {/* ══ NUMBERS STRIP ══ */}
-        <div className="lp-strip">
-          {[
-            { n: school.student_count, l: tr.students },
-            { n: school.teacher_count, l: tr.teachers },
-            { n: school.class_count, l: tr.classes },
-          ].map(({ n, l }, i) => (
-            <div key={i} className="lp-num">
-              <span className="lp-num-n">{n}</span>
-              <span className="lp-num-l">{l}</span>
-            </div>
-          ))}
-        </div>
+        {/* ══ IDENTITY BREAK ══ */}
+        <section className="lp-identity-break" aria-label={tr.identityLabel}>
+          <div className="lp-identity-art">
+            <Image
+              src="/newIdentityBG.png"
+              alt=""
+              fill
+              sizes="(max-width: 760px) 100vw, 54vw"
+              className="lp-identity-art-image"
+            />
+          </div>
+          <div className="lp-identity-copy">
+            <p>{tr.identityLabel}</p>
+            <h2>{tr.identityTitle}</h2>
+            <span>{tr.identitySub}</span>
+          </div>
+        </section>
 
         {/* ══ FOOTER CTA ══ */}
         <footer className="lp-footer">
@@ -310,6 +311,7 @@ html{scroll-behavior:smooth;}
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;padding:110px 24px 70px;
 }
+.lp-hero::after{content:"";position:absolute;z-index:1;inset-inline:0;bottom:-1px;height:150px;background:linear-gradient(180deg,transparent 0%,rgba(239,234,224,.56) 48%,var(--cream) 100%);pointer-events:none;}
 .lp-hero-bg{
   object-fit:cover;object-position:center;
   z-index:0;
@@ -331,11 +333,7 @@ html{scroll-behavior:smooth;}
 .lp-hero-panel{
   position:relative;z-index:2;
   display:flex;flex-direction:column;align-items:center;text-align:center;
-  max-width:640px;margin:0 auto;
-  padding:44px 52px;border-radius:28px;
-  background:rgba(255,251,245,.62);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border:1px solid rgba(184,160,130,.38);
-  box-shadow:0 30px 70px rgba(74,14,28,.14), inset 0 1px 0 rgba(255,255,255,.6);
+  max-width:760px;margin:0 auto;padding:44px 42px;
 }
 .lp-eyebrow{
   display:inline-flex;align-items:center;gap:9px;
@@ -351,15 +349,6 @@ html{scroll-behavior:smooth;}
 .lp-divider{display:flex;align-items:center;gap:10px;width:160px;margin:0 auto 20px;}
 .lp-dline{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,.55),transparent);}
 .lp-gem{width:5px;height:5px;background:var(--burgundy);transform:rotate(45deg);flex-shrink:0;}
-
-.lp-tagline{
-  font-size:clamp(15px,1.9vw,19px);color:var(--burgundy);
-  font-weight:700;margin-bottom:10px;line-height:1.55;font-family:var(--font-h);
-}
-.lp-sub{
-  font-size:clamp(13px,1.3vw,14.5px);color:var(--ink-muted);
-  font-weight:500;max-width:440px;line-height:1.9;margin-bottom:34px;
-}
 
 .lp-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
 .lp-cta-outline{
@@ -382,7 +371,8 @@ html{scroll-behavior:smooth;}
 /* ════════════════
    PILLARS
 ════════════════ */
-.lp-pillars{position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:90px 36px 30px;}
+.lp-pillars{position:relative;z-index:2;max-width:none;margin:0 auto;padding:88px max(36px,calc((100vw - 1180px)/2)) 42px;background:linear-gradient(180deg,var(--cream) 0%,var(--cream-soft) 100%);}
+.lp-pillars:before{content:"";position:absolute;top:0;inset-inline:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,.42),transparent);}
 .lp-pillars-head{text-align:center;margin-bottom:40px;}
 .lp-pillars-eyebrow{
   display:inline-flex;align-items:center;gap:8px;
@@ -394,8 +384,8 @@ html{scroll-behavior:smooth;}
 .lp-pillars-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;}
 .lp-pillar{
   position:relative;overflow:hidden;
-  background:linear-gradient(180deg,var(--cream-card),var(--cream-soft));
-  border:1px solid rgba(184,160,130,.28);border-radius:20px;padding:28px 24px;
+  background:linear-gradient(180deg,rgba(255,251,245,.96),rgba(251,248,241,.84));
+  border:1px solid rgba(184,160,130,.28);border-radius:18px;padding:30px 24px;min-height:218px;
   text-align:center;box-shadow:0 12px 30px rgba(74,14,28,.05);
   transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
 }
@@ -411,25 +401,19 @@ html{scroll-behavior:smooth;}
 .lp-pillar p{font-size:13px;color:var(--ink-muted);line-height:1.85;}
 
 /* ════════════════
-   NUMBERS STRIP
+   IDENTITY BREAK
 ════════════════ */
-.lp-strip{
-  position:relative;z-index:2;max-width:1000px;margin:60px auto 0;padding:0 36px;
-  display:flex;justify-content:center;align-items:stretch;gap:16px;
+.lp-identity-break{
+  position:relative;z-index:2;min-height:360px;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);align-items:center;gap:28px;
+  padding:18px max(36px,calc((100vw - 1180px)/2)) 48px;background:var(--cream-soft);
 }
-.lp-num{
-  flex:1;max-width:280px;padding:30px 24px;
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  background:var(--cream-card);border:1px solid rgba(184,160,130,.28);border-radius:20px;
-  box-shadow:0 12px 28px rgba(74,14,28,.05);
-  transition:transform .2s ease,box-shadow .2s ease;
-}
-.lp-num:hover{transform:translateY(-3px);box-shadow:0 18px 38px rgba(74,14,28,.09);}
-.lp-num-n{
-  font-size:44px;font-weight:800;color:var(--burgundy);
-  line-height:1;font-family:var(--font-h);
-}
-.lp-num-l{font-size:12.5px;color:var(--ink-soft);font-weight:700;letter-spacing:.03em;}
+.lp-identity-art{position:relative;min-height:330px;max-width:540px;width:100%;margin-inline:auto;}
+.lp-identity-art-image{object-fit:contain;object-position:center;mix-blend-mode:multiply;opacity:.88;filter:saturate(.9) contrast(1.02);}
+.lp-identity-copy{position:relative;max-width:380px;padding:28px 30px;border-inline-start:2px solid rgba(107,30,45,.28);}
+.lp-identity-copy:before{content:"";position:absolute;inset-inline-start:-7px;top:32px;width:12px;height:12px;background:var(--burgundy);transform:rotate(45deg);box-shadow:0 0 0 6px var(--cream-soft);}
+.lp-identity-copy p{color:var(--gold-dk);font-size:11px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;margin-bottom:14px;}
+.lp-identity-copy h2{font-family:var(--font-h);font-size:clamp(24px,3vw,38px);line-height:1.4;color:var(--ink);margin-bottom:12px;}
+.lp-identity-copy span{display:block;color:var(--ink-muted);font-size:14px;line-height:1.9;}
 
 /* ════════════════
    FOOTER
@@ -478,7 +462,7 @@ html{scroll-behavior:smooth;}
   .lp-lang-btn{padding:4px 10px;font-size:10.5px;}
 
   .lp-hero{padding:88px 18px 50px;}
-  .lp-hero-panel{padding:28px 22px;border-radius:22px;}
+  .lp-hero-panel{padding:28px 22px;}
   .lp-title{font-size:clamp(30px,8vw,44px);}
   .lp-cta{flex-direction:column;align-items:stretch;width:100%;max-width:320px;margin-inline:auto;}
   .lp-cta-outline,.lp-cta-gold{width:100%;padding:13px 22px;font-size:13.5px;}
@@ -486,9 +470,10 @@ html{scroll-behavior:smooth;}
   .lp-pillars{padding:60px 18px 10px;}
   .lp-pillars-grid{grid-template-columns:1fr;}
 
-  .lp-strip{flex-direction:column;padding:0 18px;margin-top:40px;}
-  .lp-num{max-width:100%;padding:22px 20px;}
-  .lp-num-n{font-size:36px;}
+  .lp-identity-break{grid-template-columns:1fr;min-height:0;padding:10px 18px 48px;gap:0;}
+  .lp-identity-art{min-height:290px;order:0;}
+  .lp-identity-copy{order:1;max-width:440px;margin:0 auto;padding:16px 22px 16px 24px;border-inline-start:0;border-top:1px solid rgba(107,30,45,.22);}
+  .lp-identity-copy:before{top:-7px;inset-inline-start:50%;margin-inline-start:-6px;}
 
   .lp-footer{padding:70px 20px 44px;margin-top:60px;}
   .lp-footer-sub{margin-bottom:26px;}
