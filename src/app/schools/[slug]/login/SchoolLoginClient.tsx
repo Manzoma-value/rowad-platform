@@ -254,6 +254,8 @@ const STRINGS = {
     emailSuccess: "Email i vlefshëm ✓",
     haveAccount: "Nuk keni llogari?",
     signup: "Regjistrohu",
+    workshopNoAccount: "Nuk keni llogari mësuesi?",
+    workshopSignup: "Krijoni llogari dhe plotësoni aplikimin",
     poweredBy: "E mundësuar nga",
     backTo: "Kthehu te faqja kryesore",
     or: "ose",
@@ -275,6 +277,8 @@ const STRINGS = {
     emailSuccess: "بريد إلكتروني صحيح ✓",
     haveAccount: "لا تملك حسابًا؟",
     signup: "إنشاء حساب",
+    workshopNoAccount: "ليس لديك حساب معلم؟",
+    workshopSignup: "أنشئ حسابًا وتابع نموذج التقديم",
     poweredBy: "مدعومة من",
     backTo: "العودة إلى الصفحة الرئيسية",
     or: "أو",
@@ -342,10 +346,17 @@ export default function SchoolLoginClient({ school, landingFlow = "student" }: {
 
   // Clean paths on a tenant subdomain; school-scoped paths on the owner host.
   const [onSubdomain, setOnSubdomain] = useState(false);
+  const [redirectTo, setRedirectTo] = useState("");
+  const [signupTo, setSignupTo] = useState("");
   useEffect(() => {
     setOnSubdomain(!window.location.pathname.startsWith("/schools/"));
+    const params = new URLSearchParams(window.location.search);
+    const rd = params.get("redirectTo") ?? "";
+    const su = params.get("signupTo") ?? "";
+    if (rd.startsWith("/") && !rd.startsWith("//")) setRedirectTo(rd);
+    if (su.startsWith("/") && !su.startsWith("//")) setSignupTo(su);
   }, []);
-  const signupPath  = onSubdomain ? "/signup" : `/schools/${school.slug}/signup`;
+  const signupPath  = signupTo || (onSubdomain ? "/signup" : `/schools/${school.slug}/signup`);
   const landingPath = onSubdomain ? "/"       : `/schools/${school.slug}`;
 
   const showEmailError   = emailTouched && email.trim().length > 0 && !isValidEmail(email);
@@ -403,7 +414,7 @@ export default function SchoolLoginClient({ school, landingFlow = "student" }: {
         TEACHER: "/teacher",
         STUDENT: "/student",
       };
-      const dest = roleRoutes[profile.role];
+      const dest = redirectTo || roleRoutes[profile.role];
       if (dest) window.location.href = dest;
       else setError("نوع الحساب غير معروف: " + profile.role);
     } catch {
@@ -607,7 +618,7 @@ export default function SchoolLoginClient({ school, landingFlow = "student" }: {
               </button>
             </div>
 
-            {landingFlow === "student" && (
+            {(landingFlow === "student" || Boolean(signupTo)) && (
               <>
                 <div className="lp-divider">
                   <div className="lp-divider-line" />
@@ -616,9 +627,9 @@ export default function SchoolLoginClient({ school, landingFlow = "student" }: {
                 </div>
 
                 <p className="lp-footer-text">
-                  {L.haveAccount}{" "}
+                  {signupTo ? L.workshopNoAccount : L.haveAccount}{" "}
                   <Link href={signupPath} className="lp-link">
-                    {L.signup}
+                    {signupTo ? L.workshopSignup : L.signup}
                   </Link>
                 </p>
               </>

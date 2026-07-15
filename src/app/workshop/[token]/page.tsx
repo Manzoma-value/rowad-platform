@@ -19,12 +19,18 @@ const UI = {
     submit: "متابعة",
     submitting: "جارٍ الإنشاء…",
     successGoing: "تم إنشاء الحساب — جارٍ تسجيل الدخول…",
+    checkingAccount: "جارٍ التحقق من حسابك…",
+    joiningWorkshop: "جارٍ ربط حسابك بالورشة…",
+    loginAgain: "تسجيل الدخول بحساب آخر",
     err_missing_fields: "الرجاء تعبئة جميع الحقول.",
     err_weak_password: "كلمة المرور يجب أن تكون 8 أحرف على الأقل.",
     err_invalid_email: "البريد الإلكتروني غير صحيح.",
     err_email_taken: "هذا البريد مسجَّل بالفعل — سجّل الدخول من الصفحة الرئيسية.",
     err_invalid_token: "رابط الورشة غير صحيح.",
     err_workshop_closed: "هذه الورشة مغلقة حالياً.",
+    err_not_teacher: "هذا الحساب ليس حساب معلم. سجّل الدخول بحساب معلم للانضمام إلى الورشة.",
+    err_account_inactive: "حساب المعلم معطّل حالياً. تواصل مع إدارة المدرسة.",
+    err_school_mismatch: "حسابك مرتبط بمدرسة أخرى ولا يمكن ربطه بهذه الورشة.",
     err_default: "تعذر إنشاء الحساب. حاول مرة أخرى.",
     footer: "منظومة · Manzoma",
   },
@@ -37,16 +43,31 @@ const UI = {
     submit: "Vazhdo",
     submitting: "Po krijohet…",
     successGoing: "Llogaria u krijua — po hyn…",
+    checkingAccount: "Po kontrollojmë llogarinë…",
+    joiningWorkshop: "Po lidhim llogarinë me punëtorinë…",
+    loginAgain: "Hyni me një llogari tjetër",
     err_missing_fields: "Të lutem plotëso të gjitha fushat.",
     err_weak_password: "Fjalëkalimi duhet të ketë të paktën 8 karaktere.",
     err_invalid_email: "E-mail-i nuk është i saktë.",
     err_email_taken: "Ky e-mail është regjistruar tashmë — hyr nga faqja kryesore.",
     err_invalid_token: "Lidhja e punëtorisë nuk është e vlefshme.",
     err_workshop_closed: "Kjo punëtori është e mbyllur.",
+    err_not_teacher: "Kjo nuk është llogari mësuesi. Hyni me një llogari mësuesi.",
+    err_account_inactive: "Llogaria e mësuesit është çaktivizuar. Kontaktoni administratën.",
+    err_school_mismatch: "Llogaria juaj i përket një shkolle tjetër dhe nuk mund të lidhet me këtë punëtori.",
     err_default: "Krijimi dështoi. Provo përsëri.",
     footer: "Manzoma",
   },
 } as const;
+
+function workshopLoginUrl(token: string) {
+  const workshopPath = `/workshop/${encodeURIComponent(token)}`;
+  const params = new URLSearchParams({
+    redirectTo: workshopPath,
+    signupTo: `${workshopPath}?mode=signup`,
+  });
+  return `/login?${params.toString()}`;
+}
 
 export default function WorkshopSignupPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -68,11 +89,57 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [entryMode, setEntryMode] = useState<"checking" | "signup" | "error">("checking");
+  const [entryError, setEntryError] = useState("");
 
   // Persist language preference on this device.
   useEffect(() => {
     try { localStorage.setItem("workshop_lang", lang); } catch { /* ignore */ }
   }, [lang]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("mode") === "signup") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEntryMode("signup");
+      return;
+    }
+
+    void (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.replace(workshopLoginUrl(token));
+        return;
+      }
+
+      const response = await fetch("/api/workshop-enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        router.replace(workshopLoginUrl(token));
+        return;
+      }
+      if (!response.ok) {
+        const key = `err_${data.error ?? "default"}`;
+        setEntryError((T as Record<string, string>)[key] ?? T.err_default);
+        setEntryMode("error");
+        return;
+      }
+
+      router.replace("/teacher");
+    })().catch(() => {
+      setEntryError(T.err_default);
+      setEntryMode("error");
+    });
+  }, [T, router, token]);
+
+  async function loginWithAnotherAccount() {
+    await createClient().auth.signOut();
+    router.replace(workshopLoginUrl(token));
+  }
 
   async function submit() {
     setErr(null);
@@ -102,7 +169,7 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
       });
       if (signInErr) {
         // Fallback — send them to the login page.
-        router.replace("/login");
+        router.replace(workshopLoginUrl(token));
         return;
       }
       setDone(true);
@@ -113,6 +180,37 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
       setErr(T.err_default);
       setSubmitting(false);
     }
+  }
+
+  if (entryMode !== "signup") {
+    return (
+      <div
+        dir={dir}
+        style={{
+          minHeight: "100vh", display: "grid", placeItems: "center", padding: 20,
+          background: "linear-gradient(160deg,#F7EFDD 0%,#EEE1C2 100%)", fontFamily: "'Cairo','Tajawal',sans-serif",
+        }}
+      >
+        <div style={{ width: "min(440px,100%)", padding: "36px 28px", textAlign: "center", borderRadius: 20, background: "#FFFBF5", border: "1.5px solid #B8A082", boxShadow: "0 20px 60px rgba(150,115,50,.18)" }}>
+          <div style={{ color: "#6B1E2D", fontSize: 28, marginBottom: 10 }}>✦</div>
+          <h1 style={{ margin: "0 0 10px", color: "#32101A", fontSize: 22 }}>
+            {entryMode === "checking" ? T.checkingAccount : T.title}
+          </h1>
+          <p style={{ margin: 0, color: "#6B1E2D", lineHeight: 1.8, fontSize: 13 }}>
+            {entryMode === "checking" ? T.joiningWorkshop : entryError}
+          </p>
+          {entryMode === "error" && (
+            <button
+              type="button"
+              onClick={() => void loginWithAnotherAccount()}
+              style={{ width: "100%", marginTop: 20, padding: 12, border: 0, borderRadius: 12, cursor: "pointer", background: "linear-gradient(180deg,#5B1526,#32101A)", color: "#D9C9B0", fontFamily: "inherit", fontWeight: 800 }}
+            >
+              {T.loginAgain}
+            </button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (

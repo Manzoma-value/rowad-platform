@@ -62,6 +62,8 @@ const STRINGS = {
     forgotPw: "نسيت كلمة المرور؟",
     noAccount: "لا تملك حسابًا؟",
     signup: "إنشاء حساب",
+    workshopNoAccount: "ليس لديك حساب معلم؟",
+    workshopSignup: "أنشئ حسابًا وتابع نموذج التقديم",
     or: "أو",
     errEmpty: "من فضلك أدخل البريد الإلكتروني وكلمة المرور",
     errEmailInvalid: "صيغة البريد الإلكتروني غير صحيحة",
@@ -88,6 +90,8 @@ const STRINGS = {
     forgotPw: "Forgot password?",
     noAccount: "Don't have an account?",
     signup: "Create one",
+    workshopNoAccount: "Don't have a teacher account?",
+    workshopSignup: "Create an account and complete the application",
     or: "or",
     errEmpty: "Please enter your email and password",
     errEmailInvalid: "Invalid email format",
@@ -156,6 +160,7 @@ export default function LoginPage() {
   const [error, setError]       = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [redirectTo, setRedirectTo]     = useState("");
+  const [signupTo, setSignupTo]         = useState("");
 
   const L = STRINGS[lang];
 
@@ -167,8 +172,10 @@ export default function LoginPage() {
     if (effectiveLang !== "ar") setLang(effectiveLang);
     const params = new URLSearchParams(window.location.search);
     const rd  = params.get("redirectTo") ?? "";
+    const su  = params.get("signupTo") ?? "";
     const err = params.get("error") ?? "";
     if (rd.startsWith("/") && !rd.startsWith("//")) setRedirectTo(rd);
+    if (su.startsWith("/") && !su.startsWith("//")) setSignupTo(su);
     const isEn = effectiveLang === "en";
     if (err === "link_invalid")       setError(isEn ? "Verification link is invalid or expired" : "رابط التأكيد غير صالح أو منتهي الصلاحية");
     else if (err === "oauth_failed")  setError(isEn ? "Sign-in failed" : "فشل تسجيل الدخول");
@@ -383,8 +390,10 @@ export default function LoginPage() {
             </div>
 
             <p className="lp-footer-text">
-              {L.noAccount}{" "}
-              <Link href="/signup" className="lp-link">{L.signup}</Link>
+              {signupTo ? L.workshopNoAccount : L.noAccount}{" "}
+              <Link href={signupTo || "/signup"} className="lp-link">
+                {signupTo ? L.workshopSignup : L.signup}
+              </Link>
             </p>
 
             <div className="lp-form-ornament" style={{ marginTop: 28 }}><Rule/></div>
