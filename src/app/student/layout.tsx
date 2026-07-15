@@ -331,7 +331,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="sl-logo-block">
           <Image
-            src="/ahlia.png"
+            src="/headerlogo.png"
             alt="بناء الأهلية"
             fill
             style={{ objectFit: "contain", objectPosition: "center" }}
@@ -620,7 +620,7 @@ const styles = `
     --sl-bdr-gold:       rgba(184,160,130,0.38);
 
     --sl-sidebar-w:      286px;
-    --sl-topbar-h:       68px;
+    --sl-topbar-h:       72px;
 
     --sl-font-heading:   'El Messiri', 'Cairo', serif;
     --sl-font-mono:      'IBM Plex Mono', monospace;
@@ -834,60 +834,60 @@ const styles = `
     position: sticky; top: 0; z-index: 40;
     height: var(--sl-topbar-h); display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
-    background: rgba(255,251,245,0.82);
+    background: linear-gradient(110deg, #32101AFA, #4A0E1CF5 58%, #32101AF7);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(26,26,26,0.07);
-    box-shadow: 0 1px 0 rgba(26,26,26,0.04), 0 6px 24px rgba(26,26,26,0.025);
+    border-bottom: 1px solid rgba(217,201,176,.24);
+    box-shadow: 0 8px 28px #32101A2E, inset 0 -1px 0 rgba(255,255,255,.03);
   }
   @media (min-width: 768px) { .sl-topbar { padding: 0 36px; } }
 
   .sl-topbar-accent {
     position: absolute; inset-x: 0; top: 0; height: 1.5px; pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(184,160,130,0.30) 15%, rgba(184,160,130,0.55) 50%, rgba(184,160,130,0.30) 85%, transparent);
+    background: linear-gradient(90deg, transparent, rgba(217,201,176,.34) 12%, rgba(217,201,176,.88) 50%, rgba(217,201,176,.34) 88%, transparent);
   }
 
   .sl-hamburger {
     display: flex; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 10px;
     background: none; border: none; cursor: pointer;
-    color: var(--sl-graphite-muted); transition: all 0.15s; flex-shrink: 0;
+    color: var(--sl-gold-soft); transition: all 0.15s; flex-shrink: 0;
   }
-  .sl-hamburger:hover { background: rgba(184,160,130,0.10); color: var(--sl-graphite); }
+  .sl-hamburger:hover { background: rgba(217,201,176,.12); color: #FFFBF5; }
   @media (min-width: 768px) { .sl-hamburger { display: none; } }
 
   .sl-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
   .sl-breadcrumb-geo  {
     display: none; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
-    border: 1px solid var(--sl-bdr-soft); background: var(--sl-bg-card); opacity: 0.90;
+    border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.07); opacity: 1;
   }
   @media (min-width: 640px) { .sl-breadcrumb-geo { display: flex; } }
   .sl-breadcrumb { display: flex; align-items: center; gap: 8px; }
-  .sl-bc-root { font-size: 12.5px; font-weight: 500; color: var(--sl-graphite-muted); white-space: nowrap; }
-  .sl-bc-sep  { color: var(--sl-graphite-muted); opacity: 0.38; flex-shrink: 0; }
-  .sl-bc-cur  { font-size: 13.5px; font-weight: 700; color: var(--sl-graphite); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sl-bc-root { font-size: 12.5px; font-weight: 600; color: var(--sl-gold-soft); opacity: .76; white-space: nowrap; }
+  .sl-bc-sep  { color: var(--sl-gold-soft); opacity: 0.42; flex-shrink: 0; }
+  .sl-bc-cur  { font-size: 13.5px; font-weight: 800; color: #FFFBF5; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing:.01em; }
   .sl-topbar-spacer { flex: 1; }
 
   .sl-topbar-actions  { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .sl-topbar-divider  { display: none; width: 1px; height: 20px; background: var(--sl-bdr-med); opacity: 0.65; }
+  .sl-topbar-divider  { display: none; width: 1px; height: 24px; background: rgba(217,201,176,.22); }
   @media (min-width: 768px) { .sl-topbar-divider { display: block; } }
 
   .sl-bell-btn {
     display: none; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 50%;
-    background: var(--sl-bg-card); border: 1px solid var(--sl-bdr-soft);
-    cursor: pointer; color: var(--sl-graphite-muted); transition: all 0.18s;
+    background: rgba(255,251,245,.07); border: 1px solid rgba(217,201,176,.22);
+    cursor: pointer; color: var(--sl-gold-soft); transition: all 0.18s;
   }
-  .sl-bell-btn:hover { border-color: var(--sl-bdr-gold); color: var(--sl-graphite); }
+  .sl-bell-btn:hover { border-color: rgba(217,201,176,.58); color: #FFFBF5; background:rgba(255,251,245,.12); }
   @media (min-width: 768px) { .sl-bell-btn { display: flex; } }
 
   .sl-topbar-user-pill {
     display: none; align-items: center; gap: 8px;
-    padding: 4px 12px 4px 4px; border-radius: 999px;
-    border: 1px solid var(--sl-bdr-soft); background: var(--sl-bg-card);
+    padding: 5px; padding-inline-end: 12px; border-radius: 999px;
+    border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.075);
     transition: all 0.18s var(--sl-ease-out);
   }
-  .sl-topbar-user-pill:hover { border-color: var(--sl-bdr-gold); box-shadow: 0 4px 16px rgba(26,26,26,0.06); }
+  .sl-topbar-user-pill:hover { border-color: rgba(217,201,176,.52); background:rgba(255,251,245,.11); box-shadow: 0 8px 24px #32101A38; }
   @media (min-width: 768px) { .sl-topbar-user-pill { display: flex; } }
 
   .sl-topbar-av {
@@ -895,8 +895,8 @@ const styles = `
     display: flex; align-items: center; justify-content: center; overflow: hidden;
     background: linear-gradient(135deg, var(--sl-gold-soft), var(--sl-gold-deep));
   }
-  .sl-topbar-initial { font-size: 11px; font-weight: 900; color: var(--sl-graphite); font-family: var(--sl-font-heading); }
-  .sl-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--sl-graphite); white-space: nowrap; padding-inline-start: 2px; }
+  .sl-topbar-initial { font-size: 11px; font-weight: 900; color: #4A0E1C; font-family: var(--sl-font-heading); }
+  .sl-topbar-name    { font-size: 12.5px; font-weight: 800; color: #FFFBF5; white-space: nowrap; padding-inline-start: 2px; }
 
   /* Content */
   .sl-content { position: relative; flex: 1; padding: 28px 20px; animation: sl-slidein 0.42s var(--sl-ease-out); }

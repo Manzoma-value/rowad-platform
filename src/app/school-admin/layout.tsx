@@ -508,7 +508,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="sa-logo-block">
           <Image
-            src="/ahlia.png"
+            src="/headerlogo.png"
             alt="بناء الأهلية"
             fill
             style={{ objectFit: "contain", objectPosition: "center" }}
@@ -841,7 +841,7 @@ const styles = `
     --sa-bdr-gold:       rgba(184,160,130,0.38);
 
     --sa-sidebar-w:      286px;
-    --sa-topbar-h:       68px;
+    --sa-topbar-h:       72px;
 
     --sa-font-heading:   'El Messiri', 'Cairo', serif;
     --sa-font-mono:      'IBM Plex Mono', monospace;
@@ -1139,60 +1139,60 @@ const styles = `
     position: sticky; top: 0; z-index: 40;
     height: var(--sa-topbar-h); display: flex; align-items: center; gap: 14px;
     padding: 0 20px;
-    background: rgba(251,250,246,0.82);
+    background: linear-gradient(110deg, #32101AFA, #4A0E1CF5 58%, #32101AF7);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(26,26,26,0.07);
-    box-shadow: 0 1px 0 rgba(26,26,26,0.04), 0 6px 24px rgba(26,26,26,0.025);
+    border-bottom: 1px solid rgba(217,201,176,.24);
+    box-shadow: 0 8px 28px #32101A2E, inset 0 -1px 0 rgba(255,255,255,.03);
   }
   @media (min-width: 768px) { .sa-topbar { padding: 0 36px; } }
 
   .sa-topbar-accent {
     position: absolute; inset-x: 0; top: 0; height: 1.5px; pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(184,160,130,0.30) 15%, rgba(184,160,130,0.55) 50%, rgba(184,160,130,0.30) 85%, transparent);
+    background: linear-gradient(90deg, transparent, rgba(217,201,176,.34) 12%, rgba(217,201,176,.88) 50%, rgba(217,201,176,.34) 88%, transparent);
   }
 
   .sa-hamburger {
     display: flex; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 10px;
     background: none; border: none; cursor: pointer;
-    color: var(--sa-graphite-muted); transition: all 0.15s; flex-shrink: 0;
+    color: var(--sa-gold-soft); transition: all 0.15s; flex-shrink: 0;
   }
-  .sa-hamburger:hover { background: rgba(184,160,130,0.10); color: var(--sa-graphite); }
+  .sa-hamburger:hover { background: rgba(217,201,176,.12); color: #FFFBF5; }
   @media (min-width: 768px) { .sa-hamburger { display: none; } }
 
   .sa-breadcrumb-wrap { display: flex; align-items: center; gap: 10px; flex: 1; }
   .sa-breadcrumb-geo  {
     display: none; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 12px; flex-shrink: 0;
-    border: 1px solid var(--sa-bdr-soft); background: var(--sa-bg-card); opacity: 0.90;
+    border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.07); opacity: 1;
   }
   @media (min-width: 640px) { .sa-breadcrumb-geo { display: flex; } }
   .sa-breadcrumb { display: flex; align-items: center; gap: 8px; }
-  .sa-bc-root { font-size: 12.5px; font-weight: 500; color: var(--sa-graphite-muted); }
-  .sa-bc-sep  { color: var(--sa-graphite-muted); opacity: 0.38; flex-shrink: 0; }
-  .sa-bc-cur  { font-size: 13.5px; font-weight: 700; color: var(--sa-graphite); }
+  .sa-bc-root { font-size: 12.5px; font-weight: 600; color: var(--sa-gold-soft); opacity: .76; }
+  .sa-bc-sep  { color: var(--sa-gold-soft); opacity: 0.42; flex-shrink: 0; }
+  .sa-bc-cur  { font-size: 13.5px; font-weight: 800; color: #FFFBF5; letter-spacing:.01em; }
   .sa-topbar-spacer { flex: 1; }
 
   .sa-topbar-actions  { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .sa-topbar-divider  { display: none; width: 1px; height: 20px; background: var(--sa-bdr-med); opacity: 0.65; }
+  .sa-topbar-divider  { display: none; width: 1px; height: 24px; background: rgba(217,201,176,.22); }
   @media (min-width: 768px) { .sa-topbar-divider { display: block; } }
 
   .sa-bell-btn {
     display: none; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 50%;
-    background: var(--sa-bg-card); border: 1px solid var(--sa-bdr-soft);
-    cursor: pointer; color: var(--sa-graphite-muted); transition: all 0.18s;
+    background: rgba(255,251,245,.07); border: 1px solid rgba(217,201,176,.22);
+    cursor: pointer; color: var(--sa-gold-soft); transition: all 0.18s;
   }
-  .sa-bell-btn:hover { border-color: var(--sa-bdr-gold); color: var(--sa-graphite); }
+  .sa-bell-btn:hover { border-color: rgba(217,201,176,.58); color: #FFFBF5; background:rgba(255,251,245,.12); }
   @media (min-width: 768px) { .sa-bell-btn { display: flex; } }
 
   .sa-topbar-user-pill {
     display: none; align-items: center; gap: 8px;
-    padding: 4px 12px 4px 4px; border-radius: 999px;
-    border: 1px solid var(--sa-bdr-soft); background: var(--sa-bg-card);
+    padding: 5px; padding-inline-end: 12px; border-radius: 999px;
+    border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.075);
     transition: all 0.18s var(--sa-ease-out);
   }
-  .sa-topbar-user-pill:hover { border-color: var(--sa-bdr-gold); box-shadow: 0 4px 16px rgba(26,26,26,0.06); }
+  .sa-topbar-user-pill:hover { border-color: rgba(217,201,176,.52); background:rgba(255,251,245,.11); box-shadow: 0 8px 24px #32101A38; }
   @media (min-width: 768px) { .sa-topbar-user-pill { display: flex; } }
 
   .sa-topbar-av {
@@ -1200,10 +1200,10 @@ const styles = `
     display: flex; align-items: center; justify-content: center; overflow: hidden;
     background: linear-gradient(135deg, var(--sa-gold-soft), var(--sa-gold-deep));
   }
-  .sa-topbar-initial { font-size: 11px; font-weight: 900; color: var(--sa-graphite); font-family: var(--sa-font-heading); }
+  .sa-topbar-initial { font-size: 11px; font-weight: 900; color: var(--sa-burgundy-deep); font-family: var(--sa-font-heading); }
   .sa-topbar-id      { display: flex; flex-direction: column; gap: 1px; padding-inline-start: 4px; padding-inline-end: 2px; line-height: 1.15; }
-  .sa-topbar-name    { font-size: 12.5px; font-weight: 700; color: var(--sa-graphite); white-space: nowrap; }
-  .sa-topbar-sub     { font-size: 10px; font-weight: 600; color: var(--sa-gold-deep); white-space: nowrap; letter-spacing: 0.02em; opacity: 0.85; }
+  .sa-topbar-name    { font-size: 12.5px; font-weight: 800; color: #FFFBF5; white-space: nowrap; }
+  .sa-topbar-sub     { font-size: 10px; font-weight: 600; color: var(--sa-gold-soft); white-space: nowrap; letter-spacing: 0.02em; opacity: 0.78; }
 
   /* Content */
   .sa-content { position: relative; flex: 1; padding: 28px 20px; animation: sa-slidein 0.42s var(--sa-ease-out); }
