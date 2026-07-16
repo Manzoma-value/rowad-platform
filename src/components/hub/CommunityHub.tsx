@@ -1,4 +1,6 @@
 "use client";
+/* User-generated and local preview URLs do not have stable dimensions for next/image. */
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -33,7 +35,7 @@ const T: Record<Lang, {
   composerPH: string; replyPH: string; loadMore: string; loading: string;
   emptyTitle: string; emptySub: string; noSchoolTitle: string; noSchoolSub: string;
   del: string; img: string; send: string; delConfirmTip: string;
-  sendFailed: string; loadFailed: string; retry: string; close: string;
+  sendFailed: string; loadFailed: string; imageError: string; retry: string; close: string;
   newMsg: (n: number) => string;
 }> = {
   ar: {
@@ -47,7 +49,7 @@ const T: Record<Lang, {
     del: "حذف", img: "صورة", send: "إرسال",
     delConfirmTip: "اضغط مرة أخرى للتأكيد",
     sendFailed: "تعذر الإرسال. تحقق من اتصالك وحاول مرة أخرى.",
-    loadFailed: "تعذر تحميل المجتمع الآن.", retry: "إعادة المحاولة", close: "إغلاق",
+    loadFailed: "تعذر تحميل المجتمع الآن.", imageError: "اختر صورة بصيغة JPG أو PNG أو WebP أو GIF أو AVIF وبحجم لا يتجاوز 8 ميجابايت.", retry: "إعادة المحاولة", close: "إغلاق",
     newMsg: (n) => `${n} رسالة جديدة · اضغط للتحديث`,
   },
   sq: {
@@ -61,7 +63,7 @@ const T: Record<Lang, {
     del: "Fshij", img: "Foto", send: "Dërgo",
     delConfirmTip: "Shtypni përsëri për të konfirmuar",
     sendFailed: "Mesazhi nuk u dërgua. Kontrolloni lidhjen dhe provoni përsëri.",
-    loadFailed: "Komuniteti nuk mund të ngarkohej tani.", retry: "Provo përsëri", close: "Mbyll",
+    loadFailed: "Komuniteti nuk mund të ngarkohej tani.", imageError: "Zgjidhni JPG, PNG, WebP, GIF ose AVIF deri në 8 MB.", retry: "Provo përsëri", close: "Mbyll",
     newMsg: (n) => `${n} mesazhe të reja · shtypni për rifreskuar`,
   },
 };
@@ -160,7 +162,6 @@ function Av({ name, role, avatarUrl, size = 40 }: { name: string; role: string; 
   return (
     <div className="av" style={{ width: size, height: size, minWidth: size, fontSize: size * 0.36, background: col.bg, color: col.text }}>
       {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img className="av-img" src={avatarUrl} alt="" />
       ) : initials(name)}
       {isStaff && <span className="av-badge">✦</span>}
@@ -235,15 +236,22 @@ function RxBar({ postId, reactions, myId, lang, onReact, compact = false, alignE
 function useImgUpload() {
   const [file, setFile]       = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [invalid, setInvalid] = useState(false);
   const ref = useRef<HTMLInputElement>(null);
   const pick = (f: File) => {
+    const supported = ["image/avif", "image/gif", "image/jpeg", "image/png", "image/webp"];
+    if (!supported.includes(f.type) || f.size <= 0 || f.size > 8 * 1024 * 1024) {
+      setInvalid(true);
+      return;
+    }
+    setInvalid(false);
     setFile(f);
     const r = new FileReader();
     r.onload = (e) => setPreview(e.target?.result as string);
     r.readAsDataURL(f);
   };
-  const clear = () => { setFile(null); setPreview(null); };
-  return { file, preview, ref, pick, clear };
+  const clear = () => { setFile(null); setPreview(null); setInvalid(false); if (ref.current) ref.current.value = ""; };
+  return { file, preview, invalid, ref, pick, clear };
 }
 
 // ─── DATE DIVIDER ─────────────────────────────────────────────────────────────
@@ -415,7 +423,7 @@ function Replies({ postId, me, lang, onCountChange }: {
               <button className="img-preview-mini-x" onClick={img.clear}>✕</button>
             </div>
           )}
-          {error && <div className="composer-error" role="alert">{error}</div>}
+          {(error || img.invalid) && <div className="composer-error" role="alert">{img.invalid ? tr.imageError : error}</div>}
           <div className="reply-composer-row">
             <textarea className="reply-input" placeholder={tr.replyPH} rows={1}
               value={text} onChange={(e) => setText(e.target.value)} dir="auto"
@@ -627,7 +635,7 @@ function Composer({ me, lang, onPosted }: { me: Me; lang: Lang; onPosted: (p: Po
           <button className="composer-img-x" onClick={img.clear}>✕</button>
         </div>
       )}
-      {error && <div className="composer-error composer-error-main" role="alert">{error}</div>}
+      {(error || img.invalid) && <div className="composer-error composer-error-main" role="alert">{img.invalid ? tr.imageError : error}</div>}
       <div className="composer-row">
         <Av name={me.name} role={me.role} size={40} />
         <div className="composer-field-wrap">
@@ -684,6 +692,7 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
   const supabase = useMemo(() => createClient(), []);
   const topRef   = useRef<HTMLDivElement>(null);
   const feedRef  = useRef<HTMLDivElement>(null);
+  const schoolId = me?.school?.id ?? null;
 
   useEffect(() => {
     let active = true;
@@ -713,11 +722,11 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
   }, [persona, supabase, loadRevision]);
 
   useEffect(() => {
-    if (!me?.school?.id) return;
+    if (!schoolId) return;
     let active = true;
     setLoading(true);
     setLoadError(false);
-    fetch(`/api/hub/posts?school_id=${me.school.id}&limit=30`, { cache: "no-store" })
+    fetch(`/api/hub/posts?school_id=${schoolId}&limit=30`, { cache: "no-store" })
       .then(async (r) => {
         if (!r.ok) throw new Error("posts");
         return r.json();
@@ -730,7 +739,7 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
       .catch(() => { if (active) setLoadError(true); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [me?.school?.id, loadRevision]);
+  }, [schoolId, loadRevision]);
 
   /* scroll-to-bottom-on-load */
   useEffect(() => {
@@ -742,16 +751,16 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
   }, [loading]);
 
   useEffect(() => {
-    if (!me?.school?.id) return;
-    const ch = supabase.channel(`hub-${persona.toLowerCase()}:${me.school.id}`)
+    if (!schoolId || !me) return;
+    const ch = supabase.channel(`hub-${persona.toLowerCase()}:${schoolId}`)
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "posts",
-        filter: `school_id=eq.${me.school.id}`,
+        filter: `school_id=eq.${schoolId}`,
       }, (payload) => {
         const p = payload.new as { reply_to_id: string | null; author_id: string };
         if (p.reply_to_id || p.author_id === me.id) return;
         // Re-fetch the freshest top-level so we get author + reactions populated.
-        fetch(`/api/hub/posts?school_id=${me.school!.id}&limit=1`, { cache: "no-store" })
+        fetch(`/api/hub/posts?school_id=${schoolId}&limit=1`, { cache: "no-store" })
           .then(async (r) => {
             if (!r.ok) throw new Error("post");
             return r.json();
@@ -768,13 +777,13 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
           .catch(() => {});
       }).subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [me?.school?.id, me?.id, persona, supabase]);
+  }, [schoolId, me, persona, supabase]);
 
   const loadMore = async () => {
-    if (!cursor || !me?.school?.id) return;
+    if (!cursor || !schoolId) return;
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/hub/posts?school_id=${me.school.id}&cursor=${cursor}&limit=30`, { cache: "no-store" });
+      const res = await fetch(`/api/hub/posts?school_id=${schoolId}&cursor=${cursor}&limit=30`, { cache: "no-store" });
       if (!res.ok) throw new Error("posts");
       const d = await res.json();
       setPosts((p) => [...p, ...(d.posts ?? [])]);
@@ -1331,8 +1340,8 @@ const premiumCss = `
 .hub-bg-pattern::before{width:420px;height:420px;filter:blur(110px);opacity:.24;animation:none;}
 .hub-bg-pattern::after{width:360px;height:360px;filter:blur(120px);opacity:.12;animation:none;}
 .hub-header{
-  background:linear-gradient(115deg,#250B12 0%,#4A0E1C 56%,#6B1E2D 100%);
-  box-shadow:0 14px 40px rgba(50,16,26,.22);
+  background:linear-gradient(115deg,#6B1E2D 0%,#4A0E1C 56%,#6B1E2D 100%);
+  box-shadow:0 14px 40px rgba(107,30,45,.22);
 }
 .hub-header::after{content:"";position:absolute;inset:0;pointer-events:none;background:
   radial-gradient(circle at 15% 30%,rgba(217,201,176,.13),transparent 27%),
@@ -1354,7 +1363,7 @@ const premiumCss = `
 .chat-bubble.has-delete{padding-inline-end:48px;}
 .chat-bubble-mine{background:linear-gradient(145deg,#D9C9B0 0%,#B8A082 100%);color:#32101A;border:1px solid rgba(107,30,45,.12);box-shadow:0 12px 28px rgba(107,30,45,.17);}
 .chat-bubble-theirs{background:rgba(255,255,255,.94);color:#32101A;border-color:rgba(107,30,45,.085);}
-.chat-bubble-staff{background:linear-gradient(145deg,#FFFEFB,#F7F3EB);}
+.chat-bubble-staff{background:linear-gradient(145deg,#FFFFFF,#F7F3EB);}
 .chat-text{font-size:15.5px;line-height:1.8;overflow-wrap:anywhere;white-space:pre-wrap;}
 .bubble-del{top:9px;inset-inline-end:9px;width:30px;height:30px;opacity:.62;background:rgba(107,30,45,.075);z-index:2;}
 .chat-img-wrap{display:block;width:100%;max-width:520px;padding:0;border:0;background:transparent;text-align:inherit;}
@@ -1363,7 +1372,7 @@ const premiumCss = `
 .reply-toggle-btn,.rx-btn,.rx-pill{min-height:32px;background:rgba(255,255,255,.82);border-color:rgba(107,30,45,.12);color:#6B1E2D;}
 .reply-toggle-btn:focus-visible,.rx-btn:focus-visible,.rx-pick-btn:focus-visible,.composer button:focus-visible,.reply-composer button:focus-visible,.state-card button:focus-visible{outline:3px solid rgba(184,160,130,.42);outline-offset:2px;}
 .rx-btn:disabled,.rx-pick-btn:disabled{opacity:.56;cursor:wait;}
-.rx-picker{z-index:320;max-width:min(420px,calc(100vw - 28px));padding:7px;border-color:rgba(107,30,45,.16);background:rgba(255,251,245,.98);box-shadow:0 20px 54px rgba(50,16,26,.2);}
+.rx-picker{z-index:320;max-width:min(420px,calc(100vw - 28px));padding:7px;border-color:rgba(107,30,45,.16);background:rgba(255,251,245,.98);box-shadow:0 20px 54px rgba(107,30,45,.2);}
 .rx-pick-btn{min-width:56px;padding:8px 7px;}
 .replies-container{width:min(600px,100%);max-width:100%;border-color:rgba(107,30,45,.14);background:rgba(255,251,245,.72);box-shadow:0 12px 28px rgba(107,30,45,.07);}
 .replies-scroll{max-height:min(42vh,390px);padding:13px;overscroll-behavior:contain;}
@@ -1375,7 +1384,7 @@ const premiumCss = `
 .reply-composer-row{min-width:0;}
 .reply-input{width:100%;min-width:0;min-height:40px;max-height:112px;resize:vertical;padding:9px 14px;line-height:1.55;overflow:auto;}
 .reply-icon-btn,.reply-send-btn{width:40px;height:40px;min-width:40px;min-height:40px;}
-.composer-error{color:#8B2635;background:rgba(139,38,53,.075);border:1px solid rgba(139,38,53,.16);border-radius:9px;padding:6px 9px;font-size:10.5px;font-weight:700;line-height:1.55;}
+.composer-error{color:#6B1E2D;background:rgba(107,30,45,.075);border:1px solid rgba(107,30,45,.16);border-radius:9px;padding:6px 9px;font-size:10.5px;font-weight:700;line-height:1.55;}
 .composer-error-main{margin:4px 8px 8px;}
 .hub-composer-wrap{padding:11px clamp(10px,2.5vw,20px) max(13px,env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(247,243,235,.62),rgba(247,243,235,.96));border-color:rgba(107,30,45,.16);}
 .hub-composer-wrap>div{max-width:1080px;margin:0 auto;}

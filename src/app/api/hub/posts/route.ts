@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { profileSchoolId } from "@/lib/hub-auth";
+import { hubImageExtension, validateHubImage } from "@/lib/hub-image";
 
 function adminSupabase() {
   return createSupabaseAdmin(
@@ -86,7 +87,9 @@ export async function POST(req: Request) {
     const file = form.get("file") as File | null;
 
     if (file) {
-      const ext = file.name.split(".").pop() ?? "jpg";
+      const validationError = validateHubImage(file);
+      if (validationError) return NextResponse.json({ error: validationError }, { status: 400 });
+      const ext = hubImageExtension(file);
       const path = `hub/${school_id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const admin = adminSupabase();
       const { error } = await admin.storage
