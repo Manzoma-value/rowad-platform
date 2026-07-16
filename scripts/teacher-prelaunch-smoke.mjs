@@ -9,6 +9,7 @@ const email = process.env.TEACHER_SMOKE_EMAIL;
 const password = process.env.TEACHER_SMOKE_PASSWORD;
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const requestTimeoutMs = Number(process.env.TEACHER_SMOKE_TIMEOUT_MS ?? 20_000);
 
 if (!email || !password) {
   throw new Error("Set TEACHER_SMOKE_EMAIL and TEACHER_SMOKE_PASSWORD before running the smoke test.");
@@ -49,6 +50,7 @@ async function probe(path, options = {}, expected = [200]) {
   try {
     response = await fetch(`${origin}${path}`, {
       redirect: "manual",
+      signal: AbortSignal.timeout(requestTimeoutMs),
       ...options,
       headers: {
         Cookie: cookieHeader(),
@@ -156,12 +158,37 @@ await Promise.all([
   probe("/api/teacher/quizzes", { method: "POST", body: JSON.stringify({}) }, [400]),
 ]);
 
+const teacherPages = [
+  "/teacher",
+  "/teacher/classes",
+  "/teacher/groups",
+  "/teacher/workshops",
+  "/teacher/hub",
+  "/teacher/roadmap",
+  "/teacher/lessons",
+  "/teacher/quizzes",
+  "/teacher/reports",
+  "/teacher/profile",
+  "/teacher/games",
+  "/teacher/games/card/1",
+  "/teacher/games/model",
+];
+if (firstGroup) teacherPages.push(`/teacher/groups/${firstGroup.id}`);
+if (firstWorkshop) teacherPages.push(`/teacher/workshops/${firstWorkshop.id}`);
+if (firstModule) teacherPages.push(`/teacher/roadmap/modules/${firstModule.id}`);
+if (firstLesson) teacherPages.push(`/teacher/lessons/${firstLesson.id}`);
+if (firstStudent) teacherPages.push(`/teacher/reports/students/${firstStudent.id}`);
+await Promise.all(teacherPages.map((path) => probe(path)));
+
+await probe("/api/teacher?smoke_warm=1");
+
 const slow = results.filter((item) => item.elapsed >= 2000).sort((a, b) => b.elapsed - a.elapsed);
 for (const result of results) {
   const cache = result.cacheControl ? ` cache=${result.cacheControl}` : "";
   console.log(`${result.ok ? "PASS" : "FAIL"} ${result.method.padEnd(6)} ${String(result.status).padEnd(3)} ${String(result.elapsed).padStart(5)}ms ${result.path}${cache}`);
 }
-console.log(`\n${results.length - failures.length}/${results.length} probes passed. ${slow.length} endpoint(s) took at least 2s.`);
+const passed = results.filter((item) => item.ok).length;
+console.log(`\n${passed}/${results.length} probes passed. ${slow.length} endpoint(s) took at least 2s.`);
 if (slow.length) console.log(`Slowest: ${slow.slice(0, 5).map((item) => `${item.path} (${item.elapsed}ms)`).join(", ")}`);
 
 await supabase.auth.signOut();

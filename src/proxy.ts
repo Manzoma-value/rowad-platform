@@ -240,6 +240,10 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  if (isProtectedDashboard) {
+    response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+    response.headers.set("Vary", "Cookie");
+  }
   return response;
 }
 
