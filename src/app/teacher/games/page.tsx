@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLang } from "@/lib/language-context";
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -597,7 +597,6 @@ function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
   }, [running]);
 
   const won = matched.size === MEM_PAIRS.length;
-  useEffect(() => { if (won) setRunning(false); }, [won]);
 
   const restart = useCallback(() => {
     setDeck(buildMemDeck(lang));
@@ -610,7 +609,10 @@ function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
   }, [lang]);
 
   // Re-build deck when language flips, so card text stays in sync.
-  useEffect(() => { restart(); }, [lang, restart]);
+  useEffect(() => {
+    const frame = requestAnimationFrame(restart);
+    return () => cancelAnimationFrame(frame);
+  }, [restart]);
 
   function flip(uid: number) {
     if (lockRef.current) return;
@@ -627,7 +629,11 @@ function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
       if (a.pairId === b.pairId) {
         // Match
         setTimeout(() => {
-          setMatched((set) => new Set(set).add(a.pairId));
+          setMatched((set) => {
+            const nextSet = new Set(set).add(a.pairId);
+            if (nextSet.size === MEM_PAIRS.length) setRunning(false);
+            return nextSet;
+          });
           setFlipped([]);
         }, 380);
       } else {
@@ -885,13 +891,20 @@ function SpeedGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: 
 
   useEffect(() => {
     if (!running) return;
-    if (timeLeft <= 0) { setRunning(false); return; }
-    const id = setInterval(() => setTimeLeft((t) => Math.max(0, t - 1)), 1000);
+    const id = setInterval(() => {
+      setTimeLeft((current) => {
+        if (current <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
     return () => clearInterval(id);
-  }, [running, timeLeft]);
+  }, [running]);
 
   function pick(kind: SpeedKind) {
-    if (!running) return;
+    if (!running || timeLeft <= 0) return;
     const correct = kind === word.kind;
     if (correct) {
       const mult = combo >= 9 ? 5 : combo >= 4 ? 3 : combo >= 1 ? 2 : 1;
@@ -911,7 +924,7 @@ function SpeedGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: 
   }
 
   const timePct = (timeLeft / SPEED_DURATION) * 100;
-  const ended = !running;
+  const ended = !running || timeLeft <= 0;
   const mult = combo >= 9 ? 5 : combo >= 4 ? 3 : combo >= 1 ? 2 : 1;
 
   return (
@@ -1065,12 +1078,24 @@ function spawnCollectorItems(target: Maqsad): CollectorEntity[] {
 }
 
 type Popup = { id: number; x: number; y: number; text: string; kind: "good" | "bad" };
+type CollectorSnapshot = {
+  target: Maqsad;
+  player: { x: number; y: number };
+  items: CollectorEntity[];
+  score: number;
+  lives: number;
+  collected: number;
+};
 
 function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: () => void }) {
   // Hot game state lives in refs — only mirrored to React on tick.
-  const targetRef = useRef<Maqsad>(pickTargetMaqsad());
-  const playerRef = useRef({ x: 50, y: 50 });
-  const itemsRef  = useRef<CollectorEntity[]>(spawnCollectorItems(targetRef.current));
+  const [initialGame] = useState(() => {
+    const target = pickTargetMaqsad();
+    return { target, player: { x: 50, y: 50 }, items: spawnCollectorItems(target) };
+  });
+  const targetRef = useRef<Maqsad>(initialGame.target);
+  const playerRef = useRef(initialGame.player);
+  const itemsRef  = useRef<CollectorEntity[]>(initialGame.items);
   const scoreRef     = useRef(0);
   const livesRef     = useRef(COLLECT_INITIAL_LIVES);
   const collectedRef = useRef(0);
@@ -1080,22 +1105,29 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
   const keysRef    = useRef(new Set<string>());
   const touchVec   = useRef({ x: 0, y: 0 });
 
-  // Re-render trigger (one bump per frame)
-  const [, setTick] = useState(0);
+  const [snapshot, setSnapshot] = useState<CollectorSnapshot>({
+    ...initialGame,
+    score: 0,
+    lives: COLLECT_INITIAL_LIVES,
+    collected: 0,
+  });
   const [popups, setPopups] = useState<Popup[]>([]);
   const [status, setStatus] = useState<"playing" | "won" | "lost">("playing");
 
   const restart = useCallback(() => {
-    targetRef.current = pickTargetMaqsad();
-    playerRef.current = { x: 50, y: 50 };
-    itemsRef.current  = spawnCollectorItems(targetRef.current);
+    const target = pickTargetMaqsad();
+    const player = { x: 50, y: 50 };
+    const items = spawnCollectorItems(target);
+    targetRef.current = target;
+    playerRef.current = player;
+    itemsRef.current = items;
     scoreRef.current  = 0;
     livesRef.current  = COLLECT_INITIAL_LIVES;
     collectedRef.current = 0;
     touchVec.current  = { x: 0, y: 0 };
     setPopups([]);
     setStatus("playing");
-    setTick((t) => t + 1);
+    setSnapshot({ target, player, items, score: 0, lives: COLLECT_INITIAL_LIVES, collected: 0 });
   }, []);
 
   const spawnPopup = useCallback((x: number, y: number, text: string, kind: "good" | "bad") => {
@@ -1194,7 +1226,14 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
         itemsRef.current = spawnCollectorItems(targetRef.current);
       }
 
-      setTick((t) => (t + 1) & 0xffff);
+      setSnapshot({
+        target: targetRef.current,
+        player: { ...playerRef.current },
+        items: itemsRef.current.map((item) => ({ ...item })),
+        score: scoreRef.current,
+        lives: livesRef.current,
+        collected: collectedRef.current,
+      });
       raf = requestAnimationFrame(step);
     }
 
@@ -1203,9 +1242,7 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
   }, [status, spawnPopup]);
 
   // ── Render-time data ──
-  const target = targetRef.current;
-  const player = playerRef.current;
-  const items  = itemsRef.current;
+  const { target, player, items, score, lives, collected } = snapshot;
   const targetLabel = MAQSAD_LABELS[target][lang === "sq" ? "sq" : "ar"];
 
   // D-pad press handlers — set the unit vector while held.
@@ -1238,16 +1275,16 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
           <span className="gm-stat-label">{T.hunLives}</span>
           <div className="gm-hearts">
             {[1, 2, 3].map((i) => (
-              <span key={i} className={`gm-heart${i <= livesRef.current ? " on" : ""}`}>♥</span>
+              <span key={i} className={`gm-heart${i <= lives ? " on" : ""}`}>♥</span>
             ))}
           </div>
         </div>
         <Stat
           label={T.colCollectedLabel}
-          value={`${collectedRef.current} / ${COLLECT_TARGET_COUNT}`}
+          value={`${collected} / ${COLLECT_TARGET_COUNT}`}
           mono
         />
-        <Stat label={T.spdScore} value={String(scoreRef.current)} mono />
+        <Stat label={T.spdScore} value={String(score)} mono />
       </div>
 
       <div
@@ -1321,9 +1358,9 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
             {status === "won" ? T.colWinSub : T.colLoseSub}
           </div>
           <div className="gm-win-stats">
-            <span>{T.spdScore}: <strong>{scoreRef.current}</strong></span>
+            <span>{T.spdScore}: <strong>{score}</strong></span>
             <span className="gm-win-sep" />
-            <span>{T.colCollectedLabel}: <strong>{collectedRef.current} / {COLLECT_TARGET_COUNT}</strong></span>
+            <span>{T.colCollectedLabel}: <strong>{collected} / {COLLECT_TARGET_COUNT}</strong></span>
           </div>
           <div className="gm-win-actions">
             <button className="gm-btn-primary" onClick={restart}>{T.memPlayAgain}</button>

@@ -62,6 +62,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  // Teacher APIs enforce role and activation in their route handlers. Avoid
+  // repeating auth and profile network calls for every teacher-page request.
+  if (pathname === "/api/teacher" || pathname.startsWith("/api/teacher/")) {
+    const apiResponse = NextResponse.next({ request });
+    apiResponse.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+    apiResponse.headers.set("Vary", "Cookie");
+    return apiResponse;
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -104,6 +113,10 @@ export async function proxy(request: NextRequest) {
       if (apiProfile?.is_active === false) {
         return NextResponse.json({ error: "Account deactivated" }, { status: 403 });
       }
+    }
+    if (user) {
+      response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
+      response.headers.set("Vary", "Cookie");
     }
     return response;
   }

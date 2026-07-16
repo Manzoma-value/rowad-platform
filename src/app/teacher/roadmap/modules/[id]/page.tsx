@@ -3,9 +3,11 @@ export const dynamic = "force-dynamic";
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 type ReviewStatus = "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
 
@@ -121,6 +123,7 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
 
   const [data, setData] = useState<{ module: ModuleDetail; classes: { id: string; name: string }[] } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
   const [dlg, setDlg] = useState<null | { kind: "lesson" | "quiz" }>(null);
   const [form, setForm] = useState({ title: "", classId: "", description: "" });
@@ -129,10 +132,11 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
 
   const reload = () => {
     setLoading(true);
+    setLoadError(false);
     fetch(`/api/teacher/modules/${id}`, { cache: "no-store" })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((d) => setData(d?.module ? d : null))
-      .catch(() => setData(null))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   };
 
@@ -189,7 +193,7 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
   }
 
   if (loading) return <MandalaLoader />;
-  if (!data) return null;
+  if (loadError || !data) return <TeacherLoadError onRetry={reload} />;
 
   const m = data.module;
 
@@ -220,7 +224,7 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
                 {c.type === "TEXT" && <p className="tm-content-text">{c.body}</p>}
                 {c.type === "IMAGE" && c.image_url && (
                   <div className="tm-content-img-wrap">
-                    <img src={c.image_url} alt={c.alt_text || ""} className="tm-content-img" />
+                    <Image src={c.image_url} alt={c.alt_text || ""} className="tm-content-img" width={960} height={540} unoptimized />
                   </div>
                 )}
                 {c.type === "VIDEO" && c.video_url && (

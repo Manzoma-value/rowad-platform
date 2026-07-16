@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 import { cachedFetch } from "@/lib/api-cache";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -126,6 +127,7 @@ export default function TeacherReportsPage() {
 
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedClass, setSelectedClass] = useState<ClassData | null>(null);
 
   useEffect(() => {
@@ -135,7 +137,7 @@ export default function TeacherReportsPage() {
         setClasses(cls);
         if (cls.length > 0) setSelectedClass(cls[0]);
       })
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -149,6 +151,7 @@ export default function TeacherReportsPage() {
         <style>{css}</style>
       </div>
     );
+  if (loadError) return <TeacherLoadError onRetry={() => window.location.reload()} />;
 
   return (
     <div className="rp-shell" dir={dir}>

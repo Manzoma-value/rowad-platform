@@ -1,6 +1,6 @@
 // src/app/api/teacher/reports/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
 
 export const revalidate = 60;
@@ -30,19 +30,12 @@ interface TraitAssessmentRef {
 }
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const teacher = await prisma.teacher.findUnique({
-    where: { profile_id: user.id },
-    select: { id: true },
-  });
-  if (!teacher) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // ── Query 1: classes + students + attempts (no trait nesting) ──
   const classes = await prisma.class.findMany({
-    where: { teacher_id: teacher.id },
+    where: { teacher_id: auth.teacher.id },
     orderBy: { created_at: "asc" },
     select: {
       id: true,

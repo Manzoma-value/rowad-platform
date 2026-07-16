@@ -9,6 +9,7 @@ import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { Icons } from "./components/icons";
 import { css } from "./components/css";
 import type { LessonListItem, ClassRef } from "./components/types";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 const T = {
   ar: {
@@ -66,6 +67,7 @@ export default function TeacherLessonsPage() {
   const [lessons, setLessons] = useState<LessonListItem[]>([]);
   const [classes, setClasses] = useState<ClassRef[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -74,6 +76,7 @@ export default function TeacherLessonsPage() {
   const [createError, setCreateError] = useState("");
 
   const fetchLessons = useCallback(async () => {
+    setLoadError(false);
     try {
       const d = await cachedFetch<{ lessons: LessonListItem[]; classes: ClassRef[] }>(
         "/api/teacher/lessons",
@@ -82,6 +85,8 @@ export default function TeacherLessonsPage() {
       setLessons(d?.lessons ?? []);
       setClasses(d?.classes ?? []);
       if (!newClassId && d?.classes?.[0]?.id) setNewClassId(d.classes[0].id);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -122,6 +127,7 @@ export default function TeacherLessonsPage() {
       </div>
     );
   }
+  if (loadError) return <TeacherLoadError onRetry={() => { setLoading(true); void fetchLessons(); }} />;
 
   return (
     <div className="lb-page" dir={dir}>

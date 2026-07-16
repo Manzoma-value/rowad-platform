@@ -5,36 +5,17 @@
 //
 // Both teachers and students count. Ties broken by earliest first-submission.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireActivePlayer } from "@/lib/player-auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-async function callerSchoolId(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: {
-      is_active: true,
-      role: true,
-      teacher: { select: { school_id: true } },
-      student: { select: { school_id: true } },
-    },
-  });
-  if (!profile?.is_active) return null;
-  if (profile.role === "TEACHER") return profile.teacher?.school_id ?? null;
-  if (profile.role === "STUDENT") return profile.student?.school_id ?? null;
-  return null;
-}
-
 export async function GET() {
-  const school_id = await callerSchoolId();
-  if (!school_id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const player = await requireActivePlayer();
+  if (!player) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const rows = await prisma.rowadGameSubmission.findMany({
-    where: { school_id },
+    where: { school_id: player.school_id },
     orderBy: { created_at: "asc" },
     select: {
       profile_id: true,

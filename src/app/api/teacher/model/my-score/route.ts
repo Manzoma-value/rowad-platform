@@ -3,19 +3,18 @@
 // featured "نموذج التعلم" card + the completion badge on the learning-tools
 // list page.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireActivePlayer } from "@/lib/player-auth";
 import { prisma } from "@/lib/prisma";
 import { TOTAL_CELLS } from "@/lib/rowad";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const player = await requireActivePlayer();
+  if (!player) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const rows = await prisma.rowadGameSubmission.findMany({
-    where: { profile_id: user.id },
+    where: { profile_id: player.profile_id },
     select: { stage: true, score: true, created_at: true },
   });
 

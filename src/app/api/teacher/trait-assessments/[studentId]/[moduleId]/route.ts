@@ -1,6 +1,6 @@
 // src/app/api/teacher/trait-assessments/[studentId]/[moduleId]/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -32,22 +32,11 @@ export async function GET(
   _req: Request,
   context: { params: Promise<{ studentId: string; moduleId: string }> },
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { studentId, moduleId } = await context.params;
+  const [auth, { studentId, moduleId }] = await Promise.all([requireTeacher(), context.params]);
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // All auth + data queries in parallel
-  const [teacher, mod] = await Promise.all([
-    prisma.teacher.findUnique({
-      where: { profile_id: user.id },
-      select: { id: true },
-    }),
-    prisma.roadmapModule.findUnique({
+  const mod = await prisma.roadmapModule.findUnique({
       where: { id: moduleId },
       select: {
         id: true,
@@ -73,18 +62,14 @@ export async function GET(
           },
         },
       },
-    }),
-  ]);
-
-  if (!teacher)
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    });
   if (!mod)
     return NextResponse.json({ error: "Module not found" }, { status: 404 });
 
   // Student auth + attempt + existing assessment — all parallel
   const [student, attempt, existing] = await Promise.all([
     prisma.student.findFirst({
-      where: { id: studentId, class: { teacher_id: teacher.id } },
+      where: { id: studentId, class: { teacher_id: auth.teacher.id } },
       select: { id: true },
     }),
     prisma.moduleAttempt.findUnique({
@@ -140,17 +125,12 @@ export async function POST(
   req: Request,
   context: { params: Promise<{ studentId: string; moduleId: string }> },
 ) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const [{ studentId, moduleId }, body] = await Promise.all([
+  const [auth, { studentId, moduleId }, body] = await Promise.all([
+    requireTeacher(),
     context.params,
     req.json().catch(() => ({})),
   ]);
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { scores, general_note } = body as {
     scores: ScoreInput[];
@@ -164,12 +144,7 @@ export async function POST(
     );
 
   // Auth + module + student — all parallel
-  const [teacher, mod] = await Promise.all([
-    prisma.teacher.findUnique({
-      where: { profile_id: user.id },
-      select: { id: true },
-    }),
-    prisma.roadmapModule.findUnique({
+  const mod = await prisma.roadmapModule.findUnique({
       where: { id: moduleId },
       select: {
         id: true,
@@ -180,18 +155,14 @@ export async function POST(
           },
         },
       },
-    }),
-  ]);
-
-  if (!teacher)
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    });
   if (!mod)
     return NextResponse.json({ error: "Module not found" }, { status: 404 });
 
   // Student + attempt + existing — all parallel
   const [student, attempt, existing] = await Promise.all([
     prisma.student.findFirst({
-      where: { id: studentId, class: { teacher_id: teacher.id } },
+      where: { id: studentId, class: { teacher_id: auth.teacher.id } },
       select: { id: true },
     }),
     prisma.moduleAttempt.findUnique({
@@ -272,7 +243,7 @@ export async function POST(
     assessment = await prisma.traitAssessment.update({
       where: { id: existing.id },
       data: {
-        teacher_id: teacher.id,
+        teacher_id: auth.teacher.id,
         general_note: gnote,
         trait_scores: { create: scoreRows },
       },
@@ -289,7 +260,7 @@ export async function POST(
       data: {
         module_id: moduleId,
         student_id: studentId,
-        teacher_id: teacher.id,
+        teacher_id: auth.teacher.id,
         general_note: gnote,
         trait_scores: { create: scoreRows },
       },

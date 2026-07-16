@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
 import { useLang } from "@/lib/language-context";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 type Lang = "ar" | "sq" | "en";
 
@@ -203,6 +204,7 @@ export default function TeacherPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [newAnnouncement, setNewAnnouncement] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [annLoading, setAnnLoading] = useState(false);
   const [posting, setPosting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -219,15 +221,21 @@ export default function TeacherPage() {
     await fetchAnnouncements(cls.id);
   }, [fetchAnnouncements]);
 
-  useEffect(() => {
+  const loadDashboard = useCallback(() => {
+    setLoading(true);
+    setLoadError(false);
     cachedFetch<TeacherData>("/api/teacher", 60_000).then((payload) => {
       setData(payload);
       const firstClass = payload.classes?.[0] ?? null;
       setSelectedClass(firstClass);
       if (firstClass) void fetchAnnouncements(firstClass.id);
-      setLoading(false);
-    });
+    }).catch(() => setLoadError(true)).finally(() => setLoading(false));
   }, [fetchAnnouncements]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(loadDashboard);
+    return () => cancelAnimationFrame(frame);
+  }, [loadDashboard]);
 
   const totals = data?.dashboard?.totals;
   const totalStudents = totals?.students ?? data?.classes.reduce((sum, cls) => sum + cls.students.length, 0) ?? 0;
@@ -266,7 +274,8 @@ export default function TeacherPage() {
     setDeletingId(null);
   };
 
-  if (loading || !data) return <Skeleton />;
+  if (loading) return <Skeleton />;
+  if (loadError || !data) return <TeacherLoadError onRetry={() => { invalidateCache("/api/teacher"); loadDashboard(); }} />;
 
   return (
     <div className="td-page" dir={dir}>

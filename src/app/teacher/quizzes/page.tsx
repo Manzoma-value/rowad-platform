@@ -7,6 +7,7 @@ import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 type Option = { id: string; text: string; order: number };
 type Question = {
@@ -50,6 +51,7 @@ export default function TeacherQuizzesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [creating, setCreating] = useState(false);
   const [expandedQuiz, setExpandedQuiz] = useState<string | null>(null);
   // Lazy-loaded detail cache: only the expanded quiz's full data lives here.
@@ -65,13 +67,19 @@ export default function TeacherQuizzesPage() {
   async function load() {
     // Cached: refresh-warm. Teacher data lives 5 min; quiz list 30s
     // because counts change as students submit.
-    const [qData, tData] = await Promise.all([
-      cachedFetch<Quiz[]>("/api/teacher/quizzes", 30_000),
-      cachedFetch<{ classes: ClassItem[] }>("/api/teacher", 300_000),
-    ]);
-    setQuizzes(qData ?? []);
-    setClasses(tData?.classes ?? []);
-    setLoading(false);
+    setLoadError(false);
+    try {
+      const [qData, tData] = await Promise.all([
+        cachedFetch<Quiz[]>("/api/teacher/quizzes", 30_000),
+        cachedFetch<{ classes: ClassItem[] }>("/api/teacher", 300_000),
+      ]);
+      setQuizzes(qData ?? []);
+      setClasses(tData?.classes ?? []);
+    } catch {
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function toggleExpand(id: string) {
@@ -91,7 +99,7 @@ export default function TeacherQuizzesPage() {
     }
   }
 
-  useEffect(() => { load(); }, []); // eslint-disable-line
+  useEffect(() => { load(); }, []);
 
   const tfLabels = [tr.trueWord, tr.falseWord];
   const addQuestion = (type: "MCQ" | "TF") =>
@@ -145,6 +153,7 @@ export default function TeacherQuizzesPage() {
   }
 
   if (loading) return <MandalaLoader label={tr.loading} />;
+  if (loadError) return <TeacherLoadError onRetry={() => { setLoading(true); void load(); }} />;
 
   const totalAttempts = quizzes.reduce((a, q) => a + q._count.attempts, 0);
 

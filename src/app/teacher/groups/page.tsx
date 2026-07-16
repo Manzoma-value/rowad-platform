@@ -1,11 +1,12 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Network, Users, ArrowUpRight } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 type TeacherGroup = {
   id: string;
@@ -49,15 +50,23 @@ export default function TeacherGroupsPage() {
 
   const [groups, setGroups] = useState<TeacherGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState("");
 
-  useEffect(() => {
+  const loadGroups = useCallback(() => {
+    setLoading(true);
+    setLoadError(false);
     fetch("/api/teacher/groups", { cache: "no-store" })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((d) => setGroups(Array.isArray(d?.groups) ? d.groups : []))
-      .catch(() => setGroups([]))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(loadGroups);
+    return () => cancelAnimationFrame(frame);
+  }, [loadGroups]);
 
   const visibleGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -75,6 +84,7 @@ export default function TeacherGroupsPage() {
       </div>
     );
   }
+  if (loadError) return <TeacherLoadError onRetry={loadGroups} />;
 
   return (
     <div className="tg-page" dir={dir}>

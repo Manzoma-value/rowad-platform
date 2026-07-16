@@ -81,11 +81,14 @@ export default function CardGamePlay({
   }, [stage, T.loadFail]);
 
   useEffect(() => {
-    load();
-    try {
-      const stored = window.localStorage.getItem(bestKey);
-      if (stored) setBestScore(parseInt(stored, 10));
-    } catch { /* ignore */ }
+    const frame = requestAnimationFrame(() => {
+      load();
+      try {
+        const stored = window.localStorage.getItem(bestKey);
+        if (stored) setBestScore(parseInt(stored, 10));
+      } catch { /* ignore */ }
+    });
+    return () => cancelAnimationFrame(frame);
   }, [load, bestKey]);
 
   const handleSubmit = useCallback(async (placements: Placement[]) => {

@@ -425,8 +425,8 @@ export default function SchoolSignupClient({
               </p>
             </div>
 
-            {/* Avatar picker */}
-            <div className="sp-avatar-section">
+            {/* Student accounts can optionally choose a profile image here. */}
+            {!isTeacherFlow && <div className="sp-avatar-section">
               <div className="sp-avatar-wrap" onClick={() => fileRef.current?.click()}>
                 {avatarPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -455,7 +455,7 @@ export default function SchoolSignupClient({
                 )}
               </div>
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleAvatarChange} />
-            </div>
+            </div>}
 
             <div className="sp-fields">
               <div className="sp-field">

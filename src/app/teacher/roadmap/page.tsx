@@ -1,10 +1,11 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 type ReviewStatus = "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
 
@@ -74,16 +75,25 @@ export default function TeacherRoadmapPage() {
 
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
-  useEffect(() => {
+  const loadRoadmap = useCallback(() => {
+    setLoading(true);
+    setLoadError(false);
     fetch("/api/teacher/roadmap", { cache: "no-store" })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
       .then((d) => setRoadmap(d?.roadmap ?? null))
-      .catch(() => setRoadmap(null))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const frame = requestAnimationFrame(loadRoadmap);
+    return () => cancelAnimationFrame(frame);
+  }, [loadRoadmap]);
+
   if (loading) return <MandalaLoader />;
+  if (loadError) return <TeacherLoadError onRetry={loadRoadmap} />;
 
   return (
     <div className="tr-page" dir={dir}>

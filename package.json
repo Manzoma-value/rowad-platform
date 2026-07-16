@@ -8,6 +8,7 @@
     "check:ui-identifiers": "node scripts/check-adblock-safe-ui.mjs",
     "check:theme-colors": "node scripts/check-theme-colors.mjs",
     "fix:theme-colors": "node scripts/check-theme-colors.mjs --fix",
+    "test:teacher-smoke": "node scripts/teacher-prelaunch-smoke.mjs",
     "start": "next start",
     "lint": "eslint"
   },

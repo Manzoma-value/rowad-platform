@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import TraitEvalForm from "@/components/TraitEvalForm";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -200,14 +201,16 @@ export default function StudentReportPage() {
 
   const [data, setData] = useState<StudentDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [evalModuleId, setEvalModuleId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"progress"|"traits"|"stats">("progress");
 
   const load = useCallback(() => {
     setLoading(true);
+    setLoadError(false);
     cachedFetch<StudentDetail>(`/api/teacher/reports/students/${studentId}`, 30_000)
       .then(setData)
-      .catch(() => {})
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, [studentId]);
 
@@ -219,7 +222,7 @@ export default function StudentReportPage() {
       <style>{css}</style>
     </div>
   );
-  if(!data) return null;
+  if(loadError || !data) return <TeacherLoadError onRetry={load} />;
 
   const {student}=data;
 

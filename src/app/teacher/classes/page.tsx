@@ -5,6 +5,7 @@ import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useEffect, useState, useCallback } from "react";
 import { useLang } from "@/lib/language-context";
 import { useConfirm } from "@/lib/confirm-dialog";
+import TeacherLoadError from "@/components/TeacherLoadError";
 
 const S = {
   ar: {
@@ -66,6 +67,7 @@ export default function TeacherClassesPage() {
   const [posting, setPosting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [annLoading, setAnnLoading] = useState(false);
 
   const loadAnnouncements = useCallback(async (classId: string) => {
@@ -85,7 +87,7 @@ export default function TeacherClassesPage() {
       setData(d);
       if (d.classes?.length > 0) selectClass(d.classes[0]);
       setLoading(false);
-    });
+    }).catch(() => { setLoadError(true); setLoading(false); });
   }, [selectClass]);
 
   async function handlePost() {
@@ -125,6 +127,7 @@ export default function TeacherClassesPage() {
       </div>
     );
   }
+  if (loadError) return <TeacherLoadError onRetry={() => window.location.reload()} />;
 
   return (
     <div className="tc-shell" dir={dir}>

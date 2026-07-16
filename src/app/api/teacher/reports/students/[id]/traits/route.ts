@@ -1,36 +1,27 @@
-// src/app/api/school-admin/reports/classes/[classId]/traits/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
+import { requireTeacher } from "@/lib/teacher-auth";
 
-// GET /api/school-admin/reports/classes/[classId]/traits
 export async function GET(
   _req: Request,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireSchoolAdmin();
+  const [auth, { id: studentId }] = await Promise.all([requireTeacher(), context.params]);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id: classId } = await context.params;
-
-  const cls = await prisma.class.findFirst({
-    where: { id: classId, school_id: auth.school.id },
+  const student = await prisma.student.findFirst({
+    where: { id: studentId, class: { teacher_id: auth.teacher.id } },
     select: {
       id: true,
-      name: true,
-      students: {
-        select: { id: true, profile: { select: { full_name: true, avatar_url: true } } },
-      },
+      profile: { select: { full_name: true, avatar_url: true } },
+      class: { select: { id: true, name: true } },
     },
   });
-  if (!cls) return NextResponse.json({ error: "Class not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
-  const studentIds = cls.students.map((s) => s.id);
-
-  const allAssessments = await prisma.traitAssessment.findMany({
-    where: { student_id: { in: studentIds } },
+  const assessments = await prisma.traitAssessment.findMany({
+    where: { student_id: studentId },
     select: {
-      student_id: true,
       module: { select: { main_trait_id: true } },
       trait_scores: {
         select: {
@@ -41,24 +32,20 @@ export async function GET(
     },
   });
 
-  // Class-wide radar: average normalized score per trait across all students
-  const traitTotals = new Map<string, { name: string; maqsad: string; sum: number; count: number }>();
-
-  for (const a of allAssessments) {
-    const otherCount = a.trait_scores.length - 1;
-    for (const ts of a.trait_scores) {
-      const isMain = a.module.main_trait_id === ts.trait.id;
-      const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-      const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
-
-      const existing = traitTotals.get(ts.trait.id);
-      if (existing) {
-        existing.sum += normalized;
-        existing.count += 1;
+  const totals = new Map<string, { name: string; maqsad: string; sum: number; count: number }>();
+  for (const assessment of assessments) {
+    const supportingCount = Math.max(1, assessment.trait_scores.length - 1);
+    for (const score of assessment.trait_scores) {
+      const maximum = score.trait.id === assessment.module.main_trait_id ? 50 : 50 / supportingCount;
+      const normalized = maximum > 0 ? Math.min(100, (score.score / maximum) * 100) : 0;
+      const current = totals.get(score.trait.id);
+      if (current) {
+        current.sum += normalized;
+        current.count += 1;
       } else {
-        traitTotals.set(ts.trait.id, {
-          name: ts.trait.name,
-          maqsad: ts.trait.maqsad,
+        totals.set(score.trait.id, {
+          name: score.trait.name,
+          maqsad: score.trait.maqsad,
           sum: normalized,
           count: 1,
         });
@@ -66,56 +53,19 @@ export async function GET(
     }
   }
 
-  const classRadar = Array.from(traitTotals.entries()).map(([id, v]) => ({
-    trait_id: id,
-    name: v.name,
-    maqsad: v.maqsad,
-    class_average: Math.round((v.sum / v.count) * 10) / 10,
-  }));
-
-  // Per-student summary for comparison
-  const studentSummaries = cls.students.map((s) => {
-    const studentAssessments = allAssessments.filter((a) => a.student_id === s.id);
-    const studentTraits = new Map<string, { name: string; sum: number; count: number }>();
-
-    for (const a of studentAssessments) {
-      const otherCount = a.trait_scores.length - 1;
-      for (const ts of a.trait_scores) {
-        const isMain = a.module.main_trait_id === ts.trait.id;
-        const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-        const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
-
-        const existing = studentTraits.get(ts.trait.id);
-        if (existing) {
-          existing.sum += normalized;
-          existing.count += 1;
-        } else {
-          studentTraits.set(ts.trait.id, {
-            name: ts.trait.name,
-            sum: normalized,
-            count: 1,
-          });
-        }
-      }
-    }
-
-    return {
-      student_id: s.id,
-      full_name: s.profile.full_name,
-      avatar_url: s.profile.avatar_url,
-      assessments_count: studentAssessments.length,
-      trait_averages: Array.from(studentTraits.entries()).map(([id, v]) => ({
-        trait_id: id,
-        name: v.name,
-        average: Math.round((v.sum / v.count) * 10) / 10,
-      })),
-    };
-  });
-
   return NextResponse.json({
-    class: { id: cls.id, name: cls.name },
-    student_count: cls.students.length,
-    class_radar: classRadar,
-    students: studentSummaries,
+    student: {
+      id: student.id,
+      full_name: student.profile.full_name,
+      avatar_url: student.profile.avatar_url,
+      class: student.class,
+    },
+    assessments_count: assessments.length,
+    trait_radar: [...totals.entries()].map(([traitId, value]) => ({
+      trait_id: traitId,
+      name: value.name,
+      maqsad: value.maqsad,
+      average: Math.round((value.sum / value.count) * 10) / 10,
+    })),
   });
 }
