@@ -238,23 +238,23 @@ model RowadConcept {
   order    Int // order within the level
 
   // Stage 1 card / concept name
-  name_ar String
-  name_sq String?
+  name_ar         String
+  name_sq         String?
   // المفهوم الاستراتيجي
-  strategic_ar String?
-  strategic_sq String?
+  strategic_ar    String?
+  strategic_sq    String?
   // الوصف
-  description_ar String?
-  description_sq String?
+  description_ar  String?
+  description_sq  String?
   // الواجب
-  duty_ar String?
-  duty_sq String?
+  duty_ar         String?
+  duty_sq         String?
   // الأجر
-  reward_ar String?
-  reward_sq String?
+  reward_ar       String?
+  reward_sq       String?
   // الثمرة
-  fruit_ar String?
-  fruit_sq String?
+  fruit_ar        String?
+  fruit_sq        String?
   // مؤشر التحقق
   verification_ar String?
   verification_sq String?
@@ -369,79 +369,80 @@ model TraitEvaluation {
 }
 
 model Profile {
-  id                           String              @id @db.Uuid
-  created_at                   DateTime            @default(now())
+  id                           String                     @id @db.Uuid
+  created_at                   DateTime                   @default(now())
   full_name                    String
-  email                        String?             @unique
-  is_active                    Boolean             @default(true)
+  email                        String?                    @unique
+  is_active                    Boolean                    @default(true)
   // True for read-only demo accounts (e.g. an investor account on the admin
   // role). The auth helpers refuse to authorise any write endpoint when this
   // is set; UI hides mutating buttons.
-  is_view_only                 Boolean             @default(false)
+  is_view_only                 Boolean                    @default(false)
   role                         Role
-  reviewed_assessment_attempts AssessmentAttempt[] @relation("AssessmentReviewedBy")
+  reviewed_assessment_attempts AssessmentAttempt[]        @relation("AssessmentReviewedBy")
   school_admin_memberships     SchoolAdminMember[]
   student                      Student?
   teacher                      Teacher?
   posts                        Post[]
   post_reactions               PostReaction[]
-  reviewedTeacherApplications  TeacherApplication[] @relation("TeacherAppReviewedBy")
-  reviewedLessons              Lesson[]             @relation("LessonReviewedBy")
-  reviewedQuizzes              Quiz[]               @relation("QuizReviewedBy")
+  reviewedTeacherApplications  TeacherApplication[]       @relation("TeacherAppReviewedBy")
+  reviewedLessons              Lesson[]                   @relation("LessonReviewedBy")
+  reviewedQuizzes              Quiz[]                     @relation("QuizReviewedBy")
   rowadGameSubmissions         RowadGameSubmission[]
-  authoredOwnerReports         OwnerReport[]        @relation("OwnerReportAuthor")
-  authoredTeacherGroups        TeacherGroup[]       @relation("TeacherGroupAuthor")
-  authoredGroupAssessments     GroupAssessment[]    @relation("GroupAssessmentAuthor")
-  authoredWorkshops            Workshop[]           @relation("WorkshopAuthor")
-  authoredAttendanceCodes      WorkshopAttendanceCode[] @relation("WorkshopAttendanceCodeAuthor")
+  authoredOwnerReports         OwnerReport[]              @relation("OwnerReportAuthor")
+  authoredTeacherGroups        TeacherGroup[]             @relation("TeacherGroupAuthor")
+  authoredGroupAssessments     GroupAssessment[]          @relation("GroupAssessmentAuthor")
+  authoredWorkshops            Workshop[]                 @relation("WorkshopAuthor")
+  authoredAttendanceCodes      WorkshopAttendanceCode[]   @relation("WorkshopAttendanceCodeAuthor")
+  workshopMessages             WorkshopMessage[]          @relation("WorkshopMessageAuthor")
   teacherGroupAnnouncements    TeacherGroupAnnouncement[]
   avatar_url                   String?
   avatar_path                  String?
-  created_invites              Invite[]            @relation("InvitesCreatedBy")
-  used_invites                 Invite[]            @relation("InviteUsedBy")
+  created_invites              Invite[]                   @relation("InvitesCreatedBy")
+  used_invites                 Invite[]                   @relation("InviteUsedBy")
 
   @@map("profiles")
 }
 
 model School {
-  id                 String              @id @default(uuid()) @db.Uuid
+  id                          String                     @id @default(uuid()) @db.Uuid
   /// Primary Arabic name (always required). Used as the canonical identifier.
-  name               String              @unique
+  name                        String                     @unique
   /// Optional Latin-script name shown when the UI language is Albanian/English.
   /// Falls back to `name` if null.
-  name_alt           String?
-  created_at         DateTime            @default(now())
-  language           String              @default("ar")
-  description        String?
-  slug               String              @unique @default("")
-  color_bg           String              @default("#0B0B0C")
-  color_primary      String              @default("#ac8e52")
-  color_secondary    String              @default("#E5B93C")
+  name_alt                    String?
+  created_at                  DateTime                   @default(now())
+  language                    String                     @default("ar")
+  description                 String?
+  slug                        String                     @unique @default("")
+  color_bg                    String                     @default("#0B0B0C")
+  color_primary               String                     @default("#ac8e52")
+  color_secondary             String                     @default("#E5B93C")
   /// Whether this school is active. When false the owner has deactivated it:
   /// the subdomain landing shows a "deactivated" page and users cannot log in.
-  is_active          Boolean             @default(true)
+  is_active                   Boolean                    @default(true)
   /// Per-school feature toggles, e.g. { "hub": false, "lessons": true }.
   /// Empty object = all features on (see src/lib/features.ts for the resolver).
   /// JSON (not boolean columns) so new features ship without a migration.
-  features           Json                @default("{}")
-  announcements      Announcement[]
-  assessmentAttempts AssessmentAttempt[]
-  assessments        Assessment[]
-  classes            Class[]
-  quizzes            Quiz[]
-  lessons            Lesson[]
-  roadmap            Roadmap?
-  rowad_model        RowadModel?
-  admins             SchoolAdminMember[]
-  students           Student[]
-  teachers           Teacher[]
-  teacher_applications TeacherApplication[]
-  posts              Post[]
-  invites            Invite[]
-  rowadGameSubmissions RowadGameSubmission[]
-  owner_reports      OwnerReport[]
-  teacher_groups     TeacherGroup[]
-  workshops          Workshop[]
+  features                    Json                       @default("{}")
+  announcements               Announcement[]
+  assessmentAttempts          AssessmentAttempt[]
+  assessments                 Assessment[]
+  classes                     Class[]
+  quizzes                     Quiz[]
+  lessons                     Lesson[]
+  roadmap                     Roadmap?
+  rowad_model                 RowadModel?
+  admins                      SchoolAdminMember[]
+  students                    Student[]
+  teachers                    Teacher[]
+  teacher_applications        TeacherApplication[]
+  posts                       Post[]
+  invites                     Invite[]
+  rowadGameSubmissions        RowadGameSubmission[]
+  owner_reports               OwnerReport[]
+  teacher_groups              TeacherGroup[]
+  workshops                   Workshop[]
   teacher_group_announcements TeacherGroupAnnouncement[]
 
   @@map("schools")
@@ -461,27 +462,27 @@ model SchoolAdminMember {
 }
 
 model Teacher {
-  id                 String                  @id @default(uuid()) @db.Uuid
-  created_at         DateTime                @default(now())
-  profile_id         String                  @unique @db.Uuid
-  school_id          String                  @db.Uuid
-  onboarding_status  TeacherOnboardingStatus @default(PENDING_APPLICATION)
+  id                  String                  @id @default(uuid()) @db.Uuid
+  created_at          DateTime                @default(now())
+  profile_id          String                  @unique @db.Uuid
+  school_id           String                  @db.Uuid
+  onboarding_status   TeacherOnboardingStatus @default(PENDING_APPLICATION)
   // Workshop the teacher signed up via, if any (nullable — teachers can
   // still sign up outside of a workshop through the classic flow).
-  workshop_signup_id String?                 @db.Uuid
-  workshop_signup    Workshop?               @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
+  workshop_signup_id  String?                 @db.Uuid
+  workshop_signup     Workshop?               @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
   workshop_attendance WorkshopAttendance[]
-  announcements     Announcement[]
-  classes           Class[]
-  quizzes           Quiz[]
-  lessons           Lesson[]
-  profile           Profile                 @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-  school            School                  @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  traitAssessments  TraitAssessment[]
-  application       TeacherApplication?
-  group_memberships TeacherGroupMember[]
-  ratings_given     AssessmentRating[]   @relation("AssessmentRater")
-  ratings_received  AssessmentRating[]   @relation("AssessmentTarget")
+  announcements       Announcement[]
+  classes             Class[]
+  quizzes             Quiz[]
+  lessons             Lesson[]
+  profile             Profile                 @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  school              School                  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  traitAssessments    TraitAssessment[]
+  application         TeacherApplication?
+  group_memberships   TeacherGroupMember[]
+  ratings_given       AssessmentRating[]      @relation("AssessmentRater")
+  ratings_received    AssessmentRating[]      @relation("AssessmentTarget")
 
   @@index([school_id])
   @@map("teachers")
@@ -498,11 +499,11 @@ model TeacherGroup {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  school      School               @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  author      Profile              @relation("TeacherGroupAuthor", fields: [created_by], references: [id])
-  members     TeacherGroupMember[]
-  assessments GroupAssessment[]
-  announcements TeacherGroupAnnouncement[]
+  school           School                     @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author           Profile                    @relation("TeacherGroupAuthor", fields: [created_by], references: [id])
+  members          TeacherGroupMember[]
+  assessments      GroupAssessment[]
+  announcements    TeacherGroupAnnouncement[]
   // Additional groups an assessment targets, beyond its legacy `group_id`
   // primary group — lets one measurement model span several groups at once.
   assessment_links GroupAssessmentGroup[]
@@ -605,15 +606,15 @@ model AssessmentRating {
   // LEGACY five-column layout — superseded by `scores` below. Left in place
   // (unused by the app) purely so a historical row is never destructively
   // altered; do not read or write these from application code.
-  s_lineage   Int
-  s_atonement Int
-  s_awareness Int
-  s_zeal      Int
-  s_distinct  Int
+  s_lineage         Int
+  s_atonement       Int
+  s_awareness       Int
+  s_zeal            Int
+  s_distinct        Int
   // Ordered scores aligned to this assessment's AssessmentTrait.position —
   // length equals the model's trait count, sums to 100.
-  scores      Json
-  updated_at  DateTime @updatedAt
+  scores            Json
+  updated_at        DateTime @updatedAt
 
   assessment GroupAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
   rater      Teacher         @relation("AssessmentRater", fields: [rater_teacher_id], references: [id], onDelete: Cascade)
@@ -717,31 +718,31 @@ enum ContentReviewStatus {
 }
 
 model Quiz {
-  id         String         @id @default(uuid()) @db.Uuid
-  name       String
-  school_id  String         @db.Uuid
-  class_id   String         @db.Uuid
-  teacher_id String         @db.Uuid
+  id                  String              @id @default(uuid()) @db.Uuid
+  name                String
+  school_id           String              @db.Uuid
+  class_id            String              @db.Uuid
+  teacher_id          String              @db.Uuid
   // Concept (RoadmapModule) the quiz is tied to. Required for NEW quizzes —
   // existing ones backfilled to NULL + is_legacy=true.
-  module_id  String?        @db.Uuid
+  module_id           String?             @db.Uuid
   // Review pipeline
-  review_status  ContentReviewStatus @default(DRAFT)
-  reviewer_id    String?             @db.Uuid
-  reviewer_notes String?
-  submitted_at   DateTime?
-  reviewed_at    DateTime?
+  review_status       ContentReviewStatus @default(DRAFT)
+  reviewer_id         String?             @db.Uuid
+  reviewer_notes      String?
+  submitted_at        DateTime?
+  reviewed_at         DateTime?
   // Pre-milestone quizzes (no concept link). Hidden from students; visible to
   // teacher as read-only "Legacy" entries that can be cloned into a concept.
-  is_legacy  Boolean        @default(false)
-  created_at DateTime       @default(now())
-  attempts   QuizAttempt[]
-  questions  QuizQuestion[]
-  class      Class          @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  school     School         @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  teacher    Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  module     RoadmapModule? @relation("ModuleQuizzes", fields: [module_id], references: [id], onDelete: SetNull)
-  reviewer   Profile?       @relation("QuizReviewedBy", fields: [reviewer_id], references: [id])
+  is_legacy           Boolean             @default(false)
+  created_at          DateTime            @default(now())
+  attempts            QuizAttempt[]
+  questions           QuizQuestion[]
+  class               Class               @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  school              School              @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  teacher             Teacher             @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  module              RoadmapModule?      @relation("ModuleQuizzes", fields: [module_id], references: [id], onDelete: SetNull)
+  reviewer            Profile?            @relation("QuizReviewedBy", fields: [reviewer_id], references: [id])
   linked_from_lessons Lesson[]
 
   @@index([teacher_id, created_at])
@@ -1053,17 +1054,17 @@ enum ReactionType {
 // ─────────────────────────────────────────────────────────────
 
 model Lesson {
-  id             String           @id @default(uuid()) @db.Uuid
-  teacher_id     String           @db.Uuid
-  school_id      String           @db.Uuid
-  class_id       String           @db.Uuid
+  id             String              @id @default(uuid()) @db.Uuid
+  teacher_id     String              @db.Uuid
+  school_id      String              @db.Uuid
+  class_id       String              @db.Uuid
   // Concept (RoadmapModule) the lesson is tied to. Required for NEW lessons.
   // Existing pre-milestone lessons are backfilled to NULL + is_legacy=true.
-  module_id      String?          @db.Uuid
+  module_id      String?             @db.Uuid
   title          String
   description    String?
   // Kept for backwards compat; new visibility is review_status==APPROVED.
-  is_published   Boolean          @default(false)
+  is_published   Boolean             @default(false)
   // Review pipeline
   review_status  ContentReviewStatus @default(DRAFT)
   reviewer_id    String?             @db.Uuid
@@ -1071,24 +1072,24 @@ model Lesson {
   submitted_at   DateTime?
   reviewed_at    DateTime?
   // Pre-milestone lessons hidden from students; teacher sees as read-only.
-  is_legacy      Boolean          @default(false)
+  is_legacy      Boolean             @default(false)
   // true  = graded mode (one attempt, score recorded)
   // false = practice mode (instant feedback, retryable, no grade)
-  is_graded      Boolean          @default(true)
-  linked_quiz_id String?          @db.Uuid
-  order          Int              @default(0)
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @updatedAt
+  is_graded      Boolean             @default(true)
+  linked_quiz_id String?             @db.Uuid
+  order          Int                 @default(0)
+  created_at     DateTime            @default(now())
+  updated_at     DateTime            @updatedAt
 
-  teacher        Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  school         School           @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  class          Class            @relation(fields: [class_id], references: [id], onDelete: Cascade)
-  module         RoadmapModule?   @relation("ModuleLessons", fields: [module_id], references: [id], onDelete: SetNull)
-  reviewer       Profile?         @relation("LessonReviewedBy", fields: [reviewer_id], references: [id])
-  linked_quiz    Quiz?            @relation(fields: [linked_quiz_id], references: [id], onDelete: SetNull)
-  contents       LessonContent[]
-  questions      LessonQuestion[]
-  attempts       LessonAttempt[]
+  teacher     Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  school      School           @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  class       Class            @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  module      RoadmapModule?   @relation("ModuleLessons", fields: [module_id], references: [id], onDelete: SetNull)
+  reviewer    Profile?         @relation("LessonReviewedBy", fields: [reviewer_id], references: [id])
+  linked_quiz Quiz?            @relation(fields: [linked_quiz_id], references: [id], onDelete: SetNull)
+  contents    LessonContent[]
+  questions   LessonQuestion[]
+  attempts    LessonAttempt[]
 
   @@index([teacher_id])
   @@index([class_id, is_published])
@@ -1114,20 +1115,20 @@ model LessonContent {
   video_title  String?
   created_at   DateTime    @default(now())
 
-  lesson       Lesson      @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
 
   @@index([lesson_id, order])
   @@map("lesson_contents")
 }
 
 model LessonQuestion {
-  id             String                 @id @default(uuid()) @db.Uuid
-  lesson_id      String                 @db.Uuid
+  id             String       @id @default(uuid()) @db.Uuid
+  lesson_id      String       @db.Uuid
   type           QuestionType
   text           String
   correct_answer String?
   order          Int
-  created_at     DateTime               @default(now())
+  created_at     DateTime     @default(now())
 
   lesson         Lesson                 @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
   options        LessonQuestionOption[]
@@ -1160,33 +1161,33 @@ model LessonMatchingPair {
 }
 
 model LessonAttempt {
-  id           String         @id @default(uuid()) @db.Uuid
-  lesson_id    String         @db.Uuid
-  student_id   String         @db.Uuid
+  id           String    @id @default(uuid()) @db.Uuid
+  lesson_id    String    @db.Uuid
+  student_id   String    @db.Uuid
   score        Int?
   total        Int?
   completed_at DateTime?
-  created_at   DateTime       @default(now())
-  updated_at   DateTime       @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
 
-  lesson       Lesson         @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
-  student      Student        @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  answers      LessonAnswer[]
+  lesson  Lesson         @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  student Student        @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  answers LessonAnswer[]
 
   @@unique([lesson_id, student_id])
   @@map("lesson_attempts")
 }
 
 model LessonAnswer {
-  id          String         @id @default(uuid()) @db.Uuid
-  attempt_id  String         @db.Uuid
-  question_id String         @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
+  attempt_id  String   @db.Uuid
+  question_id String   @db.Uuid
   answer      String
   is_correct  Boolean?
-  created_at  DateTime       @default(now())
+  created_at  DateTime @default(now())
 
-  attempt     LessonAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
-  question    LessonQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  attempt  LessonAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
+  question LessonQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   @@map("lesson_answers")
 }
@@ -1238,38 +1239,54 @@ enum WorkshopStatus {
 }
 
 model Workshop {
-  id            String         @id @default(uuid()) @db.Uuid
-  school_id     String         @db.Uuid
-  title         String
-  description   String?
-  audience      String[]       @default(["TEACHERS"])
-  audience_other String?
-  start_date    DateTime?      @db.Date
-  end_date      DateTime?      @db.Date
+  id               String         @id @default(uuid()) @db.Uuid
+  school_id        String         @db.Uuid
+  title            String
+  description      String?
+  audience         String[]       @default(["TEACHERS"])
+  audience_other   String?
+  start_date       DateTime?      @db.Date
+  end_date         DateTime?      @db.Date
   // Ordered entries: [{date,type:"WORK"|"REST",start_time?,end_time?,label?}]
-  schedule      Json           @default("[]")
-  notes         String?
+  schedule         Json           @default("[]")
+  notes            String?
   // Ordered entries: [{id,type:"FILE"|"IMAGE"|"VIDEO"|"LINK",title,url,path?,mime?,size?}]
-  materials     Json           @default("[]")
-  status        WorkshopStatus @default(OPEN)
+  materials        Json           @default("[]")
+  status           WorkshopStatus @default(OPEN)
   // Public random slug used in the signup URL and encoded in the signup QR.
   // Kept unique globally so /workshop/[token] doesn't need the school in the URL.
-  signup_token  String         @unique
+  signup_token     String         @unique
   // Permanent attendance URL token. The scan date is resolved at check-in time,
   // so one printed QR serves every scheduled work day in this workshop.
-  attendance_token String?     @unique
-  created_by    String         @db.Uuid
-  created_at    DateTime       @default(now())
-  updated_at    DateTime       @updatedAt
+  attendance_token String?        @unique
+  created_by       String         @db.Uuid
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
 
-  school           School                   @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  author           Profile                  @relation("WorkshopAuthor", fields: [created_by], references: [id])
-  signed_up_teachers Teacher[]              @relation("WorkshopSignedUpTeachers")
-  attendance       WorkshopAttendance[]
-  attendance_codes WorkshopAttendanceCode[]
+  school             School                   @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  author             Profile                  @relation("WorkshopAuthor", fields: [created_by], references: [id])
+  signed_up_teachers Teacher[]                @relation("WorkshopSignedUpTeachers")
+  attendance         WorkshopAttendance[]
+  attendance_codes   WorkshopAttendanceCode[]
+  messages           WorkshopMessage[]
 
   @@index([school_id, created_at(sort: Desc)])
   @@map("workshops")
+}
+
+model WorkshopMessage {
+  id          String   @id @default(uuid()) @db.Uuid
+  workshop_id String   @db.Uuid
+  author_id   String   @db.Uuid
+  body        String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  author   Profile  @relation("WorkshopMessageAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+
+  @@index([workshop_id, created_at])
+  @@map("workshop_messages")
 }
 
 model WorkshopAttendance {

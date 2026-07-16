@@ -16,7 +16,7 @@ const UI = {
   ar: {
     checking: "جارٍ تسجيل الحضور…",
     success: (title: string) => `تم تسجيل حضورك في ${title}. شكراً لك!`,
-    successCta: "الذهاب للوحة التحكم",
+    successCta: "فتح صفحة الورشة",
     errPrefix: "تعذر تسجيل الحضور:",
     err_not_signed_in: "الرجاء تسجيل الدخول أولاً.",
     err_not_a_teacher: "الحساب المستخدم ليس حساب معلم.",
@@ -30,7 +30,7 @@ const UI = {
   sq: {
     checking: "Po regjistrohet prania…",
     success: (title: string) => `Prania jote u regjistrua për ${title}. Faleminderit!`,
-    successCta: "Shko te paneli",
+    successCta: "Hap punëtorinë",
     errPrefix: "Prania nuk u regjistrua:",
     err_not_signed_in: "Të lutem hyr fillimisht.",
     err_not_a_teacher: "Ky nuk është llogari mësuesi.",
@@ -60,15 +60,25 @@ export default function AttendPage({ params }: { params: Promise<{ code: string 
 
   const [state, setState] = useState<"checking" | "ok" | "error">("checking");
   const [workshopTitle, setWorkshopTitle] = useState("");
+  const [workshopId, setWorkshopId] = useState("");
+  const [loginUrl, setLoginUrl] = useState(`/login?redirectTo=${encodeURIComponent(`/workshop/attend/${code}`)}`);
   const [errKey, setErrKey] = useState<string>("default");
 
   useEffect(() => {
     (async () => {
       const supa = createClient();
-      const { data: { user } } = await supa.auth.getUser();
+      const returnPath = `/workshop/attend/${code}`;
+      const [{ data: { user } }, metaResponse] = await Promise.all([
+        supa.auth.getUser(),
+        fetch(`/api/workshop-attend/${code}`, { cache: "no-store" }),
+      ]);
+      const meta = await metaResponse.json().catch(() => ({}));
+      const resolvedLoginUrl = meta.school_slug
+        ? `/schools/${encodeURIComponent(meta.school_slug)}/login?redirectTo=${encodeURIComponent(returnPath)}&signupTo=${encodeURIComponent(`/schools/${meta.school_slug}/signup`)}`
+        : `/login?redirectTo=${encodeURIComponent(returnPath)}`;
+      setLoginUrl(resolvedLoginUrl);
       if (!user) {
-        // Redirect to login with a return-back param.
-        router.replace(`/login?redirectTo=${encodeURIComponent(`/workshop/attend/${code}`)}`);
+        router.replace(resolvedLoginUrl);
         return;
       }
       try {
@@ -76,6 +86,7 @@ export default function AttendPage({ params }: { params: Promise<{ code: string 
         const d = await r.json().catch(() => ({}));
         if (r.ok) {
           setWorkshopTitle(d.workshop_title ?? "");
+          setWorkshopId(d.workshop_id ?? "");
           setState("ok");
           return;
         }
@@ -107,7 +118,7 @@ export default function AttendPage({ params }: { params: Promise<{ code: string 
           <>
             <div className="wa-check" aria-hidden>✓</div>
             <h1 className="wa-title">{T.success(workshopTitle)}</h1>
-            <Link href="/teacher" className="wa-btn">{T.successCta}</Link>
+            <Link href={workshopId ? `/teacher/workshops/${workshopId}` : "/teacher/workshops"} className="wa-btn">{T.successCta}</Link>
           </>
         )}
 
@@ -117,7 +128,7 @@ export default function AttendPage({ params }: { params: Promise<{ code: string 
             <h1 className="wa-title-err">{T.errPrefix}</h1>
             <p className="wa-err-msg">{errMsg}</p>
             {errKey === "not_signed_in" && (
-              <Link href={`/login?redirectTo=${encodeURIComponent(`/workshop/attend/${code}`)}`} className="wa-btn">
+              <Link href={loginUrl} className="wa-btn">
                 {T.goLogin}
               </Link>
             )}

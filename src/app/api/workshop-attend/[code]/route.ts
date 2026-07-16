@@ -6,6 +6,21 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+export async function GET(_req: Request, context: { params: Promise<{ code: string }> }) {
+  const { code } = await context.params;
+  const workshop = await prisma.workshop.findUnique({
+    where: { attendance_token: code },
+    select: { id: true, title: true, status: true, school: { select: { slug: true } } },
+  });
+  if (!workshop) return NextResponse.json({ error: "invalid_code" }, { status: 404 });
+  return NextResponse.json({
+    workshop_id: workshop.id,
+    workshop_title: workshop.title,
+    school_slug: workshop.school.slug,
+    status: workshop.status,
+  });
+}
+
 function todayDate(): Date {
   const timeZone = process.env.WORKSHOP_TIME_ZONE ?? "Europe/Tirane";
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -91,14 +106,17 @@ export async function POST(_req: Request, context: { params: Promise<{ code: str
     where: { workshop_id_teacher_id_day_date: key },
     select: { id: true },
   });
-  if (!existing) {
-    await prisma.workshopAttendance.create({ data: key });
-  }
+  await prisma.workshopAttendance.upsert({
+    where: { workshop_id_teacher_id_day_date: key },
+    create: key,
+    update: {},
+  });
 
   return NextResponse.json({
     success: true,
     already_recorded: !!existing,
     attendance_date: today.toISOString().slice(0, 10),
+    workshop_id: workshop.id,
     workshop_title: workshop.title,
   });
 }

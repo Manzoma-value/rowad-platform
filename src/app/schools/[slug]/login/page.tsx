@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SchoolLoginClient from "./SchoolLoginClient";
-import { resolveLandingFlow } from "@/lib/landing-flow";
 import SchoolDeactivatedClient from "../SchoolDeactivatedClient";
 
 interface Props {
@@ -21,7 +20,6 @@ export default async function SchoolLoginPage({ params }: Props) {
       slug: true,
       description: true,
       is_active: true,
-      features: true,
     },
   });
   if (!school) notFound();
@@ -34,7 +32,7 @@ export default async function SchoolLoginPage({ params }: Props) {
       />
     );
   }
-  return <SchoolLoginClient school={school} landingFlow={resolveLandingFlow(school.features)} />;
+  return <SchoolLoginClient school={school} />;
 }
 
 export async function generateMetadata({ params }: Props) {

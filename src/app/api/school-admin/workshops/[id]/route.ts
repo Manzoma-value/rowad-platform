@@ -45,6 +45,16 @@ export async function GET(
       signup_token: true,
       created_at: true,
       updated_at: true,
+      messages: {
+        orderBy: { created_at: "asc" },
+        take: 200,
+        select: {
+          id: true,
+          body: true,
+          created_at: true,
+          author: { select: { id: true, full_name: true, role: true, avatar_url: true } },
+        },
+      },
     },
   });
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });

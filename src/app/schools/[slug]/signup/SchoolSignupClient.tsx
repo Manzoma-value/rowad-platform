@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState, useEffect } from "react";
 import { schoolAuthPremiumCss } from "@/lib/auth-premium-css";
+import type { LandingFlow } from "@/lib/landing-flow";
+import { createClient } from "@/lib/supabase/client";
 
 interface School {
   id: string;
@@ -171,7 +174,14 @@ function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
   );
 }
 
-export default function SchoolSignupClient({ school }: { school: School }) {
+export default function SchoolSignupClient({
+  school,
+  landingFlow = "student",
+}: {
+  school: School;
+  landingFlow?: LandingFlow;
+}) {
+  const router = useRouter();
   // Arabic is the platform default regardless of the school's own
   // configured language — visitors can still switch via the AR/SQ toggle.
   const [lang, setLang] = useState<Lang>("ar");
@@ -181,7 +191,6 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   const [showPassword, setShowPassword] = useState(false);
   const [city, setCity] = useState("");
   const [age, setAge] = useState("");
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<"idle" | "creating">("idle");
@@ -192,6 +201,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
 
   const L = STRINGS[lang];
   const dir = L.dir;
+  const isTeacherFlow = landingFlow === "teacher";
 
   // Latin-script name in non-Arabic UIs when available; else the Arabic name.
   const displayName =
@@ -213,7 +223,6 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setAvatarFile(file);
     const reader = new FileReader();
     reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
@@ -222,7 +231,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
   const handleSignup = async () => {
     setError("");
     setEmailTouched(true);
-    if (!fullName.trim() || !email.trim() || !password || !city.trim() || !age.trim()) {
+    if (!fullName.trim() || !email.trim() || !password || (!isTeacherFlow && (!city.trim() || !age.trim()))) {
       setError(L.errEmpty);
       return;
     }
@@ -230,8 +239,8 @@ export default function SchoolSignupClient({ school }: { school: School }) {
       setError(L.errEmailInvalid);
       return;
     }
-    const ageNum = parseInt(age, 10);
-    if (isNaN(ageNum) || ageNum < 5 || ageNum > 120) {
+    const ageNum = isTeacherFlow ? undefined : parseInt(age, 10);
+    if (!isTeacherFlow && (ageNum === undefined || isNaN(ageNum) || ageNum < 5 || ageNum > 120)) {
       setError(L.errAge);
       return;
     }
@@ -252,7 +261,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
           full_name: fullName.trim(),
           email: email.trim(),
           password,
-          city: city.trim(),
+          city: isTeacherFlow ? undefined : city.trim(),
           age: ageNum,
         }),
       });
@@ -263,7 +272,19 @@ export default function SchoolSignupClient({ school }: { school: School }) {
         return;
       }
 
-      // Account created — user must confirm their email before logging in.
+      if (data.emailConfirmationRequired === false) {
+        const { error: signInError } = await createClient().auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+        });
+        if (signInError) {
+          setError(L.errServer);
+          return;
+        }
+        router.replace("/teacher/application");
+        return;
+      }
+
       setEmailSent(true);
     } catch {
       setError(L.errServer);
@@ -390,8 +411,18 @@ export default function SchoolSignupClient({ school }: { school: School }) {
             <div className="sp-form-ornament"><Rule dim /></div>
 
             <div className="sp-form-header">
-              <h1 className="sp-form-title">{L.title}</h1>
-              <p className="sp-form-sub">{L.sub}</p>
+              <h1 className="sp-form-title">
+                {isTeacherFlow
+                  ? (lang === "ar" ? "إنشاء حساب معلم" : "Krijo llogari mësuesi")
+                  : L.title}
+              </h1>
+              <p className="sp-form-sub">
+                {isTeacherFlow
+                  ? (lang === "ar"
+                      ? "أنشئ حسابك، ثم أكمل نموذج التقديم للمعلمين"
+                      : "Krijoni llogarinë, pastaj plotësoni formularin e mësuesit")
+                  : L.sub}
+              </p>
             </div>
 
             {/* Avatar picker */}
@@ -502,7 +533,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
                 </div>
               </div>
 
-              <div className="sp-row">
+              {!isTeacherFlow && <div className="sp-row">
                 <div className="sp-field sp-field-grow">
                   <label className="sp-label">
                     <span className="sp-label-icon">
@@ -529,7 +560,7 @@ export default function SchoolSignupClient({ school }: { school: School }) {
                   </label>
                   <input type="number" className="sp-input" placeholder={L.agePlaceholder} value={age} onChange={(e) => setAge(e.target.value)} disabled={loading} min={5} max={120} dir="ltr" suppressHydrationWarning />
                 </div>
-              </div>
+              </div>}
 
               {error && (
                 <div className="sp-error">
@@ -640,7 +671,7 @@ const css = `
   }
   .sp-form-wrap { width: 100%; max-width: 440px; animation: scaleIn 0.45s cubic-bezier(0.4,0,0.2,1) both; position: relative; z-index: 1; }
   .sp-form-ornament { margin-bottom: 24px; }
-  .sp-form-header { margin-bottom: 28px; text-align: end; }
+  .sp-form-header { margin-bottom: 28px; text-align: start; }
   .sp-form-title { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -0.4px; }
   .sp-form-title::after {
     content: ''; display: block; width: 40px; height: 3px;

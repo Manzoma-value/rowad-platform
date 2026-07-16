@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import SchoolSignupClient from "./SchoolSignupClient";
 import SchoolDeactivatedClient from "../SchoolDeactivatedClient";
 import { resolveLandingFlow } from "@/lib/landing-flow";
@@ -30,11 +30,12 @@ export default async function SchoolSignupPage({ params }: Props) {
     );
   }
 
-  if (resolveLandingFlow(school.features) === "teacher") {
-    redirect(`/schools/${school.slug}/login`);
-  }
-
-  return <SchoolSignupClient school={school} />;
+  return (
+    <SchoolSignupClient
+      school={school}
+      landingFlow={resolveLandingFlow(school.features)}
+    />
+  );
 }
 
 export async function generateMetadata({ params }: Props) {

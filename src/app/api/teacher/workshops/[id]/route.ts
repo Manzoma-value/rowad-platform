@@ -8,11 +8,48 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
   const auth = await requireTeacher();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await context.params;
-  const attended = await prisma.workshopAttendance.findFirst({ where: { workshop_id: id, teacher_id: auth.teacher.id }, select: { id: true } });
   const workshop = await prisma.workshop.findFirst({
     where: { id, school_id: auth.teacher.school_id },
-    select: { id: true, title: true, description: true, audience: true, audience_other: true, start_date: true, end_date: true, schedule: true, notes: true, materials: true, status: true },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      audience: true,
+      audience_other: true,
+      start_date: true,
+      end_date: true,
+      schedule: true,
+      notes: true,
+      materials: true,
+      status: true,
+      attendance: {
+        where: { teacher_id: auth.teacher.id },
+        select: { id: true, day_date: true },
+        orderBy: { day_date: "asc" },
+      },
+      messages: {
+        orderBy: { created_at: "asc" },
+        take: 200,
+        select: {
+          id: true,
+          body: true,
+          created_at: true,
+          author: { select: { id: true, full_name: true, role: true, avatar_url: true } },
+        },
+      },
+    },
   });
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ workshop: { ...workshop, notes: attended ? workshop.notes : null, materials: attended ? workshop.materials : [] }, attended: !!attended });
+  const attended = workshop.attendance.length > 0;
+  const { attendance, ...detail } = workshop;
+  return NextResponse.json({
+    workshop: {
+      ...detail,
+      notes: attended ? detail.notes : null,
+      materials: attended ? detail.materials : [],
+      messages: attended ? detail.messages : [],
+    },
+    attended,
+    attendance_days: attendance.map((entry) => entry.day_date),
+  });
 }
