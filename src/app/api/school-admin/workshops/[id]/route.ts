@@ -130,7 +130,7 @@ export async function PATCH(
 
   const workshop = await prisma.workshop.update({
     where: { id }, data,
-    select: { id: true, title: true, status: true, is_live: true, live_started_at: true, live_ended_at: true },
+    select: { id: true, title: true, description: true, status: true, is_live: true, live_started_at: true, live_ended_at: true },
   });
   return NextResponse.json({ workshop });
 }

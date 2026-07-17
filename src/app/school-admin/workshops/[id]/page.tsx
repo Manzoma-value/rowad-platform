@@ -9,7 +9,7 @@ import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
-import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Plus, Radio, Search, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Pencil, Plus, Radio, Save, Search, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import type { WorkshopDay, WorkshopMaterial } from "@/lib/workshops";
 
 type Workshop = {
@@ -200,12 +200,36 @@ const OPS = {
   },
 } as const;
 
+const EDIT = {
+  ar: {
+    action: "تعديل التفاصيل",
+    title: "عنوان الورشة",
+    description: "وصف الورشة",
+    helper: "اكتب عنواناً واضحاً ووصفاً مختصراً يوضح هدف الورشة للحاضرين.",
+    save: "حفظ التغييرات",
+    saving: "جارٍ الحفظ...",
+    cancel: "إلغاء",
+    required: "عنوان الورشة مطلوب.",
+  },
+  sq: {
+    action: "Ndrysho detajet",
+    title: "Titulli i punëtorisë",
+    description: "Përshkrimi i punëtorisë",
+    helper: "Përdor një titull të qartë dhe një përshkrim të shkurtër për pjesëmarrësit.",
+    save: "Ruaj ndryshimet",
+    saving: "Duke ruajtur...",
+    cancel: "Anulo",
+    required: "Titulli i punëtorisë kërkohet.",
+  },
+} as const;
+
 export default function WorkshopDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { lang } = useLang();
   const L = lang === "sq" ? "sq" : "ar";
   const T = UI[L];
   const O = OPS[L];
+  const E = EDIT[L];
   const dir = L === "ar" ? "rtl" : "ltr";
   const viewOnly = useViewOnly();
   const confirm = useConfirm();
@@ -233,6 +257,9 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const [attendanceBusy, setAttendanceBusy] = useState<string | null>(null);
   const [liveBusy, setLiveBusy] = useState(false);
   const [operationError, setOperationError] = useState("");
+  const [editingBasics, setEditingBasics] = useState(false);
+  const [savingBasics, setSavingBasics] = useState(false);
+  const [basicsForm, setBasicsForm] = useState({ title: "", description: "" });
 
   const loadAll = useCallback(async () => {
     setError(false);
@@ -299,6 +326,42 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
       if (r.ok) setDetail({ ...detail, workshop: { ...detail.workshop, status: next } });
     } finally {
       setBusyStatus(false);
+    }
+  }
+
+  function openBasicsEditor() {
+    if (!detail) return;
+    setOperationError("");
+    setBasicsForm({ title: detail.workshop.title, description: detail.workshop.description ?? "" });
+    setEditingBasics(true);
+  }
+
+  async function saveBasics() {
+    if (!detail || viewOnly || savingBasics) return;
+    const title = basicsForm.title.trim();
+    if (!title) {
+      setOperationError(E.required);
+      return;
+    }
+    setSavingBasics(true);
+    setOperationError("");
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description: basicsForm.description }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.workshop) throw new Error("workshop_basics");
+      setDetail((current) => current ? {
+        ...current,
+        workshop: { ...current.workshop, ...payload.workshop },
+      } : current);
+      setEditingBasics(false);
+    } catch {
+      setOperationError(O.operationError);
+    } finally {
+      setSavingBasics(false);
     }
   }
 
@@ -534,6 +597,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
         {!viewOnly && <div className="wd-hero-actions" data-write="true">
+          <button className="wd-edit-btn" onClick={openBasicsEditor}><Pencil size={16}/>{E.action}</button>
           <button className={`wd-live-toggle${detail.workshop.is_live ? " active" : ""}`} onClick={toggleLive} disabled={liveBusy}>
             <Radio size={16}/>{liveBusy ? T.saving : detail.workshop.is_live ? O.endLive : O.startLive}
           </button>
@@ -691,6 +755,15 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         </section>
       </div>}
 
+      {editingBasics && <div className="wd-edit-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !savingBasics) setEditingBasics(false); }}>
+        <section className="wd-edit-dialog" role="dialog" aria-modal="true" aria-label={E.action}>
+          <header><div><span><Pencil size={16}/>{E.action}</span><h2>{E.title}</h2><p>{E.helper}</p></div><button onClick={() => setEditingBasics(false)} disabled={savingBasics} aria-label={E.cancel}><X size={20}/></button></header>
+          <label>{E.title}<input autoFocus maxLength={200} value={basicsForm.title} onChange={(event) => setBasicsForm((current) => ({ ...current, title: event.target.value }))}/></label>
+          <label>{E.description}<textarea rows={5} maxLength={1000} value={basicsForm.description} onChange={(event) => setBasicsForm((current) => ({ ...current, description: event.target.value }))}/></label>
+          <div className="wd-edit-actions"><button className="ghost" onClick={() => setEditingBasics(false)} disabled={savingBasics}>{E.cancel}</button><button onClick={() => void saveBasics()} disabled={savingBasics || !basicsForm.title.trim()}><Save size={16}/>{savingBasics ? E.saving : E.save}</button></div>
+        </section>
+      </div>}
+
       <style>{styles}</style>
     </div>
   );
@@ -752,6 +825,7 @@ const styles = `
 .wd-hero{position:relative;overflow:hidden;border-radius:26px;padding:clamp(22px,4vw,38px);background:linear-gradient(125deg,#250B12,#4A0E1C 62%,#6B1E2D);border-color:rgba(217,201,176,.3)}
 .wd-hero:after{content:'';position:absolute;width:320px;height:320px;border-radius:50%;inset-inline-end:-110px;top:-170px;background:radial-gradient(circle,rgba(217,201,176,.22),transparent 68%);pointer-events:none}.wd-hero.is-live{box-shadow:0 22px 60px rgba(107,30,45,.25),0 0 0 2px rgba(184,160,130,.2)}
 .wd-hero-badges,.wd-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;z-index:1}.wd-hero-actions{flex-direction:column;align-items:stretch;min-width:min(100%,220px)}
+.wd-edit-btn{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(217,201,176,.34);border-radius:12px;padding:11px 15px;background:#F7F3EB;color:#6B1E2D;font:800 12px 'Cairo',sans-serif;cursor:pointer}
 .wd-live-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 11px;background:#F7F3EB;color:#6B1E2D;font-size:11px;font-weight:900;box-shadow:0 0 0 5px rgba(247,243,235,.08)}.wd-live-badge svg{animation:wd-pulse 1.4s ease-in-out infinite}
 .wd-live-toggle{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(217,201,176,.34);border-radius:12px;padding:11px 15px;background:rgba(255,255,255,.08);color:#F7F3EB;font:800 12px 'Cairo',sans-serif;cursor:pointer}.wd-live-toggle.active{background:#F7F3EB;color:#6B1E2D}.wd-live-toggle:disabled{opacity:.55;cursor:progress}
 .wd-live-strip{display:flex;align-items:center;justify-content:center;gap:8px;margin:-2px 0 14px;padding:10px 14px;border:1px solid rgba(107,30,45,.14);border-radius:14px;background:linear-gradient(90deg,rgba(107,30,45,.07),rgba(255,255,255,.84),rgba(107,30,45,.07));color:#6B1E2D}.wd-live-strip>span{width:9px;height:9px;border-radius:50%;background:#6B1E2D;box-shadow:0 0 0 5px rgba(107,30,45,.1);animation:wd-pulse 1.4s infinite}.wd-live-strip strong{font-size:12px}.wd-live-strip small{font-size:10px;color:#796A62}
@@ -762,6 +836,7 @@ const styles = `
 .wd-checkin .wd-late{padding:2px 6px;border-radius:999px;background:#F6D9D6;color:#8B2332}
 .wd-mark-present{width:100%;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px dashed rgba(107,30,45,.22);border-radius:10px;background:rgba(255,255,255,.7);color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.wd-mark-present:hover{background:#F7F3EB;border-style:solid}.wd-mark-present:disabled{opacity:.5;cursor:progress}
 .wd-people-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:stretch;justify-content:flex-end;background:rgba(26,26,26,.56);backdrop-filter:blur(7px)}[dir='rtl'] .wd-people-overlay{justify-content:flex-start}.wd-people-panel{width:min(520px,100%);height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#FFFBF5,#EFEAE0);box-shadow:0 0 70px rgba(26,26,26,.28);animation:wd-panel-in .22s ease-out}.wd-people-panel>header{display:flex;justify-content:space-between;gap:14px;padding:24px;background:linear-gradient(135deg,#250B12,#6B1E2D);color:#F7F3EB}.wd-people-panel>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-people-panel>header h2{margin:4px 0;font-size:23px}.wd-people-panel>header p{margin:0;color:rgba(247,243,235,.7);font-size:12px;line-height:1.7}.wd-people-panel>header button{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-people-search{display:flex;align-items:center;gap:9px;margin:16px 16px 8px;padding:0 12px;border:1px solid #D9C9B0;border-radius:13px;background:#fff}.wd-people-search input{width:100%;border:0;outline:0;padding:11px 0;background:transparent;font:inherit;font-size:13px}.wd-people-list{flex:1;overflow:auto;padding:8px 16px 22px}.wd-people-list article{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;margin-bottom:8px;padding:11px;border:1px solid rgba(107,30,45,.1);border-radius:15px;background:#fff}.wd-people-list article.enrolled{background:rgba(217,201,176,.24)}.wd-person-avatar{width:44px;height:44px;display:grid;place-items:center;overflow:hidden;border-radius:14px;background:#32101A;color:#D9C9B0;font-weight:900}.wd-person-avatar img{width:100%;height:100%;object-fit:cover}.wd-people-list strong,.wd-people-list small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-people-list strong{font-size:12px}.wd-people-list small{font-size:10px;color:#796A62}.wd-people-list article>button,.wd-enrolled{display:flex;align-items:center;gap:5px;border:0;border-radius:10px;padding:8px 10px;background:#6B1E2D;color:#fff;font:800 10px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}.wd-enrolled{background:rgba(49,87,36,.1);color:#315724}.wd-people-list article>button:disabled{opacity:.55;cursor:progress}
+.wd-edit-overlay{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:18px;background:rgba(26,26,26,.58);backdrop-filter:blur(7px)}.wd-edit-dialog{width:min(650px,100%);border:1px solid rgba(217,201,176,.45);border-radius:22px;overflow:hidden;background:#FFFBF5;box-shadow:0 28px 90px rgba(26,26,26,.32)}.wd-edit-dialog>header{display:flex;justify-content:space-between;gap:16px;padding:22px 24px;background:linear-gradient(135deg,#250B12,#6B1E2D);color:#F7F3EB}.wd-edit-dialog>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-edit-dialog>header h2{margin:5px 0;font-size:23px}.wd-edit-dialog>header p{margin:0;color:rgba(247,243,235,.74);font-size:12px;line-height:1.7}.wd-edit-dialog>header button{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-edit-dialog>label{display:block;margin:18px 24px 0;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-dialog input,.wd-edit-dialog textarea{box-sizing:border-box;width:100%;margin-top:7px;border:1px solid #D9C9B0;border-radius:12px;background:#fff;padding:11px 12px;color:#32101A;font:inherit;font-size:13px;outline:none}.wd-edit-dialog textarea{resize:vertical;min-height:120px;line-height:1.75}.wd-edit-dialog input:focus,.wd-edit-dialog textarea:focus{border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}.wd-edit-actions{display:flex;justify-content:flex-end;gap:8px;padding:20px 24px}.wd-edit-actions button{display:flex;align-items:center;gap:6px;border:0;border-radius:11px;padding:10px 14px;background:#6B1E2D;color:#F7F3EB;font:800 12px 'Cairo',sans-serif;cursor:pointer}.wd-edit-actions button.ghost{border:1px solid #D9C9B0;background:#fff;color:#6B1E2D}.wd-edit-actions button:disabled{opacity:.55;cursor:progress}
 @keyframes wd-panel-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}[dir='rtl'] .wd-people-panel{animation-name:wd-panel-in-rtl}@keyframes wd-panel-in-rtl{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
-@media(max-width:720px){.wd{padding-bottom:12px}.wd-hero{border-radius:20px}.wd-hero-actions{width:100%;flex-direction:row}.wd-hero-actions>*{flex:1}.wd-stats{grid-template-columns:repeat(2,1fr)}.wd-card-head,.wd-table-head{flex-direction:column}.wd-export{width:100%}.wd-export button{flex:1;justify-content:center}.wd-live-strip{flex-wrap:wrap}.wd-people-panel{width:100%}.wd-people-panel>header{padding:20px 16px}.wd-people-list article{grid-template-columns:40px minmax(0,1fr)}.wd-people-list article>button,.wd-enrolled{grid-column:1/-1;justify-content:center}.wd-person-avatar{width:40px;height:40px}}
+@media(max-width:720px){.wd{padding-bottom:12px}.wd-hero{border-radius:20px}.wd-hero-actions{width:100%;flex-direction:row}.wd-hero-actions>*{flex:1}.wd-stats{grid-template-columns:repeat(2,1fr)}.wd-card-head,.wd-table-head{flex-direction:column}.wd-export{width:100%}.wd-export button{flex:1;justify-content:center}.wd-live-strip{flex-wrap:wrap}.wd-people-panel{width:100%}.wd-people-panel>header{padding:20px 16px}.wd-people-list article{grid-template-columns:40px minmax(0,1fr)}.wd-people-list article>button,.wd-enrolled{grid-column:1/-1;justify-content:center}.wd-person-avatar{width:40px;height:40px}.wd-edit-dialog>header{padding:20px 16px}.wd-edit-dialog>label{margin-inline:16px}.wd-edit-actions{padding:18px 16px}.wd-edit-actions button{flex:1;justify-content:center}}
 `;
