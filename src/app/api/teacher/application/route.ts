@@ -156,6 +156,18 @@ export async function POST(req: Request) {
     );
   }
 
+  const qrEnrollment = await prisma.workshopEnrollment.findFirst({
+    where: {
+      teacher_id: teacher.id,
+      source: "QR",
+      workshop: { school_id: teacher.school_id },
+    },
+    orderBy: { enrolled_at: "desc" },
+    select: { workshop: { select: { id: true, title: true } } },
+  });
+  const autoApproved = !!qrEnrollment;
+  const nextStatus = autoApproved ? "ACTIVE" : "UNDER_REVIEW";
+
   await prisma.$transaction(async (tx) => {
     await tx.teacherApplication.deleteMany({
       where: { teacher_id: teacher.id },
@@ -196,14 +208,22 @@ export async function POST(req: Request) {
         // in `notes`.
         attachments: [],
         notes: optionalString(body.notes, 2000),
+        reviewed_at: autoApproved ? new Date() : null,
+        reviewer_notes: autoApproved
+          ? `Auto-approved through workshop QR: ${qrEnrollment!.workshop.title}`
+          : null,
       },
     });
 
     await tx.teacher.update({
       where: { id: teacher.id },
-      data: { onboarding_status: "UNDER_REVIEW" },
+      data: { onboarding_status: nextStatus },
     });
   }, { timeout: 30000, maxWait: 10000 });
 
-  return NextResponse.json({ success: true, status: "UNDER_REVIEW" });
+  return NextResponse.json({
+    success: true,
+    status: nextStatus,
+    workshop_id: qrEnrollment?.workshop.id ?? null,
+  });
 }

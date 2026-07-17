@@ -162,20 +162,21 @@ export default function TeacherApplicationPage() {
           age: ageNum,
         }),
       });
+      const d = await r.json().catch(() => ({}));
       if (!r.ok) {
-        const d = await r.json().catch(() => ({}));
         setError(d?.error === "missing_field"
           ? `${T.requiredFields} (${d.field})`
           : T.serverError);
         setSubmitting(false);
         return;
       }
-      // Bust the layout's cached /api/teacher response (5-min TTL) so the
-      // layout sees UNDER_REVIEW immediately on the next render. Without
-      // this the layout's gatedTo stays "PENDING_APPLICATION" and bounces
-      // the user back to /teacher/application, causing a flicker.
+      // QR entrants are already ACTIVE and go directly to their workshop;
+      // regular signups continue to the admin review screen.
       invalidateCache("/api/teacher");
-      window.location.replace("/teacher/under-review");
+      const destination = d?.status === "ACTIVE"
+        ? (d?.workshop_id ? `/teacher/workshops/${d.workshop_id}` : "/teacher")
+        : "/teacher/under-review";
+      window.location.replace(destination);
     } catch {
       setError(T.serverError);
       setSubmitting(false);

@@ -395,6 +395,8 @@ model Profile {
   authoredWorkshops            Workshop[]                 @relation("WorkshopAuthor")
   authoredAttendanceCodes      WorkshopAttendanceCode[]   @relation("WorkshopAttendanceCodeAuthor")
   workshopMessages             WorkshopMessage[]          @relation("WorkshopMessageAuthor")
+  createdWorkshopEnrollments   WorkshopEnrollment[]       @relation("WorkshopEnrollmentAuthor")
+  recordedWorkshopAttendance   WorkshopAttendance[]       @relation("WorkshopAttendanceRecorder")
   teacherGroupAnnouncements    TeacherGroupAnnouncement[]
   avatar_url                   String?
   avatar_path                  String?
@@ -471,6 +473,7 @@ model Teacher {
   // still sign up outside of a workshop through the classic flow).
   workshop_signup_id  String?                 @db.Uuid
   workshop_signup     Workshop?               @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
+  workshop_enrollments WorkshopEnrollment[]
   workshop_attendance WorkshopAttendance[]
   announcements       Announcement[]
   classes             Class[]
@@ -1238,6 +1241,16 @@ enum WorkshopStatus {
   CLOSED
 }
 
+enum WorkshopEnrollmentSource {
+  QR
+  MANUAL
+}
+
+enum WorkshopAttendanceSource {
+  QR
+  MANUAL
+}
+
 model Workshop {
   id               String         @id @default(uuid()) @db.Uuid
   school_id        String         @db.Uuid
@@ -1253,6 +1266,11 @@ model Workshop {
   // Ordered entries: [{id,type:"FILE"|"IMAGE"|"VIDEO"|"LINK",title,url,path?,mime?,size?}]
   materials        Json           @default("[]")
   status           WorkshopStatus @default(OPEN)
+  // Operational state: registration can remain OPEN while the session is
+  // explicitly marked live by an admin during the lecture/training.
+  is_live          Boolean        @default(false)
+  live_started_at  DateTime?
+  live_ended_at    DateTime?
   // Public random slug used in the signup URL and encoded in the signup QR.
   // Kept unique globally so /workshop/[token] doesn't need the school in the URL.
   signup_token     String         @unique
@@ -1266,12 +1284,30 @@ model Workshop {
   school             School                   @relation(fields: [school_id], references: [id], onDelete: Cascade)
   author             Profile                  @relation("WorkshopAuthor", fields: [created_by], references: [id])
   signed_up_teachers Teacher[]                @relation("WorkshopSignedUpTeachers")
+  enrollments        WorkshopEnrollment[]
   attendance         WorkshopAttendance[]
   attendance_codes   WorkshopAttendanceCode[]
   messages           WorkshopMessage[]
 
   @@index([school_id, created_at(sort: Desc)])
   @@map("workshops")
+}
+
+model WorkshopEnrollment {
+  id          String                   @id @default(uuid()) @db.Uuid
+  workshop_id String                   @db.Uuid
+  teacher_id  String                   @db.Uuid
+  source      WorkshopEnrollmentSource @default(QR)
+  enrolled_by String?                  @db.Uuid
+  enrolled_at DateTime                 @default(now())
+
+  workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  author   Profile? @relation("WorkshopEnrollmentAuthor", fields: [enrolled_by], references: [id], onDelete: SetNull)
+
+  @@unique([workshop_id, teacher_id])
+  @@index([teacher_id, enrolled_at(sort: Desc)])
+  @@map("workshop_enrollments")
 }
 
 model WorkshopMessage {
@@ -1295,9 +1331,12 @@ model WorkshopAttendance {
   teacher_id    String   @db.Uuid
   day_date      DateTime @db.Date
   checked_in_at DateTime @default(now())
+  source        WorkshopAttendanceSource @default(QR)
+  recorded_by   String?  @db.Uuid
 
   workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
   teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  recorder Profile? @relation("WorkshopAttendanceRecorder", fields: [recorded_by], references: [id], onDelete: SetNull)
 
   // Same teacher can only be marked present once per day per workshop.
   @@unique([workshop_id, teacher_id, day_date])

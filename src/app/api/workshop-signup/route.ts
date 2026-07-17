@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
+import { isWorkshopWorkDay, workshopDateKey, workshopDayDate } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,14 @@ export async function POST(req: Request) {
 
   const workshop = await prisma.workshop.findUnique({
     where: { signup_token: token },
-    select: { id: true, school_id: true, status: true },
+    select: {
+      id: true,
+      school_id: true,
+      status: true,
+      schedule: true,
+      start_date: true,
+      end_date: true,
+    },
   });
   if (!workshop) return NextResponse.json({ error: "invalid_token" }, { status: 404 });
   if (workshop.status === "CLOSED") {
@@ -67,6 +75,13 @@ export async function POST(req: Request) {
   }
 
   const uid = created.data.user.id;
+  const dayKey = workshopDateKey(new Date(), process.env.WORKSHOP_TIME_ZONE ?? "Europe/Tirane");
+  const countsAsAttendance = isWorkshopWorkDay(
+    workshop.schedule,
+    dayKey,
+    workshop.start_date,
+    workshop.end_date,
+  );
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -86,7 +101,7 @@ export async function POST(req: Request) {
           is_active: true,
         },
       });
-      await tx.teacher.upsert({
+      const teacher = await tx.teacher.upsert({
         where: { profile_id: uid },
         create: {
           profile_id: uid,
@@ -100,6 +115,30 @@ export async function POST(req: Request) {
           workshop_signup_id: workshop.id,
         },
       });
+      await tx.workshopEnrollment.upsert({
+        where: { workshop_id_teacher_id: { workshop_id: workshop.id, teacher_id: teacher.id } },
+        create: { workshop_id: workshop.id, teacher_id: teacher.id, source: "QR" },
+        update: {},
+      });
+      if (countsAsAttendance) {
+        const dayDate = workshopDayDate(dayKey);
+        await tx.workshopAttendance.upsert({
+          where: {
+            workshop_id_teacher_id_day_date: {
+              workshop_id: workshop.id,
+              teacher_id: teacher.id,
+              day_date: dayDate,
+            },
+          },
+          create: {
+            workshop_id: workshop.id,
+            teacher_id: teacher.id,
+            day_date: dayDate,
+            source: "QR",
+          },
+          update: {},
+        });
+      }
     });
   } catch (err) {
     // Roll back the auth user if the DB write failed so retry works cleanly.
@@ -108,5 +147,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "signup_failed" }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, attendance_recorded: countsAsAttendance });
 }

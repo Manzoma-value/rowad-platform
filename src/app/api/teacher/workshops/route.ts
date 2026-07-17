@@ -12,14 +12,14 @@ export async function GET() {
       school_id: auth.teacher.school_id,
       OR: [
         { audience: { has: "TEACHERS" } },
-        { signed_up_teachers: { some: { id: auth.teacher.id } } },
+        { enrollments: { some: { teacher_id: auth.teacher.id } } },
         { attendance: { some: { teacher_id: auth.teacher.id } } },
       ],
     },
     orderBy: [{ start_date: "asc" }, { created_at: "asc" }],
     select: {
       id: true, title: true, description: true, audience: true, audience_other: true,
-      start_date: true, end_date: true, schedule: true, status: true,
+      start_date: true, end_date: true, schedule: true, status: true, is_live: true,
       attendance: { where: { teacher_id: auth.teacher.id }, select: { day_date: true } },
     },
   });

@@ -43,3 +43,48 @@ export function workshopDates(schedule: WorkshopDay[], start?: string | null, en
   if (schedule.length) return { start: schedule[0].date, end: schedule[schedule.length - 1].date };
   return { start: start || null, end: end || null };
 }
+
+export function workshopDateKey(
+  at = new Date(),
+  timeZone = "Europe/Tirane",
+): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(at);
+  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function dateKey(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value.slice(0, 10);
+  return value.toISOString().slice(0, 10);
+}
+
+export function isWorkshopWorkDay(
+  scheduleValue: unknown,
+  day: string,
+  startDate?: Date | string | null,
+  endDate?: Date | string | null,
+): boolean {
+  if (Array.isArray(scheduleValue) && scheduleValue.length > 0) {
+    return scheduleValue.some((raw) => {
+      if (!raw || typeof raw !== "object") return false;
+      const entry = raw as { date?: unknown; type?: unknown };
+      return entry.date === day && entry.type === "WORK";
+    });
+  }
+
+  const start = dateKey(startDate);
+  const end = dateKey(endDate);
+  if (start && day < start) return false;
+  if (end && day > end) return false;
+  return !!(start || end);
+}
+
+export function workshopDayDate(day: string): Date {
+  return new Date(`${day}T00:00:00.000Z`);
+}

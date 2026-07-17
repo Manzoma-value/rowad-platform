@@ -42,6 +42,9 @@ export async function GET(
       notes: true,
       materials: true,
       status: true,
+      is_live: true,
+      live_started_at: true,
+      live_ended_at: true,
       signup_token: true,
       created_at: true,
       updated_at: true,
@@ -73,7 +76,7 @@ export async function PATCH(
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await context.params;
 
-  let body: { title?: string; description?: string | null; audience?: string[]; audience_other?: string | null; start_date?: string | null; end_date?: string | null; schedule?: unknown; notes?: string | null; status?: "OPEN" | "CLOSED" };
+  let body: { title?: string; description?: string | null; audience?: string[]; audience_other?: string | null; start_date?: string | null; end_date?: string | null; schedule?: unknown; notes?: string | null; status?: "OPEN" | "CLOSED"; is_live?: boolean };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
 
   const existing = await prisma.workshop.findFirst({
@@ -106,11 +109,28 @@ export async function PATCH(
   if (body.notes !== undefined) data.notes = body.notes?.trim().slice(0, 5000) || null;
   if (body.start_date !== undefined) data.start_date = body.start_date ? new Date(body.start_date) : null;
   if (body.end_date !== undefined)   data.end_date   = body.end_date   ? new Date(body.end_date)   : null;
-  if (body.status === "OPEN" || body.status === "CLOSED") data.status = body.status;
+  if (body.status === "OPEN" || body.status === "CLOSED") {
+    data.status = body.status;
+    if (body.status === "CLOSED") {
+      data.is_live = false;
+      data.live_ended_at = new Date();
+    }
+  }
+  if (typeof body.is_live === "boolean") {
+    if (body.is_live) {
+      data.status = "OPEN";
+      data.is_live = true;
+      data.live_started_at = new Date();
+      data.live_ended_at = null;
+    } else {
+      data.is_live = false;
+      data.live_ended_at = new Date();
+    }
+  }
 
   const workshop = await prisma.workshop.update({
     where: { id }, data,
-    select: { id: true, title: true, status: true },
+    select: { id: true, title: true, status: true, is_live: true, live_started_at: true, live_ended_at: true },
   });
   return NextResponse.json({ workshop });
 }

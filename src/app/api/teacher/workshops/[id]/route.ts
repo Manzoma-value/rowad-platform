@@ -22,6 +22,8 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
       notes: true,
       materials: true,
       status: true,
+      is_live: true,
+      live_started_at: true,
       attendance: {
         where: { teacher_id: auth.teacher.id },
         select: { id: true, day_date: true },

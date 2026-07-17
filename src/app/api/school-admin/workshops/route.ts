@@ -27,11 +27,12 @@ export async function GET() {
       schedule: true,
       materials: true,
       status: true,
+      is_live: true,
       signup_token: true,
       created_at: true,
       _count: {
         select: {
-          signed_up_teachers: true,
+          enrollments: true,
           attendance: true,
         },
       },

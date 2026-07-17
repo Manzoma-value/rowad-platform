@@ -3,6 +3,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { isWorkshopWorkDay, workshopDateKey, workshopDayDate } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
 
@@ -19,37 +20,6 @@ export async function GET(_req: Request, context: { params: Promise<{ code: stri
     school_slug: workshop.school.slug,
     status: workshop.status,
   });
-}
-
-function todayDate(): Date {
-  const timeZone = process.env.WORKSHOP_TIME_ZONE ?? "Europe/Tirane";
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date());
-  const value = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
-  return new Date(`${value("year")}-${value("month")}-${value("day")}T00:00:00.000Z`);
-}
-
-function isScheduledWorkDay(
-  scheduleValue: unknown,
-  today: Date,
-  startDate: Date | null,
-  endDate: Date | null,
-) {
-  const key = today.toISOString().slice(0, 10);
-  if (Array.isArray(scheduleValue) && scheduleValue.length > 0) {
-    return scheduleValue.some((raw) => {
-      if (!raw || typeof raw !== "object") return false;
-      const day = raw as { date?: unknown; type?: unknown };
-      return day.date === key && day.type === "WORK";
-    });
-  }
-  if (startDate && key < startDate.toISOString().slice(0, 10)) return false;
-  if (endDate && key > endDate.toISOString().slice(0, 10)) return false;
-  return !!(startDate || endDate);
 }
 
 export async function POST(_req: Request, context: { params: Promise<{ code: string }> }) {
@@ -92,10 +62,11 @@ export async function POST(_req: Request, context: { params: Promise<{ code: str
     return NextResponse.json({ error: "workshop_closed" }, { status: 410 });
   }
 
-  const today = todayDate();
-  if (!isScheduledWorkDay(workshop.schedule, today, workshop.start_date, workshop.end_date)) {
+  const dayKey = workshopDateKey(new Date(), process.env.WORKSHOP_TIME_ZONE ?? "Europe/Tirane");
+  if (!isWorkshopWorkDay(workshop.schedule, dayKey, workshop.start_date, workshop.end_date)) {
     return NextResponse.json({ error: "not_training_day" }, { status: 409 });
   }
+  const today = workshopDayDate(dayKey);
 
   const key = {
     workshop_id: workshop.id,
@@ -106,16 +77,23 @@ export async function POST(_req: Request, context: { params: Promise<{ code: str
     where: { workshop_id_teacher_id_day_date: key },
     select: { id: true },
   });
-  await prisma.workshopAttendance.upsert({
-    where: { workshop_id_teacher_id_day_date: key },
-    create: key,
-    update: {},
-  });
+  await prisma.$transaction([
+    prisma.workshopEnrollment.upsert({
+      where: { workshop_id_teacher_id: { workshop_id: workshop.id, teacher_id: profile.teacher.id } },
+      create: { workshop_id: workshop.id, teacher_id: profile.teacher.id, source: "QR" },
+      update: {},
+    }),
+    prisma.workshopAttendance.upsert({
+      where: { workshop_id_teacher_id_day_date: key },
+      create: { ...key, source: "QR" },
+      update: {},
+    }),
+  ]);
 
   return NextResponse.json({
     success: true,
     already_recorded: !!existing,
-    attendance_date: today.toISOString().slice(0, 10),
+    attendance_date: dayKey,
     workshop_id: workshop.id,
     workshop_title: workshop.title,
   });

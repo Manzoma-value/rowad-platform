@@ -1,12 +1,15 @@
 "use client";
+/* QR data URIs and user avatars do not have stable dimensions for next/image. */
+/* eslint-disable @next/next/no-img-element */
 export const dynamic = "force-dynamic";
 
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
+import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
-import { Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Plus, Send, ShieldCheck, Trash2, Upload, Video } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Plus, Radio, Search, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import type { WorkshopDay, WorkshopMaterial } from "@/lib/workshops";
 
 type Workshop = {
@@ -21,6 +24,9 @@ type Workshop = {
   notes: string | null;
   materials: WorkshopMaterial[];
   status: "OPEN" | "CLOSED";
+  is_live: boolean;
+  live_started_at: string | null;
+  live_ended_at: string | null;
   signup_token: string;
   created_at: string;
   updated_at: string;
@@ -48,9 +54,27 @@ type AttendancePayload = {
     full_name: string;
     email: string | null;
     status: string;
+    avatar_url: string | null;
+    is_active: boolean;
     days_present: boolean[];
+    attendance: ({
+      id: string;
+      checked_in_at: string;
+      source: "QR" | "MANUAL";
+      recorded_by: string | null;
+    } | null)[];
     total_present: number;
   }[];
+};
+
+type ActiveTeacher = {
+  teacher_id: string;
+  full_name: string;
+  email: string | null;
+  avatar_url: string | null;
+  enrolled: boolean;
+  enrollment: { id: string; source: "QR" | "MANUAL"; enrolled_at: string } | null;
+  attendance_count: number;
 };
 
 type AttendanceCode = {
@@ -125,13 +149,66 @@ const UI = {
   },
 } as const;
 
+const OPS = {
+  ar: {
+    liveNow: "الورشة مباشرة الآن",
+    startLive: "بدء الورشة الآن",
+    endLive: "إنهاء البث المباشر",
+    liveSince: "بدأت الساعة",
+    participants: "إدارة المشاركين",
+    participantsSub: "أضف أي معلم نشط إلى الورشة دون الحاجة لمسح رمز QR.",
+    searchTeachers: "ابحث بالاسم أو البريد الإلكتروني",
+    activeTeachers: "المعلمون النشطون",
+    enrolled: "مضاف للورشة",
+    addTeacher: "إضافة للورشة",
+    adding: "جارٍ الإضافة...",
+    noActiveTeachers: "لا يوجد معلمون نشطون مطابقون.",
+    manualAttendance: "تسجيل حضور يدوي",
+    checkIn: "تسجيل الآن",
+    checkedAt: "وقت الدخول",
+    qrSource: "عبر QR",
+    manualSource: "يدوي",
+    late: "متأخر",
+    removeAttendance: "حذف سجل الحضور",
+    removeConfirm: "هل تريد حذف سجل الحضور هذا؟ سيعود اليوم إلى حالة غائب.",
+    operationError: "تعذر تنفيذ العملية. حاول مرة أخرى.",
+    closePanel: "إغلاق",
+  },
+  sq: {
+    liveNow: "Punëtoria është live tani",
+    startLive: "Fillo punëtorinë tani",
+    endLive: "Përfundo sesionin live",
+    liveSince: "Filloi në",
+    participants: "Menaxho pjesëmarrësit",
+    participantsSub: "Shto çdo mësues aktiv pa skanuar kodin QR.",
+    searchTeachers: "Kërko me emër ose email",
+    activeTeachers: "Mësuesit aktivë",
+    enrolled: "I shtuar",
+    addTeacher: "Shto në punëtori",
+    adding: "Duke shtuar...",
+    noActiveTeachers: "Nuk ka mësues aktivë që përputhen.",
+    manualAttendance: "Regjistro praninë manualisht",
+    checkIn: "Regjistro tani",
+    checkedAt: "Ora e hyrjes",
+    qrSource: "Me QR",
+    manualSource: "Manuale",
+    late: "Me vonesë",
+    removeAttendance: "Fshi praninë",
+    removeConfirm: "Ta fshijmë këtë regjistrim? Dita do të shfaqet përsëri si mungesë.",
+    operationError: "Veprimi nuk u krye. Provo përsëri.",
+    closePanel: "Mbyll",
+  },
+} as const;
+
 export default function WorkshopDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { lang } = useLang();
   const L = lang === "sq" ? "sq" : "ar";
   const T = UI[L];
+  const O = OPS[L];
   const dir = L === "ar" ? "rtl" : "ltr";
   const viewOnly = useViewOnly();
+  const confirm = useConfirm();
 
   const [detail, setDetail] = useState<DetailPayload | null>(null);
   const [attendance, setAttendance] = useState<AttendancePayload | null>(null);
@@ -148,6 +225,14 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const [messageDraft, setMessageDraft] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageError, setMessageError] = useState("");
+  const [participantsOpen, setParticipantsOpen] = useState(false);
+  const [roster, setRoster] = useState<ActiveTeacher[]>([]);
+  const [rosterQuery, setRosterQuery] = useState("");
+  const [rosterLoading, setRosterLoading] = useState(false);
+  const [mutatingTeacher, setMutatingTeacher] = useState<string | null>(null);
+  const [attendanceBusy, setAttendanceBusy] = useState<string | null>(null);
+  const [liveBusy, setLiveBusy] = useState(false);
+  const [operationError, setOperationError] = useState("");
 
   const loadAll = useCallback(async () => {
     setError(false);
@@ -177,6 +262,12 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     const presentCells = teachers.reduce((sum, t) => sum + t.total_present, 0);
     return { teachers: teachers.length, days: days.length, presentCells, expectedCells };
   }, [attendance]);
+
+  const visibleRoster = useMemo(() => {
+    const query = rosterQuery.trim().toLowerCase();
+    if (!query) return roster;
+    return roster.filter((teacher) => `${teacher.full_name} ${teacher.email ?? ""}`.toLowerCase().includes(query));
+  }, [roster, rosterQuery]);
 
   async function copy(text: string, key: string) {
     await navigator.clipboard.writeText(text);
@@ -211,9 +302,128 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     }
   }
 
+  async function toggleLive() {
+    if (!detail || viewOnly || liveBusy) return;
+    setLiveBusy(true);
+    setOperationError("");
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_live: !detail.workshop.is_live }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !payload.workshop) throw new Error("live");
+      setDetail((current) => current ? {
+        ...current,
+        workshop: { ...current.workshop, ...payload.workshop },
+      } : current);
+    } catch {
+      setOperationError(O.operationError);
+    } finally {
+      setLiveBusy(false);
+    }
+  }
+
+  const loadRoster = useCallback(async () => {
+    setRosterLoading(true);
+    setOperationError("");
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}/teachers`, { cache: "no-store" });
+      if (!response.ok) throw new Error("teachers");
+      const payload = await response.json();
+      setRoster(payload.teachers ?? []);
+    } catch {
+      setOperationError(OPS[L].operationError);
+    } finally {
+      setRosterLoading(false);
+    }
+  }, [L, id]);
+
+  async function openParticipants() {
+    setParticipantsOpen(true);
+    await loadRoster();
+  }
+
+  async function addTeacher(teacherId: string) {
+    if (viewOnly || mutatingTeacher) return;
+    setMutatingTeacher(teacherId);
+    setOperationError("");
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}/teachers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacher_id: teacherId }),
+      });
+      if (!response.ok) throw new Error("enroll");
+      setRoster((current) => current.map((teacher) => teacher.teacher_id === teacherId
+        ? { ...teacher, enrolled: true }
+        : teacher));
+      await loadAll();
+    } catch {
+      setOperationError(O.operationError);
+    } finally {
+      setMutatingTeacher(null);
+    }
+  }
+
+  async function markAttendance(teacherId: string, dayDate: string) {
+    if (viewOnly || attendanceBusy) return;
+    const key = `${teacherId}:${dayDate}`;
+    setAttendanceBusy(key);
+    setOperationError("");
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}/attendance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacher_id: teacherId, day_date: dayDate }),
+      });
+      if (!response.ok) throw new Error("attendance");
+      await loadAll();
+    } catch {
+      setOperationError(O.operationError);
+    } finally {
+      setAttendanceBusy(null);
+    }
+  }
+
+  async function removeAttendance(attendanceId: string) {
+    if (viewOnly || attendanceBusy) return;
+    const approved = await confirm({ message: O.removeConfirm });
+    if (!approved) return;
+    setAttendanceBusy(attendanceId);
+    setOperationError("");
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}/attendance?attendance_id=${encodeURIComponent(attendanceId)}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("attendance");
+      await loadAll();
+    } catch {
+      setOperationError(O.operationError);
+    } finally {
+      setAttendanceBusy(null);
+    }
+  }
+
   function fmtDate(value: string | null) {
     if (!value) return "-";
     return new Date(value).toLocaleDateString(L === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "sq-AL", { timeZone: "UTC" });
+  }
+
+  function fmtTime(value: string | null) {
+    if (!value) return "-";
+    return new Date(value).toLocaleTimeString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+
+  function isLate(checkIn: string, day: string) {
+    const start = detail?.workshop.schedule.find((item) => item.date === day)?.start_time;
+    if (!start) return false;
+    return new Date(checkIn).getTime() > new Date(`${day}T${start}:00`).getTime();
   }
 
   async function uploadMaterial(file: File) {
@@ -263,7 +473,13 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   async function exportAttendance(format: "xlsx" | "pdf") {
     if (!attendance || !detail) return;
     const headers = [T.teacher, T.email, T.status, ...attendance.days.map(fmtDate), T.total];
-    const rows = attendance.teachers.map(t => [t.full_name, t.email ?? "", t.status, ...t.days_present.map(v => v ? T.present : T.absent), `${t.total_present}/${attendance.days.length}`]);
+    const rows = attendance.teachers.map(t => [
+      t.full_name,
+      t.email ?? "",
+      t.status,
+      ...t.attendance.map(entry => entry ? `${T.present} - ${fmtTime(entry.checked_in_at)} (${entry.source === "MANUAL" ? O.manualSource : O.qrSource})` : T.absent),
+      `${t.total_present}/${attendance.days.length}`,
+    ]);
     if (format === "xlsx") {
       const XLSX = await import("xlsx"); const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]); ws["!cols"] = headers.map((_,i)=>({wch:i<2?24:15})); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Attendance"); XLSX.writeFile(wb,`${detail.workshop.title}-attendance.xlsx`);
     } else {
@@ -302,11 +518,14 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     <div className="wd" dir={dir}>
       <Link href="/school-admin/workshops" className="wd-back">{T.back}</Link>
 
-      <header className="wd-hero">
+      <header className={`wd-hero${detail.workshop.is_live ? " is-live" : ""}`}>
         <div>
-          <span className={`wd-status wd-status-${detail.workshop.status}`}>
-            {detail.workshop.status === "OPEN" ? T.open : T.closed}
-          </span>
+          <div className="wd-hero-badges">
+            <span className={`wd-status wd-status-${detail.workshop.status}`}>
+              {detail.workshop.status === "OPEN" ? T.open : T.closed}
+            </span>
+            {detail.workshop.is_live && <span className="wd-live-badge"><Radio size={14}/>{O.liveNow}</span>}
+          </div>
           <h1>{detail.workshop.title}</h1>
           {detail.workshop.description && <p>{detail.workshop.description}</p>}
           <div className="wd-dates">
@@ -314,12 +533,20 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
             <span>{fmtDate(detail.workshop.end_date)}</span>
           </div>
         </div>
-        {!viewOnly && (
-          <button className="wd-hero-btn" onClick={toggleStatus} disabled={busyStatus} data-write="true">
+        {!viewOnly && <div className="wd-hero-actions" data-write="true">
+          <button className={`wd-live-toggle${detail.workshop.is_live ? " active" : ""}`} onClick={toggleLive} disabled={liveBusy}>
+            <Radio size={16}/>{liveBusy ? T.saving : detail.workshop.is_live ? O.endLive : O.startLive}
+          </button>
+          <button className="wd-hero-btn" onClick={toggleStatus} disabled={busyStatus}>
             {busyStatus ? T.saving : detail.workshop.status === "OPEN" ? T.close : T.reopen}
           </button>
-        )}
+        </div>}
       </header>
+
+      {detail.workshop.is_live && detail.workshop.live_started_at && (
+        <div className="wd-live-strip"><span/><strong>{O.liveNow}</strong><small>{O.liveSince} {fmtTime(detail.workshop.live_started_at)}</small></div>
+      )}
+      {operationError && <p className="wd-operation-error" role="alert">{operationError}</p>}
 
       <section className="wd-stats">
         <div><span>{T.registered}</span><strong>{summary.teachers}</strong></div>
@@ -376,7 +603,6 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           </div>
           {code.code && code.qrPng && code.url ? (
             <div className="wd-qr-body">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={code.qrPng} alt="" />
               <div className="wd-url-box" dir="ltr">{code.url}</div>
               <button className="wd-copy" onClick={() => copy(code.url!, "attendance")}>
@@ -389,13 +615,18 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         </div>
       </section>
 
-      <section className="wd-card">
+      <section className="wd-card wd-attendance-card">
         <div className="wd-table-head">
           <div>
             <h2>{T.attendance}</h2>
             <p>{T.attendanceHelp}</p>
           </div>
-          <div className="wd-export"><button className="wd-small-btn ghost" onClick={() => void exportAttendance("xlsx")}><Download size={14}/>{T.exportExcel}</button><button className="wd-small-btn ghost" onClick={() => void exportAttendance("pdf")}><Download size={14}/>{T.exportPdf}</button><button className="wd-small-btn ghost" onClick={() => void loadAll()}>{T.refresh}</button></div>
+          <div className="wd-export">
+            {!viewOnly && <button className="wd-small-btn wd-participants-btn" onClick={() => void openParticipants()} data-write="true"><UserPlus size={14}/>{O.participants}</button>}
+            <button className="wd-small-btn ghost" onClick={() => void exportAttendance("xlsx")}><Download size={14}/>{T.exportExcel}</button>
+            <button className="wd-small-btn ghost" onClick={() => void exportAttendance("pdf")}><Download size={14}/>{T.exportPdf}</button>
+            <button className="wd-small-btn ghost" onClick={() => void loadAll()}>{T.refresh}</button>
+          </div>
         </div>
 
         {!attendance || attendance.teachers.length === 0 ? (
@@ -408,7 +639,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
                   <th>{T.teacher}</th>
                   <th>{T.email}</th>
                   <th>{T.status}</th>
-                  {attendance.days.map((day) => <th key={day}>{fmtDate(day)}</th>)}
+                  {attendance.days.map((day) => <th key={day}><span>{fmtDate(day)}</span><small>{detail.workshop.schedule.find(item => item.date === day)?.start_time ?? ""}</small></th>)}
                   <th>{T.total}</th>
                 </tr>
               </thead>
@@ -418,11 +649,21 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
                     <td className="wd-teacher">{teacher.full_name}</td>
                     <td dir="ltr">{teacher.email ?? "-"}</td>
                     <td>{teacher.status}</td>
-                    {teacher.days_present.map((present, index) => (
-                      <td key={attendance.days[index]} className={present ? "present" : "absent"} title={present ? T.present : T.absent}>
-                        {present ? "✓" : "×"}
-                      </td>
-                    ))}
+                    {teacher.attendance.map((entry, index) => {
+                      const day = attendance.days[index];
+                      const busyKey = `${teacher.teacher_id}:${day}`;
+                      return <td key={day} className={entry ? "present" : "absent"}>
+                        {entry ? <div className="wd-checkin">
+                          <CheckCircle2 size={16}/>
+                          <time title={O.checkedAt}>{fmtTime(entry.checked_in_at)}</time>
+                          <small>{entry.source === "MANUAL" ? O.manualSource : O.qrSource}</small>
+                          {isLate(entry.checked_in_at, day) && <small className="wd-late">{O.late}</small>}
+                          {!viewOnly && <button onClick={() => void removeAttendance(entry.id)} disabled={attendanceBusy === entry.id} aria-label={O.removeAttendance} title={O.removeAttendance}><Trash2 size={13}/></button>}
+                        </div> : <button className="wd-mark-present" onClick={() => void markAttendance(teacher.teacher_id, day)} disabled={viewOnly || attendanceBusy === busyKey} title={O.manualAttendance}>
+                          <UserCheck size={15}/><span>{attendanceBusy === busyKey ? T.saving : O.checkIn}</span>
+                        </button>}
+                      </td>;
+                    })}
                     <td className="wd-total">{teacher.total_present} / {attendance.days.length}</td>
                   </tr>
                 ))}
@@ -431,6 +672,24 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           </div>
         )}
       </section>
+
+      {participantsOpen && <div className="wd-people-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setParticipantsOpen(false); }}>
+        <section className="wd-people-panel" role="dialog" aria-modal="true" aria-label={O.participants}>
+          <header>
+            <div><span><UserPlus size={16}/>{O.activeTeachers}</span><h2>{O.participants}</h2><p>{O.participantsSub}</p></div>
+            <button onClick={() => setParticipantsOpen(false)} aria-label={O.closePanel}><X size={20}/></button>
+          </header>
+          <label className="wd-people-search"><Search size={17}/><input autoFocus value={rosterQuery} onChange={(event) => setRosterQuery(event.target.value)} placeholder={O.searchTeachers}/></label>
+          {operationError && <p className="wd-operation-error" role="alert">{operationError}</p>}
+          <div className="wd-people-list">
+            {rosterLoading ? <MandalaLoader/> : visibleRoster.length === 0 ? <div className="wd-empty">{O.noActiveTeachers}</div> : visibleRoster.map((teacher) => <article key={teacher.teacher_id} className={teacher.enrolled ? "enrolled" : ""}>
+              <span className="wd-person-avatar">{teacher.avatar_url ? <img src={teacher.avatar_url} alt=""/> : teacher.full_name.trim().charAt(0).toUpperCase()}</span>
+              <div><strong>{teacher.full_name}</strong><small dir="ltr">{teacher.email ?? "-"}</small></div>
+              {teacher.enrolled ? <span className="wd-enrolled"><CheckCircle2 size={14}/>{O.enrolled}</span> : <button onClick={() => void addTeacher(teacher.teacher_id)} disabled={mutatingTeacher === teacher.teacher_id}><UserPlus size={14}/>{mutatingTeacher === teacher.teacher_id ? O.adding : O.addTeacher}</button>}
+            </article>)}
+          </div>
+        </section>
+      </div>}
 
       <style>{styles}</style>
     </div>
@@ -456,7 +715,6 @@ function QrPanel({
         </div>
       </div>
       <div className="wd-qr-body">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={qr} alt="" />
         <div className="wd-url-box" dir="ltr">{url}</div>
         <button className="wd-copy" onClick={onCopy}>{copyLabel}</button>
@@ -488,4 +746,22 @@ const styles = `
 .wd-program,.wd-materials{margin-bottom:14px}.wd-days{display:flex;gap:0;overflow:auto;padding:12px 0}.wd-day{position:relative;min-width:155px;border-top:3px solid #4C6B3C;background:#F3F0E8;padding:13px}.wd-day:not(:last-child):after{content:'';position:absolute;top:20px;inset-inline-end:-10px;width:20px;height:2px;background:#B8A082}.wd-day.rest{border-color:#8B8178;background:#ECE9E5}.wd-day b{display:grid;place-items:center;width:24px;height:24px;background:#32101A;color:#E8DCBC;border-radius:50%;font-size:11px}.wd-day span,.wd-day strong,.wd-day small{display:block;margin-top:5px;font-size:11px}.wd-day strong{font-size:12px}.wd-day small{color:#6C625A}.wd-content-actions,.wd-export{display:flex;gap:7px;flex-wrap:wrap}.wd-content-actions label,.wd-export button{display:inline-flex;align-items:center;gap:5px}.wd-link-form{display:grid;grid-template-columns:1fr 1.5fr auto;gap:8px;margin-bottom:12px}.wd-link-form input{border:1px solid #D7CBB9;background:#fff;padding:9px 11px;font:inherit;font-size:12px}.wd-material-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.wd-material{display:grid;grid-template-columns:28px 1fr 30px 30px;align-items:center;gap:8px;border:1px solid #E0D7C9;background:#fff;padding:11px}.wd-material>svg{color:#7A5C32}.wd-material strong,.wd-material small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-material strong{font-size:12px}.wd-material small{font-size:10px;color:#796F66}.wd-material a,.wd-material button{display:grid;place-items:center;border:0;background:none;color:#6B1E2D;cursor:pointer}.wd-notes{margin-top:12px;border-inline-start:3px solid #B8A082;background:#F5F0E7;padding:12px}.wd-notes b{font-size:12px}.wd-notes p{white-space:pre-wrap;margin-top:4px!important}
 .wd-empty{padding:40px 20px;text-align:center;border:1px dashed rgba(184,155,94,.34);border-radius:14px;color:#8C8274;font-weight:800;background:#FFFBF5}.wd-table-wrap{overflow:auto;border:1px solid rgba(26,26,26,.08);border-radius:13px}.wd-table{width:100%;border-collapse:collapse;min-width:860px;background:#fff}.wd-table th{background:#F6F0E6;color:#6B1E2D;font-size:11px;font-weight:900;padding:10px;border-bottom:1px solid rgba(184,155,94,.22);white-space:nowrap}.wd-table td{padding:10px;border-bottom:1px solid rgba(26,26,26,.06);text-align:center;font-size:12.5px;color:#4A0E1C}.wd-table tr:last-child td{border-bottom:0}.wd-teacher{text-align:start!important;font-weight:900;color:#32101A!important}.wd-total{font-weight:900;color:#32101A!important}.wd-table td.present{background:rgba(76,107,60,.14);color:#3E642E;font-weight:900}.wd-table td.absent{background:rgba(163,59,46,.10);color:#9A3025;font-weight:900}
 @media(max-width:980px){.wd-qr-grid,.wd-stats{grid-template-columns:1fr}.wd-hero{padding:20px}.wd-link-form{grid-template-columns:1fr}}
+
+/* Workshop operations refresh */
+.wd{max-width:1280px;margin:0 auto}.wd-card{border-radius:22px;padding:clamp(15px,2.3vw,24px);border-color:rgba(107,30,45,.12);box-shadow:0 16px 42px rgba(50,16,26,.075)}
+.wd-hero{position:relative;overflow:hidden;border-radius:26px;padding:clamp(22px,4vw,38px);background:linear-gradient(125deg,#250B12,#4A0E1C 62%,#6B1E2D);border-color:rgba(217,201,176,.3)}
+.wd-hero:after{content:'';position:absolute;width:320px;height:320px;border-radius:50%;inset-inline-end:-110px;top:-170px;background:radial-gradient(circle,rgba(217,201,176,.22),transparent 68%);pointer-events:none}.wd-hero.is-live{box-shadow:0 22px 60px rgba(107,30,45,.25),0 0 0 2px rgba(184,160,130,.2)}
+.wd-hero-badges,.wd-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative;z-index:1}.wd-hero-actions{flex-direction:column;align-items:stretch;min-width:min(100%,220px)}
+.wd-live-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 11px;background:#F7F3EB;color:#6B1E2D;font-size:11px;font-weight:900;box-shadow:0 0 0 5px rgba(247,243,235,.08)}.wd-live-badge svg{animation:wd-pulse 1.4s ease-in-out infinite}
+.wd-live-toggle{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(217,201,176,.34);border-radius:12px;padding:11px 15px;background:rgba(255,255,255,.08);color:#F7F3EB;font:800 12px 'Cairo',sans-serif;cursor:pointer}.wd-live-toggle.active{background:#F7F3EB;color:#6B1E2D}.wd-live-toggle:disabled{opacity:.55;cursor:progress}
+.wd-live-strip{display:flex;align-items:center;justify-content:center;gap:8px;margin:-2px 0 14px;padding:10px 14px;border:1px solid rgba(107,30,45,.14);border-radius:14px;background:linear-gradient(90deg,rgba(107,30,45,.07),rgba(255,255,255,.84),rgba(107,30,45,.07));color:#6B1E2D}.wd-live-strip>span{width:9px;height:9px;border-radius:50%;background:#6B1E2D;box-shadow:0 0 0 5px rgba(107,30,45,.1);animation:wd-pulse 1.4s infinite}.wd-live-strip strong{font-size:12px}.wd-live-strip small{font-size:10px;color:#796A62}
+@keyframes wd-pulse{50%{opacity:.35;transform:scale(.82)}}
+.wd-operation-error{margin:0 0 13px;padding:10px 12px;border-radius:11px;background:rgba(107,30,45,.08);border:1px solid rgba(107,30,45,.15);color:#6B1E2D;font-size:11px;font-weight:800}
+.wd-participants-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#32101A,#6B1E2D);color:#F7F3EB}.wd-attendance-card{margin-top:14px}.wd-attendance-card .wd-table-head{align-items:center}.wd-table th span,.wd-table th small{display:block}.wd-table th small{margin-top:3px;color:#8C8274;font-weight:700}.wd-table td.present,.wd-table td.absent{min-width:116px;padding:7px}
+.wd-checkin{position:relative;display:grid;justify-items:center;gap:2px;min-height:62px;padding:5px 26px 5px 5px;color:#315724}.wd-checkin time{font:900 12px ui-monospace,Consolas,monospace;direction:ltr}.wd-checkin small{font-size:8px;font-weight:900;color:#5D7355}.wd-checkin button{position:absolute;inset-inline-end:3px;top:3px;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(107,30,45,.08);color:#6B1E2D;cursor:pointer}.wd-checkin button:hover{background:#6B1E2D;color:#fff}
+.wd-checkin .wd-late{padding:2px 6px;border-radius:999px;background:#F6D9D6;color:#8B2332}
+.wd-mark-present{width:100%;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px dashed rgba(107,30,45,.22);border-radius:10px;background:rgba(255,255,255,.7);color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.wd-mark-present:hover{background:#F7F3EB;border-style:solid}.wd-mark-present:disabled{opacity:.5;cursor:progress}
+.wd-people-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:stretch;justify-content:flex-end;background:rgba(26,26,26,.56);backdrop-filter:blur(7px)}[dir='rtl'] .wd-people-overlay{justify-content:flex-start}.wd-people-panel{width:min(520px,100%);height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#FFFBF5,#EFEAE0);box-shadow:0 0 70px rgba(26,26,26,.28);animation:wd-panel-in .22s ease-out}.wd-people-panel>header{display:flex;justify-content:space-between;gap:14px;padding:24px;background:linear-gradient(135deg,#250B12,#6B1E2D);color:#F7F3EB}.wd-people-panel>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-people-panel>header h2{margin:4px 0;font-size:23px}.wd-people-panel>header p{margin:0;color:rgba(247,243,235,.7);font-size:12px;line-height:1.7}.wd-people-panel>header button{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-people-search{display:flex;align-items:center;gap:9px;margin:16px 16px 8px;padding:0 12px;border:1px solid #D9C9B0;border-radius:13px;background:#fff}.wd-people-search input{width:100%;border:0;outline:0;padding:11px 0;background:transparent;font:inherit;font-size:13px}.wd-people-list{flex:1;overflow:auto;padding:8px 16px 22px}.wd-people-list article{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;margin-bottom:8px;padding:11px;border:1px solid rgba(107,30,45,.1);border-radius:15px;background:#fff}.wd-people-list article.enrolled{background:rgba(217,201,176,.24)}.wd-person-avatar{width:44px;height:44px;display:grid;place-items:center;overflow:hidden;border-radius:14px;background:#32101A;color:#D9C9B0;font-weight:900}.wd-person-avatar img{width:100%;height:100%;object-fit:cover}.wd-people-list strong,.wd-people-list small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-people-list strong{font-size:12px}.wd-people-list small{font-size:10px;color:#796A62}.wd-people-list article>button,.wd-enrolled{display:flex;align-items:center;gap:5px;border:0;border-radius:10px;padding:8px 10px;background:#6B1E2D;color:#fff;font:800 10px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}.wd-enrolled{background:rgba(49,87,36,.1);color:#315724}.wd-people-list article>button:disabled{opacity:.55;cursor:progress}
+@keyframes wd-panel-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}[dir='rtl'] .wd-people-panel{animation-name:wd-panel-in-rtl}@keyframes wd-panel-in-rtl{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+@media(max-width:720px){.wd{padding-bottom:12px}.wd-hero{border-radius:20px}.wd-hero-actions{width:100%;flex-direction:row}.wd-hero-actions>*{flex:1}.wd-stats{grid-template-columns:repeat(2,1fr)}.wd-card-head,.wd-table-head{flex-direction:column}.wd-export{width:100%}.wd-export button{flex:1;justify-content:center}.wd-live-strip{flex-wrap:wrap}.wd-people-panel{width:100%}.wd-people-panel>header{padding:20px 16px}.wd-people-list article{grid-template-columns:40px minmax(0,1fr)}.wd-people-list article>button,.wd-enrolled{grid-column:1/-1;justify-content:center}.wd-person-avatar{width:40px;height:40px}}
 `;
