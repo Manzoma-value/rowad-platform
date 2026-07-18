@@ -2,7 +2,7 @@
 /* User-generated and local preview URLs do not have stable dimensions for next/image. */
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef, type WheelEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { cachedFetch } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
@@ -818,6 +818,19 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
     }
   };
 
+  // The community is a contained chat surface. On wide screens there is
+  // decorative space around the feed, so make the wheel work there too instead
+  // of requiring people to keep the pointer exactly over the message column.
+  const handleHubWheel = (event: WheelEvent<HTMLDivElement>) => {
+    if (event.ctrlKey || event.deltaY === 0) return;
+    const target = event.target as HTMLElement;
+    if (target.closest(".hub-feed, .replies-scroll, textarea, input, select")) return;
+    const feed = feedRef.current;
+    if (!feed) return;
+    feed.scrollBy({ top: event.deltaY, behavior: "auto" });
+    event.preventDefault();
+  };
+
   const lang: Lang = uiLang === "ar" ? "ar" : "sq";
   const isRtl = lang === "ar";
   const dir   = isRtl ? "rtl" : "ltr";
@@ -878,7 +891,7 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
     );
 
   return (
-    <div className="hub" dir={dir}>
+    <div className="hub" dir={dir} onWheel={handleHubWheel}>
       <div className="hub-bg-pattern" />
 
       <header className="hub-header" ref={topRef}>
@@ -1027,7 +1040,7 @@ const css = `/* hub-viral-pack */
 .new-posts-banner:hover{filter:brightness(1.06);}
 
 /* feed */
-.hub-feed{flex:1;overflow-y:auto;padding:16px 12px 8px;max-width:860px;width:100%;margin:0 auto;scroll-behavior:smooth;position:relative;z-index:10;}
+.hub-feed{flex:1;overflow-y:auto;padding:16px 12px 8px;max-width:860px;width:100%;margin:0 auto;scroll-behavior:auto;scrollbar-width:thin;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;position:relative;z-index:10;}
 .hub-feed::-webkit-scrollbar{width:5px;}
 .hub-feed::-webkit-scrollbar-track{background:transparent;}
 .hub-feed::-webkit-scrollbar-thumb{background:var(--cream3);border-radius:10px;}
@@ -1352,7 +1365,7 @@ const premiumCss = `
 .hub-subtitle{font-size:11.5px;color:rgba(239,234,224,.76);max-width:min(54vw,520px);}
 .mode-bar{min-height:38px;justify-content:center;padding:8px 16px;background:rgba(255,251,245,.86);color:#6B1E2D;border-color:rgba(107,30,45,.14);box-shadow:0 7px 22px rgba(107,30,45,.055);font-size:11.5px;line-height:1.55;text-align:center;}
 .mode-bar-admin{background:linear-gradient(90deg,rgba(217,201,176,.88),rgba(255,251,245,.94),rgba(217,201,176,.88));}
-.hub-feed{width:min(calc(100% - 28px),1080px);max-width:1080px;min-height:0;margin:14px auto 0;padding:20px clamp(10px,2.6vw,28px) 18px;border:1px solid rgba(107,30,45,.13);border-bottom:0;border-radius:28px 28px 0 0;background:linear-gradient(180deg,rgba(255,251,245,.74),rgba(255,255,255,.38));box-shadow:0 -8px 34px rgba(107,30,45,.07),inset 0 1px rgba(255,255,255,.9);overscroll-behavior:contain;scrollbar-gutter:stable;}
+.hub-feed{width:min(calc(100% - 28px),1080px);max-width:1080px;min-height:0;margin:14px auto 0;padding:20px clamp(10px,2.6vw,28px) 18px;border:1px solid rgba(107,30,45,.13);border-bottom:0;border-radius:28px 28px 0 0;background:linear-gradient(180deg,rgba(255,251,245,.74),rgba(255,255,255,.38));box-shadow:0 -8px 34px rgba(107,30,45,.07),inset 0 1px rgba(255,255,255,.9);overscroll-behavior-y:auto;scrollbar-gutter:stable;}
 .date-divider{margin:14px 0 16px;}
 .date-divider-label{padding:5px 14px;color:#6B1E2D;background:rgba(255,251,245,.88);border-color:rgba(107,30,45,.15);box-shadow:0 6px 18px rgba(107,30,45,.06);}
 .chat-row{gap:11px;margin-bottom:15px;min-width:0;}
