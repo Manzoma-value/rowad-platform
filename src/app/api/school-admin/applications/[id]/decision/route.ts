@@ -56,6 +56,9 @@ export async function POST(
     await tx.teacher.update({
       where: { id: teacher.id },
       data: { onboarding_status: nextStatus },
+      // The result is not needed. Selecting only the stable primary key keeps
+      // approvals working while optional teacher-draft columns roll out.
+      select: { id: true },
     });
 
     // On approve: attach the teacher to any pre-selected groups. We re-check
