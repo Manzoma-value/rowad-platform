@@ -10,7 +10,10 @@ export async function GET() {
   const teachers = await prisma.teacher.findMany({
     where: { school_id: auth.school.id },
     orderBy: { created_at: "desc" },
-    include: {
+    select: {
+      id: true,
+      created_at: true,
+      onboarding_status: true,
       profile: { select: { id: true, full_name: true, email: true, avatar_url: true, is_active: true } },
       classes: {
         select: {
@@ -56,5 +59,28 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({ teachers });
+  // Application drafts are a newer optional enhancement. Fetch them in a
+  // separate guarded query so a rolling migration can never make the teacher
+  // management screen fail to load.
+  let drafts = new Map<string, { application_draft: unknown; application_draft_updated_at: Date | null }>();
+  try {
+    const draftRows = await prisma.teacher.findMany({
+      where: { school_id: auth.school.id },
+      select: { id: true, application_draft: true, application_draft_updated_at: true },
+    });
+    drafts = new Map(draftRows.map((row) => [row.id, row]));
+  } catch {
+    // The core list remains fully usable until the migration is applied.
+  }
+
+  return NextResponse.json({
+    teachers: teachers.map((teacher) => {
+      const draft = drafts.get(teacher.id);
+      return {
+        ...teacher,
+        application_draft: draft?.application_draft ?? null,
+        application_draft_updated_at: draft?.application_draft_updated_at ?? null,
+      };
+    }),
+  });
 }

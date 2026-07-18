@@ -17,7 +17,10 @@ export async function requireTeacher() {
 
   const teacher = await prisma.teacher.findUnique({
     where: { profile_id: profile.id },
-    select: { id: true, school_id: true, onboarding_status: true, application_draft: true, application_draft_updated_at: true },
+    // Keep this shared authentication lookup limited to the long-established
+    // columns. Optional application-draft storage must never take down the
+    // whole teacher experience while a database migration is rolling out.
+    select: { id: true, school_id: true, onboarding_status: true },
   });
   if (!teacher) return null;
 

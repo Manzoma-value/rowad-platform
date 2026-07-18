@@ -5,7 +5,6 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import {
   APP_GENDERS,
   APP_CURRENT_ROLES,
@@ -29,11 +28,24 @@ export async function GET() {
     where: { teacher_id: auth.teacher.id },
   });
 
+  let draft: unknown = null;
+  let draftUpdatedAt: Date | null = null;
+  try {
+    const savedDraft = await prisma.teacher.findUnique({
+      where: { id: auth.teacher.id },
+      select: { application_draft: true, application_draft_updated_at: true },
+    });
+    draft = savedDraft?.application_draft ?? null;
+    draftUpdatedAt = savedDraft?.application_draft_updated_at ?? null;
+  } catch {
+    // Draft storage is optional during the migration rollout.
+  }
+
   return NextResponse.json({
     onboarding_status: auth.teacher.onboarding_status,
     application: app,
-    draft: auth.teacher.application_draft,
-    draft_updated_at: auth.teacher.application_draft_updated_at,
+    draft,
+    draft_updated_at: draftUpdatedAt,
   });
 }
 
@@ -119,12 +131,19 @@ export async function PATCH(req: Request) {
   try { body = await req.json() as Record<string, unknown>; } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  const updated = await prisma.teacher.update({
-    where: { id: auth.teacher.id },
-    data: { application_draft: sanitizeDraft(body), application_draft_updated_at: new Date() },
-    select: { application_draft_updated_at: true },
-  });
-  return NextResponse.json({ saved: true, draft_updated_at: updated.application_draft_updated_at });
+  try {
+    const updated = await prisma.teacher.update({
+      where: { id: auth.teacher.id },
+      data: { application_draft: sanitizeDraft(body), application_draft_updated_at: new Date() },
+      select: { application_draft_updated_at: true },
+    });
+    return NextResponse.json({ saved: true, draft_updated_at: updated.application_draft_updated_at });
+  } catch (error) {
+    // The form keeps its browser backup during a phased database rollout.
+    // Do not let an unavailable optional draft column break the application.
+    console.warn("[teacher-application] draft storage unavailable", error);
+    return NextResponse.json({ saved: false, draft_updated_at: null });
+  }
 }
 
 export async function POST(req: Request) {
@@ -274,7 +293,7 @@ export async function POST(req: Request) {
 
     await tx.teacher.update({
       where: { id: teacher.id },
-      data: { onboarding_status: nextStatus, application_draft: Prisma.DbNull, application_draft_updated_at: null },
+      data: { onboarding_status: nextStatus },
     });
   }, { timeout: 30000, maxWait: 10000 });
 
