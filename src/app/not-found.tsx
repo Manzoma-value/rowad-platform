@@ -29,14 +29,15 @@ const T = {
 };
 
 export default function NotFound() {
-  const [lang, setLang] = useState<Lang>("ar");
+  const [lang, setLang] = useState<Lang>("sq");
   const tr = T[lang];
 
   useEffect(() => {
     // localStorage is browser-only, so we must read it after mount.
     try {
       const saved = localStorage.getItem("lang") as Lang | null;
-      if (saved === "sq" || saved === "ar") {
+      const hasChosenLanguage = localStorage.getItem("language_preference_v2") === "1";
+      if (hasChosenLanguage && (saved === "sq" || saved === "ar")) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setLang(saved);
       }

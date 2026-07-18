@@ -73,12 +73,13 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
   const { token } = use(params);
   const router = useRouter();
   const [lang, setLang] = useState<"ar" | "sq">(() => {
-    if (typeof window === "undefined") return "ar";
+    if (typeof window === "undefined") return "sq";
     try {
       const saved = localStorage.getItem("workshop_lang");
-      return saved === "sq" ? "sq" : "ar";
+      const hasChosenLanguage = localStorage.getItem("workshop_language_preference_v2") === "1";
+      return hasChosenLanguage && saved === "ar" ? "ar" : "sq";
     } catch {
-      return "ar";
+      return "sq";
     }
   });
   const T = UI[lang];
@@ -94,7 +95,10 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
 
   // Persist language preference on this device.
   useEffect(() => {
-    try { localStorage.setItem("workshop_lang", lang); } catch { /* ignore */ }
+    try {
+      localStorage.setItem("workshop_lang", lang);
+      localStorage.setItem("workshop_language_preference_v2", "1");
+    } catch { /* ignore */ }
   }, [lang]);
 
   useEffect(() => {

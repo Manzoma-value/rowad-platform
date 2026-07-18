@@ -64,7 +64,7 @@ export default function SchoolLandingClient({ school }: { school: School }) {
   const router = useRouter();
   // Arabic is the platform default regardless of the school's own
   // configured language — visitors can still switch via the AR/SQ toggle.
-  const [lang, setLang] = useState<Lang>("ar");
+  const [lang, setLang] = useState<Lang>("sq");
   const [scrolled, setScrolled] = useState(false);
   // On a tenant subdomain (rowad-albania.manzoma.sa) we use clean /login & /signup
   // paths; on the owner host's path-based view (…/schools/<slug>) we keep the

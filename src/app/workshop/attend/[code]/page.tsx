@@ -47,12 +47,13 @@ export default function AttendPage({ params }: { params: Promise<{ code: string 
   const { code } = use(params);
   const router = useRouter();
   const [lang] = useState<"ar" | "sq">(() => {
-    if (typeof window === "undefined") return "ar";
+    if (typeof window === "undefined") return "sq";
     try {
       const saved = localStorage.getItem("workshop_lang");
-      return saved === "sq" ? "sq" : "ar";
+      const hasChosenLanguage = localStorage.getItem("workshop_language_preference_v2") === "1";
+      return hasChosenLanguage && saved === "ar" ? "ar" : "sq";
     } catch {
-      return "ar";
+      return "sq";
     }
   });
   const T = UI[lang];

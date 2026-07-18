@@ -114,6 +114,10 @@ export async function POST(req: Request) {
           onboarding_status: "PENDING_APPLICATION",
           workshop_signup_id: workshop.id,
         },
+        // Do not select optional draft columns here. During a rolling schema
+        // deployment they may not exist yet, while QR registration must stay
+        // available for every teacher.
+        select: { id: true },
       });
       await tx.workshopEnrollment.upsert({
         where: { workshop_id_teacher_id: { workshop_id: workshop.id, teacher_id: teacher.id } },
