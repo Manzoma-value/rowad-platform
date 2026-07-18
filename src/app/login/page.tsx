@@ -74,37 +74,37 @@ const STRINGS = {
     emailSuccess: "بريد إلكتروني صحيح ✓",
     poweredBy: "جميع الحقوق محفوظة © منظومة 2026",
   },
-  en: {
+  sq: {
     dir: "ltr" as const,
     brand: "Binaa Al-Ahliya",
-    tagline: "Pioneers · Empowering people · Building the future",
-    albania: "From Albania to a future built by pioneers",
-    albanianValues: "Knowledge · Values · Future",
-    welcome: "Welcome back",
-    loginTitle: "Sign in",
-    sub: "Enter your details to access your dashboard",
-    emailLabel: "Email",
-    passLabel: "Password",
-    btn: "Sign in",
-    loadingBtn: "Signing in...",
-    forgotPw: "Forgot password?",
-    noAccount: "Don't have an account?",
-    signup: "Create one",
-    workshopNoAccount: "Don't have a teacher account?",
-    workshopSignup: "Create an account and complete the application",
-    or: "or",
-    errEmpty: "Please enter your email and password",
-    errEmailInvalid: "Invalid email format",
-    errWrong: "Incorrect email or password",
-    errNotConfirmed: "Please confirm your email first — check your inbox and click the verification link",
-    errProfile: "Could not load account data",
-    errServer: "Connection failed, please try again",
-    emailSuccess: "Valid email ✓",
-    poweredBy: "All rights reserved © Manzoma 2026",
+    tagline: "Brezi i pionierëve · Fuqizimi i njeriut · Ndërtimi i së ardhmes",
+    albania: "Nga Shqipëria drejt një të ardhmeje të ndërtuar nga pionierët",
+    albanianValues: "Dije · Vlerë · E ardhme",
+    welcome: "Mirë se u ktheve",
+    loginTitle: "Hyr",
+    sub: "Fut të dhënat për të hyrë në panelin tënd",
+    emailLabel: "E-mail",
+    passLabel: "Fjalëkalimi",
+    btn: "Hyr",
+    loadingBtn: "Po hyn...",
+    forgotPw: "Harrove fjalëkalimin?",
+    noAccount: "Nuk ke llogari?",
+    signup: "Krijo një",
+    workshopNoAccount: "Nuk ke llogari mësuesi?",
+    workshopSignup: "Krijo një llogari dhe plotëso formularin e aplikimit",
+    or: "ose",
+    errEmpty: "Të lutem fut e-mail-in dhe fjalëkalimin",
+    errEmailInvalid: "Formati i e-mail-it nuk është i saktë",
+    errWrong: "E-mail-i ose fjalëkalimi është i pasaktë",
+    errNotConfirmed: "Të lutem konfirmo fillimisht e-mail-in — kontrollo kutinë hyrëse dhe kliko lidhjen e verifikimit",
+    errProfile: "Nuk u ngarkuan të dhënat e llogarisë",
+    errServer: "Lidhja dështoi, provo përsëri",
+    emailSuccess: "E-mail i vlefshëm ✓",
+    poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma 2026",
   },
 } as const;
 
-type Lang = "ar" | "en";
+type Lang = "ar" | "sq";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 /* ─── Language toggle ─── */
@@ -118,12 +118,12 @@ function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
       />
       <button
         type="button"
-        className={`lp-lang-btn${lang === "en" ? " lp-lang-btn--active" : ""}`}
-        onClick={() => onChange("en")}
-        aria-pressed={lang === "en"}
-        aria-label="English"
+        className={`lp-lang-btn${lang === "sq" ? " lp-lang-btn--active" : ""}`}
+        onClick={() => onChange("sq")}
+        aria-pressed={lang === "sq"}
+        aria-label="Shqip"
       >
-        <span className="lp-lang-name">EN</span>
+        <span className="lp-lang-name">SQ</span>
       </button>
       <button
         type="button"
@@ -150,7 +150,7 @@ function Rule() {
 }
 
 export default function LoginPage() {
-  const [lang, setLang] = useState<Lang>("ar");
+  const [lang, setLang] = useState<Lang>("sq");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
@@ -166,20 +166,21 @@ export default function LoginPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("lang") as Lang | null;
-    // Albanian was previously the second option; if a user has "sq" in
-    // localStorage from another page, fall back to Arabic on this one.
-    const effectiveLang: Lang = saved === "en" || saved === "ar" ? saved : "ar";
-    if (effectiveLang !== "ar") setLang(effectiveLang);
+    // Albanian is the default for this Albania-focused platform. Honour a
+    // saved Arabic/Albanian preference; anything else (e.g. legacy "en")
+    // falls back to Albanian.
+    const effectiveLang: Lang = saved === "sq" || saved === "ar" ? saved : "sq";
+    if (effectiveLang !== "sq") setLang(effectiveLang);
     const params = new URLSearchParams(window.location.search);
     const rd  = params.get("redirectTo") ?? "";
     const su  = params.get("signupTo") ?? "";
     const err = params.get("error") ?? "";
     if (rd.startsWith("/") && !rd.startsWith("//")) setRedirectTo(rd);
     if (su.startsWith("/") && !su.startsWith("//")) setSignupTo(su);
-    const isEn = effectiveLang === "en";
-    if (err === "link_invalid")       setError(isEn ? "Verification link is invalid or expired" : "رابط التأكيد غير صالح أو منتهي الصلاحية");
-    else if (err === "oauth_failed")  setError(isEn ? "Sign-in failed" : "فشل تسجيل الدخول");
-    else if (err === "session_error") setError(isEn ? "Session error, please try again" : "حدث خطأ في الجلسة");
+    const isAr = effectiveLang === "ar";
+    if (err === "link_invalid")       setError(isAr ? "رابط التأكيد غير صالح أو منتهي الصلاحية" : "Lidhja e verifikimit është e pavlefshme ose ka skaduar");
+    else if (err === "oauth_failed")  setError(isAr ? "فشل تسجيل الدخول" : "Hyrja dështoi");
+    else if (err === "session_error") setError(isAr ? "حدث خطأ في الجلسة" : "Gabim në sesion, provo përsëri");
   }, []);
 
   const handleLangChange = (l: Lang) => { setLang(l); setError(""); localStorage.setItem("lang", l); };
@@ -209,7 +210,7 @@ export default function LoginPage() {
         setRedirecting(true);
         window.location.href = dest;
       } else {
-        setError(lang === "en" ? "Unknown account type: " + profile.role : "نوع الحساب غير معروف: " + profile.role);
+        setError(lang === "ar" ? "نوع الحساب غير معروف: " + profile.role : "Lloj llogarie i panjohur: " + profile.role);
       }
     } catch { setError(L.errServer); }
     finally { setLoading(false); }
@@ -224,8 +225,8 @@ export default function LoginPage() {
         background: "radial-gradient(ellipse at center, rgba(184,160,130,0.06), transparent 60%), #EFEAE0",
       }}>
         <MandalaLoader
-          label={lang === "ar" ? "جارٍ تحويلك..." : "Redirecting..."}
-          sublabel={lang === "ar" ? "لحظة من فضلك" : "One moment please"}
+          label={lang === "ar" ? "جارٍ تحويلك..." : "Po ju ridrejtojmë..."}
+          sublabel={lang === "ar" ? "لحظة من فضلك" : "Një moment, të lutem"}
         />
       </div>
     );
@@ -362,7 +363,7 @@ export default function LoginPage() {
                 </div>
                 {capsOn && password.length > 0 && (
                   <span className="lp-field-msg lp-field-msg--warn">
-                    {lang === "ar" ? "Caps Lock مُفعَّل" : "Caps Lock is on"}
+                    {lang === "ar" ? "Caps Lock مُفعَّل" : "Caps Lock është aktiv"}
                   </span>
                 )}
               </div>

@@ -71,39 +71,39 @@ const STRINGS = {
     sentBtn: "الانتقال إلى تسجيل الدخول",
     poweredBy: "جميع الحقوق محفوظة © منظومة 2026",
   },
-  en: {
+  sq: {
     dir: "ltr" as const,
     brand: "Binaa Al-Ahliya",
-    tagline: "Pioneers · Empowering people · Building the future",
-    albania: "From Albania to a future built by pioneers",
-    albanianValues: "Knowledge · Values · Future",
-    welcome: "Begin your journey",
-    signupTitle: "Create account",
-    sub: "Sign up to start your journey",
-    nameLabel: "Full name",
-    namePlaceholder: "e.g. Sarah Johnson",
-    emailLabel: "Email",
-    passLabel: "Password",
-    passPh: "At least 6 characters",
-    btn: "Create account",
-    loadingBtn: "Creating...",
-    haveAccount: "Already have an account?",
-    login: "Sign in",
-    or: "or",
-    errEmpty: "Please fill in all fields",
-    errEmailInvalid: "Invalid email format",
-    errPassword: "Password must be at least 6 characters",
-    errServer: "Connection failed, please try again",
-    emailSuccess: "Valid email ✓",
-    sentTitle: "Check your email",
-    sentMsg: "We sent a confirmation link to",
-    sentNote: "Click the link in the email to activate your account. Check your spam folder if you don't see it.",
-    sentBtn: "Go to sign in",
-    poweredBy: "All rights reserved © Manzoma 2026",
+    tagline: "Brezi i pionierëve · Fuqizimi i njeriut · Ndërtimi i së ardhmes",
+    albania: "Nga Shqipëria drejt një të ardhmeje të ndërtuar nga pionierët",
+    albanianValues: "Dije · Vlerë · E ardhme",
+    welcome: "Fillo udhëtimin tënd",
+    signupTitle: "Krijo llogari",
+    sub: "Regjistrohu për t'u bashkuar me platformën",
+    nameLabel: "Emri i plotë",
+    namePlaceholder: "p.sh. Sara Hoxha",
+    emailLabel: "E-mail",
+    passLabel: "Fjalëkalimi",
+    passPh: "Të paktën 6 karaktere",
+    btn: "Krijo llogari",
+    loadingBtn: "Po krijohet...",
+    haveAccount: "Ke tashmë një llogari?",
+    login: "Hyr",
+    or: "ose",
+    errEmpty: "Të lutem plotëso të gjitha fushat",
+    errEmailInvalid: "Formati i e-mail-it nuk është i saktë",
+    errPassword: "Fjalëkalimi duhet të ketë të paktën 6 karaktere",
+    errServer: "Lidhja dështoi, provo përsëri",
+    emailSuccess: "E-mail i vlefshëm ✓",
+    sentTitle: "Kontrollo e-mail-in",
+    sentMsg: "Dërguam një lidhje konfirmimi te",
+    sentNote: "Kliko lidhjen në e-mail për të aktivizuar llogarinë. Kontrollo dosjen e postës së padëshiruar nëse nuk e sheh.",
+    sentBtn: "Shko te hyrja",
+    poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma 2026",
   },
 } as const;
 
-type Lang = "ar" | "en";
+type Lang = "ar" | "sq";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 /* ─── Modern language toggle with sliding thumb ─── */
@@ -117,11 +117,12 @@ function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
       />
       <button
         type="button"
-        className={`lp-lang-btn${lang === "en" ? " lp-lang-btn--active" : ""}`}
-        onClick={() => onChange("en")}
-        aria-pressed={lang === "en"}
+        className={`lp-lang-btn${lang === "sq" ? " lp-lang-btn--active" : ""}`}
+        onClick={() => onChange("sq")}
+        aria-pressed={lang === "sq"}
+        aria-label="Shqip"
       >
-        <span className="lp-lang-name">EN</span>
+        <span className="lp-lang-name">SQ</span>
       </button>
       <button
         type="button"
@@ -144,7 +145,7 @@ function Rule() {
 }
 
 export default function SignupPage() {
-  const [lang, setLang]           = useState<Lang>("ar");
+  const [lang, setLang]           = useState<Lang>("sq");
   const [fullName, setFullName]   = useState("");
   const [email, setEmail]         = useState("");
   const [password, setPassword]   = useState("");
@@ -160,7 +161,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("lang") as Lang | null;
-    if (saved === "en" || saved === "ar") setLang(saved);
+    if (saved === "sq" || saved === "ar") setLang(saved);
   }, []);
 
   const handleLangChange = (l: Lang) => { setLang(l); setError(""); localStorage.setItem("lang", l); };
@@ -179,7 +180,7 @@ export default function SignupPage() {
         body: JSON.stringify({ full_name: fullName.trim(), email: email.trim(), password }),
       });
       const d = await r.json();
-      if (!r.ok || d.error) { setError(d.error ?? (lang === "en" ? "Account creation failed" : "حدث خطأ أثناء إنشاء الحساب")); return; }
+      if (!r.ok || d.error) { setError(d.error ?? (lang === "ar" ? "حدث خطأ أثناء إنشاء الحساب" : "Krijimi i llogarisë dështoi")); return; }
       if (d.emailConfirmationRequired) { setEmailSent(true); return; }
       window.location.href = "/login";
     } catch { setError(L.errServer); }
@@ -352,7 +353,7 @@ export default function SignupPage() {
                     </div>
                     {capsOn && password.length > 0 && (
                       <span className="lp-field-msg lp-field-msg--warn">
-                        {lang === "ar" ? "Caps Lock مُفعَّل" : "Caps Lock is on"}
+                        {lang === "ar" ? "Caps Lock مُفعَّل" : "Caps Lock është aktiv"}
                       </span>
                     )}
                   </div>

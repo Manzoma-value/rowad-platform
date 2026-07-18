@@ -182,9 +182,10 @@ export default function SchoolSignupClient({
   landingFlow?: LandingFlow;
 }) {
   const router = useRouter();
-  // Arabic is the platform default regardless of the school's own
-  // configured language — visitors can still switch via the AR/SQ toggle.
-  const [lang, setLang] = useState<Lang>("ar");
+  // Albanian is the default for this Albania-focused platform, regardless of
+  // the school's own configured language — visitors can still switch via the
+  // SQ/AR toggle.
+  const [lang, setLang] = useState<Lang>("sq");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -324,9 +324,10 @@ function LangToggle({
 
 /* ─── Main component ─── */
 export default function SchoolLoginClient({ school }: { school: School }) {
-  // Arabic is the platform default regardless of the school's own
-  // configured language — visitors can still switch via the AR/SQ toggle.
-  const [lang, setLang] = useState<Lang>("ar");
+  // Albanian is the default for this Albania-focused platform, regardless of
+  // the school's own configured language — visitors can still switch via the
+  // SQ/AR toggle.
+  const [lang, setLang] = useState<Lang>("sq");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
