@@ -30,6 +30,16 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
         select: { id: true, day_date: true },
         orderBy: { day_date: "asc" },
       },
+      enrollments: {
+        where: { teacher_id: auth.teacher.id },
+        select: { id: true },
+        take: 1,
+      },
+      signed_up_teachers: {
+        where: { id: auth.teacher.id },
+        select: { id: true },
+        take: 1,
+      },
       messages: {
         orderBy: { created_at: "asc" },
         take: 200,
@@ -43,18 +53,20 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
     },
   });
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const attended = workshop.attendance.length > 0;
-  const { attendance, ...detail } = workshop;
+  const { attendance, enrollments, signed_up_teachers: signedUpTeachers, ...detail } = workshop;
+  const attended = attendance.length > 0;
+  const hasAccess = attended || enrollments.length > 0 || signedUpTeachers.length > 0;
   const schedule = effectiveWorkshopSchedule(detail.schedule, detail.start_date, detail.end_date);
   return NextResponse.json({
     workshop: {
       ...detail,
       schedule,
-      notes: attended ? detail.notes : null,
-      materials: attended ? detail.materials : [],
-      messages: attended ? detail.messages : [],
+      notes: hasAccess ? detail.notes : null,
+      materials: hasAccess ? detail.materials : [],
+      messages: hasAccess ? detail.messages : [],
     },
     attended,
+    has_access: hasAccess,
     attendance_days: attendance.map((entry) => entry.day_date),
   });
 }

@@ -18,11 +18,15 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     where: {
       id,
       school_id: auth.teacher.school_id,
-      attendance: { some: { teacher_id: auth.teacher.id } },
+      OR: [
+        { enrollments: { some: { teacher_id: auth.teacher.id } } },
+        { attendance: { some: { teacher_id: auth.teacher.id } } },
+        { signed_up_teachers: { some: { id: auth.teacher.id } } },
+      ],
     },
     select: { id: true, status: true },
   });
-  if (!workshop) return NextResponse.json({ error: "attendance_required" }, { status: 403 });
+  if (!workshop) return NextResponse.json({ error: "workshop_access_required" }, { status: 403 });
   if (workshop.status === "CLOSED") return NextResponse.json({ error: "workshop_closed" }, { status: 410 });
 
   const message = await prisma.workshopMessage.create({

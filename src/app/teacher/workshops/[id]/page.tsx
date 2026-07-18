@@ -53,6 +53,7 @@ type Workshop = {
 type DetailPayload = {
   workshop: Workshop;
   attended: boolean;
+  has_access: boolean;
   attendance_days: string[];
 };
 
@@ -74,8 +75,8 @@ const text = {
     materialsSub: "الشرائح والملفات والصور والروابط المضافة من الإدارة",
     adminMessage: "رسالة من الإدارة",
     adminBadge: "الإدارة",
-    locked: "المحتوى متاح بعد تسجيل الحضور",
-    lockedSub: "امسح QR الحضور في يوم التدريب، وبعد نجاح التسجيل ستظهر لك كل مواد الورشة وملاحظاتها هنا.",
+    locked: "المحتوى متاح بعد التسجيل في الورشة",
+    lockedSub: "امسح رمز QR الخاص بالورشة، وبعد ربط حسابك ستظهر لك كل الملفات والملاحظات والروابط هنا.",
     noMaterials: "لم تتم إضافة مواد للورشة بعد.",
     openMaterial: "فتح",
     download: "تنزيل",
@@ -108,8 +109,8 @@ const text = {
     materialsSub: "Prezantime, dokumente, foto dhe lidhje nga administrata",
     adminMessage: "Mesazh nga administrata",
     adminBadge: "Administrata",
-    locked: "Materialet hapen pas regjistrimit të pranisë",
-    lockedSub: "Skano QR-në e pranisë në ditën e trajnimit. Pas regjistrimit do të shfaqen të gjitha materialet dhe shënimet.",
+    locked: "Materialet hapen pas regjistrimit në forum",
+    lockedSub: "Skano kodin QR të forumit. Pasi llogaria të lidhet, do të shfaqen të gjithë skedarët, shënimet dhe lidhjet.",
     noMaterials: "Nuk ka materiale ende.",
     openMaterial: "Hap",
     download: "Shkarko",
@@ -164,10 +165,10 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
   }, [load]);
 
   useEffect(() => {
-    if (!data?.attended && !data?.workshop.is_live) return;
+    if (!data?.has_access && !data?.workshop.is_live) return;
     const timer = window.setInterval(() => void load(true), 45_000);
     return () => window.clearInterval(timer);
-  }, [data?.attended, data?.workshop.is_live, load]);
+  }, [data?.has_access, data?.workshop.is_live, load]);
 
   const formatDate = (value: string) => new Date(value).toLocaleDateString(
     locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "sq-AL",
@@ -263,7 +264,7 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
         </div>
       </header>
 
-      {data.attended && workshop.notes && (
+      {data.has_access && workshop.notes && (
         <section className="tw-admin-note">
           <div className="tw-admin-icon"><ShieldCheck size={22} /></div>
           <div>
@@ -276,9 +277,9 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
       <section className="tw-section">
         <div className="tw-section-head">
           <div><h2>{T.materials}</h2><p>{T.materialsSub}</p></div>
-          {data.attended && <span className="tw-count">{workshop.materials.length}</span>}
+          {data.has_access && <span className="tw-count">{workshop.materials.length}</span>}
         </div>
-        {!data.attended ? (
+        {!data.has_access ? (
           <div className="tw-locked">
             <LockKeyhole size={28} />
             <strong>{T.locked}</strong>
@@ -295,7 +296,7 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
         )}
       </section>
 
-      {data.attended && (
+      {data.has_access && (
         <section className="tw-section tw-discussion">
           <div className="tw-section-head">
             <div><h2>{T.sharedNotes}</h2><p>{T.sharedNotesSub}</p></div>

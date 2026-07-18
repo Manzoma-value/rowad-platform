@@ -7,9 +7,9 @@ import MandalaLoader from "@/components/MandalaLoader";
 import TeacherLoadError from "@/components/TeacherLoadError";
 import type { WorkshopDay } from "@/lib/workshops";
 
-type Row={id:string;title:string;description:string|null;start_date:string|null;end_date:string|null;schedule:WorkshopDay[];attended:boolean;attendance_days:string[];status:string;is_live:boolean};
+type Row={id:string;title:string;description:string|null;start_date:string|null;end_date:string|null;schedule:WorkshopDay[];attended:boolean;has_access:boolean;attendance_days:string[];status:string;is_live:boolean};
 const liveCopy={ar:{live:"مباشرة الآن",liveHint:"الورشة منعقدة الآن — ادخل لمتابعة التفاصيل"},sq:{live:"Drejtpërdrejt",liveHint:"Forumi po zhvillohet tani — hap detajet"}} as const;
-const text={ar:{title:"مسار الورش التدريبية",sub:"تابع الورش بالترتيب الزمني وافتح مواد الورش التي حضرتها.",search:"ابحث في الورش",all:"الكل",attended:"حضرتها",upcoming:"القادمة",empty:"لا توجد ورش مطابقة.",day:"يوم",training:"تدريب",rest:"راحة",contentOpen:"المحتوى متاح",contentLocked:"يتاح المحتوى بعد تسجيل الحضور",details:"عرض التفاصيل"},sq:{title:"Forumet",sub:"Ndiq forumet sipas radhës dhe hap materialet e atyre ku ke marrë pjesë.",search:"Kërko",all:"Të gjitha",attended:"Pjesëmarrje",upcoming:"Të ardhshme",empty:"Nuk ka rezultate.",day:"ditë",training:"trajnim",rest:"pushim",contentOpen:"Materialet janë të hapura",contentLocked:"Materialet hapen pas regjistrimit të pranisë",details:"Shiko detajet"}} as const;
+const text={ar:{title:"مسار الورش التدريبية",sub:"تابع الورش بالترتيب الزمني وافتح مواد الورش المرتبطة بحسابك.",search:"ابحث في الورش",all:"الكل",attended:"حضرتها",upcoming:"القادمة",empty:"لا توجد ورش مطابقة.",day:"يوم",training:"تدريب",rest:"راحة",contentOpen:"المحتوى متاح",contentLocked:"يتاح المحتوى بعد مسح QR الورشة",details:"عرض التفاصيل"},sq:{title:"Forumet",sub:"Ndiq forumet sipas radhës dhe hap materialet e lidhura me llogarinë tënde.",search:"Kërko",all:"Të gjitha",attended:"Pjesëmarrje",upcoming:"Të ardhshme",empty:"Nuk ka rezultate.",day:"ditë",training:"trajnim",rest:"pushim",contentOpen:"Materialet janë të hapura",contentLocked:"Materialet hapen pas skanimit të QR-së",details:"Shiko detajet"}} as const;
 export default function TeacherWorkshops() {
   const { lang } = useLang();
   const L = lang === "sq" ? "sq" : "ar";
@@ -63,7 +63,7 @@ export default function TeacherWorkshops() {
           <Link href={`/teacher/workshops/${workshop.id}`}>
             <div className="top">
               <span><CalendarDays size={15}/>{fmt(workshop.start_date)}{workshop.end_date && workshop.end_date !== workshop.start_date ? ` - ${fmt(workshop.end_date)}` : ""}</span>
-              <div className="top-badges">{workshop.is_live&&<b className="live-badge"><Radio size={14}/>{O.live}</b>}{workshop.attended ? <b className="open"><CheckCircle2 size={14}/>{T.contentOpen}</b> : <b><LockKeyhole size={14}/>{T.contentLocked}</b>}</div>
+              <div className="top-badges">{workshop.is_live&&<b className="live-badge"><Radio size={14}/>{O.live}</b>}{workshop.has_access ? <b className="open"><CheckCircle2 size={14}/>{T.contentOpen}</b> : <b><LockKeyhole size={14}/>{T.contentLocked}</b>}</div>
             </div>
             <h2>{workshop.title}</h2>{workshop.description && <p>{workshop.description}</p>}
             {workshop.is_live&&<div className="live-hint">{O.liveHint}</div>}
