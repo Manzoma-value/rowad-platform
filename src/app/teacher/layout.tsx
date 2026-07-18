@@ -170,9 +170,19 @@ export default function TeacherLayout({ children }: Readonly<{ children: React.R
 function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
   const router = useRouter();
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const tr = t[lang];
   const isRtl = lang === "ar";
+
+  // Albanian is the default language for teachers. Only apply it when the
+  // user hasn't already chosen a language on this device — an explicit
+  // choice (saved under "lang") always wins.
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("lang")) setLang("sq");
+    } catch { /* localStorage unavailable — keep the provider default */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Tenant feature flags ──
   const { hasFeature, loading: tenantLoading } = useTenant();

@@ -13,7 +13,7 @@ import { useLang } from "@/lib/language-context";
    ───────────────────────────────────────────────────────────────────── */
 
 type Lang = "ar" | "sq" | "en";
-type GameId = "hub" | "memory" | "hunter" | "speed" | "collector";
+type GameId = "hub" | "memory" | "hunter" | "speed" | "collector" | "wordrain";
 
 /* ─── Localized strings ──────────────────────────────────────────────── */
 const STR = {
@@ -88,6 +88,19 @@ const STR = {
       "تحرّك باللاعب باستخدام الأسهم على لوحة المفاتيح أو الأزرار. التقط فقط المفاهيم التي تخدم المقصد المطلوب في الأعلى. 5 مفاهيم صحيحة تعني الفوز، و3 أخطاء تعني خسارة الجولة.",
     colLearn:
       "تعزّز التمييز السريع بين المفاهيم التي تنتمي لمقصد معيّن وبقية المفاهيم، فتصبح خريطة النموذج واضحة في ذهنك وتختار الصواب بثقة.",
+    // Word Rain
+    wrTitle: "مطر الكلمات",
+    wrDesc: "كلمات تتساقط من الأعلى! انقر بسرعة كلمات المقصد المطلوب فقط وتجنّب الباقي. 3 أخطاء وينتهي المطر.",
+    wrTargetLabel: "اجمع كلمات",
+    wrHowTo:
+      "تتساقط كلمات من أعلى الملعب. انقر فقط الكلمات التي تنتمي للمقصد المعروض في الأعلى قبل أن تسقط. كل كلمة صحيحة تزيد نقاطك وسلسلتك، وكل نقرة خاطئة تكلّفك قلباً. لديك 3 قلوب و45 ثانية — والسلسلة الطويلة تضاعف نقاطك!",
+    wrLearn:
+      "تربط بسرعة بين كل كلمة ومقصدها تحت ضغط الوقت، فترسّخ مفردات كل مقصد في ذاكرتك وتميّزها عن غيرها بشكل تلقائي وممتع.",
+    wrTapHint: "انقر الكلمات الصحيحة قبل أن تسقط ⬇",
+    wrWin: "انتهى الوقت! 🎉",
+    wrWinSub: (s: number) => `أحرزت ${s} نقطة — مطر رائع!`,
+    wrLose: "نفدت قلوبك 🙈",
+    wrLoseSub: "ركّز على كلمات المقصد المطلوب فقط — حاول مرة أخرى!",
     // Common
     seconds: "ث",
     yourScore: "نقاطك",
@@ -165,6 +178,19 @@ const STR = {
       "Lëviz lojtarin me shigjetat e tastierës ose me butonat. Kap vetëm konceptet që i shërbejnë qëllimit të kërkuar lart. 5 koncepte të sakta = fitore, 3 të gabuara = humbje.",
     colLearn:
       "Forcon dallimin e shpejtë midis koncepteve të një qëllimi të caktuar dhe pjesës tjetër, duke e bërë hartën e modelit të qartë në mendje dhe duke të ndihmuar të zgjedhësh me besim.",
+    // Word Rain
+    wrTitle: "Shiu i Fjalëve",
+    wrDesc: "Fjalët bien nga lart! Prek shpejt vetëm fjalët e qëllimit të kërkuar dhe shmang të tjerat. 3 gabime dhe shiu mbaron.",
+    wrTargetLabel: "Kap fjalët e",
+    wrHowTo:
+      "Fjalët bien nga maja e fushës. Prek vetëm fjalët që i përkasin qëllimit të shfaqur lart, para se të bien poshtë. Çdo fjalë e saktë shton pikët dhe vargun; çdo prekje e gabuar të kushton një zemër. Ke 3 zemra dhe 45 sekonda — vargu i gjatë i shumëfishon pikët!",
+    wrLearn:
+      "Lidh shpejt çdo fjalë me qëllimin e saj nën presionin e kohës, duke ngulitur fjalorin e çdo qëllimi në kujtesë dhe duke e dalluar atë nga të tjerët në mënyrë automatike dhe argëtuese.",
+    wrTapHint: "Prek fjalët e sakta para se të bien ⬇",
+    wrWin: "Koha mbaroi! 🎉",
+    wrWinSub: (s: number) => `Grumbullove ${s} pikë — shi i shkëlqyer!`,
+    wrLose: "Të mbaruan zemrat 🙈",
+    wrLoseSub: "Fokusohu vetëm te fjalët e qëllimit të kërkuar — provo sërish!",
     // Common
     seconds: "s",
     yourScore: "Pikët",
@@ -324,6 +350,7 @@ export default function GamesPage({ cardBase = "/teacher/games/card" }: { cardBa
       {game === "hunter"    && <HunterGame    T={T} lang={L} onBack={() => setGame("hub")} />}
       {game === "speed"     && <SpeedGame     T={T} lang={L} onBack={() => setGame("hub")} />}
       {game === "collector" && <CollectorGame T={T} lang={L} onBack={() => setGame("hub")} />}
+      {game === "wordrain"  && <WordRainGame  T={T} lang={L} onBack={() => setGame("hub")} />}
       <style>{styles}</style>
     </div>
   );
@@ -348,6 +375,7 @@ function Hub({
     { id: "memory",    title: T.memTitle, desc: T.memDesc, emoji: "🧠",  hue: "rgba(184,160,130,0.18)" },
     { id: "hunter",    title: T.hunTitle, desc: T.hunDesc, emoji: "🎯",  hue: "rgba(107,30,45,0.10)" },
     { id: "speed",     title: T.spdTitle, desc: T.spdDesc, emoji: "⚡",  hue: "rgba(27,94,32,0.10)" },
+    { id: "wordrain",  title: T.wrTitle,  desc: T.wrDesc,  emoji: "🌧️", hue: "rgba(30,64,107,0.10)" },
     { id: "collector", title: T.colTitle, desc: T.colDesc, emoji: "🧭",  hue: "rgba(101,91,83,0.10)" },
   ];
 
@@ -1373,6 +1401,276 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
 }
 
 /* ─────────────────────────────────────────────────────────────────────
+   Game 5 — Word Rain (falling words, tap the target maqsad)
+   Mobile-first arcade: words drop from the top, tap only the ones that
+   belong to the target maqsad before they hit the floor. 3 lives, 45s.
+   ───────────────────────────────────────────────────────────────────── */
+
+type RainWord = {
+  id: number;
+  x: number;       // percent (8..92), horizontal centre
+  y: number;       // percent (<0 spawn → >104 off the floor), vertical centre
+  speed: number;   // % per second
+  ar: string;
+  sq: string;
+  correct: boolean;
+};
+type RainPopup = { id: number; x: number; y: number; text: string; kind: "good" | "bad" };
+
+const WR_DURATION = 45;
+const WR_LIVES = 3;
+const WR_CORRECT_RATIO = 0.5;    // ~half the drops belong to the target
+const WR_MAX_ON_SCREEN = 9;
+
+function WordRainGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: () => void }) {
+  const [initialTarget] = useState(pickTargetMaqsad);
+
+  // Authoritative state in refs (mutated by the rAF loop + taps), mirrored
+  // to React each tick — same pattern as the Collector game.
+  const targetRef  = useRef<Maqsad>(initialTarget);
+  const wordsRef   = useRef<RainWord[]>([]);
+  const scoreRef   = useRef(0);
+  const livesRef   = useRef(WR_LIVES);
+  const comboRef   = useRef(0);
+  const bestRef    = useRef(0);
+  const idRef      = useRef(0);
+  const popupIdRef = useRef(0);
+  const spawnAccRef = useRef(0);
+  const elapsedRef  = useRef(0);
+
+  const [target, setTarget]       = useState<Maqsad>(initialTarget);
+  const [words, setWords]         = useState<RainWord[]>([]);
+  const [popups, setPopups]       = useState<RainPopup[]>([]);
+  const [score, setScore]         = useState(0);
+  const [lives, setLives]         = useState(WR_LIVES);
+  const [combo, setCombo]         = useState(0);
+  const [bestCombo, setBestCombo] = useState(0);
+  const [timeLeft, setTimeLeft]   = useState(WR_DURATION);
+  const [status, setStatus]       = useState<"playing" | "won" | "lost">("playing");
+  const [flash, setFlash]         = useState<"good" | "bad" | null>(null);
+
+  const makeWord = useCallback((): RainWord => {
+    const t = targetRef.current;
+    const correct = Math.random() < WR_CORRECT_RATIO;
+    let item: ColItem;
+    if (correct) {
+      const pool = COLLECTOR_BANK[t];
+      item = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+      const others = MAQSAD_ORDER.filter((m) => m !== t).flatMap((m) => COLLECTOR_BANK[m]);
+      item = others[Math.floor(Math.random() * others.length)];
+    }
+    // Speed ramps up gently as the round goes on.
+    const speed = 20 + Math.random() * 9 + Math.min(15, elapsedRef.current * 0.35);
+    return {
+      id: ++idRef.current,
+      x: 10 + Math.random() * 80,
+      y: -8 - Math.random() * 8,
+      speed,
+      ar: item.ar,
+      sq: item.sq,
+      correct,
+    };
+  }, []);
+
+  const restart = useCallback(() => {
+    const t = pickTargetMaqsad();
+    targetRef.current = t;
+    wordsRef.current = [];
+    scoreRef.current = 0;
+    livesRef.current = WR_LIVES;
+    comboRef.current = 0;
+    bestRef.current = 0;
+    spawnAccRef.current = 0;
+    elapsedRef.current = 0;
+    setTarget(t);
+    setWords([]);
+    setPopups([]);
+    setScore(0);
+    setLives(WR_LIVES);
+    setCombo(0);
+    setBestCombo(0);
+    setTimeLeft(WR_DURATION);
+    setFlash(null);
+    setStatus("playing");
+  }, []);
+
+  const spawnPopup = useCallback((x: number, y: number, text: string, kind: "good" | "bad") => {
+    const id = ++popupIdRef.current;
+    setPopups((p) => [...p, { id, x, y, text, kind }]);
+    setTimeout(() => setPopups((p) => p.filter((q) => q.id !== id)), 750);
+  }, []);
+
+  // Countdown — time up is a WIN (you survived the rain).
+  useEffect(() => {
+    if (status !== "playing") return;
+    const id = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) { clearInterval(id); setStatus("won"); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [status]);
+
+  // Fall + spawn loop.
+  useEffect(() => {
+    if (status !== "playing") return;
+    let raf = 0;
+    let last = performance.now();
+    function step(now: number) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      elapsedRef.current += dt;
+
+      // Spawn on a shrinking interval, capped by max on screen.
+      spawnAccRef.current += dt;
+      const interval = Math.max(0.5, 0.82 - elapsedRef.current * 0.006);
+      if (spawnAccRef.current >= interval && wordsRef.current.length < WR_MAX_ON_SCREEN) {
+        spawnAccRef.current = 0;
+        wordsRef.current = [...wordsRef.current, makeWord()];
+      }
+
+      // Move + drop off-floor words. Missing a correct word breaks the combo.
+      let comboBroken = false;
+      const next: RainWord[] = [];
+      for (const w of wordsRef.current) {
+        const ny = w.y + w.speed * dt;
+        if (ny > 106) {
+          if (w.correct) comboBroken = true;
+          continue;
+        }
+        next.push({ ...w, y: ny });
+      }
+      wordsRef.current = next;
+      if (comboBroken && comboRef.current !== 0) {
+        comboRef.current = 0;
+        setCombo(0);
+      }
+
+      setWords(wordsRef.current);
+      raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [status, makeWord]);
+
+  function tapWord(id: number) {
+    if (status !== "playing") return;
+    const w = wordsRef.current.find((x) => x.id === id);
+    if (!w) return;
+    wordsRef.current = wordsRef.current.filter((x) => x.id !== id);
+    if (w.correct) {
+      const mult = comboRef.current >= 9 ? 5 : comboRef.current >= 4 ? 3 : comboRef.current >= 1 ? 2 : 1;
+      scoreRef.current += 10 * mult;
+      comboRef.current += 1;
+      bestRef.current = Math.max(bestRef.current, comboRef.current);
+      setScore(scoreRef.current);
+      setCombo(comboRef.current);
+      setBestCombo(bestRef.current);
+      spawnPopup(w.x, w.y, `+${10 * mult}`, "good");
+      setFlash("good");
+    } else {
+      livesRef.current -= 1;
+      comboRef.current = 0;
+      setLives(livesRef.current);
+      setCombo(0);
+      spawnPopup(w.x, w.y, "−♥", "bad");
+      setFlash("bad");
+      if (livesRef.current <= 0) setStatus("lost");
+    }
+    setWords(wordsRef.current);
+    setTimeout(() => setFlash(null), 180);
+  }
+
+  const targetLabel = MAQSAD_LABELS[target][lang === "sq" ? "sq" : "ar"];
+  const mult = combo >= 9 ? 5 : combo >= 4 ? 3 : combo >= 1 ? 2 : 1;
+  const ended = status !== "playing";
+
+  return (
+    <GameFrame
+      T={T}
+      title={T.wrTitle}
+      onBack={onBack}
+      onRestart={restart}
+      hintKey="wordrain"
+      howToPlay={T.wrHowTo}
+      whatYouLearn={T.wrLearn}
+    >
+      <div className="gm-stat-row">
+        <div className="gm-stat">
+          <span className="gm-stat-label">{T.wrTargetLabel}</span>
+          <span className="gm-col-target-pill">{targetLabel}</span>
+        </div>
+        <div className="gm-stat">
+          <span className="gm-stat-label">{T.hunLives}</span>
+          <div className="gm-hearts">
+            {[1, 2, 3].map((i) => (
+              <span key={i} className={`gm-heart${i <= lives ? " on" : ""}`}>♥</span>
+            ))}
+          </div>
+        </div>
+        <div className="gm-stat">
+          <span className="gm-stat-label">{T.spdCombo}</span>
+          <span className={`gm-stat-value mono${combo >= 1 ? " hot" : ""}`}>x{mult}</span>
+        </div>
+        <Stat label={T.spdScore} value={String(score)} mono />
+        <Stat label={T.spdTimeLeft} value={`${timeLeft}${T.seconds}`} mono />
+      </div>
+
+      <div
+        className={`gm-wr-field${flash ? ` fb-${flash}` : ""}`}
+        style={{ touchAction: "manipulation" }}
+      >
+        {words.map((w) => (
+          <button
+            key={w.id}
+            className="gm-wr-word"
+            style={{ left: `${w.x}%`, top: `${w.y}%` }}
+            onPointerDown={(e) => { e.preventDefault(); tapWord(w.id); }}
+            type="button"
+            aria-label="falling word"
+          >
+            {lang === "sq" ? w.sq : w.ar}
+          </button>
+        ))}
+        {popups.map((p) => (
+          <span
+            key={p.id}
+            className={`gm-wr-popup ${p.kind}`}
+            style={{ left: `${p.x}%`, top: `${p.y}%` }}
+          >
+            {p.text}
+          </span>
+        ))}
+        <span className="gm-wr-hint" aria-hidden>{T.wrTapHint}</span>
+      </div>
+
+      {ended && (
+        <WinModal>
+          <div className={`gm-win-title ${status === "won" ? "good" : "bad"}`}>
+            {status === "won" ? T.wrWin : T.wrLose}
+          </div>
+          <div className="gm-win-emoji">{status === "won" ? "🌧️" : "🌱"}</div>
+          <div className="gm-win-sub">
+            {status === "won" ? T.wrWinSub(score) : T.wrLoseSub}
+          </div>
+          <div className="gm-win-stats">
+            <span>{T.spdScore}: <strong>{score}</strong></span>
+            <span className="gm-win-sep" />
+            <span>{T.bestStreak}: <strong>{bestCombo}</strong></span>
+          </div>
+          <div className="gm-win-actions">
+            <button className="gm-btn-primary" onClick={restart}>{T.memPlayAgain}</button>
+            <button className="gm-btn-ghost" onClick={onBack}>{T.backToHub}</button>
+          </div>
+        </WinModal>
+      )}
+    </GameFrame>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────
    Tiny shared sub-components
    ───────────────────────────────────────────────────────────────────── */
 
@@ -1973,5 +2271,92 @@ const styles = `
 @media(min-width:760px){
   /* Desktop: keep the D-pad visible as a fallback, but smaller */
   .gm-dpad{grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,38px)}
+}
+
+/* ── WORD RAIN GAME ── */
+@keyframes gm-wr-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}30%{opacity:1;transform:translate(-50%,-90%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-150%) scale(.9)}}
+
+.gm-wr-field{
+  position:relative;
+  width:100%;max-width:560px;margin:0 auto;
+  height:min(60vh,540px);
+  border-radius:20px;overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 0%, #FFFBF5 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(30,64,107,0.08), transparent 55%),
+    linear-gradient(180deg,#F7F3EB 0%,#E5E0D5 100%);
+  border:1.5px solid #D9C9B0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), 0 10px 28px rgba(107,30,45,0.12);
+  user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  transition:border-color .14s, box-shadow .14s;
+}
+/* Faint "rain" streaks in the background */
+.gm-wr-field::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:repeating-linear-gradient(105deg, rgba(107,30,45,0.05) 0 1px, transparent 1px 26px);
+}
+.gm-wr-field.fb-good{border-color:#1B5E20;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), 0 10px 30px rgba(27,94,32,0.26)}
+.gm-wr-field.fb-bad{border-color:#6B1E2D;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), 0 10px 30px rgba(107,30,45,0.30)}
+
+.gm-wr-word{
+  position:absolute;transform:translate(-50%,-50%);
+  padding:9px 15px;border-radius:13px;
+  background:linear-gradient(160deg,#FFFBF5,#F7F3EB);
+  border:1.5px solid #D9C9B0;
+  font-family:'El Messiri','Cairo',serif;
+  font-size:15px;font-weight:800;color:#4A0E1C;
+  white-space:nowrap;cursor:pointer;
+  box-shadow:0 4px 12px rgba(107,30,45,0.16), inset 0 1px 0 rgba(255,255,255,0.6);
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  will-change:left,top;z-index:2;
+  min-height:38px;line-height:1;
+}
+.gm-wr-word:active{transform:translate(-50%,-50%) scale(.9)}
+@media(max-width:520px){.gm-wr-word{font-size:14px;padding:8px 13px;min-height:36px}}
+
+.gm-wr-popup{
+  position:absolute;transform:translate(-50%,-50%);
+  font-family:'IBM Plex Mono','Cairo',monospace;font-size:19px;font-weight:900;
+  pointer-events:none;z-index:6;
+  animation:gm-wr-pop .75s ease forwards;
+}
+.gm-wr-popup.good{color:#1B5E20;text-shadow:0 2px 8px rgba(27,94,32,0.30)}
+.gm-wr-popup.bad{color:#6B1E2D;text-shadow:0 2px 8px rgba(107,30,45,0.30)}
+
+.gm-wr-hint{
+  position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+  font-size:12px;font-weight:800;color:#796A62;letter-spacing:.3px;
+  background:rgba(255,251,245,0.75);border:1px solid rgba(184,160,130,0.35);
+  padding:4px 12px;border-radius:99px;white-space:nowrap;pointer-events:none;z-index:1;
+}
+
+/* ── MOBILE HARDENING (all games) ── */
+/* Kill the grey tap flash + the 300ms double-tap-zoom delay on every
+   interactive game control, and stop text selection during rapid taps. */
+.gm-shell{-webkit-tap-highlight-color:transparent}
+.gm-tile,.gm-back,.gm-restart,.gm-hint-pill,.gm-hint-close,
+.gm-mcard,.gm-hunter-btn,.gm-speed-btn,.gm-wr-word,.gm-dpad-btn,
+.gm-btn-primary,.gm-btn-ghost,.gm-speed-choices button{
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.gm-mcard,.gm-speed-btn,.gm-hunter-btn,.gm-wr-word{
+  user-select:none;-webkit-user-select:none;
+}
+/* Give the falling-word arena and rapid-tap surfaces a comfortable min tap
+   target and prevent the iOS long-press callout. */
+.gm-wr-word,.gm-speed-btn,.gm-dpad-btn{-webkit-touch-callout:none}
+
+@media(max-width:520px){
+  .gm-inner{padding:22px 14px 56px}
+  .gm-hero{margin-bottom:24px}
+  .gm-hero-title{font-size:27px}
+  .gm-hero-sub{font-size:13px}
+  .gm-stat-row{gap:10px 14px;padding:11px 12px}
+  .gm-stat{min-width:62px}
+  .gm-stat-value{font-size:18px}
+  .gm-game-title{font-size:19px}
+  .gm-back span,.gm-restart span{font-size:12px}
 }
 `;
