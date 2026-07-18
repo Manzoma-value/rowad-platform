@@ -45,7 +45,7 @@ const UI = {
   },
   sq: {
     title: "Raportet e pronarit",
-    sub: "Krijo raporte zyrtare për shkollat mbi punëtoritë, vizitat, programet dhe takimet. Çdo raport i dërgohet një shkolle dhe e shohin vetëm administratorët e saj.",
+    sub: "Krijo raporte zyrtare për shkollat mbi forumet, vizitat, programet dhe takimet. Çdo raport i dërgohet një shkolle dhe e shohin vetëm administratorët e saj.",
     create: "+ Raport i ri",
     tabAll: "Të gjitha",
     tabDraft: "Draft",

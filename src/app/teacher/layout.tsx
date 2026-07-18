@@ -30,6 +30,7 @@ import {
   Gamepad2,
   MapPin,
   CalendarRange,
+  Radio,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -121,7 +122,7 @@ const navItems: NavItem2[] = [
   },
   {
     href: "/teacher/workshops", key: "workshops", sublabel: "Workshops", exact: false, icon: CalendarRange,
-    labelAr: "الورش التدريبية", labelSq: "Takimet", labelEn: "Workshops",
+    labelAr: "الورش التدريبية", labelSq: "Forumi", labelEn: "Workshops",
   },
   {
     href: "/teacher/roadmap",  key: "roadmap",   sublabel: "Roadmap",   exact: false, icon: MapPin,
@@ -149,6 +150,13 @@ const navItems: NavItem2[] = [
 ];
 
 const COMMUNITY_HREF = "/teacher/hub";
+
+type LiveWorkshopAlert = {
+  id: string;
+  title: string;
+  description: string | null;
+  live_started_at: string | null;
+};
 
 /* ─── Layout (thin wrapper that provides tenant context) ─── */
 export default function TeacherLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -207,6 +215,8 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const [schoolLang, setSchoolLang] = useState("sq");
   const [onboardingStatus, setOnboardingStatus] = useState<string | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
+  const [liveWorkshop, setLiveWorkshop] = useState<LiveWorkshopAlert | null>(null);
+  const [livePanelOpen, setLivePanelOpen] = useState(false);
   const schoolSlugRef = useRef<string>("");
 
   useEffect(() => {
@@ -248,6 +258,32 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
     cachedFetch<{ profile?: { avatar_url?: string } }>("/api/profile", 600_000)
       .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const loadLiveWorkshop = async () => {
+      try {
+        const response = await fetch("/api/teacher/workshops/live", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json() as { live_workshop?: LiveWorkshopAlert | null };
+        if (active) setLiveWorkshop(data.live_workshop ?? null);
+      } catch {
+        // A transient notification failure must not affect the teacher shell.
+      }
+    };
+
+    void loadLiveWorkshop();
+    const interval = window.setInterval(() => void loadLiveWorkshop(), 30_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadLiveWorkshop();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, []);
 
   async function handleLogout() {
@@ -628,9 +664,33 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
           <div className="tl-topbar-actions">
             <div className="tl-topbar-divider" />
-            <button type="button" className="tl-bell-btn" aria-label="الإشعارات">
-              <Bell size={15} strokeWidth={1.7} />
-            </button>
+            <div className="tl-notification-wrap">
+              <button
+                type="button"
+                className={`tl-bell-btn${liveWorkshop ? " has-live" : ""}`}
+                aria-label={liveWorkshop
+                  ? (lang === "ar" ? "ورشة مباشرة الآن" : lang === "sq" ? "Forumi është drejtpërdrejt" : "Live workshop now")
+                  : (lang === "ar" ? "الإشعارات" : lang === "sq" ? "Njoftimet" : "Notifications")}
+                aria-expanded={livePanelOpen}
+                onClick={() => setLivePanelOpen((open) => liveWorkshop ? !open : false)}
+              >
+                <Bell size={16} strokeWidth={1.8} />
+                {liveWorkshop && <span className="tl-live-dot" aria-hidden="true" />}
+              </button>
+              {liveWorkshop && livePanelOpen && (
+                <div className="tl-live-panel" role="status">
+                  <div className="tl-live-panel-status">
+                    <Radio size={14} />
+                    <span>{lang === "ar" ? "أنت في ورشة مباشرة الآن" : lang === "sq" ? "Je në një forum drejtpërdrejt" : "You are in a live workshop"}</span>
+                  </div>
+                  <strong>{liveWorkshop.title}</strong>
+                  {liveWorkshop.description && <p>{liveWorkshop.description}</p>}
+                  <Link href={`/teacher/workshops/${liveWorkshop.id}`} onClick={() => setLivePanelOpen(false)}>
+                    {lang === "ar" ? "عرض الورشة" : lang === "sq" ? "Hap forumin" : "Open workshop"}
+                  </Link>
+                </div>
+              )}
+            </div>
             <div className="tl-topbar-user-pill">
               <div className="tl-topbar-av">
                 {avatarUrl ? (
@@ -1073,14 +1133,23 @@ const styles = `
   .tl-topbar-divider  { display: none; width: 1px; height: 24px; background: rgba(217,201,176,.22); }
   @media (min-width: 768px) { .tl-topbar-divider { display: block; } }
 
+  .tl-notification-wrap { position: relative; }
   .tl-bell-btn {
-    display: none; align-items: center; justify-content: center;
+    position: relative; display: flex; align-items: center; justify-content: center;
     width: 36px; height: 36px; border-radius: 50%;
     background: rgba(255,251,245,.07); border: 1px solid rgba(217,201,176,.22);
     cursor: pointer; color: var(--tl-gold-soft); transition: all 0.18s;
   }
   .tl-bell-btn:hover { border-color: rgba(217,201,176,.58); color: #FFFBF5; background:rgba(255,251,245,.12); }
-  @media (min-width: 768px) { .tl-bell-btn { display: flex; } }
+  .tl-bell-btn.has-live { color: #FFFBF5; border-color: rgba(217,201,176,.72); background:rgba(107,30,45,.9); box-shadow:0 0 0 3px rgba(217,201,176,.12); }
+  .tl-live-dot { position:absolute; inset-block-start:3px; inset-inline-end:3px; width:8px; height:8px; border-radius:50%; background:#D9C9B0; border:2px solid #4A0E1C; box-sizing:content-box; animation:tl-live-pulse 1.8s ease-out infinite; }
+  .tl-live-panel { position:absolute; inset-block-start:calc(100% + 12px); inset-inline-end:0; width:min(330px,calc(100vw - 24px)); padding:16px; border:1px solid rgba(184,160,130,.36); border-radius:8px; background:#FFFBF5; color:#32101A; box-shadow:0 18px 46px rgba(26,26,26,.24); z-index:80; }
+  .tl-live-panel::before { content:""; position:absolute; inset-block-start:-6px; inset-inline-end:13px; width:10px; height:10px; rotate:45deg; background:#FFFBF5; border-inline-start:1px solid rgba(184,160,130,.36); border-block-start:1px solid rgba(184,160,130,.36); }
+  .tl-live-panel-status { display:flex; align-items:center; gap:7px; color:#6B1E2D; font-size:11px; font-weight:900; margin-bottom:8px; }
+  .tl-live-panel > strong { display:block; font-size:14px; line-height:1.6; overflow-wrap:anywhere; }
+  .tl-live-panel > p { margin:5px 0 12px; color:#655B53; font-size:11.5px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .tl-live-panel > a { display:flex; align-items:center; justify-content:center; min-height:36px; margin-top:12px; padding:7px 12px; border-radius:7px; background:#4A0E1C; color:#FFFBF5; text-decoration:none; font-size:12px; font-weight:900; }
+  @keyframes tl-live-pulse { 0% { box-shadow:0 0 0 0 rgba(217,201,176,.65); } 70%,100% { box-shadow:0 0 0 7px rgba(217,201,176,0); } }
 
   .tl-topbar-user-pill {
     display: none; align-items: center; gap: 8px;

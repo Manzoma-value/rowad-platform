@@ -200,7 +200,7 @@ export const CONTRIBUTION_L: Record<string, L> = {
   DESIGNED_PROGRAM:         { ar: "تصميم برنامج أو مشروع",     sq: "Dizajnim programi ose projekti" },
   DEVELOPED_CURRICULUM:     { ar: "تطوير منهج أو محتوى تعليمي", sq: "Zhvillim kurrikule ose përmbajtjeje" },
   PREPARED_TOOLKIT:         { ar: "إعداد دليل أو أداة عمل",    sq: "Përgatitje udhëzuesi ose mjeti pune" },
-  DELIVERED_WORKSHOPS:      { ar: "تقديم دورات أو ورش تدريبية", sq: "Mbajtje kursesh ose punëtorish" },
+  DELIVERED_WORKSHOPS:      { ar: "تقديم دورات أو ورش تدريبية", sq: "Mbajtje kursesh ose forumesh" },
   SUPERVISED_PROGRAMS:      { ar: "الإشراف على برامج أو مشاريع", sq: "Mbikëqyrje programesh ose projektesh" },
   DEVELOPMENT_COMMITTEES:   { ar: "المشاركة في لجان أو فرق تطوير", sq: "Pjesëmarrje në komitete ose ekipe zhvillimi" },
   PRODUCED_DIGITAL_CONTENT: { ar: "إنتاج مواد رقمية تعليمية أو معرفية", sq: "Prodhim përmbajtjeje dixhitale arsimore" },

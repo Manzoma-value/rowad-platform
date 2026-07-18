@@ -102,14 +102,13 @@ const UI = {
     copy: "نسخ الرابط",
     copied: "تم النسخ",
     attendance: "جدول الحضور",
-    attendanceHelp: "الأخضر = حضر في هذا اليوم، الأحمر = لم يحضر. الإجمالي يوضح عدد أيام الحضور لكل معلم.",
+    attendanceHelp: "يعرض الجدول سجلات الحضور الفعلية فقط، مع وقت وطريقة تسجيل كل حضور.",
     teacher: "المعلم",
     email: "البريد",
     total: "الإجمالي",
     status: "الحالة",
     noTeachers: "لا يوجد معلمون مرتبطون بهذه الورشة بعد. سيظهر هنا كل من سجّل عبر QR التسجيل أو سجّل حضوراً.",
     present: "حاضر",
-    absent: "غائب",
     registered: "مسجلون",
     days: "أيام",
     refresh: "تحديث",
@@ -117,34 +116,33 @@ const UI = {
     schedule: "البرنامج الزمني", workDay: "يوم تدريب", restDay: "إجازة / راحة", content: "محتوى الورشة", contentHelp: "الملفات والروابط التي ستتاح للمعلمين بعد تسجيل حضورهم.", notes: "رسالة الإدارة المثبتة", addFile: "رفع ملف", addLink: "إضافة رابط", linkTitle: "عنوان المحتوى", linkUrl: "رابط YouTube أو Drive أو أي رابط آمن", add: "إضافة", noContent: "لم تتم إضافة محتوى بعد.", remove: "حذف", exportExcel: "Excel", exportPdf: "PDF", exporting: "جاري التصدير...", discussion: "ملاحظات الورشة المشتركة", discussionHelp: "اكتب رسالة أو ملاحظة تظهر لجميع المعلمين الحاضرين. رسائل الإدارة تظهر بشكل مميز.", messagePlaceholder: "اكتب رسالة للحاضرين...", publish: "نشر", publishing: "جاري النشر...", noMessages: "لا توجد ملاحظات مشتركة بعد.", adminBadge: "الإدارة", teacherBadge: "معلم", messageError: "تعذر نشر الرسالة.", materialError: "تعذر حفظ المادة. تأكد أن الملف أقل من 40MB ثم حاول مرة أخرى.",
   },
   sq: {
-    back: "Kthehu te punëtoritë",
+    back: "Kthehu te forumet",
     signupQr: "QR i regjistrimit",
-    signupSub: "Ky kod është i përhershëm. Shfaqe në punëtori që mësuesi të krijojë llogarinë dhe të plotësojë aplikimin.",
+    signupSub: "Ky kod është i përhershëm. Shfaqe në forum që mësuesi të krijojë llogarinë dhe të plotësojë aplikimin.",
     attendanceQr: "QR i përhershëm i pranisë",
-    attendanceSub: "Një kod i vetëm për çdo ditë të punëtorisë. Sistemi regjistron automatikisht praninë në datën e skanimit.",
+    attendanceSub: "Një kod i vetëm për çdo ditë të forumit. Sistemi regjistron automatikisht praninë në datën e skanimit.",
     generate: "Krijo kodin e pranisë",
     generating: "Duke gjeneruar...",
     noCode: "Kodi i përhershëm i pranisë nuk është krijuar ende.",
     open: "E hapur",
     closed: "E mbyllur",
-    close: "Mbyll punëtorinë",
-    reopen: "Rihap punëtorinë",
+    close: "Mbyll forumin",
+    reopen: "Rihap forumin",
     saving: "Duke ruajtur...",
     copy: "Kopjo lidhjen",
     copied: "U kopjua",
     attendance: "Tabela e pranisë",
-    attendanceHelp: "Jeshile = prezent atë ditë, e kuqe = mungesë. Totali tregon sa ditë ka marrë pjesë çdo mësues.",
+    attendanceHelp: "Tabela shfaq vetëm regjistrimet reale të pranisë, me kohën dhe mënyrën e regjistrimit.",
     teacher: "Mësuesi",
     email: "Email",
     total: "Totali",
     status: "Statusi",
-    noTeachers: "Nuk ka mësues të lidhur me këtë punëtori ende.",
+    noTeachers: "Nuk ka mësues të lidhur me këtë forum ende.",
     present: "Prezent",
-    absent: "Mungesë",
     registered: "Të regjistruar",
     days: "ditë",
     refresh: "Rifresko",
-    error: "Nuk u ngarkuan të dhënat e punëtorisë.",
+    error: "Nuk u ngarkuan të dhënat e forumit.",
     schedule: "Programi", workDay: "Ditë trajnimi", restDay: "Pushim", content: "Materialet", contentHelp: "Skedarët dhe lidhjet u hapen mësuesve pasi regjistrojnë praninë.", notes: "Mesazhi i fiksuar i administratës", addFile: "Ngarko skedar", addLink: "Shto lidhje", linkTitle: "Titulli", linkUrl: "YouTube, Drive ose lidhje tjetër", add: "Shto", noContent: "Nuk ka materiale ende.", remove: "Fshi", exportExcel: "Excel", exportPdf: "PDF", exporting: "Duke eksportuar...", discussion: "Shënimet e përbashkëta", discussionHelp: "Mesazhet e administratës shfaqen qartë për të gjithë pjesëmarrësit.", messagePlaceholder: "Shkruaj një mesazh për pjesëmarrësit...", publish: "Publiko", publishing: "Duke publikuar...", noMessages: "Nuk ka shënime ende.", adminBadge: "Administrata", teacherBadge: "Mësues", messageError: "Mesazhi nuk u publikua.", materialError: "Materiali nuk u ruajt. Skedari duhet të jetë më pak se 40MB.",
   },
 } as const;
@@ -170,13 +168,13 @@ const OPS = {
     manualSource: "يدوي",
     late: "متأخر",
     removeAttendance: "حذف سجل الحضور",
-    removeConfirm: "هل تريد حذف سجل الحضور هذا؟ سيعود اليوم إلى حالة غائب.",
+    removeConfirm: "هل تريد حذف سجل الحضور هذا؟",
     operationError: "تعذر تنفيذ العملية. حاول مرة أخرى.",
     closePanel: "إغلاق",
   },
   sq: {
-    liveNow: "Punëtoria është live tani",
-    startLive: "Fillo punëtorinë tani",
+    liveNow: "Forumi është drejtpërdrejt",
+    startLive: "Fillo forumin tani",
     endLive: "Përfundo sesionin live",
     liveSince: "Filloi në",
     participants: "Menaxho pjesëmarrësit",
@@ -184,7 +182,7 @@ const OPS = {
     searchTeachers: "Kërko me emër ose email",
     activeTeachers: "Mësuesit aktivë",
     enrolled: "I shtuar",
-    addTeacher: "Shto në punëtori",
+    addTeacher: "Shto në forum",
     adding: "Duke shtuar...",
     noActiveTeachers: "Nuk ka mësues aktivë që përputhen.",
     manualAttendance: "Regjistro praninë manualisht",
@@ -194,7 +192,7 @@ const OPS = {
     manualSource: "Manuale",
     late: "Me vonesë",
     removeAttendance: "Fshi praninë",
-    removeConfirm: "Ta fshijmë këtë regjistrim? Dita do të shfaqet përsëri si mungesë.",
+    removeConfirm: "Ta fshijmë këtë regjistrim të pranisë?",
     operationError: "Veprimi nuk u krye. Provo përsëri.",
     closePanel: "Mbyll",
   },
@@ -213,13 +211,13 @@ const EDIT = {
   },
   sq: {
     action: "Ndrysho detajet",
-    title: "Titulli i punëtorisë",
-    description: "Përshkrimi i punëtorisë",
+    title: "Titulli i forumit",
+    description: "Përshkrimi i forumit",
     helper: "Përdor një titull të qartë dhe një përshkrim të shkurtër për pjesëmarrësit.",
     save: "Ruaj ndryshimet",
     saving: "Duke ruajtur...",
     cancel: "Anulo",
-    required: "Titulli i punëtorisë kërkohet.",
+    required: "Titulli i forumit kërkohet.",
   },
 } as const;
 
@@ -285,9 +283,8 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const summary = useMemo(() => {
     const teachers = attendance?.teachers ?? [];
     const days = attendance?.days ?? [];
-    const expectedCells = teachers.length * days.length;
     const presentCells = teachers.reduce((sum, t) => sum + t.total_present, 0);
-    return { teachers: teachers.length, days: days.length, presentCells, expectedCells };
+    return { teachers: teachers.length, days: days.length, presentCells };
   }, [attendance]);
 
   const visibleRoster = useMemo(() => {
@@ -540,7 +537,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
       t.full_name,
       t.email ?? "",
       t.status,
-      ...t.attendance.map(entry => entry ? `${T.present} - ${fmtTime(entry.checked_in_at)} (${entry.source === "MANUAL" ? O.manualSource : O.qrSource})` : T.absent),
+      ...t.attendance.map(entry => entry ? `${T.present} - ${fmtTime(entry.checked_in_at)} (${entry.source === "MANUAL" ? O.manualSource : O.qrSource})` : ""),
       `${t.total_present}/${attendance.days.length}`,
     ]);
     if (format === "xlsx") {
@@ -616,7 +613,6 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         <div><span>{T.registered}</span><strong>{summary.teachers}</strong></div>
         <div><span>{T.days}</span><strong>{summary.days}</strong></div>
         <div><span>{T.present}</span><strong>{summary.presentCells}</strong></div>
-        <div><span>{T.absent}</span><strong>{Math.max(0, summary.expectedCells - summary.presentCells)}</strong></div>
       </section>
 
       <section className="wd-card wd-program">
@@ -716,7 +712,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
                     {teacher.attendance.map((entry, index) => {
                       const day = attendance.days[index];
                       const busyKey = `${teacher.teacher_id}:${day}`;
-                      return <td key={day} className={entry ? "present" : "absent"}>
+                      return <td key={day} className={entry ? "present" : "unrecorded"}>
                         {entry ? <div className="wd-checkin">
                           <CheckCircle2 size={16}/>
                           <time title={O.checkedAt}>{fmtTime(entry.checked_in_at)}</time>
@@ -810,14 +806,14 @@ const styles = `
 .wd-dates{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.wd-dates span{border:1px solid rgba(184,160,130,.18);background:rgba(255,255,255,.06);border-radius:10px;padding:6px 10px;color:#E8DCBC;font-size:12px;font-weight:800}
 .wd-hero-btn,.wd-small-btn,.wd-copy{border:0;border-radius:11px;background:#1A1A1A;color:#B8A082;padding:10px 15px;font:inherit;font-weight:900;cursor:pointer}
 .wd-hero-btn:disabled,.wd-small-btn:disabled{opacity:.55;cursor:progress}.wd-small-btn{font-size:12px;padding:8px 12px}.wd-small-btn.ghost{background:#FFF;border:1.5px solid rgba(184,155,94,.28);color:#6B1E2D}
-.wd-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}.wd-stats div{background:#FFFBF5;border:1px solid rgba(184,155,94,.18);border-radius:14px;padding:14px;box-shadow:0 10px 24px rgba(42,26,10,.06)}.wd-stats span{display:block;color:#8E7243;font-size:12px;font-weight:900}.wd-stats strong{display:block;margin-top:7px;font-size:30px;line-height:1;color:#32101A}
+.wd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}.wd-stats div{background:#FFFBF5;border:1px solid rgba(184,155,94,.18);border-radius:14px;padding:14px;box-shadow:0 10px 24px rgba(42,26,10,.06)}.wd-stats span{display:block;color:#8E7243;font-size:12px;font-weight:900}.wd-stats strong{display:block;margin-top:7px;font-size:30px;line-height:1;color:#32101A}
 .wd-qr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}.wd-card{background:#FFFBF5;border:1px solid rgba(184,155,94,.20);border-radius:16px;padding:16px;box-shadow:0 12px 28px rgba(42,26,10,.07)}.wd-card-head,.wd-table-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(184,155,94,.14)}.wd-card h2,.wd-table-head h2{margin:0 0 4px;font-size:18px;font-weight:900}.wd-card p,.wd-table-head p{margin:0;color:#655B53;font-size:13px;line-height:1.75}
 .wd-qr-body{display:grid;gap:10px;justify-items:center}.wd-qr-body img{width:min(320px,100%);height:auto;border:1px solid rgba(184,155,94,.22);border-radius:14px;background:#fff;padding:8px}.wd-url-box{width:100%;background:#F6F0E6;border:1px solid rgba(184,155,94,.18);border-radius:10px;padding:9px 11px;font-family:ui-monospace,Consolas,monospace;font-size:11px;overflow:auto;text-align:left;color:#4A0E1C}.wd-copy{width:100%;background:linear-gradient(180deg,#5B1526,#32101A)}
 .wd-no-code{min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed rgba(184,155,94,.34);border-radius:14px;color:#8C8274;font-weight:800;background:rgba(194,160,89,.04);padding:24px}
 .wd-material-error{margin:0 0 10px!important;padding:9px 11px;background:#F7F3EB;border-inline-start:3px solid #6B1E2D;color:#6B1E2D!important;font-size:11px!important;font-weight:700}
 .wd-discussion{margin-bottom:14px}.wd-messages{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto}.wd-message{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:11px;border:1px solid #E5E0D5;background:#fff}.wd-message.admin{background:#F7F3EB;border-color:#D9C9B0;border-inline-start:3px solid #6B1E2D}.wd-message-avatar{width:34px;height:34px;display:grid;place-items:center;background:#32101A;color:#D9C9B0;font-size:12px;font-weight:900}.wd-message.admin .wd-message-avatar{background:#6B1E2D;color:#F7F3EB}.wd-message-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.wd-message-meta strong{font-size:11px}.wd-message-meta b{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#EFEAE0;color:#655B53;font-size:8px}.wd-message-meta b.admin{background:#6B1E2D;color:#F7F3EB}.wd-message-meta time{margin-inline-start:auto;font-size:9px;color:#8C8274}.wd-message p{margin:5px 0 0!important;white-space:pre-wrap;font-size:12px!important;color:#32101A!important}.wd-composer{margin-top:10px;padding:10px;border:1px solid #D9C9B0;background:#FFFBF5}.wd-composer textarea{width:100%;min-height:80px;resize:vertical;border:0;outline:0;background:transparent;color:#32101A;font:inherit;font-size:12px}.wd-composer>div{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #E5E0D5;padding-top:8px}.wd-composer span{font-size:9px;color:#8C8274}.wd-message-error{color:#6B1E2D!important;font-size:10px!important;margin-top:6px!important}
 .wd-program,.wd-materials{margin-bottom:14px}.wd-days{display:flex;gap:0;overflow:auto;padding:12px 0}.wd-day{position:relative;min-width:155px;border-top:3px solid #4C6B3C;background:#F3F0E8;padding:13px}.wd-day:not(:last-child):after{content:'';position:absolute;top:20px;inset-inline-end:-10px;width:20px;height:2px;background:#B8A082}.wd-day.rest{border-color:#8B8178;background:#ECE9E5}.wd-day b{display:grid;place-items:center;width:24px;height:24px;background:#32101A;color:#E8DCBC;border-radius:50%;font-size:11px}.wd-day span,.wd-day strong,.wd-day small{display:block;margin-top:5px;font-size:11px}.wd-day strong{font-size:12px}.wd-day small{color:#6C625A}.wd-content-actions,.wd-export{display:flex;gap:7px;flex-wrap:wrap}.wd-content-actions label,.wd-export button{display:inline-flex;align-items:center;gap:5px}.wd-link-form{display:grid;grid-template-columns:1fr 1.5fr auto;gap:8px;margin-bottom:12px}.wd-link-form input{border:1px solid #D7CBB9;background:#fff;padding:9px 11px;font:inherit;font-size:12px}.wd-material-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.wd-material{display:grid;grid-template-columns:28px 1fr 30px 30px;align-items:center;gap:8px;border:1px solid #E0D7C9;background:#fff;padding:11px}.wd-material>svg{color:#7A5C32}.wd-material strong,.wd-material small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-material strong{font-size:12px}.wd-material small{font-size:10px;color:#796F66}.wd-material a,.wd-material button{display:grid;place-items:center;border:0;background:none;color:#6B1E2D;cursor:pointer}.wd-notes{margin-top:12px;border-inline-start:3px solid #B8A082;background:#F5F0E7;padding:12px}.wd-notes b{font-size:12px}.wd-notes p{white-space:pre-wrap;margin-top:4px!important}
-.wd-empty{padding:40px 20px;text-align:center;border:1px dashed rgba(184,155,94,.34);border-radius:14px;color:#8C8274;font-weight:800;background:#FFFBF5}.wd-table-wrap{overflow:auto;border:1px solid rgba(26,26,26,.08);border-radius:13px}.wd-table{width:100%;border-collapse:collapse;min-width:860px;background:#fff}.wd-table th{background:#F6F0E6;color:#6B1E2D;font-size:11px;font-weight:900;padding:10px;border-bottom:1px solid rgba(184,155,94,.22);white-space:nowrap}.wd-table td{padding:10px;border-bottom:1px solid rgba(26,26,26,.06);text-align:center;font-size:12.5px;color:#4A0E1C}.wd-table tr:last-child td{border-bottom:0}.wd-teacher{text-align:start!important;font-weight:900;color:#32101A!important}.wd-total{font-weight:900;color:#32101A!important}.wd-table td.present{background:rgba(76,107,60,.14);color:#3E642E;font-weight:900}.wd-table td.absent{background:rgba(163,59,46,.10);color:#9A3025;font-weight:900}
+.wd-empty{padding:40px 20px;text-align:center;border:1px dashed rgba(184,155,94,.34);border-radius:14px;color:#8C8274;font-weight:800;background:#FFFBF5}.wd-table-wrap{overflow:auto;border:1px solid rgba(26,26,26,.08);border-radius:13px}.wd-table{width:100%;border-collapse:collapse;min-width:860px;background:#fff}.wd-table th{background:#F6F0E6;color:#6B1E2D;font-size:11px;font-weight:900;padding:10px;border-bottom:1px solid rgba(184,155,94,.22);white-space:nowrap}.wd-table td{padding:10px;border-bottom:1px solid rgba(26,26,26,.06);text-align:center;font-size:12.5px;color:#4A0E1C}.wd-table tr:last-child td{border-bottom:0}.wd-teacher{text-align:start!important;font-weight:900;color:#32101A!important}.wd-total{font-weight:900;color:#32101A!important}.wd-table td.present{background:rgba(76,107,60,.14);color:#3E642E;font-weight:900}.wd-table td.unrecorded{background:#FFFBF5;color:#8C8274}
 @media(max-width:980px){.wd-qr-grid,.wd-stats{grid-template-columns:1fr}.wd-hero{padding:20px}.wd-link-form{grid-template-columns:1fr}}
 
 /* Workshop operations refresh */
@@ -831,7 +827,7 @@ const styles = `
 .wd-live-strip{display:flex;align-items:center;justify-content:center;gap:8px;margin:-2px 0 14px;padding:10px 14px;border:1px solid rgba(107,30,45,.14);border-radius:14px;background:linear-gradient(90deg,rgba(107,30,45,.07),rgba(255,255,255,.84),rgba(107,30,45,.07));color:#6B1E2D}.wd-live-strip>span{width:9px;height:9px;border-radius:50%;background:#6B1E2D;box-shadow:0 0 0 5px rgba(107,30,45,.1);animation:wd-pulse 1.4s infinite}.wd-live-strip strong{font-size:12px}.wd-live-strip small{font-size:10px;color:#796A62}
 @keyframes wd-pulse{50%{opacity:.35;transform:scale(.82)}}
 .wd-operation-error{margin:0 0 13px;padding:10px 12px;border-radius:11px;background:rgba(107,30,45,.08);border:1px solid rgba(107,30,45,.15);color:#6B1E2D;font-size:11px;font-weight:800}
-.wd-participants-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#32101A,#6B1E2D);color:#F7F3EB}.wd-attendance-card{margin-top:14px}.wd-attendance-card .wd-table-head{align-items:center}.wd-table th span,.wd-table th small{display:block}.wd-table th small{margin-top:3px;color:#8C8274;font-weight:700}.wd-table td.present,.wd-table td.absent{min-width:116px;padding:7px}
+.wd-participants-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#32101A,#6B1E2D);color:#F7F3EB}.wd-attendance-card{margin-top:14px}.wd-attendance-card .wd-table-head{align-items:center}.wd-table th span,.wd-table th small{display:block}.wd-table th small{margin-top:3px;color:#8C8274;font-weight:700}.wd-table td.present,.wd-table td.unrecorded{min-width:116px;padding:7px}
 .wd-checkin{position:relative;display:grid;justify-items:center;gap:2px;min-height:62px;padding:5px 26px 5px 5px;color:#315724}.wd-checkin time{font:900 12px ui-monospace,Consolas,monospace;direction:ltr}.wd-checkin small{font-size:8px;font-weight:900;color:#5D7355}.wd-checkin button{position:absolute;inset-inline-end:3px;top:3px;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(107,30,45,.08);color:#6B1E2D;cursor:pointer}.wd-checkin button:hover{background:#6B1E2D;color:#fff}
 .wd-checkin .wd-late{padding:2px 6px;border-radius:999px;background:#F6D9D6;color:#8B2332}
 .wd-mark-present{width:100%;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px dashed rgba(107,30,45,.22);border-radius:10px;background:rgba(255,255,255,.7);color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.wd-mark-present:hover{background:#F7F3EB;border-style:solid}.wd-mark-present:disabled{opacity:.5;cursor:progress}

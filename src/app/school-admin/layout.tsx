@@ -168,7 +168,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/workshops", sublabel: "Workshops", exact: false, icon: QrCode,
-      label: lang === "ar" ? "الورش التدريبية" : lang === "sq" ? "Punëtoritë" : "Workshops",
+      label: lang === "ar" ? "الورش التدريبية" : lang === "sq" ? "Forumet" : "Workshops",
       group: "teachers",
     },
     {

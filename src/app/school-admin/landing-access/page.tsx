@@ -38,7 +38,7 @@ const copy = {
     teacherSub: "Shfaqet vetëm hyrja, pa regjistrim publik.",
     student: "Rrjedha e nxënësve",
     studentSub: "Shfaqen hyrja dhe krijimi i llogarisë së nxënësit.",
-    teacherNote: "Regjistrimi publik është mbyllur. Ftesat dhe lidhjet e punëtorive mbeten aktive.",
+    teacherNote: "Regjistrimi publik është mbyllur. Ftesat dhe lidhjet e forumeve mbeten aktive.",
     studentNote: "Regjistrimi publik është i hapur për nxënësit e rinj.",
     save: "Publiko rrjedhën",
     saving: "Duke publikuar...",

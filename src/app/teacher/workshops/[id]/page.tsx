@@ -92,11 +92,11 @@ const text = {
     retry: "إعادة المحاولة",
   },
   sq: {
-    back: "Kthehu te punëtoritë",
+    back: "Kthehu te forumet",
     attended: "Prania u regjistrua",
     waitingAttendance: "Në pritje të pranisë",
-    open: "Punëtori e hapur",
-    closed: "Punëtori e mbyllur",
+    open: "Forumi i hapur",
+    closed: "Forumi i mbyllur",
     day: "ditë",
     trainingDays: "Ditë trajnimi",
     attendanceDays: "Ditët e pranisë",
@@ -104,7 +104,7 @@ const text = {
     programSub: "Plani i plotë nga dita e parë deri te dita e fundit",
     training: "Ditë trajnimi",
     rest: "Pushim",
-    materials: "Materialet e punëtorisë",
+    materials: "Materialet e forumit",
     materialsSub: "Prezantime, dokumente, foto dhe lidhje nga administrata",
     adminMessage: "Mesazh nga administrata",
     adminBadge: "Administrata",
@@ -113,7 +113,7 @@ const text = {
     noMaterials: "Nuk ka materiale ende.",
     openMaterial: "Hap",
     download: "Shkarko",
-    sharedNotes: "Shënimet e punëtorisë",
+    sharedNotes: "Shënimet e forumit",
     sharedNotesSub: "Hapësirë e përbashkët për pjesëmarrësit dhe administratën.",
     noMessages: "Nuk ka shënime ende. Shkruaj shënimin e parë.",
     placeholder: "Shkruaj një shënim të dobishëm...",
@@ -122,14 +122,14 @@ const text = {
     refresh: "Rifresko",
     teacher: "Mësues",
     messageError: "Shënimi nuk u publikua. Provo përsëri.",
-    loadError: "Detajet e punëtorisë nuk u ngarkuan.",
+    loadError: "Detajet e forumit nuk u ngarkuan.",
     retry: "Provo përsëri",
   },
 } as const;
 
 const liveCopy = {
   ar: { live: "الورشة مباشرة الآن", liveSince: "بدأت الورشة المباشرة" },
-  sq: { live: "Punëtoria është drejtpërdrejt", liveSince: "Punëtoria drejtpërdrejt filloi" },
+  sq: { live: "Forumi është drejtpërdrejt", liveSince: "Forumi drejtpërdrejt filloi" },
 } as const;
 
 export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id: string }> }) {
