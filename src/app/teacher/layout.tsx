@@ -31,6 +31,8 @@ import {
   MapPin,
   CalendarRange,
   Radio,
+  MessageCircle,
+  CheckCheck,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -158,6 +160,14 @@ type LiveWorkshopAlert = {
   live_started_at: string | null;
 };
 
+type CommunityNotification = {
+  id: string;
+  content: string | null;
+  image_url: string | null;
+  created_at: string;
+  author: { id: string; full_name: string; role: string; avatar_url: string | null };
+};
+
 /* ─── Layout (thin wrapper that provides tenant context) ─── */
 export default function TeacherLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -215,6 +225,8 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const [name, setName] = useState("");
   const [initials, setInitials] = useState("م");
   const [schoolName, setSchoolName] = useState("");
+  const [schoolId, setSchoolId] = useState("");
+  const [profileId, setProfileId] = useState("");
   const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -227,6 +239,9 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const [statusLoaded, setStatusLoaded] = useState(false);
   const [liveWorkshop, setLiveWorkshop] = useState<LiveWorkshopAlert | null>(null);
   const [livePanelOpen, setLivePanelOpen] = useState(false);
+  const [communityNotifications, setCommunityNotifications] = useState<CommunityNotification[]>([]);
+  const [communityLatestAt, setCommunityLatestAt] = useState<string | null>(null);
+  const notificationWrapRef = useRef<HTMLDivElement>(null);
   const schoolSlugRef = useRef<string>("");
 
   useEffect(() => {
@@ -241,6 +256,8 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           enforceTenantSubdomain(d.school.slug);
         }
         if (d?.school?.name) setSchoolName(d.school.name);
+        if (d?.school?.id) setSchoolId(d.school.id);
+        if (d?.profile?.id) setProfileId(d.profile.id);
         setSchoolNameAlt(d?.school?.name_alt ?? null);
         if (d?.profile?.full_name) {
           setName(d.profile.full_name);
@@ -295,6 +312,103 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showCommunity || !schoolId || !profileId) {
+      setCommunityNotifications([]);
+      return;
+    }
+
+    let active = true;
+    const supabase = createClient();
+    const readKey = `rowad:community-read:${schoolId}:${profileId}`;
+
+    const refreshCommunityNotifications = async () => {
+      try {
+        const response = await fetch(`/api/hub/posts?school_id=${schoolId}&limit=20`, { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json() as { posts?: CommunityNotification[] };
+        if (!active) return;
+        const posts = data.posts ?? [];
+        const latestAt = posts[0]?.created_at ?? null;
+        setCommunityLatestAt(latestAt);
+
+        let readAt: string | null = null;
+        try { readAt = localStorage.getItem(readKey); } catch { /* unavailable */ }
+
+        if (!readAt) {
+          const baseline = latestAt ?? new Date().toISOString();
+          try { localStorage.setItem(readKey, baseline); } catch { /* unavailable */ }
+          setCommunityNotifications([]);
+          return;
+        }
+
+        if (pathname === COMMUNITY_HREF) {
+          if (latestAt) {
+            try { localStorage.setItem(readKey, latestAt); } catch { /* unavailable */ }
+          }
+          setCommunityNotifications([]);
+          return;
+        }
+
+        const readTime = new Date(readAt).getTime();
+        setCommunityNotifications(posts.filter((post) =>
+          post.author.id !== profileId && new Date(post.created_at).getTime() > readTime,
+        ));
+      } catch {
+        // Community notifications are supplementary and never block navigation.
+      }
+    };
+
+    void refreshCommunityNotifications();
+    const interval = window.setInterval(() => void refreshCommunityNotifications(), 30_000);
+    const channel = supabase.channel(`teacher-community-alerts:${schoolId}:${profileId}`)
+      .on("postgres_changes", {
+        event: "INSERT", schema: "public", table: "posts", filter: `school_id=eq.${schoolId}`,
+      }, (payload) => {
+        const post = payload.new as { reply_to_id?: string | null; author_id?: string };
+        if (!post.reply_to_id && post.author_id !== profileId) void refreshCommunityNotifications();
+      })
+      .subscribe();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void refreshCommunityNotifications();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      void supabase.removeChannel(channel);
+    };
+  }, [pathname, profileId, schoolId, showCommunity]);
+
+  useEffect(() => {
+    if (!livePanelOpen) return;
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!notificationWrapRef.current?.contains(event.target as Node)) setLivePanelOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLivePanelOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [livePanelOpen]);
+
+  function markCommunityRead() {
+    if (!schoolId || !profileId) return;
+    try {
+      localStorage.setItem(
+        `rowad:community-read:${schoolId}:${profileId}`,
+        communityLatestAt ?? new Date().toISOString(),
+      );
+    } catch { /* unavailable */ }
+    setCommunityNotifications([]);
+  }
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -674,30 +788,85 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
           <div className="tl-topbar-actions">
             <div className="tl-topbar-divider" />
-            <div className="tl-notification-wrap">
+            <div className="tl-notification-wrap" ref={notificationWrapRef}>
               <button
                 type="button"
-                className={`tl-bell-btn${liveWorkshop ? " has-live" : ""}`}
-                aria-label={liveWorkshop
-                  ? (lang === "ar" ? "ورشة مباشرة الآن" : lang === "sq" ? "Forumi është drejtpërdrejt" : "Live workshop now")
+                className={`tl-bell-btn${liveWorkshop ? " has-live" : ""}${communityNotifications.length ? " has-unread" : ""}`}
+                aria-label={communityNotifications.length
+                  ? (lang === "ar" ? `${communityNotifications.length} إشعارات جديدة` : lang === "sq" ? `${communityNotifications.length} njoftime të reja` : `${communityNotifications.length} new notifications`)
                   : (lang === "ar" ? "الإشعارات" : lang === "sq" ? "Njoftimet" : "Notifications")}
                 aria-expanded={livePanelOpen}
-                onClick={() => setLivePanelOpen((open) => liveWorkshop ? !open : false)}
+                aria-haspopup="dialog"
+                onClick={() => setLivePanelOpen((open) => !open)}
               >
                 <Bell size={16} strokeWidth={1.8} />
                 {liveWorkshop && <span className="tl-live-dot" aria-hidden="true" />}
+                {communityNotifications.length > 0 && (
+                  <span className="tl-notification-count" aria-hidden="true">
+                    {communityNotifications.length > 9 ? "9+" : communityNotifications.length}
+                  </span>
+                )}
               </button>
-              {liveWorkshop && livePanelOpen && (
-                <div className="tl-live-panel" role="status">
-                  <div className="tl-live-panel-status">
-                    <Radio size={14} />
-                    <span>{lang === "ar" ? "أنت في ورشة مباشرة الآن" : lang === "sq" ? "Je në një forum drejtpërdrejt" : "You are in a live workshop"}</span>
+              {livePanelOpen && (
+                <div className="tl-live-panel tl-notification-panel" role="dialog" aria-label={lang === "ar" ? "الإشعارات" : lang === "sq" ? "Njoftimet" : "Notifications"}>
+                  <div className="tl-notification-head">
+                    <div>
+                      <span>{lang === "ar" ? "مركز التنبيهات" : lang === "sq" ? "Qendra e njoftimeve" : "Notification center"}</span>
+                      <strong>{lang === "ar" ? "الإشعارات" : lang === "sq" ? "Njoftimet" : "Notifications"}</strong>
+                    </div>
+                    {communityNotifications.length > 0 && (
+                      <button type="button" onClick={markCommunityRead}>
+                        <CheckCheck size={14} />
+                        {lang === "ar" ? "تحديد كمقروء" : lang === "sq" ? "Shëno si të lexuara" : "Mark as read"}
+                      </button>
+                    )}
                   </div>
-                  <strong>{liveWorkshop.title}</strong>
-                  {liveWorkshop.description && <p>{liveWorkshop.description}</p>}
-                  <Link href={`/teacher/workshops/${liveWorkshop.id}`} onClick={() => setLivePanelOpen(false)}>
-                    {lang === "ar" ? "عرض الورشة" : lang === "sq" ? "Hap forumin" : "Open workshop"}
-                  </Link>
+
+                  <div className="tl-notification-list">
+                    {liveWorkshop && (
+                      <Link className="tl-notification-item live" href={`/teacher/workshops/${liveWorkshop.id}`} onClick={() => setLivePanelOpen(false)}>
+                        <span className="tl-notification-icon"><Radio size={17} /></span>
+                        <span className="tl-notification-copy">
+                          <small>{lang === "ar" ? "ورشة مباشرة الآن" : lang === "sq" ? "Forum drejtpërdrejt" : "Live workshop"}</small>
+                          <strong>{liveWorkshop.title}</strong>
+                          {liveWorkshop.description && <span>{liveWorkshop.description}</span>}
+                        </span>
+                      </Link>
+                    )}
+
+                    {communityNotifications.slice(0, 3).map((notification) => (
+                      <Link
+                        key={notification.id}
+                        className="tl-notification-item community"
+                        href={COMMUNITY_HREF}
+                        onClick={() => { markCommunityRead(); setLivePanelOpen(false); }}
+                      >
+                        <span className="tl-notification-icon"><MessageCircle size={17} /></span>
+                        <span className="tl-notification-copy">
+                          <small>{lang === "ar" ? "رسالة جديدة في المجتمع" : lang === "sq" ? "Mesazh i ri në komunitet" : "New community message"}</small>
+                          <strong>{notification.author.full_name}</strong>
+                          <span>{notification.content || (lang === "ar" ? "أضاف صورة جديدة" : lang === "sq" ? "Shtoi një foto të re" : "Shared a new image")}</span>
+                          <time>{new Date(notification.created_at).toLocaleTimeString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { hour: "2-digit", minute: "2-digit" })}</time>
+                        </span>
+                      </Link>
+                    ))}
+
+                    {!liveWorkshop && communityNotifications.length === 0 && (
+                      <div className="tl-notification-empty">
+                        <CheckCheck size={22} />
+                        <strong>{lang === "ar" ? "أنت على اطلاع بكل جديد" : lang === "sq" ? "Je në dijeni për gjithçka" : "You are all caught up"}</strong>
+                        <span>{lang === "ar" ? "ستظهر هنا رسائل المجتمع والورش المباشرة." : lang === "sq" ? "Mesazhet e komunitetit dhe forumet drejtpërdrejt do të shfaqen këtu." : "Community messages and live workshops will appear here."}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {showCommunity && (
+                    <Link className="tl-notification-footer" href={COMMUNITY_HREF} onClick={() => { markCommunityRead(); setLivePanelOpen(false); }}>
+                      <MessageCircle size={14} />
+                      {lang === "ar" ? "فتح مجتمع المدرسة" : lang === "sq" ? "Hap komunitetin" : "Open school community"}
+                      {communityNotifications.length > 3 && <b>+{communityNotifications.length - 3}</b>}
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
@@ -1123,13 +1292,35 @@ const styles = `
   }
   .tl-bell-btn:hover { border-color: rgba(217,201,176,.58); color: #FFFBF5; background:rgba(255,251,245,.12); }
   .tl-bell-btn.has-live { color: #FFFBF5; border-color: rgba(217,201,176,.72); background:rgba(107,30,45,.9); box-shadow:0 0 0 3px rgba(217,201,176,.12); }
+  .tl-bell-btn.has-unread { color:#FFFBF5; border-color:#D9C9B0; background:rgba(255,251,245,.14); }
   .tl-live-dot { position:absolute; inset-block-start:3px; inset-inline-end:3px; width:8px; height:8px; border-radius:50%; background:#D9C9B0; border:2px solid #4A0E1C; box-sizing:content-box; animation:tl-live-pulse 1.8s ease-out infinite; }
-  .tl-live-panel { position:absolute; inset-block-start:calc(100% + 12px); inset-inline-end:0; width:min(330px,calc(100vw - 24px)); padding:16px; border:1px solid rgba(184,160,130,.36); border-radius:8px; background:#FFFBF5; color:#32101A; box-shadow:0 18px 46px rgba(26,26,26,.24); z-index:80; }
+  .tl-notification-count { position:absolute; inset-block-start:-7px; inset-inline-start:-7px; min-width:19px; height:19px; display:grid; place-items:center; padding:0 4px; border-radius:999px; background:#D9C9B0; color:#4A0E1C; border:2px solid #4A0E1C; font-size:8px; font-weight:900; line-height:1; }
+  .tl-live-panel { position:absolute; inset-block-start:calc(100% + 12px); inset-inline-end:0; width:min(390px,calc(100vw - 20px)); border:1px solid rgba(184,160,130,.36); border-radius:12px; background:#FFFBF5; color:#32101A; box-shadow:0 24px 64px rgba(26,26,26,.32); z-index:80; overflow:hidden; }
   .tl-live-panel::before { content:""; position:absolute; inset-block-start:-6px; inset-inline-end:13px; width:10px; height:10px; rotate:45deg; background:#FFFBF5; border-inline-start:1px solid rgba(184,160,130,.36); border-block-start:1px solid rgba(184,160,130,.36); }
-  .tl-live-panel-status { display:flex; align-items:center; gap:7px; color:#6B1E2D; font-size:11px; font-weight:900; margin-bottom:8px; }
-  .tl-live-panel > strong { display:block; font-size:14px; line-height:1.6; overflow-wrap:anywhere; }
-  .tl-live-panel > p { margin:5px 0 12px; color:#655B53; font-size:11.5px; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-  .tl-live-panel > a { display:flex; align-items:center; justify-content:center; min-height:36px; margin-top:12px; padding:7px 12px; border-radius:7px; background:#4A0E1C; color:#FFFBF5; text-decoration:none; font-size:12px; font-weight:900; }
+  .tl-notification-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 15px; background:linear-gradient(115deg,#32101A,#6B1E2D); color:#FFFBF5; }
+  .tl-notification-head>div { display:grid; gap:1px; }
+  .tl-notification-head span { color:#D9C9B0; font-size:8.5px; font-weight:800; }
+  .tl-notification-head strong { font-size:15px; line-height:1.4; }
+  .tl-notification-head button { display:flex; align-items:center; gap:5px; border:1px solid rgba(217,201,176,.28); border-radius:7px; background:rgba(255,255,255,.07); color:#F7F3EB; padding:6px 8px; font:800 9px 'Cairo',sans-serif; cursor:pointer; }
+  .tl-notification-list { display:grid; gap:7px; max-height:min(430px,calc(100dvh - 180px)); overflow-y:auto; padding:10px; }
+  .tl-notification-item { display:grid; grid-template-columns:38px minmax(0,1fr); gap:10px; padding:11px; border:1px solid #E5E0D5; border-radius:9px; background:#fff; color:#32101A; text-decoration:none; transition:.16s ease; }
+  .tl-notification-item:hover { border-color:#B8A082; background:#F7F3EB; transform:translateY(-1px); }
+  .tl-notification-item.live { border-color:rgba(107,30,45,.28); background:linear-gradient(135deg,#F7F3EB,#FFFBF5); }
+  .tl-notification-item.community { border-inline-start:3px solid #6B1E2D; }
+  .tl-notification-icon { width:38px; height:38px; display:grid; place-items:center; border-radius:9px; background:#EFEAE0; color:#6B1E2D; }
+  .tl-notification-item.live .tl-notification-icon { background:#6B1E2D; color:#FFFBF5; }
+  .tl-notification-copy { min-width:0; display:block; }
+  .tl-notification-copy small,.tl-notification-copy strong,.tl-notification-copy>span,.tl-notification-copy time { display:block; }
+  .tl-notification-copy small { color:#6B1E2D; font-size:8.5px; font-weight:900; }
+  .tl-notification-copy strong { margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11.5px; }
+  .tl-notification-copy>span { margin-top:3px; color:#655B53; font-size:10.5px; line-height:1.55; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
+  .tl-notification-copy time { margin-top:5px; color:#8C8274; font-size:8px; }
+  .tl-notification-empty { min-height:150px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:24px; text-align:center; color:#8C8274; }
+  .tl-notification-empty svg { color:#6B1E2D; }
+  .tl-notification-empty strong { color:#32101A; font-size:12px; }
+  .tl-notification-empty span { max-width:270px; font-size:10px; line-height:1.7; }
+  .tl-notification-footer { min-height:42px; display:flex; align-items:center; justify-content:center; gap:7px; padding:8px 12px; border-top:1px solid #E5E0D5; background:#F7F3EB; color:#6B1E2D; text-decoration:none; font-size:10.5px; font-weight:900; }
+  .tl-notification-footer b { min-width:21px; height:21px; display:grid; place-items:center; border-radius:50%; background:#6B1E2D; color:#fff; font-size:8px; }
   @keyframes tl-live-pulse { 0% { box-shadow:0 0 0 0 rgba(217,201,176,.65); } 70%,100% { box-shadow:0 0 0 7px rgba(217,201,176,0); } }
 
   .tl-topbar-user-pill {
