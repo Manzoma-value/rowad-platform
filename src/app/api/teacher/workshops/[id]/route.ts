@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { effectiveWorkshopSchedule } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +45,11 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const attended = workshop.attendance.length > 0;
   const { attendance, ...detail } = workshop;
+  const schedule = effectiveWorkshopSchedule(detail.schedule, detail.start_date, detail.end_date);
   return NextResponse.json({
     workshop: {
       ...detail,
+      schedule,
       notes: attended ? detail.notes : null,
       materials: attended ? detail.materials : [],
       messages: attended ? detail.messages : [],

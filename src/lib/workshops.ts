@@ -44,6 +44,46 @@ export function workshopDates(schedule: WorkshopDay[], start?: string | null, en
   return { start: start || null, end: end || null };
 }
 
+export function makeWorkshopDays(
+  start: string,
+  end: string,
+  previous: WorkshopDay[] = [],
+): WorkshopDay[] {
+  const startKey = start.slice(0, 10);
+  const endKey = end.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startKey) || !/^\d{4}-\d{2}-\d{2}$/.test(endKey) || endKey < startKey) {
+    return [];
+  }
+
+  const existing = new Map(previous.map((day) => [day.date, day]));
+  const days: WorkshopDay[] = [];
+  const cursor = new Date(`${startKey}T12:00:00.000Z`);
+  const last = new Date(`${endKey}T12:00:00.000Z`);
+  while (cursor <= last && days.length < 366) {
+    const date = cursor.toISOString().slice(0, 10);
+    days.push(existing.get(date) ?? {
+      date,
+      type: "WORK",
+      start_time: "09:00",
+      end_time: "15:00",
+    });
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return days;
+}
+
+export function effectiveWorkshopSchedule(
+  scheduleValue: unknown,
+  startDate?: Date | string | null,
+  endDate?: Date | string | null,
+): WorkshopDay[] {
+  const schedule = cleanSchedule(scheduleValue);
+  if (schedule.length > 0) return schedule;
+  const start = dateKey(startDate);
+  const end = dateKey(endDate) ?? start;
+  return start && end ? makeWorkshopDays(start, end) : [];
+}
+
 export function workshopDateKey(
   at = new Date(),
   timeZone = "Europe/Tirane",

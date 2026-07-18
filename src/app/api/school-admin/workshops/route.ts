@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { newSignupToken } from "@/lib/workshop-tokens";
-import { AUDIENCES, cleanSchedule, workshopDates } from "@/lib/workshops";
+import { AUDIENCES, cleanSchedule, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,12 @@ export async function GET() {
       },
     },
   });
-  return NextResponse.json({ workshops });
+  return NextResponse.json({
+    workshops: workshops.map((workshop) => ({
+      ...workshop,
+      schedule: effectiveWorkshopSchedule(workshop.schedule, workshop.start_date, workshop.end_date),
+    })),
+  });
 }
 
 export async function POST(req: Request) {

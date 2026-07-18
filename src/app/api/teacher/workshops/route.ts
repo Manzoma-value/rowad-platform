@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { effectiveWorkshopSchedule } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
 
@@ -23,5 +24,12 @@ export async function GET() {
       attendance: { where: { teacher_id: auth.teacher.id }, select: { day_date: true } },
     },
   });
-  return NextResponse.json({ workshops: workshops.map((w) => ({ ...w, attended: w.attendance.length > 0, attendance_days: w.attendance.map((a) => a.day_date) })) });
+  return NextResponse.json({
+    workshops: workshops.map((workshop) => ({
+      ...workshop,
+      schedule: effectiveWorkshopSchedule(workshop.schedule, workshop.start_date, workshop.end_date),
+      attended: workshop.attendance.length > 0,
+      attendance_days: workshop.attendance.map((entry) => entry.day_date),
+    })),
+  });
 }

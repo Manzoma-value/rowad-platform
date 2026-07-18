@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { qrDataUri } from "@/lib/qr";
-import { AUDIENCES, cleanSchedule, workshopDates } from "@/lib/workshops";
+import { AUDIENCES, cleanSchedule, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
 
 export const dynamic = "force-dynamic";
 
@@ -64,8 +64,9 @@ export async function GET(
 
   const signupUrl = absoluteSignupUrl(req, workshop.signup_token);
   const signupQrPng = await qrDataUri(signupUrl);
+  const schedule = effectiveWorkshopSchedule(workshop.schedule, workshop.start_date, workshop.end_date);
 
-  return NextResponse.json({ workshop, signupUrl, signupQrPng });
+  return NextResponse.json({ workshop: { ...workshop, schedule }, signupUrl, signupQrPng });
 }
 
 export async function PATCH(
@@ -130,7 +131,18 @@ export async function PATCH(
 
   const workshop = await prisma.workshop.update({
     where: { id }, data,
-    select: { id: true, title: true, description: true, status: true, is_live: true, live_started_at: true, live_ended_at: true },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      start_date: true,
+      end_date: true,
+      schedule: true,
+      status: true,
+      is_live: true,
+      live_started_at: true,
+      live_ended_at: true,
+    },
   });
   return NextResponse.json({ workshop });
 }
