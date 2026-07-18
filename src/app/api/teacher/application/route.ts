@@ -294,6 +294,10 @@ export async function POST(req: Request) {
     await tx.teacher.update({
       where: { id: teacher.id },
       data: { onboarding_status: nextStatus },
+      // The status update does not need a full teacher record. Keeping its
+      // selection narrow prevents optional draft columns from breaking final
+      // application submission during a rolling database migration.
+      select: { id: true },
     });
   }, { timeout: 30000, maxWait: 10000 });
 
