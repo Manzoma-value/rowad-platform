@@ -275,25 +275,6 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
 
       <section className="tw-section">
         <div className="tw-section-head">
-          <div><h2>{T.program}</h2><p>{T.programSub}</p></div>
-        </div>
-        <div className="tw-timeline">
-          {workshop.schedule.map((day, index) => (
-            <article className={`tw-day ${day.type.toLowerCase()}`} key={day.date}>
-              <span className="tw-day-number">{index + 1}</span>
-              <div>
-                <time>{formatDate(day.date)}</time>
-                <strong>{day.type === "WORK" ? T.training : T.rest}</strong>
-                {day.type === "WORK" && <small>{day.start_time || "-"} — {day.end_time || "-"}</small>}
-                {day.label && <p>{day.label}</p>}
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="tw-section">
-        <div className="tw-section-head">
           <div><h2>{T.materials}</h2><p>{T.materialsSub}</p></div>
           {data.attended && <span className="tw-count">{workshop.materials.length}</span>}
         </div>

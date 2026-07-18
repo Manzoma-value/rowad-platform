@@ -120,9 +120,9 @@ const navItems: NavItem2[] = [
     labelSq: "Grupet e mia",
     labelEn: "My Groups",
   },
-  {
+  { 
     href: "/teacher/workshops", key: "workshops", sublabel: "Workshops", exact: false, icon: CalendarRange,
-    labelAr: "الورش التدريبية", labelSq: "Forumi", labelEn: "Workshops",
+    labelAr: "الورش التدريبية", labelSq: "Forumet", labelEn: "Workshops",
   },
   {
     href: "/teacher/roadmap",  key: "roadmap",   sublabel: "Roadmap",   exact: false, icon: MapPin,

@@ -615,11 +615,6 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         <div><span>{T.present}</span><strong>{summary.presentCells}</strong></div>
       </section>
 
-      <section className="wd-card wd-program">
-        <h2>{T.schedule}</h2>
-        <div className="wd-days">{detail.workshop.schedule.map((day, index) => <div key={day.date} className={`wd-day ${day.type.toLowerCase()}`}><b>{index + 1}</b><span>{fmtDate(day.date)}</span><strong>{day.type === "WORK" ? T.workDay : T.restDay}</strong>{day.type === "WORK" && <small>{day.start_time || "-"} - {day.end_time || "-"}</small>}{day.label && <small>{day.label}</small>}</div>)}</div>
-      </section>
-
       <section className="wd-card wd-materials">
         <div className="wd-table-head"><div><h2>{T.content}</h2><p>{T.contentHelp}</p></div>{!viewOnly&&<div className="wd-content-actions"><label className="wd-small-btn"><Upload size={14}/>{uploading?T.saving:T.addFile}<input hidden type="file" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx" onChange={e=>e.target.files?.[0]&&void uploadMaterial(e.target.files[0])}/></label><button className="wd-small-btn ghost" onClick={()=>setShowLink(v=>!v)}><Plus size={14}/>{T.addLink}</button></div>}</div>
         {showLink&&<div className="wd-link-form"><input placeholder={T.linkTitle} value={linkForm.title} onChange={e=>setLinkForm({...linkForm,title:e.target.value})}/><input dir="ltr" placeholder={T.linkUrl} value={linkForm.url} onChange={e=>setLinkForm({...linkForm,url:e.target.value})}/><button className="wd-small-btn" onClick={addLink} disabled={uploading}>{T.add}</button></div>}
