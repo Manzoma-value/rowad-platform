@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import {
   APP_GENDERS,
   APP_CURRENT_ROLES,
@@ -31,6 +32,8 @@ export async function GET() {
   return NextResponse.json({
     onboarding_status: auth.teacher.onboarding_status,
     application: app,
+    draft: auth.teacher.application_draft,
+    draft_updated_at: auth.teacher.application_draft_updated_at,
   });
 }
 
@@ -68,6 +71,60 @@ function optionalString(raw: unknown, max = 500): string | null {
   if (!t) return null;
   if (t.length > max) return t.slice(0, max);
   return t;
+}
+
+const DRAFT_TEXT_LIMITS: Record<string, number> = {
+  age: 3, country: 100, city: 100, phone: 40, gender: 10,
+  current_role: 40, current_role_other: 200, qualification: 40,
+  specialization: 200, graduation_institution: 200,
+  experience_areas_other: 200, years_of_experience: 40,
+  target_groups_other: 200, achievements_scope: 40,
+  languages_other: 200, notes: 2000,
+};
+
+function draftText(raw: unknown, max: number) {
+  return typeof raw === "string" ? raw.slice(0, max) : "";
+}
+
+function draftCodes(raw: unknown, allowed: readonly string[]) {
+  if (!Array.isArray(raw)) return [];
+  const allowedSet = new Set(allowed);
+  return Array.from(new Set(raw.filter((value): value is string => typeof value === "string" && allowedSet.has(value))));
+}
+
+function sanitizeDraft(body: Record<string, unknown>) {
+  const draft: Record<string, unknown> = {};
+  for (const [field, max] of Object.entries(DRAFT_TEXT_LIMITS)) draft[field] = draftText(body[field], max);
+  draft.experience_areas = draftCodes(body.experience_areas, APP_EXPERIENCE_AREAS);
+  draft.target_groups = draftCodes(body.target_groups, APP_TARGET_GROUPS);
+  draft.contributions = draftCodes(body.contributions, APP_CONTRIBUTIONS);
+  draft.has_achievements = body.has_achievements === true;
+  const languages = Array.isArray(body.languages) ? body.languages : [];
+  const allowedLanguages = new Set<string>(APP_LANGUAGES);
+  const allowedLevels = new Set<string>(APP_LANG_LEVELS);
+  draft.languages = languages
+    .filter((entry): entry is { lang: string; level: string } => !!entry && typeof entry === "object" && "lang" in entry && "level" in entry && typeof (entry as { lang?: unknown }).lang === "string" && typeof (entry as { level?: unknown }).level === "string")
+    .filter((entry) => allowedLanguages.has(entry.lang) && allowedLevels.has(entry.level))
+    .slice(0, 20);
+  return draft;
+}
+
+export async function PATCH(req: Request) {
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (auth.teacher.onboarding_status !== "PENDING_APPLICATION") {
+    return NextResponse.json({ error: "application_already_submitted" }, { status: 409 });
+  }
+  let body: Record<string, unknown>;
+  try { body = await req.json() as Record<string, unknown>; } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+  const updated = await prisma.teacher.update({
+    where: { id: auth.teacher.id },
+    data: { application_draft: sanitizeDraft(body), application_draft_updated_at: new Date() },
+    select: { application_draft_updated_at: true },
+  });
+  return NextResponse.json({ saved: true, draft_updated_at: updated.application_draft_updated_at });
 }
 
 export async function POST(req: Request) {
@@ -217,7 +274,7 @@ export async function POST(req: Request) {
 
     await tx.teacher.update({
       where: { id: teacher.id },
-      data: { onboarding_status: nextStatus },
+      data: { onboarding_status: nextStatus, application_draft: Prisma.DbNull, application_draft_updated_at: null },
     });
   }, { timeout: 30000, maxWait: 10000 });
 

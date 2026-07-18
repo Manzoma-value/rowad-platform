@@ -63,6 +63,7 @@ type TeacherApplication = {
 
 type WorkshopRef = { id: string; title: string; status: "OPEN" | "CLOSED" };
 type WorkshopAttendanceEntry = { day_date: string; workshop: WorkshopRef };
+type ApplicationDraft = Record<string, unknown>;
 
 interface Teacher {
   id: string;
@@ -72,6 +73,8 @@ interface Teacher {
   classes: TeacherClass[];
   group_memberships: TeacherGroupMembership[];
   application: TeacherApplication | null;
+  application_draft: ApplicationDraft | null;
+  application_draft_updated_at: string | null;
   workshop_signup: WorkshopRef | null;
   workshop_attendance: WorkshopAttendanceEntry[];
   _count: { lessons: number; quizzes: number; announcements: number };
@@ -132,6 +135,27 @@ function currentRoleLabel(code: string, lang: string) {
   if (lang === "en") return CURRENT_ROLE_EN[code] ?? code;
   const entry = CURRENT_ROLE_L[code as CurrentRole];
   return entry ? entry[lang === "sq" ? "sq" : "ar"] : code;
+}
+
+function draftText(draft: ApplicationDraft, key: string) {
+  const value = draft[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function DraftProgress({ draft, updatedAt, labels, lang }: { draft: ApplicationDraft; updatedAt: string | null; labels: { savedProgress: string; progressHint: string; lastSaved: string; fieldsCompleted: string; qualification: string; specialization: string; experience: string; currentRoleLbl: string; location: string }; lang: string }) {
+  const qualification = draftText(draft, "qualification");
+  const role = draftText(draft, "current_role");
+  const location = [draftText(draft, "city"), draftText(draft, "country")].filter(Boolean).join(", ");
+  const fields = ["age", "country", "city", "phone", "gender", "current_role", "qualification", "specialization", "graduation_institution", "years_of_experience", "languages"];
+  const filled = fields.filter((field) => Array.isArray(draft[field]) ? draft[field].length > 0 : Boolean(draftText(draft, field))).length;
+  const entries = [
+    [labels.location, location],
+    [labels.qualification, qualification ? qualificationLabel(qualification, lang) : null],
+    [labels.specialization, draftText(draft, "specialization")],
+    [labels.experience, draftText(draft, "years_of_experience") ? experienceLabel(draftText(draft, "years_of_experience")!, lang) : null],
+    [labels.currentRoleLbl, role ? currentRoleLabel(role, lang) : null],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1]));
+  return <div className="te-draft-progress"><div className="te-draft-head"><div><strong>{labels.savedProgress}</strong><p>{labels.progressHint}</p></div><b>{filled}/{fields.length} {labels.fieldsCompleted}</b></div><div className="te-draft-bar"><i style={{ width: `${Math.round((filled / fields.length) * 100)}%` }} /></div>{entries.length > 0 && <div className="te-info-grid">{entries.map(([label, value]) => <InfoItem key={label} label={label} value={value} />)}</div>}{updatedAt && <small>{labels.lastSaved}: {new Date(updatedAt).toLocaleString(lang === "ar" ? "ar-SA-u-nu-latn" : lang === "sq" ? "sq-AL" : "en-GB")}</small>}</div>;
 }
 
 // Keep the experience filter's options in the enum's natural order.
@@ -202,6 +226,10 @@ export default function SchoolAdminTeachersPage() {
     groups: lang === "ar" ? "المجموعات" : lang === "sq" ? "Grupet" : "Groups",
     teacherInfo: lang === "ar" ? "بيانات المعلم" : lang === "sq" ? "Të dhënat e mësuesit" : "Teacher info",
     noApplication: lang === "ar" ? "لم يقدّم بياناته بعد" : lang === "sq" ? "Nuk ka plotësuar aplikimin ende" : "No info on file yet",
+    savedProgress: lang === "ar" ? "التقدم المحفوظ" : lang === "sq" ? "Progresi i ruajtur" : "Saved progress",
+    progressHint: lang === "ar" ? "بيانات تم إدخالها ولم يتم إرسال الطلب النهائي بعد." : lang === "sq" ? "Të dhëna të ruajtura para dërgimit përfundimtar." : "Details saved before the final submission.",
+    lastSaved: lang === "ar" ? "آخر حفظ" : lang === "sq" ? "Ruajtur së fundi" : "Last saved",
+    fieldsCompleted: lang === "ar" ? "حقول مكتملة" : lang === "sq" ? "fusha të plotësuara" : "fields complete",
     qualification: lang === "ar" ? "المؤهل العلمي" : lang === "sq" ? "Kualifikimi" : "Qualification",
     specialization: lang === "ar" ? "التخصص" : lang === "sq" ? "Specializimi" : "Specialization",
     experience: lang === "ar" ? "سنوات الخبرة" : lang === "sq" ? "Vitet e përvojës" : "Experience",
@@ -595,6 +623,8 @@ export default function SchoolAdminTeachersPage() {
                         />
                         <InfoItem label={labels.location} value={`${teacher.application.city}, ${teacher.application.country}`} />
                       </div>
+                    ) : teacher.application_draft ? (
+                      <DraftProgress draft={teacher.application_draft} updatedAt={teacher.application_draft_updated_at} labels={labels} lang={lang} />
                     ) : (
                       <p className="te-muted">{labels.noApplication}</p>
                     )}
@@ -947,6 +977,14 @@ const styles = `
   .te-info h3 svg { color:#B8A082; }
 
   .te-info-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 14px; }
+  .te-draft-progress { display:grid; gap:12px; padding:13px; border:1px solid rgba(107,30,45,.16); border-radius:13px; background:linear-gradient(135deg,rgba(255,251,245,.96),rgba(217,201,176,.18)); }
+  .te-draft-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .te-draft-head strong { display:block; color:#4A0E1C; font-size:13px; }
+  .te-draft-head p { margin:3px 0 0; color:#796A62; font-size:10px; line-height:1.6; }
+  .te-draft-head b { flex:none; padding:5px 8px; border-radius:999px; background:#4A0E1C; color:#F7F3EB; font-size:10px; }
+  .te-draft-bar { height:7px; overflow:hidden; border-radius:999px; background:rgba(107,30,45,.12); }
+  .te-draft-bar i { display:block; height:100%; min-width:4px; border-radius:inherit; background:linear-gradient(90deg,#6B1E2D,#B8A082); transition:width .25s ease; }
+  .te-draft-progress>small { color:#796A62; font-size:10px; font-weight:700; }
   .te-info-item { display:flex; flex-direction:column; gap:3px; padding-bottom:8px; border-bottom:1px dashed rgba(184,160,130,.18); min-width:0; }
   .te-info-item span { font-size:10px; font-weight:700; letter-spacing:.04em; color:#8F765B; }
   .te-info-item strong { font-size:12.5px; font-weight:700; color:#1A1A1A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

@@ -469,6 +469,10 @@ model Teacher {
   profile_id          String                  @unique @db.Uuid
   school_id           String                  @db.Uuid
   onboarding_status   TeacherOnboardingStatus @default(PENDING_APPLICATION)
+  // Server-side copy of an unfinished application, visible to the school
+  // admin so they can follow progress before final submission.
+  application_draft   Json?
+  application_draft_updated_at DateTime?
   // Workshop the teacher signed up via, if any (nullable — teachers can
   // still sign up outside of a workshop through the classic flow).
   workshop_signup_id  String?                 @db.Uuid

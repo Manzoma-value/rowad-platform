@@ -83,6 +83,10 @@ function initialForm(): Form {
   }
 }
 
+function hasDraftValues(form: Form) {
+  return Object.values(form).some((value) => Array.isArray(value) ? value.length > 0 : typeof value === "boolean" ? value : Boolean(value));
+}
+
 export default function TeacherApplicationPage() {
   const { lang } = useLang();
   const router = useRouter();
@@ -103,7 +107,28 @@ export default function TeacherApplicationPage() {
     } catch {
       // Private browsing or a full storage quota should not block the form.
     }
+    if (!hasDraftValues(form)) return;
+    const timer = window.setTimeout(() => {
+      void fetch("/api/teacher/application", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      }).catch(() => {
+        // Local storage remains a fallback if connectivity drops.
+      });
+    }, 900);
+    return () => window.clearTimeout(timer);
   }, [form, loading, submitting]);
+
+  useEffect(() => {
+    fetch("/api/teacher/application", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.draft || typeof data.draft !== "object") return;
+        setForm((current) => hasDraftValues(current) ? current : { ...EMPTY, ...(data.draft as Partial<Form>) });
+      })
+      .catch(() => {});
+  }, []);
 
   // Route guard: if the teacher already submitted or is past PENDING_APPLICATION,
   // bounce them to the appropriate screen.

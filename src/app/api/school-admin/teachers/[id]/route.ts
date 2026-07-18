@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import { createAdminClient } from "../../../../../lib/supabase/admin";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { z } from "zod";
 
 // ── PATCH /api/school-admin/teachers/[id] — activate or deactivate a teacher ──
@@ -9,7 +9,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
@@ -40,7 +40,7 @@ export async function DELETE(
   // ── Auth ── (was MISSING — this is a destructive admin action that deletes
   // the underlying auth user, so it MUST require a school admin and verify the
   // teacher belongs to that admin's school.)
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
@@ -56,9 +56,28 @@ export async function DELETE(
     }
 
     const supabase = createAdminClient();
-    // Delete auth user (cascades to profile → teacher)
-    await supabase.auth.admin.deleteUser(teacher.profile_id);
+    const { error: authDeleteError } = await supabase.auth.admin.deleteUser(teacher.profile_id);
+    if (authDeleteError && !/not found|does not exist/i.test(authDeleteError.message)) {
+      console.error("[delete-teacher] auth deletion failed:", authDeleteError.message);
+      return NextResponse.json({ error: "Could not remove the login account" }, { status: 502 });
+    }
 
+    // Auth deletion does not reliably cascade into public application tables.
+    // Remove the school record explicitly and anonymize the retained profile
+    // so the teacher cannot reappear or block a future registration.
+    await prisma.$transaction(async (tx) => {
+      await tx.teacher.deleteMany({ where: { id, school_id: auth.school.id } });
+      await tx.profile.updateMany({
+        where: { id: teacher.profile_id },
+        data: {
+          full_name: "Deleted teacher",
+          email: null,
+          is_active: false,
+          avatar_url: null,
+          avatar_path: null,
+        },
+      });
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[delete-teacher]", error);

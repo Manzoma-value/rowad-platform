@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { ArrowDownUp, CalendarDays, Download, Filter, RotateCcw, Search, Users } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import {
   APP_CURRENT_ROLES,
@@ -47,6 +47,7 @@ const UI = {
     statusUnderReview: "قيد المراجعة",
     statusActive: "مفعّل",
     statusRejected: "مرفوض",
+    statusWaiting: "قائمة الانتظار",
     statusAll: "الكل",
     allRoles: "كل الأدوار",
     allQualifications: "كل المؤهلات",
@@ -65,6 +66,19 @@ const UI = {
     yetToApply: "(لم يقدم بعد)",
     exportExcel: "تصدير كل الطلبات Excel",
     exporting: "جاري التصدير...",
+    joinedToday: "دخلوا اليوم",
+    appliedToday: "قدموا اليوم",
+    appliedWeek: "آخر 7 أيام",
+    allDates: "كل التواريخ",
+    newest: "الأحدث أولاً",
+    oldest: "الأقدم أولاً",
+    allApplications: "الطلبات والحسابات",
+    withApplication: "قدموا الطلب",
+    withoutApplication: "لم يقدموا بعد",
+    reset: "إعادة ضبط",
+    showing: "نتيجة مطابقة",
+    filtersActive: "فلاتر نشطة",
+    statusPending: "لم يقدم بعد",
   },
   sq: {
     title: "Aplikimet e mësuesve",
@@ -74,6 +88,7 @@ const UI = {
     statusUnderReview: "Në shqyrtim",
     statusActive: "Aktiv",
     statusRejected: "Refuzuar",
+    statusWaiting: "Në pritje",
     statusAll: "Të gjitha",
     allRoles: "Të gjithë rolet",
     allQualifications: "Të gjitha kualifikimet",
@@ -92,6 +107,19 @@ const UI = {
     yetToApply: "(Nuk ka aplikuar ende)",
     exportExcel: "Eksporto të gjitha në Excel",
     exporting: "Duke eksportuar...",
+    joinedToday: "Hyrë sot",
+    appliedToday: "Aplikuar sot",
+    appliedWeek: "7 ditët e fundit",
+    allDates: "Të gjitha datat",
+    newest: "Më të rejat",
+    oldest: "Më të vjetrat",
+    allApplications: "Aplikime dhe llogari",
+    withApplication: "Me aplikim",
+    withoutApplication: "Pa aplikim ende",
+    reset: "Rivendos",
+    showing: "rezultate",
+    filtersActive: "filtra aktivë",
+    statusPending: "Pa aplikuar",
   },
 } as const;
 
@@ -102,35 +130,87 @@ export default function ApplicationsListPage() {
   const dir = L === "ar" ? "rtl" : "ltr";
 
   const [rows, setRows] = useState<Row[]>([]);
+  const [meta, setMeta] = useState<{ total: number; capped: boolean; status_counts: Record<string, number> }>({ total: 0, capped: false, status_counts: {} });
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const [status, setStatus] = useState("UNDER_REVIEW");
   const [currentRole, setCurrentRole] = useState("");
   const [qualification, setQualification] = useState("");
   const [years, setYears] = useState("");
   const [gender, setGender] = useState("");
   const [country, setCountry] = useState("");
+  const [dateScope, setDateScope] = useState("all");
+  const [sort, setSort] = useState("newest");
+  const [hasApplication, setHasApplication] = useState("all");
   const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedQ(q.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [q]);
 
   const params = useMemo(() => {
     const u = new URLSearchParams();
     if (status) u.set("status", status);
-    if (q.trim()) u.set("q", q.trim());
+    if (debouncedQ) u.set("q", debouncedQ);
     if (currentRole) u.set("current_role", currentRole);
     if (qualification) u.set("qualification", qualification);
     if (years) u.set("years", years);
     if (gender) u.set("gender", gender);
     if (country.trim()) u.set("country", country.trim());
+    if (dateScope !== "all") u.set("date_scope", dateScope);
+    if (sort !== "newest") u.set("sort", sort);
+    if (hasApplication !== "all") u.set("has_application", hasApplication);
+    u.set("tz_offset", String(new Date().getTimezoneOffset()));
     return u.toString();
-  }, [status, q, currentRole, qualification, years, gender, country]);
+  }, [status, debouncedQ, currentRole, qualification, years, gender, country, dateScope, sort, hasApplication]);
 
   useEffect(() => {
-    fetch(`/api/school-admin/applications?${params}`, { cache: "no-store" })
+    const controller = new AbortController();
+    setLoading(true);
+    fetch(`/api/school-admin/applications?${params}`, { cache: "no-store", signal: controller.signal })
       .then((r) => r.json())
-      .then((d) => setRows(d?.teachers ?? []))
-      .catch(() => setRows([]))
-      .finally(() => setLoading(false));
+      .then((d) => {
+        if (controller.signal.aborted) return;
+        setRows(d?.teachers ?? []);
+        setMeta(d?.meta ?? { total: 0, capped: false, status_counts: {} });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setRows([]);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [params]);
+
+  const activeFilterCount = [
+    status !== "all",
+    Boolean(debouncedQ),
+    Boolean(currentRole),
+    Boolean(qualification),
+    Boolean(years),
+    Boolean(gender),
+    Boolean(country.trim()),
+    dateScope !== "all",
+    hasApplication !== "all",
+    sort !== "newest",
+  ].filter(Boolean).length;
+
+  function resetFilters() {
+    setQ("");
+    setDebouncedQ("");
+    setStatus("all");
+    setCurrentRole("");
+    setQualification("");
+    setYears("");
+    setGender("");
+    setCountry("");
+    setDateScope("all");
+    setSort("newest");
+    setHasApplication("all");
+  }
 
   function fmtDate(s: string | null | undefined) {
     if (!s) return "—";
@@ -200,32 +280,71 @@ export default function ApplicationsListPage() {
     }
   }
 
+  const statusCards = [
+    { value: "all", label: T.statusAll, count: Object.values(meta.status_counts).reduce((sum, count) => sum + count, 0) },
+    { value: "UNDER_REVIEW", label: T.statusUnderReview, count: meta.status_counts.UNDER_REVIEW ?? 0 },
+    { value: "WAITING_LIST", label: T.statusWaiting, count: meta.status_counts.WAITING_LIST ?? 0 },
+    { value: "ACTIVE", label: T.statusActive, count: meta.status_counts.ACTIVE ?? 0 },
+    { value: "REJECTED", label: T.statusRejected, count: meta.status_counts.REJECTED ?? 0 },
+    { value: "PENDING_APPLICATION", label: T.statusPending, count: meta.status_counts.PENDING_APPLICATION ?? 0 },
+  ];
+
   return (
     <div className="ap-page" dir={dir}>
       <header className="ap-hero">
-        <h1 className="ap-title">{T.title}</h1>
-        <p className="ap-sub">{T.sub}</p>
-      </header>
-
-      <div className="ap-toolbar">
-        <div className="ap-toolbar-top">
-        <input
-          className="ap-search"
-          placeholder={T.search}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <div>
+          <span className="ap-kicker"><Users size={14} />{T.title}</span>
+          <h1 className="ap-title">{T.title}</h1>
+          <p className="ap-sub">{T.sub}</p>
+        </div>
         <button className="ap-export" type="button" onClick={() => void exportAllApplications()} disabled={exporting}>
           <Download size={16} />{exporting ? T.exporting : T.exportExcel}
         </button>
+      </header>
+
+      <div className="ap-status-grid" aria-label={T.statusCol}>
+        {statusCards.map((card) => (
+          <button key={card.value} type="button" className={status === card.value ? "active" : ""} onClick={() => setStatus(card.value)}>
+            <span>{card.label}</span><strong>{card.count}</strong>
+          </button>
+        ))}
+      </div>
+
+      <div className="ap-toolbar">
+        <div className="ap-toolbar-top">
+          <label className="ap-search-wrap">
+            <Search size={17} />
+            <input className="ap-search" placeholder={T.search} value={q} onChange={(e) => setQ(e.target.value)} />
+          </label>
+          <div className="ap-result-count"><Users size={15} /><strong>{meta.total}</strong> {T.showing}</div>
+        </div>
+        <div className="ap-filter-heading">
+          <span><Filter size={15} />{T.filters}{activeFilterCount > 0 && <b>{activeFilterCount}</b>}</span>
+          <button type="button" onClick={resetFilters}><RotateCcw size={14} />{T.reset}</button>
         </div>
         <div className="ap-filter-row">
           <select className="ap-select" value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="UNDER_REVIEW">{T.statusUnderReview}</option>
-            <option value="WAITING_LIST">{L === "ar" ? "قائمة الانتظار" : "Në pritje"}</option>
+            <option value="WAITING_LIST">{T.statusWaiting}</option>
             <option value="ACTIVE">{T.statusActive}</option>
             <option value="REJECTED">{T.statusRejected}</option>
+            <option value="PENDING_APPLICATION">{T.statusPending}</option>
             <option value="all">{T.statusAll}</option>
+          </select>
+          <label className="ap-icon-select"><CalendarDays size={15} /><select className="ap-select" value={dateScope} onChange={(e) => setDateScope(e.target.value)}>
+            <option value="all">{T.allDates}</option>
+            <option value="joined_today">{T.joinedToday}</option>
+            <option value="applied_today">{T.appliedToday}</option>
+            <option value="applied_7d">{T.appliedWeek}</option>
+          </select></label>
+          <label className="ap-icon-select"><ArrowDownUp size={15} /><select className="ap-select" value={sort} onChange={(e) => setSort(e.target.value)}>
+            <option value="newest">{T.newest}</option>
+            <option value="oldest">{T.oldest}</option>
+          </select></label>
+          <select className="ap-select" value={hasApplication} onChange={(e) => setHasApplication(e.target.value)}>
+            <option value="all">{T.allApplications}</option>
+            <option value="yes">{T.withApplication}</option>
+            <option value="no">{T.withoutApplication}</option>
           </select>
           <select className="ap-select" value={currentRole} onChange={(e) => setCurrentRole(e.target.value)}>
             <option value="">{T.allRoles}</option>
@@ -284,7 +403,7 @@ export default function ApplicationsListPage() {
                 const a = r.application;
                 const statusLabel =
                   r.onboarding_status === "UNDER_REVIEW" ? T.statusUnderReview :
-                  r.onboarding_status === "WAITING_LIST"  ? (L === "ar" ? "قائمة الانتظار" : "Në pritje") :
+                  r.onboarding_status === "WAITING_LIST"  ? T.statusWaiting :
                   r.onboarding_status === "ACTIVE"       ? T.statusActive :
                   r.onboarding_status === "REJECTED"     ? T.statusRejected :
                   T.yetToApply;
@@ -321,44 +440,62 @@ export default function ApplicationsListPage() {
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-        .ap-page { font-family: 'Cairo', sans-serif; }
-        .ap-hero { margin-bottom: 22px; }
-        .ap-title { font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
-        .ap-sub { font-size: 13.5px; color: #655B53; max-width: 740px; line-height: 1.85; margin: 0; }
+        .ap-page { font-family: 'Cairo', sans-serif; color:#32101A; }
+        .ap-hero { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:18px; padding:24px; border:1px solid rgba(217,201,176,.28); border-radius:16px; background:linear-gradient(135deg,#32101A,#6B1E2D); box-shadow:0 18px 42px rgba(107,30,45,.14); }
+        .ap-kicker { display:flex; align-items:center; gap:7px; color:#D9C9B0; font-size:11px; font-weight:900; }
+        .ap-title { font-size:27px; font-weight:900; color:#FFFBF5; margin:6px 0; }
+        .ap-sub { font-size:12.5px; color:rgba(247,243,235,.72); max-width:740px; line-height:1.85; margin:0; }
+        .ap-status-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin-bottom:14px; }
+        .ap-status-grid button { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:13px 15px; border:1px solid #E5E0D5; border-radius:12px; background:#FFFBF5; color:#655B53; font:800 11.5px 'Cairo',sans-serif; cursor:pointer; transition:.18s ease; }
+        .ap-status-grid button:hover { border-color:#B8A082; transform:translateY(-1px); }
+        .ap-status-grid button.active { border-color:#6B1E2D; background:#F7F3EB; color:#6B1E2D; box-shadow:inset 0 -3px #6B1E2D; }
+        .ap-status-grid strong { font-size:23px; line-height:1; color:#32101A; }
         .ap-toolbar {
-          background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07);
-          border-radius: 14px; padding: 14px; margin-bottom: 18px;
+          background:#FFFBF5; border:1px solid #E5E0D5;
+          border-radius:14px; padding:14px; margin-bottom:18px;
           display: flex; flex-direction: column; gap: 12px;
+          box-shadow:0 10px 30px rgba(107,30,45,.045);
         }
+        .ap-search-wrap { flex:1; min-width:240px; min-height:44px; display:flex; align-items:center; gap:9px; padding-inline:13px; border:1.5px solid #D9C9B0; border-radius:10px; background:#fff; color:#8C8274; transition:.15s ease; }
+        .ap-search-wrap:focus-within { border-color:#6B1E2D; box-shadow:0 0 0 3px rgba(107,30,45,.08); }
         .ap-search {
-          flex: 1; min-width: 240px; padding: 10px 14px; font-size: 14px;
-          border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px;
-          background: #FFF; font-family: inherit; outline: none;
-          transition: border-color 0.15s;
+          flex:1; min-width:0; padding:9px 0; font-size:14px; border:0;
+          background:transparent; font-family:inherit; outline:none; color:#32101A;
         }
-        .ap-search:focus { border-color: #B8A082; }
         .ap-toolbar-top { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-        .ap-export { min-height:43px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 16px; border-radius:11px; border:1px solid rgba(184,160,130,.38); background:linear-gradient(180deg,#5B1526,#32101A); color:#D9C9B0; font:800 12.5px 'Cairo',sans-serif; cursor:pointer; white-space:nowrap; }
+        .ap-export { min-height:43px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 16px; border-radius:10px; border:1px solid rgba(217,201,176,.38); background:#FFFBF5; color:#6B1E2D; font:800 12px 'Cairo',sans-serif; cursor:pointer; white-space:nowrap; }
         .ap-export:disabled { opacity:.6; cursor:wait; }
+        .ap-result-count { display:flex; align-items:center; gap:6px; color:#796A62; font-size:11px; font-weight:800; white-space:nowrap; }
+        .ap-result-count strong { color:#32101A; font-size:17px; }
+        .ap-filter-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:10px; border-top:1px solid #EFEAE0; }
+        .ap-filter-heading>span,.ap-filter-heading button { display:flex; align-items:center; gap:7px; }
+        .ap-filter-heading>span { color:#6B1E2D; font-size:11px; font-weight:900; }
+        .ap-filter-heading b { min-width:21px; height:21px; display:grid; place-items:center; border-radius:50%; background:#6B1E2D; color:#fff; font-size:9px; }
+        .ap-filter-heading button { border:0; background:transparent; color:#796A62; font:800 10px 'Cairo',sans-serif; cursor:pointer; }
         .ap-filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
         .ap-select {
-          padding: 8px 12px; font-size: 13px; font-family: inherit;
-          border: 1.5px solid rgba(194,160,89,0.32); border-radius: 10px;
-          background: #FFF; color: #4A0E1C; cursor: pointer; outline: none;
+          min-height:39px; padding:7px 11px; font-size:12px; font-family:inherit;
+          border:1px solid #D9C9B0; border-radius:9px;
+          background:#FFF; color:#4A0E1C; cursor:pointer; outline:none;
         }
-        .ap-table-wrap { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; overflow: auto; }
+        .ap-select:focus { border-color:#6B1E2D; box-shadow:0 0 0 3px rgba(107,30,45,.07); }
+        .ap-icon-select { display:flex; align-items:center; padding-inline-start:10px; border:1px solid #D9C9B0; border-radius:9px; background:#fff; color:#6B1E2D; }
+        .ap-icon-select .ap-select { border:0; box-shadow:none; padding-inline-start:7px; }
+        .ap-table-wrap { background:#FFFBF5; border:1px solid #E5E0D5; border-radius:14px; overflow:auto; box-shadow:0 14px 36px rgba(107,30,45,.05); }
         .ap-empty { padding: 60px 20px; text-align: center; color: #8C8274; font-weight: 700; }
         .ap-table { width: 100%; border-collapse: collapse; min-width: 800px; }
         .ap-table th {
           text-align: start; padding: 12px 14px; font-size: 11.5px;
           color: #6B1E2D; font-weight: 800; text-transform: uppercase;
           letter-spacing: 0.06em; border-bottom: 1px solid rgba(194,160,89,0.22);
-          background: rgba(194,160,89,0.06);
+          background:#F7F3EB; position:sticky; top:0; z-index:2;
         }
         .ap-table td {
           padding: 14px; font-size: 13.5px; color: #4A0E1C;
           border-bottom: 1px solid rgba(26,26,26,0.06); vertical-align: top;
         }
+        .ap-table tbody tr { transition:background .15s ease; }
+        .ap-table tbody tr:hover { background:rgba(217,201,176,.12); }
         .ap-name { font-weight: 800; color: #32101A; }
         .ap-sub-text { font-size: 12px; color: #7A7468; margin-top: 2px; }
         .ap-status {
@@ -377,7 +514,13 @@ export default function ApplicationsListPage() {
           text-decoration: none; white-space: nowrap;
         }
         .ap-view:hover { transform: translateY(-1px); }
-        @media(max-width:620px){ .ap-export{width:100%}.ap-search{min-width:100%} }
+        @media(max-width:900px){ .ap-status-grid{grid-template-columns:repeat(3,1fr)} }
+        @media(max-width:620px){
+          .ap-hero{align-items:stretch;flex-direction:column;padding:20px}.ap-title{font-size:23px}.ap-export{width:100%}
+          .ap-status-grid{display:flex;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.ap-status-grid::-webkit-scrollbar{display:none}.ap-status-grid button{min-width:132px;min-height:64px;flex:none}
+          .ap-search-wrap{min-width:100%}.ap-result-count{width:100%;justify-content:flex-end}.ap-filter-row{display:grid;grid-template-columns:1fr 1fr}.ap-select,.ap-icon-select{width:100%;min-width:0}.ap-icon-select .ap-select{width:calc(100% - 22px)}
+        }
+        @media(max-width:400px){.ap-filter-row{grid-template-columns:1fr}}
       `}</style>
     </div>
   );
