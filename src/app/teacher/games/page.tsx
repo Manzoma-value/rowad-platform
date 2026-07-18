@@ -375,7 +375,7 @@ function Hub({
     { id: "memory",    title: T.memTitle, desc: T.memDesc, emoji: "🧠",  hue: "rgba(184,160,130,0.18)" },
     { id: "hunter",    title: T.hunTitle, desc: T.hunDesc, emoji: "🎯",  hue: "rgba(107,30,45,0.10)" },
     { id: "speed",     title: T.spdTitle, desc: T.spdDesc, emoji: "⚡",  hue: "rgba(27,94,32,0.10)" },
-    { id: "wordrain",  title: T.wrTitle,  desc: T.wrDesc,  emoji: "🌧️", hue: "rgba(30,64,107,0.10)" },
+    { id: "wordrain",  title: T.wrTitle,  desc: T.wrDesc,  emoji: "🌧️", hue: "rgba(101,91,83,0.10)" },
     { id: "collector", title: T.colTitle, desc: T.colDesc, emoji: "🧭",  hue: "rgba(101,91,83,0.10)" },
   ];
 
@@ -2283,7 +2283,7 @@ const styles = `
   border-radius:20px;overflow:hidden;
   background:
     radial-gradient(ellipse at 50% 0%, #FFFBF5 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(30,64,107,0.08), transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(101,91,83,0.08), transparent 55%),
     linear-gradient(180deg,#F7F3EB 0%,#E5E0D5 100%);
   border:1.5px solid #D9C9B0;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.55), 0 10px 28px rgba(107,30,45,0.12);
