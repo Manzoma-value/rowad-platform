@@ -756,35 +756,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
         )}
       </div>
 
-      {/* ═══════════════════ MOBILE BOTTOM TAB BAR ═══════════════════ */}
-      <nav className="tl-bottom-tabs" dir={isRtl ? "rtl" : "ltr"} aria-label="Mobile navigation">
-        {visibleNav.map((item) => {
-          const active = isActive(item.href, item.exact);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`tl-tab-item ${active ? "active" : ""}`}
-            >
-              <span className="tl-tab-icon"><Icon size={22} strokeWidth={1.6} /></span>
-              <span className="tl-tab-label">{navLabel(item)}</span>
-            </Link>
-          );
-        })}
-        {showCommunity && (() => {
-          const active = isActive(COMMUNITY_HREF);
-          return (
-            <Link href={COMMUNITY_HREF} className={`tl-tab-item ${active ? "active" : ""}`}>
-              <span className="tl-tab-icon"><Globe2 size={22} strokeWidth={1.6} /></span>
-              <span className="tl-tab-label">
-                {lang === "ar" ? "المجتمع" : lang === "sq" ? "Hub" : "Hub"}
-              </span>
-            </Link>
-          );
-        })()}
-      </nav>
-
       <style>{styles}</style>
     </div>
   );
@@ -841,7 +812,7 @@ const styles = `
   ::selection { background: rgba(184,160,130,0.20); }
 
   /* ══ SHELL ══ */
-  .tl-shell { display: flex; min-height: 100vh; width: 100%; }
+  .tl-shell { display: flex; min-height: 100vh; width: 100%; overflow-x: clip; }
 
   /* ══ OVERLAY ══ */
   .tl-overlay {
@@ -1093,7 +1064,7 @@ const styles = `
   .tl-spin { width: 13px; height: 13px; border: 2px solid rgba(184,160,130,0.15); border-top-color: var(--tl-gold); border-radius: 50%; animation: tl-spin 0.7s linear infinite; }
 
   /* ══ MAIN ══ */
-  .tl-main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; margin-inline-start: var(--tl-sidebar-w); }
+  .tl-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 100vh; margin-inline-start: var(--tl-sidebar-w); }
   @media (max-width: 767px) { .tl-main { margin-inline-start: 0; } }
 
   /* Topbar */
@@ -1175,7 +1146,7 @@ const styles = `
   @media (min-width: 768px) { .tl-content { padding: 40px; } }
   .tl-content--hub { padding: 0 !important; }
   .tl-watermark    { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
-  .tl-content-inner { position: relative; z-index: 10; }
+  .tl-content-inner { position: relative; z-index: 10; min-width: 0; }
 
   /* Bottom band */
   .tl-bottom-band {
@@ -1190,74 +1161,16 @@ const styles = `
   .tl-footer-sparkle { color: var(--tl-gold-deep); opacity: 0.60; }
   .tl-footer-text    { font-family: var(--tl-font-mono); font-size: 10px; font-weight: 500; letter-spacing: 0.28em; text-transform: uppercase; color: var(--tl-graphite-muted); opacity: 0.60; }
 
-  /* ══ MOBILE BOTTOM TAB BAR ══ */
-  .tl-bottom-tabs { display: none; }
-
   @media (max-width: 767px) {
-    /* Content padding for tab bar + safe area */
     .tl-content {
-      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
+      padding-bottom: max(20px, env(safe-area-inset-bottom, 0px));
     }
     .tl-content--hub {
-      padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
+      padding: 0 !important;
     }
     /* Hide decorative footer on mobile */
     .tl-bottom-band { display: none; }
     .tl-footer-caption { display: none; }
-
-    /* Bottom tab bar */
-    .tl-bottom-tabs {
-      display: flex;
-      justify-content: space-around;
-      align-items: stretch;
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      z-index: 45;
-      background: rgba(26, 26, 26, 0.94);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      border-top: 1px solid rgba(184, 160, 130, 0.14);
-      padding: 6px 4px calc(env(safe-area-inset-bottom, 0px) + 6px);
-      box-shadow: 0 -6px 30px rgba(26,26,26,0.30);
-    }
-
-    .tl-tab-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      flex: 1;
-      padding: 4px 2px;
-      text-decoration: none;
-      color: rgba(184,160,130,0.32);
-      transition: color 0.15s;
-      min-width: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .tl-tab-item.active { color: var(--tl-gold); }
-    .tl-tab-item:active { opacity: 0.75; }
-
-    .tl-tab-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px; height: 30px;
-      border-radius: 10px;
-      transition: background 0.15s;
-    }
-    .tl-tab-item.active .tl-tab-icon {
-      background: rgba(184,160,130,0.12);
-    }
-    .tl-tab-label {
-      font-size: 9.5px;
-      font-weight: 700;
-      font-family: 'Cairo', sans-serif;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 100%;
-    }
 
     /* Safe area for topbar on notched phones */
     .tl-topbar {
@@ -1271,8 +1184,4 @@ const styles = `
     .tl-bc-sep { display: none; }
   }
 
-  @media (max-width: 400px) {
-    .tl-tab-label { font-size: 8.5px; }
-    .tl-tab-icon { width: 34px; }
-  }
 `;
