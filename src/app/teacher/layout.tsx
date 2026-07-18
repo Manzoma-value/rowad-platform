@@ -121,7 +121,7 @@ const navItems: NavItem2[] = [
   },
   {
     href: "/teacher/workshops", key: "workshops", sublabel: "Workshops", exact: false, icon: CalendarRange,
-    labelAr: "الورش التدريبية", labelSq: "Punëtoritë", labelEn: "Workshops",
+    labelAr: "الورش التدريبية", labelSq: "Takimet", labelEn: "Workshops",
   },
   {
     href: "/teacher/roadmap",  key: "roadmap",   sublabel: "Roadmap",   exact: false, icon: MapPin,

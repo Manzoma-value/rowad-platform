@@ -98,6 +98,7 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     success: true,
+    workshop_id: workshop.id,
     onboarding_status: teacher.onboarding_status,
     attendance_recorded: countsAsAttendance,
   });

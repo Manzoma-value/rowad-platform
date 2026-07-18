@@ -70,6 +70,19 @@ const EMPTY: Form = {
   notes: "",
 };
 
+const DRAFT_KEY = "teacher-application-draft-v1";
+
+function initialForm(): Form {
+  if (typeof window === "undefined") return EMPTY;
+  try {
+    const saved = window.localStorage.getItem(DRAFT_KEY);
+    return saved ? { ...EMPTY, ...(JSON.parse(saved) as Partial<Form>) } : EMPTY;
+  } catch {
+    window.localStorage.removeItem(DRAFT_KEY);
+    return EMPTY;
+  }
+}
+
 export default function TeacherApplicationPage() {
   const { lang } = useLang();
   const router = useRouter();
@@ -80,8 +93,17 @@ export default function TeacherApplicationPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState<Form>(EMPTY);
+  const [form, setForm] = useState<Form>(initialForm);
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (loading || submitting) return;
+    try {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    } catch {
+      // Private browsing or a full storage quota should not block the form.
+    }
+  }, [form, loading, submitting]);
 
   // Route guard: if the teacher already submitted or is past PENDING_APPLICATION,
   // bounce them to the appropriate screen.
@@ -173,6 +195,7 @@ export default function TeacherApplicationPage() {
       // QR entrants are already ACTIVE and go directly to their workshop;
       // regular signups continue to the admin review screen.
       invalidateCache("/api/teacher");
+      try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
       const destination = d?.status === "ACTIVE"
         ? (d?.workshop_id ? `/teacher/workshops/${d.workshop_id}` : "/teacher")
         : "/teacher/under-review";

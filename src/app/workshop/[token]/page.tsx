@@ -129,7 +129,15 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
         return;
       }
 
-      router.replace("/teacher");
+      if (data.onboarding_status === "PENDING_APPLICATION") {
+        window.location.replace("/teacher/application");
+      } else if (data.onboarding_status === "UNDER_REVIEW" || data.onboarding_status === "WAITING_LIST") {
+        window.location.replace("/teacher/under-review");
+      } else if (data.onboarding_status === "REJECTED") {
+        window.location.replace("/teacher/rejected");
+      } else {
+        window.location.replace(data.workshop_id ? `/teacher/workshops/${data.workshop_id}` : "/teacher");
+      }
     })().catch(() => {
       setEntryError(T.err_default);
       setEntryMode("error");
@@ -173,9 +181,10 @@ export default function WorkshopSignupPage({ params }: { params: Promise<{ token
         return;
       }
       setDone(true);
-      // The teacher layout will route new PENDING_APPLICATION teachers to the
-      // application form on their next request.
-      setTimeout(() => router.replace("/teacher"), 400);
+      // Use a full navigation so the new auth cookie is available before the
+      // application route guard runs. The short QR form is only account setup;
+      // the full application is always the next screen.
+      setTimeout(() => window.location.replace("/teacher/application"), 400);
     } catch {
       setErr(T.err_default);
       setSubmitting(false);
