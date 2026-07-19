@@ -182,7 +182,7 @@ export default function FutureQualificationVoteModal() {
             <header className="fqv-head">
               <div className="fqv-brand"><ShieldCheck size={18} /><span>Al Rowad - Albania</span></div>
               <h1 id="fqv-title">Votim për proceset e ardhshme të zhvillimit profesional</h1>
-              <p>Pas përfundimit të fazës së parë të trajnimit, duam të përcaktojmë së bashku mënyrën më të përshtatshme të mbështetjes në terren. Përgjigju pesë pyetjeve të shkurtra dhe, nëse dëshiron, shto një koment në fund.</p>
+              <p>Duam të njohim preferencat e tua për mbështetjen dhe zhvillimin profesional në fazën e ardhshme. Përgjigju pesë pyetjeve të shkurtra dhe, nëse dëshiron, shto një koment në fund.</p>
               <div className="fqv-progress-meta"><span>Pyetja {step + 1} nga {TOTAL_STEPS}</span><strong>{Math.round(progress)}%</strong></div>
               <div className="fqv-progress"><span style={{ width: `${progress}%` }} /></div>
             </header>

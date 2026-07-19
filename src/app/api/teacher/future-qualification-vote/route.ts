@@ -8,6 +8,12 @@ const frequencies = new Set(["WEEKLY", "BIWEEKLY", "MONTHLY"]);
 
 const MAX_NOTES_LENGTH = 1000;
 
+// The vote is shown right after signup (before the application is even
+// filled) and again once a teacher is fully active — both are legitimate
+// times to submit it. Mid-review or rejected teachers never see the modal,
+// so they can't reach this endpoint through the UI either.
+const VOTE_ELIGIBLE_STATUSES = new Set(["PENDING_APPLICATION", "ACTIVE"]);
+
 type VoteInput = {
   coaching_frequency?: unknown;
   consultation_frequency?: unknown;
@@ -31,8 +37,8 @@ export async function GET() {
 export async function POST(req: Request) {
   const auth = await requireTeacher();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  if (auth.teacher.onboarding_status !== "ACTIVE") {
-    return NextResponse.json({ error: "active_teacher_required" }, { status: 403 });
+  if (!VOTE_ELIGIBLE_STATUSES.has(auth.teacher.onboarding_status)) {
+    return NextResponse.json({ error: "vote_not_available" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null) as VoteInput | null;

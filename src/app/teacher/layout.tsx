@@ -568,6 +568,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           </button>
         </header>
         <main style={{ flex: 1 }}>{children}</main>
+        {onboardingStatus === "PENDING_APPLICATION" && <FutureQualificationVoteModal />}
         <style>{`
           .rg-games-btn {
             display: inline-flex; align-items: center; gap: 7px;
