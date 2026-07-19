@@ -172,6 +172,9 @@ export function ProfileAvatar({
           {isStaff && <span className={`av-badge ${isAdmin ? "av-badge-admin" : ""}`}>{isAdmin ? "*" : "+"}</span>}
         </span>
       </button>
+      {/* Always mounted — the trigger avatar needs .av/.av-img/.av-badge
+          before the modal ever opens, not just while it's on screen. */}
+      <style>{css}</style>
 
       {open && (
         <div
@@ -222,8 +225,6 @@ export function ProfileAvatar({
               )}
             </div>
           </div>
-
-          <style>{css}</style>
         </div>
       )}
     </>
@@ -245,6 +246,14 @@ function InfoBlock({ label, values }: { label: string; values: string[] }) {
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
+/* Base avatar look — self-contained so this component renders correctly
+   on any page, not just inside CommunityHub (which defines its own
+   equivalent .av rules that simply take precedence there). */
+.av{border-radius:50%;flex-shrink:0;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 8px rgba(26,26,26,.15),0 0 0 2px rgba(255,255,255,.8);transition:transform .2s cubic-bezier(.34,1.56,.64,1);}
+.av:hover{transform:scale(1.07);}
+.av-img{width:100%;height:100%;border-radius:inherit;object-fit:cover;display:block;}
+.av-badge{position:absolute;bottom:-1px;right:-1px;width:14px;height:14px;border-radius:50%;background:#B8A082;border:2px solid #fff;font-size:6px;font-weight:900;color:#32101A;display:flex;align-items:center;justify-content:center;}
 
 .hpa-overlay {
   position: fixed; inset: 0; z-index: 1000;
