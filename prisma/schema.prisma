@@ -508,6 +508,8 @@ model FutureQualificationVote {
   evaluation_frequency    VoteFrequency
   field_support_frequency VoteFrequency
   needs_group_leader      Boolean
+  // Optional free-text comment the teacher may add alongside their answers.
+  notes                   String?
   submitted_at            DateTime      @default(now())
 
   teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)

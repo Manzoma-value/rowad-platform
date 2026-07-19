@@ -6,12 +6,15 @@ export const dynamic = "force-dynamic";
 
 const frequencies = new Set(["WEEKLY", "BIWEEKLY", "MONTHLY"]);
 
+const MAX_NOTES_LENGTH = 1000;
+
 type VoteInput = {
   coaching_frequency?: unknown;
   consultation_frequency?: unknown;
   evaluation_frequency?: unknown;
   field_support_frequency?: unknown;
   needs_group_leader?: unknown;
+  notes?: unknown;
 };
 
 export async function GET() {
@@ -48,6 +51,10 @@ export async function POST(req: Request) {
   if (typeof body?.needs_group_leader !== "boolean") {
     return NextResponse.json({ error: "invalid_group_leader_answer" }, { status: 400 });
   }
+  const notesRaw = typeof body?.notes === "string" ? body.notes.trim() : "";
+  if (notesRaw.length > MAX_NOTES_LENGTH) {
+    return NextResponse.json({ error: "notes_too_long" }, { status: 400 });
+  }
 
   const vote = await prisma.futureQualificationVote.upsert({
     where: { teacher_id: auth.teacher.id },
@@ -60,6 +67,7 @@ export async function POST(req: Request) {
       evaluation_frequency: body.evaluation_frequency as "WEEKLY" | "BIWEEKLY" | "MONTHLY",
       field_support_frequency: body.field_support_frequency as "WEEKLY" | "BIWEEKLY" | "MONTHLY",
       needs_group_leader: body.needs_group_leader,
+      notes: notesRaw || null,
     },
     select: { submitted_at: true },
   });

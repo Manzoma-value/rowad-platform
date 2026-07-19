@@ -71,6 +71,7 @@ export async function GET(req: Request) {
         evaluation_frequency: true,
         field_support_frequency: true,
         needs_group_leader: true,
+        notes: true,
         submitted_at: true,
         teacher: { select: { id: true, profile: { select: { full_name: true, email: true } } } },
       },
