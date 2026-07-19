@@ -11,6 +11,7 @@ import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch, clearCache } from "@/lib/api-cache";
 import MandalaLoader from "@/components/MandalaLoader";
+import FutureQualificationVoteModal from "@/components/FutureQualificationVoteModal";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
@@ -282,8 +283,11 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
       .finally(() => setStatusLoaded(true));
 
     // Cache profile — avatar doesn't change between page navigations.
-    cachedFetch<{ profile?: { avatar_url?: string } }>("/api/profile", 600_000)
-      .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
+    cachedFetch<{ profile?: { id?: string; avatar_url?: string } }>("/api/profile", 600_000)
+      .then((d) => {
+        if (d?.profile?.id) setProfileId(d.profile.id);
+        if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url);
+      })
       .catch(() => {});
   }, []);
 
@@ -352,6 +356,12 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
         }
 
         const readTime = new Date(readAt).getTime();
+        if (!Number.isFinite(readTime)) {
+          const baseline = latestAt ?? new Date().toISOString();
+          try { localStorage.setItem(readKey, baseline); } catch { /* unavailable */ }
+          setCommunityNotifications([]);
+          return;
+        }
         setCommunityNotifications(posts.filter((post) =>
           post.author.id !== profileId && new Date(post.created_at).getTime() > readTime,
         ));
@@ -935,6 +945,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
         )}
       </div>
 
+      {onboardingStatus === "ACTIVE" && <FutureQualificationVoteModal />}
       <style>{styles}</style>
     </div>
   );

@@ -35,6 +35,7 @@ import {
   Bell,
   Sparkles,
   FileText,
+  ListChecks,
   X,
   LucideIcon,
 } from "lucide-react";
@@ -191,6 +192,12 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
       label: lang === "ar" ? "طلبات المعلمين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
+      hideForViewOnly: true,
+      group: "teachers",
+    },
+    {
+      href: "/school-admin/qualification-vote", sublabel: "Qualification Vote", exact: false, icon: ListChecks,
+      label: lang === "ar" ? "تصويت التأهيل المستقبلي" : lang === "sq" ? "Votimi i zhvillimit" : "Qualification Vote",
       hideForViewOnly: true,
       group: "teachers",
     },

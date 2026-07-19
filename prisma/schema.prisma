@@ -446,6 +446,7 @@ model School {
   teacher_groups              TeacherGroup[]
   workshops                   Workshop[]
   teacher_group_announcements TeacherGroupAnnouncement[]
+  future_qualification_votes  FutureQualificationVote[]
 
   @@map("schools")
 }
@@ -490,6 +491,7 @@ model Teacher {
   group_memberships   TeacherGroupMember[]
   ratings_given       AssessmentRating[]      @relation("AssessmentRater")
   ratings_received    AssessmentRating[]      @relation("AssessmentTarget")
+  future_qualification_vote FutureQualificationVote?
 
   @@index([school_id])
   @@map("teachers")
@@ -497,6 +499,30 @@ model Teacher {
 
 // ─── Teacher Groups — private teacher communities organized by admin.
 //     A teacher can belong to many groups; a group has many teachers. ───
+model FutureQualificationVote {
+  id                      String        @id @default(uuid()) @db.Uuid
+  teacher_id              String        @unique @db.Uuid
+  school_id               String        @db.Uuid
+  coaching_frequency      VoteFrequency
+  consultation_frequency  VoteFrequency
+  evaluation_frequency    VoteFrequency
+  field_support_frequency VoteFrequency
+  needs_group_leader      Boolean
+  submitted_at            DateTime      @default(now())
+
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+
+  @@index([school_id, submitted_at(sort: Desc)])
+  @@map("future_qualification_votes")
+}
+
+enum VoteFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
 model TeacherGroup {
   id          String   @id @default(uuid()) @db.Uuid
   school_id   String   @db.Uuid
