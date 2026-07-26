@@ -18,16 +18,18 @@
 //   - onCommit: called when the user releases a slider. Caller can debounce or
 //               throttle persistence here. Only called if the new array is valid (sum=100).
 
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import {
   ASSESS_UI,
   derive, isValid100, type ScoresTuple, type AssessLang,
 } from "@/lib/rowad-assessment";
+import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
 
 export type DistributorTrait = { label: string; statement: string; color: string };
 
 export default function RowadDistributor({
   traits, value, onChange, lang, disabled, onCommit, hideReadout, compact,
+  showSpectrum, spectrumSeed,
 }: {
   traits: DistributorTrait[];
   value: ScoresTuple;
@@ -41,6 +43,12 @@ export default function RowadDistributor({
   hideReadout?: boolean;
   /** Tighten row spacing/font so all sliders + status fit above the fold. */
   compact?: boolean;
+  /** Show a live watercolor spectrum blob above the sliders, updating on
+   *  every drag — the "wow" preview requested for the rating screen. */
+  showSpectrum?: boolean;
+  /** Stable per-entity seed (e.g. hash of assessment+target id) so the
+   *  blob's organic jitter doesn't reshuffle on every re-render. */
+  spectrumSeed?: number;
 }) {
   const T = ASSESS_UI[lang];
   const total = value.reduce((a, b) => a + b, 0);
@@ -75,9 +83,21 @@ export default function RowadDistributor({
         </div>
       </div>
 
+      {showSpectrum && (
+        <div className="rwd-spectrum">
+          <TraitSpectrumBlob
+            traits={traits.map((t, i) => ({ label: t.label, color: t.color, pct: value[i] ?? 0 }))}
+            seed={spectrumSeed ?? 1}
+            size={168}
+            mode="full"
+            showMixedSwatch
+          />
+        </div>
+      )}
+
       <div className="rwd-sliders">
         {traits.map((trait, i) => (
-          <div key={i} className="rwd-row">
+          <div key={i} className="rwd-row" style={{ "--tc": trait.color } as CSSProperties}>
             <div className="rwd-row-head">
               <span className="rwd-dot" style={{ background: trait.color }} />
               <span className="rwd-tname">{trait.label}</span>
@@ -147,14 +167,34 @@ export default function RowadDistributor({
         .rwd-status-over  { background:rgba(107,30,45,0.10); color:#6B1E2D; }
         .rwd-status-under { background:rgba(107,30,45,0.14);color:#8F765B; }
 
+        .rwd-spectrum { display:flex; justify-content:center; padding:6px 0 14px; }
+
         .rwd-sliders { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; }
-        .rwd-row { background:#FFFBF5; border:1px solid rgba(107,30,45,0.18); border-radius:12px; padding:10px 12px; display:grid; grid-template-columns: 1fr 58px; column-gap:10px; align-items:center; }
+        .rwd-row {
+          background: linear-gradient(160deg,#FFFBF5,#F7F3EB);
+          border:1px solid rgba(107,30,45,0.18); border-radius:12px; padding:10px 12px;
+          display:grid; grid-template-columns: 1fr 58px; column-gap:10px; align-items:center;
+          transition: box-shadow .25s, border-color .25s, transform .15s;
+        }
+        .rwd-row:hover { border-color: color-mix(in srgb, var(--tc) 55%, rgba(107,30,45,0.3)); box-shadow: 0 6px 18px rgba(26,26,26,0.07); }
         .rwd-row-head { grid-column: 1 / -1; display:flex; align-items:center; gap:8px; }
-        .rwd-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .rwd-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc) 22%, transparent); }
         .rwd-tname { font-size:13.5px; font-weight:800; color:#32101A; flex:1; }
         .rwd-tval { font-family:'JetBrains Mono', ui-monospace, monospace; font-size:14.5px; font-weight:800; color:#6B1E2D; }
         .rwd-stmt { grid-column: 1 / -1; font-size:12px; color:#6B1E2D; line-height:1.55; margin-bottom:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-        .rwd-range { width:100%; cursor: pointer; }
+        .rwd-range { width:100%; height:6px; cursor: pointer; appearance:none; -webkit-appearance:none; background: rgba(107,30,45,0.14); border-radius:99px; }
+        .rwd-range::-webkit-slider-thumb {
+          -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+          background: var(--tc); border:3px solid #FFFBF5;
+          box-shadow: 0 0 0 1.5px rgba(26,26,26,0.18), 0 3px 8px rgba(26,26,26,0.25);
+          cursor:pointer; transition: transform .15s;
+        }
+        .rwd-range::-webkit-slider-thumb:active { transform: scale(1.15); }
+        .rwd-range::-moz-range-thumb {
+          width:20px; height:20px; border-radius:50%; background: var(--tc);
+          border:3px solid #FFFBF5; box-shadow: 0 0 0 1.5px rgba(26,26,26,0.18), 0 3px 8px rgba(26,26,26,0.25);
+          cursor:pointer;
+        }
         .rwd-range:disabled { cursor: not-allowed; opacity:.5; }
         .rwd-num { width:100%; padding:6px 8px; border:1.5px solid rgba(107,30,45,0.32); border-radius:8px; font-family:'JetBrains Mono', ui-monospace, monospace; font-weight:800; font-size:13px; text-align:center; background:#FFF; outline:none; }
         .rwd-num:focus { border-color:#B8A082; }

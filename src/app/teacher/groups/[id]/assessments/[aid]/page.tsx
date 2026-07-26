@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import RowadDistributor from "@/components/RowadDistributor";
+import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
+import { seedFromString, matchCompoundReading } from "@/lib/trait-spectrum";
 import {
   ASSESS_UI, derive, averageTuples, pickAssessLang,
   type ScoresTuple,
@@ -99,6 +101,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
     prev:      L === "ar" ? "السابق" : "Prapa",
     next:      L === "ar" ? "التالي" : "Tjetri",
     memberOf:  (i: number, n: number) => L === "ar" ? `${i} من ${n}` : `${i} nga ${n}`,
+    spectrumReading: L === "ar" ? "قراءة الطيف" : "Leximi i Spektrit",
   };
   const dir = L === "ar" ? "rtl" : "ltr";
 
@@ -288,6 +291,8 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                   disabled={locked}
                   onChange={(next) => onChange(current.teacher_id, next)}
                   onCommit={(next) => persist(current.teacher_id, next)}
+                  showSpectrum
+                  spectrumSeed={seedFromString(`${aid}:${current.teacher_id}`)}
                 />
               </div>
             </div>
@@ -317,6 +322,26 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                   <span>{AT.collectiveLabel}</span>
                   <strong>{traitLabel(traits[avgDerive.collectiveIdx], L)} · {avg[avgDerive.collectiveIdx].toFixed(1)}</strong>
                 </div>
+              </div>
+              <div className="ap-spectrum-row">
+                <TraitSpectrumBlob
+                  traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
+                  seed={seedFromString(`${aid}:my-results`)}
+                  size={150}
+                  mode="full"
+                  showMixedSwatch
+                />
+                {(() => {
+                  const reading = matchCompoundReading(traits.map((t, i) => ({ label: traitLabel(t, L), pct: avg[i] ?? 0 })));
+                  if (reading.kind === "none") return null;
+                  const text = reading.kind === "compound" ? (L === "ar" ? reading.ar : reading.sq) : traitLabel(traits[reading.index], L);
+                  return (
+                    <div className="ap-spectrum-caption">
+                      <span className="ap-spectrum-caption-lbl">{UX.spectrumReading}</span>
+                      <strong>{text}</strong>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="ap-bars ap-bars-compact">
                 {traits.map((t, i) => {
@@ -458,6 +483,11 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-result-core span { color: #6B1E2D; }
         .ap-result-coll { border-color: rgba(107,30,45,.46); background: linear-gradient(160deg,rgba(107,30,45,.16),#FFFBF5); }
         .ap-result-coll span { color: #8F765B; }
+
+        .ap-spectrum-row { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed rgba(107,30,45,0.28); }
+        .ap-spectrum-caption { display: flex; align-items: baseline; gap: 8px; text-align: center; }
+        .ap-spectrum-caption-lbl { font-size: 11px; font-weight: 800; color: #8F765B; letter-spacing: .05em; text-transform: uppercase; }
+        .ap-spectrum-caption strong { font-size: 15px; font-weight: 900; color: #6B1E2D; }
         .ap-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
         .ap-bars-compact { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
         @media (max-width: 760px) { .ap-bars-compact { grid-template-columns: 1fr; } }

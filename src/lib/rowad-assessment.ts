@@ -11,14 +11,19 @@ export const TRAIT_KEYS: readonly TraitKey[] = [
   "lineage", "atonement", "awareness", "zeal", "distinct",
 ] as const;
 
-// The original fixed five — kept as the default template for new models
-// and for any legacy code path that still wants the classic set.
+// The canonical five — kept as the default template for new models.
+// Colors and labels below are the official identity for the Albania
+// deployment (هوية السمات والألوان — مشروع الرواد | ألبانيا), each tied to
+// specific Albanian cultural symbolism (Qeleshe/Nderi, Kanun reconciliation,
+// Skanderbeg's strategic distinction, the national flag, the double-headed
+// eagle's vigilance). `key` is an internal tag only, unchanged to avoid
+// touching anything that might reference it.
 export const DEFAULT_TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
-  { key: "lineage",   ar: "النسل",     sq: "Pasardhësia", color: "#6B1E2D" },
-  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",    color: "#B8A082" },
-  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",    color: "#8F765B" },
-  { key: "zeal",      ar: "الحمية",    sq: "Zelli",       color: "#4A0E1C" },
-  { key: "distinct",  ar: "التمييز",  sq: "Dallimi",     color: "#A55A68" },
+  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#F2EFE6" },
+  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#F2B705" },
+  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",  color: "#1A1A1A" },
+  { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#B33A3A" },
+  { key: "distinct",  ar: "التمييز",  sq: "Dallimi",   color: "#9AA3AC" },
 ];
 
 export const DEFAULT_STATEMENTS = {

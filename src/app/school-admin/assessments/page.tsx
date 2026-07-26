@@ -8,6 +8,8 @@ import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
 import IdentityMandala from "@/components/IdentityMandala";
+import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
+import { seedFromString, blendCmykWeighted } from "@/lib/trait-spectrum";
 import {
   ASSESS_UI, derive, averageTuples, pickAssessLang, defaultTraitDrafts,
   type ScoresTuple, type TraitDraft,
@@ -45,7 +47,12 @@ type AssessmentFull = {
 
 function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
 
-const SWATCHES = ["#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0"];
+// Leads with the official Albania trait-identity colors, then the earlier
+// generic swatches as extra choices for fully custom trait sets.
+const SWATCHES = [
+  "#F2EFE6", "#F2B705", "#9AA3AC", "#B33A3A", "#1A1A1A",
+  "#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0",
+];
 
 const UI = {
   ar: {
@@ -650,7 +657,19 @@ export default function AssessmentsHubPage() {
                             <IdentityMandala size={80} stroke="#4A0E1C" opacity={0.05} />
                           </div>
                           <div className="am-agg-head">
-                            <div className="am-agg-name">{member.profile.full_name}</div>
+                            <div className="am-agg-head-main">
+                              {avg && (
+                                <div className="am-agg-spectrum">
+                                  <TraitSpectrumBlob
+                                    traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
+                                    seed={seedFromString(member.teacher_id)}
+                                    size={52}
+                                    mode="compact"
+                                  />
+                                </div>
+                              )}
+                              <div className="am-agg-name">{member.profile.full_name}</div>
+                            </div>
                             <span className="am-agg-count">{count}</span>
                           </div>
                           {!avg || !d ? (
@@ -897,7 +916,15 @@ export default function AssessmentsHubPage() {
               {aggregation.map(({ member, count, avg, derive: d }) => (
                 <div key={member.teacher_id} className="am-export-card">
                   <div className="am-export-card-head">
-                    <strong>{member.profile.full_name}</strong>
+                    <div className="am-export-card-head-main">
+                      {avg && (
+                        <span
+                          className="am-export-swatch"
+                          style={{ background: blendCmykWeighted(detail.traits.map((tr, i) => ({ color: tr.color, pct: avg[i] ?? 0 }))) }}
+                        />
+                      )}
+                      <strong>{member.profile.full_name}</strong>
+                    </div>
                     <span>{count} {T.ratingsCount}</span>
                   </div>
                   {!avg || !d ? (
@@ -1045,8 +1072,10 @@ const styles = `
   .am-agg { position:relative; overflow:hidden; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.28); border-radius:16px; padding:14px; box-shadow:0 8px 20px rgba(50,16,26,.045); transition:transform .18s ease, border-color .18s ease; }
   .am-agg:hover { transform:translateY(-2px); border-color:rgba(184,160,130,.5); }
   .am-agg-watermark { position:absolute; inset-inline-end:-16px; bottom:-16px; pointer-events:none; z-index:0; }
-  .am-agg-head { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; margin-bottom:9px; }
-  .am-agg-name { font-family:var(--font-head); font-size:13px; font-weight:700; color:#1A1A1A; }
+  .am-agg-head { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:9px; }
+  .am-agg-head-main { display:flex; align-items:center; gap:8px; min-width:0; }
+  .am-agg-spectrum { flex-shrink:0; line-height:0; }
+  .am-agg-name { font-family:var(--font-head); font-size:13px; font-weight:700; color:#1A1A1A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .am-agg-count { font-size:10.5px; color:#8F765B; font-weight:700; background:rgba(184,160,130,.16); padding:2px 8px; border-radius:99px; }
   .am-agg-empty { position:relative; z-index:1; font-size:12px; color:#8C8274; font-weight:700; padding:10px 0; }
   .am-agg-bars { position:relative; z-index:1; display:flex; flex-direction:column; gap:5px; margin-bottom:9px; }
@@ -1128,7 +1157,9 @@ const styles = `
   .am-export-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
   .am-export-card { border:1px solid rgba(184,160,130,.35); border-radius:14px; padding:13px 14px; background:#FFFFFF; }
   .am-export-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-  .am-export-card-head strong { font-family:'Noto Kufi Arabic','Cairo',sans-serif; font-size:13px; font-weight:700; color:#1A1A1A; }
+  .am-export-card-head-main { display:flex; align-items:center; gap:6px; min-width:0; }
+  .am-export-swatch { width:12px; height:12px; border-radius:4px; flex-shrink:0; border:1px solid rgba(26,26,26,0.15); }
+  .am-export-card-head strong { font-family:'Noto Kufi Arabic','Cairo',sans-serif; font-size:13px; font-weight:700; color:#1A1A1A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .am-export-card-head span { font-size:10.5px; color:#8F765B; font-weight:700; }
   .am-export-noresult { font-size:11.5px; color:#8C8274; font-weight:700; padding:8px 0; }
   .am-export-row { display:grid; grid-template-columns:58px 1fr 30px; align-items:center; gap:6px; margin-bottom:4px; }
