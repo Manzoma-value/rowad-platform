@@ -9,6 +9,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
 import IdentityMandala from "@/components/IdentityMandala";
 import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
+import TraitRadarChart from "@/components/TraitRadarChart";
 import { seedFromString, blendCmykWeighted } from "@/lib/trait-spectrum";
 import {
   ASSESS_UI, derive, averageTuples, pickAssessLang, defaultTraitDrafts,
@@ -658,16 +659,6 @@ export default function AssessmentsHubPage() {
                           </div>
                           <div className="am-agg-head">
                             <div className="am-agg-head-main">
-                              {avg && (
-                                <div className="am-agg-spectrum">
-                                  <TraitSpectrumBlob
-                                    traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
-                                    seed={seedFromString(member.teacher_id)}
-                                    size={52}
-                                    mode="compact"
-                                  />
-                                </div>
-                              )}
                               <div className="am-agg-name">{member.profile.full_name}</div>
                             </div>
                             <span className="am-agg-count">{count}</span>
@@ -676,6 +667,19 @@ export default function AssessmentsHubPage() {
                             <div className="am-agg-empty">{T.noRating}</div>
                           ) : (
                             <>
+                              <div className="am-agg-spectrum-row">
+                                <TraitSpectrumBlob
+                                  traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
+                                  seed={seedFromString(member.teacher_id)}
+                                  size={110}
+                                  mode="compact"
+                                  showMixedSwatch
+                                />
+                                <TraitRadarChart
+                                  traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
+                                  size={110}
+                                />
+                              </div>
                               <div className="am-agg-bars">
                                 {detail.traits.map((tr, i) => {
                                   const isCore = d.coreIdx === i && d.hasCore;
@@ -1074,7 +1078,7 @@ const styles = `
   .am-agg-watermark { position:absolute; inset-inline-end:-16px; bottom:-16px; pointer-events:none; z-index:0; }
   .am-agg-head { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:9px; }
   .am-agg-head-main { display:flex; align-items:center; gap:8px; min-width:0; }
-  .am-agg-spectrum { flex-shrink:0; line-height:0; }
+  .am-agg-spectrum-row { position:relative; z-index:1; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:14px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed rgba(107,30,45,0.2); }
   .am-agg-name { font-family:var(--font-head); font-size:13px; font-weight:700; color:#1A1A1A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .am-agg-count { font-size:10.5px; color:#8F765B; font-weight:700; background:rgba(184,160,130,.16); padding:2px 8px; border-radius:99px; }
   .am-agg-empty { position:relative; z-index:1; font-size:12px; color:#8C8274; font-weight:700; padding:10px 0; }

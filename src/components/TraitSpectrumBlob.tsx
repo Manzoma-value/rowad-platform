@@ -59,15 +59,16 @@ export default function TraitSpectrumBlob({
                 <feDisplacementMap in="SourceGraphic" in2="noise" scale={26} xChannelSelector="R" yChannelSelector="G" />
                 <feGaussianBlur stdDeviation={7} />
               </filter>
-              <radialGradient id={vignetteId} cx="50%" cy="46%" r="60%">
-                <stop offset="60%" stopColor="#1A1A1A" stopOpacity={0} />
-                <stop offset="100%" stopColor="#1A1A1A" stopOpacity={0.16} />
+              <radialGradient id={vignetteId} cx="50%" cy="45%" r="65%">
+                <stop offset="0%" stopColor="#D9C9B0" stopOpacity={0.14} />
+                <stop offset="55%" stopColor="#D9C9B0" stopOpacity={0} />
+                <stop offset="100%" stopColor="#1A1A1A" stopOpacity={0.3} />
               </radialGradient>
             </>
           )}
         </defs>
 
-        <circle cx={300} cy={300} r={242} fill="#FFFBF5" />
+        <circle cx={300} cy={300} r={242} fill="#1A1A1A" />
 
         <g clipPath={`url(#${clipId})`}>
           {layers.map((layer) => (
@@ -81,7 +82,7 @@ export default function TraitSpectrumBlob({
         </g>
 
         {frame && (
-          <g stroke="#B8A082" strokeWidth={1} fill="none" opacity={0.45}>
+          <g stroke="#D9C9B0" strokeWidth={1} fill="none" opacity={0.55}>
             {[238, 196, 150, 100].map((r) => (
               <circle key={r} cx={300} cy={300} r={r} opacity={0.5} />
             ))}
@@ -92,7 +93,7 @@ export default function TraitSpectrumBlob({
                   key={i}
                   x1={300 + 40 * Math.cos(a)} y1={300 + 40 * Math.sin(a)}
                   x2={300 + 238 * Math.cos(a)} y2={300 + 238 * Math.sin(a)}
-                  opacity={0.22}
+                  opacity={0.3}
                 />
               );
             })}
@@ -103,12 +104,12 @@ export default function TraitSpectrumBlob({
                   return `${(300 + 58 * Math.cos(a)).toFixed(1)},${(300 + 58 * Math.sin(a)).toFixed(1)}`;
                 })
                 .join(" ")}
-              opacity={0.55}
+              opacity={0.6}
             />
-            <circle cx={300} cy={300} r={242} strokeWidth={2} opacity={0.75} />
+            <circle cx={300} cy={300} r={242} strokeWidth={2} opacity={0.8} />
           </g>
         )}
-        {frame && <circle cx={300} cy={300} r={6} fill="#8F765B" />}
+        {frame && <circle cx={300} cy={300} r={6} fill="#D9C9B0" />}
       </svg>
 
       {showMixedSwatch && (

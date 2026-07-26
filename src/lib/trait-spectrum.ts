@@ -132,6 +132,56 @@ export function computeBlobLayers(
   });
 }
 
+// ── Radar (pentagon) chart geometry ───────────────────────────────────
+// Pure vector math, no filters — cheap enough for any grid size. Uses the
+// same even angle distribution as computeBlobLayers so a trait's radar
+// axis always points the same direction as its blob anchor.
+
+export type RadarGeometry = {
+  gridRings: string[]; // SVG polygon `points` strings, outer→inner
+  axisLines: { x1: number; y1: number; x2: number; y2: number }[];
+  dataPoints: { x: number; y: number; color: string }[];
+  dataPolygonPoints: string;
+};
+
+export function computeRadarGeometry(
+  traits: SpectrumTrait[],
+  opts?: { cx?: number; cy?: number; maxR?: number },
+): RadarGeometry {
+  const cx = opts?.cx ?? 110;
+  const cy = opts?.cy ?? 112;
+  const maxR = opts?.maxR ?? 82;
+  const n = traits.length || 1;
+  const angleOf = (i: number) => ((-90 + (360 / n) * i) * Math.PI) / 180;
+
+  const gridRings = [0.25, 0.5, 0.75, 1].map((f) =>
+    traits
+      .map((_, i) => {
+        const a = angleOf(i);
+        return `${(cx + maxR * f * Math.cos(a)).toFixed(1)},${(cy + maxR * f * Math.sin(a)).toFixed(1)}`;
+      })
+      .join(" "),
+  );
+
+  const axisLines = traits.map((_, i) => {
+    const a = angleOf(i);
+    return { x1: cx, y1: cy, x2: cx + maxR * Math.cos(a), y2: cy + maxR * Math.sin(a) };
+  });
+
+  const dataPoints = traits.map((t, i) => {
+    const a = angleOf(i);
+    const r = maxR * (Math.max(0, Math.min(100, t.pct)) / 100);
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a), color: t.color };
+  });
+
+  return {
+    gridRings,
+    axisLines,
+    dataPoints,
+    dataPolygonPoints: dataPoints.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" "),
+  };
+}
+
 // ── Compound reading ──────────────────────────────────────────────────
 // From the official brand doc: when the top-2 traits are within 15 points
 // of each other, a pairwise combined meaning applies; otherwise just the

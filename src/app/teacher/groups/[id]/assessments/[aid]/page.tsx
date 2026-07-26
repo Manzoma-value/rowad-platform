@@ -7,6 +7,7 @@ import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import RowadDistributor from "@/components/RowadDistributor";
 import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
+import TraitRadarChart from "@/components/TraitRadarChart";
 import { seedFromString, matchCompoundReading } from "@/lib/trait-spectrum";
 import {
   ASSESS_UI, derive, averageTuples, pickAssessLang,
@@ -324,13 +325,19 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                 </div>
               </div>
               <div className="ap-spectrum-row">
-                <TraitSpectrumBlob
-                  traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
-                  seed={seedFromString(`${aid}:my-results`)}
-                  size={150}
-                  mode="full"
-                  showMixedSwatch
-                />
+                <div className="ap-spectrum-visuals">
+                  <TraitSpectrumBlob
+                    traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
+                    seed={seedFromString(`${aid}:my-results`)}
+                    size={240}
+                    mode="full"
+                    showMixedSwatch
+                  />
+                  <TraitRadarChart
+                    traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
+                    size={170}
+                  />
+                </div>
                 {(() => {
                   const reading = matchCompoundReading(traits.map((t, i) => ({ label: traitLabel(t, L), pct: avg[i] ?? 0 })));
                   if (reading.kind === "none") return null;
@@ -485,6 +492,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-result-coll span { color: #8F765B; }
 
         .ap-spectrum-row { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed rgba(107,30,45,0.28); }
+        .ap-spectrum-visuals { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 24px; }
         .ap-spectrum-caption { display: flex; align-items: baseline; gap: 8px; text-align: center; }
         .ap-spectrum-caption-lbl { font-size: 11px; font-weight: 800; color: #8F765B; letter-spacing: .05em; text-transform: uppercase; }
         .ap-spectrum-caption strong { font-size: 15px; font-weight: 900; color: #6B1E2D; }
