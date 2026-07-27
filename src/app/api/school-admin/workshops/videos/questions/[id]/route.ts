@@ -19,7 +19,7 @@ const questionSelect = {
 async function questionForAdmin(id: string, schoolId: string) {
   return prisma.workshopVideoQuestion.findFirst({
     where: { id, video: { workshop: { school_id: schoolId } } },
-    select: { id: true, type: true },
+    select: { id: true, type: true, video: { select: { duration_seconds: true } } },
   });
 }
 
@@ -47,6 +47,10 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
   if (body.timestamp_seconds !== undefined) {
     const ts = Number(body.timestamp_seconds);
     if (!Number.isFinite(ts) || ts < 0) return NextResponse.json({ error: "invalid timestamp_seconds" }, { status: 400 });
+    const duration = existing.video.duration_seconds;
+    if (duration && ts > duration) {
+      return NextResponse.json({ error: "timestamp is past the end of the video" }, { status: 400 });
+    }
     data.timestamp_seconds = Math.round(ts);
   }
 

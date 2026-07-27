@@ -23,7 +23,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   const video = await prisma.workshopVideo.findFirst({
     where: { id: videoId, workshop_id: id, workshop: { school_id: auth.school.id } },
-    select: { id: true, _count: { select: { questions: true } } },
+    select: { id: true, duration_seconds: true, _count: { select: { questions: true } } },
   });
   if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (video._count.questions >= MAX_QUESTIONS_PER_VIDEO) {
@@ -44,6 +44,10 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const timestampSeconds = Number(body.timestamp_seconds);
   if (!type || !text || !Number.isFinite(timestampSeconds) || timestampSeconds < 0) {
     return NextResponse.json({ error: "type, text and a valid timestamp_seconds are required" }, { status: 400 });
+  }
+  // A question past the end of the video would never fire during playback.
+  if (video.duration_seconds && timestampSeconds > video.duration_seconds) {
+    return NextResponse.json({ error: "timestamp is past the end of the video" }, { status: 400 });
   }
 
   let correctAnswer = "";

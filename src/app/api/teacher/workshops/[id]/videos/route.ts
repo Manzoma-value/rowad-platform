@@ -35,6 +35,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
       title: true,
       url: true,
       mime_type: true,
+      duration_seconds: true,
       order: true,
       questions: {
         orderBy: { timestamp_seconds: "asc" },

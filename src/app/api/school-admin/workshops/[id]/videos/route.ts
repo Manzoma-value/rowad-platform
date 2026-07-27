@@ -1,14 +1,15 @@
 // /api/school-admin/workshops/[id]/videos
 //   GET  — list this workshop's videos with full question authoring detail.
-//   POST — upload a new video file (multipart, field "file" + "title").
+//   POST — record a video the browser already uploaded straight to Supabase
+//          Storage (see ./upload-url). Only small JSON metadata crosses this
+//          route, so the 4.5MB Vercel body cap is never in play.
 import { NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
-import { MAX_VIDEO_FILE } from "@/lib/workshop-videos";
+import { VIDEO_BUCKET } from "@/lib/workshop-videos";
 
 export const dynamic = "force-dynamic";
-const BUCKET = "workshop-videos";
 
 function adminSupabase() {
   return createSupabaseAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
@@ -28,6 +29,17 @@ const questionSelect = {
   options: { orderBy: { order: "asc" as const }, select: { id: true, text: true, order: true } },
 };
 
+const videoSelect = {
+  id: true,
+  title: true,
+  url: true,
+  mime_type: true,
+  size_bytes: true,
+  duration_seconds: true,
+  order: true,
+  created_at: true,
+};
+
 export async function GET(_req: Request, context: { params: Promise<{ id: string }> }) {
   const auth = await requireSchoolAdmin();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -39,13 +51,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
     where: { workshop_id: id },
     orderBy: { order: "asc" },
     select: {
-      id: true,
-      title: true,
-      url: true,
-      mime_type: true,
-      size_bytes: true,
-      order: true,
-      created_at: true,
+      ...videoSelect,
       questions: { orderBy: { timestamp_seconds: "asc" }, select: questionSelect },
     },
   });
@@ -59,47 +65,58 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const workshop = await workshopForAdmin(id, auth.school.id);
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (!(req.headers.get("content-type") ?? "").includes("multipart/form-data")) {
-    return NextResponse.json({ error: "multipart form data required" }, { status: 400 });
-  }
-  const form = await req.formData();
-  const file = form.get("file") as File | null;
-  if (!file) return NextResponse.json({ error: "file required" }, { status: 400 });
-  if (!file.type.startsWith("video/")) return NextResponse.json({ error: "file must be a video" }, { status: 400 });
-  if (file.size > MAX_VIDEO_FILE) return NextResponse.json({ error: "file too large" }, { status: 413 });
+  const body = await req.json().catch(() => null) as {
+    storage_path?: string;
+    title?: string;
+    mime_type?: string;
+    size_bytes?: number;
+    duration_seconds?: number;
+  } | null;
 
-  const title = String(form.get("title") || file.name).trim().slice(0, 160) || file.name;
-  const ext = file.name.includes(".") ? file.name.split(".").pop() : "mp4";
-  const path = `workshops/${id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const storagePath = body?.storage_path?.trim();
+  // Only ever accept a path inside this workshop's own folder — the client
+  // supplies it, so it must not be able to point at someone else's object.
+  if (!storagePath || !storagePath.startsWith(`workshops/${id}/`) || storagePath.includes("..")) {
+    return NextResponse.json({ error: "invalid storage_path" }, { status: 400 });
+  }
 
   const admin = adminSupabase();
-  const { error } = await admin.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
-  if (error) {
-    console.error("[workshop-videos upload]", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // Confirm the object really landed before creating a row that points at it.
+  const folder = storagePath.slice(0, storagePath.lastIndexOf("/"));
+  const filename = storagePath.slice(storagePath.lastIndexOf("/") + 1);
+  const { data: listed, error: listError } = await admin.storage.from(VIDEO_BUCKET).list(folder, { search: filename });
+  if (listError) {
+    console.error("[workshop-videos verify]", listError.message);
+    return NextResponse.json({ error: "could not verify upload" }, { status: 500 });
   }
-  const { data: { publicUrl } } = admin.storage.from(BUCKET).getPublicUrl(path);
+  if (!listed?.some((entry) => entry.name === filename)) {
+    return NextResponse.json({ error: "upload not found in storage" }, { status: 400 });
+  }
 
-  const lastOrder = await prisma.workshopVideo.count({ where: { workshop_id: id } });
+  const { data: { publicUrl } } = admin.storage.from(VIDEO_BUCKET).getPublicUrl(storagePath);
+
+  const duration = Number(body?.duration_seconds);
+  const size = Number(body?.size_bytes);
+  const order = await prisma.workshopVideo.count({ where: { workshop_id: id } });
+
   try {
     const video = await prisma.workshopVideo.create({
       data: {
         workshop_id: id,
-        title,
-        storage_path: path,
+        title: (body?.title ?? "").trim().slice(0, 160) || filename,
+        storage_path: storagePath,
         url: publicUrl,
-        mime_type: file.type,
-        size_bytes: file.size,
-        order: lastOrder,
+        mime_type: body?.mime_type?.slice(0, 120) ?? null,
+        size_bytes: Number.isFinite(size) && size > 0 ? Math.round(size) : null,
+        duration_seconds: Number.isFinite(duration) && duration > 0 ? Math.round(duration) : null,
+        order,
         created_by: auth.profile.id,
       },
-      select: {
-        id: true, title: true, url: true, mime_type: true, size_bytes: true, order: true, created_at: true,
-      },
+      select: videoSelect,
     });
     return NextResponse.json({ video: { ...video, questions: [] } }, { status: 201 });
   } catch (dbError) {
-    await admin.storage.from(BUCKET).remove([path]).catch(() => null);
+    await admin.storage.from(VIDEO_BUCKET).remove([storagePath]).catch(() => null);
     console.error("[workshop-videos create]", dbError);
     return NextResponse.json({ error: "Could not save video" }, { status: 500 });
   }

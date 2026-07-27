@@ -1416,6 +1416,9 @@ model WorkshopVideo {
   url          String
   mime_type    String?
   size_bytes   Int?
+  // Playback length, measured in the browser at upload time. Used to keep
+  // question timestamps inside the video and to show duration in the UI.
+  duration_seconds Int?
   order        Int      @default(0)
   created_by   String   @db.Uuid
   created_at   DateTime @default(now())
