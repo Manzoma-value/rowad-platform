@@ -393,6 +393,7 @@ model Profile {
   authoredTeacherGroups        TeacherGroup[]             @relation("TeacherGroupAuthor")
   authoredGroupAssessments     GroupAssessment[]          @relation("GroupAssessmentAuthor")
   authoredWorkshops            Workshop[]                 @relation("WorkshopAuthor")
+  authoredWorkshopVideos       WorkshopVideo[]            @relation("WorkshopVideoAuthor")
   authoredAttendanceCodes      WorkshopAttendanceCode[]   @relation("WorkshopAttendanceCodeAuthor")
   workshopMessages             WorkshopMessage[]          @relation("WorkshopMessageAuthor")
   createdWorkshopEnrollments   WorkshopEnrollment[]       @relation("WorkshopEnrollmentAuthor")
@@ -480,6 +481,8 @@ model Teacher {
   workshop_signup     Workshop?               @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
   workshop_enrollments WorkshopEnrollment[]
   workshop_attendance WorkshopAttendance[]
+  workshop_video_views WorkshopVideoView[]
+  workshop_video_attempts WorkshopVideoAttempt[]
   announcements       Announcement[]
   classes             Class[]
   quizzes             Quiz[]
@@ -1320,6 +1323,7 @@ model Workshop {
   attendance         WorkshopAttendance[]
   attendance_codes   WorkshopAttendanceCode[]
   messages           WorkshopMessage[]
+  videos             WorkshopVideo[]
 
   @@index([school_id, created_at(sort: Desc)])
   @@map("workshops")
@@ -1392,4 +1396,121 @@ model WorkshopAttendanceCode {
 
   @@index([workshop_id, day_date(sort: Desc)])
   @@map("workshop_attendance_codes")
+}
+
+// ─── Workshop Videos — uploaded training videos with in-video quiz stops.
+//     Each video has ordered MCQ/TF questions pinned to a timestamp; the
+//     teacher-facing player pauses playback there until answered. Separate
+//     "view" (did they watch it) and "attempt" (did they answer, and how
+//     well) records, mirroring the attendance-vs-enrollment split above. ───
+enum WorkshopVideoQuestionType {
+  MCQ
+  TF
+}
+
+model WorkshopVideo {
+  id           String   @id @default(uuid()) @db.Uuid
+  workshop_id  String   @db.Uuid
+  title        String
+  storage_path String
+  url          String
+  mime_type    String?
+  size_bytes   Int?
+  order        Int      @default(0)
+  created_by   String   @db.Uuid
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  workshop  Workshop                @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  author    Profile                 @relation("WorkshopVideoAuthor", fields: [created_by], references: [id])
+  questions WorkshopVideoQuestion[]
+  views     WorkshopVideoView[]
+  attempts  WorkshopVideoAttempt[]
+
+  @@index([workshop_id, order])
+  @@map("workshop_videos")
+}
+
+model WorkshopVideoQuestion {
+  id                String                    @id @default(uuid()) @db.Uuid
+  video_id          String                    @db.Uuid
+  type              WorkshopVideoQuestionType
+  text              String
+  // TF: "true"/"false". MCQ: the exact text of the correct option.
+  correct_answer    String
+  timestamp_seconds Int
+  order             Int                       @default(0)
+  created_at        DateTime                  @default(now())
+
+  video   WorkshopVideo                 @relation(fields: [video_id], references: [id], onDelete: Cascade)
+  options WorkshopVideoQuestionOption[]
+  answers WorkshopVideoAnswer[]
+
+  @@index([video_id, timestamp_seconds])
+  @@map("workshop_video_questions")
+}
+
+model WorkshopVideoQuestionOption {
+  id          String @id @default(uuid()) @db.Uuid
+  question_id String @db.Uuid
+  text        String
+  order       Int
+
+  question WorkshopVideoQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@map("workshop_video_question_options")
+}
+
+// One row per (video, teacher) — first/last time they pressed play and
+// whether they watched it through to the end. Independent of whether they
+// answered every question, same as WorkshopAttendance vs WorkshopEnrollment.
+model WorkshopVideoView {
+  id              String    @id @default(uuid()) @db.Uuid
+  video_id        String    @db.Uuid
+  teacher_id      String    @db.Uuid
+  first_viewed_at DateTime  @default(now())
+  last_viewed_at  DateTime  @default(now())
+  completed_at    DateTime?
+
+  video   WorkshopVideo @relation(fields: [video_id], references: [id], onDelete: Cascade)
+  teacher Teacher       @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@unique([video_id, teacher_id])
+  @@map("workshop_video_views")
+}
+
+// One row per (video, teacher), upserted as each in-video question is
+// answered. `total` is fixed to the question count at answer-time so partial
+// progress is visible before every question has been reached.
+model WorkshopVideoAttempt {
+  id           String    @id @default(uuid()) @db.Uuid
+  video_id     String    @db.Uuid
+  teacher_id   String    @db.Uuid
+  score        Int       @default(0)
+  total        Int       @default(0)
+  completed_at DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  video   WorkshopVideo         @relation(fields: [video_id], references: [id], onDelete: Cascade)
+  teacher Teacher               @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  answers WorkshopVideoAnswer[]
+
+  @@unique([video_id, teacher_id])
+  @@map("workshop_video_attempts")
+}
+
+model WorkshopVideoAnswer {
+  id          String   @id @default(uuid()) @db.Uuid
+  attempt_id  String   @db.Uuid
+  question_id String   @db.Uuid
+  answer      String
+  is_correct  Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  attempt  WorkshopVideoAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
+  question WorkshopVideoQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([attempt_id, question_id])
+  @@map("workshop_video_answers")
 }

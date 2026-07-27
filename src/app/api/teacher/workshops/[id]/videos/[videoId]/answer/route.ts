@@ -1,0 +1,81 @@
+// /api/teacher/workshops/[id]/videos/[videoId]/answer
+//   POST — grade one in-video question and record it. First answer for a
+//   given question sticks (idempotent replay-safe): resubmitting the same
+//   question just returns the originally graded result.
+import { NextResponse } from "next/server";
+import { requireTeacher } from "@/lib/teacher-auth";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(req: Request, context: { params: Promise<{ id: string; videoId: string }> }) {
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id, videoId } = await context.params;
+  const { teacher } = auth;
+
+  const body = await req.json().catch(() => ({})) as { question_id?: string; answer?: string };
+  const questionId = body.question_id;
+  const answer = body.answer?.trim();
+  if (!questionId || !answer) return NextResponse.json({ error: "question_id and answer required" }, { status: 400 });
+
+  const video = await prisma.workshopVideo.findFirst({
+    where: {
+      id: videoId,
+      workshop_id: id,
+      workshop: {
+        school_id: teacher.school_id,
+        OR: [
+          { enrollments: { some: { teacher_id: teacher.id } } },
+          { signed_up_teachers: { some: { id: teacher.id } } },
+          { attendance: { some: { teacher_id: teacher.id } } },
+        ],
+      },
+    },
+    select: { id: true, _count: { select: { questions: true } } },
+  });
+  if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const question = await prisma.workshopVideoQuestion.findFirst({
+    where: { id: questionId, video_id: videoId },
+    select: { id: true, correct_answer: true },
+  });
+  if (!question) return NextResponse.json({ error: "Question not found" }, { status: 404 });
+
+  const attempt = await prisma.workshopVideoAttempt.upsert({
+    where: { video_id_teacher_id: { video_id: videoId, teacher_id: teacher.id } },
+    create: { video_id: videoId, teacher_id: teacher.id, score: 0, total: video._count.questions },
+    update: {},
+    select: { id: true },
+  });
+
+  const isCorrect = answer.toLowerCase() === question.correct_answer.trim().toLowerCase();
+  await prisma.workshopVideoAnswer.upsert({
+    where: { attempt_id_question_id: { attempt_id: attempt.id, question_id: questionId } },
+    create: { attempt_id: attempt.id, question_id: questionId, answer, is_correct: isCorrect },
+    update: {},
+  });
+
+  const answers = await prisma.workshopVideoAnswer.findMany({
+    where: { attempt_id: attempt.id },
+    select: { question_id: true, answer: true, is_correct: true },
+  });
+  const score = answers.filter((a) => a.is_correct).length;
+  const total = video._count.questions;
+  const updated = await prisma.workshopVideoAttempt.update({
+    where: { id: attempt.id },
+    data: {
+      score,
+      total,
+      completed_at: answers.length >= total ? new Date() : null,
+    },
+    select: { score: true, total: true, completed_at: true },
+  });
+
+  const persisted = answers.find((a) => a.question_id === questionId)!;
+  return NextResponse.json({
+    is_correct: persisted.is_correct,
+    submitted_answer: persisted.answer,
+    attempt: updated,
+  });
+}

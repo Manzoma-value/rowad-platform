@@ -23,6 +23,7 @@ import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 import type { WorkshopDay, WorkshopMaterial } from "@/lib/workshops";
+import { WorkshopVideoSection } from "../components/WorkshopVideoSection";
 
 type WorkshopMessage = {
   id: string;
@@ -296,6 +297,8 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
           </div>
         )}
       </section>
+
+      <WorkshopVideoSection workshopId={id} hasAccess={data.has_access} lang={locale} />
 
       {data.has_access && (
         <section className="tw-section tw-discussion">

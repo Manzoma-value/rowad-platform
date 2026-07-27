@@ -12,6 +12,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Pencil, Plus, Radio, Save, Search, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import { makeWorkshopDays, type WorkshopDay, type WorkshopMaterial } from "@/lib/workshops";
+import { VideoManager } from "../components/VideoManager";
 
 type Workshop = {
   id: string;
@@ -651,6 +652,8 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=><div className="wd-material" key={m.id}>{m.type==="IMAGE"?<ImageIcon/>:m.type==="VIDEO"?<Video/>:m.type==="LINK"?<Link2/>:<FileText/>}<div><strong>{m.title}</strong><small>{m.mime || m.type}</small></div><a href={m.url} target="_blank" rel="noreferrer" aria-label={m.title}><ExternalLink size={17}/></a>{!viewOnly&&<button onClick={()=>void removeMaterial(m.id)} aria-label={T.remove}><Trash2 size={16}/></button>}</div>)}</div>}
         {detail.workshop.notes&&<div className="wd-notes"><b>{T.notes}</b><p>{detail.workshop.notes}</p></div>}
       </section>
+
+      <VideoManager workshopId={id} viewOnly={viewOnly} lang={L} />
 
       <section className="wd-card wd-discussion">
         <div className="wd-table-head"><div><h2>{T.discussion}</h2><p>{T.discussionHelp}</p></div><MessageSquareText size={20}/></div>
