@@ -277,7 +277,7 @@ export function VideoQuizPlayer({
 
   return (
     <article className="vqp">
-      <div className={`vqp-stage${isFullscreen ? " fullscreen" : ""}`} ref={wrapperRef}>
+      <div className={`vqp-stage${isFullscreen ? " fullscreen" : ""}${activeQuestion ? " question-open" : ""}`} ref={wrapperRef}>
         <video
           ref={videoRef}
           src={video.url}
@@ -317,8 +317,11 @@ export function VideoQuizPlayer({
           <div className="vqp-overlay" role="dialog" aria-modal="true" aria-label={t.question}>
             <div className="vqp-card">
               <div className="vqp-card-head">
-                <HelpCircle size={15} />
-                <span>{t.questionOf(activeIndex, questions.length)}</span>
+                <span><HelpCircle size={16} />{t.questionOf(activeIndex, questions.length)}</span>
+                <small>{t.locked}</small>
+              </div>
+              <div className="vqp-question-progress" aria-hidden="true">
+                {questions.map((question, index) => <i key={question.id} className={index + 1 <= activeIndex ? "active" : ""}/>)}
               </div>
               <p className="vqp-card-text">{activeQuestion.text}</p>
 
@@ -327,18 +330,24 @@ export function VideoQuizPlayer({
                   <div className="vqp-options">
                     {activeQuestion.type === "TF" ? (
                       <>
-                        <button type="button" className={`vqp-opt${selected === "true" ? " sel" : ""}`} onClick={() => setSelected("true")}>{t.trueLbl}</button>
-                        <button type="button" className={`vqp-opt${selected === "false" ? " sel" : ""}`} onClick={() => setSelected("false")}>{t.falseLbl}</button>
+                        <button type="button" className={`vqp-opt${selected === "true" ? " sel" : ""}`} onClick={() => setSelected("true")}>
+                          <span className="vqp-opt-index">✓</span><span>{t.trueLbl}</span>{selected === "true" && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
+                        </button>
+                        <button type="button" className={`vqp-opt${selected === "false" ? " sel" : ""}`} onClick={() => setSelected("false")}>
+                          <span className="vqp-opt-index">×</span><span>{t.falseLbl}</span>{selected === "false" && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
+                        </button>
                       </>
                     ) : (
-                      activeQuestion.options.map((option) => (
+                      activeQuestion.options.map((option, index) => (
                         <button
                           type="button"
                           key={option.id}
                           className={`vqp-opt${selected === option.text ? " sel" : ""}`}
                           onClick={() => setSelected(option.text)}
                         >
-                          {option.text}
+                          <span className="vqp-opt-index">{String.fromCharCode(65 + index)}</span>
+                          <span>{option.text}</span>
+                          {selected === option.text && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
                         </button>
                       ))
                     )}
@@ -433,15 +442,18 @@ const styles = `
 .vqp-bigplay:hover{background:#6B1E2D}
 
 /* ── Question overlay ── */
-.vqp-overlay{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(26,26,26,.82);backdrop-filter:blur(4px);overflow-y:auto;line-height:normal}
-.vqp-card{width:min(460px,100%);max-height:100%;overflow-y:auto;background:#FFFBF5;border-radius:16px;padding:18px;box-shadow:0 22px 60px rgba(26,26,26,.5)}
-.vqp-card-head{display:flex;align-items:center;gap:6px;margin-bottom:9px;color:#6B1E2D;font-size:10.5px;font-weight:900}
-.vqp-card-text{margin:0 0 14px;font-size:15px;font-weight:800;line-height:1.75;color:#32101A}
-.vqp-options{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.vqp-opt{min-height:46px;display:flex;align-items:center;border:1.5px solid #D9C9B0;border-radius:11px;background:#FFFFFF;padding:11px 14px;font:700 13.5px 'Cairo',sans-serif;color:#32101A;cursor:pointer;text-align:start;transition:border-color .12s,background .12s}
-.vqp-opt:hover{border-color:#8F765B}
-.vqp-opt.sel{border-color:#6B1E2D;border-width:2px;background:rgba(107,30,45,.08);font-weight:900}
-.vqp-cta{width:100%;min-height:46px;border:0;border-radius:11px;background:#6B1E2D;color:#F7F3EB;font:900 13.5px 'Cairo',sans-serif;cursor:pointer}
+.vqp-overlay{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;padding:clamp(12px,2.4vw,24px);background:rgba(26,26,26,.86);backdrop-filter:blur(8px);overflow-y:auto;line-height:normal}
+.vqp-card{width:min(620px,100%);max-height:100%;overflow-y:auto;background:#FFFBF5;border:1px solid rgba(217,201,176,.55);border-radius:20px;padding:clamp(16px,2.3vw,24px);box-shadow:0 26px 74px rgba(26,26,26,.55)}
+.vqp-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;color:#6B1E2D;font-size:11px;font-weight:900}
+.vqp-card-head>span{display:flex;align-items:center;gap:7px}.vqp-card-head small{color:#796A62;font-size:9px;font-weight:800}
+.vqp-question-progress{display:flex;gap:5px;margin-bottom:14px}.vqp-question-progress i{height:4px;flex:1;border-radius:999px;background:#E5E0D5}.vqp-question-progress i.active{background:#6B1E2D}
+.vqp-card-text{margin:0 0 16px;font-size:clamp(15px,2vw,18px);font-weight:900;line-height:1.75;color:#32101A}
+.vqp-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:14px}
+.vqp-opt{min-height:52px;display:grid;grid-template-columns:32px minmax(0,1fr) 20px;align-items:center;gap:9px;border:1.5px solid #D9C9B0;border-radius:13px;background:#FFFFFF;padding:8px 11px;font:700 13px 'Cairo',sans-serif;color:#32101A;cursor:pointer;text-align:start;transition:border-color .12s,background .12s,transform .12s}
+.vqp-opt:hover{border-color:#8F765B;transform:translateY(-1px)}
+.vqp-opt.sel{border-color:#6B1E2D;border-width:2px;background:rgba(107,30,45,.07);font-weight:900}
+.vqp-opt-index{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#EFEAE0;color:#6B1E2D;font:900 11px ui-monospace,Consolas,monospace}.vqp-opt.sel .vqp-opt-index{background:#6B1E2D;color:#fff}.vqp-selected-icon{color:#6B1E2D}
+.vqp-cta{width:100%;min-height:50px;border:0;border-radius:12px;background:linear-gradient(135deg,#4A0E1C,#6B1E2D);color:#F7F3EB;font:900 13.5px 'Cairo',sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(107,30,45,.16)}
 .vqp-cta:disabled{opacity:.45;cursor:not-allowed}
 .vqp-result{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:11px 13px;border-radius:11px;background:rgba(27,94,32,.13);color:#1B5E20;font-weight:900;font-size:13px}
 .vqp-result.wrong{background:rgba(107,30,45,.1);color:#6B1E2D}
@@ -475,10 +487,13 @@ const styles = `
 
 @media(max-width:560px){
   .vqp-video{max-height:56vh}
+  .vqp-stage.question-open{min-height:min(74dvh,620px)}
   .vqp-overlay{padding:10px}
-  .vqp-card{padding:15px;border-radius:14px}
+  .vqp-card{padding:15px;border-radius:15px}
+  .vqp-card-head{align-items:flex-start}.vqp-card-head small{max-width:48%;text-align:end;line-height:1.5}
   .vqp-card-text{font-size:14px}
-  .vqp-opt{min-height:48px;font-size:13px;padding:11px 12px}
+  .vqp-options{grid-template-columns:1fr}
+  .vqp-opt{min-height:50px;font-size:13px;padding:8px 10px}
   .vqp-cta{min-height:48px}
   .vqp-controls{flex-wrap:wrap;gap:6px;padding:8px}
   .vqp-track{order:10;flex-basis:100%;min-width:100%}

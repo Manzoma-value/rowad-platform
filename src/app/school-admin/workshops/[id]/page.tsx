@@ -10,9 +10,10 @@ import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
-import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Pencil, Plus, Radio, Save, Search, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import { makeWorkshopDays, type WorkshopDay, type WorkshopMaterial } from "@/lib/workshops";
 import { VideoManager } from "../components/VideoManager";
+import { ParticipantManagerModal } from "../components/participant-manager-modal";
 
 type Workshop = {
   id: string;
@@ -160,6 +161,8 @@ const OPS = {
     searchTeachers: "ابحث بالاسم أو البريد الإلكتروني",
     activeTeachers: "المعلمون النشطون",
     enrolled: "مضاف للورشة",
+    enrolledCount: "مضافون",
+    availableCount: "متاحون للإضافة",
     addTeacher: "إضافة للورشة",
     adding: "جارٍ الإضافة...",
     noActiveTeachers: "لا يوجد معلمون نشطون مطابقون.",
@@ -184,6 +187,8 @@ const OPS = {
     searchTeachers: "Kërko me emër ose email",
     activeTeachers: "Mësuesit aktivë",
     enrolled: "I shtuar",
+    enrolledCount: "Të shtuar",
+    availableCount: "Të disponueshëm",
     addTeacher: "Shto në forum",
     adding: "Duke shtuar...",
     noActiveTeachers: "Nuk ka mësues aktivë që përputhen.",
@@ -760,23 +765,21 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         )}
       </section>
 
-      {participantsOpen && <div className="wd-people-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setParticipantsOpen(false); }}>
-        <section className="wd-people-panel" role="dialog" aria-modal="true" aria-label={O.participants}>
-          <header>
-            <div><span><UserPlus size={16}/>{O.activeTeachers}</span><h2>{O.participants}</h2><p>{O.participantsSub}</p></div>
-            <button onClick={() => setParticipantsOpen(false)} aria-label={O.closePanel}><X size={20}/></button>
-          </header>
-          <label className="wd-people-search"><Search size={17}/><input autoFocus value={rosterQuery} onChange={(event) => setRosterQuery(event.target.value)} placeholder={O.searchTeachers}/></label>
-          {operationError && <p className="wd-operation-error" role="alert">{operationError}</p>}
-          <div className="wd-people-list">
-            {rosterLoading ? <MandalaLoader/> : visibleRoster.length === 0 ? <div className="wd-empty">{O.noActiveTeachers}</div> : visibleRoster.map((teacher) => <article key={teacher.teacher_id} className={teacher.enrolled ? "enrolled" : ""}>
-              <span className="wd-person-avatar">{teacher.avatar_url ? <img src={teacher.avatar_url} alt=""/> : teacher.full_name.trim().charAt(0).toUpperCase()}</span>
-              <div><strong>{teacher.full_name}</strong><small dir="ltr">{teacher.email ?? "-"}</small></div>
-              {teacher.enrolled ? <span className="wd-enrolled"><CheckCircle2 size={14}/>{O.enrolled}</span> : <button onClick={() => void addTeacher(teacher.teacher_id)} disabled={mutatingTeacher === teacher.teacher_id}><UserPlus size={14}/>{mutatingTeacher === teacher.teacher_id ? O.adding : O.addTeacher}</button>}
-            </article>)}
-          </div>
-        </section>
-      </div>}
+      {participantsOpen && (
+        <ParticipantManagerModal
+          dir={dir}
+          labels={O}
+          roster={roster}
+          visibleRoster={visibleRoster}
+          query={rosterQuery}
+          loading={rosterLoading}
+          error={operationError}
+          mutatingTeacher={mutatingTeacher}
+          onQueryChange={setRosterQuery}
+          onAdd={(teacherId) => void addTeacher(teacherId)}
+          onClose={() => setParticipantsOpen(false)}
+        />
+      )}
 
       {editingBasics && <div className="wd-edit-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !savingBasics) setEditingBasics(false); }}>
         <section className="wd-edit-dialog" role="dialog" aria-modal="true" aria-label={E.action}>
@@ -864,6 +867,25 @@ const styles = `
 .wd-checkin .wd-late{padding:2px 6px;border-radius:999px;background:#F6D9D6;color:#8B2332}
 .wd-mark-present{width:100%;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px dashed rgba(107,30,45,.22);border-radius:10px;background:rgba(255,255,255,.7);color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.wd-mark-present:hover{background:#F7F3EB;border-style:solid}.wd-mark-present:disabled{opacity:.5;cursor:progress}
 .wd-people-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:stretch;justify-content:flex-end;background:rgba(26,26,26,.56);backdrop-filter:blur(7px)}[dir='rtl'] .wd-people-overlay{justify-content:flex-start}.wd-people-panel{width:min(520px,100%);height:100%;display:flex;flex-direction:column;background:linear-gradient(180deg,#FFFBF5,#EFEAE0);box-shadow:0 0 70px rgba(26,26,26,.28);animation:wd-panel-in .22s ease-out}.wd-people-panel>header{display:flex;justify-content:space-between;gap:14px;padding:24px;background:linear-gradient(135deg,#250B12,#6B1E2D);color:#F7F3EB}.wd-people-panel>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-people-panel>header h2{margin:4px 0;font-size:23px}.wd-people-panel>header p{margin:0;color:rgba(247,243,235,.7);font-size:12px;line-height:1.7}.wd-people-panel>header button{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-people-search{display:flex;align-items:center;gap:9px;margin:16px 16px 8px;padding:0 12px;border:1px solid #D9C9B0;border-radius:13px;background:#fff}.wd-people-search input{width:100%;border:0;outline:0;padding:11px 0;background:transparent;font:inherit;font-size:13px}.wd-people-list{flex:1;overflow:auto;padding:8px 16px 22px}.wd-people-list article{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;margin-bottom:8px;padding:11px;border:1px solid rgba(107,30,45,.1);border-radius:15px;background:#fff}.wd-people-list article.enrolled{background:rgba(217,201,176,.24)}.wd-person-avatar{width:44px;height:44px;display:grid;place-items:center;overflow:hidden;border-radius:14px;background:#32101A;color:#D9C9B0;font-weight:900}.wd-person-avatar img{width:100%;height:100%;object-fit:cover}.wd-people-list strong,.wd-people-list small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-people-list strong{font-size:12px}.wd-people-list small{font-size:10px;color:#796A62}.wd-people-list article>button,.wd-enrolled{display:flex;align-items:center;gap:5px;border:0;border-radius:10px;padding:8px 10px;background:#6B1E2D;color:#fff;font:800 10px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}.wd-enrolled{background:rgba(49,87,36,.1);color:#315724}.wd-people-list article>button:disabled{opacity:.55;cursor:progress}
+.wd-people-overlay{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:clamp(12px,2vw,24px);background:rgba(26,26,26,.68);backdrop-filter:blur(10px)}
+.wd-people-panel{width:min(980px,100%);height:min(760px,calc(100dvh - 40px));display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(217,201,176,.48);border-radius:24px;background:#EFEAE0;box-shadow:0 34px 110px rgba(26,26,26,.42);animation:wd-dialog-in .2s ease-out}
+.wd-people-panel>header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex:none;padding:22px 24px;background:linear-gradient(125deg,#250B12,#4A0E1C 62%,#6B1E2D);color:#F7F3EB}
+.wd-people-panel>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-people-panel>header h2{margin:4px 0;font-size:clamp(20px,2.4vw,28px);line-height:1.35}.wd-people-panel>header p{max-width:650px;margin:0;color:rgba(247,243,235,.72);font-size:12px;line-height:1.75}
+.wd-people-panel>header button{width:42px;height:42px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.2);border-radius:13px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-people-panel>header button:hover{background:rgba(255,255,255,.16)}.wd-people-panel>header button:disabled{opacity:.45;cursor:progress}
+.wd-people-tools{display:grid;grid-template-columns:minmax(280px,1fr) auto;align-items:center;gap:14px;flex:none;padding:16px 20px 12px}
+.wd-people-search{display:flex;align-items:center;gap:10px;min-height:48px;margin:0;padding:0 14px;border:1px solid #D9C9B0;border-radius:14px;background:#fff;box-shadow:0 6px 18px rgba(50,16,26,.04)}.wd-people-search:focus-within{border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}
+.wd-people-search input{width:100%;min-width:0;border:0;outline:0;padding:0;background:transparent;font:inherit;font-size:13px;color:#32101A}.wd-people-search>button{width:30px;height:30px;display:grid;place-items:center;flex:none;border:0;border-radius:9px;background:#EFEAE0;color:#6B1E2D;cursor:pointer}
+.wd-people-summary{display:flex;gap:8px}.wd-people-summary span{min-height:46px;display:flex;align-items:center;gap:6px;padding:0 12px;border:1px solid rgba(107,30,45,.1);border-radius:13px;background:#FFFBF5;color:#655B53;font-size:10.5px;font-weight:800;white-space:nowrap}.wd-people-summary svg{color:#6B1E2D}.wd-people-summary b{color:#32101A;font-size:15px}
+.wd-people-panel>.wd-operation-error{margin:0 20px 10px}
+.wd-people-list{min-height:0;flex:1;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:10px;padding:8px 20px 20px}
+.wd-people-list>.wd-empty,.wd-people-list>.mandala-loader{grid-column:1/-1}
+.wd-people-list article{min-width:0;display:grid;grid-template-columns:50px minmax(0,1fr) auto;align-items:center;gap:11px;margin:0;padding:12px;border:1px solid rgba(107,30,45,.1);border-radius:16px;background:#FFFBF5;box-shadow:0 7px 20px rgba(50,16,26,.035);transition:transform .15s,border-color .15s,box-shadow .15s}.wd-people-list article:hover{transform:translateY(-1px);border-color:rgba(107,30,45,.22);box-shadow:0 10px 24px rgba(50,16,26,.07)}.wd-people-list article.enrolled{background:rgba(255,251,245,.64);border-color:rgba(49,87,36,.18)}
+.wd-person-avatar{width:50px;height:50px;display:grid;place-items:center;overflow:hidden;border-radius:15px;background:linear-gradient(145deg,#32101A,#6B1E2D);color:#F7F3EB;font-size:17px;font-weight:900}.wd-person-avatar img{width:100%;height:100%;object-fit:cover}
+.wd-person-details{min-width:0}.wd-person-details strong,.wd-person-details small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-person-details strong{font-size:12.5px;color:#32101A}.wd-person-details small{margin-top:3px;color:#796A62;font-size:10.5px;text-align:left}
+.wd-people-list article>button,.wd-enrolled{min-height:40px;display:flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:11px;padding:0 12px;background:#6B1E2D;color:#fff;font:800 10.5px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}.wd-people-list article>button:hover{background:#4A0E1C}.wd-enrolled{background:rgba(49,87,36,.1);color:#315724}.wd-people-list article>button:disabled{opacity:.55;cursor:progress}
+@keyframes wd-dialog-in{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@media(max-width:760px){.wd-people-overlay{padding:0}.wd-people-panel{width:100%;height:100dvh;max-height:none;border:0;border-radius:0}.wd-people-panel>header{padding:18px 16px}.wd-people-tools{grid-template-columns:1fr;padding:14px 14px 8px}.wd-people-summary{display:grid;grid-template-columns:1fr 1fr}.wd-people-summary span{justify-content:center}.wd-people-list{grid-template-columns:1fr;padding:8px 14px 18px}.wd-people-list article{grid-template-columns:46px minmax(0,1fr) auto}.wd-person-avatar{width:46px;height:46px}.wd-people-panel>.wd-operation-error{margin-inline:14px}}
+@media(max-width:480px){.wd-people-panel>header p{display:none}.wd-people-list article{grid-template-columns:44px minmax(0,1fr)}.wd-person-avatar{width:44px;height:44px}.wd-people-list article>button,.wd-enrolled{grid-column:1/-1;min-height:44px}.wd-people-summary span{padding:0 8px;font-size:9.5px}}
 .wd-edit-overlay{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:18px;background:rgba(26,26,26,.58);backdrop-filter:blur(7px)}.wd-edit-dialog{width:min(650px,100%);border:1px solid rgba(217,201,176,.45);border-radius:22px;overflow:hidden;background:#FFFBF5;box-shadow:0 28px 90px rgba(26,26,26,.32)}.wd-edit-dialog>header{display:flex;justify-content:space-between;gap:16px;padding:22px 24px;background:linear-gradient(135deg,#250B12,#6B1E2D);color:#F7F3EB}.wd-edit-dialog>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-edit-dialog>header h2{margin:5px 0;font-size:23px}.wd-edit-dialog>header p{margin:0;color:rgba(247,243,235,.74);font-size:12px;line-height:1.7}.wd-edit-dialog>header button{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-edit-dialog>label{display:block;margin:18px 24px 0;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-dialog input,.wd-edit-dialog textarea{box-sizing:border-box;width:100%;margin-top:7px;border:1px solid #D9C9B0;border-radius:12px;background:#fff;padding:11px 12px;color:#32101A;font:inherit;font-size:13px;outline:none}.wd-edit-dialog textarea{resize:vertical;min-height:120px;line-height:1.75}.wd-edit-dialog input:focus,.wd-edit-dialog textarea:focus{border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}.wd-edit-actions{display:flex;justify-content:flex-end;gap:8px;padding:20px 24px}.wd-edit-actions button{display:flex;align-items:center;gap:6px;border:0;border-radius:11px;padding:10px 14px;background:#6B1E2D;color:#F7F3EB;font:800 12px 'Cairo',sans-serif;cursor:pointer}.wd-edit-actions button.ghost{border:1px solid #D9C9B0;background:#fff;color:#6B1E2D}.wd-edit-actions button:disabled{opacity:.55;cursor:progress}
 .wd-edit-dialog{width:min(760px,100%);max-height:92vh;overflow:auto}.wd-edit-date-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 24px 0}.wd-edit-date-row label{color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-program{margin:18px 24px 0;padding:12px;border:1px solid #D9C9B0;border-radius:12px}.wd-edit-program legend{padding:0 6px;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-days{display:grid;gap:7px}.wd-edit-day{display:grid;grid-template-columns:minmax(150px,1fr) 110px 105px 105px;align-items:center;gap:7px;padding:8px;background:#F7F3EB;border-inline-start:3px solid #4C6B3C}.wd-edit-day.rest{grid-template-columns:minmax(150px,1fr) 110px;border-inline-start-color:#8C8274;background:#EFEAE0}.wd-edit-day>span{font-size:11px;font-weight:900}.wd-edit-day>button{min-height:38px;border:1px solid #D9C9B0;border-radius:8px;background:#fff;color:#6B1E2D;font:800 11px 'Cairo',sans-serif;cursor:pointer}.wd-edit-day input{margin:0;padding:8px;font-size:11px}
 @keyframes wd-panel-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}[dir='rtl'] .wd-people-panel{animation-name:wd-panel-in-rtl}@keyframes wd-panel-in-rtl{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
