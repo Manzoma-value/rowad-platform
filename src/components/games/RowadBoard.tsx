@@ -182,17 +182,17 @@ export default function RowadBoard({
   const allPlaced = placedCount === cards.length && cards.length > 0;
   const progress = (placedCount / Math.max(cards.length, 1)) * 100;
 
+  // Fired synchronously on every change (skipping the initial mount) — cheap,
+  // since it's just updating a ref/queuing a save in the caller. The caller
+  // owns any debouncing of the actual network write; this component only
+  // needs to guarantee the callback always reflects the latest board state,
+  // including in the instant before the user exits.
   const onChangeRef = useRef(onChange);
   useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
   const firstRender = useRef(true);
   useEffect(() => {
     if (firstRender.current) { firstRender.current = false; return; }
-    const cb = onChangeRef.current;
-    if (!cb) return;
-    const id = setTimeout(() => {
-      cb(Object.entries(placed).map(([concept_id, pos]) => ({ concept_id, level: pos.level, maqsad: pos.maqsad })));
-    }, 800);
-    return () => clearTimeout(id);
+    onChangeRef.current?.(Object.entries(placed).map(([concept_id, pos]) => ({ concept_id, level: pos.level, maqsad: pos.maqsad })));
   }, [placed]);
 
   function placeCard(cid: string, level: number, maqsad: Maqsad) {

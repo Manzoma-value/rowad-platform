@@ -1,16 +1,21 @@
 // GET /api/school-admin/game-scores — unified play analytics for every game
-// on the platform: the graded card/model game (RowadGameSubmission) AND the
-// 5 practice mini-games (MiniGameSubmission).
+// on the platform: the graded card/model game (RowadGameSubmission), the
+// 5 practice mini-games (MiniGameSubmission), and who's mid-attempt right
+// now on the card game but hasn't submitted yet (RowadGameDraft).
 //
-//   - Default: { overview, modelRows, miniRows }
-//     overview     — cross-game ranking (plays + unique players per game),
-//                    used to answer "which game is most played".
-//     modelRows    — per-user roll-up for the card game (unchanged shape).
-//     miniRows     — per-user roll-up for the 5 mini-games.
+//   - Default: { overview, modelRows, miniRows, inProgressRows }
+//     overview       — cross-game ranking (plays + unique players per game),
+//                      used to answer "which game is most played".
+//     modelRows      — per-user roll-up for the card game (unchanged shape).
+//     miniRows       — per-user roll-up for the 5 mini-games.
+//     inProgressRows — players with an unsubmitted, autosaved card-game
+//                      board: which stage, how many of 25 cards placed, and
+//                      when they were last active.
 //   - ?detail=<profile_id> — { profile, modelHistory, miniHistory } for one user.
 import { NextResponse } from "next/server";
 import { requireSchoolAdmin } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
+import { TOTAL_CELLS } from "@/lib/rowad";
 import type { MiniGameKind } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +51,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ profile, modelHistory, miniHistory });
   }
 
-  const [modelAll, miniAll] = await Promise.all([
+  const [modelAll, miniAll, draftsAll] = await Promise.all([
     prisma.rowadGameSubmission.findMany({
       where: { school_id: auth.school.id },
       select: {
@@ -62,6 +67,14 @@ export async function GET(req: Request) {
         profile: { select: { full_name: true, email: true, role: true } },
       },
       orderBy: { created_at: "desc" },
+    }),
+    prisma.rowadGameDraft.findMany({
+      where: { school_id: auth.school.id },
+      select: {
+        profile_id: true, stage: true, placements: true, updated_at: true,
+        profile: { select: { full_name: true, email: true, role: true } },
+      },
+      orderBy: { updated_at: "desc" },
     }),
   ]);
 
@@ -142,6 +155,18 @@ export async function GET(req: Request) {
 
   const allPlayers = new Set<string>([...modelAll.map((s) => s.profile_id), ...miniAll.map((s) => s.profile_id)]);
 
+  // ── In-progress: card-game boards autosaved but never submitted ──
+  const inProgressRows = draftsAll.map((d) => ({
+    profile_id: d.profile_id,
+    full_name: d.profile.full_name,
+    email: d.profile.email,
+    role: d.profile.role,
+    stage: d.stage,
+    placed_count: Array.isArray(d.placements) ? d.placements.length : 0,
+    total: TOTAL_CELLS,
+    updated_at: d.updated_at.toISOString(),
+  }));
+
   return NextResponse.json({
     overview: {
       total_plays: modelAll.length + miniAll.length,
@@ -150,5 +175,6 @@ export async function GET(req: Request) {
     },
     modelRows,
     miniRows,
+    inProgressRows,
   });
 }

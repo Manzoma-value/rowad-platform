@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import RowadBoard, { type Card, type Placement } from "@/components/games/RowadBoard";
+import { useModelDraft } from "@/components/games/useModelDraft";
+import { GameErrorBoundary } from "@/components/games/GameErrorBoundary";
+import { fetchJson, FetchTimeoutError } from "@/lib/fetch-with-timeout";
 
 type Lang = "ar" | "sq" | "en";
 type LevelRow = { order: number; name_ar: string; name_sq: string | null };
@@ -13,6 +16,10 @@ const STR = {
   ar: {
     loadFail: "تعذر تحميل اللعبة، حاول لاحقاً.",
     submitFail: "تعذر احتساب النتيجة، حاول مرة أخرى.",
+    timeoutError: "استغرق الاتصال وقتاً طويلاً. تحقق من اتصالك وحاول مرة أخرى.",
+    crashError: "حدث خطأ غير متوقع. تقدمك محفوظ — اضغط للمتابعة.",
+    retryBtn: "إعادة المحاولة",
+    restoredNotice: "استرجعنا تقدمك السابق — أكمل من حيث توقفت.",
     scoreOf: (s: number, t: number) => `حصلت على ${s} من ${t}`,
     bestScore: "أفضل نتيجة",
     encourageHigh: "نتيجة ممتازة! استمر في صقل معرفتك بالنموذج.",
@@ -26,6 +33,10 @@ const STR = {
   sq: {
     loadFail: "Loja nuk u ngarkua, provo më vonë.",
     submitFail: "Rezultati nuk u njehsua, provo përsëri.",
+    timeoutError: "Lidhja zgjati shumë. Kontrollo internetin dhe provo përsëri.",
+    crashError: "Ndodhi një gabim i papritur. Progresi yt është ruajtur — kliko për të vazhduar.",
+    retryBtn: "Provo përsëri",
+    restoredNotice: "E rikthyem progresin tënd të mëparshëm — vazhdo aty ku e le.",
     scoreOf: (s: number, t: number) => `Ti more ${s} nga ${t}`,
     bestScore: "Rezultati më i mirë",
     encourageHigh: "Rezultat i shkëlqyer! Vazhdo të thellosh njohuritë e modelit.",
@@ -66,19 +77,24 @@ export default function CardGamePlay({
   const [submitError, setSubmitError] = useState("");
 
   const bestKey = `cardGameBest:${stage}`;
+  const draft = useModelDraft();
+  const loadAbortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(() => {
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setLoadError("");
     setResult(null);
     setSubmitError("");
-    fetch(`/api/teacher/model?stage=${stage}`, { cache: "no-store" })
-      .then(async (r) => {
-        if (!r.ok) throw new Error();
-        return (await r.json()) as Data;
-      })
-      .then((d) => setData(d))
-      .catch(() => setLoadError(T.loadFail));
-  }, [stage, T.loadFail]);
+    void draft.loadFor(stage);
+    fetchJson<Data>(`/api/teacher/model?stage=${stage}`, { signal: controller.signal })
+      .then((d) => { if (!controller.signal.aborted) setData(d); })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setLoadError(err instanceof FetchTimeoutError ? T.timeoutError : T.loadFail);
+      });
+  }, [stage, T.loadFail, T.timeoutError, draft]);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -95,17 +111,16 @@ export default function CardGamePlay({
     setSubmitting(true);
     setSubmitError("");
     try {
-      const r = await fetch("/api/teacher/model/submit", {
+      // No auto-retry: the route always inserts a new attempt row, so a blind
+      // retry after a timeout risks double-recording an attempt that may have
+      // actually completed server-side. Failures get a manual "try again".
+      const d = await fetchJson<{ score: number; total: number }>("/api/teacher/model/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage, placements }),
+        retries: 0,
       });
-      if (!r.ok) {
-        setSubmitError(T.submitFail);
-        setSubmitting(false);
-        return;
-      }
-      const d = (await r.json()) as { score: number; total: number };
+      draft.clearDraft(stage);
       setResult(d);
       if (bestScore == null || d.score > bestScore) {
         try {
@@ -115,13 +130,13 @@ export default function CardGamePlay({
       }
       setSubmitting(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
-      setSubmitError(T.submitFail);
+    } catch (err) {
+      setSubmitError(err instanceof FetchTimeoutError ? T.timeoutError : T.submitFail);
       setSubmitting(false);
     }
-  }, [stage, bestKey, bestScore, T.submitFail]);
+  }, [stage, bestKey, bestScore, T.submitFail, T.timeoutError, draft]);
 
-  if (!data && !loadError) {
+  if ((!data && !loadError) || draft.draftLoading) {
     return (
       <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <MandalaLoader />
@@ -129,7 +144,14 @@ export default function CardGamePlay({
     );
   }
   if (loadError) {
-    return <div style={{ padding: 40, textAlign: "center", color: "#6B1E2D", fontWeight: 700 }}>{loadError}</div>;
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "#6B1E2D", fontWeight: 700 }}>
+        {loadError}
+        <div style={{ marginTop: 14 }}>
+          <button className="cg-btn-primary" onClick={load}>{T.retryBtn}</button>
+        </div>
+      </div>
+    );
   }
   if (!data) return null;
 
@@ -171,17 +193,21 @@ export default function CardGamePlay({
 
   return (
     <div className="cg-play">
+      {draft.restored && <div className="cg-banner cg-banner-info">{T.restoredNotice}</div>}
       {submitError && <div className="cg-banner">{submitError}</div>}
-      <RowadBoard
-        lang={L}
-        title={title}
-        levels={data.levels}
-        cards={data.cards}
-        detailed={stage === "STAGE2"}
-        initial={[]}
-        onSubmit={handleSubmit}
-        submitting={submitting}
-      />
+      <GameErrorBoundary message={T.crashError} retryLabel={T.retryBtn} onRetry={load}>
+        <RowadBoard
+          lang={L}
+          title={title}
+          levels={data.levels}
+          cards={data.cards}
+          detailed={stage === "STAGE2"}
+          initial={draft.initialPlacements}
+          onChange={draft.handleChange}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+        />
+      </GameErrorBoundary>
       <style>{cg_styles}</style>
     </div>
   );
@@ -196,6 +222,7 @@ const cg_styles = `
     border: 1px solid rgba(107,30,45,.32); border-radius: 12px;
     padding: 11px 16px; text-align: center; font-weight: 800; font-size: 13.5px;
   }
+  .cg-banner-info { background: rgba(27,94,32,.10); color: #1B5E20; border-color: rgba(27,94,32,.30); }
   .cg-res-wrap {
     min-height: 78vh; display: flex; align-items: center; justify-content: center;
     padding: 30px; font-family: 'Cairo', sans-serif;

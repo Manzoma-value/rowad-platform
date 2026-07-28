@@ -233,6 +233,28 @@ model MiniGameSubmission {
   @@map("mini_game_submissions")
 }
 
+// In-progress card-game board — one row per (profile, stage), upserted on
+// every autosave and deleted once that stage is actually submitted. Lets a
+// player who navigates away mid-game (accidental back button, connectivity
+// blip, phone lock) resume exactly where they left off instead of losing
+// all 25 placements. Also gives admins visibility into who's mid-attempt.
+model RowadGameDraft {
+  id         String     @id @default(uuid()) @db.Uuid
+  school_id  String     @db.Uuid
+  profile_id String     @db.Uuid
+  stage      RowadStage
+  placements Json       @db.JsonB
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@unique([profile_id, stage])
+  @@index([school_id, updated_at(sort: Desc)])
+  @@map("rowad_game_drafts")
+}
+
 // One model per school — an editable copy of the 5×5 educational model.
 // Used by the card-game (STAGE1 / STAGE2) — read-only for players.
 model RowadModel {
@@ -427,6 +449,7 @@ model Profile {
   reviewedQuizzes              Quiz[]                     @relation("QuizReviewedBy")
   rowadGameSubmissions         RowadGameSubmission[]
   miniGameSubmissions          MiniGameSubmission[]
+  rowadGameDrafts              RowadGameDraft[]
   authoredOwnerReports         OwnerReport[]              @relation("OwnerReportAuthor")
   authoredTeacherGroups        TeacherGroup[]             @relation("TeacherGroupAuthor")
   authoredGroupAssessments     GroupAssessment[]          @relation("GroupAssessmentAuthor")
@@ -482,6 +505,7 @@ model School {
   invites                     Invite[]
   rowadGameSubmissions        RowadGameSubmission[]
   miniGameSubmissions         MiniGameSubmission[]
+  rowadGameDrafts             RowadGameDraft[]
   owner_reports               OwnerReport[]
   teacher_groups              TeacherGroup[]
   workshops                   Workshop[]

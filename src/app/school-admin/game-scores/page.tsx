@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
-import { Check, MapPin, Trophy, Users, X } from "lucide-react";
+import { Check, Clock3, MapPin, Trophy, Users, X } from "lucide-react";
 import { COLUMN_LABELS, COLUMN_ORDER } from "@/lib/rowad";
 
 type MiniGameKind = "MEMORY" | "HUNTER" | "SPEED" | "COLLECTOR" | "WORDRAIN";
@@ -42,6 +42,16 @@ type MiniRow = {
 };
 type OverviewGame = { key: string; plays: number; unique_players: number };
 type Overview = { total_plays: number; unique_players: number; games: OverviewGame[] };
+type InProgressRow = {
+  profile_id: string;
+  full_name: string;
+  email: string | null;
+  role: string;
+  stage: "STAGE1" | "STAGE2";
+  placed_count: number;
+  total: number;
+  updated_at: string;
+};
 
 type ModelHistoryEntry = {
   id: string;
@@ -81,6 +91,11 @@ const UI = {
     players: (n: number) => `${n} لاعب`,
     plays: (n: number) => `${n} مرة`,
     noPlaysYet: "لا توجد بيانات لعب بعد.",
+    inProgressSection: "قيد التقدم الآن",
+    inProgressSectionSub: "معلمون وطلاب بدأوا بطاقة النموذج ولم يرسلوها بعد — يُحفظ تقدمهم تلقائياً حتى يعودوا لإكماله.",
+    inProgressEmpty: "لا يوجد أحد في منتصف اللعبة الآن.",
+    placedOf: (n: number, total: number) => `${n} من ${total} بطاقة`,
+    lastActive: "آخر نشاط",
     modelSection: "النموذج التعليمي (بطاقات)",
     modelSectionSub: "نتائج بطاقة النموذج التعليمي (Card Game 1 و Card Game 2).",
     miniSection: "الألعاب التدريبية الخمس",
@@ -135,6 +150,11 @@ const UI = {
     players: (n: number) => `${n} lojtarë`,
     plays: (n: number) => `${n} herë`,
     noPlaysYet: "Nuk ka të dhëna ende.",
+    inProgressSection: "Në vazhdim tani",
+    inProgressSectionSub: "Mësues dhe nxënës që kanë filluar kartën e modelit dhe s'e kanë dërguar ende — progresi i tyre ruhet automatikisht derisa të kthehen ta përfundojnë.",
+    inProgressEmpty: "Askush nuk është në mes të lojës tani.",
+    placedOf: (n: number, total: number) => `${n} nga ${total} karta`,
+    lastActive: "Aktiviteti i fundit",
     modelSection: "Modeli Edukativ (karta)",
     modelSectionSub: "Rezultatet e Card Game 1 dhe Card Game 2.",
     miniSection: "Pesë Lojërat e Ushtrimit",
@@ -190,6 +210,7 @@ export default function GameScoresPage() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [modelRows, setModelRows] = useState<ModelRow[]>([]);
   const [miniRows, setMiniRows] = useState<MiniRow[]>([]);
+  const [inProgressRows, setInProgressRows] = useState<InProgressRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "TEACHER" | "STUDENT">("all");
   const [q, setQ] = useState("");
@@ -207,8 +228,9 @@ export default function GameScoresPage() {
         setOverview(d?.overview ?? null);
         setModelRows(d?.modelRows ?? []);
         setMiniRows(d?.miniRows ?? []);
+        setInProgressRows(d?.inProgressRows ?? []);
       })
-      .catch(() => { setOverview(null); setModelRows([]); setMiniRows([]); })
+      .catch(() => { setOverview(null); setModelRows([]); setMiniRows([]); setInProgressRows([]); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -242,6 +264,15 @@ export default function GameScoresPage() {
     }
     return true;
   }), [miniRows, filter, q]);
+
+  const visibleInProgress = useMemo(() => inProgressRows.filter((r) => {
+    if (filter !== "all" && r.role !== filter) return false;
+    if (q.trim()) {
+      const needle = q.trim().toLowerCase();
+      if (!`${r.full_name} ${r.email ?? ""}`.toLowerCase().includes(needle)) return false;
+    }
+    return true;
+  }), [inProgressRows, filter, q]);
 
   const maxGamePlays = overview?.games.reduce((m, g) => Math.max(m, g.plays), 0) || 1;
   const topGame = overview?.games.find((g) => g.plays > 0);
@@ -396,7 +427,7 @@ export default function GameScoresPage() {
         </div>
       </section>
 
-      {/* ── Shared toolbar for both tables ── */}
+      {/* ── Shared toolbar for all tables below ── */}
       <div className="gs-toolbar">
         <input className="gs-search" placeholder={T.search} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="gs-filters">
@@ -407,6 +438,35 @@ export default function GameScoresPage() {
           ))}
         </div>
       </div>
+
+      {/* ── In progress right now: autosaved, unsubmitted card-game boards ── */}
+      <section className="gs-section">
+        <h2 className="gs-section-title">{T.inProgressSection}</h2>
+        <p className="gs-section-sub">{T.inProgressSectionSub}</p>
+        {visibleInProgress.length === 0 ? (
+          <div className="gs-empty">{T.inProgressEmpty}</div>
+        ) : (
+          <div className="gs-inprogress-list">
+            {visibleInProgress.map((r) => (
+              <div key={`${r.profile_id}:${r.stage}`} className="gs-inprogress-row">
+                <div className="gs-inprogress-who">
+                  <div className="gs-name">{r.full_name}</div>
+                  {r.email && <div className="gs-email">{r.email}</div>}
+                </div>
+                <span className={`gs-role gs-role--${r.role}`}>{roleLabel(r.role)}</span>
+                <span className={`gs-stage-tag stage-${r.stage}`}>{r.stage === "STAGE1" ? T.stage1Lbl : T.stage2Lbl}</span>
+                <div className="gs-inprogress-bar-wrap">
+                  <div className="gs-inprogress-bar-bg">
+                    <div className="gs-inprogress-bar-fill" style={{ width: `${(r.placed_count / r.total) * 100}%` }} />
+                  </div>
+                  <span>{T.placedOf(r.placed_count, r.total)}</span>
+                </div>
+                <span className="gs-inprogress-when"><Clock3 size={12} />{T.lastActive}: {fmtDate(r.updated_at)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* ── Model roll-up ── */}
       <section className="gs-section">
@@ -669,6 +729,17 @@ function Styles() {
       .gs-history-score { font-weight: 800; color: #32101A; font-variant-numeric: tabular-nums; }
       .gs-history-when { color: #7A7468; font-size: 12px; }
       .gs-answer-panel { padding:0 16px 18px; background:linear-gradient(180deg,rgba(247,243,235,.5),rgba(239,234,224,.45)); }
+
+      .gs-inprogress-list { display: flex; flex-direction: column; gap: 8px; }
+      .gs-inprogress-row { display: grid; grid-template-columns: minmax(140px,1fr) auto auto minmax(140px,220px) auto; gap: 12px; align-items: center;
+        background: #FFFBF5; border: 1px solid rgba(184,160,130,0.28); border-radius: 12px; padding: 12px 14px; }
+      .gs-inprogress-who { min-width: 0; }
+      .gs-inprogress-bar-wrap { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+      .gs-inprogress-bar-bg { height: 6px; border-radius: 99px; background: rgba(184,160,130,0.16); overflow: hidden; }
+      .gs-inprogress-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#B8A082,#6B1E2D); transition: width .4s ease; }
+      .gs-inprogress-bar-wrap span { font-size: 10.5px; font-weight: 800; color: #6B1E2D; }
+      .gs-inprogress-when { display: inline-flex; align-items: center; gap: 4px; color: #8C8274; font-size: 11px; white-space: nowrap; }
+      @media(max-width:760px){ .gs-inprogress-row{grid-template-columns:1fr auto;row-gap:6px} .gs-inprogress-bar-wrap{grid-column:1/-1}.gs-inprogress-when{grid-column:1/-1} }
 
       .gs-mini-history { margin-bottom: 20px; }
       .gs-mini-list { display: flex; flex-direction: column; gap: 8px; }

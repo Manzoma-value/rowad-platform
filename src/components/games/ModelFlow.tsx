@@ -7,11 +7,14 @@
 // The old separate /card/STAGE1 and /card/STAGE2 routes still exist for
 // direct access, but this is the featured way to play the model.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import RowadBoard, { type Card, type Placement } from "@/components/games/RowadBoard";
+import { useModelDraft } from "@/components/games/useModelDraft";
+import { GameErrorBoundary } from "@/components/games/GameErrorBoundary";
+import { fetchJson, FetchTimeoutError } from "@/lib/fetch-with-timeout";
 
 type Lang = "ar" | "sq" | "en";
 type LevelRow = { order: number; name_ar: string; name_sq: string | null };
@@ -70,6 +73,10 @@ const STR = {
     leaveModel: "العودة للبداية",
     currentStage: "المرحلة الحالية",
     nextPreview: "في المرحلة الثانية ستظهر تفاصيل كل مفهوم لتساعدك على التحليل والربط.",
+    restoredNotice: "استرجعنا تقدمك السابق — أكمل من حيث توقفت.",
+    retryBtn: "إعادة المحاولة",
+    timeoutError: "استغرق الاتصال وقتاً طويلاً. تحقق من اتصالك وحاول مرة أخرى.",
+    crashError: "حدث خطأ غير متوقع. تقدمك محفوظ — اضغط للمتابعة.",
   },
   sq: {
     title: "Modeli i Mësimit",
@@ -112,6 +119,10 @@ const STR = {
     leaveModel: "Kthehu në fillim",
     currentStage: "Faza aktuale",
     nextPreview: "Në Fazën 2 do të shfaqen detajet e çdo koncepti për të ndihmuar analizën.",
+    restoredNotice: "E rikthyem progresin tënd të mëparshëm — vazhdo aty ku e le.",
+    retryBtn: "Provo përsëri",
+    timeoutError: "Lidhja zgjati shumë. Kontrollo internetin dhe provo përsëri.",
+    crashError: "Ndodhi një gabim i papritur. Progresi yt është ruajtur — kliko për të vazhduar.",
   },
 } as const;
 
@@ -133,25 +144,43 @@ export default function ModelFlow({ backHref }: { backHref: string }) {
   const [my, setMy] = useState<MyScore | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
+  // Autosave / restore the in-progress board (see useModelDraft's doc comment
+  // for why this is driven imperatively from loadStage below, not reactively
+  // from `stage` state).
+  const draft = useModelDraft();
+
+  // Cancels a stale in-flight load if the user re-triggers one before the
+  // first resolves (e.g. clicking "start" again, or a fast stage switch) —
+  // without this a late response could overwrite newer state.
+  const loadAbortRef = useRef<AbortController | null>(null);
+
   // Load a stage's board data. Fires when user starts stage 1 or continues to 2.
   const loadStage = useCallback(async (s: StageKey) => {
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setLoading(true);
     setError("");
+    void draft.loadFor(s);
     try {
-      const r = await fetch(`/api/teacher/model?stage=${s}`, { cache: "no-store" });
-      if (!r.ok) throw new Error();
-      const d = (await r.json()) as StageData;
-      setStageData(d);
-    } catch { setError(T.loadFail); }
-    finally { setLoading(false); }
-  }, [T.loadFail]);
+      const data = await fetchJson<StageData>(`/api/teacher/model?stage=${s}`, { signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setStageData(data);
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      setError(err instanceof FetchTimeoutError ? T.timeoutError : T.loadFail);
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
+  }, [T.loadFail, T.timeoutError, draft]);
 
   // Refresh dashboard data (my score + leaderboard). Called on mount and
-  // after each stage completes.
+  // after each stage completes. Best-effort — a slow/failed fetch here must
+  // never block gameplay, so failures are swallowed after the bounded retry.
   const refreshDash = useCallback(async () => {
     const [m, l] = await Promise.all([
-      fetch("/api/teacher/model/my-score", { cache: "no-store" }).then((r) => r.ok ? r.json() : null).catch(() => null),
-      fetch("/api/teacher/model/leaderboard", { cache: "no-store" }).then((r) => r.ok ? r.json() : null).catch(() => null),
+      fetchJson<MyScore>("/api/teacher/model/my-score").catch(() => null),
+      fetchJson<{ top: LeaderboardEntry[] }>("/api/teacher/model/leaderboard").catch(() => null),
     ]);
     if (m) setMy(m);
     if (l?.top) setLeaderboard(l.top);
@@ -163,13 +192,17 @@ export default function ModelFlow({ backHref }: { backHref: string }) {
     setSubmitting(true);
     setError("");
     try {
-      const r = await fetch("/api/teacher/model/submit", {
+      // No auto-retry here: the route always inserts a new attempt row, so a
+      // blind retry after a timeout risks double-recording a stage the first
+      // request may have actually completed server-side. A failure surfaces
+      // a clear, manual "try again" instead.
+      const d = await fetchJson<Score>("/api/teacher/model/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage, placements }),
+        retries: 0,
       });
-      if (!r.ok) { setError(T.submitFail); setSubmitting(false); return; }
-      const d = (await r.json()) as Score;
+      draft.clearDraft(stage);
       if (stage === "STAGE1") {
         setStage1Score(d);
         setScreen("interstitial");
@@ -180,8 +213,11 @@ export default function ModelFlow({ backHref }: { backHref: string }) {
       setSubmitting(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       refreshDash();
-    } catch { setError(T.submitFail); setSubmitting(false); }
-  }, [stage, T.submitFail, refreshDash]);
+    } catch (err) {
+      setError(err instanceof FetchTimeoutError ? T.timeoutError : T.submitFail);
+      setSubmitting(false);
+    }
+  }, [stage, T.submitFail, T.timeoutError, refreshDash, draft]);
 
   function startStage1() {
     setStage("STAGE1");
@@ -201,6 +237,12 @@ export default function ModelFlow({ backHref }: { backHref: string }) {
     setStageData(null);
     setScreen("landing");
     refreshDash();
+  }
+  function exitToLanding() {
+    draft.flushNow();
+    draft.reset();
+    setStageData(null);
+    setScreen("landing");
   }
 
   // ── Landing screen ──
@@ -286,20 +328,29 @@ export default function ModelFlow({ backHref }: { backHref: string }) {
 
   // ── Playing screen (stage 1 or 2) ──
   if (screen === "playing") {
-    if (loading) {
+    if (loading || draft.draftLoading) {
       return (
         <div style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <MandalaLoader />
         </div>
       );
     }
-    if (error) return <div className="mf-err">{error}</div>;
+    if (error && !stageData) {
+      return (
+        <div className="mf-err">
+          {error}
+          <div style={{ marginTop: 14 }}>
+            <button className="mf-hero-btn" onClick={() => loadStage(stage)}>{T.retryBtn}</button>
+          </div>
+        </div>
+      );
+    }
     if (!stageData) return null;
     const title = L === "sq" && stageData.title_sq ? stageData.title_sq : stageData.title_ar;
     return (
       <div className="mf-play" dir={dir}>
         <div className="mf-play-header">
-          <button type="button" className="mf-play-exit" onClick={() => { setStageData(null); setScreen("landing"); }}>← {T.leaveModel}</button>
+          <button type="button" className="mf-play-exit" onClick={exitToLanding}>← {T.leaveModel}</button>
           <div className="mf-stage-progress" aria-label={T.currentStage}>
             <div className={`mf-stage-step${stage === "STAGE1" ? " active" : " done"}`}><b>1</b><span>{T.stage1Name}</span></div>
             <i />
@@ -308,17 +359,22 @@ export default function ModelFlow({ backHref }: { backHref: string }) {
           <span className="mf-stage-tag">{stage === "STAGE1" ? T.stage1Header : T.stage2Header}</span>
         </div>
         <p className="mf-play-hint">{T.playHint}</p>
+        {draft.restored && <div className="mf-banner mf-banner-info">{T.restoredNotice}</div>}
         {error && <div className="mf-banner">{error}</div>}
-        <RowadBoard
-          lang={L}
-          title={title}
-          levels={stageData.levels}
-          cards={stageData.cards}
-          detailed={stage === "STAGE2"}
-          initial={[]}
-          onSubmit={handleSubmit}
-          submitting={submitting}
-        />
+        <GameErrorBoundary message={T.crashError} retryLabel={T.retryBtn} onRetry={() => loadStage(stage)}>
+          <RowadBoard
+            key={stage}
+            lang={L}
+            title={title}
+            levels={stageData.levels}
+            cards={stageData.cards}
+            detailed={stage === "STAGE2"}
+            initial={draft.initialPlacements}
+            onChange={draft.handleChange}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+          />
+        </GameErrorBoundary>
         <style>{css}</style>
       </div>
     );
@@ -444,6 +500,7 @@ const css = `
 .mf-res-note { font-size: 12px; color: #8F765B; font-style: italic; margin: 0 auto 24px; max-width: 400px; }
 .mf-res-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .mf-err, .mf-banner { padding: 12px 16px; text-align: center; color: #6B1E2D; font-weight: 700; background: rgba(107,30,45,0.06); border: 1px solid rgba(107,30,45,0.32); border-radius: 12px; margin: 10px 0; }
+.mf-banner-info { color: #1B5E20; background: rgba(27,94,32,0.08); border-color: rgba(27,94,32,0.28); }
 
 /* Premium guided journey */
 .mf-page{max-width:1080px;padding:24px 10px 48px}
