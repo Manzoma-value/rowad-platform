@@ -54,9 +54,12 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const { name, classId, moduleId, questions } = body;
-  if (!name || !classId || !questions?.length)
+  // `questions` is optional: the builder creates an empty quiz first and then
+  // adds questions one at a time, mirroring how lessons are authored.
+  const questionList: QuestionInput[] = Array.isArray(questions) ? questions : [];
+  if (!name || !classId)
     return NextResponse.json(
-      { error: "name, classId and questions are required" },
+      { error: "name and classId are required" },
       { status: 400 },
     );
   if (!moduleId)
@@ -90,7 +93,7 @@ export async function POST(req: Request) {
       teacher_id: auth.teacher.id,
       school_id: auth.teacher.school_id,
       questions: {
-        create: questions.map((q: QuestionInput, index: number) => ({
+        create: questionList.map((q: QuestionInput, index: number) => ({
           type: q.type,
           text: q.text,
           correct_answer: q.correct_answer || null,

@@ -5,11 +5,25 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  ExternalLink,
+  FileText,
+  Info,
+  Plus,
+  Send,
+  X,
+} from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import TeacherLoadError from "@/components/TeacherLoadError";
-
-type ReviewStatus = "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+import { HowItWorks } from "../../../components/HowItWorks";
+import { teacherUI, reviewChipClass, reviewLabel, type ReviewStatus } from "../../../components/teacher-ui";
 
 type LessonRow = {
   id: string; title: string; description: string | null;
@@ -37,79 +51,102 @@ type ModuleDetail = {
 
 const UI = {
   ar: {
-    back: "← العودة للخريطة",
-    stage: "مرحلة",
-    module: "مفهوم",
-    sectionContent: "محتوى المفهوم (من إعداد الإدارة)",
-    sectionQuestions: "أسئلة المفهوم",
-    sectionLessons: "دروسي على هذا المفهوم",
-    sectionQuizzes: "اختباراتي على هذا المفهوم",
-    noContent: "لم يضف الأدمن محتوى لهذا المفهوم بعد.",
-    noQuestions: "لا توجد أسئلة لهذا المفهوم.",
+    back: "العودة للخريطة",
+    stage: "المرحلة",
+    concept: "مفهوم",
+    reference: "مرجع المفهوم من الإدارة",
+    referenceSub: "اقرأ هذا أولاً — هو الأساس الذي تبني عليه درسك واختبارك.",
+    refQuestions: "أسئلة مرجعية",
+    noContent: "لم تضف الإدارة محتوى لهذا المفهوم بعد.",
+    noQuestions: "لا توجد أسئلة مرجعية لهذا المفهوم.",
+    myLessons: "دروسي على هذا المفهوم",
+    myLessonsSub: "الدرس يحتوي شرحاً (نص/صور/فيديو) وأسئلة يجيب عنها الطالب.",
+    myQuizzes: "اختباراتي على هذا المفهوم",
+    myQuizzesSub: "الاختبار أسئلة فقط، بدون شرح — لقياس فهم الطالب.",
     addLesson: "إضافة درس",
     addQuiz: "إضافة اختبار",
     emptyLessons: "لم تضف أي درس لهذا المفهوم بعد.",
+    emptyLessonsSub: "اضغط «إضافة درس» لإنشاء أول درس، ثم ستنتقل مباشرة إلى صفحة بناء المحتوى.",
     emptyQuizzes: "لم تضف أي اختبار لهذا المفهوم بعد.",
-    open: "افتح",
+    emptyQuizzesSub: "اضغط «إضافة اختبار» لإنشاء اختبار، ثم أضف الأسئلة داخله.",
+    open: "فتح وتعديل",
     submit: "إرسال للمراجعة",
     submitting: "جارٍ الإرسال…",
-    submitted: "أُرسل ✓",
-    statusDRAFT: "مسودة",
-    statusPENDING_REVIEW: "قيد المراجعة",
-    statusAPPROVED: "معتمد",
-    statusREJECTED: "مرفوض",
-    reviewerNotesLabel: "ملاحظات المراجع:",
-    classCol: "الفصل",
-    countsLesson: (c: number, q: number, a: number) => `${c} محتوى · ${q} سؤال · ${a} طالب أجاب`,
-    countsQuiz: (q: number, a: number) => `${q} سؤال · ${a} طالب أجاب`,
-    // Create dialog
-    newLessonTitle: "درس جديد لهذا المفهوم",
-    newQuizTitle: "اختبار جديد لهذا المفهوم",
+    classLabel: "الفصل",
+    legacy: "قديم",
+    reviewerNotes: "ملاحظات المراجع",
+    contents: "محتوى",
+    questions: "سؤال",
+    attempts: "طالب أجاب",
+    newLesson: "درس جديد لهذا المفهوم",
+    newQuiz: "اختبار جديد لهذا المفهوم",
     fieldTitle: "العنوان",
-    fieldClass: "الفصل",
-    fieldDesc: "وصف (اختياري)",
+    titlePhLesson: "مثال: مقدمة في هذا المفهوم",
+    titlePhQuiz: "مثال: اختبار قصير على المفهوم",
+    fieldClass: "الفصل الذي سيرى المحتوى",
+    fieldDesc: "وصف مختصر (اختياري)",
     cancel: "إلغاء",
-    create: "إنشاء",
+    create: "إنشاء ومتابعة",
     creating: "جارٍ الإنشاء…",
-    needClass: "ليس لديك فصل لإضافة الدرس فيه. تواصل مع الإدارة.",
+    needClass: "ليس لديك فصل بعد. تواصل مع الإدارة لتخصيص فصل لك قبل إنشاء المحتوى.",
     error: "حدث خطأ، حاول مرة أخرى.",
+    titleRequired: "العنوان مطلوب.",
+    lockedHint: "المحتوى المُرسل للمراجعة أو المعتمد لا يمكن تعديله.",
+    guide: [
+      { title: "اقرأ المرجع", body: "راجع محتوى الإدارة والأسئلة المرجعية بالأعلى قبل أن تبدأ." },
+      { title: "أنشئ درساً أو اختباراً", body: "اضغط «إضافة درس» أو «إضافة اختبار» واختر الفصل المستهدف." },
+      { title: "أضف المحتوى والأسئلة", body: "ستنتقل تلقائياً لصفحة البناء لإضافة الشرح والأسئلة." },
+      { title: "أرسل للمراجعة", body: "اضغط «إرسال للمراجعة» — يظهر للطلاب بعد اعتماد الإدارة فقط." },
+    ],
   },
   sq: {
-    back: "← Kthehu te harta",
+    back: "Kthehu te harta",
     stage: "Faza",
-    module: "Koncepti",
-    sectionContent: "Përmbajtja e konceptit (përgatitur nga administrata)",
-    sectionQuestions: "Pyetjet e konceptit",
-    sectionLessons: "Mësimet e mia për këtë koncept",
-    sectionQuizzes: "Kuizet e mia për këtë koncept",
-    noContent: "Administrata ende nuk ka shtuar përmbajtje për këtë koncept.",
-    noQuestions: "Nuk ka pyetje për këtë koncept.",
+    concept: "Koncepti",
+    reference: "Materiali i konceptit nga administrata",
+    referenceSub: "Lexoje këtë të parin — mbi të ndërton mësimin dhe kuizin tënd.",
+    refQuestions: "Pyetje referuese",
+    noContent: "Administrata ende nuk ka shtuar përmbajtje.",
+    noQuestions: "Nuk ka pyetje referuese.",
+    myLessons: "Mësimet e mia për këtë koncept",
+    myLessonsSub: "Mësimi përmban shpjegim (tekst/foto/video) dhe pyetje për nxënësin.",
+    myQuizzes: "Kuizet e mia për këtë koncept",
+    myQuizzesSub: "Kuizi ka vetëm pyetje, pa shpjegim — për të matur kuptimin.",
     addLesson: "Shto mësim",
     addQuiz: "Shto kuiz",
-    emptyLessons: "Nuk ke shtuar ende asnjë mësim për këtë koncept.",
-    emptyQuizzes: "Nuk ke shtuar ende asnjë kuiz për këtë koncept.",
-    open: "Hap",
+    emptyLessons: "Nuk ke shtuar ende asnjë mësim.",
+    emptyLessonsSub: "Kliko «Shto mësim» dhe do të kalosh te faqja e ndërtimit.",
+    emptyQuizzes: "Nuk ke shtuar ende asnjë kuiz.",
+    emptyQuizzesSub: "Kliko «Shto kuiz» dhe pastaj shto pyetjet brenda tij.",
+    open: "Hap dhe modifiko",
     submit: "Dërgo për shqyrtim",
     submitting: "Po dërgohet…",
-    submitted: "U dërgua ✓",
-    statusDRAFT: "Draft",
-    statusPENDING_REVIEW: "Në shqyrtim",
-    statusAPPROVED: "Miratuar",
-    statusREJECTED: "Refuzuar",
-    reviewerNotesLabel: "Shënimet e shqyrtuesit:",
-    classCol: "Klasa",
-    countsLesson: (c: number, q: number, a: number) => `${c} përmbajtje · ${q} pyetje · ${a} nxënës iu përgjigjën`,
-    countsQuiz: (q: number, a: number) => `${q} pyetje · ${a} nxënës iu përgjigjën`,
-    newLessonTitle: "Mësim i ri për këtë koncept",
-    newQuizTitle: "Kuiz i ri për këtë koncept",
+    classLabel: "Klasa",
+    legacy: "I vjetër",
+    reviewerNotes: "Shënimet e shqyrtuesit",
+    contents: "përmbajtje",
+    questions: "pyetje",
+    attempts: "nxënës u përgjigjën",
+    newLesson: "Mësim i ri për këtë koncept",
+    newQuiz: "Kuiz i ri për këtë koncept",
     fieldTitle: "Titulli",
-    fieldClass: "Klasa",
-    fieldDesc: "Përshkrimi (opsional)",
+    titlePhLesson: "P.sh.: Hyrje në këtë koncept",
+    titlePhQuiz: "P.sh.: Kuiz i shkurtër",
+    fieldClass: "Klasa që do ta shohë",
+    fieldDesc: "Përshkrim i shkurtër (opsional)",
     cancel: "Anulo",
-    create: "Krijo",
+    create: "Krijo dhe vazhdo",
     creating: "Po krijohet…",
-    needClass: "Nuk ke asnjë klasë për të shtuar mësim. Kontakto administratën.",
+    needClass: "Nuk ke asnjë klasë. Kontakto administratën përpara se të krijosh përmbajtje.",
     error: "Ndodhi një gabim, provo përsëri.",
+    titleRequired: "Titulli kërkohet.",
+    lockedHint: "Përmbajtja e dërguar ose e miratuar nuk mund të modifikohet.",
+    guide: [
+      { title: "Lexo materialin", body: "Shiko përmbajtjen dhe pyetjet referuese më lart." },
+      { title: "Krijo mësim ose kuiz", body: "Kliko «Shto mësim» ose «Shto kuiz» dhe zgjidh klasën." },
+      { title: "Shto përmbajtje", body: "Do të kalosh te faqja e ndërtimit për shpjegimin dhe pyetjet." },
+      { title: "Dërgo për shqyrtim", body: "Nxënësit e shohin vetëm pas miratimit." },
+    ],
   },
 } as const;
 
@@ -120,12 +157,13 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
   const T = UI[L];
   const dir = L === "ar" ? "rtl" : "ltr";
   const router = useRouter();
+  const Back = L === "ar" ? ChevronRight : ChevronLeft;
 
   const [data, setData] = useState<{ module: ModuleDetail; classes: { id: string; name: string }[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
-  const [dlg, setDlg] = useState<null | { kind: "lesson" | "quiz" }>(null);
+  const [dialog, setDialog] = useState<null | { kind: "lesson" | "quiz" }>(null);
   const [form, setForm] = useState({ title: "", classId: "", description: "" });
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
@@ -134,8 +172,8 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
     setLoading(true);
     setLoadError(false);
     fetch(`/api/teacher/modules/${id}`, { cache: "no-store" })
-      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
-      .then((d) => setData(d?.module ? d : null))
+      .then((response) => { if (!response.ok) throw new Error(); return response.json(); })
+      .then((payload) => setData(payload?.module ? payload : null))
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   };
@@ -155,19 +193,18 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
   function openCreate(kind: "lesson" | "quiz") {
     setForm({ title: "", classId: data?.classes[0]?.id ?? "", description: "" });
     setError("");
-    setDlg({ kind });
+    setDialog({ kind });
   }
 
   async function create() {
-    if (!dlg || !data) return;
-    if (!form.title.trim() || !form.classId) {
-      setError(T.error);
-      return;
-    }
+    if (!dialog || !data) return;
+    if (!form.title.trim()) { setError(T.titleRequired); return; }
+    if (!form.classId) { setError(T.needClass); return; }
     setCreating(true);
+    setError("");
     try {
-      if (dlg.kind === "lesson") {
-        const r = await fetch("/api/teacher/lessons", {
+      if (dialog.kind === "lesson") {
+        const response = await fetch("/api/teacher/lessons", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -177,17 +214,28 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
             moduleId: data.module.id,
           }),
         });
-        if (!r.ok) throw new Error();
-        const { lesson } = await r.json();
+        if (!response.ok) throw new Error();
+        const { lesson } = await response.json();
         router.push(`/teacher/lessons/${lesson.id}`);
       } else {
-        // For quiz, push to dedicated builder with pre-filled module+class
-        const u = new URLSearchParams({ moduleId: data.module.id, classId: form.classId, name: form.title.trim() });
-        router.push(`/teacher/quizzes?new=1&${u.toString()}`);
+        // Create the quiz immediately (empty), then go straight to its builder.
+        // The old flow pushed to /teacher/quizzes?new=1 which was never read,
+        // so quiz creation silently did nothing.
+        const response = await fetch("/api/teacher/quizzes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: form.title.trim(),
+            classId: form.classId,
+            moduleId: data.module.id,
+          }),
+        });
+        if (!response.ok) throw new Error();
+        const quiz = await response.json();
+        router.push(`/teacher/quizzes/${quiz.id}`);
       }
     } catch {
       setError(T.error);
-    } finally {
       setCreating(false);
     }
   }
@@ -195,294 +243,319 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
   if (loading) return <MandalaLoader />;
   if (loadError || !data) return <TeacherLoadError onRetry={reload} />;
 
-  const m = data.module;
+  const concept = data.module;
+  const noClasses = data.classes.length === 0;
 
   return (
-    <div className="tm-page" dir={dir}>
-      <Link href="/teacher/roadmap" className="tm-back">{T.back}</Link>
+    <div className="tui tm" dir={dir}>
+      <Link href="/teacher/roadmap" className="tm-back"><Back size={15} />{T.back}</Link>
 
-      <header className="tm-hero">
-        <div className="tm-trail">
-          <span className="tm-trail-stage">{T.stage} {m.stage.order} · {m.stage.title}</span>
+      <header className="tui-hero">
+        <div className="tui-hero-inner">
+          <div>
+            <span className="tui-eyebrow">{T.stage} {concept.stage.order} · {concept.stage.title}</span>
+            <h1>{concept.title}</h1>
+            {concept.description && <p>{concept.description}</p>}
+          </div>
+          <div className="tui-hero-side">
+            <button className="tui-btn tui-btn-gold" onClick={() => openCreate("lesson")} disabled={noClasses}>
+              <Plus size={15} />{T.addLesson}
+            </button>
+            <button className="tui-btn tui-btn-ghost" onClick={() => openCreate("quiz")} disabled={noClasses}>
+              <Plus size={15} />{T.addQuiz}
+            </button>
+          </div>
         </div>
-        <h1 className="tm-title">
-          <span className="tm-mod-num">{T.module} {m.order}</span>
-          {m.title}
-        </h1>
-        {m.description && <p className="tm-desc">{m.description}</p>}
       </header>
 
-      {/* Admin content */}
-      <section className="tm-section">
-        <h2 className="tm-sec-title">{T.sectionContent}</h2>
-        {m.contents.length === 0 ? (
-          <div className="tm-empty">{T.noContent}</div>
+      {noClasses && (
+        <div className="tui-note tui-note-warn tm-standalone-note"><AlertCircle size={15} />{T.needClass}</div>
+      )}
+
+      <HowItWorks id="concept" steps={T.guide as unknown as { title: string; body: string }[]} lang={L} />
+
+      {/* Admin reference material */}
+      <section className="tui-card tm-block">
+        <div className="tui-section-head">
+          <div>
+            <h2><Info size={16} />{T.reference}</h2>
+            <p>{T.referenceSub}</p>
+          </div>
+        </div>
+        {concept.contents.length === 0 ? (
+          <div className="tui-empty"><strong>{T.noContent}</strong></div>
         ) : (
-          <div className="tm-content-list">
-            {m.contents.map((c) => (
-              <div key={c.id} className="tm-content-item">
-                {c.type === "TEXT" && <p className="tm-content-text">{c.body}</p>}
-                {c.type === "IMAGE" && c.image_url && (
-                  <div className="tm-content-img-wrap">
-                    <Image src={c.image_url} alt={c.alt_text || ""} className="tm-content-img" width={960} height={540} unoptimized />
-                  </div>
+          <div className="tm-contents">
+            {concept.contents.map((content) => (
+              <div key={content.id} className="tm-content">
+                {content.type === "TEXT" && <p className="tm-content-text">{content.body}</p>}
+                {content.type === "IMAGE" && content.image_url && (
+                  <Image src={content.image_url} alt={content.alt_text || ""} className="tm-content-img" width={960} height={540} unoptimized />
                 )}
-                {c.type === "VIDEO" && c.video_url && (
-                  <div className="tm-content-video">
-                    <strong>{c.video_title || "Video"}</strong>
-                    <a href={c.video_url} target="_blank" rel="noreferrer" className="tm-vid-link">↗</a>
-                  </div>
+                {content.type === "VIDEO" && content.video_url && (
+                  <a className="tm-content-video" href={content.video_url} target="_blank" rel="noreferrer">
+                    <FileText size={15} />{content.video_title || "Video"}<ExternalLink size={13} />
+                  </a>
                 )}
               </div>
             ))}
           </div>
         )}
-      </section>
 
-      {/* Admin questions */}
-      <section className="tm-section">
-        <h2 className="tm-sec-title">{T.sectionQuestions} <span className="tm-sec-count">({m.questions.length})</span></h2>
-        {m.questions.length === 0 ? (
-          <div className="tm-empty">{T.noQuestions}</div>
-        ) : (
-          <ol className="tm-q-list">
-            {m.questions.map((q) => (
-              <li key={q.id} className="tm-q-item">
-                <div className="tm-q-text">{q.text}</div>
-                {q.options.length > 0 && (
-                  <ul className="tm-q-options">
-                    {q.options.map((o) => <li key={o.id}>{o.text}</li>)}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ol>
+        {concept.questions.length > 0 && (
+          <div className="tm-ref-questions">
+            <h3>{T.refQuestions} <span>({concept.questions.length})</span></h3>
+            <ol>
+              {concept.questions.map((question) => (
+                <li key={question.id}>
+                  <span className="tm-ref-q">{question.text}</span>
+                  {question.options.length > 0 && (
+                    <ul>{question.options.map((option) => <li key={option.id}>{option.text}</li>)}</ul>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
         )}
       </section>
 
-      {/* My lessons */}
-      <section className="tm-section">
-        <header className="tm-sec-head">
-          <h2 className="tm-sec-title">{T.sectionLessons} <span className="tm-sec-count">({m.lessons.length})</span></h2>
-          <button
-            className="tm-add-btn"
-            onClick={() => openCreate("lesson")}
-            disabled={data.classes.length === 0}
-            title={data.classes.length === 0 ? T.needClass : undefined}
-          >+ {T.addLesson}</button>
-        </header>
-        {m.lessons.length === 0 ? (
-          <div className="tm-empty">{T.emptyLessons}</div>
+      {/* Lessons */}
+      <section className="tui-card tm-block">
+        <div className="tui-section-head">
+          <div>
+            <h2><BookOpen size={16} />{T.myLessons} <span className="tm-count">{concept.lessons.length}</span></h2>
+            <p>{T.myLessonsSub}</p>
+          </div>
+          <div>
+            <button className="tui-btn tui-btn-primary tui-btn-sm" onClick={() => openCreate("lesson")} disabled={noClasses}>
+              <Plus size={14} />{T.addLesson}
+            </button>
+          </div>
+        </div>
+        {concept.lessons.length === 0 ? (
+          <div className="tui-empty">
+            <span className="tui-empty-icon"><BookOpen size={20} /></span>
+            <strong>{T.emptyLessons}</strong>
+            <p>{T.emptyLessonsSub}</p>
+          </div>
         ) : (
-          <div className="tm-cards">
-            {m.lessons.map((l) => (
+          <div className="tm-items">
+            {concept.lessons.map((lesson) => (
               <ContentCard
-                key={l.id}
-                kind="lesson"
-                href={`/teacher/lessons/${l.id}`}
-                title={l.title}
-                subtitle={`${T.classCol}: ${l.class.name}`}
-                meta={T.countsLesson(l._count.contents, l._count.questions, l._count.attempts)}
-                review_status={l.review_status}
-                reviewer_notes={l.reviewer_notes}
-                is_legacy={l.is_legacy}
-                T={T}
-                onSubmit={() => submitForReview("lesson", l.id)}
-                submitting={submittingId === l.id}
+                key={lesson.id}
+                href={`/teacher/lessons/${lesson.id}`}
+                title={lesson.title}
+                classLabel={`${T.classLabel}: ${lesson.class.name}`}
+                meta={`${lesson._count.contents} ${T.contents} · ${lesson._count.questions} ${T.questions} · ${lesson._count.attempts} ${T.attempts}`}
+                reviewStatus={lesson.review_status}
+                reviewerNotes={lesson.reviewer_notes}
+                isLegacy={lesson.is_legacy}
+                T={T} L={L}
+                onSubmit={() => submitForReview("lesson", lesson.id)}
+                submitting={submittingId === lesson.id}
               />
             ))}
           </div>
         )}
       </section>
 
-      {/* My quizzes */}
-      <section className="tm-section">
-        <header className="tm-sec-head">
-          <h2 className="tm-sec-title">{T.sectionQuizzes} <span className="tm-sec-count">({m.quizzes.length})</span></h2>
-          <button
-            className="tm-add-btn"
-            onClick={() => openCreate("quiz")}
-            disabled={data.classes.length === 0}
-            title={data.classes.length === 0 ? T.needClass : undefined}
-          >+ {T.addQuiz}</button>
-        </header>
-        {m.quizzes.length === 0 ? (
-          <div className="tm-empty">{T.emptyQuizzes}</div>
+      {/* Quizzes */}
+      <section className="tui-card tm-block">
+        <div className="tui-section-head">
+          <div>
+            <h2><ClipboardList size={16} />{T.myQuizzes} <span className="tm-count">{concept.quizzes.length}</span></h2>
+            <p>{T.myQuizzesSub}</p>
+          </div>
+          <div>
+            <button className="tui-btn tui-btn-primary tui-btn-sm" onClick={() => openCreate("quiz")} disabled={noClasses}>
+              <Plus size={14} />{T.addQuiz}
+            </button>
+          </div>
+        </div>
+        {concept.quizzes.length === 0 ? (
+          <div className="tui-empty">
+            <span className="tui-empty-icon"><ClipboardList size={20} /></span>
+            <strong>{T.emptyQuizzes}</strong>
+            <p>{T.emptyQuizzesSub}</p>
+          </div>
         ) : (
-          <div className="tm-cards">
-            {m.quizzes.map((q) => (
+          <div className="tm-items">
+            {concept.quizzes.map((quiz) => (
               <ContentCard
-                key={q.id}
-                kind="quiz"
-                href={`/teacher/quizzes/${q.id}`}
-                title={q.name}
-                subtitle={`${T.classCol}: ${q.class.name}`}
-                meta={T.countsQuiz(q._count.questions, q._count.attempts)}
-                review_status={q.review_status}
-                reviewer_notes={q.reviewer_notes}
-                is_legacy={q.is_legacy}
-                T={T}
-                onSubmit={() => submitForReview("quiz", q.id)}
-                submitting={submittingId === q.id}
+                key={quiz.id}
+                href={`/teacher/quizzes/${quiz.id}`}
+                title={quiz.name}
+                classLabel={`${T.classLabel}: ${quiz.class.name}`}
+                meta={`${quiz._count.questions} ${T.questions} · ${quiz._count.attempts} ${T.attempts}`}
+                reviewStatus={quiz.review_status}
+                reviewerNotes={quiz.reviewer_notes}
+                isLegacy={quiz.is_legacy}
+                T={T} L={L}
+                onSubmit={() => submitForReview("quiz", quiz.id)}
+                submitting={submittingId === quiz.id}
               />
             ))}
           </div>
         )}
       </section>
 
-      {/* Create dialog */}
-      {dlg && (
-        <div className="tm-dlg-overlay" onClick={() => !creating && setDlg(null)}>
-          <div className="tm-dlg" onClick={(e) => e.stopPropagation()} dir={dir}>
-            <h3 className="tm-dlg-title">{dlg.kind === "lesson" ? T.newLessonTitle : T.newQuizTitle}</h3>
-            <label className="tm-dlg-lbl">{T.fieldTitle}</label>
-            <input
-              className="tm-dlg-input"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              autoFocus
-            />
-            <label className="tm-dlg-lbl">{T.fieldClass}</label>
-            <select
-              className="tm-dlg-input"
-              value={form.classId}
-              onChange={(e) => setForm({ ...form, classId: e.target.value })}
-            >
-              {data.classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            {dlg.kind === "lesson" && (
-              <>
-                <label className="tm-dlg-lbl">{T.fieldDesc}</label>
-                <textarea
-                  className="tm-dlg-input"
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+      {dialog && (
+        <div className="tm-overlay" onMouseDown={(event) => event.target === event.currentTarget && !creating && setDialog(null)}>
+          <div className="tm-dialog" role="dialog" aria-modal="true" dir={dir}>
+            <header>
+              <h3>{dialog.kind === "lesson" ? T.newLesson : T.newQuiz}</h3>
+              <button onClick={() => setDialog(null)} disabled={creating} aria-label={T.cancel}><X size={18} /></button>
+            </header>
+            <div className="tm-dialog-body">
+              <label className="tm-field">
+                <span>{T.fieldTitle}</span>
+                <input
+                  autoFocus
+                  value={form.title}
+                  onChange={(event) => setForm({ ...form, title: event.target.value })}
+                  placeholder={dialog.kind === "lesson" ? T.titlePhLesson : T.titlePhQuiz}
+                  dir="auto"
                 />
-              </>
-            )}
-            {error && <div className="tm-dlg-err">{error}</div>}
-            <div className="tm-dlg-actions">
-              <button className="tm-dlg-cancel" onClick={() => setDlg(null)} disabled={creating}>{T.cancel}</button>
-              <button className="tm-dlg-create" onClick={create} disabled={creating || !form.title.trim() || !form.classId}>
+              </label>
+              <label className="tm-field">
+                <span>{T.fieldClass}</span>
+                <select value={form.classId} onChange={(event) => setForm({ ...form, classId: event.target.value })}>
+                  {data.classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+              </label>
+              {dialog.kind === "lesson" && (
+                <label className="tm-field">
+                  <span>{T.fieldDesc}</span>
+                  <textarea
+                    rows={3}
+                    value={form.description}
+                    onChange={(event) => setForm({ ...form, description: event.target.value })}
+                    dir="auto"
+                  />
+                </label>
+              )}
+              {error && <div className="tui-note tui-note-warn"><AlertCircle size={15} />{error}</div>}
+            </div>
+            <footer>
+              <button className="tui-btn tui-btn-ghost" onClick={() => setDialog(null)} disabled={creating}>{T.cancel}</button>
+              <button className="tui-btn tui-btn-primary" onClick={create} disabled={creating || !form.title.trim()}>
                 {creating ? T.creating : T.create}
               </button>
-            </div>
+            </footer>
           </div>
         </div>
       )}
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-        .tm-page { font-family: 'Cairo', sans-serif; padding-bottom: 40px; }
-        .tm-back { display: inline-block; color: #6B1E2D; font-size: 13px; font-weight: 700; text-decoration: none; margin-bottom: 14px; }
-        .tm-back:hover { text-decoration: underline; }
-        .tm-hero { margin-bottom: 22px; }
-        .tm-trail { font-size: 11.5px; color: #8F765B; font-weight: 800; letter-spacing: 0.04em; margin-bottom: 8px; text-transform: uppercase; }
-        .tm-title { font-size: 26px; font-weight: 900; color: #32101A; margin: 0 0 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .tm-mod-num { background: linear-gradient(180deg,#B8A082,#B8A082); color: #4A0E1C; padding: 3px 11px; border-radius: 99px; font-size: 12px; font-weight: 900; }
-        .tm-desc { font-size: 14px; color: #6B1E2D; line-height: 1.85; margin: 0; max-width: 780px; }
-        .tm-section { margin-top: 28px; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 16px; padding: 20px; }
-        .tm-sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-        .tm-sec-title { font-size: 17px; font-weight: 900; color: #32101A; margin: 0; }
-        .tm-sec-count { color: #8C8274; font-weight: 700; font-size: 13.5px; }
-        .tm-add-btn { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border: none; padding: 9px 16px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; transition: all .16s; }
-        .tm-add-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(26,26,26,0.25); }
-        .tm-add-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .tm-empty { padding: 28px 18px; text-align: center; color: #8C8274; font-weight: 700; font-size: 13.5px; background: rgba(107,30,45,0.05); border-radius: 12px; }
-        .tm-content-list { display: flex; flex-direction: column; gap: 12px; }
-        .tm-content-item { padding: 14px 16px; background: rgba(107,30,45,0.05); border-radius: 11px; border: 1px solid rgba(107,30,45,0.16); }
-        .tm-content-text { margin: 0; font-size: 14px; line-height: 1.95; color: #4A0E1C; white-space: pre-wrap; }
-        .tm-content-img-wrap { max-width: 100%; }
-        .tm-content-img { max-width: 100%; border-radius: 10px; }
-        .tm-content-video { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: #4A0E1C; }
-        .tm-vid-link { color: #6B1E2D; text-decoration: none; font-size: 15px; }
-        .tm-q-list { padding-inline-start: 22px; margin: 0; display: flex; flex-direction: column; gap: 12px; }
-        .tm-q-item { color: #4A0E1C; }
-        .tm-q-text { font-weight: 700; font-size: 13.5px; line-height: 1.7; }
-        .tm-q-options { padding-inline-start: 18px; margin: 6px 0 0; font-size: 12.5px; color: #6B1E2D; }
-        .tm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 12px; }
-        .tm-dlg-overlay { position: fixed; inset: 0; background: rgba(26,26,26,0.55); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; backdrop-filter: blur(4px); }
-        .tm-dlg { background: #FFFBF5; border-radius: 16px; padding: 24px; max-width: 460px; width: 100%; box-shadow: 0 20px 60px rgba(26,26,26,0.3); }
-        .tm-dlg-title { font-size: 17px; font-weight: 900; color: #32101A; margin: 0 0 14px; }
-        .tm-dlg-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B1E2D; margin: 10px 0 4px; }
-        .tm-dlg-input { width: 100%; padding: 10px 13px; border: 1.5px solid rgba(107,30,45,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; }
-        .tm-dlg-input:focus { border-color: #B8A082; }
-        .tm-dlg-err { color: #6B1E2D; font-size: 12.5px; font-weight: 700; margin-top: 10px; }
-        .tm-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-        .tm-dlg-cancel { background: none; border: 1px solid rgba(26,26,26,0.18); color: #655B53; padding: 9px 16px; border-radius: 9px; font-family: inherit; font-weight: 700; cursor: pointer; font-size: 13px; }
-        .tm-dlg-create { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border: none; padding: 9px 18px; border-radius: 9px; font-family: inherit; font-weight: 800; cursor: pointer; font-size: 13px; }
-        .tm-dlg-create:disabled { opacity: 0.5; cursor: not-allowed; }
-      `}</style>
+      <style>{teacherUI}</style>
+      <style>{styles}</style>
     </div>
   );
 }
 
-/* ─── Reusable content card ─── */
 function ContentCard({
-  kind, href, title, subtitle, meta, review_status, reviewer_notes, is_legacy, T, onSubmit, submitting,
+  href, title, classLabel, meta, reviewStatus, reviewerNotes, isLegacy, T, L, onSubmit, submitting,
 }: {
-  kind: "lesson" | "quiz";
   href: string;
   title: string;
-  subtitle: string;
+  classLabel: string;
   meta: string;
-  review_status: ReviewStatus;
-  reviewer_notes: string | null;
-  is_legacy: boolean;
+  reviewStatus: ReviewStatus;
+  reviewerNotes: string | null;
+  isLegacy: boolean;
   T: typeof UI.ar | typeof UI.sq;
+  L: "ar" | "sq";
   onSubmit: () => void;
   submitting: boolean;
 }) {
-  const statusLabel =
-    review_status === "DRAFT" ? T.statusDRAFT :
-    review_status === "PENDING_REVIEW" ? T.statusPENDING_REVIEW :
-    review_status === "APPROVED" ? T.statusAPPROVED :
-    T.statusREJECTED;
-
-  const canSubmit = !is_legacy && (review_status === "DRAFT" || review_status === "REJECTED");
-
+  const canSubmit = !isLegacy && (reviewStatus === "DRAFT" || reviewStatus === "REJECTED");
   return (
-    <div className={`tm-card tm-card--${kind}${is_legacy ? " is-legacy" : ""}`}>
-      <div className="tm-card-head">
-        <h4 className="tm-card-title">{title}</h4>
-        {is_legacy && <span className="tm-tag tm-tag--legacy">قديم</span>}
-        <span className={`tm-tag tm-st-${review_status}`}>{statusLabel}</span>
+    <article className={`tm-item${isLegacy ? " is-legacy" : ""}`}>
+      <div className="tm-item-top">
+        <h4>{title}</h4>
+        <div className="tm-item-chips">
+          {isLegacy && <span className="tui-chip tui-chip-legacy">{T.legacy}</span>}
+          <span className={reviewChipClass[reviewStatus]}>
+            {reviewStatus === "APPROVED" && <CheckCircle2 size={11} />}
+            {reviewLabel[L][reviewStatus]}
+          </span>
+        </div>
       </div>
-      <div className="tm-card-sub">{subtitle}</div>
-      <div className="tm-card-meta">{meta}</div>
-      {reviewer_notes && (
-        <div className="tm-card-notes">
-          <strong>{T.reviewerNotesLabel}</strong> {reviewer_notes}
+      <p className="tm-item-class">{classLabel}</p>
+      <p className="tm-item-meta">{meta}</p>
+      {reviewerNotes && (
+        <div className="tui-note tui-note-warn tm-item-notes">
+          <AlertCircle size={14} />
+          <span><strong>{T.reviewerNotes}:</strong> {reviewerNotes}</span>
         </div>
       )}
-      <div className="tm-card-actions">
-        <Link href={href} className="tm-card-link">{T.open} →</Link>
+      <div className="tm-item-actions">
+        <Link href={href} className="tui-btn tui-btn-ghost tui-btn-sm">{T.open}</Link>
         {canSubmit && (
-          <button className="tm-card-submit" onClick={onSubmit} disabled={submitting}>
-            {submitting ? T.submitting : T.submit}
+          <button className="tui-btn tui-btn-primary tui-btn-sm" onClick={onSubmit} disabled={submitting}>
+            <Send size={13} />{submitting ? T.submitting : T.submit}
           </button>
         )}
       </div>
-      <style>{`
-        .tm-card { background: linear-gradient(165deg,#F7F3EB,#EFEAE0); border: 1.5px solid rgba(107,30,45,0.30); border-radius: 13px; padding: 14px 15px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 4px 12px rgba(107,30,45,0.06); }
-        .tm-card.is-legacy { background: #F7F3EB; border-color: rgba(26,26,26,0.10); opacity: 0.78; }
-        .tm-card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .tm-card-title { font-size: 14px; font-weight: 900; color: #32101A; margin: 0; flex: 1; min-width: 0; line-height: 1.35; }
-        .tm-tag { font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; letter-spacing: 0.04em; }
-        .tm-tag--legacy { background: rgba(26,26,26,0.10); color: #655B53; }
-        .tm-st-DRAFT { background: rgba(26,26,26,0.06); color: #655B53; }
-        .tm-st-PENDING_REVIEW { background: rgba(107,30,45,0.18); color: #6B1E2D; }
-        .tm-st-APPROVED { background: rgba(27,94,32,0.14); color: #1B5E20; }
-        .tm-st-REJECTED { background: rgba(107,30,45,0.10); color: #6B1E2D; }
-        .tm-card-sub { font-size: 11.5px; color: #6B1E2D; font-weight: 700; }
-        .tm-card-meta { font-size: 11.5px; color: #8F765B; }
-        .tm-card-notes { background: rgba(107,30,45,0.06); border: 1px solid rgba(107,30,45,0.18); padding: 8px 10px; border-radius: 8px; font-size: 12px; color: #6B1E2D; line-height: 1.7; margin-top: 4px; }
-        .tm-card-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; gap: 8px; }
-        .tm-card-link { color: #6B1E2D; font-size: 12.5px; font-weight: 800; text-decoration: none; }
-        .tm-card-submit { background: linear-gradient(180deg,#B8A082,#B8A082); color: #4A0E1C; border: none; padding: 6px 12px; border-radius: 8px; font-family: inherit; font-size: 11.5px; font-weight: 800; cursor: pointer; }
-        .tm-card-submit:disabled { opacity: 0.5; cursor: not-allowed; }
-      `}</style>
-    </div>
+    </article>
   );
 }
+
+const styles = `
+.tm{padding-bottom:28px}
+.tm-back{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;color:#6B1E2D;font-size:12.5px;font-weight:900;text-decoration:none}
+.tm-back:hover{text-decoration:underline}
+.tm-standalone-note{margin-bottom:14px}
+.tm-block{margin-bottom:14px}
+.tm-count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;
+  background:#EFEAE0;color:#655B53;font-size:11px;font-weight:900}
+
+.tm-contents{display:flex;flex-direction:column;gap:9px}
+.tm-content{border:1px solid #E5E0D5;border-radius:12px;background:#F7F3EB;padding:13px 15px}
+.tm-content-text{margin:0;font-size:13px;line-height:1.95;color:#4A0E1C;white-space:pre-wrap}
+.tm-content-img{max-width:100%;height:auto;border-radius:10px;display:block}
+.tm-content-video{display:inline-flex;align-items:center;gap:8px;color:#6B1E2D;font-size:12.5px;font-weight:800;text-decoration:none}
+
+.tm-ref-questions{margin-top:14px;padding-top:13px;border-top:1px solid rgba(107,30,45,.16)}
+.tm-ref-questions h3{margin:0 0 9px;font-size:13px;font-weight:900;color:#32101A}
+.tm-ref-questions h3 span{color:#8C8274;font-weight:800}
+.tm-ref-questions ol{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:9px}
+.tm-ref-q{font-size:12.5px;font-weight:800;line-height:1.75;color:#4A0E1C}
+.tm-ref-questions ul{margin:5px 0 0;padding-inline-start:18px;font-size:11.5px;color:#655B53;line-height:1.8}
+
+.tm-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:11px}
+.tm-item{display:flex;flex-direction:column;gap:6px;border:1px solid #E5E0D5;border-radius:15px;background:#FFFFFF;padding:14px 15px}
+.tm-item.is-legacy{background:#F7F3EB;opacity:.8}
+.tm-item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:9px;flex-wrap:wrap}
+.tm-item-top h4{margin:0;flex:1;min-width:0;font-size:13.5px;font-weight:900;line-height:1.4;color:#32101A}
+.tm-item-chips{display:flex;gap:5px;flex-wrap:wrap}
+.tm-item-class{margin:0;font-size:11.5px;font-weight:800;color:#6B1E2D}
+.tm-item-meta{margin:0;font-size:11px;color:#8C8274}
+.tm-item-notes{margin-top:4px;font-size:11.5px}
+.tm-item-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:8px}
+
+.tm-overlay{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:rgba(26,26,26,.6);backdrop-filter:blur(6px)}
+.tm-dialog{width:min(520px,100%);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;
+  border-radius:20px;background:#FFFBF5;border:1px solid rgba(217,201,176,.45);box-shadow:0 26px 74px rgba(26,26,26,.34);
+  font-family:'Cairo',sans-serif}
+.tm-dialog>header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex:none;padding:16px 20px;
+  background:linear-gradient(135deg,#6B1E2D,#6B1E2D);color:#F7F3EB}
+.tm-dialog>header h3{margin:0;font-size:15.5px}
+.tm-dialog>header button{width:32px;height:32px;flex:none;display:grid;place-items:center;border:1px solid rgba(255,255,255,.2);
+  border-radius:9px;background:rgba(255,255,255,.08);color:#FFFFFF;cursor:pointer}
+.tm-dialog-body{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:13px}
+.tm-field{display:flex;flex-direction:column;gap:6px}
+.tm-field>span{font-size:12px;font-weight:900;color:#4A0E1C}
+.tm-field input,.tm-field select,.tm-field textarea{width:100%;box-sizing:border-box;min-height:44px;border:1px solid #D9C9B0;
+  border-radius:11px;background:#FFFFFF;padding:10px 12px;font:inherit;font-size:13.5px;color:#32101A}
+.tm-field textarea{min-height:78px;resize:vertical;line-height:1.7}
+.tm-field input:focus,.tm-field select:focus,.tm-field textarea:focus{outline:none;border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}
+.tm-dialog>footer{display:flex;justify-content:flex-end;gap:8px;flex:none;padding:14px 20px;border-top:1px solid rgba(107,30,45,.2)}
+
+@media(max-width:560px){
+  .tm-items{grid-template-columns:1fr}
+  .tm-overlay{padding:0;align-items:stretch}
+  .tm-dialog{width:100%;max-height:100vh;border-radius:0;border:0}
+  .tm-dialog>footer>*{flex:1}
+}
+`;

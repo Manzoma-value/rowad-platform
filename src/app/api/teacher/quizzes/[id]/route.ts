@@ -24,7 +24,20 @@ export async function GET(
       id: true,
       name: true,
       created_at: true,
+      is_legacy: true,
+      review_status: true,
+      reviewer_notes: true,
+      submitted_at: true,
+      reviewed_at: true,
       class: { select: { id: true, name: true } },
+      module: {
+        select: {
+          id: true,
+          title: true,
+          order: true,
+          stage: { select: { id: true, title: true, order: true } },
+        },
+      },
       questions: {
         orderBy: { order: "asc" },
         select: {
@@ -54,6 +67,36 @@ export async function GET(
 
   if (!quiz) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(quiz);
+}
+
+export async function PATCH(
+  req: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireTeacher();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { id } = await context.params;
+  const existing = await prisma.quiz.findFirst({
+    where: { id, teacher_id: auth.teacher.id },
+    select: { id: true, is_legacy: true, review_status: true },
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (existing.is_legacy) return NextResponse.json({ error: "Legacy quizzes are read-only" }, { status: 409 });
+  if (existing.review_status === "PENDING_REVIEW" || existing.review_status === "APPROVED") {
+    return NextResponse.json({ error: "Quiz is locked while under review" }, { status: 409 });
+  }
+
+  const body = await req.json().catch(() => null) as { name?: string } | null;
+  const name = body?.name?.trim();
+  if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
+
+  const quiz = await prisma.quiz.update({
+    where: { id },
+    data: { name: name.slice(0, 200) },
+    select: { id: true, name: true },
+  });
+  return NextResponse.json({ quiz });
 }
 
 export async function DELETE(
