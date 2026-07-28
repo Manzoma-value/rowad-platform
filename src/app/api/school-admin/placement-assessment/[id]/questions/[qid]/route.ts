@@ -1,13 +1,13 @@
 // api/school-admin/placement-assessment/[id]/questions/[qid]/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string; qid: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const [{ qid }, { text, correct_answer, options }] = await Promise.all([
@@ -66,7 +66,7 @@ export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string; qid: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { qid } = await context.params;

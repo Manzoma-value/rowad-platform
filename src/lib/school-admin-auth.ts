@@ -1,6 +1,7 @@
-// school admin auth
+﻿// school admin auth
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { isViewOnlyAccessExpired } from "@/lib/view-only-access";
 
 export async function requireSchoolAdmin() {
   const supabase = await createClient();
@@ -12,7 +13,7 @@ export async function requireSchoolAdmin() {
 
   const profile = await prisma.profile.findUnique({ where: { id: user.id } });
   if (!profile) {
-    console.error("[requireSchoolAdmin] FAIL step 2 — no profile found for user id:", user.id);
+    console.error("[ requireSchoolAdmin] FAIL step 2 — no profile found for user id:", user.id);
     return null;
   }
   if (profile.role !== "SCHOOL_ADMIN") {
@@ -23,6 +24,10 @@ export async function requireSchoolAdmin() {
   // Deactivated admins are blocked from all school-admin API routes
   if (!profile.is_active) {
     console.error("[requireSchoolAdmin] FAIL step 3 — profile is_active=false for user id:", user.id);
+    return null;
+  }
+  if (isViewOnlyAccessExpired(profile)) {
+    console.error("[requireSchoolAdmin] FAIL step 3 — view-only access expired for user id:", user.id);
     return null;
   }
 
@@ -63,16 +68,22 @@ export async function requireSchoolAdminWriter() {
  * Returns the raw activation status so the layout can distinguish
  * "deactivated" (show deactivated page) from "unauthorized" (redirect).
  */
-export async function getSchoolAdminStatus(): Promise<"ok" | "deactivated" | "unauthorized"> {
+export async function getSchoolAdminStatus(): Promise<"ok" | "deactivated" | "expired" | "unauthorized"> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return "unauthorized";
 
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
-    select: { role: true, is_active: true },
+    select: {
+      role: true,
+      is_active: true,
+      is_view_only: true,
+      view_only_expires_at: true,
+    },
   });
   if (!profile || profile.role !== "SCHOOL_ADMIN") return "unauthorized";
   if (!profile.is_active) return "deactivated";
+  if (isViewOnlyAccessExpired(profile)) return "expired";
   return "ok";
 }

@@ -6,14 +6,14 @@ import { useLang } from "@/lib/language-context";
 
 const S = {
   ar: {
-    title: "تم تعطيل حسابك",
-    message: "قام المسؤول بتعطيل حسابك. لم يعد بإمكانك الوصول إلى المنصة.",
+    title: "تم إيقاف الوصول إلى حسابك",
+    message: "تم تعطيل الحساب أو انتهت مدة الوصول المحددة له. لم يعد بإمكانك الوصول إلى المنصة.",
     contact: "إذا كنت تعتقد أن هذا خطأ، تواصل مع إدارة مدرستك.",
     logout: "تسجيل الخروج",
   },
   sq: {
-    title: "Llogaria juaj u çaktivizua",
-    message: "Administratori ka çaktivizuar lllogarinë tuaj. Nuk keni më akses në platformë.",
+    title: "Aksesi në llogarinë tuaj u ndal",
+    message: "Llogaria u çaktivizua ose periudha e caktuar e aksesit përfundoi. Nuk keni më akses në platformë.",
     contact: "Nëse mendoni se kjo është gabim, kontaktoni administratën e shkollës suaj.",
     logout: "Dil nga llogaria",
   },

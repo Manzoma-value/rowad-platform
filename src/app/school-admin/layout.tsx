@@ -36,6 +36,7 @@ import {
   Sparkles,
   FileText,
   ListChecks,
+  ShieldCheck,
   X,
   LucideIcon,
 } from "lucide-react";
@@ -246,6 +247,12 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       hideForViewOnly: true,
       group: "operations",
     },
+    {
+      href: "/school-admin/view-only-admins", sublabel: "View-only access", exact: false, icon: ShieldCheck,
+      label: lang === "ar" ? "صلاحيات العرض" : lang === "sq" ? "Aksesi vetëm për shikim" : "View-only access",
+      hideForViewOnly: true,
+      group: "operations",
+    },
   ];
 
   // ── Tenant feature flags ──
@@ -265,13 +272,19 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   }, [pathname, tenantLoading, hasFeature, router]);
 
   useEffect(() => {
+    if (viewOnly && pathname.startsWith("/school-admin/view-only-admins")) {
+      router.replace("/school-admin");
+    }
+  }, [pathname, router, viewOnly]);
+
+  useEffect(() => {
     // All three layout fetches in parallel + cached so navigation is instant.
     // /me — 10 min TTL (activation rarely changes in a session)
     // /stats — 60s TTL (the dashboard sometimes refreshes counts)
     // /profile — 10 min TTL (avatar doesn't change between page views)
-    cachedFetch<{ status?: string; is_view_only?: boolean }>("/api/school-admin/me", 600_000)
+    cachedFetch<{ status?: string; is_view_only?: boolean }>("/api/school-admin/me", 60_000)
       .then((d) => {
-        if (d?.status === "deactivated") setDeactivated(true);
+        if (d?.status === "deactivated" || d?.status === "expired") setDeactivated(true);
         if (d?.is_view_only) setViewOnly(true);
       })
       .catch(() => {});
@@ -326,7 +339,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       try {
         const u = new URL(url, window.location.origin);
-        return u.pathname.startsWith("/api/school-admin/");
+        return u.pathname.startsWith("/api/");
       } catch { return false; }
     };
     window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {

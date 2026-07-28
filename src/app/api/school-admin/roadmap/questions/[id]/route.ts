@@ -1,13 +1,13 @@
 // api/school-admin/roadmap/questions/[id]/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [{ id }, body] = await Promise.all([context.params, req.json().catch(() => ({}))]);
@@ -71,7 +71,7 @@ export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;

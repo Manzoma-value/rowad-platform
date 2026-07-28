@@ -1,6 +1,6 @@
 "use server";
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 // PUT /api/school-admin/roadmap/modules/[id]
@@ -8,7 +8,7 @@ export async function PUT(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;
@@ -41,7 +41,7 @@ export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;

@@ -1,6 +1,6 @@
 // src/app/api/school-admin/invites/[id]/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
@@ -8,7 +8,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   const [auth, { id }] = await Promise.all([
-    requireSchoolAdmin(),
+    requireSchoolAdminWriter(),
     context.params,
   ]);
 

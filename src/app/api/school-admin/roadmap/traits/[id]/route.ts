@@ -1,6 +1,6 @@
 // api/school-admin/roadmap/traits/[id]/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 async function verifyTrait(traitId: string, schoolId: string) {
@@ -15,7 +15,7 @@ export async function PATCH(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [{ id }, body] = await Promise.all([
@@ -51,7 +51,7 @@ export async function DELETE(
   _req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await context.params;

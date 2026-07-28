@@ -3,14 +3,14 @@
 // PATCH — reorder questions or content blocks of a roadmap module.
 // Body: { kind: "questions" | "contents", ids: string[] }
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   req: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: moduleId } = await context.params;

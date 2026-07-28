@@ -1,6 +1,6 @@
 // api/school-admin/roadmap/modules/[id]/questions/route.ts
 import { NextResponse } from "next/server";
-import { requireSchoolAdmin, requireSchoolAdminWriter } from '@/lib/school-admin-auth';
+import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
 
 type QuestionType = "MCQ" | "TF" | "WRITTEN" | "MATCHING";
@@ -10,7 +10,7 @@ export async function POST(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [{ id: moduleId }, body] = await Promise.all([

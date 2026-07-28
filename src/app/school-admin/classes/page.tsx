@@ -8,6 +8,7 @@ import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
+import { useViewOnly } from "@/lib/view-only-context";
 
 interface ClassItem {
   id: string;
@@ -24,6 +25,7 @@ export default function SchoolAdminClassesPage() {
   const { lang } = useLang();
   const tr = t[lang];
   const confirm = useConfirm();
+  const viewOnly = useViewOnly();
 
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -114,7 +116,7 @@ export default function SchoolAdminClassesPage() {
         <div className="cl-rule-line" />
       </div>
 
-      <div className="create-section">
+      <div className="create-section" data-write-area="true">
         <p className="create-label">
           {lang === "ar" ? "إضافة فصل جديد" : "Shto klasë të re"}
         </p>
@@ -246,27 +248,33 @@ export default function SchoolAdminClassesPage() {
               <div className="cl-divider" />
               <div className="cl-teacher-row">
                 <span className="cl-teacher-label">{tr.teacherLabel}</span>
-                <select
-                  className="cl-select"
-                  dir={dir}
-                  value={
-                    cls.teacher
-                      ? (teachers.find(
-                          (t) =>
-                            t.profile.full_name ===
-                            cls.teacher?.profile.full_name,
-                        )?.id ?? "")
-                      : ""
-                  }
-                  onChange={(e) => handleAssignTeacher(cls.id, e.target.value)}
-                >
-                  <option value="">{tr.withoutTeacher}</option>
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.profile.full_name}
-                    </option>
-                  ))}
-                </select>
+                {viewOnly ? (
+                  <span className="cl-teacher-read">
+                    {cls.teacher?.profile.full_name ?? tr.withoutTeacher}
+                  </span>
+                ) : (
+                  <select
+                    className="cl-select"
+                    dir={dir}
+                    value={
+                      cls.teacher
+                        ? (teachers.find(
+                            (t) =>
+                              t.profile.full_name ===
+                              cls.teacher?.profile.full_name,
+                          )?.id ?? "")
+                        : ""
+                    }
+                    onChange={(e) => handleAssignTeacher(cls.id, e.target.value)}
+                  >
+                    <option value="">{tr.withoutTeacher}</option>
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.profile.full_name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
           ))}
@@ -314,6 +322,7 @@ export default function SchoolAdminClassesPage() {
         .cl-teacher-label{font-size:11px;color:var(--text3);font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:0.5px}
         .cl-select{flex:1;background:var(--off-white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-family:var(--font);outline:none;cursor:pointer;transition:border-color 0.15s}
         .cl-select:focus{border-color:var(--gold)}
+        .cl-teacher-read{flex:1;background:var(--off-white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-weight:700}
         @media(max-width:700px){
           .cl-grid{grid-template-columns:1fr; gap:10px}
           .create-row{flex-direction:column; gap:10px}

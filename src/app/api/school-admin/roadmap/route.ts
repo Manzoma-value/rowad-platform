@@ -72,7 +72,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [existing, body] = await Promise.all([

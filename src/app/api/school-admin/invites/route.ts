@@ -44,7 +44,7 @@ export async function GET() {
 // Body: {} (no required fields for teacher invites)
 
 export async function POST() {
-  const auth = await requireSchoolAdmin();
+  const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const expires_at = new Date();

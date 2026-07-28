@@ -378,6 +378,9 @@ model Profile {
   // role). The auth helpers refuse to authorise any write endpoint when this
   // is set; UI hides mutating buttons.
   is_view_only                 Boolean                    @default(false)
+  // Optional hard expiry for a view-only school-admin account. Access is
+  // denied at and after this instant, even if an old browser session exists.
+  view_only_expires_at         DateTime?
   role                         Role
   reviewed_assessment_attempts AssessmentAttempt[]        @relation("AssessmentReviewedBy")
   school_admin_memberships     SchoolAdminMember[]

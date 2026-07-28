@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/language-context";
+import { useViewOnly } from "@/lib/view-only-context";
 
 interface ProfileData {
   id: string;
@@ -96,6 +97,7 @@ const c = {
 
 export default function SchoolAdminProfilePage() {
   const { lang } = useLang();
+  const viewOnly = useViewOnly();
   const tr = c[lang === "sq" ? "sq" : "ar"];
   const isRtl = lang !== "sq";
 
@@ -124,7 +126,7 @@ export default function SchoolAdminProfilePage() {
   }
 
   async function handleUpload(file: File) {
-    if (!profile) return;
+    if (!profile || viewOnly) return;
     if (!file.type.startsWith("image/")) {
       showToast(tr.toastType, false);
       return;
@@ -169,7 +171,7 @@ export default function SchoolAdminProfilePage() {
   }
 
   async function handleRemove() {
-    if (!profile) return;
+    if (!profile || viewOnly) return;
     setRemoving(true);
     try {
       const res = await fetch("/api/profile", { method: "DELETE" });
@@ -185,15 +187,13 @@ export default function SchoolAdminProfilePage() {
     }
   }
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      const file = e.dataTransfer.files[0];
-      if (file) handleUpload(file);
-    },
-    [profile],
-  );
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    if (viewOnly) return;
+    const file = e.dataTransfer.files[0];
+    if (file) void handleUpload(file);
+  }
 
   if (loading)
     return (
@@ -389,6 +389,7 @@ export default function SchoolAdminProfilePage() {
             </div>
 
             <input
+              data-write="true"
               ref={fileRef}
               type="file"
               accept="image/*"
@@ -400,7 +401,7 @@ export default function SchoolAdminProfilePage() {
               }}
             />
 
-            <div className="pf-actions">
+            <div className="pf-actions" data-write="true">
               <button
                 className="pf-btn-primary"
                 onClick={() => fileRef.current?.click()}

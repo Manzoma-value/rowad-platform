@@ -8,9 +8,18 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const status = await getSchoolAdminStatus();
-  if (status !== "ok") return NextResponse.json({ status, is_view_only: false });
+  if (status !== "ok") {
+    return NextResponse.json(
+      { status, is_view_only: status === "expired", view_only_expires_at: null },
+      { status: status === "unauthorized" ? 401 : 403 },
+    );
+  }
 
   const auth = await requireSchoolAdmin();
   const is_view_only = auth?.profile.is_view_only ?? false;
-  return NextResponse.json({ status, is_view_only });
+  return NextResponse.json({
+    status,
+    is_view_only,
+    view_only_expires_at: auth?.profile.view_only_expires_at?.toISOString() ?? null,
+  });
 }

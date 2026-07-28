@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parseHost } from "@/lib/tenant-host";
+import {
+  isViewOnlyAccessExpired,
+  isViewOnlySchoolAdminWrite,
+} from "@/lib/view-only-access";
 
 // ─────────────────────────────────────────────────────────────────────
 // Proxy (Next.js middleware) — runs on EVERY request.
@@ -98,20 +102,32 @@ export async function proxy(request: NextRequest) {
 
   // ════ API routes ════
   if (pathname.startsWith("/api/")) {
-    // Only the user-scoped APIs need a deactivation gate.
-    const needsActivationCheck =
-      pathname.startsWith("/api/student") ||
-      pathname.startsWith("/api/teacher") ||
-      pathname.startsWith("/api/hub");
-
-    if (needsActivationCheck && user) {
+    if (user) {
       const { data: apiProfile } = await supabase
         .from("profiles")
-        .select("is_active")
+        .select("role, is_active, is_view_only, view_only_expires_at")
         .eq("id", user.id)
         .single();
+
       if (apiProfile?.is_active === false) {
         return NextResponse.json({ error: "Account deactivated" }, { status: 403 });
+      }
+
+      if (
+        apiProfile &&
+        isViewOnlyAccessExpired({
+          is_view_only: apiProfile.is_view_only,
+          view_only_expires_at: apiProfile.view_only_expires_at,
+        })
+      ) {
+        return NextResponse.json({ error: "View-only access expired" }, { status: 403 });
+      }
+
+      if (apiProfile && isViewOnlySchoolAdminWrite(apiProfile, request.method)) {
+        return NextResponse.json(
+          { error: "View-only accounts cannot change platform data" },
+          { status: 403 },
+        );
       }
     }
     if (user) {
@@ -154,7 +170,7 @@ export async function proxy(request: NextRequest) {
   const [profileRes, studentRes] = await Promise.all([
     supabase
       .from("profiles")
-      .select("role, is_active")
+      .select("role, is_active, is_view_only, view_only_expires_at")
       .eq("id", user.id)
       .single(),
     isStudentPath
@@ -169,16 +185,23 @@ export async function proxy(request: NextRequest) {
   const profile = profileRes.data;
   const role = profile?.role as string | undefined;
   const isActive = profile?.is_active as boolean | undefined;
+  const viewOnlyExpired = profile
+    ? isViewOnlyAccessExpired({
+        is_view_only: Boolean(profile.is_view_only),
+        view_only_expires_at: profile.view_only_expires_at as string | null,
+      })
+    : false;
 
   // ── Deactivation gate ──
   // Only act on explicit false — null/undefined means "unknown, let through".
-  if (isActive === false && pathname !== "/deactivated") {
+  if ((isActive === false || viewOnlyExpired) && pathname !== "/deactivated") {
     const url = request.nextUrl.clone();
     url.pathname = "/deactivated";
+    if (viewOnlyExpired) url.searchParams.set("reason", "expired");
     return NextResponse.redirect(url);
   }
   // Active user on /deactivated → bounce to their dashboard.
-  if (isActive === true && pathname === "/deactivated") {
+  if (isActive === true && !viewOnlyExpired && pathname === "/deactivated") {
     const url = request.nextUrl.clone();
     if (role === "OWNER")             { url.pathname = "/owner"; }
     else if (role === "SCHOOL_ADMIN") { url.pathname = "/school-admin"; }
