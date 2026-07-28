@@ -1,11 +1,13 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
-import { Check, MapPin, X } from "lucide-react";
+import { Check, MapPin, Trophy, Users, X } from "lucide-react";
 import { COLUMN_LABELS, COLUMN_ORDER } from "@/lib/rowad";
+
+type MiniGameKind = "MEMORY" | "HUNTER" | "SPEED" | "COLLECTOR" | "WORDRAIN";
 
 type ModelAnswer = {
   concept_id: string;
@@ -18,7 +20,7 @@ type ModelAnswer = {
   is_correct: boolean;
 };
 
-type Row = {
+type ModelRow = {
   profile_id: string;
   full_name: string;
   email: string | null;
@@ -29,7 +31,19 @@ type Row = {
   best_stage2: number | null;
   total: number;
 };
-type HistoryEntry = {
+type MiniRow = {
+  profile_id: string;
+  full_name: string;
+  email: string | null;
+  role: string;
+  plays: number;
+  last_played_at: string | null;
+  by_game: Partial<Record<MiniGameKind, { plays: number; best_score: number }>>;
+};
+type OverviewGame = { key: string; plays: number; unique_players: number };
+type Overview = { total_plays: number; unique_players: number; games: OverviewGame[] };
+
+type ModelHistoryEntry = {
   id: string;
   stage: "STAGE1" | "STAGE2";
   score: number;
@@ -37,11 +51,40 @@ type HistoryEntry = {
   answers: ModelAnswer[] | null;
   created_at: string;
 };
+type MiniHistoryEntry = {
+  id: string;
+  game: MiniGameKind;
+  score: number;
+  won: boolean;
+  meta: Record<string, unknown> | null;
+  created_at: string;
+};
+
+const GAME_LABELS: Record<string, { ar: string; sq: string; emoji: string }> = {
+  MODEL_STAGE1: { ar: "النموذج — البطاقة الأولى", sq: "Modeli — Karta e parë", emoji: "🎴" },
+  MODEL_STAGE2: { ar: "النموذج — البطاقة الثانية", sq: "Modeli — Karta e dytë", emoji: "🎴" },
+  MEMORY: { ar: "لعبة الذاكرة", sq: "Loja e Kujtesës", emoji: "🧠" },
+  HUNTER: { ar: "صائد المقاصد", sq: "Gjuetari i Qëllimeve", emoji: "🎯" },
+  SPEED: { ar: "تحدي السرعة", sq: "Sfida e Shpejtësisë", emoji: "⚡" },
+  COLLECTOR: { ar: "جامع المقاصد", sq: "Mbledhësi i Qëllimeve", emoji: "🧭" },
+  WORDRAIN: { ar: "مطر الكلمات", sq: "Shiu i Fjalëve", emoji: "🌧️" },
+};
 
 const UI = {
   ar: {
-    title: "النموذج التعليمي — نتائج اللعب",
-    sub: "نتائج بطاقة النموذج التعليمي (Card Game 1 و Card Game 2) لكل المعلمين والطلاب في المدرسة. تظهر أعلى نتيجة لكل لاعب وعدد محاولاته.",
+    title: "الألعاب — من يلعب وكم مرة",
+    sub: "نظرة شاملة على كل الألعاب التعليمية في المنصة: النموذج التعليمي (بطاقات) وخمس ألعاب تدريبية. اعرف أي الألعاب الأكثر استخداماً ومن لعبها.",
+    totalPlays: "إجمالي مرات اللعب",
+    uniquePlayers: "عدد اللاعبين",
+    mostPlayed: "الأكثر لعباً",
+    rankTitle: "الألعاب مرتبة حسب الاستخدام",
+    players: (n: number) => `${n} لاعب`,
+    plays: (n: number) => `${n} مرة`,
+    noPlaysYet: "لا توجد بيانات لعب بعد.",
+    modelSection: "النموذج التعليمي (بطاقات)",
+    modelSectionSub: "نتائج بطاقة النموذج التعليمي (Card Game 1 و Card Game 2).",
+    miniSection: "الألعاب التدريبية الخمس",
+    miniSectionSub: "لا تُقيَّم هذه الألعاب — الهدف تتبع الاستخدام فقط: من لعب، وكم مرة، وأي لعبة يفضلها.",
     filterAll: "الكل",
     filterTeachers: "المعلمون فقط",
     filterStudents: "الطلاب فقط",
@@ -51,14 +94,17 @@ const UI = {
     roleCol: "الدور",
     bestStage1: "أعلى نتيجة — البطاقة الأولى",
     bestStage2: "أعلى نتيجة — البطاقة الثانية",
-    plays: "عدد المحاولات",
+    playsCol: "عدد المحاولات",
     lastPlayed: "آخر محاولة",
+    gamesCol: "الألعاب التي لعبها",
     open: "عرض السجل",
     roleTEACHER: "معلم",
     roleSTUDENT: "طالب",
     backToList: "← العودة",
     historyTitle: (n: string) => `سجل محاولات: ${n}`,
     noHistory: "لا توجد محاولات.",
+    modelHistoryTitle: "محاولات النموذج التعليمي",
+    miniHistoryTitle: "محاولات الألعاب التدريبية",
     when: "متى",
     stage: "البطاقة",
     score: "النتيجة",
@@ -67,8 +113,6 @@ const UI = {
     answers: "تفاصيل الإجابات",
     correct: "إجابة صحيحة",
     wrong: "إجابة خاطئة",
-    selected: "إجابة المشارك",
-    expected: "الإجابة الصحيحة",
     level: "المستوى",
     exactModel: "النموذج الذي رتّبه المشارك",
     exactModelSub: "كل بطاقة تظهر في الخانة التي اختارها المشارك فعليًا.",
@@ -77,10 +121,24 @@ const UI = {
     expectedAt: "مكانها الصحيح",
     emptyCell: "خانة فارغة",
     legacy: "هذه المحاولة قديمة وتم تسجيل الدرجة فقط قبل إضافة تفاصيل الإجابات.",
+    won: "فاز",
+    lost: "لم يفز",
+    completed: "أكمل الجولة",
   },
   sq: {
-    title: "Modeli Edukativ — Rezultatet e lojës",
-    sub: "Rezultatet e Card Game 1 dhe Card Game 2 për të gjithë mësuesit dhe nxënësit në shkollë. Shfaqet rezultati më i lartë i secilit lojtar dhe numri i provimeve.",
+    title: "Lojërat — kush luan dhe sa shpesh",
+    sub: "Pamje e plotë e të gjitha lojërave edukative në platformë: Modeli Edukativ (karta) dhe pesë lojëra ushtrimi. Shiko cilat lojëra përdoren më shumë dhe kush i ka luajtur.",
+    totalPlays: "Lojëra gjithsej",
+    uniquePlayers: "Numri i lojtarëve",
+    mostPlayed: "Më e luajtura",
+    rankTitle: "Lojërat sipas përdorimit",
+    players: (n: number) => `${n} lojtarë`,
+    plays: (n: number) => `${n} herë`,
+    noPlaysYet: "Nuk ka të dhëna ende.",
+    modelSection: "Modeli Edukativ (karta)",
+    modelSectionSub: "Rezultatet e Card Game 1 dhe Card Game 2.",
+    miniSection: "Pesë Lojërat e Ushtrimit",
+    miniSectionSub: "Këto lojëra nuk vlerësohen — qëllimi është vetëm të ndiqet përdorimi: kush luajti, sa herë, dhe cilën lojë preferon.",
     filterAll: "Të gjithë",
     filterTeachers: "Vetëm mësuesit",
     filterStudents: "Vetëm nxënësit",
@@ -90,14 +148,17 @@ const UI = {
     roleCol: "Roli",
     bestStage1: "Rezultati më i lartë — Karta e parë",
     bestStage2: "Rezultati më i lartë — Karta e dytë",
-    plays: "Numri i provimeve",
+    playsCol: "Numri i provimeve",
     lastPlayed: "Loja e fundit",
+    gamesCol: "Lojërat e luajtura",
     open: "Shih historikun",
     roleTEACHER: "Mësues",
     roleSTUDENT: "Nxënës",
     backToList: "← Kthehu",
     historyTitle: (n: string) => `Historiku i lojës: ${n}`,
     noHistory: "Asnjë lojë.",
+    modelHistoryTitle: "Përpjekjet e Modelit Edukativ",
+    miniHistoryTitle: "Përpjekjet e lojërave të ushtrimit",
     when: "Kur",
     stage: "Karta",
     score: "Rezultati",
@@ -106,8 +167,6 @@ const UI = {
     answers: "Detajet e përgjigjeve",
     correct: "Përgjigje e saktë",
     wrong: "Përgjigje e gabuar",
-    selected: "Përgjigjja e pjesëmarrësit",
-    expected: "Përgjigjja e saktë",
     level: "Niveli",
     exactModel: "Modeli i plotësuar nga pjesëmarrësi",
     exactModelSub: "Çdo kartë shfaqet pikërisht në qelizën që zgjodhi pjesëmarrësi.",
@@ -116,6 +175,9 @@ const UI = {
     expectedAt: "Vendi i saktë",
     emptyCell: "Qelizë bosh",
     legacy: "Kjo përpjekje është e vjetër dhe ka ruajtur vetëm rezultatin.",
+    won: "Fitoi",
+    lost: "Nuk fitoi",
+    completed: "Përfundoi raundin",
   },
 } as const;
 
@@ -125,18 +187,28 @@ export default function GameScoresPage() {
   const T = UI[L];
   const dir = L === "ar" ? "rtl" : "ltr";
 
-  const [rows, setRows] = useState<Row[]>([]);
+  const [overview, setOverview] = useState<Overview | null>(null);
+  const [modelRows, setModelRows] = useState<ModelRow[]>([]);
+  const [miniRows, setMiniRows] = useState<MiniRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "TEACHER" | "STUDENT">("all");
   const [q, setQ] = useState("");
-  const [detail, setDetail] = useState<{ profile: Row | null; history: HistoryEntry[] } | null>(null);
+  const [detail, setDetail] = useState<{
+    row: { profile_id: string; full_name: string };
+    modelHistory: ModelHistoryEntry[];
+    miniHistory: MiniHistoryEntry[];
+  } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/school-admin/game-scores", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setRows(d?.rows ?? []))
-      .catch(() => setRows([]))
+      .then((d) => {
+        setOverview(d?.overview ?? null);
+        setModelRows(d?.modelRows ?? []);
+        setMiniRows(d?.miniRows ?? []);
+      })
+      .catch(() => { setOverview(null); setModelRows([]); setMiniRows([]); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -144,30 +216,49 @@ export default function GameScoresPage() {
     if (!s) return "—";
     try { return new Date(s).toLocaleString(L === "ar" ? "ar-u-nu-latn" : "sq"); } catch { return s; }
   }
-
   function roleLabel(r: string) {
     return r === "TEACHER" ? T.roleTEACHER : r === "STUDENT" ? T.roleSTUDENT : r;
   }
+  function gameLabel(key: string) {
+    const entry = GAME_LABELS[key];
+    if (!entry) return key;
+    return `${entry.emoji} ${L === "ar" ? entry.ar : entry.sq}`;
+  }
 
-  const visible = rows.filter((r) => {
+  const visibleModel = useMemo(() => modelRows.filter((r) => {
     if (filter !== "all" && r.role !== filter) return false;
     if (q.trim()) {
       const needle = q.trim().toLowerCase();
-      const hay = `${r.full_name} ${r.email ?? ""}`.toLowerCase();
-      if (!hay.includes(needle)) return false;
+      if (!`${r.full_name} ${r.email ?? ""}`.toLowerCase().includes(needle)) return false;
     }
     return true;
-  });
+  }), [modelRows, filter, q]);
 
-  async function openDetail(row: Row) {
+  const visibleMini = useMemo(() => miniRows.filter((r) => {
+    if (filter !== "all" && r.role !== filter) return false;
+    if (q.trim()) {
+      const needle = q.trim().toLowerCase();
+      if (!`${r.full_name} ${r.email ?? ""}`.toLowerCase().includes(needle)) return false;
+    }
+    return true;
+  }), [miniRows, filter, q]);
+
+  const maxGamePlays = overview?.games.reduce((m, g) => Math.max(m, g.plays), 0) || 1;
+  const topGame = overview?.games.find((g) => g.plays > 0);
+
+  async function openDetail(profileId: string, fullName: string) {
     setDetailLoading(true);
-    setDetail({ profile: row, history: [] });
+    setDetail({ row: { profile_id: profileId, full_name: fullName }, modelHistory: [], miniHistory: [] });
     try {
-      const r = await fetch(`/api/school-admin/game-scores?detail=${row.profile_id}`, { cache: "no-store" });
+      const r = await fetch(`/api/school-admin/game-scores?detail=${profileId}`, { cache: "no-store" });
       const d = await r.json();
-      setDetail({ profile: row, history: d?.history ?? [] });
+      setDetail({
+        row: { profile_id: profileId, full_name: fullName },
+        modelHistory: d?.modelHistory ?? [],
+        miniHistory: d?.miniHistory ?? [],
+      });
     } catch {
-      setDetail({ profile: row, history: [] });
+      setDetail({ row: { profile_id: profileId, full_name: fullName }, modelHistory: [], miniHistory: [] });
     } finally {
       setDetailLoading(false);
     }
@@ -179,46 +270,79 @@ export default function GameScoresPage() {
     return (
       <div className="gs-page" dir={dir}>
         <button className="gs-back" onClick={() => setDetail(null)}>{T.backToList}</button>
-        <h1 className="gs-title">{T.historyTitle(detail.profile?.full_name ?? "")}</h1>
-        {detailLoading ? <MandalaLoader />
-          : detail.history.length === 0 ? <div className="gs-empty">{T.noHistory}</div>
-          : (
-            <div className="gs-history-list">
-              {detail.history.map((h, attemptIndex) => (
-                <details key={h.id} className="gs-attempt" open={attemptIndex === 0}>
-                  <summary className="gs-history-row">
-                    <span className={`gs-stage-tag stage-${h.stage}`}>
-                      {h.stage === "STAGE1" ? T.stage1Lbl : T.stage2Lbl}
-                    </span>
-                    <span className="gs-history-score">{h.score} / {h.total}</span>
-                    <span className="gs-history-when">{fmtDate(h.created_at)}</span>
-                    <strong className="gs-answer-link">{T.answers}</strong>
-                  </summary>
-                  <div className="gs-answer-panel">
-                    {!Array.isArray(h.answers) || h.answers.length === 0 ? (
-                      <div className="gs-legacy">{T.legacy}</div>
-                    ) : (
-                      <SubmissionBoard
-                        answers={h.answers}
-                        lang={L}
-                        score={h.score}
-                        total={h.total}
-                        labels={{
-                          title: T.exactModel,
-                          sub: T.exactModelSub,
-                          correct: T.correctCount,
-                          wrong: T.wrongCount,
-                          expectedAt: T.expectedAt,
-                          level: T.level,
-                          emptyCell: T.emptyCell,
-                        }}
-                      />
-                    )}
-                  </div>
-                </details>
-              ))}
-            </div>
-          )}
+        <h1 className="gs-title">{T.historyTitle(detail.row.full_name)}</h1>
+
+        {detailLoading ? <MandalaLoader /> : (
+          <>
+            {detail.miniHistory.length > 0 && (
+              <section className="gs-mini-history">
+                <h2 className="gs-subtitle">{T.miniHistoryTitle}</h2>
+                <div className="gs-mini-list">
+                  {detail.miniHistory.map((h) => (
+                    <div key={h.id} className={`gs-mini-entry${h.won ? " won" : ""}`}>
+                      <span className="gs-mini-entry-game">{gameLabel(h.game)}</span>
+                      <span className="gs-mini-entry-score">{h.score}</span>
+                      <span className={`gs-mini-entry-result${h.won ? " won" : ""}`}>
+                        {h.won ? T.won : h.game === "SPEED" ? T.completed : T.lost}
+                      </span>
+                      {h.meta && Object.keys(h.meta).length > 0 && (
+                        <span className="gs-mini-entry-meta">
+                          {Object.entries(h.meta).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+                        </span>
+                      )}
+                      <time className="gs-mini-entry-when">{fmtDate(h.created_at)}</time>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className="gs-model-history-section">
+              {(detail.modelHistory.length > 0 || detail.miniHistory.length > 0) && (
+                <h2 className="gs-subtitle">{T.modelHistoryTitle}</h2>
+              )}
+              {detail.modelHistory.length === 0 && detail.miniHistory.length === 0 ? (
+                <div className="gs-empty">{T.noHistory}</div>
+              ) : detail.modelHistory.length === 0 ? null : (
+                <div className="gs-history-list">
+                  {detail.modelHistory.map((h, attemptIndex) => (
+                    <details key={h.id} className="gs-attempt" open={attemptIndex === 0}>
+                      <summary className="gs-history-row">
+                        <span className={`gs-stage-tag stage-${h.stage}`}>
+                          {h.stage === "STAGE1" ? T.stage1Lbl : T.stage2Lbl}
+                        </span>
+                        <span className="gs-history-score">{h.score} / {h.total}</span>
+                        <span className="gs-history-when">{fmtDate(h.created_at)}</span>
+                        <strong className="gs-answer-link">{T.answers}</strong>
+                      </summary>
+                      <div className="gs-answer-panel">
+                        {!Array.isArray(h.answers) || h.answers.length === 0 ? (
+                          <div className="gs-legacy">{T.legacy}</div>
+                        ) : (
+                          <SubmissionBoard
+                            answers={h.answers}
+                            lang={L}
+                            score={h.score}
+                            total={h.total}
+                            labels={{
+                              title: T.exactModel,
+                              sub: T.exactModelSub,
+                              correct: T.correctCount,
+                              wrong: T.wrongCount,
+                              expectedAt: T.expectedAt,
+                              level: T.level,
+                              emptyCell: T.emptyCell,
+                            }}
+                          />
+                        )}
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
         <Styles />
       </div>
     );
@@ -231,61 +355,140 @@ export default function GameScoresPage() {
         <p className="gs-sub">{T.sub}</p>
       </header>
 
+      {/* ── Overview: totals + which game is most played ── */}
+      <section className="gs-overview">
+        <div className="gs-overview-cards">
+          <div className="gs-overview-card">
+            <Trophy size={18} />
+            <strong>{overview?.total_plays ?? 0}</strong>
+            <span>{T.totalPlays}</span>
+          </div>
+          <div className="gs-overview-card">
+            <Users size={18} />
+            <strong>{overview?.unique_players ?? 0}</strong>
+            <span>{T.uniquePlayers}</span>
+          </div>
+          <div className="gs-overview-card highlight">
+            <span className="gs-overview-emoji">{topGame ? GAME_LABELS[topGame.key]?.emoji ?? "🎮" : "🎮"}</span>
+            <strong className="gs-overview-toplabel">{topGame ? gameLabel(topGame.key) : "—"}</strong>
+            <span>{T.mostPlayed}</span>
+          </div>
+        </div>
+
+        <div className="gs-rank-card">
+          <h2 className="gs-rank-title">{T.rankTitle}</h2>
+          {!overview || overview.games.every((g) => g.plays === 0) ? (
+            <div className="gs-empty">{T.noPlaysYet}</div>
+          ) : (
+            <div className="gs-rank-list">
+              {overview.games.map((g) => (
+                <div key={g.key} className="gs-rank-row">
+                  <span className="gs-rank-label">{gameLabel(g.key)}</span>
+                  <div className="gs-rank-bar-bg">
+                    <div className="gs-rank-bar-fill" style={{ width: `${g.plays === 0 ? 0 : Math.max(4, (g.plays / maxGamePlays) * 100)}%` }} />
+                  </div>
+                  <span className="gs-rank-count">{T.plays(g.plays)}</span>
+                  <span className="gs-rank-players">{T.players(g.unique_players)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Shared toolbar for both tables ── */}
       <div className="gs-toolbar">
-        <input
-          className="gs-search"
-          placeholder={T.search}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
+        <input className="gs-search" placeholder={T.search} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="gs-filters">
           {(["all", "TEACHER", "STUDENT"] as const).map((opt) => (
-            <button
-              key={opt}
-              className={`gs-toggle${filter === opt ? " active" : ""}`}
-              onClick={() => setFilter(opt)}
-            >
+            <button key={opt} className={`gs-toggle${filter === opt ? " active" : ""}`} onClick={() => setFilter(opt)}>
               {opt === "all" ? T.filterAll : opt === "TEACHER" ? T.filterTeachers : T.filterStudents}
             </button>
           ))}
         </div>
       </div>
 
-      {visible.length === 0 ? (
-        <div className="gs-empty">{T.empty}</div>
-      ) : (
-        <div className="gs-table-wrap">
-          <table className="gs-table">
-            <thead>
-              <tr>
-                <th>{T.nameCol}</th>
-                <th>{T.roleCol}</th>
-                <th>{T.bestStage1}</th>
-                <th>{T.bestStage2}</th>
-                <th>{T.plays}</th>
-                <th>{T.lastPlayed}</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((r) => (
-                <tr key={r.profile_id}>
-                  <td>
-                    <div className="gs-name">{r.full_name}</div>
-                    {r.email && <div className="gs-email">{r.email}</div>}
-                  </td>
-                  <td><span className={`gs-role gs-role--${r.role}`}>{roleLabel(r.role)}</span></td>
-                  <td><Score n={r.best_stage1} total={r.total} /></td>
-                  <td><Score n={r.best_stage2} total={r.total} /></td>
-                  <td className="gs-num">{r.plays}</td>
-                  <td>{fmtDate(r.last_played_at)}</td>
-                  <td><button className="gs-open" onClick={() => openDetail(r)}>{T.open}</button></td>
+      {/* ── Model roll-up ── */}
+      <section className="gs-section">
+        <h2 className="gs-section-title">{T.modelSection}</h2>
+        <p className="gs-section-sub">{T.modelSectionSub}</p>
+        {visibleModel.length === 0 ? (
+          <div className="gs-empty">{T.empty}</div>
+        ) : (
+          <div className="gs-table-wrap">
+            <table className="gs-table">
+              <thead>
+                <tr>
+                  <th>{T.nameCol}</th>
+                  <th>{T.roleCol}</th>
+                  <th>{T.bestStage1}</th>
+                  <th>{T.bestStage2}</th>
+                  <th>{T.playsCol}</th>
+                  <th>{T.lastPlayed}</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {visibleModel.map((r) => (
+                  <tr key={r.profile_id}>
+                    <td><div className="gs-name">{r.full_name}</div>{r.email && <div className="gs-email">{r.email}</div>}</td>
+                    <td><span className={`gs-role gs-role--${r.role}`}>{roleLabel(r.role)}</span></td>
+                    <td><Score n={r.best_stage1} total={r.total} /></td>
+                    <td><Score n={r.best_stage2} total={r.total} /></td>
+                    <td className="gs-num">{r.plays}</td>
+                    <td>{fmtDate(r.last_played_at)}</td>
+                    <td><button className="gs-open" onClick={() => openDetail(r.profile_id, r.full_name)}>{T.open}</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* ── Mini-games roll-up ── */}
+      <section className="gs-section">
+        <h2 className="gs-section-title">{T.miniSection}</h2>
+        <p className="gs-section-sub">{T.miniSectionSub}</p>
+        {visibleMini.length === 0 ? (
+          <div className="gs-empty">{T.empty}</div>
+        ) : (
+          <div className="gs-table-wrap">
+            <table className="gs-table">
+              <thead>
+                <tr>
+                  <th>{T.nameCol}</th>
+                  <th>{T.roleCol}</th>
+                  <th>{T.gamesCol}</th>
+                  <th>{T.playsCol}</th>
+                  <th>{T.lastPlayed}</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {visibleMini.map((r) => (
+                  <tr key={r.profile_id}>
+                    <td><div className="gs-name">{r.full_name}</div>{r.email && <div className="gs-email">{r.email}</div>}</td>
+                    <td><span className={`gs-role gs-role--${r.role}`}>{roleLabel(r.role)}</span></td>
+                    <td>
+                      <div className="gs-mini-chips">
+                        {(Object.keys(r.by_game) as MiniGameKind[]).map((game) => (
+                          <span key={game} className="gs-mini-chip" title={gameLabel(game)}>
+                            {GAME_LABELS[game]?.emoji}{r.by_game[game]!.plays}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="gs-num">{r.plays}</td>
+                    <td>{fmtDate(r.last_played_at)}</td>
+                    <td><button className="gs-open" onClick={() => openDetail(r.profile_id, r.full_name)}>{T.open}</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
 
       <Styles />
     </div>
@@ -296,37 +499,22 @@ function Score({ n, total }: { n: number | null; total: number }) {
   if (n == null) return <span className="gs-dash">—</span>;
   const pct = total === 0 ? 0 : Math.round((n / total) * 100);
   const tone = pct >= 80 ? "great" : pct >= 50 ? "ok" : "low";
-  return (
-    <span className={`gs-score gs-score--${tone}`}>
-      {n} / {total}
-    </span>
-  );
+  return <span className={`gs-score gs-score--${tone}`}>{n} / {total}</span>;
 }
 
 function SubmissionBoard({
-  answers,
-  lang,
-  score,
-  total,
-  labels,
+  answers, lang, score, total, labels,
 }: {
   answers: ModelAnswer[];
   lang: "ar" | "sq";
   score: number;
   total: number;
   labels: {
-    title: string;
-    sub: string;
-    correct: string;
-    wrong: string;
-    expectedAt: string;
-    level: string;
-    emptyCell: string;
+    title: string; sub: string; correct: string; wrong: string;
+    expectedAt: string; level: string; emptyCell: string;
   };
 }) {
-  const byCell = new Map(
-    answers.map((answer) => [`${answer.selected_level}:${answer.selected_maqsad}`, answer]),
-  );
+  const byCell = new Map(answers.map((answer) => [`${answer.selected_level}:${answer.selected_maqsad}`, answer]));
   const correct = answers.filter((answer) => answer.is_correct).length;
   const wrong = answers.length - correct;
   const pct = total > 0 ? Math.round((score / total) * 100) : 0;
@@ -411,13 +599,43 @@ function Styles() {
       .gs-hero { margin-bottom: 18px; }
       .gs-title { font-size: 24px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
       .gs-sub { font-size: 13.5px; color: #655B53; max-width: 740px; line-height: 1.85; margin: 0; }
+      .gs-subtitle { font-size: 15px; font-weight: 900; color: #32101A; margin: 18px 0 10px; }
       .gs-back { background: none; border: none; color: #6B1E2D; font-family: inherit; font-size: 13px; font-weight: 800; cursor: pointer; margin-bottom: 10px; padding: 0; }
+
+      /* Overview */
+      .gs-overview { margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; }
+      .gs-overview-cards { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+      .gs-overview-card { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+        background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; padding: 16px 10px; color: #6B1E2D; }
+      .gs-overview-card strong { font-size: 24px; font-weight: 900; color: #32101A; }
+      .gs-overview-card span { font-size: 11px; font-weight: 700; color: #796A62; }
+      .gs-overview-card.highlight { background: linear-gradient(160deg,#FFFBF5,#F7F3EB); border-color: rgba(184,160,130,0.5); }
+      .gs-overview-emoji { font-size: 24px; line-height: 1; }
+      .gs-overview-toplabel { font-size: 13px !important; line-height: 1.3; }
+      .gs-rank-card { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; padding: 16px; }
+      .gs-rank-title { margin: 0 0 12px; font-size: 13px; font-weight: 900; color: #32101A; text-transform: uppercase; letter-spacing: .04em; }
+      .gs-rank-list { display: flex; flex-direction: column; gap: 9px; }
+      .gs-rank-row { display: grid; grid-template-columns: minmax(120px,180px) 1fr auto auto; gap: 10px; align-items: center; font-size: 12.5px; }
+      .gs-rank-label { font-weight: 800; color: #4A0E1C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .gs-rank-bar-bg { height: 8px; border-radius: 99px; background: rgba(184,160,130,0.14); overflow: hidden; }
+      .gs-rank-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#B8A082,#6B1E2D); transition: width .5s ease; }
+      .gs-rank-count { font-weight: 900; color: #6B1E2D; white-space: nowrap; }
+      .gs-rank-players { color: #8C8274; font-size: 11px; white-space: nowrap; }
+      @media(max-width:640px){ .gs-overview-cards{grid-template-columns:1fr 1fr} .gs-overview-cards .highlight{grid-column:1/-1}
+        .gs-rank-row{grid-template-columns:1fr auto;grid-template-rows:auto auto;row-gap:4px}
+        .gs-rank-bar-bg{grid-column:1/-1}.gs-rank-players{grid-column:2}.gs-rank-count{grid-column:1} }
+
       .gs-toolbar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; padding: 14px; }
       .gs-search { width: 100%; padding: 10px 14px; font-size: 14px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 11px; background: #FFF; font-family: inherit; outline: none; }
       .gs-search:focus { border-color: #B8A082; }
       .gs-filters { display: flex; gap: 8px; flex-wrap: wrap; }
       .gs-toggle { background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); color: #6B1E2D; padding: 7px 14px; border-radius: 99px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
       .gs-toggle.active { background: linear-gradient(180deg,#5B1526,#32101A); color: #B8A082; border-color: transparent; }
+
+      .gs-section { margin-bottom: 22px; }
+      .gs-section-title { font-size: 16px; font-weight: 900; color: #32101A; margin: 0 0 3px; }
+      .gs-section-sub { font-size: 12px; color: #796A62; margin: 0 0 12px; line-height: 1.7; }
+
       .gs-empty { padding: 60px 20px; text-align: center; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; color: #8C8274; font-weight: 700; }
       .gs-table-wrap { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; overflow: auto; }
       .gs-table { width: 100%; border-collapse: collapse; min-width: 700px; }
@@ -435,6 +653,10 @@ function Styles() {
       .gs-score--low   { background: rgba(139,26,26,0.10); color: #6B1E2D; }
       .gs-dash { color: #BFB6A8; }
       .gs-open { background: linear-gradient(180deg,#D8B96A,#B8A082); color: #4A0E1C; border: none; padding: 6px 14px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+      .gs-mini-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+      .gs-mini-chip { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 99px; background: rgba(184,160,130,0.14); color: #6B1E2D; font-size: 11px; font-weight: 800; white-space: nowrap; }
+
       .gs-history-list { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; overflow: hidden; }
       .gs-attempt { border-bottom:1px solid rgba(26,26,26,.07); }
       .gs-attempt:last-child { border-bottom:none; }
@@ -447,6 +669,19 @@ function Styles() {
       .gs-history-score { font-weight: 800; color: #32101A; font-variant-numeric: tabular-nums; }
       .gs-history-when { color: #7A7468; font-size: 12px; }
       .gs-answer-panel { padding:0 16px 18px; background:linear-gradient(180deg,rgba(247,243,235,.5),rgba(239,234,224,.45)); }
+
+      .gs-mini-history { margin-bottom: 20px; }
+      .gs-mini-list { display: flex; flex-direction: column; gap: 8px; }
+      .gs-mini-entry { display: grid; grid-template-columns: minmax(140px,1fr) auto auto 1fr auto; gap: 10px; align-items: center;
+        background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 12px; padding: 11px 14px; font-size: 12.5px; }
+      .gs-mini-entry-game { font-weight: 800; color: #32101A; }
+      .gs-mini-entry-score { font-weight: 900; color: #6B1E2D; font-variant-numeric: tabular-nums; }
+      .gs-mini-entry-result { padding: 2px 9px; border-radius: 99px; background: rgba(26,26,26,0.06); color: #655B53; font-size: 10.5px; font-weight: 800; white-space: nowrap; }
+      .gs-mini-entry-result.won { background: rgba(27,94,32,0.13); color: #1B5E20; }
+      .gs-mini-entry-meta { color: #796A62; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .gs-mini-entry-when { color: #8C8274; font-size: 11px; white-space: nowrap; }
+      @media(max-width:640px){ .gs-mini-entry{grid-template-columns:1fr auto;row-gap:5px} .gs-mini-entry-meta{grid-column:1/-1}.gs-mini-entry-when{grid-column:1/-1} }
+
       .gs-model-review { padding-top:14px; }
       .gs-model-head { display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:20px 22px;background:linear-gradient(120deg,#32101A,#4A0E1C 66%,#5B1526);border:1px solid rgba(184,160,130,.42);border-radius:8px 8px 0 0;color:#FFFBF5; }
       .gs-model-kicker { display:block;color:#B8A082;font-size:10px;font-weight:900;letter-spacing:.2em; }

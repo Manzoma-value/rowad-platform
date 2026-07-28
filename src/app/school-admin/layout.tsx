@@ -209,8 +209,8 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       group: "learning",
     },
     {
-      href: "/school-admin/game-scores", sublabel: "Model game scores", exact: false, icon: Gamepad2,
-      label: lang === "ar" ? "النموذج التعليمي" : lang === "sq" ? "Modeli Edukativ" : "Educational Model",
+      href: "/school-admin/game-scores", sublabel: "Games & play analytics", exact: false, icon: Gamepad2,
+      label: lang === "ar" ? "الألعاب وإحصائياتها" : lang === "sq" ? "Lojërat & Statistikat" : "Games & Analytics",
       group: "models",
     },
     {

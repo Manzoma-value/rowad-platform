@@ -199,6 +199,40 @@ model RowadGameSubmission {
   @@map("rowad_game_submissions")
 }
 
+// The five practice mini-games on the Games page (Memory Match, Maqsad
+// Hunter, Speed Drill, Maqsad Collector, Word Rain). Unlike the graded card
+// game these have no answer key to validate server-side — every completed
+// round is logged as-is purely so admins can see usage (who played, how
+// often, which game is most popular). Never used for grading.
+enum MiniGameKind {
+  MEMORY
+  HUNTER
+  SPEED
+  COLLECTOR
+  WORDRAIN
+}
+
+model MiniGameSubmission {
+  id         String       @id @default(uuid()) @db.Uuid
+  school_id  String       @db.Uuid
+  profile_id String       @db.Uuid
+  game       MiniGameKind
+  score      Int          @default(0)
+  won        Boolean      @default(false)
+  // Free-form per-game extras, e.g. {"moves":10,"time_seconds":42} or
+  // {"best_combo":6}. Analytics-only — never validated.
+  meta       Json?        @db.JsonB
+  created_at DateTime     @default(now())
+
+  school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  profile Profile @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+
+  @@index([school_id, created_at(sort: Desc)])
+  @@index([profile_id, game, created_at(sort: Desc)])
+  @@index([game, created_at(sort: Desc)])
+  @@map("mini_game_submissions")
+}
+
 // One model per school — an editable copy of the 5×5 educational model.
 // Used by the card-game (STAGE1 / STAGE2) — read-only for players.
 model RowadModel {
@@ -392,6 +426,7 @@ model Profile {
   reviewedLessons              Lesson[]                   @relation("LessonReviewedBy")
   reviewedQuizzes              Quiz[]                     @relation("QuizReviewedBy")
   rowadGameSubmissions         RowadGameSubmission[]
+  miniGameSubmissions          MiniGameSubmission[]
   authoredOwnerReports         OwnerReport[]              @relation("OwnerReportAuthor")
   authoredTeacherGroups        TeacherGroup[]             @relation("TeacherGroupAuthor")
   authoredGroupAssessments     GroupAssessment[]          @relation("GroupAssessmentAuthor")
@@ -446,6 +481,7 @@ model School {
   posts                       Post[]
   invites                     Invite[]
   rowadGameSubmissions        RowadGameSubmission[]
+  miniGameSubmissions         MiniGameSubmission[]
   owner_reports               OwnerReport[]
   teacher_groups              TeacherGroup[]
   workshops                   Workshop[]

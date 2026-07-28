@@ -106,6 +106,11 @@ const STR = {
     yourScore: "نقاطك",
     moves: "محاولاتك",
     bestStreak: "أطول سلسلة",
+    // Progress / stats (hub)
+    progressTried: (n: number, total: number) => `جربت ${n} من ${total} ألعاب`,
+    progressPlays: (n: number) => `${n} محاولة${n === 1 ? "" : ""} إجمالاً`,
+    tileBest: (n: number) => `أفضل نتيجة ${n}`,
+    tilePlays: (n: number) => `${n}×`,
   },
   sq: {
     title: "Lojërat Edukative",
@@ -196,6 +201,11 @@ const STR = {
     yourScore: "Pikët",
     moves: "Tentativat",
     bestStreak: "Vargu më i gjatë",
+    // Progress / stats (hub)
+    progressTried: (n: number, total: number) => `Provove ${n} nga ${total} lojëra`,
+    progressPlays: (n: number) => `${n} lojëra gjithsej`,
+    tileBest: (n: number) => `Rekordi ${n}`,
+    tilePlays: (n: number) => `${n}×`,
   },
 };
 
@@ -332,6 +342,26 @@ const localize = <T extends { ar: string; sq: string }>(item: T, lang: Lang) =>
   lang === "sq" ? item.sq : item.ar;
 
 /* ─────────────────────────────────────────────────────────────────────
+   Usage analytics — these 5 mini-games have no server-side answer key
+   (unlike the graded card game), so this is purely a "did they play, how
+   often, which is most popular" log for admins. Fire-and-forget: never
+   blocks or interrupts the player if it fails.
+   ───────────────────────────────────────────────────────────────────── */
+
+type ServerGameKind = "MEMORY" | "HUNTER" | "SPEED" | "COLLECTOR" | "WORDRAIN";
+
+function submitMiniGame(game: ServerGameKind, score: number, won: boolean, meta?: Record<string, unknown>) {
+  void fetch("/api/teacher/mini-games/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ game, score, won, meta }),
+  }).catch(() => { /* usage logging is best-effort */ });
+}
+
+type GameStat = { plays: number; best_score: number; wins: number; last_played_at: string | null };
+type MyStats = { stats: Record<ServerGameKind, GameStat>; total_plays: number; games_tried: number };
+
+/* ─────────────────────────────────────────────────────────────────────
    Page shell
    ───────────────────────────────────────────────────────────────────── */
 
@@ -342,34 +372,61 @@ export default function GamesPage({ cardBase = "/teacher/games/card" }: { cardBa
   const dir = L === "ar" ? "rtl" : "ltr";
 
   const [game, setGame] = useState<GameId>("hub");
+  const [myStats, setMyStats] = useState<MyStats | null>(null);
+
+  const loadStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/teacher/mini-games/my-stats", { cache: "no-store" });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setMyStats(data);
+    } catch { /* stats are a nice-to-have progress touch, never block the hub */ }
+  }, []);
+
+  // Initial load only — every later refresh is triggered explicitly from the
+  // "back to hub" click below, not derived from a `game` state effect.
+  useEffect(() => { void loadStats(); }, [loadStats]);
+
+  const goHub = useCallback(() => {
+    setGame("hub");
+    void loadStats();
+  }, [loadStats]);
 
   return (
     <div className="gm-shell" dir={dir}>
-      {game === "hub"       && <Hub T={T} onPlay={setGame} cardBase={cardBase} lang={L} />}
-      {game === "memory"    && <MemoryGame    T={T} lang={L} onBack={() => setGame("hub")} />}
-      {game === "hunter"    && <HunterGame    T={T} lang={L} onBack={() => setGame("hub")} />}
-      {game === "speed"     && <SpeedGame     T={T} lang={L} onBack={() => setGame("hub")} />}
-      {game === "collector" && <CollectorGame T={T} lang={L} onBack={() => setGame("hub")} />}
-      {game === "wordrain"  && <WordRainGame  T={T} lang={L} onBack={() => setGame("hub")} />}
+      {game === "hub"       && <Hub T={T} onPlay={setGame} cardBase={cardBase} lang={L} stats={myStats} />}
+      {game === "memory"    && <MemoryGame    T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("MEMORY", score, won, meta)} />}
+      {game === "hunter"    && <HunterGame    T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("HUNTER", score, won, meta)} />}
+      {game === "speed"     && <SpeedGame     T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("SPEED", score, won, meta)} />}
+      {game === "collector" && <CollectorGame T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("COLLECTOR", score, won, meta)} />}
+      {game === "wordrain"  && <WordRainGame  T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("WORDRAIN", score, won, meta)} />}
       <style>{styles}</style>
     </div>
   );
 }
 
+type RoundEnd = (score: number, won: boolean, meta?: Record<string, unknown>) => void;
+
 /* ─────────────────────────────────────────────────────────────────────
    Hub — three game tiles
    ───────────────────────────────────────────────────────────────────── */
+
+const TILE_KIND: Record<Exclude<GameId, "hub">, ServerGameKind> = {
+  memory: "MEMORY", hunter: "HUNTER", speed: "SPEED", collector: "COLLECTOR", wordrain: "WORDRAIN",
+};
 
 function Hub({
   T,
   onPlay,
   cardBase,
   lang,
+  stats,
 }: {
   T: typeof STR.ar;
   onPlay: (g: GameId) => void;
   cardBase: string;
   lang: Lang;
+  stats: MyStats | null;
 }) {
   const tiles: { id: Exclude<GameId, "hub">; title: string; desc: string; emoji: string; hue: string }[] = [
     { id: "memory",    title: T.memTitle, desc: T.memDesc, emoji: "🧠",  hue: "rgba(184,160,130,0.18)" },
@@ -378,6 +435,7 @@ function Hub({
     { id: "wordrain",  title: T.wrTitle,  desc: T.wrDesc,  emoji: "🌧️", hue: "rgba(101,91,83,0.10)" },
     { id: "collector", title: T.colTitle, desc: T.colDesc, emoji: "🧭",  hue: "rgba(101,91,83,0.10)" },
   ];
+  const totalGames = tiles.length;
 
   // "نموذج التعلم" is now the single featured entry point that runs both
   // stages back-to-back. The old per-stage tiles are collapsed into this
@@ -401,6 +459,19 @@ function Hub({
         <p className="gm-hero-sub">{T.sub}</p>
       </header>
 
+      {stats && stats.total_plays > 0 && (
+        <div className="gm-progress-strip">
+          <span className="gm-progress-icon" aria-hidden>🔥</span>
+          <div className="gm-progress-text">
+            <strong>{T.progressTried(stats.games_tried, totalGames)}</strong>
+            <span>{T.progressPlays(stats.total_plays)}</span>
+          </div>
+          <div className="gm-progress-track" aria-hidden>
+            <div className="gm-progress-fill" style={{ width: `${(stats.games_tried / totalGames) * 100}%` }} />
+          </div>
+        </div>
+      )}
+
       {/* Hero: نموذج التعلم — the flagship two-stage flow. */}
       <a href={modelHref} className="gm-model-hero">
         <div className="gm-model-hero-band">
@@ -422,28 +493,38 @@ function Hub({
       </a>
 
       <div className="gm-tiles">
-        {tiles.map((t, i) => (
-          <button
-            key={t.id}
-            className="gm-tile"
-            onClick={() => onPlay(t.id)}
-            style={{ animationDelay: `${0.08 * (i + 2)}s`, "--tile-tint": t.hue } as React.CSSProperties}
-          >
-            <div className="gm-tile-emblem" aria-hidden>
-              <span className="gm-tile-emoji">{t.emoji}</span>
-            </div>
-            <div className="gm-tile-body">
-              <h2 className="gm-tile-title">{t.title}</h2>
-              <p className="gm-tile-desc">{t.desc}</p>
-            </div>
-            <div className="gm-tile-cta">
-              <span>{T.playBtn}</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-                <polyline points="9 6 15 12 9 18" />
-              </svg>
-            </div>
-          </button>
-        ))}
+        {tiles.map((t, i) => {
+          const s = stats?.stats[TILE_KIND[t.id]];
+          const played = !!s && s.plays > 0;
+          return (
+            <button
+              key={t.id}
+              className="gm-tile"
+              onClick={() => onPlay(t.id)}
+              style={{ animationDelay: `${0.08 * (i + 2)}s`, "--tile-tint": t.hue } as React.CSSProperties}
+            >
+              {played && (
+                <span className="gm-tile-stat" aria-label={`${T.tileBest(s.best_score)} · ${T.tilePlays(s.plays)}`}>
+                  <span className="gm-tile-stat-best">🏆 {s.best_score}</span>
+                  <span className="gm-tile-stat-plays">{T.tilePlays(s.plays)}</span>
+                </span>
+              )}
+              <div className="gm-tile-emblem" aria-hidden>
+                <span className="gm-tile-emoji">{t.emoji}</span>
+              </div>
+              <div className="gm-tile-body">
+                <h2 className="gm-tile-title">{t.title}</h2>
+                <p className="gm-tile-desc">{t.desc}</p>
+              </div>
+              <div className="gm-tile-cta">
+                <span>{T.playBtn}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+                  <polyline points="9 6 15 12 9 18" />
+                </svg>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -608,7 +689,7 @@ function buildMemDeck(lang: Lang): MemCard[] {
   return shuffle(pool).map((c, i) => ({ uid: i, ...c }));
 }
 
-function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: () => void }) {
+function MemoryGame({ T, lang, onBack, onRoundEnd }: { T: typeof STR.ar; lang: Lang; onBack: () => void; onRoundEnd?: RoundEnd }) {
   const [deck, setDeck] = useState<MemCard[]>(() => buildMemDeck(lang));
   const [flipped, setFlipped] = useState<number[]>([]);
   const [matched, setMatched] = useState<Set<string>>(new Set());
@@ -616,6 +697,7 @@ function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
   const [time, setTime] = useState(0);
   const [running, setRunning] = useState(true);
   const lockRef = useRef(false);
+  const submittedRef = useRef(false);
 
   // Timer
   useEffect(() => {
@@ -634,6 +716,7 @@ function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
     setTime(0);
     setRunning(true);
     lockRef.current = false;
+    submittedRef.current = false;
   }, [lang]);
 
   // Re-build deck when language flips, so card text stays in sync.
@@ -676,6 +759,13 @@ function MemoryGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
 
   // Stars: perfect = 3 (≤12 moves), good = 2 (≤16), participation = 1
   const stars = won ? (moves <= 12 ? 3 : moves <= 16 ? 2 : 1) : 0;
+
+  useEffect(() => {
+    if (won && !submittedRef.current) {
+      submittedRef.current = true;
+      onRoundEnd?.(stars, true, { moves, time_seconds: time });
+    }
+  }, [won, stars, moves, time, onRoundEnd]);
 
   return (
     <GameFrame
@@ -764,13 +854,14 @@ function pickHunterRound(): HunterQ[] {
   return shuffle(HUNTER_BANK).slice(0, 10);
 }
 
-function HunterGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: () => void }) {
+function HunterGame({ T, lang, onBack, onRoundEnd }: { T: typeof STR.ar; lang: Lang; onBack: () => void; onRoundEnd?: RoundEnd }) {
   const [round, setRound] = useState<HunterQ[]>(pickHunterRound);
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [picked, setPicked] = useState<Maqsad | null>(null);
   const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
+  const submittedRef = useRef(false);
 
   const restart = useCallback(() => {
     setRound(pickHunterRound());
@@ -779,12 +870,20 @@ function HunterGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack:
     setLives(3);
     setPicked(null);
     setFeedback(null);
+    submittedRef.current = false;
   }, []);
 
   const current = round[idx];
   const won = idx >= 10 && lives > 0;
   const lost = lives <= 0;
   const ended = won || lost;
+
+  useEffect(() => {
+    if (ended && !submittedRef.current) {
+      submittedRef.current = true;
+      onRoundEnd?.(score, won, { lives_left: lives });
+    }
+  }, [ended, won, score, lives, onRoundEnd]);
 
   function answer(m: Maqsad) {
     if (picked || ended) return;
@@ -898,7 +997,7 @@ function nextSpeedWord(prev?: SpeedWord): SpeedWord {
 
 const SPEED_DURATION = 30;
 
-function SpeedGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: () => void }) {
+function SpeedGame({ T, lang, onBack, onRoundEnd }: { T: typeof STR.ar; lang: Lang; onBack: () => void; onRoundEnd?: RoundEnd }) {
   const [word, setWord] = useState<SpeedWord>(() => nextSpeedWord());
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
@@ -906,6 +1005,7 @@ function SpeedGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: 
   const [timeLeft, setTimeLeft] = useState(SPEED_DURATION);
   const [running, setRunning] = useState(true);
   const [flash, setFlash] = useState<"right" | "wrong" | null>(null);
+  const submittedRef = useRef(false);
 
   const restart = useCallback(() => {
     setWord(nextSpeedWord());
@@ -915,6 +1015,7 @@ function SpeedGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: 
     setTimeLeft(SPEED_DURATION);
     setRunning(true);
     setFlash(null);
+    submittedRef.current = false;
   }, []);
 
   useEffect(() => {
@@ -954,6 +1055,13 @@ function SpeedGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: 
   const timePct = (timeLeft / SPEED_DURATION) * 100;
   const ended = !running || timeLeft <= 0;
   const mult = combo >= 9 ? 5 : combo >= 4 ? 3 : combo >= 1 ? 2 : 1;
+
+  useEffect(() => {
+    if (ended && !submittedRef.current) {
+      submittedRef.current = true;
+      onRoundEnd?.(score, true, { best_combo: bestCombo });
+    }
+  }, [ended, score, bestCombo, onRoundEnd]);
 
   return (
     <GameFrame
@@ -1115,7 +1223,7 @@ type CollectorSnapshot = {
   collected: number;
 };
 
-function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: () => void }) {
+function CollectorGame({ T, lang, onBack, onRoundEnd }: { T: typeof STR.ar; lang: Lang; onBack: () => void; onRoundEnd?: RoundEnd }) {
   // Hot game state lives in refs — only mirrored to React on tick.
   const [initialGame] = useState(() => {
     const target = pickTargetMaqsad();
@@ -1128,6 +1236,7 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
   const livesRef     = useRef(COLLECT_INITIAL_LIVES);
   const collectedRef = useRef(0);
   const popupIdRef   = useRef(0);
+  const submittedRef = useRef(false);
 
   // Input state
   const keysRef    = useRef(new Set<string>());
@@ -1153,6 +1262,7 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
     livesRef.current  = COLLECT_INITIAL_LIVES;
     collectedRef.current = 0;
     touchVec.current  = { x: 0, y: 0 };
+    submittedRef.current = false;
     setPopups([]);
     setStatus("playing");
     setSnapshot({ target, player, items, score: 0, lives: COLLECT_INITIAL_LIVES, collected: 0 });
@@ -1272,6 +1382,13 @@ function CollectorGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBa
   // ── Render-time data ──
   const { target, player, items, score, lives, collected } = snapshot;
   const targetLabel = MAQSAD_LABELS[target][lang === "sq" ? "sq" : "ar"];
+
+  useEffect(() => {
+    if (status !== "playing" && !submittedRef.current) {
+      submittedRef.current = true;
+      onRoundEnd?.(score, status === "won", { collected });
+    }
+  }, [status, score, collected, onRoundEnd]);
 
   // D-pad press handlers — set the unit vector while held.
   const press = (x: number, y: number) => (e: React.PointerEvent) => {
@@ -1422,8 +1539,9 @@ const WR_LIVES = 3;
 const WR_CORRECT_RATIO = 0.5;    // ~half the drops belong to the target
 const WR_MAX_ON_SCREEN = 9;
 
-function WordRainGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBack: () => void }) {
+function WordRainGame({ T, lang, onBack, onRoundEnd }: { T: typeof STR.ar; lang: Lang; onBack: () => void; onRoundEnd?: RoundEnd }) {
   const [initialTarget] = useState(pickTargetMaqsad);
+  const submittedRef = useRef(false);
 
   // Authoritative state in refs (mutated by the rAF loop + taps), mirrored
   // to React each tick — same pattern as the Collector game.
@@ -1483,6 +1601,7 @@ function WordRainGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBac
     bestRef.current = 0;
     spawnAccRef.current = 0;
     elapsedRef.current = 0;
+    submittedRef.current = false;
     setTarget(t);
     setWords([]);
     setPopups([]);
@@ -1586,6 +1705,13 @@ function WordRainGame({ T, lang, onBack }: { T: typeof STR.ar; lang: Lang; onBac
   const targetLabel = MAQSAD_LABELS[target][lang === "sq" ? "sq" : "ar"];
   const mult = combo >= 9 ? 5 : combo >= 4 ? 3 : combo >= 1 ? 2 : 1;
   const ended = status !== "playing";
+
+  useEffect(() => {
+    if (ended && !submittedRef.current) {
+      submittedRef.current = true;
+      onRoundEnd?.(score, status === "won", { best_combo: bestCombo });
+    }
+  }, [ended, status, score, bestCombo, onRoundEnd]);
 
   return (
     <GameFrame
@@ -1720,9 +1846,38 @@ const styles = `
 .gm-hero-title{font-family:'El Messiri','Cairo',serif;font-size:34px;font-weight:800;color:#4A0E1C;margin:0;letter-spacing:-0.4px}
 .gm-hero-sub{font-size:14.5px;color:#796A62;margin:10px auto 0;max-width:560px;line-height:1.7;font-weight:500}
 
+/* ── PROGRESS STRIP — "you've tried N of 5 games" ── */
+.gm-progress-strip{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:20px;padding:13px 18px;border-radius:16px;
+  background:linear-gradient(160deg,#FFFBF5 0%,#F7F3EB 100%);
+  border:1.5px solid rgba(184,160,130,0.42);
+  box-shadow:0 6px 18px rgba(107,30,45,0.09);
+  animation:gm-fade .4s ease both;
+}
+.gm-progress-icon{font-size:22px;line-height:1;flex-shrink:0}
+.gm-progress-text{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.gm-progress-text strong{font-family:'El Messiri','Cairo',serif;font-size:14px;font-weight:800;color:#4A0E1C}
+.gm-progress-text span{font-size:11.5px;color:#796A62;font-weight:600}
+.gm-progress-track{flex:1;height:7px;border-radius:99px;background:rgba(107,30,45,0.12);overflow:hidden;min-width:60px}
+.gm-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#B8A082,#6B1E2D);transition:width .5s cubic-bezier(.22,1,.36,1)}
+@media(max-width:520px){.gm-progress-strip{gap:10px;padding:11px 14px}.gm-progress-track{min-width:40px}}
+
 /* ── TILES ── */
 .gm-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 @media(max-width:880px){.gm-tiles{grid-template-columns:1fr}}
+
+/* Per-tile "played before" badge — best score + play count. */
+.gm-tile-stat{
+  position:absolute;top:14px;inset-inline-end:14px;z-index:2;
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:99px;
+  background:rgba(107,30,45,0.92);color:#D9C9B0;
+  font-size:11px;font-weight:800;letter-spacing:.2px;
+  box-shadow:0 4px 12px rgba(107,30,45,0.25);
+  backdrop-filter:blur(2px);
+}
+.gm-tile-stat-plays{opacity:.75;padding-inline-start:6px;border-inline-start:1px solid rgba(217,201,176,0.35)}
 
 /* Featured Learning Model hero — the flagship of the tools page. */
 .gm-model-hero{
