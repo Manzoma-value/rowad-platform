@@ -47,10 +47,10 @@ type AssessmentFull = {
 
 function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
 
-// Lead with the five high-contrast canonical trait colors, followed by the
-// brand neutrals as extra choices for fully custom trait sets.
+// Lead with the five official canonical trait colors, followed by extra
+// brand choices for fully custom trait sets.
 const SWATCHES = [
-  "#2563EB", "#D97706", "#7C3AED", "#DC2626", "#059669",
+  "#F2EFE6", "#F2B705", "#9AA3AC", "#B33A3A", "#1A1A1A",
   "#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0",
 ];
 

@@ -12,14 +12,13 @@ export const TRAIT_KEYS: readonly TraitKey[] = [
 ] as const;
 
 // The canonical five — kept in the exact methodology order used by the
-// statements and saved score arrays. The categorical palette is deliberately
-// high-contrast so the five traits remain distinguishable at a glance.
+// statements and saved score arrays, with the official identity palette.
 export const DEFAULT_TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
-  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#2563EB" },
-  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#D97706" },
-  { key: "distinct",  ar: "المميز",    sq: "Dallimi",   color: "#7C3AED" },
-  { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#DC2626" },
-  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",  color: "#059669" },
+  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#F2EFE6" },
+  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#F2B705" },
+  { key: "distinct",  ar: "المميز",    sq: "Dallimi",   color: "#9AA3AC" },
+  { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#B33A3A" },
+  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",  color: "#1A1A1A" },
 ];
 
 export const DEFAULT_STATEMENTS = {
