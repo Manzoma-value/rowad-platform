@@ -1,8 +1,8 @@
 "use client";
 
-// Clean, white trait spectrum shared by the teacher and admin experiences.
-// Each trait keeps its own clearly separated petal and outer-ring segment;
-// no dark blend is used, so close values remain readable.
+// A restrained, continuous trait spectrum shared by teacher and admin views.
+// Directional color fields softly merge inside a neutral measurement grid,
+// keeping the visual analytical rather than decorative.
 
 import { useId, useMemo } from "react";
 import { blendCmykWeighted, type SpectrumTrait } from "@/lib/trait-spectrum";
@@ -29,29 +29,29 @@ export default function TraitSpectrumBlob({
   const mixedHex = useMemo(() => (traits.length ? blendCmykWeighted(traits) : "#EFEAE0"), [traits]);
 
   const clipId = `tsb-clip-${uid}`;
-  const total = Math.max(1, traits.reduce((sum, trait) => sum + Math.max(0, trait.pct), 0));
+  const blurId = `tsb-blur-${uid}`;
   const rotation = (seed % 9) - 4;
-  const petals = traits.map((trait, index) => {
-    const angle = -90 + rotation + (index * 360) / Math.max(1, traits.length);
+  const polarPoint = (radius: number, angle: number) => {
     const radians = (angle * Math.PI) / 180;
+    return {
+      x: 300 + Math.cos(radians) * radius,
+      y: 300 + Math.sin(radians) * radius,
+    };
+  };
+  const sectors = traits.map((trait, index) => {
+    const angle = -90 + rotation + (index * 360) / Math.max(1, traits.length);
     const strength = Math.max(0, Math.min(100, trait.pct));
-    const distance = mode === "compact" ? 128 : 136;
+    const radius = Math.min(232, 78 + strength * 3);
+    const halfAngle = Math.min(42, 195 / Math.max(1, traits.length));
+    const start = polarPoint(radius, angle - halfAngle);
+    const end = polarPoint(radius, angle + halfAngle);
+    const focus = polarPoint(radius * 0.72, angle);
     return {
       ...trait,
       angle,
-      cx: 300 + Math.cos(radians) * distance,
-      cy: 300 + Math.sin(radians) * distance,
-      radius: 64 + strength * 0.62,
-    };
-  });
-  const arcs = traits.map((trait, index) => {
-    const preceding = traits
-      .slice(0, index)
-      .reduce((sum, item) => sum + Math.max(0, item.pct), 0);
-    return {
-      trait,
-      pct: (Math.max(0, trait.pct) / total) * 100,
-      offset: (preceding / total) * 100,
+      radius,
+      focus,
+      path: `M 300 300 L ${start.x.toFixed(1)} ${start.y.toFixed(1)} A ${radius.toFixed(1)} ${radius.toFixed(1)} 0 0 1 ${end.x.toFixed(1)} ${end.y.toFixed(1)} Z`,
     };
   });
 
@@ -62,75 +62,84 @@ export default function TraitSpectrumBlob({
           <clipPath id={clipId}>
             <circle cx={300} cy={300} r={238} />
           </clipPath>
+          <filter id={blurId} x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur stdDeviation={mode === "compact" ? 13 : 19} />
+          </filter>
+          {sectors.map((sector, index) => (
+            <radialGradient
+              key={index}
+              id={`tsb-field-${uid}-${index}`}
+              gradientUnits="userSpaceOnUse"
+              cx={sector.focus.x}
+              cy={sector.focus.y}
+              r={Math.max(105, sector.radius * 0.92)}
+            >
+              <stop offset="0%" stopColor={sector.color} stopOpacity={0.82} />
+              <stop offset="42%" stopColor={sector.color} stopOpacity={0.58} />
+              <stop offset="78%" stopColor={sector.color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={sector.color} stopOpacity={0} />
+            </radialGradient>
+          ))}
         </defs>
 
-        <circle cx={300} cy={300} r={246} fill="#FFFFFF" stroke="#D9C9B0" strokeWidth={4} />
+        <circle cx={300} cy={300} r={247} fill="#FFFFFF" stroke="#B8A082" strokeWidth={3} />
 
         <g clipPath={`url(#${clipId})`}>
-          <circle cx={300} cy={300} r={238} fill="#FFFFFF" />
-          {frame && (
-            <g stroke="#D9C9B0" strokeWidth={1} fill="none" opacity={0.48}>
-            {[238, 196, 150, 100].map((r) => (
-                <circle key={r} cx={300} cy={300} r={r} />
+          <circle cx={300} cy={300} r={238} fill="#FFFBF5" />
+          <g filter={`url(#${blurId})`}>
+            {sectors.map((sector, index) => (
+              <path
+                key={`${sector.label}-${index}`}
+                d={sector.path}
+                fill={`url(#tsb-field-${uid}-${index})`}
+              />
             ))}
-              {petals.map((petal, index) => {
-                const a = (petal.angle * Math.PI) / 180;
-              return (
-                <line
+          </g>
+          {sectors.map((sector, index) => (
+            <path
+              key={`definition-${sector.label}-${index}`}
+              d={sector.path}
+              fill={sector.color}
+              fillOpacity={0.055}
+            />
+          ))}
+          {frame && (
+            <g stroke="#8F765B" strokeWidth={1} fill="none" opacity={0.3}>
+              {[238, 190, 142, 94].map((r) => (
+                <circle key={r} cx={300} cy={300} r={r} />
+              ))}
+              {sectors.map((sector, index) => {
+                const endpoint = polarPoint(238, sector.angle);
+                return (
+                  <line
                     key={index}
-                  x1={300 + 40 * Math.cos(a)} y1={300 + 40 * Math.sin(a)}
-                  x2={300 + 238 * Math.cos(a)} y2={300 + 238 * Math.sin(a)}
-                    opacity={0.7}
-                />
-              );
-            })}
+                    x1={300}
+                    y1={300}
+                    x2={endpoint.x}
+                    y2={endpoint.y}
+                  />
+                );
+              })}
             </g>
           )}
-          {petals.map((petal, index) => (
-            <g key={`${petal.label}-${index}`}>
-              <circle
-                cx={petal.cx}
-                cy={petal.cy}
-                r={petal.radius}
-                fill={petal.color}
-                fillOpacity={0.15}
-                stroke={petal.color}
-                strokeOpacity={0.82}
-                strokeWidth={4}
-              />
-              <circle
-                cx={petal.cx}
-                cy={petal.cy}
-                r={Math.max(28, petal.radius * 0.62)}
-                fill={petal.color}
-                fillOpacity={0.16}
-              />
-            </g>
-          ))}
-          <circle cx={300} cy={300} r={54} fill="#FFFFFF" stroke="#D9C9B0" strokeWidth={2} />
-          <circle cx={300} cy={300} r={8} fill="#6B1E2D" />
+          <polygon
+            points={sectors
+              .map((sector) => {
+                const point = polarPoint(54, sector.angle);
+                return `${point.x.toFixed(1)},${point.y.toFixed(1)}`;
+              })
+              .join(" ")}
+            fill="#FFFBF5"
+            fillOpacity={0.9}
+            stroke="#8F765B"
+            strokeOpacity={0.36}
+            strokeWidth={1.5}
+          />
+          <circle cx={300} cy={300} r={7} fill="#B8A082" stroke="#FFFFFF" strokeWidth={2} />
         </g>
 
-        <g transform="rotate(-90 300 300)">
-          {arcs.map(({ trait, pct, offset }, index) => {
-            return (
-              <circle
-                key={`${trait.label}-${index}`}
-                cx={300}
-                cy={300}
-                r={268}
-                pathLength={100}
-                fill="none"
-                stroke={trait.color}
-                strokeWidth={24}
-                strokeLinecap="butt"
-                strokeDasharray={`${Math.max(0.6, pct)} ${Math.max(0, 100 - pct)}`}
-                strokeDashoffset={-offset}
-              />
-            );
-          })}
-        </g>
-        <circle cx={300} cy={300} r={282} fill="none" stroke="#D9C9B0" strokeWidth={2} />
+        <circle cx={300} cy={300} r={255} fill="none" stroke="#D9C9B0" strokeWidth={1} />
+        <circle cx={300} cy={300} r={266} fill="none" stroke="#B8A082" strokeWidth={2} strokeOpacity={0.42} />
       </svg>
 
       {showMixedSwatch && (
@@ -142,7 +151,7 @@ export default function TraitSpectrumBlob({
 
       <style>{`
         .tsb-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; }
-        .tsb-svg { display: block; filter: drop-shadow(0 12px 22px rgba(107,30,45,0.10)); }
+        .tsb-svg { display: block; filter: drop-shadow(0 14px 24px rgba(107,30,45,0.11)); }
         .tsb-mixed { display: flex; align-items: center; gap: 8px; }
         .tsb-mixed-swatch { width: 20px; height: 20px; border-radius: 7px; border: 2px solid #FFFBF5; box-shadow: 0 0 0 1px rgba(26,26,26,0.15); display: inline-block; }
         .tsb-mixed-hex { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 700; color: #655B53; letter-spacing: 0.02em; }
