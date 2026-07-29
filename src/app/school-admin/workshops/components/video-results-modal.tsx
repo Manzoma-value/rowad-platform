@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   CheckCircle2,
   ChevronDown,
@@ -194,7 +195,7 @@ export function VideoResultsModal({
 
   const reportUrl = `/api/school-admin/workshops/${workshopId}/videos/${videoId}/results?format=csv`;
 
-  return (
+  return createPortal(
     <div
       className="vrm-overlay"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
@@ -328,7 +329,8 @@ export function VideoResultsModal({
         </div>
       </div>
       <style>{styles}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

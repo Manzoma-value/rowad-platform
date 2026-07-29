@@ -1,19 +1,11 @@
 "use client";
 
-// Trait Spectrum Blob — the organic "watercolor" color-blend visualization
-// used across نماذج القياس (teacher rating live preview + admin results).
-// Colors always arrive via the `traits` prop (never a literal string in
-// this file), so scripts/check-theme-colors.mjs never flags this component;
-// any decorative chrome below uses only the build's approved palette.
-//
-// mode="full"  — real SVG watercolor filters + geometric frame. Use for a
-//                single on-screen instance (the live rating preview, one
-//                expanded admin card).
-// mode="compact" — no SVG filters, fewer layers, no frame. Cheap enough to
-//                  render dozens at once (the admin member grid).
+// Clean, white trait spectrum shared by the teacher and admin experiences.
+// Each trait keeps its own clearly separated petal and outer-ring segment;
+// no dark blend is used, so close values remain readable.
 
 import { useId, useMemo } from "react";
-import { computeBlobLayers, blendCmykWeighted, type SpectrumTrait } from "@/lib/trait-spectrum";
+import { blendCmykWeighted, type SpectrumTrait } from "@/lib/trait-spectrum";
 
 export default function TraitSpectrumBlob({
   traits,
@@ -33,17 +25,35 @@ export default function TraitSpectrumBlob({
   className?: string;
 }) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const frame = showFrame ?? mode === "full";
-  const layers = useMemo(
-    () => computeBlobLayers(traits, seed),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(traits.map((t) => [t.color, t.pct])), seed],
-  );
+  const frame = showFrame ?? true;
   const mixedHex = useMemo(() => (traits.length ? blendCmykWeighted(traits) : "#EFEAE0"), [traits]);
 
   const clipId = `tsb-clip-${uid}`;
-  const filterId = `tsb-filter-${uid}`;
-  const vignetteId = `tsb-vgn-${uid}`;
+  const total = Math.max(1, traits.reduce((sum, trait) => sum + Math.max(0, trait.pct), 0));
+  const rotation = (seed % 9) - 4;
+  const petals = traits.map((trait, index) => {
+    const angle = -90 + rotation + (index * 360) / Math.max(1, traits.length);
+    const radians = (angle * Math.PI) / 180;
+    const strength = Math.max(0, Math.min(100, trait.pct));
+    const distance = mode === "compact" ? 128 : 136;
+    return {
+      ...trait,
+      angle,
+      cx: 300 + Math.cos(radians) * distance,
+      cy: 300 + Math.sin(radians) * distance,
+      radius: 64 + strength * 0.62,
+    };
+  });
+  const arcs = traits.map((trait, index) => {
+    const preceding = traits
+      .slice(0, index)
+      .reduce((sum, item) => sum + Math.max(0, item.pct), 0);
+    return {
+      trait,
+      pct: (Math.max(0, trait.pct) / total) * 100,
+      offset: (preceding / total) * 100,
+    };
+  });
 
   return (
     <div className={`tsb-wrap ${className ?? ""}`} style={{ width: size }}>
@@ -52,64 +62,75 @@ export default function TraitSpectrumBlob({
           <clipPath id={clipId}>
             <circle cx={300} cy={300} r={238} />
           </clipPath>
-          {mode === "full" && (
-            <>
-              <filter id={filterId} x="-60%" y="-60%" width="220%" height="220%">
-                <feTurbulence type="fractalNoise" baseFrequency={0.012} numOctaves={2} seed={seed % 97} result="noise" />
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale={26} xChannelSelector="R" yChannelSelector="G" />
-                <feGaussianBlur stdDeviation={7} />
-              </filter>
-              <radialGradient id={vignetteId} cx="50%" cy="45%" r="65%">
-                <stop offset="0%" stopColor="#D9C9B0" stopOpacity={0.14} />
-                <stop offset="55%" stopColor="#D9C9B0" stopOpacity={0} />
-                <stop offset="100%" stopColor="#1A1A1A" stopOpacity={0.3} />
-              </radialGradient>
-            </>
-          )}
         </defs>
 
-        <circle cx={300} cy={300} r={242} fill="#1A1A1A" />
+        <circle cx={300} cy={300} r={246} fill="#FFFFFF" stroke="#D9C9B0" strokeWidth={4} />
 
         <g clipPath={`url(#${clipId})`}>
-          {layers.map((layer) => (
-            <g key={layer.traitIndex} filter={mode === "full" ? `url(#${filterId})` : undefined}>
-              {(mode === "full" ? layer.circles : layer.circles.slice(0, 3)).map((c, i) => (
-                <circle key={i} cx={c.cx} cy={c.cy} r={c.r} fill={layer.color} opacity={c.opacity} />
-              ))}
-            </g>
-          ))}
-          {mode === "full" && <circle cx={300} cy={300} r={238} fill={`url(#${vignetteId})`} />}
-        </g>
-
-        {frame && (
-          <g stroke="#D9C9B0" strokeWidth={1} fill="none" opacity={0.55}>
+          <circle cx={300} cy={300} r={238} fill="#FFFFFF" />
+          {frame && (
+            <g stroke="#D9C9B0" strokeWidth={1} fill="none" opacity={0.48}>
             {[238, 196, 150, 100].map((r) => (
-              <circle key={r} cx={300} cy={300} r={r} opacity={0.5} />
+                <circle key={r} cx={300} cy={300} r={r} />
             ))}
-            {Array.from({ length: 12 }).map((_, i) => {
-              const a = (i * 30 * Math.PI) / 180;
+              {petals.map((petal, index) => {
+                const a = (petal.angle * Math.PI) / 180;
               return (
                 <line
-                  key={i}
+                    key={index}
                   x1={300 + 40 * Math.cos(a)} y1={300 + 40 * Math.sin(a)}
                   x2={300 + 238 * Math.cos(a)} y2={300 + 238 * Math.sin(a)}
-                  opacity={0.3}
+                    opacity={0.7}
                 />
               );
             })}
-            <polygon
-              points={Array.from({ length: 8 })
-                .map((_, i) => {
-                  const a = (i * 45 * Math.PI) / 180;
-                  return `${(300 + 58 * Math.cos(a)).toFixed(1)},${(300 + 58 * Math.sin(a)).toFixed(1)}`;
-                })
-                .join(" ")}
-              opacity={0.6}
-            />
-            <circle cx={300} cy={300} r={242} strokeWidth={2} opacity={0.8} />
-          </g>
-        )}
-        {frame && <circle cx={300} cy={300} r={6} fill="#D9C9B0" />}
+            </g>
+          )}
+          {petals.map((petal, index) => (
+            <g key={`${petal.label}-${index}`}>
+              <circle
+                cx={petal.cx}
+                cy={petal.cy}
+                r={petal.radius}
+                fill={petal.color}
+                fillOpacity={0.15}
+                stroke={petal.color}
+                strokeOpacity={0.82}
+                strokeWidth={4}
+              />
+              <circle
+                cx={petal.cx}
+                cy={petal.cy}
+                r={Math.max(28, petal.radius * 0.62)}
+                fill={petal.color}
+                fillOpacity={0.16}
+              />
+            </g>
+          ))}
+          <circle cx={300} cy={300} r={54} fill="#FFFFFF" stroke="#D9C9B0" strokeWidth={2} />
+          <circle cx={300} cy={300} r={8} fill="#6B1E2D" />
+        </g>
+
+        <g transform="rotate(-90 300 300)">
+          {arcs.map(({ trait, pct, offset }, index) => {
+            return (
+              <circle
+                key={`${trait.label}-${index}`}
+                cx={300}
+                cy={300}
+                r={268}
+                pathLength={100}
+                fill="none"
+                stroke={trait.color}
+                strokeWidth={24}
+                strokeLinecap="butt"
+                strokeDasharray={`${Math.max(0.6, pct)} ${Math.max(0, 100 - pct)}`}
+                strokeDashoffset={-offset}
+              />
+            );
+          })}
+        </g>
+        <circle cx={300} cy={300} r={282} fill="none" stroke="#D9C9B0" strokeWidth={2} />
       </svg>
 
       {showMixedSwatch && (
@@ -121,7 +142,7 @@ export default function TraitSpectrumBlob({
 
       <style>{`
         .tsb-wrap { display: inline-flex; flex-direction: column; align-items: center; gap: 8px; }
-        .tsb-svg { display: block; filter: drop-shadow(0 10px 24px rgba(107,30,45,0.16)); }
+        .tsb-svg { display: block; filter: drop-shadow(0 12px 22px rgba(107,30,45,0.10)); }
         .tsb-mixed { display: flex; align-items: center; gap: 8px; }
         .tsb-mixed-swatch { width: 20px; height: 20px; border-radius: 7px; border: 2px solid #FFFBF5; box-shadow: 0 0 0 1px rgba(26,26,26,0.15); display: inline-block; }
         .tsb-mixed-hex { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 700; color: #655B53; letter-spacing: 0.02em; }

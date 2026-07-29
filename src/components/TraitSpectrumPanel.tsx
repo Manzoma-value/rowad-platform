@@ -1,0 +1,176 @@
+"use client";
+
+import { useMemo } from "react";
+import TraitRadarChart from "@/components/TraitRadarChart";
+import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
+import { ASSESS_UI, derive, type AssessLang } from "@/lib/rowad-assessment";
+import { matchCompoundReading, type SpectrumTrait } from "@/lib/trait-spectrum";
+
+type Props = {
+  traits: SpectrumTrait[];
+  seed: number;
+  lang: AssessLang;
+  compact?: boolean;
+  live?: boolean;
+};
+
+const COPY = {
+  ar: {
+    eyebrow: "قراءة الطيف",
+    title: "خريطة السمات البصرية",
+    subtitle: "كل لون يمثل سمة، والنسبة توضّح وزنها من إجمالي 100 نقطة.",
+    live: "تتحدث مباشرة",
+    total: "المجموع",
+    remaining: (n: number) => `متبقٍ ${n} نقطة`,
+    over: (n: number) => `تجاوزت المجموع بـ ${n}`,
+    complete: "التوزيع مكتمل",
+    strongest: "القراءة الأبرز",
+    core: "جوهرية",
+    collective: "جماعية",
+    supporting: "مساندة",
+    coreHelp: "تتجاوز 50 نقطة",
+    collectiveHelp: "أقرب سمة تالية",
+    supportingHelp: "تكمل الصورة",
+    points: "نقطة",
+  },
+  sq: {
+    eyebrow: "Leximi i spektrit",
+    title: "Harta vizuale e tipareve",
+    subtitle: "Çdo ngjyrë përfaqëson një tipar; përqindja tregon peshën nga 100 pikë.",
+    live: "Përditësohet drejtpërdrejt",
+    total: "Totali",
+    remaining: (n: number) => `Mbeten ${n} pikë`,
+    over: (n: number) => `Tejkalim me ${n}`,
+    complete: "Shpërndarja u plotësua",
+    strongest: "Leximi kryesor",
+    core: "Thelbësor",
+    collective: "Kolektiv",
+    supporting: "Mbështetës",
+    coreHelp: "Arrin 50 pikë",
+    collectiveHelp: "Tipari i radhës",
+    supportingHelp: "Plotësojnë tablonë",
+    points: "pikë",
+  },
+} as const;
+
+export default function TraitSpectrumPanel({
+  traits,
+  seed,
+  lang,
+  compact = false,
+  live = false,
+}: Props) {
+  const C = COPY[lang];
+  const A = ASSESS_UI[lang];
+  const values = traits.map((trait) => trait.pct);
+  const total = Math.round(values.reduce((sum, value) => sum + value, 0) * 10) / 10;
+  const result = useMemo(() => derive(values), [values]);
+  const ordered = traits.map((trait, index) => ({ ...trait, index }));
+  const reading = useMemo(
+    () => matchCompoundReading(traits.map(({ label, pct }) => ({ label, pct }))),
+    [traits],
+  );
+  const readingText = reading.kind === "compound"
+    ? (lang === "ar" ? reading.ar : reading.sq)
+    : reading.kind === "dominant"
+      ? traits[reading.index]?.label
+      : A.noCore;
+
+  function roleFor(index: number) {
+    if (result.hasCore && result.coreIdx === index) return { label: C.core, className: "core" };
+    if (result.collectiveIdx === index) return { label: C.collective, className: "collective" };
+    return { label: C.supporting, className: "supporting" };
+  }
+
+  const progressText = total === 100
+    ? C.complete
+    : total < 100
+      ? C.remaining(Math.round((100 - total) * 10) / 10)
+      : C.over(Math.round((total - 100) * 10) / 10);
+
+  return (
+    <section className={`tsp ${compact ? "tsp-compact" : ""}`} dir={lang === "ar" ? "rtl" : "ltr"}>
+      <header className="tsp-head">
+        <div>
+          <span className="tsp-eyebrow">{C.eyebrow}</span>
+          <h3>{C.title}</h3>
+          <p>{C.subtitle}</p>
+        </div>
+        {live && <span className="tsp-live"><i />{C.live}</span>}
+      </header>
+
+      <div className="tsp-main">
+        <div className="tsp-visual">
+          <div className="tsp-blob">
+            <TraitSpectrumBlob
+              traits={traits}
+              seed={seed}
+              size={compact ? 178 : 252}
+              mode={compact ? "compact" : "full"}
+              showFrame
+            />
+            <div className={`tsp-total ${total === 100 ? "done" : total > 100 ? "over" : ""}`}>
+              <strong>{total}</strong>
+              <span>/ 100</span>
+            </div>
+          </div>
+          <div className="tsp-radar">
+            <TraitRadarChart traits={traits} size={compact ? 128 : 176} />
+            <span>{C.strongest}</span>
+            <strong>{readingText}</strong>
+          </div>
+        </div>
+
+        <div className="tsp-legend">
+          <div className={`tsp-progress ${total === 100 ? "done" : total > 100 ? "over" : ""}`}>
+            <span>{C.total}</span>
+            <strong>{progressText}</strong>
+          </div>
+          <div className="tsp-ranked">
+            {ordered.map((trait) => {
+              const role = roleFor(trait.index);
+              return (
+                <div className="tsp-trait" key={`${trait.label}-${trait.index}`}>
+                  <div className="tsp-trait-line">
+                    <span className="tsp-order">{trait.index + 1}</span>
+                    <span className="tsp-dot" style={{ background: trait.color }} />
+                    <strong>{trait.label}</strong>
+                    <span className={`tsp-role ${role.className}`}>{role.label}</span>
+                    <b>{Number(trait.pct.toFixed(1))}%</b>
+                  </div>
+                  <div className="tsp-track">
+                    <span style={{ width: `${Math.max(0, Math.min(100, trait.pct))}%`, background: trait.color }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <footer className="tsp-explain">
+        <div><span className="core">{C.core}</span><small>{C.coreHelp}</small></div>
+        <div><span className="collective">{C.collective}</span><small>{C.collectiveHelp}</small></div>
+        <div><span className="supporting">{C.supporting}</span><small>{C.supportingHelp}</small></div>
+      </footer>
+
+      <style>{`
+        .tsp{width:100%;overflow:hidden;border:1px solid rgba(107,30,45,.15);border-radius:24px;background:#FFFFFF;box-shadow:0 18px 42px rgba(107,30,45,.09);font-family:'Cairo',sans-serif;color:#32101A}
+        .tsp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:19px 21px 15px;border-bottom:1px solid rgba(107,30,45,.10);background:#FFFFFF}
+        .tsp-eyebrow{display:block;margin-bottom:3px;color:#8F765B;font-size:10px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}
+        .tsp-head h3{margin:0;color:#32101A;font-size:17px;font-weight:900}.tsp-head p{margin:4px 0 0;max-width:600px;color:#655B53;font-size:11.5px;line-height:1.7;font-weight:700}
+        .tsp-live{display:inline-flex;align-items:center;gap:7px;flex:none;border:1px solid rgba(27,94,32,.18);border-radius:999px;background:rgba(27,94,32,.08);padding:6px 10px;color:#1B5E20;font-size:10px;font-weight:900}.tsp-live i{width:7px;height:7px;border-radius:50%;background:#1B5E20;box-shadow:0 0 0 4px rgba(27,94,32,.1)}
+        .tsp-main{display:grid;grid-template-columns:minmax(350px,.92fr) minmax(290px,1.08fr);gap:20px;align-items:center;padding:20px 21px;background:#FFFFFF}
+        .tsp-visual{display:flex;align-items:center;justify-content:center;gap:12px;min-width:0;border:1px solid rgba(107,30,45,.08);border-radius:20px;background:#FFFFFF;padding:12px}.tsp-blob{position:relative;display:grid;place-items:center;flex:none}.tsp-total{position:absolute;display:flex;align-items:baseline;gap:2px;border:1px solid rgba(107,30,45,.16);border-radius:14px;background:#FFFFFF;padding:8px 10px;box-shadow:0 8px 20px rgba(107,30,45,.10)}.tsp-total strong{font-size:20px;line-height:1;color:#8F765B}.tsp-total span{font-size:9px;color:#796A62;font-weight:900}.tsp-total.done strong{color:#1B5E20}.tsp-total.over strong{color:#6B1E2D}
+        .tsp-radar{display:flex;flex-direction:column;align-items:center;min-width:0}.tsp-radar>span{margin-top:-7px;color:#8F765B;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.07em}.tsp-radar>strong{max-width:170px;margin-top:3px;text-align:center;color:#6B1E2D;font-size:12px;line-height:1.5}
+        .tsp-legend{min-width:0}.tsp-progress{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;border:1px solid rgba(184,160,130,.20);border-radius:14px;background:#FFFFFF;padding:10px 12px;color:#8F765B;font-size:10px;font-weight:900}.tsp-progress strong{color:#655B53}.tsp-progress.done{border-color:rgba(27,94,32,.18);background:rgba(27,94,32,.05);color:#1B5E20}.tsp-progress.done strong{color:#1B5E20}.tsp-progress.over,.tsp-progress.over strong{color:#6B1E2D}
+        .tsp-ranked{display:flex;flex-direction:column;gap:8px}.tsp-trait{border:1px solid rgba(107,30,45,.09);border-radius:14px;background:#FFFFFF;padding:9px 10px}.tsp-trait-line{display:flex;align-items:center;gap:7px;min-width:0}.tsp-order{display:grid;place-items:center;width:22px;height:22px;flex:none;border-radius:7px;background:#F7F3EB;color:#655B53;font:900 10px ui-monospace,Consolas,monospace}.tsp-dot{width:14px;height:14px;flex:none;border:2px solid #FFFFFF;border-radius:5px;box-shadow:0 0 0 1px rgba(26,26,26,.18)}.tsp-trait-line>strong{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#32101A;font-size:12.5px}.tsp-trait-line>b{min-width:42px;text-align:end;color:#32101A;font:900 12px ui-monospace,Consolas,monospace}
+        .tsp-role{flex:none;border-radius:999px;padding:3px 7px;font-size:8.5px;font-weight:900}.tsp-role.core,.tsp-explain .core{background:#6B1E2D;color:#fff}.tsp-role.collective,.tsp-explain .collective{background:#D9C9B0;color:#4A0E1C}.tsp-role.supporting,.tsp-explain .supporting{background:#EFEAE0;color:#655B53}
+        .tsp-track{height:8px;margin-top:7px;margin-inline-start:58px;overflow:hidden;border-radius:999px;background:#EFEAE0}.tsp-track span{display:block;height:100%;min-width:2px;border-radius:inherit}
+        .tsp-explain{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;border-top:1px solid rgba(107,30,45,.09);background:rgba(107,30,45,.06)}.tsp-explain>div{display:flex;align-items:center;gap:8px;background:#FFFFFF;padding:10px 12px}.tsp-explain span{border-radius:999px;padding:3px 8px;font-size:8.5px;font-weight:900}.tsp-explain small{color:#796A62;font-size:9px;font-weight:800}
+        .tsp-compact{border-radius:18px;box-shadow:none}.tsp-compact .tsp-head{padding:13px 14px 10px}.tsp-compact .tsp-head h3{font-size:14px}.tsp-compact .tsp-head p{font-size:10px}.tsp-compact .tsp-main{grid-template-columns:minmax(250px,.9fr) minmax(220px,1.1fr);gap:10px;padding:12px 14px}.tsp-compact .tsp-radar>strong{font-size:10.5px}.tsp-compact .tsp-explain>div{padding:8px}.tsp-compact .tsp-explain small{display:none}
+        @media(max-width:760px){.tsp-head{padding:15px}.tsp-live{display:none}.tsp-main,.tsp-compact .tsp-main{grid-template-columns:1fr;padding:14px}.tsp-visual{flex-wrap:wrap}.tsp-explain{grid-template-columns:1fr}.tsp-explain small{display:block!important}.tsp-compact .tsp-head p{display:block}}
+      `}</style>
+    </section>
+  );
+}

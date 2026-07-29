@@ -8,16 +8,15 @@ import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
 import IdentityMandala from "@/components/IdentityMandala";
-import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
-import TraitRadarChart from "@/components/TraitRadarChart";
+import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
 import { seedFromString, blendCmykWeighted } from "@/lib/trait-spectrum";
 import {
-  ASSESS_UI, derive, averageTuples, pickAssessLang, defaultTraitDrafts,
+  ASSESS_UI, derive, averageTuples, pickAssessLang, defaultTraitDrafts, canonicalizeDefaultTraits,
   type ScoresTuple, type TraitDraft,
 } from "@/lib/rowad-assessment";
 import {
   SlidersHorizontal, X, Search, Plus, Pencil, Download, Lock, Unlock,
-  Trash2, Users2, ClipboardList, Target, GripVertical, CheckSquare, Square,
+  Trash2, Users2, ClipboardList, Target, GripVertical, Layers3, Sparkles, CheckSquare,
 } from "lucide-react";
 
 // ── Types ──
@@ -48,10 +47,10 @@ type AssessmentFull = {
 
 function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
 
-// Leads with the official Albania trait-identity colors, then the earlier
-// generic swatches as extra choices for fully custom trait sets.
+// Lead with the five high-contrast canonical trait colors, followed by the
+// brand neutrals as extra choices for fully custom trait sets.
 const SWATCHES = [
-  "#F2EFE6", "#F2B705", "#9AA3AC", "#B33A3A", "#1A1A1A",
+  "#2563EB", "#D97706", "#7C3AED", "#DC2626", "#059669",
   "#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0",
 ];
 
@@ -64,7 +63,9 @@ const UI = {
     metricOpen: "مفتوح",
     metricClosed: "مغلق",
     metricRatings: "تقييم",
-    create: "+ نموذج جديد",
+    create: "نموذج جديد",
+    createHelpTitle: "أنشئ نموذجاً لكل المدرسة أو لمجموعة محددة",
+    createHelpSub: "اختر النطاق، خصّص السمات والألوان، ثم افتح النموذج للمعلمين من شاشة واحدة.",
     creating: "جارٍ الإنشاء…",
     filters: "تصفية النتائج",
     allGroups: "كل المجموعات",
@@ -85,6 +86,14 @@ const UI = {
     titlePh: "مثال: نموذج قياس السمات (المرحلة الأولى) — مارس 2026",
     groupsPickLbl: "المجموعات المستهدفة",
     groupsPickSub: "كل الأعضاء في المجموعات المختارة سيقيّمون بعضهم بعضاً كمجموعة واحدة. الكل مُحدَّد افتراضياً.",
+    scopeLbl: "نطاق التطبيق",
+    scopeAll: "كل المجموعات",
+    scopeAllSub: "تطبيق النموذج على جميع مجموعات المعلمين الحالية.",
+    scopeSpecific: "مجموعات محددة",
+    scopeSpecificSub: "اختر مجموعة واحدة أو أكثر لهذا النموذج فقط.",
+    setupTitle: "إعداد النموذج",
+    traitsCount: (n: number) => `${n} سمات`,
+    selectedGroups: (n: number) => `${n} مجموعات محددة`,
     selectAll: "تحديد الكل",
     deselectAll: "إلغاء تحديد الكل",
     traitsLbl: "سمات النموذج",
@@ -136,7 +145,9 @@ const UI = {
     metricOpen: "të hapura",
     metricClosed: "të mbyllura",
     metricRatings: "vlerësime",
-    create: "+ Model i ri",
+    create: "Model i ri",
+    createHelpTitle: "Krijo një model për gjithë shkollën ose për grupe të caktuara",
+    createHelpSub: "Zgjidh shtrirjen, personalizo tiparet dhe ngjyrat, pastaj hape për mësuesit nga një ekran.",
     creating: "Po krijohet…",
     filters: "Filtrimi",
     allGroups: "Të gjitha grupet",
@@ -157,6 +168,14 @@ const UI = {
     titlePh: "Shembull: Modeli i Tipareve (Faza 1) — Mars 2026",
     groupsPickLbl: "Grupet e synuara",
     groupsPickSub: "Të gjithë anëtarët e grupeve të zgjedhura do të vlerësojnë njëri-tjetrin si një grup i vetëm. Të gjitha janë të zgjedhura si parazgjedhje.",
+    scopeLbl: "Shtrirja e modelit",
+    scopeAll: "Të gjitha grupet",
+    scopeAllSub: "Zbatoje modelin në të gjitha grupet aktuale të mësuesve.",
+    scopeSpecific: "Grupe të caktuara",
+    scopeSpecificSub: "Zgjidh një ose më shumë grupe vetëm për këtë model.",
+    setupTitle: "Konfigurimi i modelit",
+    traitsCount: (n: number) => `${n} tipare`,
+    selectedGroups: (n: number) => `${n} grupe të zgjedhura`,
     selectAll: "Zgjidh të gjitha",
     deselectAll: "Hiq zgjedhjen",
     traitsLbl: "Tiparet e modelit",
@@ -241,8 +260,10 @@ export default function AssessmentsHubPage() {
     try {
       const r = await fetch(`/api/school-admin/assessments`, { cache: "no-store" });
       const d = await r.json();
-      setList(d?.assessments ?? []);
+      const assessments = d?.assessments ?? [];
+      setList(assessments);
       setGroups(d?.groups ?? []);
+      setSelectedId((current) => current ?? assessments[0]?.id ?? null);
     } finally { setLoadingList(false); }
   }, []);
 
@@ -252,7 +273,8 @@ export default function AssessmentsHubPage() {
       const r = await fetch(`/api/school-admin/assessments/${aid}`, { cache: "no-store" });
       if (!r.ok) { setDetail(null); return; }
       const d = await r.json();
-      setDetail(d?.assessment ?? null);
+      const assessment = d?.assessment as AssessmentFull | undefined;
+      setDetail(assessment ? { ...assessment, traits: canonicalizeDefaultTraits(assessment.traits) } : null);
     } finally { setLoadingDetail(false); }
   }, []);
 
@@ -315,9 +337,6 @@ export default function AssessmentsHubPage() {
       ...f,
       groupIds: f.groupIds.includes(id) ? f.groupIds.filter((g) => g !== id) : [...f.groupIds, id],
     }));
-  }
-  function toggleAllGroups() {
-    setForm((f) => ({ ...f, groupIds: f.groupIds.length === groups.length ? [] : groups.map((g) => g.id) }));
   }
   function updateTrait(idx: number, patch: Partial<TraitDraft>) {
     setForm((f) => ({ ...f, traits: f.traits.map((t, i) => (i === idx ? { ...t, ...patch } : t)) }));
@@ -496,6 +515,10 @@ export default function AssessmentsHubPage() {
 
       {!viewOnly && (
         <div className="am-createbar">
+          <div className="am-createbar-copy">
+            <span><Sparkles size={13} />{T.createHelpTitle}</span>
+            <p>{T.createHelpSub}</p>
+          </div>
           <button className="am-create" onClick={openCreateDialog} data-write="true">
             <Plus size={15} strokeWidth={2.4} />
             {T.create}
@@ -652,7 +675,7 @@ export default function AssessmentsHubPage() {
                   <section className="am-sub">
                     <div className="am-sub-head"><h3>{T.aggHead}</h3><p>{T.aggSub}</p></div>
                     <div className="am-agg-grid">
-                      {visibleAggregation.map(({ member, count, avg, derive: d }) => (
+                      {visibleAggregation.map(({ member, count, avg }) => (
                         <div key={member.teacher_id} className="am-agg">
                           <div className="am-agg-watermark" aria-hidden="true">
                             <IdentityMandala size={80} stroke="#4A0E1C" opacity={0.05} />
@@ -663,39 +686,17 @@ export default function AssessmentsHubPage() {
                             </div>
                             <span className="am-agg-count">{count}</span>
                           </div>
-                          {!avg || !d ? (
+                          {!avg ? (
                             <div className="am-agg-empty">{T.noRating}</div>
                           ) : (
                             <>
                               <div className="am-agg-spectrum-row">
-                                <TraitSpectrumBlob
+                                <TraitSpectrumPanel
                                   traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
                                   seed={seedFromString(member.teacher_id)}
-                                  size={110}
-                                  mode="compact"
-                                  showMixedSwatch
+                                  lang={L}
+                                  compact
                                 />
-                                <TraitRadarChart
-                                  traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
-                                  size={110}
-                                />
-                              </div>
-                              <div className="am-agg-bars">
-                                {detail.traits.map((tr, i) => {
-                                  const isCore = d.coreIdx === i && d.hasCore;
-                                  const isColl = d.collectiveIdx === i;
-                                  return (
-                                    <div key={tr.id} className="am-agg-row">
-                                      <span className={`am-agg-trait ${isCore ? "core" : isColl ? "coll" : ""}`}>{traitLabel(tr, L)}</span>
-                                      <div className="am-agg-track"><div className="am-agg-fill" style={{ width: `${Math.min(100, avg[i] ?? 0)}%`, background: tr.color }} /></div>
-                                      <span className="am-agg-val">{(avg[i] ?? 0).toFixed(1)}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              <div className="am-agg-derived">
-                                <span className="am-agg-derived-core"><b>{AT.coreLabel}:</b> {d.hasCore && d.coreIdx !== null ? traitLabel(detail.traits[d.coreIdx], L) : AT.noCore}</span>
-                                <span><b>{AT.collectiveLabel}:</b> {traitLabel(detail.traits[d.collectiveIdx], L)}</span>
                               </div>
                             </>
                           )}
@@ -790,102 +791,140 @@ export default function AssessmentsHubPage() {
       {dlg && !viewOnly && (
         <div className="am-overlay" onClick={() => !saving && setDlg(null)}>
           <div className="am-dlg" onClick={(e) => e.stopPropagation()}>
-            <h3 className="am-dlg-title">{dlg.mode === "create" ? T.dlgCreateTitle : T.dlgEditTitle}</h3>
+            <header className="am-dlg-head">
+              <div>
+                <span><Layers3 size={14} />{T.setupTitle}</span>
+                <h3 className="am-dlg-title">{dlg.mode === "create" ? T.dlgCreateTitle : T.dlgEditTitle}</h3>
+                <p>{T.selectedGroups(form.groupIds.length)} · {T.traitsCount(form.traits.length)}</p>
+              </div>
+              <button type="button" onClick={() => !saving && setDlg(null)} aria-label={T.cancel}><X size={18} /></button>
+            </header>
 
-            <label className="am-dlg-lbl">{T.titleLbl}</label>
-            <input className="am-dlg-input" placeholder={T.titlePh} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} autoFocus />
+            <div className="am-dlg-body">
+              <section className="am-form-section">
+                <div className="am-form-number">1</div>
+                <div className="am-form-content">
+                  <label className="am-dlg-lbl">{T.titleLbl}</label>
+                  <input className="am-dlg-input" placeholder={T.titlePh} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} autoFocus />
+                </div>
+              </section>
 
-            {editLocked ? (
-              <p className="am-dlg-note">{T.lockedEditNote}</p>
-            ) : (
-              <>
-                {/* ── Target groups ── */}
-                <div className="am-dlg-section-head">
-                  <div>
-                    <label className="am-dlg-lbl" style={{ margin: 0 }}>{T.groupsPickLbl}</label>
-                    <p className="am-dlg-hint">{T.groupsPickSub}</p>
-                  </div>
-                  <button type="button" className="am-dlg-linkbtn" onClick={toggleAllGroups}>
-                    {form.groupIds.length === groups.length
-                      ? <><Square size={13} strokeWidth={2} />{T.deselectAll}</>
-                      : <><CheckSquare size={13} strokeWidth={2} />{T.selectAll}</>}
-                  </button>
-                </div>
-                <div className="am-group-grid">
-                  {groups.map((g) => {
-                    const checked = form.groupIds.includes(g.id);
-                    return (
-                      <label key={g.id} className={`am-group-chk ${checked ? "checked" : ""}`}>
-                        <input type="checkbox" checked={checked} onChange={() => toggleGroup(g.id)} />
-                        <span>{g.name}</span>
-                        <em>{g._count?.members ?? 0}</em>
-                      </label>
-                    );
-                  })}
-                </div>
-
-                {/* ── Traits editor ── */}
-                <div className="am-dlg-section-head">
-                  <div>
-                    <label className="am-dlg-lbl" style={{ margin: 0 }}>{T.traitsLbl}</label>
-                    <p className="am-dlg-hint">{T.traitsSub}</p>
-                  </div>
-                </div>
-                <div className="am-trait-editor">
-                  {form.traits.map((t, i) => (
-                    <div key={i} className="am-trait-row">
-                      <div className="am-trait-row-head">
-                        <GripVertical size={14} strokeWidth={2} className="am-trait-grip" />
-                        <input
-                          type="color"
-                          className="am-trait-color"
-                          value={t.color}
-                          onChange={(e) => updateTrait(i, { color: e.target.value })}
-                        />
-                        <input
-                          className="am-trait-input am-trait-label"
-                          placeholder={T.traitLabelAr}
-                          value={t.label_ar}
-                          onChange={(e) => updateTrait(i, { label_ar: e.target.value })}
-                          dir="rtl"
-                        />
-                        <input
-                          className="am-trait-input am-trait-label"
-                          placeholder={T.traitLabelSq}
-                          value={t.label_sq}
-                          onChange={(e) => updateTrait(i, { label_sq: e.target.value })}
-                        />
-                        <button type="button" className="am-trait-remove" onClick={() => removeTrait(i)} title={T.removeTrait}>
-                          <Trash2 size={13} strokeWidth={2} />
+              {editLocked ? (
+                <p className="am-dlg-note">{T.lockedEditNote}</p>
+              ) : (
+                <>
+                  <section className="am-form-section">
+                    <div className="am-form-number">2</div>
+                    <div className="am-form-content">
+                      <label className="am-dlg-lbl">{T.groupsPickLbl}</label>
+                      <p className="am-dlg-hint">{T.groupsPickSub}</p>
+                      <span className="am-scope-label">{T.scopeLbl}</span>
+                      <div className="am-scope-grid">
+                        <button
+                          type="button"
+                          className={form.groupIds.length === groups.length ? "active" : ""}
+                          onClick={() => setForm((current) => ({ ...current, groupIds: groups.map((group) => group.id) }))}
+                        >
+                          <CheckSquare size={18} />
+                          <span><strong>{T.scopeAll}</strong><small>{T.scopeAllSub}</small></span>
+                        </button>
+                        <button
+                          type="button"
+                          className={form.groupIds.length !== groups.length ? "active" : ""}
+                          onClick={() => setForm((current) => ({ ...current, groupIds: current.groupIds.length === groups.length ? groups.slice(0, 1).map((group) => group.id) : current.groupIds }))}
+                        >
+                          <Users2 size={18} />
+                          <span><strong>{T.scopeSpecific}</strong><small>{T.scopeSpecificSub}</small></span>
                         </button>
                       </div>
-                      <textarea
-                        className="am-trait-input am-trait-statement"
-                        placeholder={T.traitStatementAr}
-                        value={t.statement_ar}
-                        onChange={(e) => updateTrait(i, { statement_ar: e.target.value })}
-                        dir="rtl"
-                        rows={2}
-                      />
-                      <textarea
-                        className="am-trait-input am-trait-statement"
-                        placeholder={T.traitStatementSq}
-                        value={t.statement_sq}
-                        onChange={(e) => updateTrait(i, { statement_sq: e.target.value })}
-                        rows={2}
-                      />
-                    </div>
-                  ))}
-                  <button type="button" className="am-add-trait" onClick={addTrait}>
-                    <Plus size={14} strokeWidth={2.4} />
-                    {T.addTrait}
-                  </button>
-                  {form.traits.length === 0 && <p className="am-dlg-warn">{T.minTraitsWarn}</p>}
-                </div>
-              </>
-            )}
 
-            {dlgError && <p className="am-dlg-err">{dlgError}</p>}
+                      {form.groupIds.length !== groups.length && (
+                        <div className="am-group-grid">
+                          {groups.map((g) => {
+                            const checked = form.groupIds.includes(g.id);
+                            return (
+                              <label key={g.id} className={`am-group-chk ${checked ? "checked" : ""}`}>
+                                <input type="checkbox" checked={checked} onChange={() => toggleGroup(g.id)} />
+                                <span>{g.name}</span>
+                                <em>{g._count?.members ?? 0}</em>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="am-form-section">
+                    <div className="am-form-number">3</div>
+                    <div className="am-form-content">
+                      <div className="am-dlg-section-head">
+                        <div>
+                          <label className="am-dlg-lbl" style={{ margin: 0 }}>{T.traitsLbl}</label>
+                          <p className="am-dlg-hint">{T.traitsSub}</p>
+                        </div>
+                        <span className="am-trait-total">{T.traitsCount(form.traits.length)}</span>
+                      </div>
+                      <div className="am-trait-editor">
+                        {form.traits.map((t, i) => (
+                          <div key={i} className="am-trait-row">
+                            <div className="am-trait-row-head">
+                              <GripVertical size={14} strokeWidth={2} className="am-trait-grip" />
+                              <input
+                                type="color"
+                                className="am-trait-color"
+                                value={t.color}
+                                onChange={(e) => updateTrait(i, { color: e.target.value })}
+                              />
+                              <input
+                                className="am-trait-input am-trait-label"
+                                placeholder={T.traitLabelAr}
+                                value={t.label_ar}
+                                onChange={(e) => updateTrait(i, { label_ar: e.target.value })}
+                                dir="rtl"
+                              />
+                              <input
+                                className="am-trait-input am-trait-label"
+                                placeholder={T.traitLabelSq}
+                                value={t.label_sq}
+                                onChange={(e) => updateTrait(i, { label_sq: e.target.value })}
+                              />
+                              <button type="button" className="am-trait-remove" onClick={() => removeTrait(i)} title={T.removeTrait}>
+                                <Trash2 size={13} strokeWidth={2} />
+                              </button>
+                            </div>
+                            <div className="am-trait-statements">
+                              <textarea
+                                className="am-trait-input am-trait-statement"
+                                placeholder={T.traitStatementAr}
+                                value={t.statement_ar}
+                                onChange={(e) => updateTrait(i, { statement_ar: e.target.value })}
+                                dir="rtl"
+                                rows={2}
+                              />
+                              <textarea
+                                className="am-trait-input am-trait-statement"
+                                placeholder={T.traitStatementSq}
+                                value={t.statement_sq}
+                                onChange={(e) => updateTrait(i, { statement_sq: e.target.value })}
+                                rows={2}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                        <button type="button" className="am-add-trait" onClick={addTrait}>
+                          <Plus size={14} strokeWidth={2.4} />
+                          {T.addTrait}
+                        </button>
+                        {form.traits.length === 0 && <p className="am-dlg-warn">{T.minTraitsWarn}</p>}
+                      </div>
+                    </div>
+                  </section>
+                </>
+              )}
+
+              {dlgError && <p className="am-dlg-err">{dlgError}</p>}
+            </div>
 
             <div className="am-dlg-actions">
               <button className="am-btn" onClick={() => setDlg(null)} disabled={saving}>{T.cancel}</button>
@@ -994,7 +1033,11 @@ const styles = `
   .am-metric strong { display:block; color:#D9C9B0; font-family:var(--font-head); font-size:22px; line-height:1.2; font-weight:700; }
   .am-metric span { display:block; margin-top:6px; color:rgba(239,234,224,.68); font-size:11px; font-weight:600; }
 
-  .am-createbar { display:flex; justify-content:flex-end; }
+  .am-createbar { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 18px; border:1px solid rgba(184,160,130,.28); border-radius:18px; background:linear-gradient(115deg,#FFFBF5,#F1E9DE); box-shadow:0 10px 26px rgba(50,16,26,.055); }
+  .am-createbar-copy { min-width:0; }
+  .am-createbar-copy span { display:flex; align-items:center; gap:7px; color:#4A0E1C; font-size:13px; font-weight:900; }
+  .am-createbar-copy span svg { color:#B8A082; }
+  .am-createbar-copy p { margin:4px 0 0; color:#796A62; font-size:11.5px; line-height:1.6; font-weight:700; }
   .am-create { display:inline-flex; align-items:center; gap:7px; height:44px; padding:0 20px; border-radius:14px; background:linear-gradient(180deg,#5B1526,#32101A); border:1px solid rgba(184,160,130,.35); color:#D9C9B0; font:800 13px 'Cairo',sans-serif; cursor:pointer; transition:box-shadow .18s ease, transform .18s ease; }
   .am-create:hover { box-shadow:0 8px 22px rgba(184,160,130,.28); transform:translateY(-1px); }
 
@@ -1024,9 +1067,9 @@ const styles = `
 
   /* ── Layout ── */
   .am-layout { display:grid; grid-template-columns:300px 1fr; gap:16px; align-items:start; }
-  @media (max-width:1000px) { .am-layout { grid-template-columns:1fr; } .am-filters-row { grid-template-columns:1fr; } }
+  @media (max-width:1000px) { .am-layout { grid-template-columns:minmax(0,1fr); } .am-filters-row { grid-template-columns:1fr; } }
 
-  .am-side { background:linear-gradient(180deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.22); border-radius:20px; padding:10px; min-height:220px; box-shadow:0 10px 26px rgba(50,16,26,.045); }
+  .am-side { min-width:0; background:linear-gradient(180deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.22); border-radius:20px; padding:10px; min-height:220px; box-shadow:0 10px 26px rgba(50,16,26,.045); }
   .am-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:5px; }
   .am-list-item { width:100%; text-align:start; background:transparent; border:1px solid transparent; padding:12px 13px; border-radius:14px; cursor:pointer; font-family:inherit; display:flex; flex-direction:column; gap:5px; transition:all .16s ease; }
   .am-list-item:hover { background:rgba(184,160,130,.09); }
@@ -1040,7 +1083,7 @@ const styles = `
   .am-list-meta { display:flex; align-items:center; gap:5px; font-size:10.5px; color:#8C8274; font-weight:700; }
   .am-list-meta svg { color:#B8A082; }
 
-  .am-detail { background:linear-gradient(180deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.22); border-radius:20px; padding:20px; min-height:320px; box-shadow:0 10px 26px rgba(50,16,26,.045); }
+  .am-detail { min-width:0; background:linear-gradient(180deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.22); border-radius:20px; padding:20px; min-height:320px; box-shadow:0 10px 26px rgba(50,16,26,.045); }
   .am-detail-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:70px 20px; text-align:center; color:#8C8274; }
   .am-detail-empty svg { color:#B8A082; margin-bottom:4px; }
   .am-detail-empty strong { font-family:var(--font-head); font-size:15px; color:#655B53; }
@@ -1072,13 +1115,13 @@ const styles = `
   .am-sub-head h3 { margin:0 0 4px; font-family:var(--font-head); font-size:14px; font-weight:700; color:#1A1A1A; }
   .am-sub-head p { margin:0; font-size:12px; color:#796A62; line-height:1.75; }
 
-  .am-agg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(270px,1fr)); gap:12px; }
-  .am-agg { position:relative; overflow:hidden; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.28); border-radius:16px; padding:14px; box-shadow:0 8px 20px rgba(50,16,26,.045); transition:transform .18s ease, border-color .18s ease; }
+  .am-agg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(440px,1fr)); gap:14px; }
+  .am-agg { position:relative; min-width:0; overflow:hidden; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.28); border-radius:16px; padding:14px; box-shadow:0 8px 20px rgba(50,16,26,.045); transition:transform .18s ease, border-color .18s ease; }
   .am-agg:hover { transform:translateY(-2px); border-color:rgba(184,160,130,.5); }
   .am-agg-watermark { position:absolute; inset-inline-end:-16px; bottom:-16px; pointer-events:none; z-index:0; }
   .am-agg-head { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:9px; }
   .am-agg-head-main { display:flex; align-items:center; gap:8px; min-width:0; }
-  .am-agg-spectrum-row { position:relative; z-index:1; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:14px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed rgba(107,30,45,0.2); }
+  .am-agg-spectrum-row { position:relative; z-index:1; margin-bottom:14px; }
   .am-agg-name { font-family:var(--font-head); font-size:13px; font-weight:700; color:#1A1A1A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .am-agg-count { font-size:10.5px; color:#8F765B; font-weight:700; background:rgba(184,160,130,.16); padding:2px 8px; border-radius:99px; }
   .am-agg-empty { position:relative; z-index:1; font-size:12px; color:#8C8274; font-weight:700; padding:10px 0; }
@@ -1111,9 +1154,18 @@ const styles = `
   .am-score-core { background:rgba(107,30,45,.18); color:#6B1E2D; }
   .am-score-coll { background:rgba(184,160,130,.28); color:#8F765B; }
 
-  .am-overlay { position:fixed; inset:0; background:rgba(26,17,14,.55); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; backdrop-filter:blur(5px); }
-  .am-dlg { background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:18px; padding:24px; max-width:640px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 26px 64px rgba(50,16,26,.28); }
-  .am-dlg-title { font-family:var(--font-head); font-size:16.5px; font-weight:700; color:#4A0E1C; margin:0 0 14px; }
+  .am-overlay { position:fixed; inset:0; background:rgba(26,17,14,.68); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; backdrop-filter:blur(9px); }
+  .am-dlg { display:flex; flex-direction:column; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:24px; max-width:920px; width:100%; max-height:calc(100dvh - 32px); overflow:hidden; box-shadow:0 32px 90px rgba(50,16,26,.38); }
+  .am-dlg-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:20px 24px; color:#FFFBF5; background:radial-gradient(circle at 85% 0%,rgba(184,160,130,.2),transparent 34%),linear-gradient(130deg,#250B12,#5B1526); }
+  .am-dlg-head>div>span { display:flex; align-items:center; gap:7px; color:#D9C9B0; font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+  .am-dlg-head p { margin:5px 0 0; color:rgba(255,251,245,.66); font-size:10.5px; font-weight:700; }
+  .am-dlg-head>button { width:38px; height:38px; display:grid; place-items:center; flex:none; border:1px solid rgba(255,255,255,.16); border-radius:12px; background:rgba(255,255,255,.07); color:#fff; cursor:pointer; }
+  .am-dlg-body { min-height:0; overflow-y:auto; padding:20px 24px; }
+  .am-dlg-title { font-family:var(--font-head); font-size:18px; font-weight:700; color:#FFFBF5; margin:5px 0 0; }
+  .am-form-section { display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:start; padding:16px; border:1px solid rgba(184,160,130,.22); border-radius:17px; background:rgba(255,255,255,.64); }
+  .am-form-section+.am-form-section { margin-top:12px; }
+  .am-form-number { width:30px; height:30px; display:grid; place-items:center; border-radius:10px; background:#32101A; color:#D9C9B0; font:900 12px ui-monospace,monospace; }
+  .am-form-content { min-width:0; }
   .am-dlg-lbl { display:block; font-size:11.5px; font-weight:800; color:#6B1E2D; margin:10px 0 5px; }
   .am-dlg-hint { margin:2px 0 0; font-size:11px; color:#8F765B; font-weight:600; line-height:1.6; max-width:440px; }
   .am-dlg-input { width:100%; padding:10px 13px; border:1.5px solid rgba(184,160,130,.32); border-radius:11px; font-family:inherit; font-size:13px; background:#FFF; outline:none; }
@@ -1124,7 +1176,17 @@ const styles = `
   .am-dlg-linkbtn:hover { background:rgba(184,160,130,.10); }
   .am-dlg-err { margin:12px 0 0; padding:10px 13px; border-radius:11px; background:rgba(107,30,45,.08); border:1px solid rgba(107,30,45,.24); color:#6B1E2D; font-size:12.5px; font-weight:700; }
   .am-dlg-warn { margin:8px 0 0; font-size:12px; font-weight:700; color:#8F765B; }
-  .am-dlg-actions { display:flex; gap:9px; justify-content:flex-end; margin-top:18px; }
+  .am-dlg-actions { display:flex; gap:9px; justify-content:flex-end; padding:14px 24px; border-top:1px solid rgba(184,160,130,.22); background:#FFFBF5; }
+  .am-scope-label { display:block; margin:14px 0 7px; color:#6B1E2D; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+  .am-scope-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+  .am-scope-grid>button { display:flex; align-items:flex-start; gap:10px; border:1.5px solid rgba(184,160,130,.26); border-radius:14px; background:#FFF; padding:12px; color:#796A62; text-align:start; font-family:inherit; cursor:pointer; transition:.16s ease; }
+  .am-scope-grid>button.active { border-color:#6B1E2D; background:rgba(107,30,45,.055); color:#6B1E2D; box-shadow:0 0 0 3px rgba(107,30,45,.06); }
+  .am-scope-grid>button svg { flex:none; margin-top:2px; }
+  .am-scope-grid>button span { min-width:0; }
+  .am-scope-grid strong,.am-scope-grid small { display:block; }
+  .am-scope-grid strong { color:#32101A; font-size:12px; }
+  .am-scope-grid small { margin-top:3px; color:#796A62; font-size:10px; line-height:1.55; font-weight:700; }
+  .am-trait-total { flex:none; border-radius:999px; background:rgba(107,30,45,.08); padding:5px 9px; color:#6B1E2D; font-size:10px; font-weight:900; }
 
   .am-group-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:8px; }
   .am-group-chk { display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:12px; border:1.5px solid rgba(184,160,130,.26); background:#FFF; cursor:pointer; transition:all .16s ease; }
@@ -1134,7 +1196,7 @@ const styles = `
   .am-group-chk em { font-style:normal; font-size:10.5px; color:#8F765B; font-weight:700; }
 
   .am-trait-editor { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
-  .am-trait-row { border:1.5px solid rgba(184,160,130,.26); border-radius:14px; padding:10px; background:#FFF; display:flex; flex-direction:column; gap:8px; }
+  .am-trait-row { border:1.5px solid rgba(184,160,130,.26); border-radius:14px; padding:11px; background:#FFF; display:flex; flex-direction:column; gap:8px; box-shadow:0 5px 15px rgba(50,16,26,.03); }
   .am-trait-row-head { display:flex; align-items:center; gap:8px; }
   .am-trait-grip { color:#C9BFAF; flex-shrink:0; }
   .am-trait-color { width:30px; height:30px; border-radius:8px; border:1.5px solid rgba(184,160,130,.3); padding:2px; cursor:pointer; flex-shrink:0; }
@@ -1142,6 +1204,7 @@ const styles = `
   .am-trait-input:focus { border-color:#B8A082; background:#FFF; }
   .am-trait-label { flex:1; min-width:0; }
   .am-trait-statement { resize:vertical; min-height:44px; line-height:1.5; }
+  .am-trait-statements { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   .am-trait-remove { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:rgba(107,30,45,.06); border:1px solid rgba(107,30,45,.20); color:#6B1E2D; cursor:pointer; flex-shrink:0; transition:background .16s ease; }
   .am-trait-remove:hover { background:rgba(107,30,45,.14); }
   .am-add-trait { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; background:rgba(184,160,130,.10); border:1px dashed rgba(184,160,130,.4); border-radius:11px; padding:8px 16px; color:#6B1E2D; font:700 12px 'Cairo',sans-serif; cursor:pointer; transition:background .16s ease; }
@@ -1175,11 +1238,20 @@ const styles = `
   .am-export-footer { margin-top:8px; padding-top:7px; border-top:1px dashed rgba(184,160,130,.35); font-size:10.5px; font-weight:700; color:#6B1E2D; }
 
   @media (max-width:700px) {
-    .am-hero { padding:20px; border-radius:20px; }
+    .am-hero { grid-template-columns:1fr; padding:20px; border-radius:20px; }
     .am-hero h1 { font-size:23px; }
-    .am-hero-metrics { grid-template-columns:repeat(2,1fr); }
+    .am-hero-metrics { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); }
     .am-detail { padding:16px; }
-    .am-agg-grid { grid-template-columns:1fr; }
+    .am-createbar { align-items:stretch; flex-direction:column; }
+    .am-create { justify-content:center; }
+    .am-agg-grid { grid-template-columns:minmax(0,1fr); }
     .am-group-grid { grid-template-columns:1fr; }
+    .am-overlay { padding:0; }
+    .am-dlg { max-height:100dvh; height:100dvh; border:0; border-radius:0; }
+    .am-dlg-head,.am-dlg-body,.am-dlg-actions { padding-inline:15px; }
+    .am-form-section { grid-template-columns:1fr; padding:13px; }
+    .am-scope-grid,.am-trait-statements { grid-template-columns:1fr; }
+    .am-trait-row-head { flex-wrap:wrap; }
+    .am-trait-label { flex-basis:calc(50% - 38px); }
   }
 `;

@@ -519,14 +519,25 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Logo */}
         <div className="sa-logo-block">
-          <Image
-            src="/headerlogo.png"
-            alt="بناء الأهلية"
-            fill
-            style={{ objectFit: "cover", objectPosition: "center" }}
-            priority
-          />
-          <div className="sa-logo-frame" aria-hidden="true" />
+          <Link
+            href="/school-admin"
+            className="sa-logo-home"
+            onClick={() => setSidebarOpen(false)}
+            aria-label={lang === "ar" ? "العودة إلى لوحة التحكم" : lang === "sq" ? "Kthehu te paneli" : "Back to dashboard"}
+          >
+            <Image
+              src="/headerlogo.png"
+              alt="بناء الأهلية"
+              fill
+              style={{ objectFit: "cover", objectPosition: "center" }}
+              priority
+            />
+            <div className="sa-logo-frame" aria-hidden="true" />
+            <span className="sa-logo-home-hint">
+              {lang === "ar" ? "لوحة التحكم" : lang === "sq" ? "Paneli" : "Dashboard"}
+              <b aria-hidden="true">↗</b>
+            </span>
+          </Link>
           <button
             className="sa-close-btn"
             onClick={() => setSidebarOpen(false)}
@@ -912,6 +923,13 @@ const styles = `
     border-bottom: 1px solid rgba(184,160,130,0.20);
     box-shadow: 0 6px 28px rgba(184,160,130,0.07), inset 0 -1px 0 rgba(184,160,130,0.08);
   }
+  .sa-logo-home { position:absolute; inset:0; z-index:1; display:block; color:#FFFBF5; text-decoration:none; outline:none; }
+  .sa-logo-home img { transition:transform .35s var(--sa-ease-out),filter .35s ease; }
+  .sa-logo-home:hover img,.sa-logo-home:focus-visible img { transform:scale(1.035); filter:brightness(.86); }
+  .sa-logo-home:focus-visible { box-shadow:inset 0 0 0 3px #D9C9B0; }
+  .sa-logo-home-hint { position:absolute; inset-inline-end:12px; bottom:9px; z-index:3; display:flex; align-items:center; gap:6px; border:1px solid rgba(217,201,176,.24); border-radius:999px; background:rgba(18,7,11,.72); padding:4px 9px; color:#F7F3EB; font-size:9px; font-weight:900; opacity:0; transform:translateY(4px); transition:.22s ease; backdrop-filter:blur(8px); }
+  .sa-logo-home:hover .sa-logo-home-hint,.sa-logo-home:focus-visible .sa-logo-home-hint { opacity:1; transform:none; }
+  .sa-logo-home-hint b { color:#D9C9B0; font-size:11px; }
   .sa-logo-frame {
     position: absolute; inset: 0; pointer-events: none; z-index: 2;
     background:
@@ -1138,7 +1156,7 @@ const styles = `
   .sa-spin { width: 13px; height: 13px; border: 2px solid rgba(184,160,130,0.15); border-top-color: var(--sa-gold); border-radius: 50%; animation: sa-spin 0.7s linear infinite; }
 
   /* ══ MAIN ══ */
-  .sa-main { flex: 1; display: flex; flex-direction: column; min-height: 100vh; margin-inline-start: var(--sa-sidebar-w); }
+  .sa-main { flex: 1; display: flex; flex-direction: column; min-width:0; min-height: 100vh; margin-inline-start: var(--sa-sidebar-w); }
   @media (max-width: 767px) { .sa-main { margin-inline-start: 0; } }
 
   /* Topbar */
@@ -1207,11 +1225,11 @@ const styles = `
   .sa-topbar-sub     { font-size: 10px; font-weight: 600; color: var(--sa-gold-soft); white-space: nowrap; letter-spacing: 0.02em; opacity: 0.78; }
 
   /* Content */
-  .sa-content { position: relative; flex: 1; padding: 28px 20px; animation: sa-slidein 0.42s var(--sa-ease-out); }
+  .sa-content { position: relative; flex: 1; min-width:0; padding: 28px 20px; animation: sa-slidein 0.42s var(--sa-ease-out); }
   @media (min-width: 768px) { .sa-content { padding: 40px; } }
   .sa-content--hub { padding: 0 !important; }
   .sa-watermark    { position: absolute; left: 24px; top: 24px; opacity: 0.04; pointer-events: none; }
-  .sa-content-inner { position: relative; z-index: 10; }
+  .sa-content-inner { position: relative; z-index: 10; min-width:0; }
 
   /* ── view-only banner (investor demo) ── */
   .sa-view-only-banner {

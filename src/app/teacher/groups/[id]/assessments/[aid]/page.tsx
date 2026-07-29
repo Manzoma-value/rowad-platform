@@ -6,11 +6,10 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import RowadDistributor from "@/components/RowadDistributor";
-import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
-import TraitRadarChart from "@/components/TraitRadarChart";
-import { seedFromString, matchCompoundReading } from "@/lib/trait-spectrum";
+import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
+import { seedFromString } from "@/lib/trait-spectrum";
 import {
-  ASSESS_UI, derive, averageTuples, pickAssessLang,
+  ASSESS_UI, derive, averageTuples, pickAssessLang, canonicalizeDefaultTraits,
   type ScoresTuple,
 } from "@/lib/rowad-assessment";
 
@@ -102,7 +101,6 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
     prev:      L === "ar" ? "السابق" : "Prapa",
     next:      L === "ar" ? "التالي" : "Tjetri",
     memberOf:  (i: number, n: number) => L === "ar" ? `${i} من ${n}` : `${i} nga ${n}`,
-    spectrumReading: L === "ar" ? "قراءة الطيف" : "Leximi i Spektrit",
   };
   const dir = L === "ar" ? "rtl" : "ltr";
 
@@ -120,7 +118,9 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
       const r = await fetch(`/api/teacher/groups/${id}/assessments/${aid}`, { cache: "no-store" });
       if (!r.ok) { setData(null); return; }
       const d = await r.json();
-      const a: AssessmentData = d?.assessment;
+      const raw = d?.assessment as AssessmentData | undefined;
+      if (!raw) { setData(null); return; }
+      const a: AssessmentData = { ...raw, traits: canonicalizeDefaultTraits(raw.traits) };
       setData(a);
       const emptyScores = evenSplit(a.traits.length);
       const map: Record<string, ScoresTuple> = {};
@@ -314,60 +314,12 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                 <span className="ap-avg-label">{T.average}</span>
                 <strong>{T.averageOf(received.length)}</strong>
               </div>
-              <div className="ap-result-hero">
-                <div className="ap-result-chip ap-result-core">
-                  <span>{AT.coreLabel}</span>
-                  <strong>{avgDerive.hasCore && avgDerive.coreIdx !== null ? traitLabel(traits[avgDerive.coreIdx], L) : AT.noCore}</strong>
-                </div>
-                <div className="ap-result-chip ap-result-coll">
-                  <span>{AT.collectiveLabel}</span>
-                  <strong>{traitLabel(traits[avgDerive.collectiveIdx], L)} · {avg[avgDerive.collectiveIdx].toFixed(1)}</strong>
-                </div>
-              </div>
               <div className="ap-spectrum-row">
-                <div className="ap-spectrum-visuals">
-                  <TraitSpectrumBlob
-                    traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
-                    seed={seedFromString(`${aid}:my-results`)}
-                    size={240}
-                    mode="full"
-                    showMixedSwatch
-                  />
-                  <TraitRadarChart
-                    traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
-                    size={170}
-                  />
-                </div>
-                {(() => {
-                  const reading = matchCompoundReading(traits.map((t, i) => ({ label: traitLabel(t, L), pct: avg[i] ?? 0 })));
-                  if (reading.kind === "none") return null;
-                  const text = reading.kind === "compound" ? (L === "ar" ? reading.ar : reading.sq) : traitLabel(traits[reading.index], L);
-                  return (
-                    <div className="ap-spectrum-caption">
-                      <span className="ap-spectrum-caption-lbl">{UX.spectrumReading}</span>
-                      <strong>{text}</strong>
-                    </div>
-                  );
-                })()}
-              </div>
-              <div className="ap-bars ap-bars-compact">
-                {traits.map((t, i) => {
-                  const v = avg[i];
-                  const isCore = avgDerive.coreIdx === i && avgDerive.hasCore;
-                  const isCollective = avgDerive.collectiveIdx === i;
-                  return (
-                    <div key={i} className={`ap-bar ${isCore ? "ap-core" : isCollective ? "ap-coll" : ""}`}>
-                      <span className="ap-bar-name">{traitLabel(t, L)}</span>
-                      <div className="ap-bar-track">
-                        <span className="ap-bar-fill" style={{ width: `${Math.min(100, v)}%`, background: t.color }} />
-                      </div>
-                      <span className="ap-bar-val">{v.toFixed(1)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="ap-avg-derived">
-                <span><strong>{AT.supportingLabel}:</strong> {avgDerive.supportingIdxs.map((i) => traitLabel(traits[i], L)).join(L === "ar" ? "، " : ", ")}</span>
+                <TraitSpectrumPanel
+                  traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
+                  seed={seedFromString(`${aid}:my-results`)}
+                  lang={L}
+                />
               </div>
             </div>
           )}

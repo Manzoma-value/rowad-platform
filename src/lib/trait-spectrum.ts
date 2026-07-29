@@ -195,14 +195,14 @@ function pairKey(a: string, b: string): string {
 
 const COMPOUND_READINGS: Record<string, { ar: string; sq: string }> = {
   [pairKey("الفرد", "الكفارات")]: { ar: "الفرد المُستدرِك", sq: "Individi Ndreqës" },
-  [pairKey("الفرد", "التمييز")]: { ar: "الهوية الواعية بالاختيار", sq: "Identiteti i Zgjedhjes së Vetëdijshme" },
+  [pairKey("الفرد", "المميز")]: { ar: "الهوية الواعية بالاختيار", sq: "Identiteti i Zgjedhjes së Vetëdijshme" },
   [pairKey("الفرد", "الحمية")]: { ar: "هوية الكرامة", sq: "Identiteti i Dinjitetit" },
   [pairKey("الفرد", "الدراية")]: { ar: "الوعي الذاتي العميق", sq: "Vetëdija e Thellë" },
-  [pairKey("الكفارات", "التمييز")]: { ar: "الاستدراك الحكيم", sq: "Ndreqja e Mençur" },
+  [pairKey("الكفارات", "المميز")]: { ar: "الاستدراك الحكيم", sq: "Ndreqja e Mençur" },
   [pairKey("الكفارات", "الحمية")]: { ar: "جبر الكرامة", sq: "Rikthimi i Dinjitetit" },
   [pairKey("الكفارات", "الدراية")]: { ar: "الاستدراك الواعي", sq: "Ndreqja e Vetëdijshme" },
-  [pairKey("التمييز", "الحمية")]: { ar: "القرار الشجاع", sq: "Vendimi i Guximshëm" },
-  [pairKey("التمييز", "الدراية")]: { ar: "الحكمة التحليلية", sq: "Urtësia Analitike" },
+  [pairKey("المميز", "الحمية")]: { ar: "القرار الشجاع", sq: "Vendimi i Guximshëm" },
+  [pairKey("المميز", "الدراية")]: { ar: "الحكمة التحليلية", sq: "Urtësia Analitike" },
   [pairKey("الحمية", "الدراية")]: { ar: "الدفاع المتبصر", sq: "Mbrojtja e Mençur" },
 };
 

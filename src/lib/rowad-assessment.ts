@@ -5,25 +5,21 @@
 // exactly as the original canonical Rowad First-Stage set so existing
 // models keep behaving identically after the migration to custom traits.
 
-export type TraitKey = "lineage" | "atonement" | "awareness" | "zeal" | "distinct";
+export type TraitKey = "lineage" | "atonement" | "distinct" | "zeal" | "awareness";
 
 export const TRAIT_KEYS: readonly TraitKey[] = [
-  "lineage", "atonement", "awareness", "zeal", "distinct",
+  "lineage", "atonement", "distinct", "zeal", "awareness",
 ] as const;
 
-// The canonical five — kept as the default template for new models.
-// Colors and labels below are the official identity for the Albania
-// deployment (هوية السمات والألوان — مشروع الرواد | ألبانيا), each tied to
-// specific Albanian cultural symbolism (Qeleshe/Nderi, Kanun reconciliation,
-// Skanderbeg's strategic distinction, the national flag, the double-headed
-// eagle's vigilance). `key` is an internal tag only, unchanged to avoid
-// touching anything that might reference it.
+// The canonical five — kept in the exact methodology order used by the
+// statements and saved score arrays. The categorical palette is deliberately
+// high-contrast so the five traits remain distinguishable at a glance.
 export const DEFAULT_TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
-  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#F2EFE6" },
-  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#F2B705" },
-  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",  color: "#1A1A1A" },
-  { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#B33A3A" },
-  { key: "distinct",  ar: "التمييز",  sq: "Dallimi",   color: "#9AA3AC" },
+  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#2563EB" },
+  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#D97706" },
+  { key: "distinct",  ar: "المميز",    sq: "Dallimi",   color: "#7C3AED" },
+  { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#DC2626" },
+  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",  color: "#059669" },
 ];
 
 export const DEFAULT_STATEMENTS = {
@@ -62,6 +58,43 @@ export type TraitDraft = {
   statement_sq: string;
   color: string;
 };
+
+type CanonicalizableTrait = {
+  position: number;
+  label_ar: string;
+  label_sq: string;
+  statement_ar: string;
+  statement_sq: string;
+  color: string;
+};
+
+const CANONICAL_AR_LABELS = new Set([
+  "الفرد", "النسل", "الكفارات", "المميز", "التمييز", "الحمية", "الدراية",
+]);
+
+/**
+ * Presents legacy five-trait models using the corrected canonical names,
+ * statements, order and accessible colors. Rows are never reordered: saved
+ * score arrays are positional, and the historical statements already use
+ * this exact conceptual sequence.
+ */
+export function canonicalizeDefaultTraits<T extends CanonicalizableTrait>(traits: T[]): T[] {
+  if (traits.length !== DEFAULT_TRAITS.length) return traits;
+
+  const ordered = [...traits].sort((a, b) => a.position - b.position);
+  const looksCanonical = ordered.every((trait) => CANONICAL_AR_LABELS.has(trait.label_ar.trim()));
+  if (!looksCanonical) return traits;
+
+  return ordered.map((trait, index) => ({
+    ...trait,
+    position: index,
+    label_ar: DEFAULT_TRAITS[index].ar,
+    label_sq: DEFAULT_TRAITS[index].sq,
+    statement_ar: DEFAULT_STATEMENTS.ar[index],
+    statement_sq: DEFAULT_STATEMENTS.sq[index],
+    color: DEFAULT_TRAITS[index].color,
+  }));
+}
 
 export type AssessLang = "ar" | "sq";
 export const pickAssessLang = (l: string): AssessLang => (l === "sq" ? "sq" : "ar");

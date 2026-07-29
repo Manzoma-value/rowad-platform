@@ -465,14 +465,25 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
         {/* Logo */}
         <div className="tl-logo-block">
-          <Image
-            src="/headerlogo.png"
-            alt="بناء الأهلية"
-            fill
-            style={{ objectFit: "cover", objectPosition: "center" }}
-            priority
-          />
-          <div className="tl-logo-frame" aria-hidden="true" />
+          <Link
+            href="/teacher"
+            className="tl-logo-home"
+            onClick={() => setSidebarOpen(false)}
+            aria-label={lang === "ar" ? "العودة إلى لوحة المعلم" : lang === "sq" ? "Kthehu te paneli i mësuesit" : "Back to teacher dashboard"}
+          >
+            <Image
+              src="/headerlogo.png"
+              alt="بناء الأهلية"
+              fill
+              style={{ objectFit: "cover", objectPosition: "center" }}
+              priority
+            />
+            <div className="tl-logo-frame" aria-hidden="true" />
+            <span className="tl-logo-home-hint">
+              {lang === "ar" ? "لوحة المعلم" : lang === "sq" ? "Paneli i mësuesit" : "Teacher dashboard"}
+              <b aria-hidden="true">↗</b>
+            </span>
+          </Link>
           <button
             className="tl-close-btn"
             onClick={() => setSidebarOpen(false)}
@@ -829,6 +840,13 @@ const styles = `
     border-bottom: 1px solid rgba(184,160,130,0.20);
     box-shadow: 0 6px 28px rgba(184,160,130,0.07), inset 0 -1px 0 rgba(184,160,130,0.08);
   }
+  .tl-logo-home { position:absolute; inset:0; z-index:1; display:block; color:#FFFBF5; text-decoration:none; outline:none; }
+  .tl-logo-home img { transition:transform .35s var(--tl-ease-out),filter .35s ease; }
+  .tl-logo-home:hover img,.tl-logo-home:focus-visible img { transform:scale(1.035); filter:brightness(.86); }
+  .tl-logo-home:focus-visible { box-shadow:inset 0 0 0 3px #D9C9B0; }
+  .tl-logo-home-hint { position:absolute; inset-inline-end:12px; bottom:9px; z-index:3; display:flex; align-items:center; gap:6px; border:1px solid rgba(217,201,176,.24); border-radius:999px; background:rgba(107,30,45,.72); padding:4px 9px; color:#F7F3EB; font-size:9px; font-weight:900; opacity:0; transform:translateY(4px); transition:.22s ease; backdrop-filter:blur(8px); }
+  .tl-logo-home:hover .tl-logo-home-hint,.tl-logo-home:focus-visible .tl-logo-home-hint { opacity:1; transform:none; }
+  .tl-logo-home-hint b { color:#D9C9B0; font-size:11px; }
   .tl-logo-frame {
     position: absolute; inset: 0; pointer-events: none; z-index: 2;
     background:

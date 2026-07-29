@@ -23,8 +23,7 @@ import {
   ASSESS_UI,
   derive, isValid100, type ScoresTuple, type AssessLang,
 } from "@/lib/rowad-assessment";
-import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
-import TraitRadarChart from "@/components/TraitRadarChart";
+import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
 
 export type DistributorTrait = { label: string; statement: string; color: string };
 
@@ -86,16 +85,11 @@ export default function RowadDistributor({
 
       {showSpectrum && (
         <div className="rwd-spectrum">
-          <TraitSpectrumBlob
+          <TraitSpectrumPanel
             traits={traits.map((t, i) => ({ label: t.label, color: t.color, pct: value[i] ?? 0 }))}
             seed={spectrumSeed ?? 1}
-            size={280}
-            mode="full"
-            showMixedSwatch
-          />
-          <TraitRadarChart
-            traits={traits.map((t, i) => ({ label: t.label, color: t.color, pct: value[i] ?? 0 }))}
-            size={180}
+            lang={lang}
+            live
           />
         </div>
       )}
@@ -172,7 +166,7 @@ export default function RowadDistributor({
         .rwd-status-over  { background:rgba(107,30,45,0.10); color:#6B1E2D; }
         .rwd-status-under { background:rgba(107,30,45,0.14);color:#8F765B; }
 
-        .rwd-spectrum { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:20px; padding:10px 0 20px; }
+        .rwd-spectrum { display:flex; justify-content:center; align-items:center; padding:6px 0 18px; }
 
         .rwd-sliders { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; }
         .rwd-row {

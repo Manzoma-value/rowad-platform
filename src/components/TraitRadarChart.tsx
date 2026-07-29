@@ -21,7 +21,8 @@ export default function TraitRadarChart({
 
   return (
     <svg viewBox="0 0 220 220" width={size} height={size} className={`trc-svg ${className ?? ""}`}>
-      <g stroke="#B8A082" strokeWidth={1} fill="none" opacity={0.4}>
+      <circle cx={110} cy={110} r={106} fill="#FFFFFF" stroke="#D9C9B0" strokeWidth={1.5} />
+      <g stroke="#B8A082" strokeWidth={1} fill="none" opacity={0.52}>
         {geo.gridRings.map((points, i) => (
           <polygon key={i} points={points} />
         ))}
@@ -31,13 +32,13 @@ export default function TraitRadarChart({
       </g>
       <polygon
         points={geo.dataPolygonPoints}
-        fill="#6B1E2D" fillOpacity={0.18}
-        stroke="#6B1E2D" strokeWidth={2} strokeLinejoin="round"
+        fill="#6B1E2D" fillOpacity={0.08}
+        stroke="#6B1E2D" strokeWidth={2.5} strokeLinejoin="round"
       />
       {geo.dataPoints.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={4.5} fill={p.color} stroke="#FFFBF5" strokeWidth={1.5} />
+        <circle key={i} cx={p.x} cy={p.y} r={5.5} fill={p.color} stroke="#FFFFFF" strokeWidth={2} />
       ))}
-      <style>{`.trc-svg { display: block; }`}</style>
+      <style>{`.trc-svg { display: block; filter: drop-shadow(0 8px 14px rgba(107,30,45,.08)); }`}</style>
     </svg>
   );
 }
