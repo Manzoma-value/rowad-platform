@@ -25,7 +25,7 @@ export default function Harness() {
   const [mountKey, setMountKey] = useState(0);
   const [patched, setPatched] = useState(false);
 
-  if (!patched) {
+  if (typeof window !== "undefined" && !patched) {
     const original = window.fetch;
     window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === "string" ? input : input.toString();

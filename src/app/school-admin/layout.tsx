@@ -15,6 +15,7 @@ import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import IdentityBackdrop from "@/components/IdentityBackdrop";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import {
   LayoutDashboard,
   Users,
@@ -32,7 +33,6 @@ import {
   Globe2,
   Menu,
   LogOut,
-  Bell,
   Sparkles,
   FileText,
   ListChecks,
@@ -209,8 +209,8 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       group: "learning",
     },
     {
-      href: "/school-admin/game-scores", sublabel: "Games & play analytics", exact: false, icon: Gamepad2,
-      label: lang === "ar" ? "الألعاب وإحصائياتها" : lang === "sq" ? "Lojërat & Statistikat" : "Games & Analytics",
+      href: "/school-admin/game-scores", sublabel: "Learning tools analytics", exact: false, icon: Gamepad2,
+      label: lang === "ar" ? "أدوات التعلم وإحصاءاتها" : lang === "sq" ? "Mjetet mësimore & statistikat" : "Learning Tools & Analytics",
       group: "models",
     },
     {
@@ -699,10 +699,8 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
           <div className="sa-topbar-actions">
             <div className="sa-topbar-divider" />
-            <button type="button" className="sa-bell-btn" aria-label="الإشعارات">
-              <Bell size={15} strokeWidth={1.7} />
-            </button>
-            <div className="sa-topbar-user-pill">
+            <NotificationCenter basePath="/school-admin" buttonClassName="sa-bell-btn" />
+            <Link href="/school-admin/profile" className="sa-topbar-user-pill">
               <div className="sa-topbar-av">
                 {avatarUrl ? (
                   <Image
@@ -726,7 +724,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                   </span>
                 )}
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -1193,7 +1191,7 @@ const styles = `
     display: none; align-items: center; gap: 8px;
     padding: 5px; padding-inline-end: 12px; border-radius: 999px;
     border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.075);
-    transition: all 0.18s var(--sa-ease-out);
+    transition: all 0.18s var(--sa-ease-out); text-decoration:none;
   }
   .sa-topbar-user-pill:hover { border-color: rgba(217,201,176,.52); background:rgba(255,251,245,.11); box-shadow: 0 8px 24px #32101A38; }
   @media (min-width: 768px) { .sa-topbar-user-pill { display: flex; } }

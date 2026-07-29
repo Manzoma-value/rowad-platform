@@ -22,6 +22,9 @@ const T = {
     textPh: "اكتب سؤالاً واضحاً ومباشراً...",
     typeMCQ: "اختيار من متعدد",
     typeTF: "صح / خطأ",
+    typeText: "إجابة كتابية",
+    writtenStep: "التقييم اليدوي",
+    writtenHint: "يكتب المعلم إجابته بحرية، ثم تظهر في شاشة النتائج لتقييمها وإضافة ملاحظاتك.",
     optionsHint: "اكتب الخيارات، ثم اضغط علامة الصح بجانب الإجابة الصحيحة.",
     optionN: (i: number) => `الخيار ${i + 1}`,
     addOption: "إضافة خيار",
@@ -56,6 +59,9 @@ const T = {
     textPh: "Shkruaj një pyetje të qartë...",
     typeMCQ: "Shumë opsione",
     typeTF: "E saktë / E gabuar",
+    typeText: "Përgjigje me shkrim",
+    writtenStep: "Vlerësim manual",
+    writtenHint: "Mësuesi shkruan lirshëm; përgjigjja shfaqet te rezultatet për vlerësim dhe komente.",
     optionsHint: "Shkruaj opsionet, pastaj kliko ✓ te përgjigjja e saktë.",
     optionN: (i: number) => `Opsioni ${i + 1}`,
     addOption: "Shto opsion",
@@ -184,7 +190,7 @@ export function VideoQuestionModal({
       if (type === "MCQ") {
         body.options = options.map((option) => option.trim()).filter(Boolean);
         body.correct_answer = options[correctIndex]?.trim() ?? "";
-      } else {
+      } else if (type === "TF") {
         body.correct_answer = tfAnswer;
       }
       const url = isEdit
@@ -255,8 +261,9 @@ export function VideoQuestionModal({
             <section className="vqm-step">
               <div className="vqm-step-heading"><b>2</b><span>{t.step2}</span></div>
               <div className="vqm-type-row">
-                <button type="button" className={`vqm-type-btn${type === "MCQ" ? " active" : ""}`} onClick={() => setType("MCQ")}>{t.typeMCQ}</button>
-                <button type="button" className={`vqm-type-btn${type === "TF" ? " active" : ""}`} onClick={() => setType("TF")}>{t.typeTF}</button>
+                <button type="button" disabled={isEdit} className={`vqm-type-btn${type === "MCQ" ? " active" : ""}`} onClick={() => setType("MCQ")}>{t.typeMCQ}</button>
+                <button type="button" disabled={isEdit} className={`vqm-type-btn${type === "TF" ? " active" : ""}`} onClick={() => setType("TF")}>{t.typeTF}</button>
+                <button type="button" disabled={isEdit} className={`vqm-type-btn${type === "TEXT" ? " active" : ""}`} onClick={() => setType("TEXT")}>{t.typeText}</button>
               </div>
               <label className="vqm-question-field">
                 <span>{t.text}</span>
@@ -265,7 +272,7 @@ export function VideoQuestionModal({
             </section>
 
             <section className="vqm-step">
-              <div className="vqm-step-heading"><b>3</b><span>{t.step3}</span></div>
+              <div className="vqm-step-heading"><b>3</b><span>{type === "TEXT" ? t.writtenStep : t.step3}</span></div>
               {type === "MCQ" ? (
                 <>
                   <p className="vqm-hint">{t.optionsHint}</p>
@@ -286,11 +293,13 @@ export function VideoQuestionModal({
                   </div>
                   {options.length < 8 && <button type="button" className="vqm-add-opt" onClick={addOption}><Plus size={15} />{t.addOption}</button>}
                 </>
-              ) : (
+              ) : type === "TF" ? (
                 <div className="vqm-tf-row">
                   <button type="button" className={`vqm-tf-btn${tfAnswer === "true" ? " true" : ""}`} onClick={() => setTfAnswer("true")}><Check size={17}/>{t.trueLbl}</button>
                   <button type="button" className={`vqm-tf-btn${tfAnswer === "false" ? " false" : ""}`} onClick={() => setTfAnswer("false")}><X size={17}/>{t.falseLbl}</button>
                 </div>
+              ) : (
+                <div className="vqm-written-note"><Check size={18}/><p>{t.writtenHint}</p></div>
               )}
             </section>
             {error && <p className="vqm-error" role="alert">{error}</p>}
@@ -334,9 +343,10 @@ const styles = `
 .vqm-time-row label{flex:1;display:flex;flex-direction:column;gap:5px;font-size:10px;font-weight:900;color:#655B53}
 .vqm-time-row input{box-sizing:border-box;width:100%;min-height:48px;border:1px solid #D9C9B0;border-radius:12px;background:#FFFFFF;padding:0 10px;font:900 17px ui-monospace,Consolas,monospace;color:#32101A;text-align:center;direction:ltr}
 .vqm-time-separator{padding-bottom:10px;color:#6B1E2D;font-size:22px;font-weight:900}
-.vqm-type-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vqm-type-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .vqm-type-btn{min-height:48px;border:1px solid #D9C9B0;border-radius:12px;background:#FFFFFF;color:#6B1E2D;font:800 12.5px 'Cairo',sans-serif;cursor:pointer}
 .vqm-type-btn.active{background:#6B1E2D;color:#F7F3EB;border-color:#6B1E2D;box-shadow:0 7px 18px rgba(107,30,45,.17)}
+.vqm-type-btn:disabled{cursor:default}
 .vqm-question-field{display:flex;flex-direction:column;gap:6px;color:#655B53;font-size:10.5px;font-weight:900}
 .vqm-body textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:108px;border:1px solid #D9C9B0;border-radius:12px;background:#FFFFFF;padding:12px 14px;font:inherit;font-size:14px;line-height:1.8;color:#32101A}
 .vqm-body textarea:focus,.vqm-time-row input:focus,.vqm-opt-row input:focus{outline:none;border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}
@@ -350,6 +360,8 @@ const styles = `
 .vqm-opt-remove{width:38px;height:48px;display:grid;place-items:center;border:1px solid #E5E0D5;border-radius:11px;background:#FFFFFF;color:#6B1E2D;cursor:pointer}
 .vqm-add-opt{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;min-height:42px;border:1px dashed rgba(107,30,45,.38);border-radius:11px;background:#FFFBF5;color:#6B1E2D;padding:0 14px;font:800 11.5px 'Cairo',sans-serif;cursor:pointer}
 .vqm-tf-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.vqm-written-note{display:flex;align-items:flex-start;gap:10px;padding:15px;border:1px solid rgba(27,94,32,.2);border-radius:13px;background:rgba(27,94,32,.06);color:#1B5E20}
+.vqm-written-note svg{flex:none;margin-top:2px}.vqm-written-note p{margin:0;font-size:12px;font-weight:800;line-height:1.8}
 .vqm-tf-btn{min-height:58px;display:flex;align-items:center;justify-content:center;gap:7px;border:1.5px solid #D9C9B0;border-radius:12px;background:#FFFFFF;color:#4A0E1C;font:800 13px 'Cairo',sans-serif;cursor:pointer}
 .vqm-tf-btn.true{background:rgba(27,94,32,.13);border-color:#1B5E20;color:#1B5E20}
 .vqm-tf-btn.false{background:rgba(107,30,45,.1);border-color:#6B1E2D;color:#6B1E2D}
@@ -368,6 +380,7 @@ const styles = `
   .vqm-preview{max-height:260px}
 }
 @media(max-width:600px){
+  .vqm-type-row{grid-template-columns:1fr}
   .vqm-overlay{padding:0;align-items:stretch}
   .vqm-modal{width:100%;height:100dvh;max-height:none;border-radius:0;border:0}
   .vqm-modal>header{padding:14px 15px}

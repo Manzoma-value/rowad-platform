@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
+import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   const workshop = await prisma.workshop.findFirst({
     where: { id, school_id: auth.school.id },
-    select: { id: true },
+    select: { id: true, title: true },
   });
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -29,5 +30,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       author: { select: { id: true, full_name: true, role: true, avatar_url: true } },
     },
   });
+  const teacherIds = await workshopTeacherProfileIds(id);
+  await notifyProfiles(teacherIds, {
+    type: "WORKSHOP_MESSAGE",
+    title_ar: "إعلان جديد في الورشة",
+    title_sq: "Njoftim i ri në trajnim",
+    title_en: "New workshop announcement",
+    body_ar: messageBody.slice(0, 180),
+    body_sq: messageBody.slice(0, 180),
+    body_en: messageBody.slice(0, 180),
+    href: `/workshops/${id}`,
+    actor_id: auth.profile.id,
+    event_key: `workshop-message:${message.id}`,
+  }).catch(() => undefined);
   return NextResponse.json({ message }, { status: 201 });
 }

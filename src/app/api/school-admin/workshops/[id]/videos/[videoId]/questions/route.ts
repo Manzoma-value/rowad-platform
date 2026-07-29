@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { cleanQuestionOptions, MAX_QUESTIONS_PER_VIDEO } from "@/lib/workshop-videos";
+import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,13 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   const video = await prisma.workshopVideo.findFirst({
     where: { id: videoId, workshop_id: id, workshop: { school_id: auth.school.id } },
-    select: { id: true, duration_seconds: true, _count: { select: { questions: true } } },
+    select: {
+      id: true,
+      title: true,
+      duration_seconds: true,
+      workshop: { select: { title: true } },
+      _count: { select: { questions: true } },
+    },
   });
   if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (video._count.questions >= MAX_QUESTIONS_PER_VIDEO) {
@@ -31,7 +38,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   }
 
   let body: {
-    type?: "MCQ" | "TF";
+    type?: "MCQ" | "TF" | "TEXT";
     text?: string;
     correct_answer?: string;
     timestamp_seconds?: number;
@@ -39,7 +46,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
 
-  const type = body.type === "TF" ? "TF" : body.type === "MCQ" ? "MCQ" : null;
+  const type = body.type === "TF" || body.type === "MCQ" || body.type === "TEXT"
+    ? body.type
+    : null;
   const text = body.text?.trim();
   const timestampSeconds = Number(body.timestamp_seconds);
   if (!type || !text || !Number.isFinite(timestampSeconds) || timestampSeconds < 0) {
@@ -52,7 +61,9 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   let correctAnswer = "";
   let options: string[] = [];
-  if (type === "TF") {
+  if (type === "TEXT") {
+    correctAnswer = "";
+  } else if (type === "TF") {
     if (body.correct_answer !== "true" && body.correct_answer !== "false") {
       return NextResponse.json({ error: "correct_answer must be true or false" }, { status: 400 });
     }
@@ -79,5 +90,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     },
     select: questionSelect,
   });
+  const teacherIds = await workshopTeacherProfileIds(id);
+  await notifyProfiles(teacherIds, {
+    type: "WORKSHOP_UPDATE",
+    title_ar: "سؤال جديد داخل فيديو",
+    title_sq: "Pyetje e re brenda videos",
+    title_en: "New in-video question",
+    body_ar: `أضيف سؤال جديد إلى «${video.title}»`,
+    body_sq: `U shtua një pyetje e re në “${video.title}”`,
+    body_en: `A new question was added to “${video.title}”`,
+    href: `/workshops/${id}`,
+    actor_id: auth.profile.id,
+    event_key: `workshop-video-question:${question.id}`,
+  }).catch(() => undefined);
   return NextResponse.json({ question }, { status: 201 });
 }

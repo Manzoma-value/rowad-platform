@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { profileSchoolId } from "@/lib/hub-auth";
 import { hubImageExtension, validateHubImage } from "@/lib/hub-image";
+import { notifyProfiles, schoolProfileIds } from "@/lib/notifications";
 
 function adminSupabase() {
   return createSupabaseAdmin(
@@ -132,6 +133,20 @@ export async function POST(
     },
     select: REPLY_SELECT,
   });
+
+  const recipientIds = await schoolProfileIds(parentPost.school_id);
+  await notifyProfiles(recipientIds, {
+    type: "COMMUNITY_REPLY",
+    title_ar: "رد جديد في المجتمع",
+    title_sq: "Përgjigje e re në komunitet",
+    title_en: "New community reply",
+    body_ar: content?.slice(0, 180) || "تمت مشاركة صورة في الردود",
+    body_sq: content?.slice(0, 180) || "U nda një imazh në përgjigje",
+    body_en: content?.slice(0, 180) || "An image was shared in a reply",
+    href: "/hub",
+    actor_id: profile.id,
+    event_key: `community-reply:${reply.id}`,
+  }).catch(() => undefined);
 
   return NextResponse.json({ reply }, { status: 201 });
 }

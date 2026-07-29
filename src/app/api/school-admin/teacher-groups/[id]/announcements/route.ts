@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
+import { notifyProfiles, teacherGroupProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,19 @@ export async function POST(
     },
     select: ANNOUNCEMENT_SELECT,
   });
+  const memberIds = await teacherGroupProfileIds(id);
+  await notifyProfiles(memberIds, {
+    type: "SYSTEM",
+    title_ar: "إعلان جديد في المجموعة",
+    title_sq: "Njoftim i ri në grup",
+    title_en: "New group announcement",
+    body_ar: content.slice(0, 180),
+    body_sq: content.slice(0, 180),
+    body_en: content.slice(0, 180),
+    href: `/teacher/groups/${id}`,
+    actor_id: auth.profile.id,
+    event_key: `teacher-group-announcement:${announcement.id}`,
+  }).catch(() => undefined);
 
   return NextResponse.json({ announcement }, { status: 201 });
 }

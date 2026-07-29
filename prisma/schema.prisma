@@ -455,6 +455,7 @@ model Profile {
   authoredGroupAssessments     GroupAssessment[]          @relation("GroupAssessmentAuthor")
   authoredWorkshops            Workshop[]                 @relation("WorkshopAuthor")
   authoredWorkshopVideos       WorkshopVideo[]            @relation("WorkshopVideoAuthor")
+  gradedWorkshopVideoAnswers   WorkshopVideoAnswer[]       @relation("WorkshopVideoAnswerGrader")
   authoredAttendanceCodes      WorkshopAttendanceCode[]   @relation("WorkshopAttendanceCodeAuthor")
   workshopMessages             WorkshopMessage[]          @relation("WorkshopMessageAuthor")
   createdWorkshopEnrollments   WorkshopEnrollment[]       @relation("WorkshopEnrollmentAuthor")
@@ -464,6 +465,8 @@ model Profile {
   avatar_path                  String?
   created_invites              Invite[]                   @relation("InvitesCreatedBy")
   used_invites                 Invite[]                   @relation("InviteUsedBy")
+  notifications                Notification[]             @relation("NotificationRecipient")
+  acted_notifications          Notification[]             @relation("NotificationActor")
 
   @@map("profiles")
 }
@@ -1469,6 +1472,13 @@ model WorkshopAttendanceCode {
 enum WorkshopVideoQuestionType {
   MCQ
   TF
+  TEXT
+}
+
+enum WorkshopVideoAnswerStatus {
+  AUTO_GRADED
+  PENDING_REVIEW
+  GRADED
 }
 
 model WorkshopVideo {
@@ -1567,16 +1577,57 @@ model WorkshopVideoAttempt {
 }
 
 model WorkshopVideoAnswer {
-  id          String   @id @default(uuid()) @db.Uuid
-  attempt_id  String   @db.Uuid
-  question_id String   @db.Uuid
-  answer      String
-  is_correct  Boolean  @default(false)
-  created_at  DateTime @default(now())
+  id             String                    @id @default(uuid()) @db.Uuid
+  attempt_id     String                    @db.Uuid
+  question_id    String                    @db.Uuid
+  answer         String
+  is_correct     Boolean                   @default(false)
+  grading_status WorkshopVideoAnswerStatus @default(AUTO_GRADED)
+  grader_id      String?                   @db.Uuid
+  graded_at      DateTime?
+  feedback       String?
+  created_at     DateTime                  @default(now())
 
   attempt  WorkshopVideoAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
   question WorkshopVideoQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  grader   Profile?              @relation("WorkshopVideoAnswerGrader", fields: [grader_id], references: [id], onDelete: SetNull)
 
   @@unique([attempt_id, question_id])
+  @@index([grading_status, created_at(sort: Desc)])
   @@map("workshop_video_answers")
+}
+
+enum NotificationType {
+  COMMUNITY_POST
+  COMMUNITY_REPLY
+  WORKSHOP_ANSWER
+  WORKSHOP_MESSAGE
+  WORKSHOP_VIDEO
+  WORKSHOP_MATERIAL
+  WORKSHOP_UPDATE
+  WORKSHOP_LIVE
+  SYSTEM
+}
+
+model Notification {
+  id           String           @id @default(uuid()) @db.Uuid
+  recipient_id String           @db.Uuid
+  actor_id     String?          @db.Uuid
+  type         NotificationType
+  title_ar     String
+  title_sq     String
+  title_en     String
+  body_ar      String?
+  body_sq      String?
+  body_en      String?
+  href         String
+  dedupe_key   String?          @unique
+  read_at      DateTime?
+  created_at   DateTime         @default(now())
+
+  recipient Profile  @relation("NotificationRecipient", fields: [recipient_id], references: [id], onDelete: Cascade)
+  actor     Profile? @relation("NotificationActor", fields: [actor_id], references: [id], onDelete: SetNull)
+
+  @@index([recipient_id, read_at, created_at(sort: Desc)])
+  @@map("notifications")
 }

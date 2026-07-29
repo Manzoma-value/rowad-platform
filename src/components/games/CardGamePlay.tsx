@@ -14,7 +14,7 @@ type LevelRow = { order: number; name_ar: string; name_sq: string | null };
 
 const STR = {
   ar: {
-    loadFail: "تعذر تحميل اللعبة، حاول لاحقاً.",
+    loadFail: "تعذر تحميل أداة التعلم، حاول لاحقاً.",
     submitFail: "تعذر احتساب النتيجة، حاول مرة أخرى.",
     timeoutError: "استغرق الاتصال وقتاً طويلاً. تحقق من اتصالك وحاول مرة أخرى.",
     crashError: "حدث خطأ غير متوقع. تقدمك محفوظ — اضغط للمتابعة.",
@@ -24,14 +24,14 @@ const STR = {
     bestScore: "أفضل نتيجة",
     encourageHigh: "نتيجة ممتازة! استمر في صقل معرفتك بالنموذج.",
     encourageMid: "نتيجة جيدة. يمكنك تحسينها مع مزيد من التدريب.",
-    encourageLow: "كل لعبة فرصة جديدة — جرّب مرة أخرى بعد مراجعة المفاهيم.",
-    playAgain: "العب مرة أخرى",
-    backToGames: "العودة للألعاب",
+    encourageLow: "كل محاولة فرصة جديدة — جرّب مرة أخرى بعد مراجعة المفاهيم.",
+    playAgain: "أعد المحاولة",
+    backToGames: "العودة لأدوات التعلم",
     homeBack: "الصفحة الرئيسية",
-    note: "اللعبة لا تكشف الإجابات الصحيحة، عليك أن تكتشفها بنفسك من خلال التجريب والتعلم.",
+    note: "أداة التعلم لا تكشف الإجابات الصحيحة؛ اكتشفها بنفسك من خلال التجريب والتعلم.",
   },
   sq: {
-    loadFail: "Loja nuk u ngarkua, provo më vonë.",
+    loadFail: "Mjeti mësimor nuk u ngarkua, provo më vonë.",
     submitFail: "Rezultati nuk u njehsua, provo përsëri.",
     timeoutError: "Lidhja zgjati shumë. Kontrollo internetin dhe provo përsëri.",
     crashError: "Ndodhi një gabim i papritur. Progresi yt është ruajtur — kliko për të vazhduar.",
@@ -41,11 +41,11 @@ const STR = {
     bestScore: "Rezultati më i mirë",
     encourageHigh: "Rezultat i shkëlqyer! Vazhdo të thellosh njohuritë e modelit.",
     encourageMid: "Rezultat i mirë. Mund ta përmirësosh me më shumë praktikë.",
-    encourageLow: "Çdo lojë është një shans i ri — provo përsëri pas rishikimit.",
-    playAgain: "Luaj sërish",
-    backToGames: "Kthehu te lojërat",
+    encourageLow: "Çdo përpjekje është një shans i ri — provo përsëri pas rishikimit.",
+    playAgain: "Provo sërish",
+    backToGames: "Kthehu te mjetet mësimore",
     homeBack: "Shtëpia",
-    note: "Loja nuk t'i zbulon përgjigjet e sakta — duhet t'i zbulosh vetë përmes provës dhe mësimit.",
+    note: "Mjeti nuk t'i zbulon përgjigjet e sakta — zbuloji përmes provës dhe mësimit.",
   },
 } as const;
 

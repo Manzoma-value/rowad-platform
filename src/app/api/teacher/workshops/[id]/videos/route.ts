@@ -55,7 +55,16 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
           score: true,
           total: true,
           completed_at: true,
-          answers: { select: { question_id: true, answer: true, is_correct: true } },
+          answers: {
+            select: {
+              id: true,
+              question_id: true,
+              answer: true,
+              is_correct: true,
+              grading_status: true,
+              feedback: true,
+            },
+          },
         },
       },
     },

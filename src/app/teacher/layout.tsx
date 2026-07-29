@@ -16,6 +16,7 @@ import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import IdentityBackdrop from "@/components/IdentityBackdrop";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import {
   LayoutDashboard,
   Users,
@@ -26,14 +27,11 @@ import {
   Globe2,
   Menu,
   LogOut,
-  Bell,
   Sparkles,
   Gamepad2,
   MapPin,
   CalendarRange,
-  Radio,
-  MessageCircle,
-  CheckCheck,
+  ChevronDown,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -154,21 +152,6 @@ const navItems: NavItem2[] = [
 
 const COMMUNITY_HREF = "/teacher/hub";
 
-type LiveWorkshopAlert = {
-  id: string;
-  title: string;
-  description: string | null;
-  live_started_at: string | null;
-};
-
-type CommunityNotification = {
-  id: string;
-  content: string | null;
-  image_url: string | null;
-  created_at: string;
-  author: { id: string; full_name: string; role: string; avatar_url: string | null };
-};
-
 /* ─── Layout (thin wrapper that provides tenant context) ─── */
 export default function TeacherLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -226,11 +209,13 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const [name, setName] = useState("");
   const [initials, setInitials] = useState("م");
   const [schoolName, setSchoolName] = useState("");
-  const [schoolId, setSchoolId] = useState("");
-  const [profileId, setProfileId] = useState("");
   const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [classesNavOpen, setClassesNavOpen] = useState(
+    () => ["/teacher/classes", "/teacher/lessons", "/teacher/quizzes", "/teacher/reports"]
+      .some((route) => pathname.startsWith(route)),
+  );
   const [loggingOut, setLoggingOut] = useState(false);
   // Toggle is now ALWAYS visible (no gating on the school's default language).
   // Users can swap between Arabic and the school's secondary language at any time.
@@ -238,11 +223,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const [schoolLang, setSchoolLang] = useState("sq");
   const [onboardingStatus, setOnboardingStatus] = useState<string | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
-  const [liveWorkshop, setLiveWorkshop] = useState<LiveWorkshopAlert | null>(null);
-  const [livePanelOpen, setLivePanelOpen] = useState(false);
-  const [communityNotifications, setCommunityNotifications] = useState<CommunityNotification[]>([]);
-  const [communityLatestAt, setCommunityLatestAt] = useState<string | null>(null);
-  const notificationWrapRef = useRef<HTMLDivElement>(null);
   const schoolSlugRef = useRef<string>("");
 
   useEffect(() => {
@@ -257,8 +237,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           enforceTenantSubdomain(d.school.slug);
         }
         if (d?.school?.name) setSchoolName(d.school.name);
-        if (d?.school?.id) setSchoolId(d.school.id);
-        if (d?.profile?.id) setProfileId(d.profile.id);
         setSchoolNameAlt(d?.school?.name_alt ?? null);
         if (d?.profile?.full_name) {
           setName(d.profile.full_name);
@@ -285,140 +263,10 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
     // Cache profile — avatar doesn't change between page navigations.
     cachedFetch<{ profile?: { id?: string; avatar_url?: string } }>("/api/profile", 600_000)
       .then((d) => {
-        if (d?.profile?.id) setProfileId(d.profile.id);
         if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url);
       })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    let active = true;
-    const loadLiveWorkshop = async () => {
-      try {
-        const response = await fetch("/api/teacher/workshops/live", { cache: "no-store" });
-        if (!response.ok) return;
-        const data = await response.json() as { live_workshop?: LiveWorkshopAlert | null };
-        if (active) setLiveWorkshop(data.live_workshop ?? null);
-      } catch {
-        // A transient notification failure must not affect the teacher shell.
-      }
-    };
-
-    void loadLiveWorkshop();
-    const interval = window.setInterval(() => void loadLiveWorkshop(), 30_000);
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") void loadLiveWorkshop();
-    };
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!showCommunity || !schoolId || !profileId) {
-      setCommunityNotifications([]);
-      return;
-    }
-
-    let active = true;
-    const supabase = createClient();
-    const readKey = `rowad:community-read:${schoolId}:${profileId}`;
-
-    const refreshCommunityNotifications = async () => {
-      try {
-        const response = await fetch(`/api/hub/posts?school_id=${schoolId}&limit=20`, { cache: "no-store" });
-        if (!response.ok) return;
-        const data = await response.json() as { posts?: CommunityNotification[] };
-        if (!active) return;
-        const posts = data.posts ?? [];
-        const latestAt = posts[0]?.created_at ?? null;
-        setCommunityLatestAt(latestAt);
-
-        let readAt: string | null = null;
-        try { readAt = localStorage.getItem(readKey); } catch { /* unavailable */ }
-
-        if (!readAt) {
-          const baseline = latestAt ?? new Date().toISOString();
-          try { localStorage.setItem(readKey, baseline); } catch { /* unavailable */ }
-          setCommunityNotifications([]);
-          return;
-        }
-
-        if (pathname === COMMUNITY_HREF) {
-          if (latestAt) {
-            try { localStorage.setItem(readKey, latestAt); } catch { /* unavailable */ }
-          }
-          setCommunityNotifications([]);
-          return;
-        }
-
-        const readTime = new Date(readAt).getTime();
-        if (!Number.isFinite(readTime)) {
-          const baseline = latestAt ?? new Date().toISOString();
-          try { localStorage.setItem(readKey, baseline); } catch { /* unavailable */ }
-          setCommunityNotifications([]);
-          return;
-        }
-        setCommunityNotifications(posts.filter((post) =>
-          post.author.id !== profileId && new Date(post.created_at).getTime() > readTime,
-        ));
-      } catch {
-        // Community notifications are supplementary and never block navigation.
-      }
-    };
-
-    void refreshCommunityNotifications();
-    const interval = window.setInterval(() => void refreshCommunityNotifications(), 30_000);
-    const channel = supabase.channel(`teacher-community-alerts:${schoolId}:${profileId}`)
-      .on("postgres_changes", {
-        event: "INSERT", schema: "public", table: "posts", filter: `school_id=eq.${schoolId}`,
-      }, (payload) => {
-        const post = payload.new as { reply_to_id?: string | null; author_id?: string };
-        if (!post.reply_to_id && post.author_id !== profileId) void refreshCommunityNotifications();
-      })
-      .subscribe();
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") void refreshCommunityNotifications();
-    };
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
-      void supabase.removeChannel(channel);
-    };
-  }, [pathname, profileId, schoolId, showCommunity]);
-
-  useEffect(() => {
-    if (!livePanelOpen) return;
-    const closeOnOutsideClick = (event: MouseEvent) => {
-      if (!notificationWrapRef.current?.contains(event.target as Node)) setLivePanelOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setLivePanelOpen(false);
-    };
-    document.addEventListener("mousedown", closeOnOutsideClick);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("mousedown", closeOnOutsideClick);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [livePanelOpen]);
-
-  function markCommunityRead() {
-    if (!schoolId || !profileId) return;
-    try {
-      localStorage.setItem(
-        `rowad:community-read:${schoolId}:${profileId}`,
-        communityLatestAt ?? new Date().toISOString(),
-      );
-    } catch { /* unavailable */ }
-    setCommunityNotifications([]);
-  }
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -657,16 +505,23 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
         {/* Nav */}
         <nav className="tl-nav">
           {visibleNav.map((item) => {
-            const active = isActive(item.href, item.exact);
-            const Icon = item.icon;
             const isSub = !!item.parent;
             const hasChildren = visibleNav.some((child) => child.parent === item.key);
+            if (isSub && item.parent === "myClasses" && !classesNavOpen) return null;
+            const childActive = hasChildren && visibleNav.some(
+              (child) => child.parent === item.key && isActive(child.href, child.exact),
+            );
+            const active = isActive(item.href, item.exact) || childActive;
+            const Icon = item.icon;
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`tl-nav-item ${active ? "active" : ""} ${isSub ? "tl-nav-sub" : ""} ${hasChildren ? "tl-nav-parent" : ""}`}
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => {
+                  if (hasChildren) setClassesNavOpen((value) => !value);
+                  else setSidebarOpen(false);
+                }}
               >
                 {active && (
                   <>
@@ -681,6 +536,13 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                   <span className="tl-nav-label-main">{navLabel(item)}</span>
                   <span className="tl-nav-label-sub">{item.sublabel}</span>
                 </span>
+                {hasChildren && (
+                  <ChevronDown
+                    className={`tl-nav-chevron${classesNavOpen ? " open" : ""}`}
+                    size={15}
+                    aria-hidden="true"
+                  />
+                )}
                 {active && <span className="tl-nav-dot" />}
               </Link>
             );
@@ -799,89 +661,8 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
           <div className="tl-topbar-actions">
             <div className="tl-topbar-divider" />
-            <div className="tl-notification-wrap" ref={notificationWrapRef}>
-              <button
-                type="button"
-                className={`tl-bell-btn${liveWorkshop ? " has-live" : ""}${communityNotifications.length ? " has-unread" : ""}`}
-                aria-label={communityNotifications.length
-                  ? (lang === "ar" ? `${communityNotifications.length} إشعارات جديدة` : lang === "sq" ? `${communityNotifications.length} njoftime të reja` : `${communityNotifications.length} new notifications`)
-                  : (lang === "ar" ? "الإشعارات" : lang === "sq" ? "Njoftimet" : "Notifications")}
-                aria-expanded={livePanelOpen}
-                aria-haspopup="dialog"
-                onClick={() => setLivePanelOpen((open) => !open)}
-              >
-                <Bell size={16} strokeWidth={1.8} />
-                {liveWorkshop && <span className="tl-live-dot" aria-hidden="true" />}
-                {communityNotifications.length > 0 && (
-                  <span className="tl-notification-count" aria-hidden="true">
-                    {communityNotifications.length > 9 ? "9+" : communityNotifications.length}
-                  </span>
-                )}
-              </button>
-              {livePanelOpen && (
-                <div className="tl-live-panel tl-notification-panel" role="dialog" aria-label={lang === "ar" ? "الإشعارات" : lang === "sq" ? "Njoftimet" : "Notifications"}>
-                  <div className="tl-notification-head">
-                    <div>
-                      <span>{lang === "ar" ? "مركز التنبيهات" : lang === "sq" ? "Qendra e njoftimeve" : "Notification center"}</span>
-                      <strong>{lang === "ar" ? "الإشعارات" : lang === "sq" ? "Njoftimet" : "Notifications"}</strong>
-                    </div>
-                    {communityNotifications.length > 0 && (
-                      <button type="button" onClick={markCommunityRead}>
-                        <CheckCheck size={14} />
-                        {lang === "ar" ? "تحديد كمقروء" : lang === "sq" ? "Shëno si të lexuara" : "Mark as read"}
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="tl-notification-list">
-                    {liveWorkshop && (
-                      <Link className="tl-notification-item live" href={`/teacher/workshops/${liveWorkshop.id}`} onClick={() => setLivePanelOpen(false)}>
-                        <span className="tl-notification-icon"><Radio size={17} /></span>
-                        <span className="tl-notification-copy">
-                          <small>{lang === "ar" ? "ورشة مباشرة الآن" : lang === "sq" ? "Forum drejtpërdrejt" : "Live workshop"}</small>
-                          <strong>{liveWorkshop.title}</strong>
-                          {liveWorkshop.description && <span>{liveWorkshop.description}</span>}
-                        </span>
-                      </Link>
-                    )}
-
-                    {communityNotifications.slice(0, 3).map((notification) => (
-                      <Link
-                        key={notification.id}
-                        className="tl-notification-item community"
-                        href={COMMUNITY_HREF}
-                        onClick={() => { markCommunityRead(); setLivePanelOpen(false); }}
-                      >
-                        <span className="tl-notification-icon"><MessageCircle size={17} /></span>
-                        <span className="tl-notification-copy">
-                          <small>{lang === "ar" ? "رسالة جديدة في المجتمع" : lang === "sq" ? "Mesazh i ri në komunitet" : "New community message"}</small>
-                          <strong>{notification.author.full_name}</strong>
-                          <span>{notification.content || (lang === "ar" ? "أضاف صورة جديدة" : lang === "sq" ? "Shtoi një foto të re" : "Shared a new image")}</span>
-                          <time>{new Date(notification.created_at).toLocaleTimeString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { hour: "2-digit", minute: "2-digit" })}</time>
-                        </span>
-                      </Link>
-                    ))}
-
-                    {!liveWorkshop && communityNotifications.length === 0 && (
-                      <div className="tl-notification-empty">
-                        <CheckCheck size={22} />
-                        <strong>{lang === "ar" ? "أنت على اطلاع بكل جديد" : lang === "sq" ? "Je në dijeni për gjithçka" : "You are all caught up"}</strong>
-                        <span>{lang === "ar" ? "ستظهر هنا رسائل المجتمع والورش المباشرة." : lang === "sq" ? "Mesazhet e komunitetit dhe forumet drejtpërdrejt do të shfaqen këtu." : "Community messages and live workshops will appear here."}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {showCommunity && (
-                    <Link className="tl-notification-footer" href={COMMUNITY_HREF} onClick={() => { markCommunityRead(); setLivePanelOpen(false); }}>
-                      <MessageCircle size={14} />
-                      {lang === "ar" ? "فتح مجتمع المدرسة" : lang === "sq" ? "Hap komunitetin" : "Open school community"}
-                      {communityNotifications.length > 3 && <b>+{communityNotifications.length - 3}</b>}
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="tl-topbar-user-pill">
+            <NotificationCenter basePath="/teacher" buttonClassName="tl-bell-btn" />
+            <Link href="/teacher/profile" className="tl-topbar-user-pill">
               <div className="tl-topbar-av">
                 {avatarUrl ? (
                   <Image
@@ -905,7 +686,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                   </span>
                 )}
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -1125,6 +906,8 @@ const styles = `
   .tl-nav-item.tl-nav-parent.active::after {
     background: linear-gradient(180deg, rgba(229,224,213,0.72), rgba(184,160,130,0.28));
   }
+  .tl-nav-chevron{margin-inline-start:auto;flex:none;color:#D9C9B0;transition:transform .18s ease}
+  .tl-nav-chevron.open{transform:rotate(180deg)}
 
   /* Sub-items (lessons/quizzes/reports nested under My Classes). */
   .tl-nav-item.tl-nav-sub {
@@ -1339,7 +1122,7 @@ const styles = `
     display: none; align-items: center; gap: 8px;
     padding: 5px; padding-inline-end: 12px; border-radius: 999px;
     border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.075);
-    transition: all 0.18s var(--tl-ease-out);
+    transition: all 0.18s var(--tl-ease-out); text-decoration:none;
   }
   .tl-topbar-user-pill:hover { border-color: rgba(217,201,176,.52); background:rgba(255,251,245,.11); box-shadow: 0 8px 24px #32101A38; }
   @media (min-width: 768px) { .tl-topbar-user-pill { display: flex; } }

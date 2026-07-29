@@ -1,4 +1,5 @@
-export type WorkshopVideoQuestionType = "MCQ" | "TF";
+export type WorkshopVideoQuestionType = "MCQ" | "TF" | "TEXT";
+export type WorkshopVideoAnswerStatus = "AUTO_GRADED" | "PENDING_REVIEW" | "GRADED";
 
 export type WorkshopVideoOption = {
   id: string;
@@ -33,9 +34,12 @@ export type WorkshopVideo = {
 };
 
 export type WorkshopVideoAnswerRecord = {
+  id: string;
   question_id: string;
   answer: string;
   is_correct: boolean;
+  grading_status: WorkshopVideoAnswerStatus;
+  feedback: string | null;
 };
 
 export type WorkshopVideoAttemptSummary = {

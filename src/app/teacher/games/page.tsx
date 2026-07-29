@@ -18,19 +18,19 @@ type GameId = "hub" | "memory" | "hunter" | "speed" | "collector" | "wordrain";
 /* ─── Localized strings ──────────────────────────────────────────────── */
 const STR = {
   ar: {
-    title: "الألعاب التعليمية",
-    sub: "تعلّم النموذج عن طريق اللعب — ثلاث ألعاب قصيرة، صفّر العداد ودرّب نفسك",
-    playBtn: "ابدأ اللعب",
-    backToHub: "كل الألعاب",
+    title: "أدوات التعلم التفاعلية",
+    sub: "تعلّم النموذج عبر أنشطة تعليمية قصيرة وتدريبات عملية هادفة",
+    playBtn: "ابدأ النشاط",
+    backToHub: "كل أدوات التعلم",
     restart: "إعادة",
     // Memory
-    memTitle: "لعبة الذاكرة",
+    memTitle: "تحدي الذاكرة",
     memDesc: "اقلب الكروت وطابق المستوى مع رقمه والمقصد مع معناه. كلما قلّت محاولاتك زادت نجومك.",
     memMoves: "محاولات",
     memTime: "الوقت",
     memWin: "أحسنت!",
     memStars: (s: number) => `${s} ${s === 1 ? "نجمة" : "نجوم"}`,
-    memPlayAgain: "العب مرة أخرى",
+    memPlayAgain: "أعد المحاولة",
     // Hunter
     hunTitle: "صائد المقاصد",
     hunDesc: "بطاقة تظهر، عليك اختيار المقصد المناسب لها. 3 أخطاء وتخسر، 10 إجابات صحيحة وتفوز.",
@@ -67,9 +67,9 @@ const STR = {
     colLose: "لا بأس، حاول مرة أخرى",
     colLoseSub: "ركّز على العناصر المرتبطة بالمقصد المطلوب فقط",
     // Hint card — generic labels
-    howToTitle: "كيفية اللعب",
+    howToTitle: "طريقة الاستخدام",
     whatYouLearnTitle: "الفائدة التعليمية",
-    hintToggle: "كيف ألعب؟",
+    hintToggle: "كيف أستخدمها؟",
     hintCloseLabel: "إخفاء التعليمات",
     // Per-game hints
     memHowTo:
@@ -107,25 +107,25 @@ const STR = {
     moves: "محاولاتك",
     bestStreak: "أطول سلسلة",
     // Progress / stats (hub)
-    progressTried: (n: number, total: number) => `جربت ${n} من ${total} ألعاب`,
+    progressTried: (n: number, total: number) => `استخدمت ${n} من ${total} أدوات`,
     progressPlays: (n: number) => `${n} محاولة${n === 1 ? "" : ""} إجمالاً`,
     tileBest: (n: number) => `أفضل نتيجة ${n}`,
     tilePlays: (n: number) => `${n}×`,
   },
   sq: {
-    title: "Lojërat Edukative",
-    sub: "Mëso modelin përmes lojës — tri lojëra të shkurtra, sfido veten dhe argëtohu",
-    playBtn: "Luaj",
-    backToHub: "Të gjitha lojërat",
+    title: "Mjete Mësimore Interaktive",
+    sub: "Mëso modelin përmes aktiviteteve të shkurtra dhe ushtrimeve praktike",
+    playBtn: "Fillo aktivitetin",
+    backToHub: "Të gjitha mjetet",
     restart: "Rinis",
     // Memory
-    memTitle: "Loja e Kujtesës",
+    memTitle: "Sfida e Kujtesës",
     memDesc: "Ktheji kartat dhe përshtati nivelet me numrat dhe qëllimet me kuptimet. Sa më pak tentativa, aq më shumë yje.",
     memMoves: "Tentativa",
     memTime: "Koha",
     memWin: "Bravo!",
     memStars: (s: number) => `${s} ${s === 1 ? "yll" : "yje"}`,
-    memPlayAgain: "Luaj sërish",
+    memPlayAgain: "Provo sërish",
     // Hunter
     hunTitle: "Gjuetari i Qëllimeve",
     hunDesc: "Shfaqet një kartë, ti zgjedh qëllimin e duhur. 3 gabime humbet, 10 të sakta dhe fiton.",
@@ -164,7 +164,7 @@ const STR = {
     // Hint card — generic labels
     howToTitle: "Si të luash",
     whatYouLearnTitle: "Çfarë mëson",
-    hintToggle: "Si luaj?",
+    hintToggle: "Si përdoret?",
     hintCloseLabel: "Fshih udhëzimet",
     // Per-game hints
     memHowTo:
@@ -180,7 +180,7 @@ const STR = {
     spdLearn:
       "Mat shpejtësinë e dallimit mes qëllimeve dhe niveleve — dy kategorive bazë mbi të cilat ndërtohet i gjithë modeli — duke i bërë këto emra intuitivë.",
     colHowTo:
-      "Lëviz lojtarin me shigjetat e tastierës ose me butonat. Kap vetëm konceptet që i shërbejnë qëllimit të kërkuar lart. 5 koncepte të sakta = fitore, 3 të gabuara = humbje.",
+      "Lëviz simbolin me shigjetat e tastierës ose me butonat. Kap vetëm konceptet që i shërbejnë qëllimit të kërkuar lart. 5 koncepte të sakta = fitore, 3 të gabuara = humbje.",
     colLearn:
       "Forcon dallimin e shpejtë midis koncepteve të një qëllimi të caktuar dhe pjesës tjetër, duke e bërë hartën e modelit të qartë në mendje dhe duke të ndihmuar të zgjedhësh me besim.",
     // Word Rain
@@ -202,8 +202,8 @@ const STR = {
     moves: "Tentativat",
     bestStreak: "Vargu më i gjatë",
     // Progress / stats (hub)
-    progressTried: (n: number, total: number) => `Provove ${n} nga ${total} lojëra`,
-    progressPlays: (n: number) => `${n} lojëra gjithsej`,
+    progressTried: (n: number, total: number) => `Përdore ${n} nga ${total} mjete`,
+    progressPlays: (n: number) => `${n} përpjekje gjithsej`,
     tileBest: (n: number) => `Rekordi ${n}`,
     tilePlays: (n: number) => `${n}×`,
   },

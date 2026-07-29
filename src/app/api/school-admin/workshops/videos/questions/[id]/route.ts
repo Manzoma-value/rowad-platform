@@ -54,7 +54,9 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
     data.timestamp_seconds = Math.round(ts);
   }
 
-  if (existing.type === "TF") {
+  if (existing.type === "TEXT") {
+    data.correct_answer = "";
+  } else if (existing.type === "TF") {
     if (body.correct_answer !== undefined) {
       if (body.correct_answer !== "true" && body.correct_answer !== "false") {
         return NextResponse.json({ error: "correct_answer must be true or false" }, { status: 400 });

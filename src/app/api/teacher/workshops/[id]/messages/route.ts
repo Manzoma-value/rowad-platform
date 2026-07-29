@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { notifyProfiles, schoolAdminProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         { signed_up_teachers: { some: { id: auth.teacher.id } } },
       ],
     },
-    select: { id: true, status: true },
+    select: { id: true, title: true, status: true },
   });
   if (!workshop) return NextResponse.json({ error: "workshop_access_required" }, { status: 403 });
   if (workshop.status === "CLOSED") return NextResponse.json({ error: "workshop_closed" }, { status: 410 });
@@ -38,5 +39,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       author: { select: { id: true, full_name: true, role: true, avatar_url: true } },
     },
   });
+  const adminIds = await schoolAdminProfileIds(auth.teacher.school_id);
+  await notifyProfiles(adminIds, {
+    type: "WORKSHOP_MESSAGE",
+    title_ar: "ملاحظة جديدة من معلم",
+    title_sq: "Shënim i ri nga mësuesi",
+    title_en: "New teacher workshop note",
+    body_ar: `${auth.profile.full_name}: ${messageBody.slice(0, 180)}`,
+    body_sq: `${auth.profile.full_name}: ${messageBody.slice(0, 180)}`,
+    body_en: `${auth.profile.full_name}: ${messageBody.slice(0, 180)}`,
+    href: `/workshops/${id}`,
+    actor_id: auth.profile.id,
+    event_key: `workshop-message:${message.id}`,
+  }).catch(() => undefined);
   return NextResponse.json({ message }, { status: 201 });
 }

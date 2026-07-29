@@ -7,6 +7,7 @@ import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
 import { useLang } from "@/lib/language-context";
 import TeacherLoadError from "@/components/TeacherLoadError";
+import { NotificationFeed } from "@/components/NotificationCenter";
 
 type Lang = "ar" | "sq" | "en";
 
@@ -544,6 +545,7 @@ export default function TeacherPage() {
             ))}
           </section>
         )}
+        <NotificationFeed basePath="/teacher" />
       </main>
       <style>{styles}</style>
     </div>

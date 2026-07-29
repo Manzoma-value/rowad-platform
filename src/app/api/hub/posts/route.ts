@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { profileSchoolId } from "@/lib/hub-auth";
 import { hubImageExtension, validateHubImage } from "@/lib/hub-image";
+import { notifyProfiles, schoolProfileIds } from "@/lib/notifications";
 
 function adminSupabase() {
   return createSupabaseAdmin(
@@ -131,6 +132,20 @@ export async function POST(req: Request) {
     },
     select: POST_SELECT,
   });
+
+  const recipientIds = await schoolProfileIds(school_id);
+  await notifyProfiles(recipientIds, {
+    type: "COMMUNITY_POST",
+    title_ar: "منشور جديد في المجتمع",
+    title_sq: "Postim i ri në komunitet",
+    title_en: "New community post",
+    body_ar: content?.slice(0, 180) || "تمت مشاركة صورة جديدة",
+    body_sq: content?.slice(0, 180) || "U nda një imazh i ri",
+    body_en: content?.slice(0, 180) || "A new image was shared",
+    href: "/hub",
+    actor_id: profile.id,
+    event_key: `community-post:${post.id}`,
+  }).catch(() => undefined);
 
   return NextResponse.json({ post }, { status: 201 });
 }

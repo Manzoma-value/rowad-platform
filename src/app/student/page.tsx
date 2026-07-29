@@ -8,6 +8,7 @@ import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
 import StudentConceptBanner from "@/components/StudentConceptBanner";
 import { cachedFetch } from "@/lib/api-cache";
+import { NotificationFeed } from "@/components/NotificationCenter";
 
 type Announcement = {
   id: string;
@@ -183,6 +184,7 @@ export default function StudentPage() {
             ))}
           </div>
         </section>
+        <NotificationFeed basePath="/student" />
       </main>
       <style>{styles}</style>
     </div>

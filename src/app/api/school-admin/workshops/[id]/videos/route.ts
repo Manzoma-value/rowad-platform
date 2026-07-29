@@ -8,6 +8,7 @@ import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { VIDEO_BUCKET } from "@/lib/workshop-videos";
+import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ function adminSupabase() {
 }
 
 async function workshopForAdmin(id: string, schoolId: string) {
-  return prisma.workshop.findFirst({ where: { id, school_id: schoolId }, select: { id: true } });
+  return prisma.workshop.findFirst({ where: { id, school_id: schoolId }, select: { id: true, title: true } });
 }
 
 const questionSelect = {
@@ -114,6 +115,19 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       },
       select: videoSelect,
     });
+    const teacherIds = await workshopTeacherProfileIds(id);
+    await notifyProfiles(teacherIds, {
+      type: "WORKSHOP_VIDEO",
+      title_ar: "فيديو جديد في الورشة",
+      title_sq: "Video e re në trajnim",
+      title_en: "New workshop video",
+      body_ar: `تمت إضافة «${video.title}» إلى ورشة «${workshop.title}»`,
+      body_sq: `“${video.title}” u shtua në trajnimin “${workshop.title}”`,
+      body_en: `“${video.title}” was added to “${workshop.title}”`,
+      href: `/workshops/${id}`,
+      actor_id: auth.profile.id,
+      event_key: `workshop-video:${video.id}`,
+    }).catch(() => undefined);
     return NextResponse.json({ video: { ...video, questions: [] } }, { status: 201 });
   } catch (dbError) {
     await admin.storage.from(VIDEO_BUCKET).remove([storagePath]).catch(() => null);

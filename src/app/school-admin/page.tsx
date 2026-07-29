@@ -9,6 +9,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import IdentityStar from "@/components/IdentityStar";
 import IdentityMandala from "@/components/IdentityMandala";
 import { useViewOnly } from "@/lib/view-only-context";
+import { NotificationFeed } from "@/components/NotificationCenter";
 
 interface Stats {
   school: { name: string; name_alt?: string | null };
@@ -190,6 +191,7 @@ export default function SchoolAdminDashboard() {
           ))}
         </div>
       </section>
+      <NotificationFeed basePath="/school-admin" />
 
       <style>{styles}</style>
     </div>

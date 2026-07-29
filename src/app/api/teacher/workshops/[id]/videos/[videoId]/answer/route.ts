@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { notifyProfiles, schoolAdminProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -32,13 +33,18 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
         ],
       },
     },
-    select: { id: true, _count: { select: { questions: true } } },
+    select: {
+      id: true,
+      title: true,
+      workshop: { select: { school_id: true, title: true } },
+      _count: { select: { questions: true } },
+    },
   });
   if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const question = await prisma.workshopVideoQuestion.findFirst({
     where: { id: questionId, video_id: videoId },
-    select: { id: true, correct_answer: true },
+    select: { id: true, type: true, text: true, correct_answer: true },
   });
   if (!question) return NextResponse.json({ error: "Question not found" }, { status: 404 });
 
@@ -49,16 +55,40 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     select: { id: true },
   });
 
-  const isCorrect = answer.toLowerCase() === question.correct_answer.trim().toLowerCase();
-  await prisma.workshopVideoAnswer.upsert({
+  const isWritten = question.type === "TEXT";
+  const isCorrect = isWritten
+    ? false
+    : answer.toLowerCase() === question.correct_answer.trim().toLowerCase();
+  const persistedAnswer = await prisma.workshopVideoAnswer.upsert({
     where: { attempt_id_question_id: { attempt_id: attempt.id, question_id: questionId } },
-    create: { attempt_id: attempt.id, question_id: questionId, answer, is_correct: isCorrect },
+    create: {
+      attempt_id: attempt.id,
+      question_id: questionId,
+      answer: answer.slice(0, 4000),
+      is_correct: isCorrect,
+      grading_status: isWritten ? "PENDING_REVIEW" : "AUTO_GRADED",
+    },
     update: {},
+    select: {
+      id: true,
+      question_id: true,
+      answer: true,
+      is_correct: true,
+      grading_status: true,
+      feedback: true,
+    },
   });
 
   const answers = await prisma.workshopVideoAnswer.findMany({
     where: { attempt_id: attempt.id },
-    select: { question_id: true, answer: true, is_correct: true },
+    select: {
+      id: true,
+      question_id: true,
+      answer: true,
+      is_correct: true,
+      grading_status: true,
+      feedback: true,
+    },
   });
   const score = answers.filter((a) => a.is_correct).length;
   const total = video._count.questions;
@@ -72,10 +102,27 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     select: { score: true, total: true, completed_at: true },
   });
 
+  const adminIds = await schoolAdminProfileIds(video.workshop.school_id);
+  await notifyProfiles(adminIds, {
+    type: "WORKSHOP_ANSWER",
+    title_ar: "إجابة جديدة في ورشة",
+    title_sq: "Përgjigje e re në trajnim",
+    title_en: "New workshop answer",
+    body_ar: `${auth.profile.full_name} أجاب عن سؤال في «${video.title}»`,
+    body_sq: `${auth.profile.full_name} iu përgjigj një pyetjeje në “${video.title}”`,
+    body_en: `${auth.profile.full_name} answered a question in “${video.title}”`,
+    href: `/workshops/${id}`,
+    actor_id: auth.profile.id,
+    event_key: `workshop-video-answer:${persistedAnswer.id}`,
+  }).catch(() => undefined);
+
   const persisted = answers.find((a) => a.question_id === questionId)!;
   return NextResponse.json({
+    answer_id: persisted.id,
     is_correct: persisted.is_correct,
     submitted_answer: persisted.answer,
+    grading_status: persisted.grading_status,
+    feedback: persisted.feedback,
     attempt: updated,
   });
 }

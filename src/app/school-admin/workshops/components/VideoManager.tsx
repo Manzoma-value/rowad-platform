@@ -17,7 +17,7 @@ import { VideoResultsModal } from "./video-results-modal";
 const T = {
   ar: {
     title: "الفيديوهات التفاعلية",
-    help: "ارفع فيديو وثبّت عليه أسئلة اختيار من متعدد أو صح/خطأ. أثناء المشاهدة يتوقف الفيديو تلقائياً عند كل سؤال ولا يكمل حتى يجيب المعلم.",
+    help: "ارفع فيديو وأضف أسئلة اختيار من متعدد أو صح/خطأ أو إجابات كتابية. يتوقف الفيديو عند كل سؤال، وتظهر الإجابات الكتابية في شاشة المراجعة لتقييمها.",
     upload: "رفع فيديو",
     uploading: "جارٍ الرفع",
     titlePh: "عنوان الفيديو (اختياري)",
@@ -32,6 +32,7 @@ const T = {
     results: "من شاهد وأجاب",
     mcq: "اختيار",
     tf: "صح/خطأ",
+    textType: "كتابي",
     confirmDeleteVideo: "سيتم حذف هذا الفيديو وكل أسئلته ونتائج المعلمين المرتبطة به. المتابعة؟",
     confirmDeleteQuestion: "حذف هذا السؤال؟",
     error: "حدث خطأ. حاول مرة أخرى.",
@@ -41,7 +42,7 @@ const T = {
   },
   sq: {
     title: "Videot interaktive",
-    help: "Ngarko një video dhe vendos mbi të pyetje me shumë opsione ose të saktë/gabuar. Gjatë shikimit video ndalon te çdo pyetje dhe nuk vazhdon derisa mësuesi të përgjigjet.",
+    help: "Ngarko një video dhe shto pyetje me opsione, saktë/gabim ose përgjigje me shkrim. Video ndalon te çdo pyetje; përgjigjet me shkrim vlerësohen te rezultatet.",
     upload: "Ngarko video",
     uploading: "Duke ngarkuar",
     titlePh: "Titulli i videos (opsional)",
@@ -56,6 +57,7 @@ const T = {
     results: "Kush e pa dhe u përgjigj",
     mcq: "Opsione",
     tf: "Saktë/Gabim",
+    textType: "Me shkrim",
     confirmDeleteVideo: "Kjo do të fshijë videon, pyetjet dhe rezultatet e mësuesve. Vazhdo?",
     confirmDeleteQuestion: "Ta fshijmë këtë pyetje?",
     error: "Ndodhi një gabim. Provo përsëri.",
@@ -258,7 +260,7 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
                   {video.questions.map((question) => (
                     <li key={question.id} className="vm-question">
                       <span className="vm-q-time"><Clock3 size={11} />{formatVideoTime(question.timestamp_seconds)}</span>
-                      <span className="vm-q-type">{question.type === "MCQ" ? t.mcq : t.tf}</span>
+                      <span className="vm-q-type">{question.type === "MCQ" ? t.mcq : question.type === "TF" ? t.tf : t.textType}</span>
                       <p title={question.text}>{question.text}</p>
                       {!viewOnly && (
                         <span className="vm-q-actions">

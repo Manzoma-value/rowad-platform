@@ -7,6 +7,7 @@ import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin
 import { prisma } from "@/lib/prisma";
 import { qrDataUri } from "@/lib/qr";
 import { AUDIENCES, cleanSchedule, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
+import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -144,6 +145,22 @@ export async function PATCH(
       live_ended_at: true,
     },
   });
+  if (Object.keys(data).length > 0) {
+    const teacherIds = await workshopTeacherProfileIds(id);
+    const isLive = body.is_live === true;
+    await notifyProfiles(teacherIds, {
+      type: isLive ? "WORKSHOP_LIVE" : "WORKSHOP_UPDATE",
+      title_ar: isLive ? "الورشة مباشرة الآن" : "تحديث جديد في الورشة",
+      title_sq: isLive ? "Trajnimi është drejtpërdrejt" : "Përditësim i ri në trajnim",
+      title_en: isLive ? "Workshop is live now" : "Workshop updated",
+      body_ar: isLive ? `بدأت ورشة «${workshop.title}» الآن` : `تم تحديث ورشة «${workshop.title}»`,
+      body_sq: isLive ? `Trajnimi “${workshop.title}” filloi tani` : `Trajnimi “${workshop.title}” u përditësua`,
+      body_en: isLive ? `“${workshop.title}” is live now` : `“${workshop.title}” was updated`,
+      href: `/workshops/${id}`,
+      actor_id: auth.profile.id,
+      event_key: `workshop-update:${id}:${workshop.live_started_at?.toISOString() ?? Date.now()}`,
+    }).catch(() => undefined);
+  }
   return NextResponse.json({ workshop });
 }
 

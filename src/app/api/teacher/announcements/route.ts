@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { classStudentProfileIds, notifyProfiles } from "@/lib/notifications";
 
 export const revalidate = 30;
 
@@ -79,6 +80,19 @@ export async function POST(req: Request) {
       teacher: { select: { profile: { select: { full_name: true } } } },
     },
   });
+  const studentIds = await classStudentProfileIds(classId);
+  await notifyProfiles(studentIds, {
+    type: "SYSTEM",
+    title_ar: "إعلان جديد من المعلم",
+    title_sq: "Njoftim i ri nga mësuesi",
+    title_en: "New teacher announcement",
+    body_ar: content.trim().slice(0, 180),
+    body_sq: content.trim().slice(0, 180),
+    body_en: content.trim().slice(0, 180),
+    href: "/student/classes",
+    actor_id: auth.profile.id,
+    event_key: `class-announcement:${announcement.id}`,
+  }).catch(() => undefined);
 
   return NextResponse.json(announcement, { status: 201 });
 }

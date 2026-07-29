@@ -4,6 +4,7 @@ import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import type { WorkshopMaterial } from "@/lib/workshops";
+import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 const BUCKET = "workshop-materials";
@@ -14,7 +15,7 @@ function adminSupabase() {
 }
 
 async function workshopForAdmin(id: string, schoolId: string) {
-  return prisma.workshop.findFirst({ where: { id, school_id: schoolId }, select: { id: true, materials: true, updated_at: true } });
+  return prisma.workshop.findFirst({ where: { id, school_id: schoolId }, select: { id: true, title: true, materials: true, updated_at: true } });
 }
 
 async function appendMaterial(id: string, initial: Awaited<ReturnType<typeof workshopForAdmin>>, material: WorkshopMaterial) {
@@ -27,7 +28,7 @@ async function appendMaterial(id: string, initial: Awaited<ReturnType<typeof wor
       data: { materials: next as unknown as Prisma.InputJsonValue },
     });
     if (updated.count === 1) return next;
-    current = await prisma.workshop.findUnique({ where: { id }, select: { id: true, materials: true, updated_at: true } });
+    current = await prisma.workshop.findUnique({ where: { id }, select: { id: true, title: true, materials: true, updated_at: true } });
   }
   throw new Error("material_update_conflict");
 }
@@ -43,7 +44,7 @@ async function removeMaterial(id: string, initial: Awaited<ReturnType<typeof wor
       data: { materials: next as unknown as Prisma.InputJsonValue },
     });
     if (updated.count === 1) return { next, removed };
-    current = await prisma.workshop.findUnique({ where: { id }, select: { id: true, materials: true, updated_at: true } });
+    current = await prisma.workshop.findUnique({ where: { id }, select: { id: true, title: true, materials: true, updated_at: true } });
   }
   throw new Error("material_update_conflict");
 }
@@ -86,6 +87,19 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   try {
     const next = await appendMaterial(id, workshop, material);
+    const teacherIds = await workshopTeacherProfileIds(id);
+    await notifyProfiles(teacherIds, {
+      type: "WORKSHOP_MATERIAL",
+      title_ar: "مادة تعليمية جديدة",
+      title_sq: "Material i ri mësimor",
+      title_en: "New workshop material",
+      body_ar: `تمت إضافة «${material.title}» إلى ورشة «${workshop.title}»`,
+      body_sq: `“${material.title}” u shtua në trajnimin “${workshop.title}”`,
+      body_en: `“${material.title}” was added to “${workshop.title}”`,
+      href: `/workshops/${id}`,
+      actor_id: auth.profile.id,
+      event_key: `workshop-material:${material.id}`,
+    }).catch(() => undefined);
     return NextResponse.json({ material, materials: next }, { status: 201 });
   } catch (error) {
     if (material.path) await adminSupabase().storage.from(BUCKET).remove([material.path]).catch(() => null);

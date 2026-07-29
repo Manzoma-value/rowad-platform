@@ -14,6 +14,7 @@ import Image from "next/image";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import IdentityBackdrop from "@/components/IdentityBackdrop";
+import { NotificationCenter } from "@/components/NotificationCenter";
 import {
   LayoutDashboard,
   Users,
@@ -24,7 +25,6 @@ import {
   Globe2,
   Menu,
   LogOut,
-  Bell,
   Sparkles,
   X,
   LucideIcon,
@@ -478,10 +478,8 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
 
           <div className="sl-topbar-actions">
             <div className="sl-topbar-divider" />
-            <button type="button" className="sl-bell-btn" aria-label="الإشعارات">
-              <Bell size={15} strokeWidth={1.7} />
-            </button>
-            <div className="sl-topbar-user-pill">
+            <NotificationCenter basePath="/student" buttonClassName="sl-bell-btn" />
+            <Link href="/student/profile" className="sl-topbar-user-pill">
               <div className="sl-topbar-av">
                 {avatarUrl ? (
                   <Image
@@ -496,7 +494,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
                 )}
               </div>
               <span className="sl-topbar-name">{name || (lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName)}</span>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -862,7 +860,7 @@ const styles = `
     display: none; align-items: center; gap: 8px;
     padding: 5px; padding-inline-end: 12px; border-radius: 999px;
     border: 1px solid rgba(217,201,176,.24); background: rgba(255,251,245,.075);
-    transition: all 0.18s var(--sl-ease-out);
+    transition: all 0.18s var(--sl-ease-out); text-decoration:none;
   }
   .sl-topbar-user-pill:hover { border-color: rgba(217,201,176,.52); background:rgba(255,251,245,.11); box-shadow: 0 8px 24px #32101A38; }
   @media (min-width: 768px) { .sl-topbar-user-pill { display: flex; } }

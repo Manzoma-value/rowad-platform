@@ -9,7 +9,11 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, context: { params: Promise<{ id: string; videoId: string }> }) {
+function csvCell(value: unknown) {
+  return `"${String(value ?? "").replaceAll('"', '""')}"`;
+}
+
+export async function GET(req: Request, context: { params: Promise<{ id: string; videoId: string }> }) {
   const auth = await requireSchoolAdmin();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id, videoId } = await context.params;
@@ -52,7 +56,17 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
         total: true,
         completed_at: true,
         answers: {
-          select: { question_id: true, answer: true, is_correct: true, created_at: true },
+          select: {
+            id: true,
+            question_id: true,
+            answer: true,
+            is_correct: true,
+            grading_status: true,
+            feedback: true,
+            graded_at: true,
+            created_at: true,
+            grader: { select: { full_name: true } },
+          },
         },
       },
     }),
@@ -81,17 +95,85 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
         .slice()
         .sort((a, b) => (questionById.get(a.question_id)?.order ?? 0) - (questionById.get(b.question_id)?.order ?? 0))
         .map((a) => ({
+          id: a.id,
           question_id: a.question_id,
           question_text: questionById.get(a.question_id)?.text ?? "",
+          question_type: questionById.get(a.question_id)?.type ?? "MCQ",
           answer: a.answer,
           is_correct: a.is_correct,
+          grading_status: a.grading_status,
+          feedback: a.feedback,
+          graded_at: a.graded_at,
+          grader_name: a.grader?.full_name ?? null,
           answered_at: a.created_at,
         })),
     };
   });
 
+  if (new URL(req.url).searchParams.get("format") === "csv") {
+    const header = [
+      "Teacher",
+      "Email",
+      "Viewed",
+      "Watch completed",
+      "Score",
+      "Total",
+      "Question type",
+      "Question",
+      "Answer",
+      "Grading status",
+      "Correct",
+      "Feedback",
+      "Answered at",
+      "Graded at",
+    ];
+    const lines = [header.map(csvCell).join(",")];
+    for (const row of rows) {
+      const answers = row.answers.length ? row.answers : [null];
+      for (const answer of answers) {
+        lines.push([
+          row.full_name,
+          row.email,
+          row.viewed ? "Yes" : "No",
+          row.watch_completed_at ? "Yes" : "No",
+          row.score ?? "",
+          row.total,
+          answer?.question_type ?? "",
+          answer?.question_text ?? "",
+          answer?.answer ?? "",
+          answer?.grading_status ?? "",
+          answer ? (answer.is_correct ? "Yes" : "No") : "",
+          answer?.feedback ?? "",
+          answer?.answered_at?.toISOString?.() ?? "",
+          answer?.graded_at?.toISOString?.() ?? "",
+        ].map(csvCell).join(","));
+      }
+    }
+    return new Response(`\uFEFF${lines.join("\r\n")}`, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="workshop-video-report-${videoId}.csv"`,
+      },
+    });
+  }
+
+  const pendingReview = rows.reduce(
+    (sum, row) => sum + row.answers.filter((answer) => answer.grading_status === "PENDING_REVIEW").length,
+    0,
+  );
   return NextResponse.json({
-    video: { id: video.id, title: video.title, question_count: video.questions.length },
+    video: {
+      id: video.id,
+      title: video.title,
+      question_count: video.questions.length,
+      pending_review: pendingReview,
+    },
+    summary: {
+      total_teachers: rows.length,
+      viewed: rows.filter((row) => row.viewed).length,
+      completed: rows.filter((row) => Boolean(row.quiz_completed_at)).length,
+      pending_review: pendingReview,
+    },
     teachers: rows,
   });
 }

@@ -27,6 +27,8 @@ const T = {
     continue: "متابعة الفيديو",
     correct: "إجابة صحيحة",
     wrong: "إجابة غير صحيحة",
+    writtenPlaceholder: "اكتب إجابتك بوضوح...",
+    pendingReview: "تم إرسال إجابتك وستظهر نتيجتها بعد مراجعة الإدارة.",
     trueLbl: "صح",
     falseLbl: "خطأ",
     score: "نتيجتك",
@@ -53,6 +55,8 @@ const T = {
     continue: "Vazhdo videon",
     correct: "Përgjigje e saktë",
     wrong: "Përgjigje jo e saktë",
+    writtenPlaceholder: "Shkruaj përgjigjen tënde qartë...",
+    pendingReview: "Përgjigjja u dërgua dhe rezultati shfaqet pas vlerësimit nga administrata.",
     trueLbl: "E saktë",
     falseLbl: "E gabuar",
     score: "Rezultati yt",
@@ -234,7 +238,7 @@ export function VideoQuizPlayer({
   }
 
   async function submitAnswer() {
-    if (!activeQuestion || !selected || submitting) return;
+    if (!activeQuestion || !selected?.trim() || submitting) return;
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -246,9 +250,12 @@ export function VideoQuizPlayer({
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error ?? "failed");
       const record: WorkshopVideoAnswerRecord = {
+        id: payload.answer_id ?? activeQuestion.id,
         question_id: activeQuestion.id,
         answer: payload.submitted_answer,
         is_correct: payload.is_correct,
+        grading_status: payload.grading_status,
+        feedback: payload.feedback ?? null,
       };
       setAnswered((current) => new Map(current).set(activeQuestion.id, record));
       setScore(payload.attempt.score);
@@ -327,8 +334,19 @@ export function VideoQuizPlayer({
 
               {!revealed ? (
                 <>
-                  <div className="vqp-options">
-                    {activeQuestion.type === "TF" ? (
+                  <div className={`vqp-options${activeQuestion.type === "TEXT" ? " written" : ""}`}>
+                    {activeQuestion.type === "TEXT" ? (
+                      <textarea
+                        className="vqp-written"
+                        dir="auto"
+                        rows={5}
+                        maxLength={4000}
+                        value={selected ?? ""}
+                        onChange={(event) => setSelected(event.target.value)}
+                        placeholder={t.writtenPlaceholder}
+                        autoFocus
+                      />
+                    ) : activeQuestion.type === "TF" ? (
                       <>
                         <button type="button" className={`vqp-opt${selected === "true" ? " sel" : ""}`} onClick={() => setSelected("true")}>
                           <span className="vqp-opt-index">✓</span><span>{t.trueLbl}</span>{selected === "true" && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
@@ -353,15 +371,15 @@ export function VideoQuizPlayer({
                     )}
                   </div>
                   {submitError && <p className="vqp-error" role="alert">{submitError}</p>}
-                  <button className="vqp-cta" onClick={() => void submitAnswer()} disabled={!selected || submitting}>
+                  <button className="vqp-cta" onClick={() => void submitAnswer()} disabled={!selected?.trim() || submitting}>
                     {submitting ? t.submitting : t.submit}
                   </button>
                 </>
               ) : (
                 <>
-                  <div className={`vqp-result${revealed.is_correct ? "" : " wrong"}`}>
-                    {revealed.is_correct ? <CheckCircle2 size={17} /> : <XCircle size={17} />}
-                    <span>{revealed.is_correct ? t.correct : t.wrong}</span>
+                  <div className={`vqp-result${revealed.grading_status === "PENDING_REVIEW" ? " pending" : revealed.is_correct ? "" : " wrong"}`}>
+                    {revealed.grading_status === "PENDING_REVIEW" ? <HelpCircle size={17} /> : revealed.is_correct ? <CheckCircle2 size={17} /> : <XCircle size={17} />}
+                    <span>{revealed.grading_status === "PENDING_REVIEW" ? t.pendingReview : revealed.is_correct ? t.correct : t.wrong}</span>
                   </div>
                   <button className="vqp-cta" onClick={continuePlayback}>{t.continue}</button>
                 </>
@@ -449,6 +467,9 @@ const styles = `
 .vqp-question-progress{display:flex;gap:5px;margin-bottom:14px}.vqp-question-progress i{height:4px;flex:1;border-radius:999px;background:#E5E0D5}.vqp-question-progress i.active{background:#6B1E2D}
 .vqp-card-text{margin:0 0 16px;font-size:clamp(15px,2vw,18px);font-weight:900;line-height:1.75;color:#32101A}
 .vqp-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:14px}
+.vqp-options.written{display:block}
+.vqp-written{box-sizing:border-box;width:100%;min-height:132px;resize:vertical;border:1.5px solid #D9C9B0;border-radius:13px;background:#FFFFFF;padding:13px 14px;font:700 13px 'Cairo',sans-serif;line-height:1.9;color:#32101A}
+.vqp-written:focus{outline:none;border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}
 .vqp-opt{min-height:52px;display:grid;grid-template-columns:32px minmax(0,1fr) 20px;align-items:center;gap:9px;border:1.5px solid #D9C9B0;border-radius:13px;background:#FFFFFF;padding:8px 11px;font:700 13px 'Cairo',sans-serif;color:#32101A;cursor:pointer;text-align:start;transition:border-color .12s,background .12s,transform .12s}
 .vqp-opt:hover{border-color:#8F765B;transform:translateY(-1px)}
 .vqp-opt.sel{border-color:#6B1E2D;border-width:2px;background:rgba(107,30,45,.07);font-weight:900}
@@ -457,6 +478,7 @@ const styles = `
 .vqp-cta:disabled{opacity:.45;cursor:not-allowed}
 .vqp-result{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:11px 13px;border-radius:11px;background:rgba(27,94,32,.13);color:#1B5E20;font-weight:900;font-size:13px}
 .vqp-result.wrong{background:rgba(107,30,45,.1);color:#6B1E2D}
+.vqp-result.pending{background:rgba(184,160,130,.2);color:#6B1E2D}
 .vqp-error{margin:0 0 10px;padding:9px 11px;border-radius:9px;background:rgba(107,30,45,.09);color:#6B1E2D;font-size:11.5px;font-weight:800}
 
 /* ── Custom controls (native controls are intentionally NOT used: they would
