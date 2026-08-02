@@ -326,6 +326,10 @@ SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 
 # ─── Application ───────────────────────────────────────────────
 NEXT_PUBLIC_SITE_URL="http://localhost:3000"
+
+# Google Drive workshop videos (server-side only)
+GOOGLE_DRIVE_CLIENT_EMAIL="workshop-videos@your-project.iam.gserviceaccount.com"
+GOOGLE_DRIVE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
 | Variable | Required | Description |
@@ -336,7 +340,12 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key — used server-side only for admin operations |
 | `NEXT_PUBLIC_SITE_URL` | ✅ | Full URL of the app — used in auth redirect URLs and invite emails |
 
-> **Security:** Never expose `SUPABASE_SERVICE_ROLE_KEY` to the client. It is only used in server-side API route handlers.
+| `GOOGLE_DRIVE_CLIENT_EMAIL` | For Drive videos | Google Cloud service-account email shown to workshop admins for file sharing |
+| `GOOGLE_DRIVE_PRIVATE_KEY` | For Drive videos | Service-account private key; keep the `\n` line breaks and store it server-side only |
+
+> **Security:** Never expose `SUPABASE_SERVICE_ROLE_KEY` or `GOOGLE_DRIVE_PRIVATE_KEY` to the client. They are only used in server-side API route handlers.
+
+For Drive-hosted workshop videos, enable the Google Drive API in the Google Cloud project and create a service account with a JSON key. Add the two values above to the deployment environment. An admin then shares each Drive video with the displayed service-account email as **Viewer** and pastes the normal Drive file link into the workshop. Downloading must remain enabled. The platform validates the file and streams it only to authenticated admins and enrolled workshop teachers.
 
 ---
 

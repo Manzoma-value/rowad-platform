@@ -25,6 +25,7 @@ export type WorkshopVideo = {
   id: string;
   title: string;
   url: string;
+  source_type: "SUPABASE" | "GOOGLE_DRIVE";
   mime_type: string | null;
   size_bytes: number | null;
   duration_seconds: number | null;
@@ -55,6 +56,7 @@ export type TeacherWorkshopVideo = {
   id: string;
   title: string;
   url: string;
+  source_type: "SUPABASE" | "GOOGLE_DRIVE";
   mime_type: string | null;
   duration_seconds: number | null;
   order: number;

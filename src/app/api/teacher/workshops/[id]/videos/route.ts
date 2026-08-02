@@ -34,6 +34,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
       id: true,
       title: true,
       url: true,
+      source_type: true,
       mime_type: true,
       duration_seconds: true,
       order: true,

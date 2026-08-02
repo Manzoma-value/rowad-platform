@@ -17,7 +17,7 @@ function adminSupabase() {
 async function videoForAdmin(id: string, videoId: string, schoolId: string) {
   return prisma.workshopVideo.findFirst({
     where: { id: videoId, workshop_id: id, workshop: { school_id: schoolId } },
-    select: { id: true, storage_path: true },
+    select: { id: true, storage_path: true, source_type: true },
   });
 }
 
@@ -55,6 +55,8 @@ export async function DELETE(_req: Request, context: { params: Promise<{ id: str
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   await prisma.workshopVideo.delete({ where: { id: videoId } });
-  await adminSupabase().storage.from(VIDEO_BUCKET).remove([existing.storage_path]).catch(() => null);
+  if (existing.source_type === "SUPABASE" && existing.storage_path) {
+    await adminSupabase().storage.from(VIDEO_BUCKET).remove([existing.storage_path]).catch(() => null);
+  }
   return NextResponse.json({ success: true });
 }

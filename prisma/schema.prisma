@@ -1485,7 +1485,10 @@ model WorkshopVideo {
   id           String   @id @default(uuid()) @db.Uuid
   workshop_id  String   @db.Uuid
   title        String
-  storage_path String
+  // Supabase objects have a storage path; Drive-backed videos have a Drive ID.
+  storage_path String?
+  source_type  WorkshopVideoSource @default(SUPABASE)
+  drive_file_id String?
   url          String
   mime_type    String?
   size_bytes   Int?
@@ -1504,7 +1507,13 @@ model WorkshopVideo {
   attempts  WorkshopVideoAttempt[]
 
   @@index([workshop_id, order])
+  @@index([drive_file_id])
   @@map("workshop_videos")
+}
+
+enum WorkshopVideoSource {
+  SUPABASE
+  GOOGLE_DRIVE
 }
 
 model WorkshopVideoQuestion {

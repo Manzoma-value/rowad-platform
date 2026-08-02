@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BarChart3, Clock3, Film, HelpCircle, Pencil, Plus, Trash2, Upload } from "lucide-react";
+import { BarChart3, Clock3, Film, HardDrive, HelpCircle, Link2, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
 import { uploadWorkshopVideo } from "@/lib/upload-workshop-video";
@@ -67,10 +67,34 @@ const T = {
   },
 } as const;
 
+const DRIVE_T = {
+  ar: {
+    link: "رابط فيديو Google Drive",
+    add: "إضافة من Drive",
+    adding: "جارٍ التحقق",
+    source: "Google Drive",
+    share: (email: string) => email ? `شارك الملف بصلاحية مشاهد مع ${email} ثم الصق الرابط هنا.` : "يجب إعداد حساب خدمة Google Drive في الخادم أولاً.",
+    invalid: "الرابط غير صالح. الصق رابط ملف فيديو من Google Drive.",
+    access: "تعذر فتح الملف. تأكد من مشاركته مع حساب الخدمة الظاهر أدناه والسماح بالتنزيل.",
+    config: "لم يتم إعداد اتصال Google Drive على الخادم بعد.",
+  },
+  sq: {
+    link: "Lidhja e videos në Google Drive",
+    add: "Shto nga Drive",
+    adding: "Duke verifikuar",
+    source: "Google Drive",
+    share: (email: string) => email ? `Ndaje skedarin si Viewer me ${email}, pastaj vendos lidhjen këtu.` : "Llogaria e shërbimit Google Drive duhet konfiguruar në server.",
+    invalid: "Lidhja nuk është e vlefshme. Vendos një lidhje skedari video nga Google Drive.",
+    access: "Skedari nuk mund të hapet. Ndaje me llogarinë e shërbimit më poshtë dhe lejo shkarkimin.",
+    config: "Lidhja me Google Drive nuk është konfiguruar ende në server.",
+  },
+} as const;
+
 type QuestionModalState = { video: WorkshopVideo; question?: WorkshopVideoQuestion };
 
 export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: string; viewOnly: boolean; lang: "ar" | "sq" }) {
   const t = T[lang];
+  const driveT = DRIVE_T[lang];
   const confirm = useConfirm();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -78,6 +102,9 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
   const [error, setError] = useState("");
   const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [pendingTitle, setPendingTitle] = useState("");
+  const [driveUrl, setDriveUrl] = useState("");
+  const [driveEmail, setDriveEmail] = useState("");
+  const [addingDrive, setAddingDrive] = useState(false);
   const [questionModal, setQuestionModal] = useState<QuestionModalState | null>(null);
   const [resultsFor, setResultsFor] = useState<WorkshopVideo | null>(null);
   const [busyVideo, setBusyVideo] = useState<string | null>(null);
@@ -89,6 +116,7 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
       if (!response.ok) throw new Error("failed");
       const payload = await response.json();
       setVideos(payload.videos ?? []);
+      setDriveEmail(payload.drive_service_account_email ?? "");
     } catch {
       setVideos([]);
       setError(t.error);
@@ -117,6 +145,34 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
     } finally {
       setUploadPercent(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function addDriveVideo() {
+    if (viewOnly || !driveUrl.trim() || addingDrive) return;
+    setError("");
+    setAddingDrive(true);
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${workshopId}/videos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source_type: "GOOGLE_DRIVE", drive_url: driveUrl.trim(), title: pendingTitle.trim() }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (payload.service_account_email) setDriveEmail(payload.service_account_email);
+        throw new Error(payload.error ?? "drive_lookup_failed");
+      }
+      setVideos((current) => [...(current ?? []), payload.video]);
+      setDriveUrl("");
+      setPendingTitle("");
+    } catch (addError) {
+      const code = addError instanceof Error ? addError.message : "";
+      setError(code === "invalid_drive_url" || code === "drive_not_video"
+        ? driveT.invalid
+        : code === "drive_not_configured" ? driveT.config : driveT.access);
+    } finally {
+      setAddingDrive(false);
     }
   }
 
@@ -173,26 +229,37 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
           <p>{t.help}</p>
         </div>
         {!viewOnly && (
-          <div className="vm-upload">
+          <div className="vm-source-controls">
             <input
               className="vm-title-input"
               placeholder={t.titlePh}
               value={pendingTitle}
               onChange={(event) => setPendingTitle(event.target.value)}
-              disabled={uploading}
+              disabled={uploading || addingDrive}
             />
-            <label className={`vm-upload-btn${uploading ? " busy" : ""}`}>
-              <Upload size={15} />
-              <span>{uploading ? `${t.uploading} ${uploadPercent}%` : t.upload}</span>
-              <input
-                ref={fileInputRef}
-                hidden
-                type="file"
-                accept="video/*"
-                disabled={uploading}
-                onChange={(event) => event.target.files?.[0] && void handleFile(event.target.files[0])}
-              />
-            </label>
+            <div className="vm-source-row">
+              <label className={`vm-upload-btn${uploading ? " busy" : ""}`}>
+                <Upload size={15} />
+                <span>{uploading ? `${t.uploading} ${uploadPercent}%` : t.upload}</span>
+                <input
+                  ref={fileInputRef}
+                  hidden
+                  type="file"
+                  accept="video/*"
+                  disabled={uploading || addingDrive}
+                  onChange={(event) => event.target.files?.[0] && void handleFile(event.target.files[0])}
+                />
+              </label>
+              <span className="vm-or">أو / ose</span>
+              <div className="vm-drive-input">
+                <Link2 size={15} />
+                <input dir="ltr" value={driveUrl} onChange={(event) => setDriveUrl(event.target.value)} placeholder={driveT.link} disabled={uploading || addingDrive} />
+              </div>
+              <button className="vm-drive-btn" onClick={() => void addDriveVideo()} disabled={!driveUrl.trim() || uploading || addingDrive}>
+                <HardDrive size={15} />{addingDrive ? driveT.adding : driveT.add}
+              </button>
+            </div>
+            <p className="vm-drive-help">{driveT.share(driveEmail)}</p>
           </div>
         )}
       </header>
@@ -227,6 +294,7 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
                       </span>
                       {video.duration_seconds ? <span className="vm-tag"><Clock3 size={11} />{formatVideoTime(video.duration_seconds)}</span> : null}
                       {video.size_bytes ? <span className="vm-tag">{formatFileSize(video.size_bytes)}</span> : null}
+                      {video.source_type === "GOOGLE_DRIVE" ? <span className="vm-tag drive"><HardDrive size={11} />{driveT.source}</span> : null}
                     </div>
                   </div>
                   <div className="vm-video-actions">
@@ -320,11 +388,18 @@ const styles = `
 .vm-head-text{min-width:min(260px,100%);flex:1}
 .vm-head h2{display:flex;align-items:center;gap:8px;margin:0 0 5px;font-size:18px;font-weight:900;color:#32101A}
 .vm-head p{margin:0;max-width:620px;color:#655B53;font-size:12.5px;line-height:1.8}
-.vm-upload{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.vm-title-input{min-width:190px;min-height:42px;border:1px solid #D7CBB9;border-radius:11px;background:#fff;padding:0 12px;font:inherit;font-size:12.5px;color:#32101A}
+.vm-source-controls{width:min(720px,100%);display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.vm-source-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.vm-title-input{width:100%;min-height:42px;box-sizing:border-box;border:1px solid #D7CBB9;border-radius:11px;background:#fff;padding:0 12px;font:inherit;font-size:12.5px;color:#32101A}
 .vm-title-input:focus{outline:none;border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}
 .vm-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;border-radius:11px;padding:0 16px;background:linear-gradient(135deg,#32101A,#6B1E2D);color:#F7F3EB;font:900 12.5px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}
 .vm-upload-btn.busy{opacity:.75;cursor:progress}
+.vm-or{color:#8C8274;font-size:10px;font-weight:900;white-space:nowrap}
+.vm-drive-input{min-width:240px;flex:1;min-height:42px;box-sizing:border-box;display:flex;align-items:center;gap:7px;border:1px solid #D7CBB9;border-radius:11px;background:#fff;padding:0 10px;color:#6B1E2D}
+.vm-drive-input input{width:100%;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:11.5px;color:#32101A}
+.vm-drive-btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #D9C9B0;border-radius:11px;padding:0 14px;background:#fff;color:#6B1E2D;font:900 11.5px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}
+.vm-drive-btn:disabled{opacity:.5;cursor:not-allowed}
+.vm-drive-help{margin:0;color:#655B53;font-size:10px;line-height:1.65;overflow-wrap:anywhere}
 .vm-progress{height:6px;border-radius:999px;background:#EFEAE0;overflow:hidden;margin-bottom:12px}
 .vm-progress>div{height:100%;background:linear-gradient(90deg,#6B1E2D,#B8A082);transition:width .2s}
 .vm-error{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(107,30,45,.08);border:1px solid rgba(107,30,45,.16);color:#6B1E2D;font-size:12px;font-weight:800}
@@ -344,6 +419,7 @@ const styles = `
 .vm-video-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 .vm-tag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 10px;background:#EFEAE0;color:#655B53;font-size:10px;font-weight:800}
 .vm-tag.warn{background:rgba(107,30,45,.09);color:#6B1E2D}
+.vm-tag.drive{background:rgba(26,115,232,.09);color:#1A5FAD}
 .vm-video-actions{display:flex;flex-wrap:wrap;gap:7px}
 .vm-btn{display:inline-flex;align-items:center;gap:6px;min-height:38px;border:0;border-radius:10px;padding:0 13px;background:#6B1E2D;color:#F7F3EB;font:800 11.5px 'Cairo',sans-serif;cursor:pointer}
 .vm-btn.ghost{background:#fff;border:1px solid #D9C9B0;color:#6B1E2D}
@@ -368,9 +444,13 @@ const styles = `
 @media(max-width:560px){
   .vm-card{border-radius:16px}
   .vm-head{gap:12px}
-  .vm-upload{width:100%}
+  .vm-source-controls{width:100%}
   .vm-title-input{flex:1;min-width:0}
-  .vm-upload-btn{width:100%}
+  .vm-source-row{align-items:stretch}
+  .vm-upload-btn,.vm-drive-btn{flex:1}
+  .vm-or{align-self:center}
+  .vm-drive-input{order:4;min-width:100%}
+  .vm-drive-btn{order:5}
   .vm-video-actions .vm-btn{flex:1;justify-content:center}
   .vm-question{grid-template-columns:auto minmax(0,1fr) auto;row-gap:6px}
   .vm-q-type{grid-row:1;grid-column:2;justify-self:start}

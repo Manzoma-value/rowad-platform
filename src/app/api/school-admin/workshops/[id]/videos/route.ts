@@ -9,6 +9,7 @@ import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin
 import { prisma } from "@/lib/prisma";
 import { VIDEO_BUCKET } from "@/lib/workshop-videos";
 import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
+import { extractGoogleDriveFileId, getGoogleDriveVideo, googleDriveServiceAccountEmail } from "@/lib/google-drive";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,7 @@ const videoSelect = {
   id: true,
   title: true,
   url: true,
+  source_type: true,
   mime_type: true,
   size_bytes: true,
   duration_seconds: true,
@@ -56,7 +58,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
       questions: { orderBy: { timestamp_seconds: "asc" }, select: questionSelect },
     },
   });
-  return NextResponse.json({ videos });
+  return NextResponse.json({ videos, drive_service_account_email: googleDriveServiceAccountEmail() });
 }
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -68,11 +70,68 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
 
   const body = await req.json().catch(() => null) as {
     storage_path?: string;
+    source_type?: "SUPABASE" | "GOOGLE_DRIVE";
+    drive_url?: string;
     title?: string;
     mime_type?: string;
     size_bytes?: number;
     duration_seconds?: number;
   } | null;
+
+  if (body?.source_type === "GOOGLE_DRIVE") {
+    const driveFileId = extractGoogleDriveFileId(body.drive_url ?? "");
+    if (!driveFileId) return NextResponse.json({ error: "invalid_drive_url" }, { status: 400 });
+
+    let driveFile: Awaited<ReturnType<typeof getGoogleDriveVideo>>;
+    try {
+      driveFile = await getGoogleDriveVideo(driveFileId);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "drive_lookup_failed";
+      return NextResponse.json(
+        { error: code, service_account_email: googleDriveServiceAccountEmail() },
+        { status: code === "drive_not_configured" ? 503 : 400 },
+      );
+    }
+
+    const videoId = crypto.randomUUID();
+    const order = await prisma.workshopVideo.count({ where: { workshop_id: id } });
+    try {
+      const video = await prisma.workshopVideo.create({
+        data: {
+          id: videoId,
+          workshop_id: id,
+          title: (body.title ?? "").trim().slice(0, 160) || driveFile.name,
+          storage_path: null,
+          source_type: "GOOGLE_DRIVE",
+          drive_file_id: driveFile.id,
+          url: `/api/workshop-videos/${videoId}/stream`,
+          mime_type: driveFile.mimeType,
+          size_bytes: driveFile.sizeBytes,
+          duration_seconds: driveFile.durationSeconds,
+          order,
+          created_by: auth.profile.id,
+        },
+        select: videoSelect,
+      });
+      const teacherIds = await workshopTeacherProfileIds(id);
+      await notifyProfiles(teacherIds, {
+        type: "WORKSHOP_VIDEO",
+        title_ar: "فيديو جديد في الورشة",
+        title_sq: "Video e re në trajnim",
+        title_en: "New workshop video",
+        body_ar: `تمت إضافة «${video.title}» إلى ورشة «${workshop.title}»`,
+        body_sq: `“${video.title}” u shtua në trajnimin “${workshop.title}”`,
+        body_en: `“${video.title}” was added to “${workshop.title}”`,
+        href: `/workshops/${id}`,
+        actor_id: auth.profile.id,
+        event_key: `workshop-video:${video.id}`,
+      }).catch(() => undefined);
+      return NextResponse.json({ video: { ...video, questions: [] } }, { status: 201 });
+    } catch (dbError) {
+      console.error("[workshop-drive-video create]", dbError);
+      return NextResponse.json({ error: "Could not save video" }, { status: 500 });
+    }
+  }
 
   const storagePath = body?.storage_path?.trim();
   // Only ever accept a path inside this workshop's own folder — the client
