@@ -1,6 +1,7 @@
 // /api/school-admin/workshops
-//   GET  — list all workshops for this school (most recent first).
-//   POST — create a new workshop with a fresh signup_token.
+//   GET   — list all workshops for this school in the admin-defined order.
+//   POST  — create a new workshop with a fresh signup_token.
+//   PATCH — persist a complete school-scoped drag/drop order.
 import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +16,7 @@ export async function GET() {
 
   const workshops = await prisma.workshop.findMany({
     where: { school_id: auth.school.id },
-    orderBy: [{ start_date: "asc" }, { created_at: "asc" }],
+    orderBy: [{ sort_order: "asc" }, { start_date: "asc" }, { created_at: "asc" }],
     select: {
       id: true,
       title: true,
@@ -28,6 +29,7 @@ export async function GET() {
       materials: true,
       status: true,
       is_live: true,
+      sort_order: true,
       signup_token: true,
       created_at: true,
       _count: {
@@ -58,6 +60,10 @@ export async function POST(req: Request) {
   const dates = workshopDates(schedule, body.start_date, body.end_date);
   const audience = Array.from(new Set((body.audience ?? []).filter((item) => AUDIENCES.includes(item as typeof AUDIENCES[number]))));
   if (!audience.length) return NextResponse.json({ error: "audience required" }, { status: 400 });
+  const lastOrder = await prisma.workshop.aggregate({
+    where: { school_id: auth.school.id },
+    _max: { sort_order: true },
+  });
 
   // Retry on the (extremely rare) signup_token collision.
   let workshop = null;
@@ -75,6 +81,7 @@ export async function POST(req: Request) {
           end_date: dates.end ? new Date(`${dates.end}T00:00:00Z`) : null,
           schedule,
           notes: body.notes?.trim().slice(0, 5000) || null,
+          sort_order: (lastOrder._max.sort_order ?? -1) + 1,
           signup_token: newSignupToken(),
         },
         select: { id: true, signup_token: true },
@@ -83,4 +90,36 @@ export async function POST(req: Request) {
   }
   if (!workshop) return NextResponse.json({ error: "Failed to create" }, { status: 500 });
   return NextResponse.json({ workshop }, { status: 201 });
+}
+
+export async function PATCH(req: Request) {
+  const auth = await requireSchoolAdminWriter();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  let body: { ordered_ids?: string[] };
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
+  const orderedIds = Array.isArray(body.ordered_ids)
+    ? body.ordered_ids.filter((id): id is string => typeof id === "string")
+    : [];
+  if (!orderedIds.length || new Set(orderedIds).size !== orderedIds.length) {
+    return NextResponse.json({ error: "A unique complete workshop order is required" }, { status: 400 });
+  }
+
+  const schoolWorkshops = await prisma.workshop.findMany({
+    where: { school_id: auth.school.id },
+    select: { id: true },
+  });
+  const schoolIds = new Set(schoolWorkshops.map((workshop) => workshop.id));
+  if (orderedIds.length !== schoolIds.size || orderedIds.some((id) => !schoolIds.has(id))) {
+    return NextResponse.json({ error: "Workshop list changed; refresh and try again" }, { status: 409 });
+  }
+
+  await prisma.$transaction(
+    orderedIds.map((id, sortOrder) => prisma.workshop.update({
+      where: { id },
+      data: { sort_order: sortOrder },
+      select: { id: true },
+    })),
+  );
+  return NextResponse.json({ success: true });
 }

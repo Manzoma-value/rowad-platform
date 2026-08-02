@@ -18,7 +18,7 @@ export async function GET() {
         { signed_up_teachers: { some: { id: auth.teacher.id } } },
       ],
     },
-    orderBy: [{ start_date: "asc" }, { created_at: "asc" }],
+    orderBy: [{ sort_order: "asc" }, { start_date: "asc" }, { created_at: "asc" }],
     select: {
       id: true, title: true, description: true, audience: true, audience_other: true,
       start_date: true, end_date: true, schedule: true, status: true, is_live: true,

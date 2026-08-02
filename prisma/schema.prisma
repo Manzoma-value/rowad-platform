@@ -1367,6 +1367,8 @@ model Workshop {
   // Ordered entries: [{id,type:"FILE"|"IMAGE"|"VIDEO"|"LINK",title,url,path?,mime?,size?}]
   materials        Json           @default("[]")
   status           WorkshopStatus @default(OPEN)
+  // School-admin controlled display order on the workshop management page.
+  sort_order       Int            @default(0)
   // Operational state: registration can remain OPEN while the session is
   // explicitly marked live by an admin during the lecture/training.
   is_live          Boolean        @default(false)
@@ -1392,6 +1394,7 @@ model Workshop {
   videos             WorkshopVideo[]
 
   @@index([school_id, created_at(sort: Desc)])
+  @@index([school_id, sort_order])
   @@map("workshops")
 }
 
