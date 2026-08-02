@@ -1,7 +1,8 @@
-import { GoogleAuth } from "google-auth-library";
+import { GoogleAuth, OAuth2Client } from "google-auth-library";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 let cachedAuth: GoogleAuth | null = null;
+let cachedOAuthClient: OAuth2Client | null = null;
 
 type DriveVideoMetadata = {
   id: string;
@@ -44,6 +45,35 @@ export async function googleDriveAccessToken() {
   const token = await client.getAccessToken();
   if (!token.token) throw new Error("drive_auth_failed");
   return token.token;
+}
+
+function googleDriveOAuthClient() {
+  const clientId = process.env.GOOGLE_DRIVE_OAUTH_CLIENT_ID?.trim();
+  const clientSecret = process.env.GOOGLE_DRIVE_OAUTH_CLIENT_SECRET?.trim();
+  const refreshToken = process.env.GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN?.trim();
+  if (!clientId || !clientSecret || !refreshToken) throw new Error("drive_upload_not_configured");
+  if (!cachedOAuthClient) {
+    cachedOAuthClient = new OAuth2Client(clientId, clientSecret);
+    cachedOAuthClient.setCredentials({ refresh_token: refreshToken });
+  }
+  return cachedOAuthClient;
+}
+
+export function googleDriveUploadFolderId() {
+  const folderId = process.env.GOOGLE_DRIVE_UPLOAD_FOLDER_ID?.trim();
+  if (!folderId) throw new Error("drive_upload_folder_not_configured");
+  return folderId;
+}
+
+export async function googleDriveOAuthAccessToken() {
+  try {
+    const token = await googleDriveOAuthClient().getAccessToken();
+    if (!token.token) throw new Error("drive_upload_auth_failed");
+    return token.token;
+  } catch (error) {
+    console.error("[google-drive OAuth]", error instanceof Error ? error.message : error);
+    throw new Error("drive_upload_auth_failed");
+  }
 }
 
 export async function getGoogleDriveVideo(fileId: string) {

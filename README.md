@@ -330,6 +330,10 @@ NEXT_PUBLIC_SITE_URL="http://localhost:3000"
 # Google Drive workshop videos (server-side only)
 GOOGLE_DRIVE_CLIENT_EMAIL="workshop-videos@your-project.iam.gserviceaccount.com"
 GOOGLE_DRIVE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_DRIVE_OAUTH_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+GOOGLE_DRIVE_OAUTH_CLIENT_SECRET="your-client-secret"
+GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN="your-refresh-token"
+GOOGLE_DRIVE_UPLOAD_FOLDER_ID="your-drive-folder-id"
 ```
 
 | Variable | Required | Description |
@@ -342,6 +346,10 @@ GOOGLE_DRIVE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY
 
 | `GOOGLE_DRIVE_CLIENT_EMAIL` | For Drive videos | Google Cloud service-account email shown to workshop admins for file sharing |
 | `GOOGLE_DRIVE_PRIVATE_KEY` | For Drive videos | Service-account private key; keep the `\n` line breaks and store it server-side only |
+| `GOOGLE_DRIVE_OAUTH_CLIENT_ID` | For Drive uploads | OAuth web-client ID for the Google account that owns the upload folder |
+| `GOOGLE_DRIVE_OAUTH_CLIENT_SECRET` | For Drive uploads | OAuth web-client secret; server-side only |
+| `GOOGLE_DRIVE_OAUTH_REFRESH_TOKEN` | For Drive uploads | Offline token used to create resumable uploads in the account's My Drive |
+| `GOOGLE_DRIVE_UPLOAD_FOLDER_ID` | For Drive uploads | Destination folder ID for platform-uploaded workshop videos |
 
 > **Security:** Never expose `SUPABASE_SERVICE_ROLE_KEY` or `GOOGLE_DRIVE_PRIVATE_KEY` to the client. They are only used in server-side API route handlers.
 

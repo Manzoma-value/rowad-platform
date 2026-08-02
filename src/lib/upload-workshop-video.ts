@@ -1,13 +1,11 @@
-import { MAX_VIDEO_FILE } from "@/lib/workshop-videos";
-
 /**
- * Uploads a workshop video from the browser straight into Supabase Storage,
+ * Uploads a workshop video from the browser straight into Google Drive,
  * then registers it with our API.
  *
  * The bytes deliberately never pass through a Next.js route handler: on Vercel
  * a serverless request body is capped at 4.5MB, so posting a video to our own
  * API always came back 413. We only exchange small JSON with the server (to
- * mint a signed upload URL and to save the metadata afterwards).
+ * create a resumable Drive session and to save the metadata afterwards).
  */
 export async function uploadWorkshopVideo({
   workshopId,
@@ -23,12 +21,11 @@ export async function uploadWorkshopVideo({
   signal?: AbortSignal;
 }) {
   if (!file.type.startsWith("video/")) throw new Error("not_video");
-  if (file.size > MAX_VIDEO_FILE) throw new Error("too_large");
 
   // Read the real playback length so question timestamps can be validated.
   const durationSeconds = await readVideoDuration(file).catch(() => null);
 
-  const urlResponse = await fetch(`/api/school-admin/workshops/${workshopId}/videos/upload-url`, {
+  const urlResponse = await fetch(`/api/school-admin/workshops/${workshopId}/videos/drive-upload-url`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ filename: file.name, mime_type: file.type, size_bytes: file.size }),
@@ -37,13 +34,14 @@ export async function uploadWorkshopVideo({
   const urlPayload = await urlResponse.json().catch(() => ({}));
   if (!urlResponse.ok) throw new Error(urlPayload.error ?? "upload_url_failed");
 
-  await putToSignedUrl({ signedUrl: urlPayload.signed_url, file, onProgress, signal });
+  const driveFileId = await putToDriveUploadUrl({ uploadUrl: urlPayload.upload_url, file, onProgress, signal });
 
   const saveResponse = await fetch(`/api/school-admin/workshops/${workshopId}/videos`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      storage_path: urlPayload.path,
+      source_type: "GOOGLE_DRIVE",
+      drive_url: driveFileId,
       title,
       mime_type: file.type,
       size_bytes: file.size,
@@ -57,23 +55,24 @@ export async function uploadWorkshopVideo({
 }
 
 /**
- * PUT the file to the signed storage URL. Uses XHR rather than fetch purely
+ * PUT the file to the resumable Drive URL. Uses XHR rather than fetch purely
  * because it is the only way to get upload progress events.
  */
-function putToSignedUrl({
-  signedUrl,
+function putToDriveUploadUrl({
+  uploadUrl,
   file,
   onProgress,
   signal,
 }: {
-  signedUrl: string;
+  uploadUrl: string;
   file: File;
   onProgress?: (percent: number) => void;
   signal?: AbortSignal;
 }) {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const request = new XMLHttpRequest();
-    request.open("PUT", signedUrl);
+    request.open("PUT", uploadUrl);
+    request.setRequestHeader("Content-Type", file.type || "application/octet-stream");
 
     request.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
@@ -81,20 +80,22 @@ function putToSignedUrl({
       }
     };
     request.onload = () => {
-      if (request.status >= 200 && request.status < 300) resolve();
-      else reject(new Error(`storage_${request.status}`));
+      if (request.status >= 200 && request.status < 300) {
+        try {
+          const payload = JSON.parse(request.responseText || "{}") as { id?: string };
+          if (!payload.id) throw new Error("missing_drive_file_id");
+          resolve(payload.id);
+        } catch {
+          reject(new Error("invalid_drive_upload_response"));
+        }
+      } else reject(new Error(`drive_upload_${request.status}`));
     };
     request.onerror = () => reject(new Error("network_error"));
     request.onabort = () => reject(new Error("aborted"));
 
     signal?.addEventListener("abort", () => request.abort(), { once: true });
 
-    // Matches what supabase-js sends for uploadToSignedUrl: multipart body
-    // with the file under an empty field name.
-    const body = new FormData();
-    body.append("cacheControl", "3600");
-    body.append("", file);
-    request.send(body);
+    request.send(file);
   });
 }
 
