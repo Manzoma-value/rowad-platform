@@ -17,6 +17,7 @@ import {
   Sparkles,
   ShieldCheck,
   FileText,
+  Database,
   LucideIcon,
 } from "lucide-react";
 
@@ -347,6 +348,12 @@ const navItems: NavItem[] = [
     label: "التقارير الرسمية",
     sublabel: "Reports",
     icon: FileText,
+  },
+  {
+    href: "/owner/data",
+    label: "مركز البيانات",
+    sublabel: "Data Room",
+    icon: Database,
   },
 ];
 
