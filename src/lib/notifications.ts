@@ -51,6 +51,18 @@ export async function schoolAdminProfileIds(schoolId: string) {
   return rows.map((row) => row.profile_id);
 }
 
+export async function schoolTeacherProfileIds(schoolId: string) {
+  const teachers = await prisma.teacher.findMany({
+    where: {
+      school_id: schoolId,
+      onboarding_status: "ACTIVE",
+      profile: { is: { is_active: true } },
+    },
+    select: { profile_id: true },
+  });
+  return teachers.map((teacher) => teacher.profile_id);
+}
+
 export async function workshopTeacherProfileIds(workshopId: string) {
   const teachers = await prisma.teacher.findMany({
     where: {

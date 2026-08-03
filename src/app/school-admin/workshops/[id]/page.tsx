@@ -13,7 +13,7 @@ import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import { makeWorkshopDays, type WorkshopDay, type WorkshopMaterial } from "@/lib/workshops";
 import { VideoManager } from "../components/VideoManager";
-import { ParticipantManagerModal } from "../components/participant-manager-modal";
+import { ParticipantManagerModal, type JoinRequest } from "../components/participant-manager-modal";
 
 type Workshop = {
   id: string;
@@ -166,6 +166,19 @@ const OPS = {
     addTeacher: "إضافة للورشة",
     adding: "جارٍ الإضافة...",
     noActiveTeachers: "لا يوجد معلمون نشطون مطابقون.",
+    tabRequests: "طلبات الانضمام",
+    tabRoster: "كل المعلمين",
+    pendingCount: "طلبات جديدة",
+    noRequests: "لا توجد طلبات انضمام حاليًا.",
+    approve: "قبول",
+    reject: "رفض",
+    waitlist: "قائمة الانتظار",
+    deciding: "جارٍ الحفظ...",
+    statusPending: "قيد المراجعة",
+    statusApproved: "تم القبول",
+    statusRejected: "تم الرفض",
+    statusWaitlisted: "قائمة الانتظار",
+    historyLabel: "سجل القرارات السابقة",
     manualAttendance: "تسجيل حضور يدوي",
     checkIn: "تسجيل الآن",
     checkedAt: "وقت الدخول",
@@ -192,6 +205,19 @@ const OPS = {
     addTeacher: "Shto në forum",
     adding: "Duke shtuar...",
     noActiveTeachers: "Nuk ka mësues aktivë që përputhen.",
+    tabRequests: "Kërkesat për t'u bashkuar",
+    tabRoster: "Të gjithë mësuesit",
+    pendingCount: "kërkesa të reja",
+    noRequests: "Nuk ka kërkesa aktualisht.",
+    approve: "Prano",
+    reject: "Refuzo",
+    waitlist: "Listë pritjeje",
+    deciding: "Duke ruajtur...",
+    statusPending: "Në shqyrtim",
+    statusApproved: "U pranua",
+    statusRejected: "U refuzua",
+    statusWaitlisted: "Në listë pritjeje",
+    historyLabel: "Historiku i vendimeve",
     manualAttendance: "Regjistro praninë manualisht",
     checkIn: "Regjistro tani",
     checkedAt: "Ora e hyrjes",
@@ -269,6 +295,9 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const [rosterQuery, setRosterQuery] = useState("");
   const [rosterLoading, setRosterLoading] = useState(false);
   const [mutatingTeacher, setMutatingTeacher] = useState<string | null>(null);
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [decidingTeacher, setDecidingTeacher] = useState<string | null>(null);
   const [attendanceBusy, setAttendanceBusy] = useState<string | null>(null);
   const [liveBusy, setLiveBusy] = useState(false);
   const [operationError, setOperationError] = useState("");
@@ -435,9 +464,47 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     }
   }, [L, id]);
 
+  const loadRequests = useCallback(async () => {
+    setRequestsLoading(true);
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}/requests`, { cache: "no-store" });
+      if (!response.ok) throw new Error("requests");
+      const payload = await response.json();
+      setRequests(payload.requests ?? []);
+    } catch {
+      setOperationError(OPS[L].operationError);
+    } finally {
+      setRequestsLoading(false);
+    }
+  }, [L, id]);
+
+  useEffect(() => { void loadRequests(); }, [loadRequests]);
+
   async function openParticipants() {
     setParticipantsOpen(true);
-    await loadRoster();
+    await Promise.all([loadRoster(), loadRequests()]);
+  }
+
+  async function decideRequest(teacherId: string, status: "APPROVED" | "REJECTED" | "WAITLISTED") {
+    if (viewOnly || decidingTeacher) return;
+    setDecidingTeacher(teacherId);
+    setOperationError("");
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${id}/requests/${teacherId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error("decide");
+      setRequests((current) => current.map((request) => request.teacher_id === teacherId
+        ? { ...request, status, decided_at: new Date().toISOString() }
+        : request));
+      await loadAll();
+    } catch {
+      setOperationError(OPS[L].operationError);
+    } finally {
+      setDecidingTeacher(null);
+    }
   }
 
   async function addTeacher(teacherId: string) {
@@ -714,7 +781,14 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
             <p>{T.attendanceHelp}</p>
           </div>
           <div className="wd-export">
-            {!viewOnly && <button className="wd-small-btn wd-participants-btn" onClick={() => void openParticipants()} data-write="true"><UserPlus size={14}/>{O.participants}</button>}
+            {!viewOnly && (
+              <button className="wd-small-btn wd-participants-btn" onClick={() => void openParticipants()} data-write="true">
+                <UserPlus size={14}/>{O.participants}
+                {requests.filter((r) => r.status === "PENDING" || r.status === "WAITLISTED").length > 0 && (
+                  <em className="wd-pending-badge">{requests.filter((r) => r.status === "PENDING" || r.status === "WAITLISTED").length}</em>
+                )}
+              </button>
+            )}
             <button className="wd-small-btn ghost" onClick={() => void exportAttendance("xlsx")}><Download size={14}/>{T.exportExcel}</button>
             <button className="wd-small-btn ghost" onClick={() => void exportAttendance("pdf")}><Download size={14}/>{T.exportPdf}</button>
             <button className="wd-small-btn ghost" onClick={() => void loadAll()}>{T.refresh}</button>
@@ -775,8 +849,12 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           loading={rosterLoading}
           error={operationError}
           mutatingTeacher={mutatingTeacher}
+          requests={requests}
+          requestsLoading={requestsLoading}
+          decidingTeacher={decidingTeacher}
           onQueryChange={setRosterQuery}
           onAdd={(teacherId) => void addTeacher(teacherId)}
+          onDecide={(teacherId, status) => void decideRequest(teacherId, status)}
           onClose={() => setParticipantsOpen(false)}
         />
       )}
@@ -862,7 +940,7 @@ const styles = `
 .wd-live-strip{display:flex;align-items:center;justify-content:center;gap:8px;margin:-2px 0 14px;padding:10px 14px;border:1px solid rgba(107,30,45,.14);border-radius:14px;background:linear-gradient(90deg,rgba(107,30,45,.07),rgba(255,255,255,.84),rgba(107,30,45,.07));color:#6B1E2D}.wd-live-strip>span{width:9px;height:9px;border-radius:50%;background:#6B1E2D;box-shadow:0 0 0 5px rgba(107,30,45,.1);animation:wd-pulse 1.4s infinite}.wd-live-strip strong{font-size:12px}.wd-live-strip small{font-size:10px;color:#796A62}
 @keyframes wd-pulse{50%{opacity:.35;transform:scale(.82)}}
 .wd-operation-error{margin:0 0 13px;padding:10px 12px;border-radius:11px;background:rgba(107,30,45,.08);border:1px solid rgba(107,30,45,.15);color:#6B1E2D;font-size:11px;font-weight:800}
-.wd-participants-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#32101A,#6B1E2D);color:#F7F3EB}.wd-attendance-card{margin-top:14px}.wd-attendance-card .wd-table-head{align-items:center}.wd-table th span,.wd-table th small{display:block}.wd-table th small{margin-top:3px;color:#8C8274;font-weight:700}.wd-table td.present,.wd-table td.unrecorded{min-width:116px;padding:7px}
+.wd-participants-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#32101A,#6B1E2D);color:#F7F3EB}.wd-pending-badge{font-style:normal;min-width:18px;height:18px;display:grid;place-items:center;border-radius:999px;background:#D9C9B0;color:#32101A;font-size:10px;font-weight:900;padding:0 5px}.wd-attendance-card{margin-top:14px}.wd-attendance-card .wd-table-head{align-items:center}.wd-table th span,.wd-table th small{display:block}.wd-table th small{margin-top:3px;color:#8C8274;font-weight:700}.wd-table td.present,.wd-table td.unrecorded{min-width:116px;padding:7px}
 .wd-checkin{position:relative;display:grid;justify-items:center;gap:2px;min-height:62px;padding:5px 26px 5px 5px;color:#315724}.wd-checkin time{font:900 12px ui-monospace,Consolas,monospace;direction:ltr}.wd-checkin small{font-size:8px;font-weight:900;color:#5D7355}.wd-checkin button{position:absolute;inset-inline-end:3px;top:3px;width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(107,30,45,.08);color:#6B1E2D;cursor:pointer}.wd-checkin button:hover{background:#6B1E2D;color:#fff}
 .wd-checkin .wd-late{padding:2px 6px;border-radius:999px;background:#F6D9D6;color:#8B2332}
 .wd-mark-present{width:100%;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1px dashed rgba(107,30,45,.22);border-radius:10px;background:rgba(255,255,255,.7);color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.wd-mark-present:hover{background:#F7F3EB;border-style:solid}.wd-mark-present:disabled{opacity:.5;cursor:progress}

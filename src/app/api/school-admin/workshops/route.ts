@@ -7,6 +7,7 @@ import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin
 import { prisma } from "@/lib/prisma";
 import { newSignupToken } from "@/lib/workshop-tokens";
 import { AUDIENCES, cleanSchedule, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
+import { notifyProfiles, schoolTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -34,17 +35,40 @@ export async function GET() {
       created_at: true,
       _count: {
         select: {
-          enrollments: true,
           attendance: true,
         },
       },
     },
   });
+
+  // Approved/pending enrollment counts, computed separately from the plain
+  // row total above so "Registered" doesn't silently include pending or
+  // rejected requests.
+  const counts = await prisma.workshopEnrollment.groupBy({
+    by: ["workshop_id", "status"],
+    where: { workshop_id: { in: workshops.map((w) => w.id) } },
+    _count: true,
+  });
+  const countsByWorkshop = new Map<string, { approved: number; pending: number }>();
+  for (const row of counts) {
+    const entry = countsByWorkshop.get(row.workshop_id) ?? { approved: 0, pending: 0 };
+    if (row.status === "APPROVED") entry.approved += row._count;
+    if (row.status === "PENDING" || row.status === "WAITLISTED") entry.pending += row._count;
+    countsByWorkshop.set(row.workshop_id, entry);
+  }
+
   return NextResponse.json({
-    workshops: workshops.map((workshop) => ({
-      ...workshop,
-      schedule: effectiveWorkshopSchedule(workshop.schedule, workshop.start_date, workshop.end_date),
-    })),
+    workshops: workshops.map((workshop) => {
+      const { _count, ...rest } = workshop;
+      const entry = countsByWorkshop.get(workshop.id) ?? { approved: 0, pending: 0 };
+      return {
+        ...rest,
+        schedule: effectiveWorkshopSchedule(workshop.schedule, workshop.start_date, workshop.end_date),
+        _count: { attendance: _count.attendance },
+        approved_count: entry.approved,
+        pending_count: entry.pending,
+      };
+    }),
   });
 }
 
@@ -89,6 +113,21 @@ export async function POST(req: Request) {
     } catch { /* collision or transient error — retry with a new token */ }
   }
   if (!workshop) return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+
+  const teacherIds = await schoolTeacherProfileIds(auth.school.id);
+  await notifyProfiles(teacherIds, {
+    type: "WORKSHOP_NEW",
+    title_ar: "ورشة جديدة متاحة",
+    title_sq: "Forum i ri i disponueshëm",
+    title_en: "New workshop available",
+    body_ar: `أُضيفت ورشة «${title}» — يمكنك طلب الانضمام إليها الآن`,
+    body_sq: `U shtua forumi “${title}” — mund të kërkosh të bashkohesh tani`,
+    body_en: `“${title}” was added — you can now request to join`,
+    href: `/workshops/${workshop.id}`,
+    actor_id: auth.profile.id,
+    event_key: `workshop-new:${workshop.id}`,
+  }).catch(() => undefined);
+
   return NextResponse.json({ workshop }, { status: 201 });
 }
 

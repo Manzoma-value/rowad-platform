@@ -459,6 +459,7 @@ model Profile {
   authoredAttendanceCodes      WorkshopAttendanceCode[]   @relation("WorkshopAttendanceCodeAuthor")
   workshopMessages             WorkshopMessage[]          @relation("WorkshopMessageAuthor")
   createdWorkshopEnrollments   WorkshopEnrollment[]       @relation("WorkshopEnrollmentAuthor")
+  decidedWorkshopEnrollments   WorkshopEnrollment[]       @relation("WorkshopEnrollmentDecider")
   recordedWorkshopAttendance   WorkshopAttendance[]       @relation("WorkshopAttendanceRecorder")
   teacherGroupAnnouncements    TeacherGroupAnnouncement[]
   avatar_url                   String?
@@ -1345,6 +1346,14 @@ enum WorkshopStatus {
 enum WorkshopEnrollmentSource {
   QR
   MANUAL
+  REQUEST
+}
+
+enum WorkshopEnrollmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLISTED
 }
 
 enum WorkshopAttendanceSource {
@@ -1403,12 +1412,19 @@ model WorkshopEnrollment {
   workshop_id String                   @db.Uuid
   teacher_id  String                   @db.Uuid
   source      WorkshopEnrollmentSource @default(QR)
+  // Defaults to APPROVED so every existing row, and the still-instant QR/
+  // manual-add paths, keep granting access with zero code changes. Only the
+  // in-app "Request to Join" path (source=REQUEST) creates a PENDING row.
+  status      WorkshopEnrollmentStatus @default(APPROVED)
   enrolled_by String?                  @db.Uuid
   enrolled_at DateTime                 @default(now())
+  decided_by  String?                  @db.Uuid
+  decided_at  DateTime?
 
   workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
   teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   author   Profile? @relation("WorkshopEnrollmentAuthor", fields: [enrolled_by], references: [id], onDelete: SetNull)
+  decider  Profile? @relation("WorkshopEnrollmentDecider", fields: [decided_by], references: [id], onDelete: SetNull)
 
   @@unique([workshop_id, teacher_id])
   @@index([teacher_id, enrolled_at(sort: Desc)])
@@ -1618,6 +1634,9 @@ enum NotificationType {
   WORKSHOP_MATERIAL
   WORKSHOP_UPDATE
   WORKSHOP_LIVE
+  WORKSHOP_NEW
+  WORKSHOP_REQUEST
+  WORKSHOP_REQUEST_DECISION
   SYSTEM
 }
 
