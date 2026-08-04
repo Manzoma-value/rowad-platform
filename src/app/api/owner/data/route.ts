@@ -15,7 +15,13 @@ export async function GET() {
     }),
     prisma.teacher.findMany({
       orderBy: { created_at: "desc" },
-      select: { id: true, created_at: true, school_id: true, onboarding_status: true, profile: { select: { full_name: true, email: true, is_active: true } }, school: { select: { name: true } }, _count: { select: { classes: true, ratings_received: true, future_qualification_vote: true } } },
+      select: {
+        id: true, created_at: true, school_id: true, onboarding_status: true,
+        profile: { select: { full_name: true, email: true, is_active: true } },
+        school: { select: { name: true } },
+        future_qualification_vote: { select: { id: true } },
+        _count: { select: { classes: true, ratings_received: true } },
+      },
     }),
     prisma.class.findMany({
       orderBy: { created_at: "desc" },
@@ -32,7 +38,12 @@ export async function GET() {
   ]);
 
   return NextResponse.json({
-    generatedAt: new Date().toISOString(), schools, teachers, classes, admins,
+    generatedAt: new Date().toISOString(), schools,
+    teachers: teachers.map((teacher) => {
+      const { future_qualification_vote, _count, ...rest } = teacher;
+      return { ...rest, _count: { ...(_count as object), future_qualification_vote: future_qualification_vote ? 1 : 0 } };
+    }),
+    classes, admins,
     performance: performance.map((school) => {
       const scored = school.assessmentAttempts.filter((a) => a.score !== null && a.total);
       const averageScore = scored.length ? Math.round(scored.reduce((sum, a) => sum + ((a.score ?? 0) / (a.total ?? 1)) * 100, 0) / scored.length) : null;

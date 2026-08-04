@@ -515,6 +515,7 @@ model School {
   workshops                   Workshop[]
   teacher_group_announcements TeacherGroupAnnouncement[]
   future_qualification_votes  FutureQualificationVote[]
+  group_assessments           GroupAssessment[]
 
   @@map("schools")
 }
@@ -658,6 +659,7 @@ model GroupAssessment {
   closed_at  DateTime?
 
   group         TeacherGroup           @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  school        School                 @relation(fields: [school_id], references: [id], onDelete: Cascade)
   author        Profile                @relation("GroupAssessmentAuthor", fields: [created_by], references: [id])
   ratings       AssessmentRating[]
   traits        AssessmentTrait[]
