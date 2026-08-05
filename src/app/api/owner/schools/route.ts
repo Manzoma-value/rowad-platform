@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   const { name, admin_id, language = "ar", description, slug: customSlug } = body;
 
   if (!name?.trim())
-    return NextResponse.json({ error: "اسم المدرسة مطلوب" }, { status: 400 });
+    return NextResponse.json({ error: "اسم المنصة مطلوب" }, { status: 400 });
 
   let slug = customSlug?.trim() || generateSlug(name);
   const existing = await prisma.school.findUnique({

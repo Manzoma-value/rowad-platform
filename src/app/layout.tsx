@@ -6,7 +6,7 @@ import { ConfirmProvider } from "@/lib/confirm-dialog";
 
 export const metadata: Metadata = {
   title: "منصة الرواد التعليمية",
-  description: "نظام تعليمي متكامل للطلاب والمعلمين والمدارس",
+  description: "نظام تعليمي متكامل للمستفيدين والمشرفين والمنصات",
 };
 
 export default function RootLayout({

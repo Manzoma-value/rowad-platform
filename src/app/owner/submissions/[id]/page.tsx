@@ -85,7 +85,7 @@ export default function OwnerSubmissionDetailPage() {
   }, [id]);
   async function handleSubmitReview() {
     if (!assignedSchoolId) {
-      setSubmitError("يرجى تحديد المدرسة المراد التعيين إليها.");
+      setSubmitError("يرجى تحديد المنصة المراد التعيين إليها.");
       return;
     }
     setSubmitting(true);
@@ -197,7 +197,7 @@ export default function OwnerSubmissionDetailPage() {
           </div>
           {attempt.assigned_school && (
             <div className="sr-score-meta">
-              <span className="sr-score-meta-label">المدرسة المعيّنة</span>
+              <span className="sr-score-meta-label">المنصة المعيّنة</span>
               <span className="sr-score-meta-val school">
                 {attempt.assigned_school.name}
               </span>
@@ -217,7 +217,7 @@ export default function OwnerSubmissionDetailPage() {
       <div className="sr-body">
         {/* Answers */}
         <div className="sr-answers">
-          <h2 className="sr-col-title">إجابات الطالب</h2>
+          <h2 className="sr-col-title">إجابات المستفيد</h2>
           {attempt.answers.length === 0 && (
             <div className="sr-no-answers">لم يتم تقديم أي إجابات.</div>
           )}
@@ -289,7 +289,7 @@ export default function OwnerSubmissionDetailPage() {
                           </div>
                           <span>{opt.text}</span>
                           {isStudent && (
-                            <span className="sr-opt-tag">إجابة الطالب</span>
+                            <span className="sr-opt-tag">إجابة المستفيد</span>
                           )}
                         </div>
                       );
@@ -302,7 +302,7 @@ export default function OwnerSubmissionDetailPage() {
                     <div
                       className={`sr-tf-pill student ${answer.answer === q.correct_answer ? "correct" : "wrong"}`}
                     >
-                      الطالب: {answer.answer === "true" ? "صح" : "خطأ"}
+                      المستفيد: {answer.answer === "true" ? "صح" : "خطأ"}
                     </div>
                     <div className="sr-tf-pill correct-ans">
                       الصحيح: {correctDisplay}
@@ -312,7 +312,7 @@ export default function OwnerSubmissionDetailPage() {
 
                 {q.type === "WRITTEN" && (
                   <div className="sr-written">
-                    <div className="sr-written-label">إجابة الطالب</div>
+                    <div className="sr-written-label">إجابة المستفيد</div>
                     <div className="sr-written-box">{answer.answer}</div>
                     {!isReviewed && (
                       <div className="sr-grade-row">
@@ -403,14 +403,14 @@ export default function OwnerSubmissionDetailPage() {
               </div>
               <div className="sr-field">
                 <label className="sr-field-label">
-                  تعيين المدرسة <span className="sr-req">*</span>
+                  تعيين المنصة <span className="sr-req">*</span>
                 </label>
                 <select
                   className="sr-select"
                   value={assignedSchoolId}
                   onChange={(e) => setAssignedSchoolId(e.target.value)}
                 >
-                  <option value="">اختر المدرسة…</option>
+                  <option value="">اختر المنصة…</option>
                   {schools.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -425,7 +425,7 @@ export default function OwnerSubmissionDetailPage() {
                 <textarea
                   className="sr-textarea"
                   rows={4}
-                  placeholder="أضف ملاحظاتك حول أداء الطالب…"
+                  placeholder="أضف ملاحظاتك حول أداء المستفيد…"
                   value={reviewerNotes}
                   onChange={(e) => setReviewerNotes(e.target.value)}
                 />
@@ -453,7 +453,7 @@ export default function OwnerSubmissionDetailPage() {
                     >
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    إرسال المراجعة وتعيين المدرسة
+                    إرسال المراجعة وتعيين المنصة
                   </>
                 )}
               </button>
@@ -480,7 +480,7 @@ export default function OwnerSubmissionDetailPage() {
               <div className="sr-done-rows">
                 {[
                   {
-                    label: "المدرسة المعيّنة",
+                    label: "المنصة المعيّنة",
                     val: attempt.assigned_school?.name ?? "—",
                   },
                   {

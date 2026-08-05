@@ -37,7 +37,7 @@ export const REPORT_LABELS = {
     issuedBy:     "إدارة المنصة",
     publishedOn:  "تاريخ النشر",
     reportDate:   "تاريخ التقرير",
-    school:       "المدرسة",
+    school:       "المنصة",
     introduction: "مقدمة تنفيذية",
     closingNote:  "الخاتمة",
     images:       "المرفقات المرئية",

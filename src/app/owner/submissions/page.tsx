@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -216,9 +216,9 @@ function SubmissionsContent() {
             <span>إدارة الطلبات</span>
             <div className="s-eyebrow-line" />
           </div>
-          <h1 className="s-title">مراجعة إجابات الطلاب</h1>
+          <h1 className="s-title">مراجعة إجابات المستفيدين</h1>
           <p className="s-subtitle">
-            مراجعة وتقييم الإجابات المُقدَّمة وتعيين المدارس
+            مراجعة وتقييم الإجابات المُقدَّمة وتعيين المنصات
           </p>
         </div>
         {pending > 0 && (
@@ -293,7 +293,7 @@ function SubmissionsContent() {
           </div>
           <p className="s-empty-text">لا توجد إجابات مطابقة.</p>
           <p className="s-empty-sub">
-            جرّب تغيير الفلتر أو انتظر تقديم الطلاب لإجاباتهم.
+            جرّب تغيير الفلتر أو انتظر تقديم المستفيدين لإجاباتهم.
           </p>
         </div>
       ) : (

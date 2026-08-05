@@ -437,7 +437,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
 
                         {trait.elements.length === 0 ? (
                           <div className="elements-empty">
-                            لا توجد عناصر بعد — أضف معايير تساعد المعلم على
+                            لا توجد عناصر بعد — أضف معايير تساعد المشرف على
                             التقييم
                           </div>
                         ) : (
@@ -660,7 +660,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                     </label>
                     <textarea
                       className="rb-textarea"
-                      placeholder="مثال: قدرة الطالب على فهم سبب الفعل ودوره وواجبه"
+                      placeholder="مثال: قدرة المستفيد على فهم سبب الفعل ودوره وواجبه"
                       value={form.definition}
                       onChange={(e) =>
                         setForm((f) => ({ ...f, definition: e.target.value }))

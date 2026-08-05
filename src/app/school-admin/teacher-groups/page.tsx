@@ -60,10 +60,10 @@ type Eligible = {
 
 const UI = {
   ar: {
-    title: "مجموعات المعلمين",
-    sub: "نظِّم المعلمين المقبولين في مجموعات عمل وتدريب ومجتمع خاصة.",
+    title: "مجموعات المشرفين",
+    sub: "نظِّم المشرفين المقبولين في مجموعات عمل وتدريب ومجتمع خاصة.",
     create: "+ مجموعة جديدة",
-    empty: "لا توجد مجموعات بعد. أنشئ أول مجموعة لتنظيم معلميك.",
+    empty: "لا توجد مجموعات بعد. أنشئ أول مجموعة لتنظيم مشرفيك.",
     members: "أعضاء",
     pickOne: "اختر مجموعة لعرض أعضائها",
     rename: "تعديل الاسم والوصف",
@@ -73,24 +73,24 @@ const UI = {
     saving: "جارٍ الحفظ…",
     assessments: "نماذج القياس",
     deleteGroup: "حذف المجموعة",
-    confirmDelete: "هل تريد حذف هذه المجموعة؟ سيتم إلغاء عضوية كل المعلمين.",
+    confirmDelete: "هل تريد حذف هذه المجموعة؟ سيتم إلغاء عضوية كل المشرفين.",
     addMembers: "+ إضافة أعضاء",
     searchPh: "ابحث بالاسم أو البريد…",
     groupSearchPh: "ابحث في المجموعات…",
     memberSearchPh: "ابحث في أعضاء المجموعة…",
     noGroupResults: "لا توجد مجموعات مطابقة.",
     noMemberResults: "لا يوجد أعضاء مطابقون للبحث.",
-    noEligible: "لا يوجد معلمون متاحون للإضافة.",
+    noEligible: "لا يوجد مشرفون متاحون للإضافة.",
     add: "إضافة",
     remove: "إزالة",
-    confirmRemove: "إزالة هذا المعلم من المجموعة؟",
+    confirmRemove: "إزالة هذا المشرف من المجموعة؟",
     cancel: "إلغاء",
     yearsExp: "سنوات الخبرة",
     spec: "التخصص",
     location: "الموقع",
     close: "إغلاق",
     newGroupTitle: "إنشاء مجموعة جديدة",
-    namePh: "مثال: مجموعة معلمي القرآن",
+    namePh: "مثال: مجموعة مشرفي القرآن",
     descPh: "وصف اختياري للمجموعة وأهدافها…",
     creating: "جارٍ الإنشاء…",
   },
@@ -397,7 +397,7 @@ export default function TeacherGroupsPage() {
               data-write="true"
             >
               <strong>{L === "ar" ? "رؤية المجموعات" : "Shikimi i grupeve"}</strong>
-              <span>{openVisibility ? (L === "ar" ? "مفتوحة لكل المعلمين" : "E hapur për mësuesit") : (L === "ar" ? "خاصة بكل مجموعة" : "Private për çdo grup")}</span>
+              <span>{openVisibility ? (L === "ar" ? "مفتوحة لكل المشرفين" : "E hapur për mësuesit") : (L === "ar" ? "خاصة بكل مجموعة" : "Private për çdo grup")}</span>
             </button>
           )}
           {!viewOnly && (

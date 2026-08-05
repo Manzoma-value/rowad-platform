@@ -48,7 +48,7 @@ export async function GET() {
 
 // ── POST /api/owner/invites ────────────────────────────────────────────────────
 const CreateSchema = z.object({
-  school_id: z.string().uuid("معرّف المدرسة غير صالح"),
+  school_id: z.string().uuid("معرّف المنصة غير صالح"),
 });
 
 export async function POST(req: Request) {
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     select: { id: true },
   });
   if (!school) {
-    return NextResponse.json({ error: "المدرسة غير موجودة" }, { status: 404 });
+    return NextResponse.json({ error: "المنصة غير موجودة" }, { status: 404 });
   }
 
   const expires_at = new Date();

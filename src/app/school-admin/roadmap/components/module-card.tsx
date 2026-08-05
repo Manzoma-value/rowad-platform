@@ -29,7 +29,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
 
   const deleteModule = async () => {
     if (!(await confirm({
-      message: "سيتم حذف هذا المستوى وكل ما يحتويه من محتوى وأسئلة ومحاولات الطلاب فيه.",
+      message: "سيتم حذف هذا المستوى وكل ما يحتويه من محتوى وأسئلة ومحاولات المستفيدين فيه.",
       title: "حذف المستوى",
     }))) return;
     await fetch(`/api/school-admin/roadmap/modules/${mod.id}`, {

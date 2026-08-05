@@ -69,7 +69,7 @@ export default function StudentClassPage() {
       {/* ── Header banner ── */}
       <div className="cls-header">
         <div className="cls-header-left">
-          <p className="cls-eyebrow">{lang === "ar" ? "الفصل الدراسي" : "Klasa"}</p>
+          <p className="cls-eyebrow">{lang === "ar" ? "المجموعة الدراسي" : "Klasa"}</p>
           <h1 className="cls-title">{data.class.name}</h1>
           <div className="cls-chips">
             {data.class.teacher ? (
@@ -82,7 +82,7 @@ export default function StudentClassPage() {
             )}
             <span className="cls-chip">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-              {data.class.students.length} {tr.classmates ?? "طالب"}
+              {data.class.students.length} {tr.classmates ?? "مستفيد"}
             </span>
           </div>
         </div>

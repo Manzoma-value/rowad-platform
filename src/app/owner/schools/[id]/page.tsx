@@ -48,7 +48,7 @@ const STATUS_LABELS: Record<string, string> = {
   INTAKE_SUBMITTED: "تم تقديم الاختبار",
   SCHOOL_ASSIGNED: "تم تعيين الجهة",
   SCHOOL_PLACEMENT_SUBMITTED: "تم تقديم التوزيع",
-  CLASS_ASSIGNED: "تم تعيين الفصل",
+  CLASS_ASSIGNED: "تم تعيين المجموعة",
 };
 
 type Tab = "overview" | "teachers" | "students" | "classes" | "settings";
@@ -145,7 +145,7 @@ export default function OwnerSchoolDetailPage() {
     { id: "overview", label: "نظرة عامة" },
     { id: "teachers", label: "المشرفون", count: school.teachers.length },
     { id: "students", label: "مستفيدين", count: school.students.length },
-    { id: "classes", label: "الفصول", count: school.classes.length },
+    { id: "classes", label: "المجموعات", count: school.classes.length },
     { id: "settings", label: "⚙️ الإعدادات" },
   ];
 
@@ -170,7 +170,7 @@ export default function OwnerSchoolDetailPage() {
           >
             <path d="M9 18l6-6-6-6" />
           </svg>
-          جميع المدارس
+          جميع المنصات
         </Link>
         <div className="sd-title-row">
           <div
@@ -249,7 +249,7 @@ export default function OwnerSchoolDetailPage() {
             {[
               { label: "المشرفون", value: school.teachers.length, icon: "👨‍🏫", tab: "teachers" as Tab },
               { label: "مستفيدين", value: school.students.length, icon: "🎓", tab: "students" as Tab },
-              { label: "الفصول", value: school.classes.length, icon: "📚", tab: "classes" as Tab },
+              { label: "المجموعات", value: school.classes.length, icon: "📚", tab: "classes" as Tab },
               {
                 label: "Created",
                 value: new Date(school.created_at).toLocaleDateString("en-US", {
@@ -282,16 +282,16 @@ export default function OwnerSchoolDetailPage() {
           <div className="sd-ov-info-grid">
             {[
               {
-                label: "المشرفون بدون فصول",
+                label: "المشرفون بدون مجموعات",
                 val: school.teachers.filter((t) => t.classes.length === 0)
                   .length,
               },
               {
-                label: "مستفيدين بدون فصل",
+                label: "مستفيدين بدون مجموعة",
                 val: school.students.filter((s) => !s.class).length,
               },
               {
-                label: "الفصول بدون مشرفين",
+                label: "المجموعات بدون مشرفين",
                 val: school.classes.filter((c) => !c.teacher).length,
               },
             ].map((item, i) => (
@@ -371,14 +371,14 @@ export default function OwnerSchoolDetailPage() {
                 <div className="sd-row-body">
                   <div className="sd-row-name">{t.profile.full_name}</div>
                   <div className="sd-row-sub">
-                    <span className="sd-row-sub-label">الفصول:</span>{" "}
+                    <span className="sd-row-sub-label">المجموعات:</span>{" "}
                     {t.classes.length > 0
                       ? t.classes.map((c) => c.name).join("، ")
-                      : "لا توجد فصول مُعيَّنة"}
+                      : "لا توجد مجموعات مُعيَّنة"}
                   </div>
                 </div>
                 <div className="sd-tag">
-                  {t.classes.length} {t.classes.length === 1 ? "فصل" : "فصول"}
+                  {t.classes.length} {t.classes.length === 1 ? "مجموعة" : "مجموعات"}
                 </div>
               </div>
             ))
@@ -422,8 +422,8 @@ export default function OwnerSchoolDetailPage() {
                 <div className="sd-row-body">
                   <div className="sd-row-name">{s.profile.full_name}</div>
                   <div className="sd-row-sub">
-                    <span className="sd-row-sub-label">الفصل:</span>{" "}
-                    {s.class?.name ?? "لم يُعيَّن فصل"}
+                    <span className="sd-row-sub-label">المجموعة:</span>{" "}
+                    {s.class?.name ?? "لم يُعيَّن مجموعة"}
                   </div>
                 </div>
                 <div
@@ -446,7 +446,7 @@ export default function OwnerSchoolDetailPage() {
       {tab === "classes" && (
         <div className="sd-list">
           {school.classes.length === 0 ? (
-            <div className="sd-empty">لا توجد فصول.</div>
+            <div className="sd-empty">لا توجد مجموعات.</div>
           ) : (
             school.classes.map((c) => (
               <div key={c.id} className="sd-row">
@@ -538,7 +538,7 @@ export default function OwnerSchoolDetailPage() {
                 <h3 className="sd-features-title">الوحدات والميزات</h3>
                 <p className="sd-features-sub">
                   فعّل أو عطّل الوحدات لهذه الجهة. الوحدة المعطّلة تختفي من قوائم
-                  الطلاب والمعلمين والمشرف ولا يمكن الوصول إليها.
+                  المستفيدون والمشرفين والمشرف ولا يمكن الوصول إليها.
                 </p>
               </div>
               <div className="sd-features-grid">

@@ -395,7 +395,7 @@ function Heatmap({
                   fontSize: 10,
                 }}
               >
-                الطالب
+                المستفيد
               </th>
               {modules.map((m) => (
                 <th
@@ -775,7 +775,7 @@ export default function SchoolAdminReportsPage() {
           </div>
           <h1 className="rp-headline">تقارير الأداء</h1>
           <p className="rp-subline">
-            مراقبة شاملة لأداء الفصول والطلاب والسمات
+            مراقبة شاملة لأداء المجموعات والمستفيدون والسمات
           </p>
         </div>
         <div className="rp-masthead-badge">
@@ -799,14 +799,14 @@ export default function SchoolAdminReportsPage() {
       <div className="rp-kpi-strip">
         {[
           {
-            label: "الفصول",
+            label: "المجموعات",
             value: classes.length,
             suffix: "",
             accent: "#B8A082",
             icon: "🏛",
           },
           {
-            label: "الطلاب",
+            label: "المستفيدون",
             value: totalStudents,
             suffix: "",
             accent: "#B8A082",
@@ -820,7 +820,7 @@ export default function SchoolAdminReportsPage() {
             icon: "📝",
           },
           {
-            label: "متوسط المدرسة",
+            label: "متوسط المنصة",
             value: schoolAvg ?? 0,
             suffix: "%",
             accent: "#1B5E20",
@@ -837,7 +837,7 @@ export default function SchoolAdminReportsPage() {
               <span className="rp-kpi-label">{k.label}</span>
             </div>
             <div className="rp-kpi-value" style={{ color: k.accent }}>
-              {schoolAvg === null && k.label === "متوسط المدرسة" ? (
+              {schoolAvg === null && k.label === "متوسط المنصة" ? (
                 "—"
               ) : (
                 <AnimatedNumber value={k.value} suffix={k.suffix} />
@@ -856,13 +856,13 @@ export default function SchoolAdminReportsPage() {
       {/* ── CLASSES ── */}
       <div className="rp-section-head">
         <div className="rp-sh-line" />
-        <span className="rp-sh-label">الفصول الدراسية</span>
+        <span className="rp-sh-label">المجموعات الدراسية</span>
         <div className="rp-sh-count">{classes.length}</div>
         <div className="rp-sh-line" />
       </div>
 
       {classes.length === 0 ? (
-        <div className="rp-empty">لا توجد فصول بعد</div>
+        <div className="rp-empty">لا توجد مجموعات بعد</div>
       ) : (
         <div className="rp-classes-grid">
           {classes.map((cls, i) => {
@@ -886,7 +886,7 @@ export default function SchoolAdminReportsPage() {
                 <div className="rp-cc-stats">
                   <div className="rp-cc-stat">
                     <div className="rp-cc-stat-num">{cls.student_count}</div>
-                    <div className="rp-cc-stat-lbl">طالب</div>
+                    <div className="rp-cc-stat-lbl">مستفيد</div>
                   </div>
                   <div className="rp-cc-divider" />
                   <div className="rp-cc-stat">
@@ -918,7 +918,7 @@ export default function SchoolAdminReportsPage() {
             <div>
               <div className="rp-eyebrow">
                 <span className="rp-eyebrow-dot" />
-                تفاصيل الفصل
+                تفاصيل المجموعة
               </div>
               <h2 className="rp-dp-title">{selectedClass.name}</h2>
             </div>
@@ -984,7 +984,7 @@ export default function SchoolAdminReportsPage() {
                     </div>
                     <div className="rp-panel" style={{ flex: 2 }}>
                       <div className="rp-panel-label">
-                        خريطة الأداء · طالب × وحدة
+                        خريطة الأداء · مستفيد × وحدة
                       </div>
                       <Heatmap data={detail.heatmap} modules={detail.modules} />
                     </div>
@@ -992,7 +992,7 @@ export default function SchoolAdminReportsPage() {
 
                   {/* Students table */}
                   <div className="rp-panel">
-                    <div className="rp-panel-label">أداء الطلاب الفردي</div>
+                    <div className="rp-panel-label">أداء المستفيدين الفردي</div>
                     {detail.students?.length === 0 ? (
                       <div
                         style={{
@@ -1002,12 +1002,12 @@ export default function SchoolAdminReportsPage() {
                           padding: "20px 0",
                         }}
                       >
-                        لا يوجد طلاب في هذا الفصل
+                        لا يوجد مستفيدون في هذا المجموعة
                       </div>
                     ) : (
                       <div className="rp-table">
                         <div className="rp-table-head">
-                          <span>الطالب</span>
+                          <span>المستفيد</span>
                           <span>المحاولات</span>
                           <span>الناجحة</span>
                           <span>المتوسط</span>
@@ -1255,7 +1255,7 @@ export default function SchoolAdminReportsPage() {
                           لا توجد تقييمات سمات بعد
                         </div>
                         <div style={{ fontSize: 12 }}>
-                          قم بتقييم سمات الطلاب من لوحة المعلم
+                          قم بتقييم سمات المستفيدون من لوحة المشرف
                         </div>
                       </div>
                     </div>
@@ -1268,7 +1268,7 @@ export default function SchoolAdminReportsPage() {
                           style={{ alignItems: "center" }}
                         >
                           <div className="rp-panel-label">
-                            رادار السمات · متوسط الفصل
+                            رادار السمات · متوسط المجموعة
                           </div>
                           <TraitRadar
                             data={traitData.class_radar.map((r) => ({
@@ -1281,7 +1281,7 @@ export default function SchoolAdminReportsPage() {
                         </div>
                         <div className="rp-panel" style={{ flex: 2 }}>
                           <div className="rp-panel-label">
-                            متوسط السمات · مقارنة الفصل
+                            متوسط السمات · مقارنة المجموعة
                           </div>
                           <TraitBars
                             traits={traitData.class_radar.map((r) => ({
@@ -1301,7 +1301,7 @@ export default function SchoolAdminReportsPage() {
                                 (s) => s.assessments_count > 0,
                               ).length
                             }{" "}
-                            طالب تم تقييمهم
+                            مستفيد تم تقييمهم
                           </div>
                         </div>
                       </div>
@@ -1309,7 +1309,7 @@ export default function SchoolAdminReportsPage() {
                       {/* Per-student trait table */}
                       <div className="rp-panel">
                         <div className="rp-panel-label">
-                          السمات الفردية · كل طالب
+                          السمات الفردية · كل مستفيد
                         </div>
                         {traitData.students.map((s, i) => (
                           <div
@@ -1400,7 +1400,7 @@ export default function SchoolAdminReportsPage() {
                                             left: `${classAvg}%`,
                                             zIndex: 2,
                                           }}
-                                          title={`متوسط الفصل: ${classAvg}%`}
+                                          title={`متوسط المجموعة: ${classAvg}%`}
                                         />
                                         <div
                                           style={{

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 import MandalaLoader from "@/components/MandalaLoader";
 import { SortableList } from "@/components/SortableList";
@@ -269,7 +269,7 @@ export default function OwnerIntakeAssessmentPage() {
           </div>
           <h2 className="ia-create-title">إنشاء اختبار القبول</h2>
           <p className="ia-create-desc">
-            سيتم إجراء هذا الاختبار لجميع الطلاب الجدد قبل تعيينهم في الجهة
+            سيتم إجراء هذا الاختبار لجميع المستفيدين الجدد قبل تعيينهم في الجهة
             المناسبة.
           </p>
           <div className="ia-field">

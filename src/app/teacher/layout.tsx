@@ -134,7 +134,7 @@ const navItems: NavItem2[] = [
   },
   // Lessons + Quizzes + Reports are children of "My Classes" — rendered
   // indented directly under it so the sidebar reads:
-  //   الفصول
+  //   المجموعات
   //     └ الدروس
   //     └ الاختبارات
   //     └ التقارير
@@ -469,7 +469,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
             href="/teacher"
             className="tl-logo-home"
             onClick={() => setSidebarOpen(false)}
-            aria-label={lang === "ar" ? "العودة إلى لوحة المعلم" : lang === "sq" ? "Kthehu te paneli i mësuesit" : "Back to teacher dashboard"}
+            aria-label={lang === "ar" ? "العودة إلى لوحة المشرف" : lang === "sq" ? "Kthehu te paneli i mësuesit" : "Back to teacher dashboard"}
           >
             <Image
               src="/headerlogo.png"
@@ -480,7 +480,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
             />
             <div className="tl-logo-frame" aria-hidden="true" />
             <span className="tl-logo-home-hint">
-              {lang === "ar" ? "لوحة المعلم" : lang === "sq" ? "Paneli i mësuesit" : "Teacher dashboard"}
+              {lang === "ar" ? "لوحة المشرف" : lang === "sq" ? "Paneli i mësuesit" : "Teacher dashboard"}
               <b aria-hidden="true">↗</b>
             </span>
           </Link>
@@ -688,11 +688,11 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                 )}
               </div>
               <div className="tl-topbar-id">
-                <span className="tl-topbar-name">{name || (lang === "ar" ? "المعلم" : "Teacher")}</span>
+                <span className="tl-topbar-name">{name || (lang === "ar" ? "المشرف" : "Teacher")}</span>
                 {(schoolName || schoolNameAlt) && (
                   <span className="tl-topbar-sub">
                     {lang === "ar"
-                      ? `معلم في ${schoolName || schoolNameAlt}`
+                      ? `مشرف في ${schoolName || schoolNameAlt}`
                       : `Teacher of ${schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}`}
                   </span>
                 )}

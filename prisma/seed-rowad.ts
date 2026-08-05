@@ -31,7 +31,7 @@ const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 const TEST_TEACHER_EMAIL = "rowad.teacher@test.com";
 const TEST_TEACHER_PASSWORD = "Test123456";
-const TEST_TEACHER_NAME = "معلم اختبار الرواد";
+const TEST_TEACHER_NAME = "مشرف اختبار الرواد";
 
 // Look up an auth user id directly from auth.users (avoids the flaky admin listUsers API)
 async function findAuthUserId(email: string): Promise<string | null> {

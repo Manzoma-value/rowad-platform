@@ -14,7 +14,9 @@ export const TRAIT_KEYS: readonly TraitKey[] = [
 // The canonical five — kept in the exact methodology order used by the
 // statements and saved score arrays, with the official identity palette.
 export const DEFAULT_TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
-  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#F2EFE6" },
+  // A muted evergreen keeps the first trait distinct from the paper surfaces
+  // used throughout the spectrum panel while remaining formal and on-brand.
+  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#4F6B5A" },
   { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#F2B705" },
   { key: "distinct",  ar: "المميز",    sq: "Dallimi",   color: "#9AA3AC" },
   { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#B33A3A" },

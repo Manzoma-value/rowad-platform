@@ -144,7 +144,7 @@ export default function QualificationVotePage() {
     try {
       const XLSX = await import("xlsx");
       const rows = data.votes.map((vote) => ({
-        "اسم المعلم": vote.teacher.profile?.full_name || "-",
+        "اسم المشرف": vote.teacher.profile?.full_name || "-",
         "البريد الإلكتروني": vote.teacher.profile?.email || "-",
         "جلسة الكوتشينج الفردية": FREQUENCY_LABELS[vote.coaching_frequency],
         "الاستشارة الجماعية": FREQUENCY_LABELS[vote.consultation_frequency],
@@ -171,9 +171,9 @@ export default function QualificationVotePage() {
     <div className="qv-page" dir="rtl">
       <section className="qv-hero">
         <div>
-          <span className="qv-kicker"><BarChart3 size={15} /> صوت المعلمين</span>
+          <span className="qv-kicker"><BarChart3 size={15} /> صوت المشرفين</span>
           <h1>نتائج تصويت عمليات التأهيل المستقبلية</h1>
-          <p>قراءة منظمة لاختيارات المعلمين حول وتيرة الدعم والتطوير في المرحلة القادمة.</p>
+          <p>قراءة منظمة لاختيارات المشرفين حول وتيرة الدعم والتطوير في المرحلة القادمة.</p>
         </div>
         <button type="button" className="qv-export" onClick={() => void exportExcel()} disabled={exporting || data.votes.length === 0}>
           {exporting ? <LoaderCircle className="qv-spin" size={17} /> : <Download size={17} />}
@@ -183,7 +183,7 @@ export default function QualificationVotePage() {
 
       <section className="qv-stats" aria-label="ملخص المشاركة">
         <article><CheckCircle2 size={20} /><div><strong>{data.meta.total_responses}</strong><span>إجمالي المشاركات</span></div></article>
-        <article><Users size={20} /><div><strong>{data.meta.eligible_teachers}</strong><span>المعلمون المؤهلون</span></div></article>
+        <article><Users size={20} /><div><strong>{data.meta.eligible_teachers}</strong><span>المشرفون المؤهلون</span></div></article>
         <article><BarChart3 size={20} /><div><strong>{data.meta.response_rate}%</strong><span>نسبة الاستجابة</span></div></article>
         <article><Search size={20} /><div><strong>{data.meta.filtered}</strong><span>النتائج المطابقة</span></div></article>
       </section>
@@ -197,7 +197,7 @@ export default function QualificationVotePage() {
       </section>
 
       <section className="qv-results">
-        <div className="qv-results-head"><div><h2>الإجابات التفصيلية</h2><p>كل صف يعرض النموذج الكامل الذي أرسله المعلم.</p></div></div>
+        <div className="qv-results-head"><div><h2>الإجابات التفصيلية</h2><p>كل صف يعرض النموذج الكامل الذي أرسله المشرف.</p></div></div>
         <div className="qv-filters">
           <label className="qv-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث بالاسم أو البريد الإلكتروني" /></label>
           <FilterSelect label="التاريخ" value={dateScope} onChange={setDateScope} options={[["all", "كل التواريخ"], ["today", "أرسلوا اليوم"], ["week", "آخر 7 أيام"]]} />
@@ -214,7 +214,7 @@ export default function QualificationVotePage() {
           <div className="qv-table-wrap" aria-busy={loading}>
             {loading && <div className="qv-loading"><LoaderCircle className="qv-spin" size={25} /><span>جاري تحديث النتائج...</span></div>}
             <table>
-              <thead><tr><th>المعلم</th><th>الكوتشينج الفردي</th><th>الاستشارة الجماعية</th><th>التقييم التطويري</th><th>الدعم الميداني</th><th>قائد للمجموعة</th><th>ملاحظات</th><th>تاريخ الإرسال</th></tr></thead>
+              <thead><tr><th>المشرف</th><th>الكوتشينج الفردي</th><th>الاستشارة الجماعية</th><th>التقييم التطويري</th><th>الدعم الميداني</th><th>قائد للمجموعة</th><th>ملاحظات</th><th>تاريخ الإرسال</th></tr></thead>
               <tbody>
                 {!loading && data.votes.length === 0 ? <tr><td colSpan={8} className="qv-empty">لا توجد إجابات مطابقة للفلاتر الحالية.</td></tr> : data.votes.map((vote) => (
                   <tr key={vote.id}>

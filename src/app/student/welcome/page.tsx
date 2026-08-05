@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
@@ -7,15 +7,15 @@ import { useLang } from "@/lib/language-context";
 
 const S = {
   ar: {
-    bannerTitle: "تم تعيينك في فصلك الدراسي!",
+    bannerTitle: "تم تعيينك في مجموعةك الدراسي!",
     bannerSub: (name: string) => `أهلاً وسهلاً، ${name}`,
-    classLabel: "فصلك الدراسي",
-    teacherLabel: "معلمك",
-    classmatesLabel: "زملاؤك في الفصل",
-    classmatesCount: (n: number) => `${n} طالب`,
+    classLabel: "مجموعةك الدراسي",
+    teacherLabel: "مشرفك",
+    classmatesLabel: "زملاؤك في المجموعة",
+    classmatesCount: (n: number) => `${n} مستفيد`,
     scoreLabel: "نتيجة اختبار التصنيف",
-    goBtn: "انتقل إلى الفصل الآن",
-    footerNote: "يمكنك الآن رؤية إعلانات فصلك وأداء الاختبارات",
+    goBtn: "انتقل إلى المجموعة الآن",
+    footerNote: "يمكنك الآن رؤية إعلانات مجموعةك وأداء الاختبارات",
   },
   sq: {
     bannerTitle: "Jeni caktuar në klasën tuaj!",

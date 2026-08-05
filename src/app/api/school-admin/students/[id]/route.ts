@@ -22,7 +22,7 @@ export async function PATCH(
     where: { id, school_id: auth.school.id },
     select: { profile_id: true },
   });
-  if (!student) return NextResponse.json({ error: "الطالب غير موجود" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "المستفيد غير موجود" }, { status: 404 });
 
   const updated = await prisma.profile.update({
     where: { id: student.profile_id },

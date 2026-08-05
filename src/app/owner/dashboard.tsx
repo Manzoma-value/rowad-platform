@@ -16,9 +16,9 @@ interface Stats {
 const STATUS_LABELS: Record<string, string> = {
   PENDING_INTAKE: "في انتظار الاختبار",
   INTAKE_SUBMITTED: "تم تقديم الاختبار",
-  SCHOOL_ASSIGNED: "تم تعيين المدرسة",
+  SCHOOL_ASSIGNED: "تم تعيين المنصة",
   SCHOOL_PLACEMENT_SUBMITTED: "تم تقديم التوزيع",
-  CLASS_ASSIGNED: "تم تعيين الفصل",
+  CLASS_ASSIGNED: "تم تعيين المجموعة",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -53,28 +53,28 @@ export default function OwnerDashboardPage() {
 
   const statCards = [
     {
-      label: "المدارس",
+      label: "المنصات",
       value: stats.schoolCount,
       icon: "🏫",
       href: "/owner/schools",
       accent: "#1a4fa0",
-      desc: "مدرسة مسجّلة",
+      desc: "منصة مسجّلة",
     },
     {
-      label: "المعلمون",
+      label: "المشرفون",
       value: stats.teacherCount,
       icon: "👨‍🏫",
       href: "/owner/schools",
       accent: "#0d7c4f",
-      desc: "معلم نشط",
+      desc: "مشرف نشط",
     },
     {
-      label: "الطلاب",
+      label: "المستفيدون",
       value: stats.studentCount,
       icon: "🎓",
       href: "/owner/submissions",
       accent: "#6d28d9",
-      desc: "طالب مسجّل",
+      desc: "مستفيد مسجّل",
     },
     {
       label: "بانتظار المراجعة",
@@ -130,7 +130,7 @@ export default function OwnerDashboardPage() {
           <div className="alert-body">
             <span className="alert-title">لم يتم إنشاء اختبار القبول بعد</span>
             <span className="alert-desc">
-              لن يتمكن الطلاب الجدد من إجراء الاختبار الأوّلي.
+              لن يتمكن المستفيدين الجدد من إجراء الاختبار الأوّلي.
             </span>
           </div>
           <Link href="/owner/intake-assessment" className="alert-action">
@@ -206,14 +206,14 @@ export default function OwnerDashboardPage() {
         {/* Pipeline */}
         <div className="section-card">
           <div className="section-card-header">
-            <h2 className="section-card-title">مسار تأهيل الطلاب</h2>
+            <h2 className="section-card-title">مسار تأهيل المستفيدين</h2>
             <span className="section-card-badge">
-              {stats.studentCount} طالب
+              {stats.studentCount} مستفيد
             </span>
           </div>
           <div className="pipeline">
             {stats.studentsByStatus.length === 0 ? (
-              <div className="empty-state">لا يوجد طلاب مسجّلون بعد.</div>
+              <div className="empty-state">لا يوجد مستفيدون مسجّلون بعد.</div>
             ) : (
               stats.studentsByStatus.map((s) => {
                 const pct = stats.studentCount
@@ -301,9 +301,9 @@ export default function OwnerDashboardPage() {
             <Link href="/owner/schools" className="quick-link">
               <div className="ql-icon-wrap">🏫</div>
               <div className="ql-body">
-                <div className="ql-title">المدارس المسجّلة</div>
+                <div className="ql-title">المنصات المسجّلة</div>
                 <div className="ql-sub">
-                  {stats.schoolCount} مدارس في النظام
+                  {stats.schoolCount} منصات في النظام
                 </div>
               </div>
               <svg

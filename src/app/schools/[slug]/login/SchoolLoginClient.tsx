@@ -276,7 +276,7 @@ const STRINGS = {
     emailSuccess: "بريد إلكتروني صحيح ✓",
     haveAccount: "لا تملك حسابًا؟",
     signup: "إنشاء حساب",
-    workshopNoAccount: "ليس لديك حساب معلم؟",
+    workshopNoAccount: "ليس لديك حساب مشرف؟",
     workshopSignup: "أنشئ حسابًا وتابع نموذج التقديم",
     poweredBy: "مدعومة من",
     backTo: "العودة إلى الصفحة الرئيسية",

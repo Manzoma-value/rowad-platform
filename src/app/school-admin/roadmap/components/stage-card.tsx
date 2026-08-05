@@ -29,7 +29,7 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
   const deleteStage = async () => {
     if (!(await confirm({
       title: "حذف المرحلة",
-      message: "هل أنت متأكد من حذف هذه المرحلة؟ سيتم حذف جميع مستوياتها وأسئلتها ومحاولات الطلاب فيها.",
+      message: "هل أنت متأكد من حذف هذه المرحلة؟ سيتم حذف جميع مستوياتها وأسئلتها ومحاولات المستفيدين فيها.",
     }))) return;
     await fetch(`/api/school-admin/roadmap/stages/${stage.id}`, {
       method: "DELETE",

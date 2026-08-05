@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,7 +20,7 @@ const STATUS_LABELS: Record<string, string> = {
   INTAKE_SUBMITTED: "تم تقديم الاختبار",
   SCHOOL_ASSIGNED: "تم تعيين الجهة",
   SCHOOL_PLACEMENT_SUBMITTED: "تم تقديم التوزيع",
-  CLASS_ASSIGNED: "تم تعيين الفصل",
+  CLASS_ASSIGNED: "تم تعيين المجموعة",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -209,7 +209,7 @@ export default function OwnerDashboardPage() {
           </div>
           <div className="alert-body">
             <span className="alert-title">لم يتم إنشاء اختبار القبول بعد</span>
-            <span className="alert-desc">لن يتمكن الطلاب الجدد من إجراء الاختبار الأوّلي.</span>
+            <span className="alert-desc">لن يتمكن المستفيدين الجدد من إجراء الاختبار الأوّلي.</span>
           </div>
           <Link href="/owner/intake-assessment" className="alert-action">إنشاء الآن →</Link>
         </div>
@@ -263,14 +263,14 @@ export default function OwnerDashboardPage() {
         <div className="section-card">
           <div className="section-card-head">
             <div className="section-card-head-left">
-              <h2 className="section-card-title">مسار تأهيل الطلاب</h2>
-              <p className="section-card-desc">توزيع الطلاب حسب مرحلة القبول</p>
+              <h2 className="section-card-title">مسار تأهيل المستفيدين</h2>
+              <p className="section-card-desc">توزيع المستفيدين حسب مرحلة القبول</p>
             </div>
-            <span className="section-badge">{stats.studentCount.toLocaleString("en")} طالب</span>
+            <span className="section-badge">{stats.studentCount.toLocaleString("en")} مستفيد</span>
           </div>
           <div className="pipeline">
             {stats.studentsByStatus.length === 0 ? (
-              <div className="empty-state">لا يوجد طلاب مسجّلون بعد.</div>
+              <div className="empty-state">لا يوجد مستفيدون مسجّلون بعد.</div>
             ) : (
               stats.studentsByStatus.map((s, i) => {
                 const pct = stats.studentCount ? Math.min(100, (s.count / stats.studentCount) * 100) : 0;
@@ -304,7 +304,7 @@ export default function OwnerDashboardPage() {
             {[
               {
                 href: "/owner/intake-assessment", icon: "📋", title: "اختبار القبول",
-                sub: stats.hasIntakeAssessment ? "عرض وتعديل الاختبار الحالي" : "إنشاء اختبار جديد للطلاب",
+                sub: stats.hasIntakeAssessment ? "عرض وتعديل الاختبار الحالي" : "إنشاء اختبار جديد للمستفيدين",
                 tag: stats.hasIntakeAssessment ? "نشط" : "مطلوب",
                 tagType: stats.hasIntakeAssessment ? "success" : "danger",
               },

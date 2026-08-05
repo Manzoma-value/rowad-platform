@@ -65,7 +65,7 @@ export default function Harness() {
           modelRows: [],
           miniRows: [],
           inProgressRows: [
-            { profile_id: "p1", full_name: "معلم تجريبي", email: "t@test.com", role: "TEACHER", stage: "STAGE1", placed_count: 12, total: 25, updated_at: new Date().toISOString() },
+            { profile_id: "p1", full_name: "مشرف تجريبي", email: "t@test.com", role: "TEACHER", stage: "STAGE1", placed_count: 12, total: 25, updated_at: new Date().toISOString() },
           ],
         });
       }

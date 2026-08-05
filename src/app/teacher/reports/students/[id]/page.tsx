@@ -58,7 +58,7 @@ const TR: Record<string, Record<string, string>> = {
     radarTitle: "متوسط السمات",
     assessedTitle: "التقييمات المكتملة",
     editBtn: "تعديل",
-    emptyTraits: "لم يُكمل الطالب أي مستوى بعد",
+    emptyTraits: "لم يُكمل المستفيد أي مستوى بعد",
     typeAccTitle: "الدقة حسب نوع السؤال",
     stageTitle: "الأداء حسب المرحلة",
     moduleUnit: "وحدة",

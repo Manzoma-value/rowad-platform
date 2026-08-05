@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
@@ -33,9 +33,9 @@ export default function SchoolAdminDashboard() {
   const [error, setError] = useState(false);
 
   const labels = {
-    eyebrow: lang === "ar" ? "مركز القيادة المدرسي" : lang === "sq" ? "Qendra e drejtimit" : "School Command Center",
+    eyebrow: lang === "ar" ? "مركز قيادة المنصة" : lang === "sq" ? "Qendra e drejtimit" : "School Command Center",
     welcome: lang === "ar" ? "لوحة تحكم الإدارة" : lang === "sq" ? "Paneli i administrimit" : "Administration dashboard",
-    subtitle: lang === "ar" ? "نظرة تنفيذية على المعلمين، الطلاب، الفصول، التقييمات والمجتمع من مكان واحد." : lang === "sq" ? "Pamje ekzekutive për mësuesit, nxënësit, klasat, vlerësimet dhe komunitetin." : "An executive view of teachers, students, classes, assessments and community work.",
+    subtitle: lang === "ar" ? "نظرة تنفيذية على المشرفين، المستفيدين، المجموعات، التقييمات والمجتمع من مكان واحد." : lang === "sq" ? "Pamje ekzekutive për mësuesit, nxënësit, klasat, vlerësimet dhe komunitetin." : "An executive view of teachers, students, classes, assessments and community work.",
     urgent: lang === "ar" ? "الأولويات الآن" : lang === "sq" ? "Prioritetet tani" : "Priorities now",
     ecosystem: lang === "ar" ? "خريطة المنصة" : lang === "sq" ? "Harta e platformës" : "Platform map",
     healthy: lang === "ar" ? "مستقر" : lang === "sq" ? "Në rregull" : "Healthy",
@@ -108,9 +108,9 @@ export default function SchoolAdminDashboard() {
   ].filter(Boolean) as { title: string; href: string; tone: string; action: string }[];
 
   const modules = [
-    { title: lang === "ar" ? "المعلمون والتأهيل" : lang === "sq" ? "Mësuesit" : "Teachers", desc: lang === "ar" ? "المعلمون، المجموعات، الطلبات والورش." : lang === "sq" ? "Mësuesit, grupet, aplikimet dhe forumet." : "Teachers, groups, applications and workshops.", href: "/school-admin/teachers", links: [[tr.teachers, "/school-admin/teachers"], [lang === "ar" ? "المجموعات" : "Groups", "/school-admin/teacher-groups"], [lang === "ar" ? "الطلبات" : "Applications", "/school-admin/applications"], [lang === "ar" ? "الورش" : "Workshops", "/school-admin/workshops"]] },
-    { title: lang === "ar" ? "الطلاب والفصول" : lang === "sq" ? "Nxënësit dhe klasat" : "Students and classes", desc: lang === "ar" ? "الطلاب، الفصول، الفرز، والمراجعة التعليمية." : lang === "sq" ? "Nxënësit, klasat, vendosja dhe shqyrtimi." : "Students, classes, placement and learning review.", href: "/school-admin/students", links: [[tr.students, "/school-admin/students"], [tr.classes, "/school-admin/classes"], [tr.submissions, "/school-admin/submissions"], [lang === "ar" ? "المراجعة" : "Review", "/school-admin/review-queue"]] },
-    { title: lang === "ar" ? "التقارير والقياس" : lang === "sq" ? "Raporte dhe matje" : "Reports and measurement", desc: lang === "ar" ? "تقارير المدرسة، تقارير المالك، ونتائج النموذج." : lang === "sq" ? "Raportet, raportet e pronarit dhe modeli edukativ." : "School reports, owner reports and model scores.", href: "/school-admin/reports", links: [[tr.reports ?? "Reports", "/school-admin/reports"], [lang === "ar" ? "تقارير المالك" : "Owner Reports", "/school-admin/owner-reports"], [lang === "ar" ? "النموذج" : "Model", "/school-admin/game-scores"]] },
+    { title: lang === "ar" ? "المشرفون والتأهيل" : lang === "sq" ? "Mësuesit" : "Teachers", desc: lang === "ar" ? "المشرفون، المجموعات، الطلبات والورش." : lang === "sq" ? "Mësuesit, grupet, aplikimet dhe forumet." : "Teachers, groups, applications and workshops.", href: "/school-admin/teachers", links: [[tr.teachers, "/school-admin/teachers"], [lang === "ar" ? "المجموعات" : "Groups", "/school-admin/teacher-groups"], [lang === "ar" ? "الطلبات" : "Applications", "/school-admin/applications"], [lang === "ar" ? "الورش" : "Workshops", "/school-admin/workshops"]] },
+    { title: lang === "ar" ? "المستفيدون والمجموعات" : lang === "sq" ? "Nxënësit dhe klasat" : "Students and classes", desc: lang === "ar" ? "المستفيدين، المجموعات، الفرز، والمراجعة التعليمية." : lang === "sq" ? "Nxënësit, klasat, vendosja dhe shqyrtimi." : "Students, classes, placement and learning review.", href: "/school-admin/students", links: [[tr.students, "/school-admin/students"], [tr.classes, "/school-admin/classes"], [tr.submissions, "/school-admin/submissions"], [lang === "ar" ? "المراجعة" : "Review", "/school-admin/review-queue"]] },
+    { title: lang === "ar" ? "التقارير والقياس" : lang === "sq" ? "Raporte dhe matje" : "Reports and measurement", desc: lang === "ar" ? "تقارير المنصة، تقارير المالك، ونتائج النموذج." : lang === "sq" ? "Raportet, raportet e pronarit dhe modeli edukativ." : "School reports, owner reports and model scores.", href: "/school-admin/reports", links: [[tr.reports ?? "Reports", "/school-admin/reports"], [lang === "ar" ? "تقارير المالك" : "Owner Reports", "/school-admin/owner-reports"], [lang === "ar" ? "النموذج" : "Model", "/school-admin/game-scores"]] },
     { title: lang === "ar" ? "المجتمع والتواصل" : lang === "sq" ? "Komuniteti" : "Community", desc: lang === "ar" ? "المجتمع، الإعلانات، الدعوات والتواصل." : lang === "sq" ? "Komuniteti, njoftimet, ftesat dhe komunikimi." : "Community, announcements, invites and communication.", href: "/school-admin/hub", links: [[lang === "ar" ? "المجتمع" : "Community", "/school-admin/hub"], [lang === "ar" ? "الدعوات" : "Invites", "/school-admin/invites"]] },
   ];
 
@@ -162,7 +162,7 @@ export default function SchoolAdminDashboard() {
 
         <div className="school-dashboard-panel school-dashboard-status">
           <div className="school-dashboard-panel-head">
-            <h2>{lang === "ar" ? "حالة الطلاب" : lang === "sq" ? "Statusi i nxënësve" : "Student status"}</h2>
+            <h2>{lang === "ar" ? "حالة المستفيدين" : lang === "sq" ? "Statusi i nxënësve" : "Student status"}</h2>
             <span>{stats.studentCount}</span>
           </div>
           {studentStatus.length > 0 ? studentStatus.map((row) => (

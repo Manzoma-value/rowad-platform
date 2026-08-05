@@ -149,7 +149,7 @@ export async function POST(
     const messages: Record<string, string> = {
       not_found: "رابط الدعوة غير صالح.",
       disabled:  "تم تعطيل هذه الدعوة.",
-      expired:   "انتهت صلاحية الدعوة. تواصل مع مدير المدرسة.",
+      expired:   "انتهت صلاحية الدعوة. تواصل مع مدير المنصة.",
       used:      "تم استخدام هذه الدعوة مسبقاً.",
     };
     return NextResponse.json({ error: messages[state.reason] }, { status: 410 });

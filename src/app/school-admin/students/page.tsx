@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -61,7 +61,7 @@ const STATUS_META: Record<
     border: "rgba(184,160,130,0.22)",
   },
   SCHOOL_ASSIGNED: {
-    label: "تم تعيين المدرسة",
+    label: "تم تعيين المنصة",
     color: "#1A4A7A",
     bg: "rgba(26,74,122,0.08)",
     border: "rgba(26,74,122,0.18)",
@@ -73,7 +73,7 @@ const STATUS_META: Record<
     border: "rgba(74,32,128,0.18)",
   },
   CLASS_ASSIGNED: {
-    label: "في الفصل",
+    label: "في المجموعة",
     color: "#1B5E20",
     bg: "rgba(26,107,60,0.07)",
     border: "rgba(26,107,60,0.18)",
@@ -305,7 +305,7 @@ function StudentCard({
           className={`sc-toggle-btn ${student.profile.is_active ? "sc-toggle-btn--off" : "sc-toggle-btn--on"}`}
           onClick={(e) => { e.stopPropagation(); onToggle(student.id, student.profile.is_active); }}
           disabled={toggling}
-          title={student.profile.is_active ? "تعطيل الطالب" : "تفعيل الطالب"}
+          title={student.profile.is_active ? "تعطيل المستفيد" : "تفعيل المستفيد"}
         >
           {toggling ? (
             <span className="sc-spin" />
@@ -436,14 +436,14 @@ function StudentCard({
 
           {/* Assign class */}
           <div className="sc-section">
-            <div className="sc-section-title">تعيين الفصل</div>
+            <div className="sc-section-title">تعيين المجموعة</div>
             <select
               className="sc-select"
               value={student.class?.id ?? ""}
               onChange={(e) => onAssign(student.id, e.target.value)}
               dir="rtl"
             >
-              <option value="">— بدون فصل —</option>
+              <option value="">— بدون مجموعة —</option>
               {classes.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -487,8 +487,8 @@ export default function SchoolAdminStudentsPage() {
   async function handleToggle(studentId: string, currentActive: boolean) {
     if (currentActive) {
       const ok = await confirm({
-        title: "تعطيل حساب الطالب",
-        message: "سيتم تعطيل وصول هذا الطالب فوراً. لن يتمكن من الدخول حتى تعيد تفعيله.",
+        title: "تعطيل حساب المستفيد",
+        message: "سيتم تعطيل وصول هذا المستفيد فوراً. لن يتمكن من الدخول حتى تعيد تفعيله.",
         variant: "warning",
         confirmText: "تعطيل",
         irreversible: false,
@@ -557,9 +557,9 @@ export default function SchoolAdminStudentsPage() {
       {/* ── Header ── */}
       <div className="sp-header">
         <div>
-          <p className="sp-eyebrow">سجل الطلاب</p>
-          <h1 className="sp-title">الطلاب</h1>
-          <p className="sp-sub">{students.length} طالب مسجل</p>
+          <p className="sp-eyebrow">سجل المستفيدين</p>
+          <h1 className="sp-title">المستفيدون</h1>
+          <p className="sp-sub">{students.length} مستفيد مسجل</p>
         </div>
         <div className="sp-header-stats">
           <div className="sp-hstat">
@@ -597,7 +597,7 @@ export default function SchoolAdminStudentsPage() {
           </svg>
           <input
             className="sp-search"
-            placeholder="بحث عن طالب..."
+            placeholder="بحث عن مستفيد..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             dir="rtl"
@@ -643,7 +643,7 @@ export default function SchoolAdminStudentsPage() {
       {loading ? (
         <div className="sp-loading">
           <div className="sp-spinner" />
-          <span>جارٍ تحميل الطلاب...</span>
+          <span>جارٍ تحميل المستفيدين...</span>
         </div>
       ) : filtered.length === 0 ? (
         <div className="sp-empty">
@@ -661,7 +661,7 @@ export default function SchoolAdminStudentsPage() {
             <path d="M23 21v-2a4 4 0 00-3-3.87" />
             <path d="M16 3.13a4 4 0 010 7.75" />
           </svg>
-          <p>لا يوجد طلاب</p>
+          <p>لا يوجد مستفيدون</p>
         </div>
       ) : (
         <div className="sp-grid">

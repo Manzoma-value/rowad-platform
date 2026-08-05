@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
@@ -40,9 +40,9 @@ export default function StudentPage() {
 
   const labels = {
     learning: lang === "ar" ? "مساحتي التعليمية" : lang === "sq" ? "Hapësira ime" : "My learning space",
-    subtitle: lang === "ar" ? "كل ما تحتاجه اليوم: دروسك، مجتمعك، زملاؤك، وإعلانات معلمك." : lang === "sq" ? "Gjithçka për sot: mësimet, komuniteti, shokët dhe njoftimet." : "Everything for today: lessons, community, classmates and teacher announcements.",
+    subtitle: lang === "ar" ? "كل ما تحتاجه اليوم: دروسك، مجتمعك، زملاؤك، وإعلانات مشرفك." : lang === "sq" ? "Gjithçka për sot: mësimet, komuniteti, shokët dhe njoftimet." : "Everything for today: lessons, community, classmates and teacher announcements.",
     overview: lang === "ar" ? "نظرة سريعة" : lang === "sq" ? "Pamje e shpejtë" : "Quick overview",
-    teacher: lang === "ar" ? "المعلم" : lang === "sq" ? "Mësuesi" : "Teacher",
+    teacher: lang === "ar" ? "المشرف" : lang === "sq" ? "Mësuesi" : "Teacher",
     classmates: tr.classmates,
     announcements: tr.announcements,
     community: lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community",
@@ -66,7 +66,7 @@ export default function StudentPage() {
   }, []);
 
   const initials = useMemo(() => {
-    const name = data?.profile?.full_name ?? "طالب";
+    const name = data?.profile?.full_name ?? "مستفيد";
     return name.split(" ").map((word) => word[0]).slice(0, 2).join("");
   }, [data?.profile?.full_name]);
 
@@ -86,7 +86,7 @@ export default function StudentPage() {
     { href: "/student/roadmap", title: tr.questionBank, sub: tr.questionBankSub },
     { href: "/student/quizzes", title: tr.quizzes, sub: tr.quizzesActionSub },
     { href: "/student/classes", title: tr.myClass, sub: tr.myClassActionSub },
-    { href: "/student/hub", title: labels.community, sub: lang === "ar" ? "شارك وتابع مجتمع المدرسة." : lang === "sq" ? "Merr pjesë në komunitet." : "Join the school community." },
+    { href: "/student/hub", title: labels.community, sub: lang === "ar" ? "شارك وتابع مجتمع المنصة." : lang === "sq" ? "Merr pjesë në komunitet." : "Join the school community." },
   ];
 
   return (

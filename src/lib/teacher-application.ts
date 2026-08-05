@@ -126,11 +126,11 @@ export const GENDER_L: Record<Gender, L> = {
 };
 
 export const CURRENT_ROLE_L: Record<CurrentRole, L> = {
-  TEACHER:        { ar: "معلم",          sq: "Mësues" },
+  TEACHER:        { ar: "مشرف",          sq: "Mësues" },
   SUPERVISOR:     { ar: "مشرف تربوي",    sq: "Mbikëqyrës arsimor" },
-  PRINCIPAL:      { ar: "مدير مدرسة",    sq: "Drejtor shkolle" },
-  VICE_PRINCIPAL: { ar: "وكيل مدرسة",    sq: "Zëvendësdrejtor" },
-  COUNSELOR:      { ar: "مرشد طلابي",    sq: "Këshilltar studentor" },
+  PRINCIPAL:      { ar: "مدير منصة",    sq: "Drejtor shkolle" },
+  VICE_PRINCIPAL: { ar: "وكيل منصة",    sq: "Zëvendësdrejtor" },
+  COUNSELOR:      { ar: "مرشد للمستفيدين",    sq: "Këshilltar studentor" },
   TRAINER:        { ar: "مدرب",          sq: "Trajner" },
   TEAM_LEAD:      { ar: "قائد فريق",     sq: "Udhëheqës ekipi" },
   RESEARCHER:     { ar: "باحث",          sq: "Studiues" },
@@ -155,7 +155,7 @@ export const EXPERIENCE_RANGE_L: Record<ExperienceRange, L> = {
 };
 
 export const ACHIEVEMENT_SCOPE_L: Record<AchievementScope, L> = {
-  INSTITUTIONAL: { ar: "على مستوى مؤسسة أو مدرسة", sq: "Niveli institucional ose i shkollës" },
+  INSTITUTIONAL: { ar: "على مستوى مؤسسة أو منصة", sq: "Niveli institucional ose i shkollës" },
   CITY:          { ar: "على مستوى مدينة أو محافظة", sq: "Niveli i qytetit ose qarkut" },
   COUNTRY:       { ar: "على مستوى الدولة",           sq: "Niveli kombëtar" },
   REGIONAL:      { ar: "على المستوى الإقليمي",       sq: "Niveli rajonal" },
@@ -165,7 +165,7 @@ export const ACHIEVEMENT_SCOPE_L: Record<AchievementScope, L> = {
 export const EXPERIENCE_AREA_L: Record<string, L> = {
   TEACHING:                  { ar: "التدريس",              sq: "Mësimdhënie" },
   EDUCATIONAL_SUPERVISION:   { ar: "الإشراف التربوي",      sq: "Mbikëqyrje arsimore" },
-  SCHOOL_LEADERSHIP:         { ar: "القيادة المدرسية",     sq: "Lidership shkollor" },
+  SCHOOL_LEADERSHIP:         { ar: "القيادة الإدارية",     sq: "Lidership shkollor" },
   TRAINING:                  { ar: "التدريب",              sq: "Trajnim" },
   GUIDANCE:                  { ar: "الإرشاد",              sq: "Këshillim" },
   YOUTH_WORK:                { ar: "العمل الشبابي",        sq: "Punë me të rinjtë" },
@@ -180,12 +180,12 @@ export const EXPERIENCE_AREA_L: Record<string, L> = {
 
 export const TARGET_GROUP_L: Record<string, L> = {
   CHILDREN:               { ar: "الأطفال",                sq: "Fëmijët" },
-  PRIMARY:                { ar: "طلاب المرحلة الابتدائية", sq: "Nxënësit e shkollës fillore" },
-  MIDDLE:                 { ar: "طلاب المرحلة المتوسطة",  sq: "Nxënësit e shkollës 9-vjeçare" },
-  SECONDARY:              { ar: "طلاب المرحلة الثانوية",  sq: "Nxënësit e shkollës së mesme" },
-  UNIVERSITY:             { ar: "الطلاب الجامعيون",        sq: "Studentët universitarë" },
+  PRIMARY:                { ar: "مستفيدو المرحلة الابتدائية", sq: "Nxënësit e shkollës fillore" },
+  MIDDLE:                 { ar: "مستفيدو المرحلة المتوسطة",  sq: "Nxënësit e shkollës 9-vjeçare" },
+  SECONDARY:              { ar: "مستفيدو المرحلة الثانوية",  sq: "Nxënësit e shkollës së mesme" },
+  UNIVERSITY:             { ar: "المستفيدون الجامعيون",        sq: "Studentët universitarë" },
   YOUTH:                  { ar: "الشباب",                  sq: "Të rinjtë" },
-  TEACHERS:               { ar: "المعلمون",                sq: "Mësuesit" },
+  TEACHERS:               { ar: "المشرفون",                sq: "Mësuesit" },
   SUPERVISORS:            { ar: "المشرفون التربويون",      sq: "Mbikëqyrësit arsimorë" },
   EDUCATIONAL_LEADERS:    { ar: "القيادات التعليمية",      sq: "Udhëheqësit arsimorë" },
   PARENTS:                { ar: "أولياء الأمور",           sq: "Prindërit" },
@@ -239,7 +239,7 @@ export const APP_UI = {
   ar: {
     pageTitle: "نموذج التقديم — المرحلة الأولى",
     pageSub:
-      "املأ بيانات التقديم بدقة. سيتم مراجعة طلبك من قبل إدارة المدرسة قبل تفعيل حسابك كمعلم.",
+      "املأ بيانات التقديم بدقة. سيتم مراجعة طلبك من قبل إدارة المنصة قبل تفعيل حسابك كمشرف.",
     sectionPersonal: "البيانات الشخصية",
     sectionNomination: "جهة الترشيح",
     sectionCurrentRole: "الدور الحالي",

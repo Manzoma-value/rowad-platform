@@ -86,7 +86,7 @@ export default function RoadmapPage() {
           </div>
           <h2 className="rb-empty-title">لا يوجد بنك أسئلة بعد</h2>
           <p className="rb-empty-sub">
-            أنشئ خارطة الطريق التعليمية لمدرستك وابدأ في إضافة المراحل
+            أنشئ خارطة الطريق التعليمية لمنصتك وابدأ في إضافة المراحل
             والمستويات
           </p>
           <button

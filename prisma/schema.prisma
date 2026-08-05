@@ -359,7 +359,7 @@ model StageTrait {
   stage_id   String   @db.Uuid
   maqsad     Maqsad
   name       String // e.g. "الدراية"
-  definition String // e.g. "قدرة الطالب على فهم سبب الفعل..."
+  definition String // e.g. "قدرة المستفيد على فهم سبب الفعل..."
   created_at DateTime @default(now())
 
   stage              RoadmapStage      @relation(fields: [stage_id], references: [id], onDelete: Cascade)
@@ -375,7 +375,7 @@ model StageTrait {
 model TraitElement {
   id         String   @id @default(uuid()) @db.Uuid
   trait_id   String   @db.Uuid
-  text       String // e.g. "يفهم الطالب لماذا يتحرك"
+  text       String // e.g. "يفهم المستفيد لماذا يتحرك"
   order      Int
   created_at DateTime @default(now())
 

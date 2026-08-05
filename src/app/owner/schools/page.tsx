@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 export const dynamic = "force-dynamic";
 import MandalaLoader from "@/components/MandalaLoader";
 import { useEffect, useState } from "react";
@@ -142,7 +142,7 @@ export default function OwnerSchoolsPage() {
       // Deactivating a school cuts off all its users. Confirm explicitly.
       const ok = await confirm({
         title: "تعطيل الجهة",
-        message: "سيتم تعطيل هذه الجهة وحجب وصول جميع مديريها ومعلميها وطلابها فوراً.",
+        message: "سيتم تعطيل هذه الجهة وحجب وصول جميع مديريها ومشرفيها ومستفيدوها فوراً.",
         variant: "warning",
         confirmText: "تعطيل",
         irreversible: false,
@@ -358,7 +358,7 @@ export default function OwnerSchoolsPage() {
 
       {/* ── Grid ── */}
       {loading ? (
-        <MandalaLoader label="جارٍ تحميل المدارس" sublabel="يرجى الانتظار..." />
+        <MandalaLoader label="جارٍ تحميل المنصات" sublabel="يرجى الانتظار..." />
       ) : filtered.length === 0 ? (
         <div className="state-center state-empty">
           <div className="empty-ring">
@@ -465,7 +465,7 @@ export default function OwnerSchoolsPage() {
                 {[
                   { val: school._count?.teachers ?? 0, lab: "الجهة" },
                   { val: school._count?.students ?? 0, lab: "مستفيد" },
-                  { val: school._count?.classes ?? 0, lab: "فصل" },
+                  { val: school._count?.classes ?? 0, lab: "مجموعة" },
                 ].map((s, i) => (
                   <div key={i} className="stat">
                     <span className="stat-val">{s.val}</span>

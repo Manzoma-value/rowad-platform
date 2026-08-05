@@ -52,7 +52,7 @@ const T = {
     waitingInvite: "دعوة نشطة قيد الانتظار",
     /* Empty states */
     emptyNoSchools: "لا توجد جهات مسجّلة بعد",
-    emptyNoSchoolsSub: "يجب أن تكون لديك جهة (مدرسة) واحدة على الأقل قبل إصدار دعوات المدراء. أنشئ أول جهة من صفحة الجهات.",
+    emptyNoSchoolsSub: "يجب أن تكون لديك جهة (منصة) واحدة على الأقل قبل إصدار دعوات المدراء. أنشئ أول جهة من صفحة الجهات.",
     emptyGoSchools: "صفحة الجهات",
     emptyNoInvites: "لا توجد دعوات بعد",
     emptyCreateFirst: "إنشاء أول دعوة",

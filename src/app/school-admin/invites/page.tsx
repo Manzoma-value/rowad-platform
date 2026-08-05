@@ -336,7 +336,7 @@ export default function InvitesPage() {
             <IdentityStar size={11} strokeWidth={5} />
             إدارة الوصول
           </p>
-          <h1 className="inv-title">دعوات المعلمين</h1>
+          <h1 className="inv-title">دعوات المشرفين</h1>
         </div>
         <button
           data-write="true"
@@ -391,9 +391,9 @@ export default function InvitesPage() {
           </svg>
         </div>
         <p>
-          أنشئ رابط دعوة وشاركه مع المعلم عبر واتساب أو البريد الإلكتروني.
+          أنشئ رابط دعوة وشاركه مع المشرف عبر واتساب أو البريد الإلكتروني.
           الرابط صالح لمدة <strong>14 يوماً</strong> ويُستخدم مرة واحدة فقط. بعد
-          قبول الدعوة، يمكن للمعلم تسجيل الدخول بشكل طبيعي.
+          قبول الدعوة، يمكن للمشرف تسجيل الدخول بشكل طبيعي.
         </p>
       </div>
 
@@ -404,7 +404,7 @@ export default function InvitesPage() {
             <div className="inv-new-flash-icon">✦</div>
             <span className="inv-new-flash-title">تم إنشاء رابط الدعوة!</span>
             <span className="inv-new-flash-sub">
-              انسخ الرابط وشاركه مع المعلم الآن
+              انسخ الرابط وشاركه مع المشرف الآن
             </span>
           </div>
           <div className="inv-new-flash-link">
@@ -442,7 +442,7 @@ export default function InvitesPage() {
             </svg>
           </div>
           <h3>لا توجد دعوات بعد</h3>
-          <p>أنشئ دعوة أولى لإضافة معلم إلى مدرستك</p>
+          <p>أنشئ دعوة أولى لإضافة مشرف إلى منصتك</p>
           <button
             data-write="true"
             className="inv-create-btn"

@@ -7,7 +7,7 @@ import { resolveLandingFlow } from "@/lib/landing-flow";
 import { z } from "zod";
 
 const SchoolSignupSchema = z.object({
-  school_slug: z.string().trim().min(1, "رمز المدرسة مطلوب"),
+  school_slug: z.string().trim().min(1, "رمز المنصة مطلوب"),
   full_name:   z.string().trim().min(1, "الاسم الكامل مطلوب"),
   email:       z.string().trim().email("صيغة البريد الإلكتروني غير صحيحة"),
   password:    z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
     });
 
     if (!school) {
-      return NextResponse.json({ error: "المدرسة غير موجودة" }, { status: 404 });
+      return NextResponse.json({ error: "المنصة غير موجودة" }, { status: 404 });
     }
 
     const landingFlow = resolveLandingFlow(school.features);

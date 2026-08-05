@@ -164,7 +164,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/teacher-groups", sublabel: "Teacher Groups", exact: false, icon: Users,
-      label: lang === "ar" ? "مجموعات المعلمين" : lang === "sq" ? "Grupet e mësuesve" : "Teacher Groups",
+      label: lang === "ar" ? "مجموعات المشرفين" : lang === "sq" ? "Grupet e mësuesve" : "Teacher Groups",
       hideForViewOnly: true,
       group: "teachers",
     },
@@ -192,7 +192,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
-      label: lang === "ar" ? "طلبات المعلمين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
+      label: lang === "ar" ? "طلبات المشرفين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
       hideForViewOnly: true,
       group: "teachers",
     },
@@ -415,12 +415,12 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const navGroups = [
     {
       key: "teachers",
-      label: lang === "ar" ? "المعلمون" : lang === "sq" ? "Mësuesit" : "Teachers",
+      label: lang === "ar" ? "المشرفون" : lang === "sq" ? "Mësuesit" : "Teachers",
       sublabel: "Teachers",
     },
     {
       key: "learning",
-      label: lang === "ar" ? "التعلم والفصول" : lang === "sq" ? "Mësimi" : "Learning",
+      label: lang === "ar" ? "التعلم والمجموعات" : lang === "sq" ? "Mësimi" : "Learning",
       sublabel: "Classes",
     },
     {

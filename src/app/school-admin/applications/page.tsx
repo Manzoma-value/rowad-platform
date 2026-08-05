@@ -40,7 +40,7 @@ type Row = {
 
 const UI = {
   ar: {
-    title: "طلبات المعلمين",
+    title: "طلبات المشرفين",
     sub: "راجع طلبات التقديم وحدد الموافقة أو الرفض. يمكنك تصفية القائمة وتصدير كل طلب كملف PDF.",
     search: "بحث بالاسم، البريد، الجوال أو المدينة",
     filters: "تصفية",
@@ -273,7 +273,7 @@ export default function ApplicationsListPage() {
       const sheet = XLSX.utils.json_to_sheet(rowsForExport);
       sheet["!cols"] = Object.keys(rowsForExport[0] ?? {}).map((key) => ({ wch: Math.min(44, Math.max(14, key.length + 5)) }));
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, sheet, L === "ar" ? "طلبات المعلمين" : "Aplikimet");
+      XLSX.utils.book_append_sheet(workbook, sheet, L === "ar" ? "طلبات المشرفين" : "Aplikimet");
       XLSX.writeFile(workbook, `teacher-applications-${new Date().toISOString().slice(0, 10)}.xlsx`);
     } finally {
       setExporting(false);

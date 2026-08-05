@@ -434,10 +434,10 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
               <div className="sl-user-info">
                 <span className="sl-user-name">
-                  {name || (lang === "ar" ? "الطالب" : "Nxënësi")}
+                  {name || (lang === "ar" ? "المستفيد" : "Nxënësi")}
                 </span>
                 <span className="sl-user-role">
-                  {lang === "ar" ? "طالب" : lang === "sq" ? "Nxënës" : "Student"}
+                  {lang === "ar" ? "مستفيد" : lang === "sq" ? "Nxënës" : "Student"}
                 </span>
               </div>
             </Link>

@@ -39,12 +39,12 @@ const T: Record<Lang, {
   newMsg: (n: number) => string;
 }> = {
   ar: {
-    today: "اليوم", yesterday: "أمس", community: "مجتمع المدرسة", react: "تفاعل",
-    replyLabel: "رد", replies: "ردود", teacher: "معلم", admin: "مشرف",
-    composerPH: "شارك فكرة، تحديثًا، أو لحظة مع مجتمع مدرستك...", replyPH: "اكتب ردًا واضحًا ولطيفًا...",
+    today: "اليوم", yesterday: "أمس", community: "مجتمع المنصة", react: "تفاعل",
+    replyLabel: "رد", replies: "ردود", teacher: "مشرف", admin: "مشرف",
+    composerPH: "شارك فكرة، تحديثًا، أو لحظة مع مجتمع منصتك...", replyPH: "اكتب ردًا واضحًا ولطيفًا...",
     loadMore: "عرض رسائل أقدم", loading: "جارٍ التحميل...",
-    emptyTitle: "المساحة جاهزة لأول مشاركة", emptySub: "ابدأ حوارًا يقرّب مجتمع المدرسة من بعضه.",
-    noSchoolTitle: "لم يتم تعيينك في مدرسة بعد",
+    emptyTitle: "المساحة جاهزة لأول مشاركة", emptySub: "ابدأ حوارًا يقرّب مجتمع المنصة من بعضه.",
+    noSchoolTitle: "لم يتم تعيينك في منصة بعد",
     noSchoolSub: "تواصل مع المدير لتفعيل حسابك",
     del: "حذف", img: "صورة", send: "إرسال",
     delConfirmTip: "اضغط مرة أخرى للتأكيد",
@@ -75,7 +75,7 @@ function moderationNote(persona: CommunityPersona, lang: Lang) {
       : "Modaliteti i administratorit · Mund të menaxhoni të gjitha postimet dhe përgjigjet";
   }
   return lang === "ar"
-    ? "وضع المعلم · يمكنك إدارة مشاركات الطلاب وردودهم"
+    ? "وضع المشرف · يمكنك إدارة مشاركات المستفيدون وردودهم"
     : "Modaliteti i mësuesit · Mund të menaxhoni postimet dhe përgjigjet e nxënësve";
 }
 

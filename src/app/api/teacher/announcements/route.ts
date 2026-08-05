@@ -83,7 +83,7 @@ export async function POST(req: Request) {
   const studentIds = await classStudentProfileIds(classId);
   await notifyProfiles(studentIds, {
     type: "SYSTEM",
-    title_ar: "إعلان جديد من المعلم",
+    title_ar: "إعلان جديد من المشرف",
     title_sq: "Njoftim i ri nga mësuesi",
     title_en: "New teacher announcement",
     body_ar: content.trim().slice(0, 180),

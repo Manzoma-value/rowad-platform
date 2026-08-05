@@ -62,7 +62,7 @@ const STRINGS = {
     forgotPw: "نسيت كلمة المرور؟",
     noAccount: "لا تملك حسابًا؟",
     signup: "إنشاء حساب",
-    workshopNoAccount: "ليس لديك حساب معلم؟",
+    workshopNoAccount: "ليس لديك حساب مشرف؟",
     workshopSignup: "أنشئ حسابًا وتابع نموذج التقديم",
     or: "أو",
     errEmpty: "من فضلك أدخل البريد الإلكتروني وكلمة المرور",

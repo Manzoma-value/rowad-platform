@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -118,7 +118,7 @@ export default function SchoolAdminClassesPage() {
 
       <div className="create-section" data-write-area="true">
         <p className="create-label">
-          {lang === "ar" ? "إضافة فصل جديد" : "Shto klasë të re"}
+          {lang === "ar" ? "إضافة مجموعة جديد" : "Shto klasë të re"}
         </p>
         <div className="create-row" data-write-area="true">
           <input

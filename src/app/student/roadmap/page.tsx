@@ -36,7 +36,7 @@ const TR: Record<string, Record<string, string>> = {
   ar: {
     loading: "جارٍ تحميل خريطتك...",
     noRoadmap: "لا توجد خريطة بعد",
-    noRoadmapDesc: "لا يوجد بنك أسئلة لمدرستك حتى الآن",
+    noRoadmapDesc: "لا يوجد بنك أسئلة لمنصتك حتى الآن",
     learningMap: "خريطة التعلم",
     overallProgress: "التقدم الكلي",
     startJourney: "ابدأ رحلتك",
@@ -58,7 +58,7 @@ const TR: Record<string, Record<string, string>> = {
     errorSubmit: "فشل التسليم", errorGeneric: "حدث خطأ",
     tfTrue: "صح", tfFalse: "خطأ",
     writtenPH: "اكتب إجابتك هنا...",
-    writtenHint: "اكتب إجابة واضحة ومفصلة",
+    writtenHint: "اكتب إجابة واضحة وممجموعةة",
     matchingHint: "صل كل عنصر بما يناسبه",
     matchingSelect: "اختر...",
     matchingIncomplete: "أكمل جميع التوصيلات للمتابعة",

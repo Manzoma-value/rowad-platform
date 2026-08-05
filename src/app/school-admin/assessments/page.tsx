@@ -50,7 +50,7 @@ function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.labe
 // Lead with the five official canonical trait colors, followed by extra
 // brand choices for fully custom trait sets.
 const SWATCHES = [
-  "#F2EFE6", "#F2B705", "#9AA3AC", "#B33A3A", "#1A1A1A",
+  "#4F6B5A", "#F2B705", "#9AA3AC", "#B33A3A", "#1A1A1A",
   "#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0",
 ];
 
@@ -58,14 +58,14 @@ const UI = {
   ar: {
     eyebrow: "لوحة النماذج",
     title: "نماذج القياس",
-    sub: "تتبَّع نتائج السمات لكل مجموعات المعلمين من مكان واحد — أنشئ نموذجاً جديداً بسماته الخاصة، صفِّه، أو صدِّره كتقرير جاهز.",
+    sub: "تتبَّع نتائج السمات لكل مجموعات المشرفين من مكان واحد — أنشئ نموذجاً جديداً بسماته الخاصة، صفِّه، أو صدِّره كتقرير جاهز.",
     metricModels: "نموذج",
     metricOpen: "مفتوح",
     metricClosed: "مغلق",
     metricRatings: "تقييم",
     create: "نموذج جديد",
-    createHelpTitle: "أنشئ نموذجاً لكل المدرسة أو لمجموعة محددة",
-    createHelpSub: "اختر النطاق، خصّص السمات والألوان، ثم افتح النموذج للمعلمين من شاشة واحدة.",
+    createHelpTitle: "أنشئ نموذجاً لكل المنصة أو لمجموعة محددة",
+    createHelpSub: "اختر النطاق، خصّص السمات والألوان، ثم افتح النموذج للمشرفين من شاشة واحدة.",
     creating: "جارٍ الإنشاء…",
     filters: "تصفية النتائج",
     allGroups: "كل المجموعات",
@@ -88,7 +88,7 @@ const UI = {
     groupsPickSub: "كل الأعضاء في المجموعات المختارة سيقيّمون بعضهم بعضاً كمجموعة واحدة. الكل مُحدَّد افتراضياً.",
     scopeLbl: "نطاق التطبيق",
     scopeAll: "كل المجموعات",
-    scopeAllSub: "تطبيق النموذج على جميع مجموعات المعلمين الحالية.",
+    scopeAllSub: "تطبيق النموذج على جميع مجموعات المشرفين الحالية.",
     scopeSpecific: "مجموعات محددة",
     scopeSpecificSub: "اختر مجموعة واحدة أو أكثر لهذا النموذج فقط.",
     setupTitle: "إعداد النموذج",
@@ -105,7 +105,7 @@ const UI = {
     addTrait: "+ إضافة سمة",
     removeTrait: "حذف السمة",
     minTraitsWarn: "يلزم سمة واحدة على الأقل.",
-    lockedEditNote: "بدأ المعلمون بالتقييم على هذا النموذج، لذا لا يمكن تعديل السمات أو المجموعات المستهدفة بعد الآن — يمكنك تغيير العنوان فقط. أنشئ نموذجاً جديداً لتخصيص مختلف.",
+    lockedEditNote: "بدأ المشرفون بالتقييم على هذا النموذج، لذا لا يمكن تعديل السمات أو المجموعات المستهدفة بعد الآن — يمكنك تغيير العنوان فقط. أنشئ نموذجاً جديداً لتخصيص مختلف.",
     cancel: "إلغاء",
     submit: "إنشاء",
     save: "حفظ",
@@ -121,7 +121,7 @@ const UI = {
     exportBtn: "تصدير PDF",
     exporting: "جارٍ التصدير…",
     editBtn: "تعديل",
-    confirmClose: "إغلاق هذا النموذج سيمنع المعلمين من تعديل تقييماتهم. متابعة؟",
+    confirmClose: "إغلاق هذا النموذج سيمنع المشرفين من تعديل تقييماتهم. متابعة؟",
     confirmReopen: "إعادة فتح هذا النموذج تسمح بالتعديل من جديد. متابعة؟",
     confirmDelete: "حذف هذا النموذج نهائيًا مع كل بياناته؟ هذا الإجراء لا يمكن التراجع عنه.",
     matrixHead: "المصفوفة الكاملة",
@@ -130,7 +130,7 @@ const UI = {
     hideMatrix: "إخفاء المصفوفة",
     aggHead: "نتائج الأعضاء",
     aggSub: "السمة الجوهرية والجماعية لكل عضو، مبنيّة على متوسط كل التقييمات التي تلقّاها.",
-    teacherSearch: "ابحث عن معلم داخل هذا النموذج…",
+    teacherSearch: "ابحث عن مشرف داخل هذا النموذج…",
     resultFilter: "تصفية حسب السمة الجوهرية",
     resultFilterAll: "كل السمات",
     perTraitHead: "متوسط كل سمة لكل عضو",
@@ -1254,4 +1254,53 @@ const styles = `
     .am-trait-row-head { flex-wrap:wrap; }
     .am-trait-label { flex-basis:calc(50% - 38px); }
   }
+
+  /* Assessment workspace polish: stronger contrast and clearer hierarchy. */
+  .am-page { gap:18px; }
+  .am-hero { min-height:196px; grid-template-columns:minmax(0,1.25fr) auto; }
+  .am-hero h1 { letter-spacing:-.02em; }
+  .am-hero-metrics { align-self:stretch; align-items:end; }
+  .am-metric { background:rgba(26,10,16,.52); border-color:rgba(217,201,176,.38); }
+  .am-metric strong { color:#F2D9A7; }
+  .am-metric span { color:rgba(255,251,245,.82); }
+  .am-createbar { background:linear-gradient(115deg,#FBF8F1,#EFEAE0); border-color:rgba(107,30,45,.18); }
+  .am-createbar-copy span { color:#32101A; }
+  .am-create { color:#FFF8EA; box-shadow:0 9px 20px rgba(50,16,26,.18); }
+  .am-filters { background:#FBF8F1; border-color:rgba(107,30,45,.18); box-shadow:0 12px 28px rgba(50,16,26,.06); }
+  .am-filters-head { color:#32101A; }
+  .am-filter > span { color:#6B1E2D; }
+  .am-filter select, .am-search-box { background:#FFFDF9; border-color:rgba(107,30,45,.20); }
+  .am-filter select:hover, .am-search-box:focus-within { border-color:rgba(107,30,45,.48); }
+  .am-layout { grid-template-columns:318px minmax(0,1fr); gap:18px; }
+  .am-side, .am-detail { background:#FBF8F1; border-color:rgba(107,30,45,.18); box-shadow:0 14px 30px rgba(50,16,26,.055); }
+  .am-side { padding:12px; }
+  .am-side:before { content:'MODELS'; display:block; margin:2px 8px 10px; color:#8F765B; font:900 10px ui-monospace,Consolas,monospace; letter-spacing:.16em; }
+  [dir="rtl"] .am-side:before { content:'النماذج'; font-family:'Cairo',sans-serif; letter-spacing:0; text-align:right; }
+  .am-list { gap:7px; }
+  .am-list-item { padding:14px; border-color:rgba(107,30,45,.08); background:rgba(255,255,255,.24); }
+  .am-list-item:hover { background:#F3EDE3; border-color:rgba(184,160,130,.52); }
+  .am-list-item.active { background:linear-gradient(135deg,#F7F0E5,#EFE2D1); border-color:#B8A082; box-shadow:inset 4px 0 0 #6B1E2D, 0 8px 18px rgba(50,16,26,.08); }
+  [dir="rtl"] .am-list-item.active { box-shadow:inset -4px 0 0 #6B1E2D, 0 8px 18px rgba(50,16,26,.08); }
+  .am-list-title { color:#32101A; font-size:13.5px; }
+  .am-detail { padding:24px; }
+  .am-detail-head { padding-bottom:18px; margin-bottom:20px; border-bottom-color:rgba(107,30,45,.16); }
+  .am-detail-title { color:#32101A; font-size:20px; }
+  .am-detail-meta { color:#6B1E2D; }
+  .am-btn { background:#FFFDF9; border-color:rgba(107,30,45,.22); color:#4A0E1C; }
+  .am-btn:hover:not(:disabled) { border-color:#6B1E2D; background:#F7F0E5; }
+  .am-btn-primary { color:#FFF8EA; }
+  .am-detail-filters { padding:12px; border:1px solid rgba(107,30,45,.12); border-radius:14px; background:#F3EDE3; }
+  .am-search-box--detail { background:#FFFDF9; }
+  .am-trait-chip { background:#FFFDF9; border-color:rgba(107,30,45,.20); color:#4A0E1C; }
+  .am-trait-chip.active:not([style]) { background:#6B1E2D; color:#FFF8EA; }
+  .am-sub { margin-top:24px; }
+  .am-sub-head { padding-bottom:9px; border-bottom:1px solid rgba(184,160,130,.28); }
+  .am-sub-head h3 { color:#32101A; font-size:15px; }
+  .am-agg { background:linear-gradient(150deg,#FFFDF9,#F5EEE4); border-color:rgba(107,30,45,.16); box-shadow:0 10px 22px rgba(50,16,26,.055); }
+  .am-agg-name { color:#32101A; }
+  .am-table-wrap { background:#FFFDF9; border-color:rgba(107,30,45,.16); }
+  .am-table th, .am-matrix th { background:#EFE2D1; color:#4A0E1C; border-bottom-color:rgba(107,30,45,.18); }
+  .am-name-cell { background:#F7F0E5; color:#32101A; }
+  @media (max-width:1000px) { .am-layout { grid-template-columns:minmax(0,1fr); } }
+  @media (max-width:700px) { .am-detail { padding:16px; } .am-side:before { margin-inline:4px; } }
 `;

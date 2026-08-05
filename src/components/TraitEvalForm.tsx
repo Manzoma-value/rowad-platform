@@ -49,7 +49,7 @@ const TR: Record<string, Record<string, string>> = {
     elementsBtn: "عناصر التقييم",
     notePlaceholder: "ملاحظة...",
     generalNoteLabel: "ملاحظة عامة على المستوى (اختياري)",
-    generalNotePlaceholder: "اكتب ملاحظاتك العامة على أداء الطالب في هذا المستوى...",
+    generalNotePlaceholder: "اكتب ملاحظاتك العامة على أداء المستفيد في هذا المستوى...",
     saveBtn: "حفظ التقييم",
     updateBtn: "تحديث التقييم",
     saving: "جارٍ الحفظ...",
