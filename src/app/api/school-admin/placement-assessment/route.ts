@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
   const assessment = await prisma.assessment.create({
     data: {
-      title: title || "School Placement Assessment",
+      title: title || "Platform Placement Assessment",
       type: "SCHOOL_PLACEMENT",
       school_id: auth.school.id,
       is_active: true,

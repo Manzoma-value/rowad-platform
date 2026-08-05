@@ -108,13 +108,13 @@ interface NavItem2 extends Omit<NavItem, "key"> {
   labelEn?: string;
   /** When set, this item renders as an indented sub-item under the matching
    *  parent key in the sidebar (used for lessons/quizzes/reports under
-   *  "My Classes"). */
+   *  "My Groups"). */
   parent?: NavItem["key"];
 }
 
 const navItems: NavItem2[] = [
   { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
-  { href: "/teacher/classes",  key: "myClasses", sublabel: "Classes",   exact: false, icon: Users },
+  { href: "/teacher/classes",  key: "myClasses", sublabel: "Groups",   exact: false, icon: Users },
   {
     href: "/teacher/groups",   key: "groups",    sublabel: "My Groups", exact: false, icon: Network,
     labelAr: "مجموعاتي",
@@ -132,7 +132,7 @@ const navItems: NavItem2[] = [
     labelSq: "Harta Edukative",
     labelEn: "Roadmap",
   },
-  // Lessons + Quizzes + Reports are children of "My Classes" — rendered
+  // Lessons + Quizzes + Reports are children of "My Groups" — rendered
   // indented directly under it so the sidebar reads:
   //   المجموعات
   //     └ الدروس

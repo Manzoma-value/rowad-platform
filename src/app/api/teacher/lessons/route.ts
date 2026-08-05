@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     select: { id: true },
   });
   if (!cls) {
-    return NextResponse.json({ error: "Class not found or not yours" }, { status: 404 });
+    return NextResponse.json({ error: "Group not found or not yours" }, { status: 404 });
   }
 
   // Verify the module belongs to this school's roadmap

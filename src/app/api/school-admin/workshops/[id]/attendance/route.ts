@@ -147,7 +147,7 @@ export async function POST(
     }),
   ]);
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (!teacher) return NextResponse.json({ error: "Teacher not active" }, { status: 409 });
+  if (!teacher) return NextResponse.json({ error: "Supervisor not active" }, { status: 409 });
   if (!attendanceDays(workshop.schedule, workshop.start_date, workshop.end_date).includes(body.day_date!)) {
     return NextResponse.json({ error: "Not a training day" }, { status: 409 });
   }

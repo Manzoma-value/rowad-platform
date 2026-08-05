@@ -86,7 +86,7 @@ export async function POST(req: Request) {
   });
   const allGroupIds = new Set(allGroups.map((g) => g.id));
   if (allGroupIds.size === 0) {
-    return NextResponse.json({ error: "This school has no teacher groups yet" }, { status: 400 });
+    return NextResponse.json({ error: "This platform has no supervisor groups yet" }, { status: 400 });
   }
 
   // No group_ids (or an empty array) means "all groups" — the requested default.

@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     select: { id: true },
   });
   if (!cls)
-    return NextResponse.json({ error: "Class not found" }, { status: 404 });
+    return NextResponse.json({ error: "Group not found" }, { status: 404 });
 
   const announcements = await prisma.announcement.findMany({
     where: { class_id: classId },
@@ -64,7 +64,7 @@ export async function POST(req: Request) {
     select: { id: true },
   });
   if (!cls)
-    return NextResponse.json({ error: "Class not found" }, { status: 404 });
+    return NextResponse.json({ error: "Group not found" }, { status: 404 });
 
   const announcement = await prisma.announcement.create({
     data: {
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     type: "SYSTEM",
     title_ar: "إعلان جديد من المشرف",
     title_sq: "Njoftim i ri nga mësuesi",
-    title_en: "New teacher announcement",
+    title_en: "New supervisor announcement",
     body_ar: content.trim().slice(0, 180),
     body_sq: content.trim().slice(0, 180),
     body_en: content.trim().slice(0, 180),

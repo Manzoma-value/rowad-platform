@@ -14,7 +14,7 @@ export async function GET() {
 
   const student = await getStudent(user.id);
   if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
-  if (!student.school_id) return NextResponse.json({ error: "No school assigned" }, { status: 400 });
+  if (!student.school_id) return NextResponse.json({ error: "No platform assigned" }, { status: 400 });
 
   if (student.onboarding_status !== "SCHOOL_ASSIGNED") {
     return NextResponse.json({ error: "Not in placement stage" }, { status: 400 });

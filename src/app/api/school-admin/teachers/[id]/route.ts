@@ -52,7 +52,7 @@ export async function DELETE(
       select: { profile_id: true },
     });
     if (!teacher) {
-      return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
+      return NextResponse.json({ error: "Supervisor not found" }, { status: 404 });
     }
 
     const supabase = createAdminClient();
@@ -70,7 +70,7 @@ export async function DELETE(
       await tx.profile.updateMany({
         where: { id: teacher.profile_id },
         data: {
-          full_name: "Deleted teacher",
+          full_name: "Deleted supervisor",
           email: null,
           is_active: false,
           avatar_url: null,
@@ -81,6 +81,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[delete-teacher]", error);
-    return NextResponse.json({ error: "Failed to delete teacher" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete supervisor" }, { status: 500 });
   }
 }

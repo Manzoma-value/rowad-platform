@@ -60,6 +60,6 @@ export async function generateMetadata({ params }: Props) {
     where: { slug },
     select: { name: true, description: true },
   });
-  if (!school) return { title: "School Not Found" };
+  if (!school) return { title: "Platform Not Found" };
   return { title: school.name, description: school.description ?? school.name };
 }

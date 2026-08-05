@@ -83,7 +83,7 @@ export async function POST(
     }),
   ]);
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (!teacher) return NextResponse.json({ error: "Teacher not active" }, { status: 409 });
+  if (!teacher) return NextResponse.json({ error: "Supervisor not active" }, { status: 409 });
 
   const enrollment = await prisma.workshopEnrollment.upsert({
     where: { workshop_id_teacher_id: { workshop_id: id, teacher_id: teacher.id } },

@@ -96,7 +96,7 @@ export async function GET(
 
   if (!student)
     return NextResponse.json(
-      { error: "Student not found or not in your class" },
+      { error: "Student not found or not in your group" },
       { status: 404 },
     );
   if (!attempt)
@@ -181,7 +181,7 @@ export async function POST(
 
   if (!student)
     return NextResponse.json(
-      { error: "Student not found or not in your class" },
+      { error: "Student not found or not in your group" },
       { status: 404 },
     );
   if (!attempt)

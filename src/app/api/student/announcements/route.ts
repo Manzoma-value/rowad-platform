@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     select: { id: true },
   });
   if (!student) {
-    return NextResponse.json({ error: "Class not found" }, { status: 404 });
+    return NextResponse.json({ error: "Group not found" }, { status: 404 });
   }
 
   const announcements = await prisma.announcement.findMany({

@@ -33,7 +33,7 @@ export async function PATCH(
       select: { id: true },
     });
     if (!ownsTeacher)
-      return NextResponse.json({ error: "Teacher not found in your school" }, { status: 404 });
+      return NextResponse.json({ error: "Supervisor not found in your platform" }, { status: 404 });
   }
 
   const cls = await prisma.class.update({

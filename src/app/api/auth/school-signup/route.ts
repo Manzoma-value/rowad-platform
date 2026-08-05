@@ -151,7 +151,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, emailConfirmationRequired: role === "STUDENT", role });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("School signup error:", message);
+    console.error("Platform signup error:", message);
     return NextResponse.json(
       { error: process.env.NODE_ENV === "development" ? message : "حدث خطأ غير متوقع" },
       { status: 500 },

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
 
   const school = await prisma.school.findUnique({ where: { id: school_id }, select: { id: true } });
-  if (!school) return NextResponse.json({ error: "School not found" }, { status: 404 });
+  if (!school) return NextResponse.json({ error: "Platform not found" }, { status: 404 });
 
   const report = await prisma.ownerReport.create({
     data: {

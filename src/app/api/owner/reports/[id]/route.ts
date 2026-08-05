@@ -75,7 +75,7 @@ export async function PATCH(
   // If school is being changed, verify it exists.
   if (body.school_id) {
     const s = await prisma.school.findUnique({ where: { id: body.school_id }, select: { id: true } });
-    if (!s) return NextResponse.json({ error: "School not found" }, { status: 404 });
+    if (!s) return NextResponse.json({ error: "Platform not found" }, { status: 404 });
   }
 
   const data: Record<string, unknown> = {};

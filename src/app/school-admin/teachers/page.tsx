@@ -116,7 +116,7 @@ const EXPERIENCE_EN: Record<string, string> = {
   LT_3: "Under 3 years", Y_3_5: "3–5 years", Y_6_10: "6–10 years", Y_11_15: "11–15 years", GT_15: "15+ years",
 };
 const CURRENT_ROLE_EN: Record<string, string> = {
-  TEACHER: "Teacher", SUPERVISOR: "Educational supervisor", PRINCIPAL: "Principal", VICE_PRINCIPAL: "Vice principal",
+  TEACHER: "Supervisor", SUPERVISOR: "Educational supervisor", PRINCIPAL: "Principal", VICE_PRINCIPAL: "Vice principal",
   COUNSELOR: "Counselor", TRAINER: "Trainer", TEAM_LEAD: "Team lead", RESEARCHER: "Researcher",
   VOLUNTEER: "Volunteer", OTHER: "Other",
 };
@@ -216,15 +216,15 @@ export default function SchoolAdminTeachersPage() {
 
   const labels = {
     title: tr.teachers,
-    eyebrow: lang === "ar" ? "إدارة الكوادر التعليمية" : lang === "sq" ? "Menaxhimi i mësuesve" : "Teacher Management",
-    subtitle: lang === "ar" ? "ملف شامل لكل مشرف: مجموعاته، مجموعاته، بياناته والورش التي حضرها." : lang === "sq" ? "Pamje e plotë për çdo mësues: klasa, grupe, të dhëna dhe forumet." : "A complete view of each teacher: classes, groups, info and workshops attended.",
-    search: lang === "ar" ? "ابحث باسم المشرف، البريد، المجموعة، المجموعة أو المدينة..." : lang === "sq" ? "Kërko sipas emrit, emailit, klasës, grupit ose qytetit..." : "Search by name, email, class, group or city...",
+    eyebrow: lang === "ar" ? "إدارة الكوادر التعليمية" : lang === "sq" ? "Menaxhimi i mësuesve" : "Supervisor Management",
+    subtitle: lang === "ar" ? "ملف شامل لكل مشرف: مجموعاته، مجموعاته، بياناته والورش التي حضرها." : lang === "sq" ? "Pamje e plotë për çdo mësues: klasa, grupe, të dhëna dhe forumet." : "A complete view of each supervisor: groups, groups, info and workshops attended.",
+    search: lang === "ar" ? "ابحث باسم المشرف، البريد، المجموعة، المجموعة أو المدينة..." : lang === "sq" ? "Kërko sipas emrit, emailit, klasës, grupit ose qytetit..." : "Search by name, email, group, group or city...",
     active: lang === "ar" ? "نشط" : lang === "sq" ? "Aktiv" : "Active",
     inactive: lang === "ar" ? "معطل" : lang === "sq" ? "Jo aktiv" : "Inactive",
     teachers: lang === "ar" ? "مشرف" : lang === "sq" ? "mësues" : "teachers",
-    classes: lang === "ar" ? "المجموعات" : lang === "sq" ? "Klasat" : "Classes",
+    classes: lang === "ar" ? "المجموعات" : lang === "sq" ? "Klasat" : "Groups",
     groups: lang === "ar" ? "المجموعات" : lang === "sq" ? "Grupet" : "Groups",
-    teacherInfo: lang === "ar" ? "بيانات المشرف" : lang === "sq" ? "Të dhënat e mësuesit" : "Teacher info",
+    teacherInfo: lang === "ar" ? "بيانات المشرف" : lang === "sq" ? "Të dhënat e mësuesit" : "Supervisor info",
     noApplication: lang === "ar" ? "لم يقدّم بياناته بعد" : lang === "sq" ? "Nuk ka plotësuar aplikimin ende" : "No info on file yet",
     savedProgress: lang === "ar" ? "التقدم المحفوظ" : lang === "sq" ? "Progresi i ruajtur" : "Saved progress",
     progressHint: lang === "ar" ? "بيانات تم إدخالها ولم يتم إرسال الطلب النهائي بعد." : lang === "sq" ? "Të dhëna të ruajtura para dërgimit përfundimtar." : "Details saved before the final submission.",
@@ -240,7 +240,7 @@ export default function SchoolAdminTeachersPage() {
     attendingNow: lang === "ar" ? "يحضر الآن" : lang === "sq" ? "Po merr pjesë tani" : "Attending now",
     daysAttended: lang === "ar" ? "أيام حضور" : lang === "sq" ? "ditë pjesëmarrje" : "days attended",
     noWorkshops: lang === "ar" ? "لم يسجّل في أي ورشة بعد" : lang === "sq" ? "Nuk është regjistruar në asnjë forum ende" : "Not registered in any workshop yet",
-    noClasses: lang === "ar" ? "لا توجد مجموعات مرتبطة" : lang === "sq" ? "Pa klasa" : "No classes assigned",
+    noClasses: lang === "ar" ? "لا توجد مجموعات مرتبطة" : lang === "sq" ? "Pa klasa" : "No groups assigned",
     noGroups: lang === "ar" ? "لا توجد مجموعات" : lang === "sq" ? "Pa grupe" : "No groups",
     content: lang === "ar" ? "المحتوى" : lang === "sq" ? "Përmbajtja" : "Content",
     students: lang === "ar" ? "مستفيدون" : lang === "sq" ? "nxënës" : "students",
@@ -257,10 +257,10 @@ export default function SchoolAdminTeachersPage() {
     statusLbl: lang === "ar" ? "الحالة" : lang === "sq" ? "Statusi" : "Status",
     resetFilters: lang === "ar" ? "مسح التصفية" : lang === "sq" ? "Pastro filtrat" : "Clear filters",
     result: lang === "ar" ? "نتيجة" : lang === "sq" ? "rezultate" : "results",
-    noResults: lang === "ar" ? "لا يوجد مشرفون مطابقون لخيارات التصفية الحالية." : lang === "sq" ? "Asnjë mësues nuk përputhet me filtrat aktualë." : "No teachers match the current filters.",
+    noResults: lang === "ar" ? "لا يوجد مشرفون مطابقون لخيارات التصفية الحالية." : lang === "sq" ? "Asnjë mësues nuk përputhet me filtrat aktualë." : "No supervisors match the current filters.",
     readMore: lang === "ar" ? "عرض التفاصيل" : lang === "sq" ? "Shfaq detajet" : "Read more",
     readLess: lang === "ar" ? "إخفاء التفاصيل" : lang === "sq" ? "Fshih detajet" : "Show less",
-    exportExcel: lang === "ar" ? "تصدير كل المشرفين Excel" : lang === "sq" ? "Eksporto mësuesit në Excel" : "Export all teachers",
+    exportExcel: lang === "ar" ? "تصدير كل المشرفين Excel" : lang === "sq" ? "Eksporto mësuesit në Excel" : "Export all supervisors",
     exporting: lang === "ar" ? "جاري التصدير..." : lang === "sq" ? "Duke eksportuar..." : "Exporting...",
   };
 
@@ -359,7 +359,7 @@ export default function SchoolAdminTeachersPage() {
         [lang === "ar" ? "التخصص" : "Specialization"]: teacher.application?.specialization ?? "",
         [lang === "ar" ? "الخبرة" : "Experience"]: teacher.application ? experienceLabel(teacher.application.years_of_experience, lang) : "",
         [lang === "ar" ? "الدور الحالي" : "Current role"]: teacher.application ? currentRoleLabel(teacher.application.current_role, lang) : "",
-        [lang === "ar" ? "المجموعات" : "Classes"]: teacher.classes.map((klass) => klass.name).join(" | "),
+        [lang === "ar" ? "المجموعات" : "Groups"]: teacher.classes.map((klass) => klass.name).join(" | "),
         [lang === "ar" ? "المجموعات" : "Groups"]: teacher.group_memberships.map((membership) => membership.group.name).join(" | "),
         [lang === "ar" ? "الورش" : "Workshops"]: summarizeWorkshops(teacher).map((workshop) => workshop.title).join(" | "),
         [lang === "ar" ? "عدد الدروس" : "Lessons"]: teacher._count.lessons,
@@ -368,7 +368,7 @@ export default function SchoolAdminTeachersPage() {
       const sheet = XLSX.utils.json_to_sheet(rows);
       sheet["!cols"] = Object.keys(rows[0] ?? {}).map((key) => ({ wch: Math.min(42, Math.max(14, key.length + 4)) }));
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, sheet, lang === "ar" ? "المشرفون" : "Teachers");
+      XLSX.utils.book_append_sheet(workbook, sheet, lang === "ar" ? "المشرفون" : "Supervisors");
       XLSX.writeFile(workbook, `teachers-${new Date().toISOString().slice(0, 10)}.xlsx`);
     } finally {
       setExportingExcel(false);
@@ -378,12 +378,12 @@ export default function SchoolAdminTeachersPage() {
   const toggleTeacher = async (teacherId: string, currentActive: boolean) => {
     if (currentActive) {
       const ok = await confirm({
-        title: lang === "ar" ? "تعطيل المشرف" : lang === "sq" ? "Çaktivizo mësuesin" : "Deactivate teacher",
+        title: lang === "ar" ? "تعطيل المشرف" : lang === "sq" ? "Çaktivizo mësuesin" : "Deactivate supervisor",
         message: lang === "ar"
           ? "سيتم تعطيل وصول هذا المشرف إلى لوحته فوراً. لن يتمكن من الدخول حتى تعيد تفعيله."
           : lang === "sq"
             ? "Ky mësues do të humbasë qasjen menjëherë. Nuk do të mund të hyjë derisa ta riaktivizoni."
-            : "This teacher will lose access immediately. They won't be able to log in until you reactivate them.",
+            : "This supervisor will lose access immediately. They won't be able to log in until you reactivate them.",
         variant: "warning",
         confirmText: labels.deactivate,
         irreversible: false,
@@ -425,7 +425,7 @@ export default function SchoolAdminTeachersPage() {
       const r = await fetch(`/api/school-admin/teachers/${deleteTarget.id}`, { method: "DELETE" });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
-        setDeleteError(d.error ?? (lang === "ar" ? "تعذر حذف المشرف" : lang === "sq" ? "Fshirja dështoi" : "Failed to delete teacher"));
+        setDeleteError(d.error ?? (lang === "ar" ? "تعذر حذف المشرف" : lang === "sq" ? "Fshirja dështoi" : "Failed to delete supervisor"));
         return;
       }
       setTeachers((prev) => prev.filter((teacher) => teacher.id !== deleteTarget.id));

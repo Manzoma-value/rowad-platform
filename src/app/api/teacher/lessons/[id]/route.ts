@@ -89,7 +89,7 @@ export async function PATCH(
       where: { id: classId, teacher_id: auth.teacher.id },
       select: { id: true },
     });
-    if (!cls) return NextResponse.json({ error: "Class not yours" }, { status: 400 });
+    if (!cls) return NextResponse.json({ error: "Group not yours" }, { status: 400 });
   }
 
   // Validate quiz ownership if changing quiz

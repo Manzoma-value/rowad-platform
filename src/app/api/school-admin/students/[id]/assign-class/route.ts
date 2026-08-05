@@ -32,7 +32,7 @@ export async function POST(
       select: { id: true },
     });
     if (!ownsClass)
-      return NextResponse.json({ error: "Class not found in your school" }, { status: 404 });
+      return NextResponse.json({ error: "Group not found in your platform" }, { status: 404 });
   }
 
   const student = await prisma.student.update({

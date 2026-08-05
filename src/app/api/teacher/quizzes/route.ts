@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     select: { id: true },
   });
   if (!ownsClass)
-    return NextResponse.json({ error: "Class not found or not yours" }, { status: 404 });
+    return NextResponse.json({ error: "Group not found or not yours" }, { status: 404 });
 
   // Concept must be in this school's roadmap
   const mod = await prisma.roadmapModule.findFirst({

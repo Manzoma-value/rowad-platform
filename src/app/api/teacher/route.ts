@@ -44,7 +44,7 @@ export async function GET() {
     },
   });
 
-  if (!teacher) return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
+  if (!teacher) return NextResponse.json({ error: "Supervisor not found" }, { status: 404 });
 
   if (!teacher.school?.is_active)
     return NextResponse.json({ error: "school_deactivated", school: teacher.school });

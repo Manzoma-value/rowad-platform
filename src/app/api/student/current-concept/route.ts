@@ -10,7 +10,7 @@ export async function GET() {
   const auth = await requireStudent();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   if (!auth.student.school_id) {
-    return NextResponse.json({ error: "Not in a school" }, { status: 409 });
+    return NextResponse.json({ error: "Not in a platform" }, { status: 409 });
   }
 
   const state = await resolveStudentRoadmapState({

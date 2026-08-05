@@ -22,7 +22,7 @@ export async function POST(
   ]);
 
   if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
-  if (!student.school_id) return NextResponse.json({ error: "Not assigned to a school" }, { status: 403 });
+  if (!student.school_id) return NextResponse.json({ error: "Not assigned to a platform" }, { status: 403 });
 
   const { answers } = body as {
     answers: { question_id: string; answer: string }[];

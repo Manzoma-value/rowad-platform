@@ -158,13 +158,13 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       group: "learning",
     },
     {
-      href: "/school-admin/teachers", sublabel: "Teachers", exact: false, icon: GraduationCap,
+      href: "/school-admin/teachers", sublabel: "Supervisors", exact: false, icon: GraduationCap,
       label: tr.teachers,
       group: "teachers",
     },
     {
-      href: "/school-admin/teacher-groups", sublabel: "Teacher Groups", exact: false, icon: Users,
-      label: lang === "ar" ? "مجموعات المشرفين" : lang === "sq" ? "Grupet e mësuesve" : "Teacher Groups",
+      href: "/school-admin/teacher-groups", sublabel: "Supervisor Groups", exact: false, icon: Users,
+      label: lang === "ar" ? "مجموعات المشرفين" : lang === "sq" ? "Grupet e mësuesve" : "Supervisor Groups",
       hideForViewOnly: true,
       group: "teachers",
     },
@@ -174,7 +174,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       group: "teachers",
     },
     {
-      href: "/school-admin/classes", sublabel: "Classes", exact: false, icon: BookOpen,
+      href: "/school-admin/classes", sublabel: "Groups", exact: false, icon: BookOpen,
       label: tr.classes,
       group: "learning",
     },
@@ -192,7 +192,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
-      label: lang === "ar" ? "طلبات المشرفين" : lang === "sq" ? "Aplikimet e mësuesve" : "Teacher Applications",
+      label: lang === "ar" ? "طلبات المشرفين" : lang === "sq" ? "Aplikimet e mësuesve" : "Supervisor Applications",
       hideForViewOnly: true,
       group: "teachers",
     },
@@ -415,13 +415,13 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const navGroups = [
     {
       key: "teachers",
-      label: lang === "ar" ? "المشرفون" : lang === "sq" ? "Mësuesit" : "Teachers",
-      sublabel: "Teachers",
+      label: lang === "ar" ? "المشرفون" : lang === "sq" ? "Mësuesit" : "Supervisors",
+      sublabel: "Supervisors",
     },
     {
       key: "learning",
       label: lang === "ar" ? "التعلم والمجموعات" : lang === "sq" ? "Mësimi" : "Learning",
-      sublabel: "Classes",
+      sublabel: "Groups",
     },
     {
       key: "models",

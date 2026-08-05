@@ -28,7 +28,7 @@ export async function GET() {
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
   if (!school)
-    return NextResponse.json({ error: "School not found" }, { status: 404 });
+    return NextResponse.json({ error: "Platform not found" }, { status: 404 });
 
   if (!school.is_active)
     return NextResponse.json({ error: "school_deactivated", school });

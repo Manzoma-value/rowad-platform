@@ -130,7 +130,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { key: "dashboard", href: "/student",          exact: true,  sublabel: "Dashboard", icon: LayoutDashboard },
-  { key: "myClass",   href: "/student/classes",  exact: false, sublabel: "Classes",   icon: Users },
+  { key: "myClass",   href: "/student/classes",  exact: false, sublabel: "Groups",   icon: Users },
   { key: "lessons",   href: "/student/lessons",  exact: false, sublabel: "Lessons",   icon: BookOpen, feature: "lessons" },
   { key: "quizzes",   href: "/student/quizzes",  exact: false, sublabel: "Quizzes",   icon: ClipboardList, feature: "quizzes" },
   {

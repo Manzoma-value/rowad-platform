@@ -119,7 +119,7 @@ const TR: Record<string, Record<string, string>> = {
   },
   en: {
     loading: "Loading your map...", noRoadmap: "No roadmap yet",
-    noRoadmapDesc: "No question bank for your school yet",
+    noRoadmapDesc: "No question bank for your platform yet",
     learningMap: "Learning Map", overallProgress: "Overall Progress",
     startJourney: "Start your journey",
     completedLeg: "Completed", lockedLeg: "Locked", activeLeg: "Available",

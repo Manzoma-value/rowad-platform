@@ -9,9 +9,9 @@ type Row = Record<string, unknown>;
 type DataRoom = { generatedAt: string; schools: Row[]; teachers: Row[]; classes: Row[]; admins: Row[]; performance: Row[] };
 
 const tabs: Array<{ id: Tab; label: string; sub: string; icon: typeof Building2 }> = [
-  { id: "schools", label: "الجهات", sub: "Schools", icon: Building2 },
-  { id: "teachers", label: "المشرفون", sub: "Teachers", icon: GraduationCap },
-  { id: "classes", label: "المجموعات", sub: "Classes", icon: BookOpen },
+  { id: "schools", label: "الجهات", sub: "Platforms", icon: Building2 },
+  { id: "teachers", label: "المشرفون", sub: "Supervisors", icon: GraduationCap },
+  { id: "classes", label: "المجموعات", sub: "Groups", icon: BookOpen },
   { id: "admins", label: "المدراء", sub: "Admins", icon: ShieldCheck },
   { id: "performance", label: "الأداء", sub: "Performance", icon: BarChart3 },
 ];

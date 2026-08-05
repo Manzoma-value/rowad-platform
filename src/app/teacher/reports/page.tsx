@@ -68,10 +68,10 @@ const TR: Record<string, Record<string, string>> = {
   },
   en: {
     loading: "Loading reports...",
-    eyebrow: "Teacher Reports",
+    eyebrow: "Supervisor Reports",
     title: "Student Performance",
     pendingSuffix: "pending trait assessments",
-    noClasses: "No classes assigned to you yet",
+    noClasses: "No groups assigned to you yet",
     studentsLabel: "students",
     attemptsLabel: "attempts",
     avgLabel: "Average Score",

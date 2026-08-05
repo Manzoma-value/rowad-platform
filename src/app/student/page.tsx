@@ -40,9 +40,9 @@ export default function StudentPage() {
 
   const labels = {
     learning: lang === "ar" ? "مساحتي التعليمية" : lang === "sq" ? "Hapësira ime" : "My learning space",
-    subtitle: lang === "ar" ? "كل ما تحتاجه اليوم: دروسك، مجتمعك، زملاؤك، وإعلانات مشرفك." : lang === "sq" ? "Gjithçka për sot: mësimet, komuniteti, shokët dhe njoftimet." : "Everything for today: lessons, community, classmates and teacher announcements.",
+    subtitle: lang === "ar" ? "كل ما تحتاجه اليوم: دروسك، مجتمعك، زملاؤك، وإعلانات مشرفك." : lang === "sq" ? "Gjithçka për sot: mësimet, komuniteti, shokët dhe njoftimet." : "Everything for today: lessons, community, classmates and supervisor announcements.",
     overview: lang === "ar" ? "نظرة سريعة" : lang === "sq" ? "Pamje e shpejtë" : "Quick overview",
-    teacher: lang === "ar" ? "المشرف" : lang === "sq" ? "Mësuesi" : "Teacher",
+    teacher: lang === "ar" ? "المشرف" : lang === "sq" ? "Mësuesi" : "Supervisor",
     classmates: tr.classmates,
     announcements: tr.announcements,
     community: lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community",
@@ -86,7 +86,7 @@ export default function StudentPage() {
     { href: "/student/roadmap", title: tr.questionBank, sub: tr.questionBankSub },
     { href: "/student/quizzes", title: tr.quizzes, sub: tr.quizzesActionSub },
     { href: "/student/classes", title: tr.myClass, sub: tr.myClassActionSub },
-    { href: "/student/hub", title: labels.community, sub: lang === "ar" ? "شارك وتابع مجتمع المنصة." : lang === "sq" ? "Merr pjesë në komunitet." : "Join the school community." },
+    { href: "/student/hub", title: labels.community, sub: lang === "ar" ? "شارك وتابع مجتمع المنصة." : lang === "sq" ? "Merr pjesë në komunitet." : "Join the platform community." },
   ];
 
   return (

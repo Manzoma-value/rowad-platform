@@ -20,8 +20,8 @@ const T = {
     footer: "Të gjitha të drejtat e rezervuara © Manzoma - 2026",
   },
   en: {
-    title: "School Deactivated",
-    message: "This school has been deactivated by the platform administration.",
+    title: "Platform Deactivated",
+    message: "This platform has been deactivated by the platform administration.",
     sub: "Content and login are currently unavailable. If you believe this is an error, please contact the administration.",
     contact: "Contact administration",
     footer: "All rights reserved © Manzoma - 2026",

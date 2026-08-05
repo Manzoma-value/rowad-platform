@@ -23,7 +23,7 @@ export async function GET(
       },
     },
   });
-  if (!cls) return NextResponse.json({ error: "Class not found" }, { status: 404 });
+  if (!cls) return NextResponse.json({ error: "Group not found" }, { status: 404 });
 
   const studentIds = cls.students.map((s) => s.id);
 

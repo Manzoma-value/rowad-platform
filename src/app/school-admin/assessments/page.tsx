@@ -1115,7 +1115,7 @@ const styles = `
   .am-sub-head h3 { margin:0 0 4px; font-family:var(--font-head); font-size:14px; font-weight:700; color:#1A1A1A; }
   .am-sub-head p { margin:0; font-size:12px; color:#796A62; line-height:1.75; }
 
-  .am-agg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(440px,1fr)); gap:14px; }
+  .am-agg-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 460px),1fr)); gap:14px; }
   .am-agg { position:relative; min-width:0; overflow:hidden; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1px solid rgba(184,160,130,.28); border-radius:16px; padding:14px; box-shadow:0 8px 20px rgba(50,16,26,.045); transition:transform .18s ease, border-color .18s ease; }
   .am-agg:hover { transform:translateY(-2px); border-color:rgba(184,160,130,.5); }
   .am-agg-watermark { position:absolute; inset-inline-end:-16px; bottom:-16px; pointer-events:none; z-index:0; }

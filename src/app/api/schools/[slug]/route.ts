@@ -22,7 +22,7 @@ export async function GET(
   });
 
   if (!school) {
-    return NextResponse.json({ error: "School not found" }, { status: 404 });
+    return NextResponse.json({ error: "Platform not found" }, { status: 404 });
   }
 
   return NextResponse.json({ school });
