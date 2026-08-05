@@ -92,7 +92,7 @@ const UI = {
     plays: (n: number) => `${n} مرة`,
     noPlaysYet: "لا توجد بيانات استخدام بعد.",
     inProgressSection: "قيد التقدم الآن",
-    inProgressSectionSub: "معلمون وطلاب بدأوا بطاقة النموذج ولم يرسلوها بعد — يُحفظ تقدمهم تلقائياً حتى يعودوا لإكماله.",
+    inProgressSectionSub: "مشرفون ومستفيدون بدأوا بطاقة النموذج ولم يرسلوها بعد — يُحفظ تقدمهم تلقائياً حتى يعودوا لإكماله.",
     inProgressEmpty: "لا يوجد أحد في منتصف النشاط الآن.",
     placedOf: (n: number, total: number) => `${n} من ${total} بطاقة`,
     lastActive: "آخر نشاط",
@@ -101,8 +101,8 @@ const UI = {
     miniSection: "الأنشطة التدريبية الخمسة",
     miniSectionSub: "لا تُقيَّم هذه الأنشطة؛ الهدف متابعة الاستخدام وعدد المحاولات والأداة المفضلة.",
     filterAll: "الكل",
-    filterTeachers: "المعلمون فقط",
-    filterStudents: "الطلاب فقط",
+    filterTeachers: "المشرفون فقط",
+    filterStudents: "المستفيدون فقط",
     search: "بحث بالاسم أو البريد",
     empty: "لا توجد محاولات بعد.",
     nameCol: "الاسم",
@@ -113,8 +113,8 @@ const UI = {
     lastPlayed: "آخر محاولة",
     gamesCol: "أدوات التعلم المستخدمة",
     open: "عرض السجل",
-    roleTEACHER: "معلم",
-    roleSTUDENT: "طالب",
+    roleTEACHER: "مشرف",
+    roleSTUDENT: "مستفيد",
     backToList: "← العودة",
     historyTitle: (n: string) => `سجل محاولات: ${n}`,
     noHistory: "لا توجد محاولات.",
@@ -382,8 +382,12 @@ export default function GameScoresPage() {
   return (
     <div className="gs-page" dir={dir}>
       <header className="gs-hero">
-        <h1 className="gs-title">{T.title}</h1>
-        <p className="gs-sub">{T.sub}</p>
+        <div className="gs-hero-copy">
+          <span className="gs-eyebrow">{L === "ar" ? "لوحة المتابعة والتحليل" : "Paneli i monitorimit"}</span>
+          <h1 className="gs-title">{T.title}</h1>
+          <p className="gs-sub">{T.sub}</p>
+        </div>
+        <div className="gs-hero-mark" aria-hidden="true"><Trophy size={22} /><span>05</span></div>
       </header>
 
       {/* ── Overview: totals + which game is most played ── */}
@@ -402,7 +406,7 @@ export default function GameScoresPage() {
           <div className="gs-overview-card highlight">
             <span className="gs-overview-emoji">{topGame ? GAME_LABELS[topGame.key]?.emoji ?? "🎮" : "🎮"}</span>
             <strong className="gs-overview-toplabel">{topGame ? gameLabel(topGame.key) : "—"}</strong>
-            <span>{T.mostPlayed}</span>
+            <span>{T.mostPlayed}{topGame ? ` · ${T.plays(topGame.plays)}` : ""}</span>
           </div>
         </div>
 
@@ -429,7 +433,7 @@ export default function GameScoresPage() {
 
       {/* ── Shared toolbar for all tables below ── */}
       <div className="gs-toolbar">
-        <input className="gs-search" placeholder={T.search} value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="gs-search-wrap"><MapPin size={16} /><input className="gs-search" placeholder={T.search} value={q} onChange={(e) => setQ(e.target.value)} /></div>
         <div className="gs-filters">
           {(["all", "TEACHER", "STUDENT"] as const).map((opt) => (
             <button key={opt} className={`gs-toggle${filter === opt ? " active" : ""}`} onClick={() => setFilter(opt)}>
@@ -437,6 +441,7 @@ export default function GameScoresPage() {
             </button>
           ))}
         </div>
+        <span className="gs-filter-count">{L === "ar" ? `${visibleModel.length + visibleMini.length} سجلاً مطابقاً` : `${visibleModel.length + visibleMini.length} rezultate`}</span>
       </div>
 
       {/* ── In progress right now: autosaved, unsubmitted card-game boards ── */}
@@ -779,6 +784,54 @@ function Styles() {
       .gs-model-empty { height:124px;display:grid;place-items:center;color:#8C8274;font-size:9px;background:#F7F3EB; }
       .gs-legacy { margin-top:12px; padding:14px; border-radius:12px; background:rgba(184,160,130,.12); color:#655B53; font-size:12px; font-weight:700; text-align:center; }
       @media(max-width:760px){ .gs-history-row{grid-template-columns:auto 1fr auto}.gs-answer-link{grid-column:2 / -1}.gs-answer-panel{padding-inline:8px}.gs-model-head{align-items:flex-start;padding:16px;flex-direction:column}.gs-model-score{padding-inline-start:0;border-inline-start:0}.gs-model-table{min-width:820px}.gs-model-table td,.gs-model-card,.gs-model-empty{height:112px;min-height:112px} }
+
+      /* Refined admin analytics treatment */
+      .gs-page { max-width: 1220px; margin: 0 auto; padding-bottom: 34px; color: #2C2022; }
+      .gs-hero { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding: 26px 28px 24px; margin: -4px 0 18px; overflow: hidden; border: 1px solid rgba(184,160,130,.25); border-radius: 22px; background: radial-gradient(circle at 12% 18%, rgba(217,201,176,.24), transparent 32%), linear-gradient(120deg,#32101A,#4A0E1C 72%,#5B1526); box-shadow: 0 20px 44px rgba(74,14,28,.13); color: #FFFBF5; }
+      .gs-hero::after { content: ""; position: absolute; width: 280px; height: 280px; border: 1px solid rgba(217,201,176,.13); border-radius: 50%; inset-inline-end: -82px; top: -142px; box-shadow: 0 0 0 24px rgba(217,201,176,.035), 0 0 0 48px rgba(217,201,176,.025); }
+      .gs-hero-copy { position: relative; z-index: 1; }
+      .gs-eyebrow { display: block; margin-bottom: 8px; color: #D9C9B0; font-size: 10px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+      .gs-title { color: #FFFBF5; font-size: clamp(23px, 2.6vw, 32px); letter-spacing: -.025em; margin-bottom: 7px; }
+      .gs-sub { max-width: 720px; color: rgba(239,234,224,.76); line-height: 1.8; }
+      .gs-hero-mark { position: relative; z-index: 1; display: grid; place-items: center; gap: 4px; width: 74px; height: 74px; flex: 0 0 auto; border: 1px solid rgba(217,201,176,.35); border-radius: 18px; color: #D9C9B0; background: rgba(255,251,245,.08); font-family: Georgia, serif; font-size: 13px; }
+      .gs-overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.65fr); gap: 14px; align-items: stretch; }
+      .gs-overview-cards { grid-template-columns: 1fr; gap: 10px; }
+      .gs-overview-card { position: relative; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; min-height: 74px; padding: 13px 16px; text-align: start; border-radius: 16px; box-shadow: 0 8px 24px rgba(74,14,28,.045); }
+      .gs-overview-card svg { width: 34px; height: 34px; padding: 8px; border-radius: 10px; color: #6B1E2D; background: rgba(184,160,130,.16); }
+      .gs-overview-card strong { font-size: 26px; line-height: 1; }
+      .gs-overview-card span:not(.gs-overview-emoji) { display: block; }
+      .gs-overview-card .gs-overview-emoji { display: grid; place-items: center; width: 34px; height: 34px; font-size: 19px; border-radius: 10px; background: rgba(184,160,130,.16); }
+      .gs-overview-card.highlight { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+      .gs-overview-card.highlight .gs-overview-emoji { grid-row: span 2; }
+      .gs-overview-toplabel { align-self: end; }
+      .gs-overview-card.highlight > span:last-child { align-self: start; }
+      .gs-rank-card { padding: 20px 22px; border-radius: 16px; box-shadow: 0 8px 24px rgba(74,14,28,.045); }
+      .gs-rank-title { padding-bottom: 12px; border-bottom: 1px solid rgba(184,160,130,.2); font-size: 12px; letter-spacing: .08em; }
+      .gs-rank-row { grid-template-columns: minmax(155px, 1.1fr) 2fr auto auto; min-height: 28px; }
+      .gs-rank-bar-bg { height: 9px; background: #F1ECE4; }
+      .gs-rank-bar-fill { background: linear-gradient(90deg,#8F765B,#6B1E2D); }
+      .gs-toolbar { position: sticky; top: 12px; z-index: 5; flex-direction: row; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; box-shadow: 0 12px 30px rgba(74,14,28,.08); }
+      .gs-search-wrap { position: relative; display: flex; align-items: center; flex: 1; min-width: 190px; }
+      .gs-search-wrap svg { position: absolute; inset-inline-start: 13px; color: #8F765B; pointer-events: none; }
+      .gs-search { padding-inline-start: 38px; }
+      .gs-filters { flex-wrap: nowrap; }
+      .gs-toggle { white-space: nowrap; padding-inline: 13px; }
+      .gs-filter-count { color: #8C8274; font-size: 11px; font-weight: 800; white-space: nowrap; }
+      .gs-section { margin-bottom: 28px; }
+      .gs-section-title { display: flex; align-items: center; gap: 9px; font-size: 17px; letter-spacing: -.01em; }
+      .gs-section-title::before { content: ""; width: 4px; height: 19px; border-radius: 99px; background: #6B1E2D; }
+      .gs-section-sub { margin-inline-start: 13px; }
+      .gs-empty, .gs-table-wrap { border-radius: 16px; box-shadow: 0 8px 24px rgba(74,14,28,.04); }
+      .gs-table-wrap { overflow: auto; }
+      .gs-table th { padding: 13px 16px; background: #F5F0E8; font-size: 10.5px; }
+      .gs-table td { padding: 15px 16px; }
+      .gs-table tbody tr { transition: background .18s ease; }
+      .gs-table tbody tr:hover { background: #FCF8F1; }
+      .gs-open { padding: 8px 15px; border: 1px solid rgba(143,118,91,.3); box-shadow: none; }
+      .gs-inprogress-list { gap: 10px; }
+      .gs-inprogress-row { padding: 14px 16px; border-radius: 15px; box-shadow: 0 7px 18px rgba(74,14,28,.035); }
+      @media(max-width: 860px) { .gs-overview { grid-template-columns: 1fr; } .gs-overview-cards { grid-template-columns: repeat(3, minmax(0,1fr)); } .gs-toolbar { position: static; flex-wrap: wrap; } .gs-search-wrap { flex-basis: 100%; } }
+      @media(max-width: 640px) { .gs-page { padding-inline: 0; } .gs-hero { align-items: flex-start; padding: 22px 18px; border-radius: 17px; } .gs-hero-mark { width: 56px; height: 56px; } .gs-overview-cards { grid-template-columns: 1fr 1fr; } .gs-overview-card { padding-inline: 12px; } .gs-overview-cards .highlight { grid-column: 1/-1; } .gs-filter-count { display: none; } }
     `}</style>
   );
 }
