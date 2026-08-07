@@ -82,7 +82,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     let url: URL;
     try { url = new URL(body?.url ?? ""); } catch { return NextResponse.json({ error: "valid URL required" }, { status: 400 }); }
     if (!title || !["http:", "https:"].includes(url.protocol)) return NextResponse.json({ error: "title and URL required" }, { status: 400 });
-    material = { id: crypto.randomUUID(), type: body?.type === "VIDEO" ? "VIDEO" : "LINK", title: title.slice(0, 160), url: url.toString() };
+    material = { id: crypto.randomUUID(), type: body?.type === "VIDEO" ? "VIDEO" : body?.type === "READING" ? "READING" : "LINK", title: title.slice(0, 160), url: url.toString() };
   }
 
   try {

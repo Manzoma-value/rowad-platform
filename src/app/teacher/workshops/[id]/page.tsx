@@ -24,6 +24,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 import type { WorkshopDay, WorkshopMaterial } from "@/lib/workshops";
 import { WorkshopVideoSection } from "../components/WorkshopVideoSection";
+import { WorkshopJourney } from "../components/WorkshopJourney";
 
 type WorkshopMessage = {
   id: string;
@@ -174,6 +175,7 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [messageError, setMessageError] = useState("");
+  const [messageVersion, setMessageVersion] = useState(0);
   const [requesting, setRequesting] = useState(false);
   const [requestError, setRequestError] = useState("");
 
@@ -255,6 +257,7 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
         },
       } : current);
       setDraft("");
+      setMessageVersion((value) => value + 1);
     } catch {
       setMessageError(T.messageError);
     } finally {
@@ -373,10 +376,11 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
         )}
       </section>
 
+      <WorkshopJourney workshopId={id} hasAccess={data.has_access} lang={locale} refreshKey={messageVersion} />
       <WorkshopVideoSection workshopId={id} hasAccess={data.has_access} lang={locale} />
 
       {data.has_access && (
-        <section className="tw-section tw-discussion">
+        <section id="workshop-discussion" className="tw-section tw-discussion">
           <div className="tw-section-head">
             <div><h2>{T.sharedNotes}</h2><p>{T.sharedNotesSub}</p></div>
             <button className="tw-icon-button" onClick={() => void load(true)} title={T.refresh} aria-label={T.refresh}>

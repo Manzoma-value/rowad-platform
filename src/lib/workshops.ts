@@ -8,7 +8,7 @@ export type WorkshopDay = {
 
 export type WorkshopMaterial = {
   id: string;
-  type: "FILE" | "IMAGE" | "VIDEO" | "LINK";
+  type: "FILE" | "IMAGE" | "VIDEO" | "LINK" | "READING";
   title: string;
   url: string;
   path?: string;

@@ -13,6 +13,7 @@ import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
 import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import { makeWorkshopDays, type WorkshopDay, type WorkshopMaterial } from "@/lib/workshops";
 import { VideoManager } from "../components/VideoManager";
+import { WorkshopJourneyManager } from "../components/WorkshopJourneyManager";
 import { ParticipantManagerModal, type JoinRequest } from "../components/participant-manager-modal";
 
 type Workshop = {
@@ -285,6 +286,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const [error, setError] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [linkForm, setLinkForm] = useState({ title: "", url: "" });
+  const [linkType, setLinkType] = useState<"LINK" | "VIDEO" | "READING">("LINK");
   const [showLink, setShowLink] = useState(false);
   const [materialError, setMaterialError] = useState("");
   const [messageDraft, setMessageDraft] = useState("");
@@ -602,11 +604,11 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   async function addLink() {
     if (!linkForm.title.trim() || !linkForm.url.trim()) return; setUploading(true); setMaterialError("");
     try {
-      const isVideo = /youtube|youtu\.be|vimeo/i.test(linkForm.url);
-      const r = await fetch(`/api/school-admin/workshops/${id}/materials`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...linkForm, type: isVideo ? "VIDEO" : "LINK" }) });
+      const inferredType = linkType === "LINK" && /youtube|youtu\.be|vimeo/i.test(linkForm.url) ? "VIDEO" : linkType;
+      const r = await fetch(`/api/school-admin/workshops/${id}/materials`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...linkForm, type: inferredType }) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "link_failed");
-      setDetail((v) => v ? { ...v, workshop: { ...v.workshop, materials: d.materials } } : v); setLinkForm({ title: "", url: "" }); setShowLink(false);
+      setDetail((v) => v ? { ...v, workshop: { ...v.workshop, materials: d.materials } } : v); setLinkForm({ title: "", url: "" }); setLinkType("LINK"); setShowLink(false);
     } catch { setMaterialError(T.materialError); }
     finally { setUploading(false); }
   }
@@ -719,13 +721,14 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
 
       <section className="wd-card wd-materials">
         <div className="wd-table-head"><div><h2>{T.content}</h2><p>{T.contentHelp}</p></div>{!viewOnly&&<div className="wd-content-actions"><label className="wd-small-btn"><Upload size={14}/>{uploading?T.saving:T.addFile}<input hidden type="file" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx" onChange={e=>e.target.files?.[0]&&void uploadMaterial(e.target.files[0])}/></label><button className="wd-small-btn ghost" onClick={()=>setShowLink(v=>!v)}><Plus size={14}/>{T.addLink}</button></div>}</div>
-        {showLink&&<div className="wd-link-form"><input placeholder={T.linkTitle} value={linkForm.title} onChange={e=>setLinkForm({...linkForm,title:e.target.value})}/><input dir="ltr" placeholder={T.linkUrl} value={linkForm.url} onChange={e=>setLinkForm({...linkForm,url:e.target.value})}/><button className="wd-small-btn" onClick={addLink} disabled={uploading}>{T.add}</button></div>}
+        {showLink&&<div className="wd-link-form"><select value={linkType} onChange={e=>setLinkType(e.target.value as typeof linkType)}><option value="LINK">Link</option><option value="VIDEO">Video link</option><option value="READING">Reading</option></select><input placeholder={T.linkTitle} value={linkForm.title} onChange={e=>setLinkForm({...linkForm,title:e.target.value})}/><input dir="ltr" placeholder={T.linkUrl} value={linkForm.url} onChange={e=>setLinkForm({...linkForm,url:e.target.value})}/><button className="wd-small-btn" onClick={addLink} disabled={uploading}>{T.add}</button></div>}
         {materialError&&<p className="wd-material-error" role="alert">{materialError}</p>}
         {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=><div className="wd-material" key={m.id}>{m.type==="IMAGE"?<ImageIcon/>:m.type==="VIDEO"?<Video/>:m.type==="LINK"?<Link2/>:<FileText/>}<div><strong>{m.title}</strong><small>{m.mime || m.type}</small></div><a href={m.url} target="_blank" rel="noreferrer" aria-label={m.title}><ExternalLink size={17}/></a>{!viewOnly&&<button onClick={()=>void removeMaterial(m.id)} aria-label={T.remove}><Trash2 size={16}/></button>}</div>)}</div>}
         {detail.workshop.notes&&<div className="wd-notes"><b>{T.notes}</b><p>{detail.workshop.notes}</p></div>}
       </section>
 
       <VideoManager workshopId={id} viewOnly={viewOnly} lang={L} />
+      <WorkshopJourneyManager workshopId={id} viewOnly={viewOnly} lang={L} />
 
       <section className="wd-card wd-discussion">
         <div className="wd-table-head"><div><h2>{T.discussion}</h2><p>{T.discussionHelp}</p></div><MessageSquareText size={20}/></div>

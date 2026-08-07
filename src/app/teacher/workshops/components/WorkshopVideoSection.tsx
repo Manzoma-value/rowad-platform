@@ -47,7 +47,7 @@ export function WorkshopVideoSection({ workshopId, hasAccess, lang }: { workshop
   }, [workshopId, hasAccess]);
 
   return (
-    <section className="wvs-section">
+    <section id="workshop-videos" className="wvs-section">
       <div className="wvs-head">
         <div><h2>{t.title}</h2><p>{t.sub}</p></div>
       </div>

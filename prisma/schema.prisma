@@ -455,7 +455,9 @@ model Profile {
   authoredGroupAssessments     GroupAssessment[]          @relation("GroupAssessmentAuthor")
   authoredWorkshops            Workshop[]                 @relation("WorkshopAuthor")
   authoredWorkshopVideos       WorkshopVideo[]            @relation("WorkshopVideoAuthor")
+  authoredWorkshopRequirements WorkshopRequirement[]      @relation("WorkshopRequirementAuthor")
   gradedWorkshopVideoAnswers   WorkshopVideoAnswer[]       @relation("WorkshopVideoAnswerGrader")
+  gradedWorkshopQuizAnswers    WorkshopQuizAnswer[]        @relation("WorkshopQuizAnswerGrader")
   authoredAttendanceCodes      WorkshopAttendanceCode[]   @relation("WorkshopAttendanceCodeAuthor")
   workshopMessages             WorkshopMessage[]          @relation("WorkshopMessageAuthor")
   createdWorkshopEnrollments   WorkshopEnrollment[]       @relation("WorkshopEnrollmentAuthor")
@@ -551,6 +553,9 @@ model Teacher {
   workshop_attendance WorkshopAttendance[]
   workshop_video_views WorkshopVideoView[]
   workshop_video_attempts WorkshopVideoAttempt[]
+  workshop_quiz_attempts WorkshopQuizAttempt[]
+  workshop_requirement_completions WorkshopRequirementCompletion[]
+  workshop_completions WorkshopCompletion[]
   announcements       Announcement[]
   classes             Class[]
   quizzes             Quiz[]
@@ -1403,6 +1408,8 @@ model Workshop {
   attendance_codes   WorkshopAttendanceCode[]
   messages           WorkshopMessage[]
   videos             WorkshopVideo[]
+  requirements       WorkshopRequirement[]
+  completion_records WorkshopCompletion[]
 
   @@index([school_id, created_at(sort: Desc)])
   @@index([school_id, sort_order])
@@ -1446,6 +1453,155 @@ model WorkshopMessage {
 
   @@index([workshop_id, created_at])
   @@map("workshop_messages")
+}
+
+enum WorkshopRequirementType {
+  VIDEO
+  QUIZ
+  MESSAGE
+  READING
+}
+
+model WorkshopRequirement {
+  id           String                  @id @default(uuid()) @db.Uuid
+  workshop_id  String                  @db.Uuid
+  type         WorkshopRequirementType
+  title        String
+  description  String?
+  order        Int                     @default(0)
+  is_required  Boolean                 @default(true)
+  min_length   Int                     @default(1)
+  created_by   String                  @db.Uuid
+  created_at   DateTime                @default(now())
+  updated_at   DateTime                @updatedAt
+
+  workshop     Workshop                 @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  author       Profile                  @relation("WorkshopRequirementAuthor", fields: [created_by], references: [id])
+  quiz         WorkshopQuiz?
+  completions  WorkshopRequirementCompletion[]
+
+  @@index([workshop_id, order])
+  @@map("workshop_requirements")
+}
+
+model WorkshopQuiz {
+  id             String                 @id @default(uuid()) @db.Uuid
+  requirement_id String                 @unique @db.Uuid
+  title          String
+  description    String?
+  passing_score  Int                    @default(70)
+  created_at     DateTime               @default(now())
+  updated_at     DateTime               @updatedAt
+
+  requirement    WorkshopRequirement    @relation(fields: [requirement_id], references: [id], onDelete: Cascade)
+  questions     WorkshopQuizQuestion[]
+  attempts      WorkshopQuizAttempt[]
+
+  @@map("workshop_quizzes")
+}
+
+enum WorkshopQuizQuestionType {
+  MCQ
+  TF
+  TEXT
+}
+
+model WorkshopQuizQuestion {
+  id             String                  @id @default(uuid()) @db.Uuid
+  quiz_id        String                  @db.Uuid
+  type           WorkshopQuizQuestionType
+  text           String
+  correct_answer String?
+  order          Int                     @default(0)
+  created_at     DateTime                @default(now())
+
+  quiz           WorkshopQuiz             @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  options        WorkshopQuizQuestionOption[]
+  answers        WorkshopQuizAnswer[]
+
+  @@index([quiz_id, order])
+  @@map("workshop_quiz_questions")
+}
+
+model WorkshopQuizQuestionOption {
+  id          String               @id @default(uuid()) @db.Uuid
+  question_id String               @db.Uuid
+  text        String
+  order       Int                  @default(0)
+
+  question    WorkshopQuizQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@map("workshop_quiz_question_options")
+}
+
+model WorkshopQuizAttempt {
+  id           String               @id @default(uuid()) @db.Uuid
+  quiz_id      String               @db.Uuid
+  teacher_id   String               @db.Uuid
+  score        Int                  @default(0)
+  total        Int                  @default(0)
+  completed_at DateTime?
+  passed_at    DateTime?
+  created_at   DateTime             @default(now())
+  updated_at   DateTime             @updatedAt
+
+  quiz         WorkshopQuiz          @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  teacher      Teacher               @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  answers      WorkshopQuizAnswer[]
+
+  @@unique([quiz_id, teacher_id])
+  @@index([teacher_id, updated_at(sort: Desc)])
+  @@map("workshop_quiz_attempts")
+}
+
+model WorkshopQuizAnswer {
+  id             String                   @id @default(uuid()) @db.Uuid
+  attempt_id     String                   @db.Uuid
+  question_id    String                   @db.Uuid
+  answer         String
+  is_correct     Boolean                  @default(false)
+  grading_status  WorkshopVideoAnswerStatus @default(AUTO_GRADED)
+  grader_id      String?                  @db.Uuid
+  graded_at      DateTime?
+  feedback       String?
+  created_at     DateTime                 @default(now())
+
+  attempt        WorkshopQuizAttempt      @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
+  question       WorkshopQuizQuestion     @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  grader         Profile?                @relation("WorkshopQuizAnswerGrader", fields: [grader_id], references: [id], onDelete: SetNull)
+
+  @@unique([attempt_id, question_id])
+  @@index([grading_status, created_at(sort: Desc)])
+  @@map("workshop_quiz_answers")
+}
+
+model WorkshopRequirementCompletion {
+  id             String              @id @default(uuid()) @db.Uuid
+  requirement_id String              @db.Uuid
+  teacher_id     String              @db.Uuid
+  response       String?
+  completed_at   DateTime            @default(now())
+
+  requirement    WorkshopRequirement @relation(fields: [requirement_id], references: [id], onDelete: Cascade)
+  teacher        Teacher             @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@unique([requirement_id, teacher_id])
+  @@index([teacher_id, completed_at(sort: Desc)])
+  @@map("workshop_requirement_completions")
+}
+
+model WorkshopCompletion {
+  id           String    @id @default(uuid()) @db.Uuid
+  workshop_id  String    @db.Uuid
+  teacher_id   String    @db.Uuid
+  completed_at DateTime  @default(now())
+
+  workshop     Workshop  @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  teacher      Teacher   @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@unique([workshop_id, teacher_id])
+  @@index([workshop_id, completed_at(sort: Desc)])
+  @@map("workshop_completions")
 }
 
 model WorkshopAttendance {
