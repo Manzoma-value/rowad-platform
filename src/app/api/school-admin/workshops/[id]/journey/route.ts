@@ -15,7 +15,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
   if (!await ownsWorkshop(id, auth.school.id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const [requirements, teachers] = await Promise.all([
     prisma.workshopRequirement.findMany({ where: { workshop_id: id }, orderBy: { order: "asc" }, include: { quiz: { include: { questions: { orderBy: { order: "asc" }, include: { options: { orderBy: { order: "asc" } } } } } }, _count: { select: { completions: true } } } }),
-    prisma.teacher.findMany({ where: { school_id: auth.school.id, onboarding_status: "ACTIVE", profile: { is: { is_active: true } }, workshop_enrollments: { some: { workshop_id: id, status: "APPROVED" } } }, orderBy: { profile: { full_name: "asc" } }, select: { id: true, profile: { select: { full_name: true, email: true, avatar_url: true } }, workshop_completions: { where: { workshop_id: id }, select: { completed_at: true }, take: 1 } } }),
+    prisma.teacher.findMany({ where: { school_id: auth.school.id, onboarding_status: "ACTIVE", profile: { is: { is_active: true } }, OR: [{ workshop_enrollments: { some: { workshop_id: id, status: "APPROVED" } } }, { workshop_signup_id: id }, { workshop_attendance: { some: { workshop_id: id } } }] }, orderBy: { profile: { full_name: "asc" } }, select: { id: true, profile: { select: { full_name: true, email: true, avatar_url: true } }, workshop_completions: { where: { workshop_id: id }, select: { completed_at: true }, take: 1 } } }),
   ]);
   return NextResponse.json({ requirements, teachers: teachers.map((teacher) => ({ teacher_id: teacher.id, ...teacher.profile, completed_at: teacher.workshop_completions[0]?.completed_at ?? null })) });
 }
@@ -27,12 +27,11 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   if (!await ownsWorkshop(id, auth.school.id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const body = await req.json().catch(() => null) as { type?: "VIDEO" | "QUIZ" | "MESSAGE" | "READING"; title?: string; description?: string; min_length?: number; is_required?: boolean } | null;
   if (!body?.type || !["VIDEO", "QUIZ", "MESSAGE", "READING"].includes(body.type)) return NextResponse.json({ error: "valid type required" }, { status: 400 });
-  const order = await prisma.workshopRequirement.count({ where: { workshop_id: id } });
-  const requirement = await prisma.workshopRequirement.create({ data: { workshop_id: id, type: body.type, title: body.title?.trim().slice(0, 180) || ({ VIDEO: "Complete all videos", QUIZ: "Workshop quiz", MESSAGE: "Share what you learned", READING: "Complete the reading" }[body.type]), description: body.description?.trim().slice(0, 1000) || null, min_length: Math.max(1, Math.min(4000, Number(body.min_length) || 1)), is_required: body.is_required !== false, order, created_by: auth.profile.id }, include: { quiz: true } });
-  if (body.type === "QUIZ") {
-    const quiz = await prisma.workshopQuiz.create({ data: { requirement_id: requirement.id, title: body.title?.trim().slice(0, 180) || "Workshop quiz", description: body.description?.trim().slice(0, 1000) || null } });
-    return NextResponse.json({ requirement: { ...requirement, quiz } }, { status: 201 });
+  if (body.type === "QUIZ" && await prisma.workshopRequirement.findFirst({ where: { workshop_id: id, type: "QUIZ" }, select: { id: true } })) {
+    return NextResponse.json({ error: "workshop quiz already exists" }, { status: 409 });
   }
+  const order = await prisma.workshopRequirement.count({ where: { workshop_id: id } });
+  const requirement = await prisma.workshopRequirement.create({ data: { workshop_id: id, type: body.type, title: body.title?.trim().slice(0, 180) || ({ VIDEO: "Complete all videos", QUIZ: "Workshop quiz", MESSAGE: "Share what you learned", READING: "Complete the reading" }[body.type]), description: body.description?.trim().slice(0, 1000) || null, min_length: Math.max(1, Math.min(4000, Number(body.min_length) || 1)), is_required: body.is_required !== false, order, created_by: auth.profile.id, ...(body.type === "QUIZ" ? { quiz: { create: { title: body.title?.trim().slice(0, 180) || "Workshop quiz", description: body.description?.trim().slice(0, 1000) || null } } } : {}) }, include: { quiz: true } });
   return NextResponse.json({ requirement }, { status: 201 });
 }
 

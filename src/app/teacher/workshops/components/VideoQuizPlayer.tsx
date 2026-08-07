@@ -189,6 +189,8 @@ export function VideoQuizPlayer({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ completed }),
+    }).then((response) => {
+      if (completed && response.ok) window.dispatchEvent(new Event("workshop-journey-refresh"));
     }).catch(() => null);
   }
 
@@ -260,6 +262,7 @@ export function VideoQuizPlayer({
       setAnswered((current) => new Map(current).set(activeQuestion.id, record));
       setScore(payload.attempt.score);
       setRevealed(record);
+      window.dispatchEvent(new Event("workshop-journey-refresh"));
     } catch {
       setSubmitError(t.submitError);
     } finally {

@@ -49,7 +49,7 @@ export async function getWorkshopJourney(workshopId: string, teacherId: string):
         quiz: {
           include: {
             _count: { select: { questions: true } },
-            attempts: { where: { teacher_id: teacherId }, select: { score: true, total: true, completed_at: true, passed_at: true }, take: 1 },
+            attempts: { where: { teacher_id: teacherId }, select: { score: true, total: true, completed_at: true, passed_at: true, _count: { select: { answers: true } } }, take: 1 },
           },
         },
         completions: { where: { teacher_id: teacherId }, select: { completed_at: true }, take: 1 },
@@ -89,12 +89,12 @@ export async function getWorkshopJourney(workshopId: string, teacherId: string):
     }
     const attempt = item.quiz?.attempts[0] ?? null;
     const done = !!attempt?.passed_at;
-    const progress = item.quiz?._count.questions ? Math.round(((attempt?.total ?? 0) / item.quiz._count.questions) * 100) : 0;
+    const progress = item.quiz?._count.questions ? Math.round(((attempt?._count.answers ?? 0) / item.quiz._count.questions) * 100) : 0;
     return {
       ...base,
       completed: done,
-      progress: done ? 100 : Math.min(100, progress),
-      quiz: item.quiz ? { id: item.quiz.id, title: item.quiz.title, description: item.quiz.description, passing_score: item.quiz.passing_score, question_count: item.quiz._count.questions, attempt } : undefined,
+      progress: done ? 100 : Math.min(95, progress),
+      quiz: item.quiz ? { id: item.quiz.id, title: item.quiz.title, description: item.quiz.description, passing_score: item.quiz.passing_score, question_count: item.quiz._count.questions, attempt: attempt ? { score: attempt.score, total: attempt.total, completed_at: attempt.completed_at, passed_at: attempt.passed_at } : null } : undefined,
     };
   });
   const required = rows.filter((row) => row.is_required);
