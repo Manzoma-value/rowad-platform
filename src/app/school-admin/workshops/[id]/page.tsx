@@ -720,6 +720,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
       </section>
 
       <section className="wd-card wd-materials">
+        <style>{`.wd-materials .wd-link-form{grid-template-columns:110px 1fr 1.5fr auto}@media(max-width:720px){.wd-materials .wd-link-form{grid-template-columns:1fr}}`}</style>
         <div className="wd-table-head"><div><h2>{T.content}</h2><p>{T.contentHelp}</p></div>{!viewOnly&&<div className="wd-content-actions"><label className="wd-small-btn"><Upload size={14}/>{uploading?T.saving:T.addFile}<input hidden type="file" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx" onChange={e=>e.target.files?.[0]&&void uploadMaterial(e.target.files[0])}/></label><button className="wd-small-btn ghost" onClick={()=>setShowLink(v=>!v)}><Plus size={14}/>{T.addLink}</button></div>}</div>
         {showLink&&<div className="wd-link-form"><select value={linkType} onChange={e=>setLinkType(e.target.value as typeof linkType)}><option value="LINK">Link</option><option value="VIDEO">Video link</option><option value="READING">Reading</option></select><input placeholder={T.linkTitle} value={linkForm.title} onChange={e=>setLinkForm({...linkForm,title:e.target.value})}/><input dir="ltr" placeholder={T.linkUrl} value={linkForm.url} onChange={e=>setLinkForm({...linkForm,url:e.target.value})}/><button className="wd-small-btn" onClick={addLink} disabled={uploading}>{T.add}</button></div>}
         {materialError&&<p className="wd-material-error" role="alert">{materialError}</p>}
