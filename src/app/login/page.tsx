@@ -90,7 +90,7 @@ const STRINGS = {
     forgotPw: "Harrove fjalëkalimin?",
     noAccount: "Nuk ke llogari?",
     signup: "Krijo një",
-    workshopNoAccount: "Nuk ke llogari mësuesi?",
+    workshopNoAccount: "Nuk ke llogari edukatori?",
     workshopSignup: "Krijo një llogari dhe plotëso formularin e aplikimit",
     or: "ose",
     errEmpty: "Të lutem fut e-mail-in dhe fjalëkalimin",

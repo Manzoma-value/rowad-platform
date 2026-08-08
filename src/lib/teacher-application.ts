@@ -126,9 +126,9 @@ export const GENDER_L: Record<Gender, L> = {
 };
 
 export const CURRENT_ROLE_L: Record<CurrentRole, L> = {
-  TEACHER:        { ar: "مشرف",          sq: "Mësues" },
+  TEACHER:        { ar: "مشرف",          sq: "Edukator" },
   SUPERVISOR:     { ar: "مشرف تربوي",    sq: "Mbikëqyrës arsimor" },
-  PRINCIPAL:      { ar: "مدير منصة",    sq: "Drejtor shkolle" },
+  PRINCIPAL:      { ar: "مدير منصة",    sq: "Drejtor platforme" },
   VICE_PRINCIPAL: { ar: "وكيل منصة",    sq: "Zëvendësdrejtor" },
   COUNSELOR:      { ar: "مرشد للمستفيدين",    sq: "Këshilltar studentor" },
   TRAINER:        { ar: "مدرب",          sq: "Trajner" },
@@ -155,7 +155,7 @@ export const EXPERIENCE_RANGE_L: Record<ExperienceRange, L> = {
 };
 
 export const ACHIEVEMENT_SCOPE_L: Record<AchievementScope, L> = {
-  INSTITUTIONAL: { ar: "على مستوى مؤسسة أو منصة", sq: "Niveli institucional ose i shkollës" },
+  INSTITUTIONAL: { ar: "على مستوى مؤسسة أو منصة", sq: "Niveli institucional ose i platformës" },
   CITY:          { ar: "على مستوى مدينة أو محافظة", sq: "Niveli i qytetit ose qarkut" },
   COUNTRY:       { ar: "على مستوى الدولة",           sq: "Niveli kombëtar" },
   REGIONAL:      { ar: "على المستوى الإقليمي",       sq: "Niveli rajonal" },
@@ -165,7 +165,7 @@ export const ACHIEVEMENT_SCOPE_L: Record<AchievementScope, L> = {
 export const EXPERIENCE_AREA_L: Record<string, L> = {
   TEACHING:                  { ar: "التدريس",              sq: "Mësimdhënie" },
   EDUCATIONAL_SUPERVISION:   { ar: "الإشراف التربوي",      sq: "Mbikëqyrje arsimore" },
-  SCHOOL_LEADERSHIP:         { ar: "القيادة الإدارية",     sq: "Lidership shkollor" },
+  SCHOOL_LEADERSHIP:         { ar: "القيادة الإدارية",     sq: "Lidership platforme" },
   TRAINING:                  { ar: "التدريب",              sq: "Trajnim" },
   GUIDANCE:                  { ar: "الإرشاد",              sq: "Këshillim" },
   YOUTH_WORK:                { ar: "العمل الشبابي",        sq: "Punë me të rinjtë" },
@@ -180,12 +180,12 @@ export const EXPERIENCE_AREA_L: Record<string, L> = {
 
 export const TARGET_GROUP_L: Record<string, L> = {
   CHILDREN:               { ar: "الأطفال",                sq: "Fëmijët" },
-  PRIMARY:                { ar: "مستفيدو المرحلة الابتدائية", sq: "Nxënësit e shkollës fillore" },
-  MIDDLE:                 { ar: "مستفيدو المرحلة المتوسطة",  sq: "Nxënësit e shkollës 9-vjeçare" },
-  SECONDARY:              { ar: "مستفيدو المرحلة الثانوية",  sq: "Nxënësit e shkollës së mesme" },
-  UNIVERSITY:             { ar: "المستفيدون الجامعيون",        sq: "Studentët universitarë" },
+  PRIMARY:                { ar: "مستفيدو المرحلة الابتدائية", sq: "Pjesëmarrësit e nivelit fillor" },
+  MIDDLE:                 { ar: "مستفيدو المرحلة المتوسطة",  sq: "Pjesëmarrësit e arsimit 9-vjeçar" },
+  SECONDARY:              { ar: "مستفيدو المرحلة الثانوية",  sq: "Pjesëmarrësit e arsimit të mesëm" },
+  UNIVERSITY:             { ar: "المستفيدون الجامعيون",        sq: "Pjesëmarrësit universitarë" },
   YOUTH:                  { ar: "الشباب",                  sq: "Të rinjtë" },
-  TEACHERS:               { ar: "المشرفون",                sq: "Mësuesit" },
+  TEACHERS:               { ar: "المشرفون",                sq: "Edukatorët" },
   SUPERVISORS:            { ar: "المشرفون التربويون",      sq: "Mbikëqyrësit arsimorë" },
   EDUCATIONAL_LEADERS:    { ar: "القيادات التعليمية",      sq: "Udhëheqësit arsimorë" },
   PARENTS:                { ar: "أولياء الأمور",           sq: "Prindërit" },
@@ -293,7 +293,7 @@ export const APP_UI = {
   sq: {
     pageTitle: "Formulari i aplikimit — Faza e parë",
     pageSub:
-      "Plotëso me kujdes të dhënat e aplikimit. Administrata e shkollës do ta shqyrtojë kërkesën tënde para se llogaria të aktivizohet si mësues.",
+      "Plotëso me kujdes të dhënat e aplikimit. Administrata e platformës do ta shqyrtojë kërkesën tënde para se llogaria të aktivizohet si edukator.",
     sectionPersonal: "Të dhënat personale",
     sectionNomination: "Pala që të ka rekomanduar",
     sectionCurrentRole: "Roli aktual",

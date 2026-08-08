@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import TraitRadarChart from "@/components/TraitRadarChart";
 import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
 import { ASSESS_UI, derive, type AssessLang } from "@/lib/rowad-assessment";
-import { matchCompoundReading, type SpectrumTrait } from "@/lib/trait-spectrum";
+import type { SpectrumTrait } from "@/lib/trait-spectrum";
 
 type Props = {
   traits: SpectrumTrait[];
@@ -26,10 +26,10 @@ const COPY = {
     complete: "التوزيع مكتمل",
     strongest: "القراءة الأبرز",
     core: "جوهرية",
-    collective: "جماعية",
+    connecting: "رابطة",
     supporting: "مساندة",
     coreHelp: "تتجاوز 50 نقطة",
-    collectiveHelp: "أقرب سمة تالية",
+    connectingHelp: "كيف تتحول القوة إلى أثر داخل المجموعة",
     supportingHelp: "تكمل الصورة",
     points: "نقطة",
   },
@@ -44,10 +44,10 @@ const COPY = {
     complete: "Shpërndarja u plotësua",
     strongest: "Leximi kryesor",
     core: "Thelbësor",
-    collective: "Kolektiv",
+    connecting: "Ndërlidhës",
     supporting: "Mbështetës",
     coreHelp: "Arrin 50 pikë",
-    collectiveHelp: "Tipari i radhës",
+    connectingHelp: "Si shndërrohet forca në ndikim brenda grupit",
     supportingHelp: "Plotësojnë tablonë",
     points: "pikë",
   },
@@ -66,19 +66,13 @@ export default function TraitSpectrumPanel({
   const total = Math.round(values.reduce((sum, value) => sum + value, 0) * 10) / 10;
   const result = useMemo(() => derive(values), [values]);
   const ordered = traits.map((trait, index) => ({ ...trait, index }));
-  const reading = useMemo(
-    () => matchCompoundReading(traits.map(({ label, pct }) => ({ label, pct }))),
-    [traits],
-  );
-  const readingText = reading.kind === "compound"
-    ? (lang === "ar" ? reading.ar : reading.sq)
-    : reading.kind === "dominant"
-      ? traits[reading.index]?.label
-      : A.noCore;
+  const readingText = result.hasCore && result.coreIdx !== null
+    ? traits[result.coreIdx]?.label
+    : A.noCore;
 
   function roleFor(index: number) {
     if (result.hasCore && result.coreIdx === index) return { label: C.core, className: "core" };
-    if (result.collectiveIdx === index) return { label: C.collective, className: "collective" };
+    if (result.connectingIdx === index) return { label: C.connecting, className: "collective" };
     return { label: C.supporting, className: "supporting" };
   }
 
@@ -150,7 +144,7 @@ export default function TraitSpectrumPanel({
 
       <footer className="tsp-explain">
         <div><span className="core">{C.core}</span><small>{C.coreHelp}</small></div>
-        <div><span className="collective">{C.collective}</span><small>{C.collectiveHelp}</small></div>
+        <div><span className="collective">{C.connecting}</span><small>{C.connectingHelp}</small></div>
         <div><span className="supporting">{C.supporting}</span><small>{C.supportingHelp}</small></div>
       </footer>
 

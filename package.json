@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run check:ui-identifiers && npm run check:theme-colors && node scripts/deploy-migrations.mjs && prisma generate && next build",
+    "build": "npm run check:ui-identifiers && npm run check:terminology && npm run check:theme-colors && node scripts/deploy-migrations.mjs && prisma generate && next build",
     "check:ui-identifiers": "node scripts/check-adblock-safe-ui.mjs",
     "check:theme-colors": "node scripts/check-theme-colors.mjs",
+    "check:terminology": "node scripts/check-product-terminology.mjs",
     "fix:theme-colors": "node scripts/check-theme-colors.mjs --fix",
     "test:view-only-admin": "node --no-warnings --experimental-strip-types scripts/check-view-only-admin-access.mjs",
     "test:teacher-smoke": "node scripts/teacher-prelaunch-smoke.mjs",

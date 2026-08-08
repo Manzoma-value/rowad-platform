@@ -16,7 +16,7 @@ const COPY = {
   sq: {
     badge: "Rezultati i shqyrtimit",
     title: "Aplikimi yt nuk u miratua",
-    body: "Të falënderojmë për aplikimin. Aplikimi yt nuk u miratua në këtë fazë nga administrata e shkollës. Për çdo paqartësi të lutem kontakto drejtpërdrejt administratën.",
+    body: "Të falënderojmë për aplikimin. Aplikimi yt nuk u miratua në këtë fazë nga administrata e platformës. Për çdo paqartësi të lutem kontakto drejtpërdrejt administratën.",
     notesLabel: "Shënimet e shqyrtuesit",
     noNotes: "Administrata nuk la shënime.",
   },

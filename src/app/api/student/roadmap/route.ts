@@ -14,7 +14,7 @@ export async function GET() {
     where: { profile_id: user.id },
     select: { id: true, school_id: true },
   });
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
   if (!student.school_id) return NextResponse.json({ roadmap: null });
 
   const roadmap = await prisma.roadmap.findUnique({

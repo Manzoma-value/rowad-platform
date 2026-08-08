@@ -20,16 +20,16 @@ const S = {
   },
   sq: {
     title: (name: string) => name ? `Faleminderit, ${name}!` : "Aplikimi u dërgua me sukses!",
-    desc: "Përgjigjet tuaja u morën me sukses. Administratori do të rishikojë testin tuaj dhe do të caktojë shkollën e duhur sa më shpejt.",
+    desc: "Përgjigjet tuaja u morën me sukses. Administratori do të rishikojë testin tuaj dhe do të caktojë platformën e duhur sa më shpejt.",
     step1Title: "Testi i pranimit u dërgua",
     step1Sub: "Kryer me sukses",
     step2Title: "Rishikimi nga administratori",
     step2Sub: "Duke pritur...",
-    step3Title: "Caktimi i shkollës",
+    step3Title: "Caktimi i platformës",
     step3Sub: "Së shpejti",
-    step4Title: "Bashkimi me klasën",
+    step4Title: "Bashkimi me grupin",
     step4Sub: "Së shpejti",
-    note: "Kjo faqe do të shfaqet derisa të caktoheni në një shkollë. Nuk keni nevojë të bëni asgjë tani.",
+    note: "Kjo faqe do të shfaqet derisa të caktoheni në një platformë. Nuk keni nevojë të bëni asgjë tani.",
   },
 } as const;
 

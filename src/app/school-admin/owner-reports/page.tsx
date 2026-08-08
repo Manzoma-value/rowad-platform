@@ -28,7 +28,7 @@ const UI = {
   },
   sq: {
     title: "Raportet e pronarit",
-    sub: "Raporte zyrtare të lëshuara nga administrata e platformës për shkollën tuaj.",
+    sub: "Raporte zyrtare të lëshuara nga administrata e platformës për platformën tuaj.",
     empty: "Nuk ka raporte të publikuara.",
     formal: "Raport zyrtar",
     open: "Hap raportin",

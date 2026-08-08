@@ -55,7 +55,7 @@ export const REPORT_LABELS = {
     issuedBy:     "Administrata e platformës",
     publishedOn:  "Data e publikimit",
     reportDate:   "Data e raportit",
-    school:       "Shkolla",
+    school:       "Platforma",
     introduction: "Hyrje ekzekutive",
     closingNote:  "Përmbyllja",
     images:       "Galeria",

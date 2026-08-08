@@ -81,7 +81,7 @@ const UI = {
     statusPending: "لم يقدم بعد",
   },
   sq: {
-    title: "Aplikimet e mësuesve",
+    title: "Aplikimet e edukatorëve",
     sub: "Shqyrto aplikimet dhe vendos miratim ose refuzim. Mund të filtrosh listën dhe të eksportosh çdo aplikim si PDF.",
     search: "Kërko sipas emrit, e-mail, telefonit ose qytetit",
     filters: "Filtra",

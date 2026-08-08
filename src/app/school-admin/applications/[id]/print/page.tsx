@@ -131,7 +131,7 @@ function PrintPageInner({ params }: { params: Promise<{ id: string }> }) {
       }
     : {
         title: "Formulari i aplikimit — Faza e parë",
-        sub: "Dosja e mësuesit aplikant",
+        sub: "Dosja e edukatorit aplikant",
         ageL: "Mosha", countryL: "Shteti", cityL: "Qyteti", phoneL: "Telefoni", emailL: "E-mail", genderL: "Gjinia",
         s1: "Të dhënat personale", s2: "Pala rekomanduese", s3: "Roli aktual", s4: "Kualifikimi",
         s5: "Fushat e përvojës", s6: "Vitet e përvojës", s7: "Grupet e synuara",

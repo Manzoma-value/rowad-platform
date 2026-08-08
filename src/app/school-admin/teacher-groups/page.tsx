@@ -95,8 +95,8 @@ const UI = {
     creating: "جارٍ الإنشاء…",
   },
   sq: {
-    title: "Grupet e mësuesve",
-    sub: "Organizo mësuesit e pranuar në grupe pune, trajnimi dhe komunitete private.",
+    title: "Grupet e edukatorëve",
+    sub: "Organizo edukatorët e pranuar në grupe pune, trajnimi dhe komunitete private.",
     create: "+ Grup i ri",
     empty: "Nuk ka grupe ende. Krijo grupin e parë.",
     members: "anëtarë",
@@ -115,17 +115,17 @@ const UI = {
     memberSearchPh: "Kërko në anëtarët e grupit…",
     noGroupResults: "Nuk ka grupe që përputhen.",
     noMemberResults: "Nuk ka anëtarë që përputhen.",
-    noEligible: "Nuk ka mësues të disponueshëm.",
+    noEligible: "Nuk ka edukatorë të disponueshëm.",
     add: "Shto",
     remove: "Hiq",
-    confirmRemove: "Të hiqet ky mësues nga grupi?",
+    confirmRemove: "Të hiqet ky edukator nga grupi?",
     cancel: "Anulo",
     yearsExp: "Vitet e përvojës",
     spec: "Specializimi",
     location: "Vendndodhja",
     close: "Mbyll",
     newGroupTitle: "Krijo grup të ri",
-    namePh: "Shembull: Mësuesit e Kuranit",
+    namePh: "Shembull: Edukatorët e Kuranit",
     descPh: "Përshkrim opsional…",
     creating: "Po krijohet…",
   },
@@ -397,7 +397,7 @@ export default function TeacherGroupsPage() {
               data-write="true"
             >
               <strong>{L === "ar" ? "رؤية المجموعات" : "Shikimi i grupeve"}</strong>
-              <span>{openVisibility ? (L === "ar" ? "مفتوحة لكل المشرفين" : "E hapur për mësuesit") : (L === "ar" ? "خاصة بكل مجموعة" : "Private për çdo grup")}</span>
+              <span>{openVisibility ? (L === "ar" ? "مفتوحة لكل المشرفين" : "E hapur për edukatorët") : (L === "ar" ? "خاصة بكل مجموعة" : "Private për çdo grup")}</span>
             </button>
           )}
           {!viewOnly && (

@@ -26,7 +26,7 @@ export async function POST(
   const trait = await verifyTrait(traitId, auth.school.id);
   if (!trait) return NextResponse.json({ error: "Trait not found" }, { status: 404 });
 
-  const { text } = body;
+  const { text, text_sq } = body;
   if (!text?.trim())
     return NextResponse.json({ error: "text required" }, { status: 400 });
 
@@ -40,9 +40,10 @@ export async function POST(
     data: {
       trait_id: traitId,
       text: text.trim(),
+      text_sq: text_sq?.trim() || null,
       order: (last?.order ?? 0) + 1,
     },
-    select: { id: true, text: true, order: true },
+    select: { id: true, text: true, text_sq: true, order: true },
   });
 
   return NextResponse.json({ element }, { status: 201 });

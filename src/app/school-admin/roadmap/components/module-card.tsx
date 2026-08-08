@@ -5,7 +5,7 @@ import { Icons } from "./icons";
 import type { Module, ModuleContent, Question, StageTrait } from "./types";
 import { TextModal, ImageModal, VideoModal } from "./content-modals";
 import { QuestionModal } from "./question-modal";
-import { ModuleMainTraitSelector } from "./module-main-trait-selector";
+import { ModuleTraitTargetsSelector } from "./module-trait-targets-selector";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/lib/confirm-dialog";
 
@@ -83,8 +83,10 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   const contents = mod.contents ?? [];
   const questions = mod.questions ?? [];
   const attemptCount = mod._count?.attempts ?? 0;
-  const hasMainTrait = !!mod.main_trait_id;
-  const mainTrait = stageTraits.find((t) => t.id === mod.main_trait_id);
+  const linkedTraits = (mod.trait_links ?? [])
+    .map((link) => stageTraits.find((trait) => trait.id === link.trait_id))
+    .filter(Boolean);
+  const hasTraitTargets = linkedTraits.length > 0;
 
   const renderContentPreview = (block: ModuleContent) => {
     if (block.type === "TEXT") {
@@ -166,7 +168,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
         <div className="rb-mod-head">
           <button className="rb-mod-toggle" onClick={() => setOpen((v) => !v)}>
             <span className="rb-mod-dot-wrap">
-              {hasMainTrait ? (
+              {hasTraitTargets ? (
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="#B8A082">
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
@@ -181,15 +183,15 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
                 <span className="rb-mod-meta-sep">·</span>
                 <span>{questions.length} سؤال</span>
                 <span className="rb-mod-meta-sep">·</span>
-                {mainTrait ? (
+                {hasTraitTargets ? (
                   <span
                     style={{ color: "#B8A082", fontWeight: 700, fontSize: 10 }}
                   >
-                    ★ {mainTrait.name}
+                    ★ {linkedTraits.length} سمات مستهدفة
                   </span>
                 ) : (
                   <span style={{ color: "#bbb", fontSize: 10 }}>
-                    بلا سمة مشغّلة
+                    لم تحدد خريطة الأثر
                   </span>
                 )}
                 <span className="rb-mod-meta-sep">·</span>
@@ -383,9 +385,9 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
             {/* ── MAIN TRAIT SECTION ── */}
             {stageTraits.length > 0 && (
               <div className="rb-q-section">
-                <ModuleMainTraitSelector
+                <ModuleTraitTargetsSelector
                   moduleId={mod.id}
-                  mainTraitId={mod.main_trait_id}
+                  initialLinks={mod.trait_links ?? []}
                   stageTraits={stageTraits}
                   onRefresh={onRefresh}
                 />

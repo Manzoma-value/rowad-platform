@@ -29,7 +29,7 @@ type RoadmapModule = {
   quizzes: { id: string; name: string; review_status: ReviewStatus; is_legacy: boolean }[];
 };
 
-type RoadmapStage = { id: string; title: string; order: number; modules: RoadmapModule[] };
+type RoadmapStage = { id: string; title: string; qualification_ar: string | null; qualification_sq: string | null; order: number; modules: RoadmapModule[] };
 type Roadmap = { id: string; title: string; stages: RoadmapStage[] };
 
 const UI = {
@@ -59,6 +59,7 @@ const UI = {
     statPending: "بانتظار المراجعة",
     statApproved: "معتمد ومنشور",
     noResults: "لا توجد نتائج مطابقة لبحثك.",
+    qualification: "الأهلية المستهدفة",
     needsWork: "ينقصه محتوى",
     coverage: "نسبة تغطيتك لهذه المرحلة",
     guide: [
@@ -70,15 +71,15 @@ const UI = {
   },
   sq: {
     eyebrow: "Harta Edukative",
-    title: "Ndërto përmbajtjen sipas hartës së shkollës",
-    sub: "Harta ndahet në faza, dhe çdo fazë përmban koncepte. Detyra jote: shto një mësim dhe një kuiz për çdo koncept, pastaj dërgoji për shqyrtim që t'u shfaqen nxënësve.",
+    title: "Ndërto përmbajtjen sipas hartës së platformës",
+    sub: "Harta ndahet në faza, dhe çdo fazë përmban koncepte. Detyra jote: shto një mësim dhe një kuiz për çdo koncept, pastaj dërgoji për shqyrtim që t'u shfaqen pjesëmarrësve.",
     stage: "Faza",
     concept: "koncept",
     concepts: "koncepte",
     open: "Hap konceptin",
     start: "Fillo tani",
     addFirst: "Shto mësimin e parë",
-    empty: "Harta ende nuk është konfiguruar për shkollën tuaj.",
+    empty: "Harta ende nuk është konfiguruar për platformën tuaj.",
     emptySub: "Kontakto administratën për të konfiguruar fazat dhe konceptet.",
     lessons: "mësim",
     quizzes: "kuiz",
@@ -94,13 +95,14 @@ const UI = {
     statPending: "Në shqyrtim",
     statApproved: "Miratuar",
     noResults: "Nuk ka rezultate.",
+    qualification: "Aftësia përfundimtare",
     needsWork: "I mungon përmbajtje",
     coverage: "Mbulimi yt i kësaj faze",
     guide: [
       { title: "Hap një koncept", body: "Kliko çdo kartë koncepti më poshtë për të parë materialin e administratës." },
       { title: "Shto mësim ose kuiz", body: "Brenda konceptit kliko «Shto mësim» ose «Shto kuiz». Nuk krijohen nga jashtë hartës." },
       { title: "Ndërto përmbajtjen", body: "Shto tekst, foto dhe video, si dhe pyetje me opsione ose të saktë/gabuar." },
-      { title: "Dërgo për shqyrtim", body: "Në fund kliko «Dërgo për shqyrtim». Nxënësit e shohin vetëm pas miratimit." },
+      { title: "Dërgo për shqyrtim", body: "Në fund kliko «Dërgo për shqyrtim». Pjesëmarrësit e shohin vetëm pas miratimit." },
     ],
   },
 } as const;
@@ -256,6 +258,16 @@ export default function TeacherRoadmapPage() {
                       </div>
                     </header>
 
+                    {(stage.qualification_ar || stage.qualification_sq) && (
+                      <div className="tr-qualification">
+                        <span>✦</span>
+                        <div>
+                          <small>{T.qualification}</small>
+                          <strong>{L === "sq" ? stage.qualification_sq || stage.qualification_ar : stage.qualification_ar || stage.qualification_sq}</strong>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="tr-modules">
                       {stage.modules.map((concept) => {
                         const lessons = concept.lessons.filter((lesson) => !lesson.is_legacy);
@@ -326,6 +338,7 @@ const styles = `
 .tr-stage-progress-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
 .tr-stage-progress-top span{font-size:10.5px;font-weight:800;color:#8C8274}
 .tr-stage-progress-top b{font-size:12.5px;color:#32101A}
+.tr-qualification{display:flex;align-items:flex-start;gap:10px;margin:12px 0 14px;border:1px solid rgba(184,160,130,.34);border-radius:14px;background:linear-gradient(135deg,#F7F3EB,#FFFBF5);padding:11px 13px}.tr-qualification>span{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:9px;background:#6B1E2D;color:#D9C9B0}.tr-qualification small{display:block;color:#8F765B;font-size:9px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}.tr-qualification strong{display:block;margin-top:2px;color:#32101A;font-size:12px;line-height:1.65}
 
 .tr-modules{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:11px}
 .tr-module{display:flex;flex-direction:column;gap:8px;padding:15px;border-radius:16px;text-decoration:none;color:inherit;

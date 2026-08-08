@@ -2,7 +2,7 @@
 
 // 100-point distributor — one slider per trait defined on the assessment,
 // with live total, status pill (Ok / Over / Under), and a live readout of
-// Core/Collective/Supporting derived from the current distribution.
+// Core/Connecting/Supporting derived from the current distribution.
 //
 // Mirrors the JS simulator in the methodology HTML the team uses in-person.
 // Traits are supplied by the caller (each assessment model owns its own
@@ -137,9 +137,9 @@ export default function RowadDistributor({
             </div>
           </div>
           <div className="rwd-rb rwd-rb-collective">
-            <div className="rwd-rb-lbl">{T.collectiveLabel}</div>
+            <div className="rwd-rb-lbl">{T.connectingLabel}</div>
             <div className="rwd-rb-val">
-              {traits[derivation.collectiveIdx]?.label} · <b>{value[derivation.collectiveIdx]}</b>
+              {traits[derivation.connectingIdx]?.label} · <b>{value[derivation.connectingIdx]}</b>
             </div>
           </div>
           <div className="rwd-rb rwd-rb-support">

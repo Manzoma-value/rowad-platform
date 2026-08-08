@@ -130,10 +130,10 @@ const S = {
     backToLogin: "Kthehu te hyrja",
     haveAccount: "Kam tashmë një llogari",
     // role-based
-    createTeacher: "Krijo Llogarinë e Mësuesit",
+    createTeacher: "Krijo llogarinë e edukatorit",
     createAdmin: "Krijo Llogarinë e Administratorit",
     stripTeacher:
-      "Keni marrë një ftesë për t'u bashkuar si mësues. Plotësoni të dhënat tuaja më poshtë.",
+      "Keni marrë një ftesë për t'u bashkuar si edukator. Plotësoni të dhënat tuaja më poshtë.",
     stripAdmin:
       "Keni marrë një ftesë për t'u bashkuar si administrator i institucionit. Plotësoni të dhënat tuaja më poshtë.",
     // steps

@@ -50,7 +50,7 @@ const T = {
     pillarsEyebrow: "Shtyllat Tona",
     pillarsTitle: "Tri shtylla, një vizion",
     pillars: [
-      { title: "Vlerat morale", desc: "Mbjellim vlerat dhe parimet që ndërtojnë njeriun para se të ndërtojnë nxënësin." },
+      { title: "Vlerat morale", desc: "Mbjellim vlerat dhe parimet që ndërtojnë njeriun para se të ndërtojnë pjesëmarrësin." },
       { title: "Dija", desc: "Përmbajtje edukative e gradualizuar, që balancon autenticitetin me modernitetin." },
       { title: "Lidershipi", desc: "Përgatisim një brez të aftë të udhëheqë dhe të krijojë ndikim në komunitetin e tij." },
     ],

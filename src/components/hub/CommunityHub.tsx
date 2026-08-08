@@ -54,11 +54,11 @@ const T: Record<Lang, {
   },
   sq: {
     today: "Sot", yesterday: "Dje", community: "Komuniteti", react: "Reagoj",
-    replyLabel: "Përgjigje", replies: "përgjigje", teacher: "Mësues", admin: "Drejtori",
+    replyLabel: "Përgjigje", replies: "përgjigje", teacher: "Edukator", admin: "Drejtori",
     composerPH: "Ndaj një ide, përditësim ose moment me komunitetin...", replyPH: "Shkruaj një përgjigje të qartë dhe miqësore...",
     loadMore: "Shfaq mesazhe më të vjetra", loading: "Po ngarkohet...",
-    emptyTitle: "Hapësira është gati për postimin e parë", emptySub: "Nis një bisedë që afron komunitetin e shkollës.",
-    noSchoolTitle: "Nuk jeni caktuar në asnjë shkollë",
+    emptyTitle: "Hapësira është gati për postimin e parë", emptySub: "Nis një bisedë që afron komunitetin e platformës.",
+    noSchoolTitle: "Nuk jeni caktuar në asnjë platformë",
     noSchoolSub: "Kontaktoni administratorin për aktivizimin",
     del: "Fshij", img: "Foto", send: "Dërgo",
     delConfirmTip: "Shtypni përsëri për të konfirmuar",
@@ -76,7 +76,7 @@ function moderationNote(persona: CommunityPersona, lang: Lang) {
   }
   return lang === "ar"
     ? "وضع المشرف · يمكنك إدارة مشاركات المستفيدون وردودهم"
-    : "Modaliteti i mësuesit · Mund të menaxhoni postimet dhe përgjigjet e nxënësve";
+    : "Modaliteti i edukatorit · Mund të menaxhoni postimet dhe përgjigjet e pjesëmarrësve";
 }
 
 const RX: { type: ReactionType; emoji: string; label: Record<Lang, string> }[] = [
@@ -705,7 +705,7 @@ export function CommunityHub({ persona }: { persona: CommunityPersona }) {
         const ttl = persona === "TEACHER" ? 300_000 : 60_000;
         const d = await cachedFetch<IdentityResponse>(endpoint, ttl);
         if (!active) return;
-        const fallback = persona === "SCHOOL_ADMIN" ? "Drejtori" : persona === "TEACHER" ? "Mësues" : "Nxënës";
+        const fallback = persona === "SCHOOL_ADMIN" ? "Drejtori" : persona === "TEACHER" ? "Edukator" : "Pjesëmarrës";
         setMe({
           id: user.id,
           name: d.adminName ?? d.profile?.full_name ?? fallback,

@@ -32,11 +32,13 @@ export async function GET(
       id: true,
       maqsad: true,
       name: true,
+      name_sq: true,
       definition: true,
+      definition_sq: true,
       created_at: true,
       elements: {
         orderBy: { order: "asc" },
-        select: { id: true, text: true, order: true },
+        select: { id: true, text: true, text_sq: true, order: true },
       },
       module_main_traits: {
         select: { id: true, title: true },
@@ -63,7 +65,7 @@ export async function POST(
   const stage = await verifyStage(stageId, auth.school.id);
   if (!stage) return NextResponse.json({ error: "Stage not found" }, { status: 404 });
 
-  const { maqsad, name, definition } = body;
+  const { maqsad, name, name_sq, definition, definition_sq } = body;
 
   if (!maqsad || !MAQASID.includes(maqsad))
     return NextResponse.json({ error: `maqsad must be one of: ${MAQASID.join(", ")}` }, { status: 400 });
@@ -83,10 +85,12 @@ export async function POST(
       stage_id: stageId,
       maqsad,
       name: name.trim(),
+      name_sq: name_sq?.trim() || null,
       definition: definition?.trim() || null,
+      definition_sq: definition_sq?.trim() || null,
     },
     select: {
-      id: true, maqsad: true, name: true, definition: true, created_at: true,
+      id: true, maqsad: true, name: true, name_sq: true, definition: true, definition_sq: true, created_at: true,
       elements: true,
     },
   });

@@ -29,7 +29,6 @@ export async function GET(
     where: { student_id: { in: studentIds } },
     select: {
       student_id: true,
-      module: { select: { main_trait_id: true } },
       trait_scores: {
         select: {
           score: true,
@@ -42,14 +41,10 @@ export async function GET(
   // Class-wide radar
   const traitTotals = new Map<string, { name: string; maqsad: string; sum: number; count: number }>();
   for (const a of allAssessments) {
-    const otherCount = a.trait_scores.length - 1;
     for (const ts of a.trait_scores) {
-      const isMain = a.module.main_trait_id === ts.trait.id;
-      const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-      const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
       const existing = traitTotals.get(ts.trait.id);
-      if (existing) { existing.sum += normalized; existing.count += 1; }
-      else traitTotals.set(ts.trait.id, { name: ts.trait.name, maqsad: ts.trait.maqsad, sum: normalized, count: 1 });
+      if (existing) { existing.sum += ts.score; existing.count += 1; }
+      else traitTotals.set(ts.trait.id, { name: ts.trait.name, maqsad: ts.trait.maqsad, sum: ts.score, count: 1 });
     }
   }
 
@@ -63,14 +58,10 @@ export async function GET(
     const studentAssessments = allAssessments.filter(a => a.student_id === s.id);
     const studentTraits = new Map<string, { name: string; sum: number; count: number }>();
     for (const a of studentAssessments) {
-      const otherCount = a.trait_scores.length - 1;
       for (const ts of a.trait_scores) {
-        const isMain = a.module.main_trait_id === ts.trait.id;
-        const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-        const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
         const existing = studentTraits.get(ts.trait.id);
-        if (existing) { existing.sum += normalized; existing.count += 1; }
-        else studentTraits.set(ts.trait.id, { name: ts.trait.name, sum: normalized, count: 1 });
+        if (existing) { existing.sum += ts.score; existing.count += 1; }
+        else studentTraits.set(ts.trait.id, { name: ts.trait.name, sum: ts.score, count: 1 });
       }
     }
     return {

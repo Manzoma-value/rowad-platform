@@ -118,7 +118,7 @@ export default function SchoolAdminClassesPage() {
 
       <div className="create-section" data-write-area="true">
         <p className="create-label">
-          {lang === "ar" ? "إضافة مجموعة جديد" : "Shto klasë të re"}
+          {lang === "ar" ? "إضافة مجموعة جديدة" : "Shto grup të ri"}
         </p>
         <div className="create-row" data-write-area="true">
           <input

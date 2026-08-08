@@ -14,7 +14,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await getStudent(user.id);
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   // Only allow if still pending
   if (student.onboarding_status !== "PENDING_INTAKE") {
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await getStudent(user.id);
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   if (student.onboarding_status !== "PENDING_INTAKE") {
     return NextResponse.json({ error: "Already submitted" }, { status: 400 });

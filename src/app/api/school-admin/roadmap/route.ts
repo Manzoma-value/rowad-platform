@@ -15,17 +15,19 @@ export async function GET() {
       stages: {
         orderBy: { order: "asc" },
         select: {
-          id: true, title: true, order: true,
+          id: true, title: true, qualification_ar: true, qualification_sq: true, order: true,
           traits: {
             orderBy: { maqsad: "asc" },
             select: {
               id: true,
               maqsad: true,
               name: true,
+              name_sq: true,
               definition: true,
+              definition_sq: true,
               elements: {
                 orderBy: { order: "asc" },
-                select: { id: true, text: true, order: true },
+                select: { id: true, text: true, text_sq: true, order: true },
               },
               module_main_traits: {
                 select: { id: true, title: true },
@@ -37,6 +39,10 @@ export async function GET() {
             select: {
               id: true, title: true, description: true, order: true,
               main_trait_id: true,
+              trait_links: {
+                orderBy: { position: "asc" },
+                select: { trait_id: true, position: true, guidance_ar: true, guidance_sq: true },
+              },
               _count: { select: { attempts: true } },
               contents: {
                 orderBy: { order: "asc" },

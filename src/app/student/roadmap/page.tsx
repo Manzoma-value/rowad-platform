@@ -78,7 +78,7 @@ const TR: Record<string, Record<string, string>> = {
   sq: {
     loading: "Duke ngarkuar hartën tuaj...",
     noRoadmap: "Ende nuk ka hartë",
-    noRoadmapDesc: "Ende nuk ka bankë pyetjesh për shkollën tuaj",
+    noRoadmapDesc: "Ende nuk ka bankë pyetjesh për platformën tuaj",
     learningMap: "Harta e Mësimit",
     overallProgress: "Progresi i Përgjithshëm",
     startJourney: "Fillo udhëtimin",

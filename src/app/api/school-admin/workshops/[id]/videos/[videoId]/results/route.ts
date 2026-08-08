@@ -112,7 +112,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string;
 
   if (new URL(req.url).searchParams.get("format") === "csv") {
     const header = [
-      "Teacher",
+      "Supervisor",
       "Email",
       "Viewed",
       "Watch completed",

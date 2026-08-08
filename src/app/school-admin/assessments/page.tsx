@@ -58,14 +58,14 @@ const UI = {
   ar: {
     eyebrow: "لوحة النماذج",
     title: "نماذج القياس",
-    sub: "تتبَّع نتائج السمات لكل مجموعات المشرفين من مكان واحد — أنشئ نموذجاً جديداً بسماته الخاصة، صفِّه، أو صدِّره كتقرير جاهز.",
+    sub: "تابع خرائط السمات النسبية لكل مجموعات المشرفين — 100 نقطة تصف نقطة البداية ولا تمنح حكم نجاح أو فشل.",
     metricModels: "نموذج",
     metricOpen: "مفتوح",
     metricClosed: "مغلق",
     metricRatings: "تقييم",
     create: "نموذج جديد",
     createHelpTitle: "أنشئ نموذجاً لكل المنصة أو لمجموعة محددة",
-    createHelpSub: "اختر النطاق، خصّص السمات والألوان، ثم افتح النموذج للمشرفين من شاشة واحدة.",
+    createHelpSub: "اختر النطاق، عرّف السمات وعبارات الملاحظة، ثم افتحه للمشرفين. يجب توزيع 100 نقطة كاملة على السمات.",
     creating: "جارٍ الإنشاء…",
     filters: "تصفية النتائج",
     allGroups: "كل المجموعات",
@@ -97,7 +97,7 @@ const UI = {
     selectAll: "تحديد الكل",
     deselectAll: "إلغاء تحديد الكل",
     traitsLbl: "سمات النموذج",
-    traitsSub: "خصّص العدد والعناوين والعبارات كما تشاء — تبدأ مسبقة التعبئة بسمات نموذج الرواد الافتراضي ويمكنك تعديلها أو حذفها أو إضافة غيرها.",
+    traitsSub: "عرّف ما نريد بناءه وعبارة الملاحظة لكل سمة. يبدأ النموذج بسمات الرواد دون تحويل السمات إلى مواد دراسية أو درجات نجاح.",
     traitLabelAr: "الاسم (عربي)",
     traitLabelSq: "الاسم (ألباني)",
     traitStatementAr: "عبارة التقييم (عربي)",
@@ -129,7 +129,7 @@ const UI = {
     showMatrix: "عرض المصفوفة الكاملة",
     hideMatrix: "إخفاء المصفوفة",
     aggHead: "نتائج الأعضاء",
-    aggSub: "السمة الجوهرية والجماعية لكل عضو، مبنيّة على متوسط كل التقييمات التي تلقّاها.",
+    aggSub: "السمة الجوهرية والرابطة لكل عضو، مبنيّة على متوسط كل القراءات التي تلقّاها.",
     teacherSearch: "ابحث عن مشرف داخل هذا النموذج…",
     resultFilter: "تصفية حسب السمة الجوهرية",
     resultFilterAll: "كل السمات",
@@ -140,14 +140,14 @@ const UI = {
   sq: {
     eyebrow: "Paneli i Modeleve",
     title: "Modelet e Matjes",
-    sub: "Ndiq rezultatet e tipareve për të gjitha grupet e mësuesve nga një vend — krijo model të ri me tiparet e tij, filtroje, ose eksportoje si raport.",
+    sub: "Ndiq hartat relative të tipareve për të gjitha grupet e edukatorëve — 100 pikët përshkruajnë pikën e nisjes dhe nuk japin gjykim suksesi apo dështimi.",
     metricModels: "modele",
     metricOpen: "të hapura",
     metricClosed: "të mbyllura",
     metricRatings: "vlerësime",
     create: "Model i ri",
-    createHelpTitle: "Krijo një model për gjithë shkollën ose për grupe të caktuara",
-    createHelpSub: "Zgjidh shtrirjen, personalizo tiparet dhe ngjyrat, pastaj hape për mësuesit nga një ekran.",
+    createHelpTitle: "Krijo një model për gjithë platformën ose për grupe të caktuara",
+    createHelpSub: "Zgjidh shtrirjen, përcakto tiparet dhe pohimet e vëzhgimit, pastaj hape. Çdo edukator duhet të shpërndajë plot 100 pikë.",
     creating: "Po krijohet…",
     filters: "Filtrimi",
     allGroups: "Të gjitha grupet",
@@ -170,7 +170,7 @@ const UI = {
     groupsPickSub: "Të gjithë anëtarët e grupeve të zgjedhura do të vlerësojnë njëri-tjetrin si një grup i vetëm. Të gjitha janë të zgjedhura si parazgjedhje.",
     scopeLbl: "Shtrirja e modelit",
     scopeAll: "Të gjitha grupet",
-    scopeAllSub: "Zbatoje modelin në të gjitha grupet aktuale të mësuesve.",
+    scopeAllSub: "Zbatoje modelin në të gjitha grupet aktuale të edukatorëve.",
     scopeSpecific: "Grupe të caktuara",
     scopeSpecificSub: "Zgjidh një ose më shumë grupe vetëm për këtë model.",
     setupTitle: "Konfigurimi i modelit",
@@ -179,7 +179,7 @@ const UI = {
     selectAll: "Zgjidh të gjitha",
     deselectAll: "Hiq zgjedhjen",
     traitsLbl: "Tiparet e modelit",
-    traitsSub: "Personalizo numrin, titujt dhe pohimet si të duash — fillon e mbushur me tiparet e modelit standard Rowad dhe mund t'i ndryshosh, fshish, ose shtosh të tjera.",
+    traitsSub: "Përcakto çfarë duam të ndërtojmë dhe pohimin e vëzhgimit për çdo tipar. Modeli nis me tiparet Rowad pa i kthyer ato në lëndë ose nota suksesi.",
     traitLabelAr: "Emri (arabisht)",
     traitLabelSq: "Emri (shqip)",
     traitStatementAr: "Pohimi (arabisht)",
@@ -187,7 +187,7 @@ const UI = {
     addTrait: "+ Shto tipar",
     removeTrait: "Fshi tiparin",
     minTraitsWarn: "Duhet të paktën një tipar.",
-    lockedEditNote: "Mësuesit kanë filluar të vlerësojnë në këtë model, kështu që tiparet ose grupet e synuara nuk mund të ndryshohen më — mund të ndryshosh vetëm titullin. Krijo një model të ri për personalizim tjetër.",
+    lockedEditNote: "Edukatorët kanë filluar të vlerësojnë në këtë model, kështu që tiparet ose grupet e synuara nuk mund të ndryshohen më — mund të ndryshosh vetëm titullin. Krijo një model të ri për personalizim tjetër.",
     cancel: "Anulo",
     submit: "Krijo",
     save: "Ruaj",
@@ -203,7 +203,7 @@ const UI = {
     exportBtn: "Eksporto PDF",
     exporting: "Po eksportohet…",
     editBtn: "Modifiko",
-    confirmClose: "Mbyllja do parandalojë mësuesit të redaktojnë. Të vazhdohet?",
+    confirmClose: "Mbyllja do parandalojë edukatorët të redaktojnë. Të vazhdohet?",
     confirmReopen: "Rihapja do lejojë redaktimin sërish. Të vazhdohet?",
     confirmDelete: "Të fshihet ky model përfundimisht me të gjitha të dhënat? Ky veprim nuk mund të zhbëhet.",
     matrixHead: "Matrica e Plotë",
@@ -211,8 +211,8 @@ const UI = {
     showMatrix: "Shfaq matricën e plotë",
     hideMatrix: "Fshih matricën",
     aggHead: "Rezultatet e Anëtarëve",
-    aggSub: "Tipari thelbësor dhe kolektiv për secilin, bazuar në mesataren e vlerësimeve.",
-    teacherSearch: "Kërko një mësues brenda këtij modeli…",
+    aggSub: "Tipari thelbësor dhe ndërlidhës për secilin, bazuar në mesataren e leximeve.",
+    teacherSearch: "Kërko një edukator brenda këtij modeli…",
     resultFilter: "Filtro sipas tiparit thelbësor",
     resultFilterAll: "Të gjitha tiparet",
     perTraitHead: "Mesatarja e çdo tipari për secilin anëtar",
@@ -450,7 +450,7 @@ export default function AssessmentsHubPage() {
       if (needle && !member.profile.full_name.toLowerCase().includes(needle)) return false;
       if (traitFilter !== null) {
         if (!d) return false;
-        const resultIdx = d.hasCore && d.coreIdx !== null ? d.coreIdx : d.collectiveIdx;
+        const resultIdx = d.hasCore && d.coreIdx !== null ? d.coreIdx : d.connectingIdx;
         if (resultIdx !== traitFilter) return false;
       }
       return true;
@@ -762,7 +762,7 @@ export default function AssessmentsHubPage() {
                                         <div className="am-cell-scores">
                                           {r.scores.map((v, i) => {
                                             const isCore = d.coreIdx === i && d.hasCore;
-                                            const isColl = d.collectiveIdx === i;
+                                            const isColl = d.connectingIdx === i;
                                             return (
                                               <span key={i} className={`am-score ${isCore ? "am-score-core" : isColl ? "am-score-coll" : ""}`} title={detail.traits[i] ? traitLabel(detail.traits[i], L) : ""}>
                                                 {v}

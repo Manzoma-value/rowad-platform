@@ -69,7 +69,7 @@ export default function StudentClassPage() {
       {/* ── Header banner ── */}
       <div className="cls-header">
         <div className="cls-header-left">
-          <p className="cls-eyebrow">{lang === "ar" ? "المجموعة الدراسي" : "Klasa"}</p>
+          <p className="cls-eyebrow">{lang === "ar" ? "المجموعة الدراسي" : "Grupi"}</p>
           <h1 className="cls-title">{data.class.name}</h1>
           <div className="cls-chips">
             {data.class.teacher ? (

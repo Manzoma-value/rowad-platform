@@ -41,8 +41,9 @@ type QuizRow = {
 };
 type ModuleDetail = {
   id: string; title: string; description: string | null; order: number;
-  stage: { id: string; title: string; order: number; roadmap: { title: string } };
+  stage: { id: string; title: string; qualification_ar: string | null; qualification_sq: string | null; order: number; roadmap: { title: string } };
   main_trait: { id: string; name: string; definition: string; maqsad: string } | null;
+  trait_links: { guidance_ar: string | null; guidance_sq: string | null; trait: { id: string; name: string; name_sq: string | null; definition: string; definition_sq: string | null; maqsad: string; elements: { id: string; text: string; text_sq: string | null }[] } }[];
   contents: { id: string; type: "TEXT"|"IMAGE"|"VIDEO"; order: number; body: string | null; image_url: string | null; alt_text: string | null; video_url: string | null; video_title: string | null }[];
   questions: { id: string; type: string; text: string; order: number; options: { id: string; text: string }[]; matching_pairs: { id: string; left: string; right: string }[] }[];
   lessons: LessonRow[];
@@ -56,6 +57,11 @@ const UI = {
     concept: "مفهوم",
     reference: "مرجع المفهوم من الإدارة",
     referenceSub: "اقرأ هذا أولاً — هو الأساس الذي تبني عليه درسك واختبارك.",
+    impactTitle: "ما الذي نريد بناءه بهذا المفهوم؟",
+    impactSub: "الاختبار يقيس فهم المفهوم، أما السمة فتُبنى بالممارسة وتظهر في الأفعال. استخدم هذه الخريطة عند تصميم الدرس والنشاط.",
+    impactEmpty: "لم تحدد الإدارة سمات مستهدفة لهذا المفهوم بعد.",
+    qualification: "الأهلية التي تقود إليها المرحلة",
+    indicators: "أفعال ومؤشرات يمكن ملاحظتها",
     refQuestions: "أسئلة مرجعية",
     noContent: "لم تضف الإدارة محتوى لهذا المفهوم بعد.",
     noQuestions: "لا توجد أسئلة مرجعية لهذا المفهوم.",
@@ -105,11 +111,16 @@ const UI = {
     concept: "Koncepti",
     reference: "Materiali i konceptit nga administrata",
     referenceSub: "Lexoje këtë të parin — mbi të ndërton mësimin dhe kuizin tënd.",
+    impactTitle: "Çfarë duam të ndërtojmë me këtë koncept?",
+    impactSub: "Kuizi mat kuptimin e konceptit; tipari ndërtohet me praktikë dhe shfaqet në veprime. Përdore këtë hartë kur projekton mësimin dhe aktivitetin.",
+    impactEmpty: "Administrata nuk ka përcaktuar ende tipare të synuara për këtë koncept.",
+    qualification: "Aftësia ku çon kjo fazë",
+    indicators: "Veprime dhe tregues që mund të vëzhgohen",
     refQuestions: "Pyetje referuese",
     noContent: "Administrata ende nuk ka shtuar përmbajtje.",
     noQuestions: "Nuk ka pyetje referuese.",
     myLessons: "Mësimet e mia për këtë koncept",
-    myLessonsSub: "Mësimi përmban shpjegim (tekst/foto/video) dhe pyetje për nxënësin.",
+    myLessonsSub: "Mësimi përmban shpjegim (tekst/foto/video) dhe pyetje për pjesëmarrësin.",
     myQuizzes: "Kuizet e mia për këtë koncept",
     myQuizzesSub: "Kuizi ka vetëm pyetje, pa shpjegim — për të matur kuptimin.",
     addLesson: "Shto mësim",
@@ -121,31 +132,31 @@ const UI = {
     open: "Hap dhe modifiko",
     submit: "Dërgo për shqyrtim",
     submitting: "Po dërgohet…",
-    classLabel: "Klasa",
+    classLabel: "Grupi",
     legacy: "I vjetër",
     reviewerNotes: "Shënimet e shqyrtuesit",
     contents: "përmbajtje",
     questions: "pyetje",
-    attempts: "nxënës u përgjigjën",
+    attempts: "pjesëmarrës u përgjigjën",
     newLesson: "Mësim i ri për këtë koncept",
     newQuiz: "Kuiz i ri për këtë koncept",
     fieldTitle: "Titulli",
     titlePhLesson: "P.sh.: Hyrje në këtë koncept",
     titlePhQuiz: "P.sh.: Kuiz i shkurtër",
-    fieldClass: "Klasa që do ta shohë",
+    fieldClass: "Grupi që do ta shohë",
     fieldDesc: "Përshkrim i shkurtër (opsional)",
     cancel: "Anulo",
     create: "Krijo dhe vazhdo",
     creating: "Po krijohet…",
-    needClass: "Nuk ke asnjë klasë. Kontakto administratën përpara se të krijosh përmbajtje.",
+    needClass: "Nuk ke asnjë grup. Kontakto administratën përpara se të krijosh përmbajtje.",
     error: "Ndodhi një gabim, provo përsëri.",
     titleRequired: "Titulli kërkohet.",
     lockedHint: "Përmbajtja e dërguar ose e miratuar nuk mund të modifikohet.",
     guide: [
       { title: "Lexo materialin", body: "Shiko përmbajtjen dhe pyetjet referuese më lart." },
-      { title: "Krijo mësim ose kuiz", body: "Kliko «Shto mësim» ose «Shto kuiz» dhe zgjidh klasën." },
+      { title: "Krijo mësim ose kuiz", body: "Kliko «Shto mësim» ose «Shto kuiz» dhe zgjidh grupin." },
       { title: "Shto përmbajtje", body: "Do të kalosh te faqja e ndërtimit për shpjegimin dhe pyetjet." },
-      { title: "Dërgo për shqyrtim", body: "Nxënësit e shohin vetëm pas miratimit." },
+      { title: "Dërgo për shqyrtim", body: "Pjesëmarrësit e shohin vetëm pas miratimit." },
     ],
   },
 } as const;
@@ -273,6 +284,38 @@ export default function TeacherModulePage({ params }: { params: Promise<{ id: st
       )}
 
       <HowItWorks id="concept" steps={T.guide as unknown as { title: string; body: string }[]} lang={L} />
+
+      {(concept.stage.qualification_ar || concept.stage.qualification_sq) && (
+        <section className="tm-qualification">
+          <span>✦</span>
+          <div><small>{T.qualification}</small><strong>{L === "sq" ? concept.stage.qualification_sq || concept.stage.qualification_ar : concept.stage.qualification_ar || concept.stage.qualification_sq}</strong></div>
+        </section>
+      )}
+
+      <section className="tm-impact">
+        <div className="tm-impact-head">
+          <span>✦</span>
+          <div><h2>{T.impactTitle}</h2><p>{T.impactSub}</p></div>
+        </div>
+        {concept.trait_links.length ? (
+          <div className="tm-impact-grid">
+            {concept.trait_links.map((link) => {
+              const name = L === "sq" ? link.trait.name_sq || link.trait.name : link.trait.name;
+              const definition = L === "sq" ? link.trait.definition_sq || link.trait.definition : link.trait.definition;
+              const guidance = L === "sq" ? link.guidance_sq || link.guidance_ar : link.guidance_ar;
+              return (
+                <article key={link.trait.id}>
+                  <small>{L === "ar" ? "سمة مستهدفة" : "Tipar i synuar"}</small>
+                  <h3>{name}</h3>
+                  {definition && <p>{definition}</p>}
+                  {guidance && <blockquote>{guidance}</blockquote>}
+                  {link.trait.elements.length > 0 && <div><b>{T.indicators}</b>{link.trait.elements.map((element) => <span key={element.id}>✓ {L === "sq" ? element.text_sq || element.text : element.text}</span>)}</div>}
+                </article>
+              );
+            })}
+          </div>
+        ) : <div className="tui-empty"><strong>{T.impactEmpty}</strong></div>}
+      </section>
 
       {/* Admin reference material */}
       <section className="tui-card tm-block">
@@ -502,6 +545,9 @@ function ContentCard({
 
 const styles = `
 .tm{padding-bottom:28px}
+.tm-impact{margin:16px 0;border:1px solid rgba(184,160,130,.28);border-radius:20px;background:linear-gradient(150deg,#FFFBF5,#EFEAE0);padding:18px;box-shadow:0 12px 28px rgba(107,30,45,.05)}
+.tm-qualification{display:flex;align-items:flex-start;gap:11px;margin:16px 0 -5px;border:1px solid rgba(184,160,130,.38);border-radius:16px;background:#FFFBF5;padding:13px 15px}.tm-qualification>span{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:10px;background:#6B1E2D;color:#D9C9B0}.tm-qualification small{display:block;color:#8F765B;font-size:9px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}.tm-qualification strong{display:block;margin-top:3px;color:#32101A;font-size:12px;line-height:1.7}
+.tm-impact-head{display:flex;align-items:flex-start;gap:11px}.tm-impact-head>span{display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:12px;background:#4A0E1C;color:#D9C9B0}.tm-impact-head h2{margin:0;color:#32101A;font-size:17px}.tm-impact-head p{margin:4px 0 0;max-width:760px;color:#655B53;font-size:11.5px;line-height:1.75}.tm-impact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}.tm-impact-grid article{border:1px solid rgba(107,30,45,.14);border-radius:15px;background:#fff;padding:13px}.tm-impact-grid article>small{color:#8F765B;font-size:9px;font-weight:900;letter-spacing:.07em;text-transform:uppercase}.tm-impact-grid h3{margin:3px 0;color:#32101A;font-size:14px}.tm-impact-grid p{margin:0;color:#796A62;font-size:10.5px;line-height:1.65}.tm-impact-grid blockquote{margin:9px 0 0;border-inline-start:3px solid #B8A082;border-radius:8px;background:#F7F3EB;padding:8px 10px;color:#4A0E1C;font-size:10.5px;font-weight:700;line-height:1.65}.tm-impact-grid article>div{display:flex;flex-direction:column;gap:4px;margin-top:10px;border-top:1px dashed rgba(107,30,45,.14);padding-top:8px}.tm-impact-grid article>div b{color:#8F765B;font-size:9.5px}.tm-impact-grid article>div span{color:#655B53;font-size:9.5px;line-height:1.5}
 .tm-back{display:inline-flex;align-items:center;gap:4px;margin-bottom:12px;color:#6B1E2D;font-size:12.5px;font-weight:900;text-decoration:none}
 .tm-back:hover{text-decoration:underline}
 .tm-standalone-note{margin-bottom:14px}
@@ -553,6 +599,7 @@ const styles = `
 .tm-dialog>footer{display:flex;justify-content:flex-end;gap:8px;flex:none;padding:14px 20px;border-top:1px solid rgba(107,30,45,.2)}
 
 @media(max-width:560px){
+  .tm-impact{padding:14px}.tm-impact-grid{grid-template-columns:1fr}
   .tm-items{grid-template-columns:1fr}
   .tm-overlay{padding:0;align-items:stretch}
   .tm-dialog{width:100%;max-height:100vh;border-radius:0;border:0}

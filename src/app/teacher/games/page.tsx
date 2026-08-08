@@ -244,7 +244,7 @@ const HUNTER_BANK: HunterQ[] = [
   { ar: "حفظ الفكر والوعي",     sq: "Ruajtja e mendjes dhe vetëdijes", answer: "AQL"  },
   { ar: "حفظ الأسرة والذرية",   sq: "Ruajtja e familjes dhe pasardhësve", answer: "NASL" },
   { ar: "حفظ الثروة والموارد",  sq: "Ruajtja e pasurisë dhe burimeve", answer: "MAL"  },
-  { ar: "النية المثمرة",        sq: "Qëllimi i Frytshëm",               answer: "DEEN" },
+  { ar: "النية المثمرة",        sq: "Nijeti frytdhënës",                 answer: "DEEN" },
   { ar: "مسار الزمن",           sq: "Rrjedha e Kohës",                  answer: "NAFS" },
   { ar: "المآلات",              sq: "Pasojat",                          answer: "AQL"  },
   { ar: "التفكير الاستراتيجي",  sq: "Mendimi Strategjik",               answer: "NASL" },

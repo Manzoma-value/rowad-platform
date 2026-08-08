@@ -31,7 +31,7 @@ const UI = {
   },
   sq: {
     title: "Grupet e mia",
-    sub: "Komunitetet private ku administratori i shkollës ju ka shtuar.",
+    sub: "Komunitetet private ku administratori i platformës ju ka shtuar.",
     count: "grupe",
     members: "anëtarë",
     open: "Hap grupin",

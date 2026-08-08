@@ -21,7 +21,7 @@ export async function POST(
     select: { id: true },
   });
   if (!existing)
-    return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   // ── Tenant guard ── the target class (when assigning, not clearing) must
   // also belong to this school — otherwise an admin could move their student

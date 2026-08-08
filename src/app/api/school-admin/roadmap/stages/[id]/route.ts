@@ -18,7 +18,9 @@ export async function PUT(
   });
   if (!stage) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  if (!body.title?.trim() && typeof body.order !== "number")
+  const hasQualificationAr = typeof body.qualification_ar === "string";
+  const hasQualificationSq = typeof body.qualification_sq === "string";
+  if (!body.title?.trim() && typeof body.order !== "number" && !hasQualificationAr && !hasQualificationSq)
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
 
   const updated = await prisma.roadmapStage.update({
@@ -26,8 +28,10 @@ export async function PUT(
     data: {
       ...(body.title?.trim() && { title: body.title.trim() }),
       ...(typeof body.order === "number" && { order: body.order }),
+      ...(hasQualificationAr && { qualification_ar: body.qualification_ar.trim() || null }),
+      ...(hasQualificationSq && { qualification_sq: body.qualification_sq.trim() || null }),
     },
-    select: { id: true, title: true, order: true },
+    select: { id: true, title: true, qualification_ar: true, qualification_sq: true, order: true },
   });
 
   return NextResponse.json({ stage: updated });

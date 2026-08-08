@@ -76,13 +76,13 @@ export async function POST(req: Request) {
   if (!ownsClass)
     return NextResponse.json({ error: "Group not found or not yours" }, { status: 404 });
 
-  // Concept must be in this school's roadmap
+  // Concept must be in this platform's roadmap
   const mod = await prisma.roadmapModule.findFirst({
     where: { id: moduleId, stage: { roadmap: { school_id: auth.teacher.school_id } } },
     select: { id: true },
   });
   if (!mod)
-    return NextResponse.json({ error: "Concept not found in this school's roadmap" }, { status: 404 });
+    return NextResponse.json({ error: "Concept not found in this platform's roadmap" }, { status: 404 });
 
   const quiz = await prisma.quiz.create({
     data: {

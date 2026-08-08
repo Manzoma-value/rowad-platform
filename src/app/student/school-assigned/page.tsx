@@ -9,7 +9,7 @@ const S = {
   ar: {
     congrats: "مبروك!",
     greeting: (name: string) => name ? `أهلاً ${name}،` : "أهلاً بك!",
-    sub: "تم قبولك في المنصة وتعيينك في منصة",
+    sub: "تم قبولك وتعيينك في منصتك",
     schoolLabel: "منصتك",
     scoreLabel: "نتيجة اختبار القبول",
     nextTitle: "الخطوة التالية: اختبار التصنيف",
@@ -21,14 +21,14 @@ const S = {
   sq: {
     congrats: "Urime!",
     greeting: (name: string) => name ? `Mirë se vini, ${name}!` : "Mirë se vini!",
-    sub: "Jeni pranuar në platformë dhe caktuar në një shkollë",
-    schoolLabel: "Shkolla juaj",
+    sub: "Jeni pranuar dhe caktuar në platformën tuaj",
+    schoolLabel: "Platforma juaj",
     scoreLabel: "Rezultati i testit të pranimit",
     nextTitle: "Hapi tjetër: Testi i Vendosjes",
-    nextDesc: "Tani do të bëni një test të shkurtër të përgatitur nga shkolla juaj për të përcaktuar klasën e duhur. Përfshin pyetje me zgjedhje të shumëfishtë, e vërtetë/e gabuar dhe me shkrim.",
+    nextDesc: "Tani do të bëni një test të shkurtër të përgatitur nga platforma juaj për të përcaktuar grupin e duhur. Përfshin pyetje me zgjedhje të shumëfishtë, e vërtetë/e gabuar dhe me shkrim.",
     startBtn: "Fillo testin e vendosjes",
     starting: "Duke ngarkuar...",
-    footerNote: "Testi është i detyrueshëm për të përcaktuar klasën tuaj",
+    footerNote: "Testi është i detyrueshëm për të përcaktuar grupin tuaj",
   },
 } as const;
 

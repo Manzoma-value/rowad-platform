@@ -32,7 +32,7 @@ export async function GET() {
   });
 
   if (!student)
-    return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   if (!student.school?.is_active)
     return NextResponse.json({ error: "school_deactivated", school: student.school });

@@ -23,7 +23,7 @@ export async function GET(
       class: { select: { id: true, name: true } },
     },
   });
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   // Get all trait assessments for this student with full context
   const assessments = await prisma.traitAssessment.findMany({
@@ -41,7 +41,6 @@ export async function GET(
         select: {
           id: true,
           title: true,
-          main_trait_id: true,
           stage: {
             select: {
               id: true,
@@ -75,20 +74,14 @@ export async function GET(
   for (const a of assessments) {
     for (const ts of a.trait_scores) {
       const existing = traitTotals.get(ts.trait.id);
-      // Normalize score to percentage of its max weight for fair averaging
-      const isMain = a.module.main_trait_id === ts.trait.id;
-      const otherCount = a.trait_scores.length - 1;
-      const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-      const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
-
       if (existing) {
-        existing.sum += normalized;
+        existing.sum += ts.score;
         existing.count += 1;
       } else {
         traitTotals.set(ts.trait.id, {
           name: ts.trait.name,
           maqsad: ts.trait.maqsad,
-          sum: normalized,
+          sum: ts.score,
           count: 1,
         });
       }
@@ -111,7 +104,6 @@ export async function GET(
       stage_id: a.module.stage.id,
       stage_title: a.module.stage.title,
       stage_order: a.module.stage.order,
-      main_trait_id: a.module.main_trait_id,
       total_score: Math.round(total * 10) / 10,
       general_note: a.general_note,
       teacher_name: a.teacher.profile.full_name,

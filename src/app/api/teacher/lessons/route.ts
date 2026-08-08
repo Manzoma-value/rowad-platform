@@ -80,13 +80,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Group not found or not yours" }, { status: 404 });
   }
 
-  // Verify the module belongs to this school's roadmap
+  // Verify the module belongs to this platform's roadmap
   const mod = await prisma.roadmapModule.findFirst({
     where: { id: moduleId, stage: { roadmap: { school_id: auth.teacher.school_id } } },
     select: { id: true },
   });
   if (!mod) {
-    return NextResponse.json({ error: "Concept not found in this school's roadmap" }, { status: 404 });
+    return NextResponse.json({ error: "Concept not found in this platform's roadmap" }, { status: 404 });
   }
 
   const last = await prisma.lesson.findFirst({

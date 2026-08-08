@@ -67,7 +67,7 @@ const UI = {
     rejected: "I refuzuar",
     confirmApprove: "Je i sigurt që do ta miratosh këtë aplikim?",
     confirmReject: "Je i sigurt që do ta refuzosh këtë aplikim?",
-    notes: "Shënime (opsionale, i shfaqen mësuesit)",
+    notes: "Shënime (opsionale, i shfaqen edukatorit)",
     saving: "Po ruhet…",
     saveError: "Vendimi nuk u ruajt",
     sectionPersonal: "Të dhënat personale",
@@ -86,9 +86,9 @@ const UI = {
     submittedAt: "Data e dërgimit",
     reviewedAt: "Data e shqyrtimit",
     submitting: "Po dërgohet…",
-    assignGroups: "Grupet e mësuesve (opsionale)",
-    assignGroupsHint: "Mund ta shtosh mësuesin në një ose më shumë grupe tani, ose ta organizosh më vonë.",
-    noTeacherGroups: "Nuk ka grupe mësuesish ende.",
+    assignGroups: "Grupet e edukatorëve (opsionale)",
+    assignGroupsHint: "Mund ta shtosh edukatorin në një ose më shumë grupe tani, ose ta organizosh më vonë.",
+    noTeacherGroups: "Nuk ka grupe edukatorësh ende.",
   },
 } as const;
 

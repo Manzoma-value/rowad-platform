@@ -153,7 +153,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       label: lang === "ar" ? "الرئيسية" : lang === "sq" ? "Kryesore" : "Dashboard",
     },
     {
-      href: "/school-admin/students", sublabel: "Students", exact: false, icon: Users,
+      href: "/school-admin/students", sublabel: "Beneficiaries", exact: false, icon: Users,
       label: tr.students,
       group: "learning",
     },
@@ -164,7 +164,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/teacher-groups", sublabel: "Supervisor Groups", exact: false, icon: Users,
-      label: lang === "ar" ? "مجموعات المشرفين" : lang === "sq" ? "Grupet e mësuesve" : "Supervisor Groups",
+      label: lang === "ar" ? "مجموعات المشرفين" : lang === "sq" ? "Grupet e edukatorëve" : "Supervisor Groups",
       hideForViewOnly: true,
       group: "teachers",
     },
@@ -192,7 +192,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     {
       href: "/school-admin/applications", sublabel: "Applications", exact: false, icon: LayoutGrid,
-      label: lang === "ar" ? "طلبات المشرفين" : lang === "sq" ? "Aplikimet e mësuesve" : "Supervisor Applications",
+      label: lang === "ar" ? "طلبات المشرفين" : lang === "sq" ? "Aplikimet e edukatorëve" : "Supervisor Applications",
       hideForViewOnly: true,
       group: "teachers",
     },
@@ -415,7 +415,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const navGroups = [
     {
       key: "teachers",
-      label: lang === "ar" ? "المشرفون" : lang === "sq" ? "Mësuesit" : "Supervisors",
+      label: lang === "ar" ? "المشرفون" : lang === "sq" ? "Edukatorët" : "Supervisors",
       sublabel: "Supervisors",
     },
     {

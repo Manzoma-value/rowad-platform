@@ -66,7 +66,7 @@ const c = {
   sq: {
     section: "Llogaria ime",
     title: "Profili im",
-    role: "Nxënësi",
+    role: "Pjesëmarrësi",
     basicInfo: "Të dhënat bazë",
     fullName: "Emri i plotë",
     email: "Email",

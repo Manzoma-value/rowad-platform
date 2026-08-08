@@ -123,7 +123,7 @@ const STRINGS = {
   sq: {
     dir: "ltr" as const,
     title: "Regjistrohu",
-    sub: "Plotësoni të dhënat tuaja për t'u bashkuar me shkollën",
+    sub: "Plotësoni të dhënat tuaja për t'u bashkuar me platformën",
     nameLabel: "Emri i plotë",
     namePlaceholder: "Emri Mbiemri",
     emailLabel: "Email",
@@ -414,14 +414,14 @@ export default function SchoolSignupClient({
             <div className="sp-form-header">
               <h1 className="sp-form-title">
                 {isTeacherFlow
-                  ? (lang === "ar" ? "إنشاء حساب مشرف" : "Krijo llogari mësuesi")
+                  ? (lang === "ar" ? "إنشاء حساب مشرف" : "Krijo llogari edukatori")
                   : L.title}
               </h1>
               <p className="sp-form-sub">
                 {isTeacherFlow
                   ? (lang === "ar"
                       ? "أنشئ حسابك، ثم أكمل نموذج التقديم للمشرفين"
-                      : "Krijoni llogarinë, pastaj plotësoni formularin e mësuesit")
+                      : "Krijoni llogarinë, pastaj plotësoni formularin e edukatorit")
                   : L.sub}
               </p>
             </div>

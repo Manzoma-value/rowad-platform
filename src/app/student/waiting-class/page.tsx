@@ -22,16 +22,16 @@ const S = {
     note: "سيتم إخطارك فور تعيينك في مجموعةك الدراسي. لا حاجة لفعل أي شيء الآن.",
   },
   sq: {
-    headerLabel: "Caktimi i shkollës",
-    headerTitle: "Jeni caktuar në një shkollë!",
-    desc: (name: string) => `${name ? `Mirësevini ${name}, ` : ""}Jeni pranuar me sukses në shkollë. Tani drejtori i shkollës do të rishikojë rezultatet tuaja dhe do t'ju caktojë në klasën e duhur së shpejti.`,
+    headerLabel: "Caktimi i platformës",
+    headerTitle: "Jeni caktuar në një platformë!",
+    desc: (name: string) => `${name ? `Mirësevini ${name}, ` : ""}Jeni pranuar me sukses në platformë. Tani drejtori i platformës do të rishikojë rezultatet tuaja dhe do t'ju caktojë në grupin e duhur së shpejti.`,
     step1Title: "Testi i pranimit",
     step1Sub: "Kryer",
-    step2Title: "Caktimi i shkollës",
+    step2Title: "Caktimi i platformës",
     step2Sub: "Kryer",
-    step3Title: "Caktimi i klasës",
+    step3Title: "Caktimi i grupit",
     step3Sub: "Duke pritur...",
-    note: "Do të njoftoheni menjëherë sapo të caktoheni në klasën tuaj. Nuk keni nevojë të bëni asgjë tani.",
+    note: "Do të njoftoheni menjëherë sapo të caktoheni në grupin tuaj. Nuk keni nevojë të bëni asgjë tani.",
   },
 } as const;
 

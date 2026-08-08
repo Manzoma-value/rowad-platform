@@ -28,7 +28,7 @@ export const DEFAULT_LEVELS: { order: number; name_ar: string; name_sq: string |
 /** Per-concept Albanian short names, keyed by Arabic name_ar.
  *  Used both at seed time and by the backfill migration. */
 export const CONCEPT_SQ_BY_AR: Record<string, string> = {
-  "النية المثمرة": "Qëllimi i Frytshëm",
+  "النية المثمرة": "Nijeti frytdhënës",
   "مسار الزمن": "Rrjedha e Kohës",
   "المآلات": "Pasojat",
   "التفكير الاستراتيجي": "Mendimi Strategjik",

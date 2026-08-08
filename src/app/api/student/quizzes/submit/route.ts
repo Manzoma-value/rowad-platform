@@ -1,4 +1,4 @@
-﻿// api/student/quizzes/submit/route.ts
+// api/student/quizzes/submit/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     req.json() as Promise<{ quizId: string; answers: SubmittedAnswer[] }>,
   ]);
 
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   const { quizId, answers } = body;
 

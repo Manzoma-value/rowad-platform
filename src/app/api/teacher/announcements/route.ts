@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   await notifyProfiles(studentIds, {
     type: "SYSTEM",
     title_ar: "إعلان جديد من المشرف",
-    title_sq: "Njoftim i ri nga mësuesi",
+    title_sq: "Njoftim i ri nga edukatori",
     title_en: "New supervisor announcement",
     body_ar: content.trim().slice(0, 180),
     body_sq: content.trim().slice(0, 180),

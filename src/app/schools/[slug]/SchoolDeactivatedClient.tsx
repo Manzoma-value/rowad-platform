@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type Lang = "ar" | "sq" | "en";
 
@@ -47,14 +47,11 @@ export default function SchoolDeactivatedClient({
       ? schoolNameAlt
       : schoolName;
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   const altLang: Lang = lang === "ar" ? (schoolLang === "sq" ? "sq" : "en") : "ar";
 
   return (
     <div className="sd-shell" dir={dir}>
-      <div className={`sd-card ${mounted ? "sd-card--in" : ""}`}>
+      <div className="sd-card">
         {/* Language toggle */}
         <div className="sd-lang-row">
           <button
@@ -114,10 +111,8 @@ export default function SchoolDeactivatedClient({
           border-radius: 24px;
           padding: 40px 36px;
           text-align: center;
-          opacity: 0; transform: translateY(20px);
-          transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+          animation: sd-fade 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
-        .sd-card--in { opacity: 1; transform: translateY(0); }
 
         .sd-lang-row {
           display: flex; justify-content: flex-end; margin-bottom: 20px;

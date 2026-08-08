@@ -43,7 +43,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   await notifyProfiles(adminIds, {
     type: "WORKSHOP_MESSAGE",
     title_ar: "ملاحظة جديدة من مشرف",
-    title_sq: "Shënim i ri nga mësuesi",
+    title_sq: "Shënim i ri nga edukatori",
     title_en: "New supervisor workshop note",
     body_ar: `${auth.profile.full_name}: ${messageBody.slice(0, 180)}`,
     body_sq: `${auth.profile.full_name}: ${messageBody.slice(0, 180)}`,

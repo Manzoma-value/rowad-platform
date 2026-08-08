@@ -22,6 +22,8 @@ export async function GET() {
         select: {
           id: true,
           title: true,
+          qualification_ar: true,
+          qualification_sq: true,
           order: true,
           modules: {
             orderBy: { order: "asc" },

@@ -469,7 +469,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
             href="/teacher"
             className="tl-logo-home"
             onClick={() => setSidebarOpen(false)}
-            aria-label={lang === "ar" ? "العودة إلى لوحة المشرف" : lang === "sq" ? "Kthehu te paneli i mësuesit" : "Back to teacher dashboard"}
+            aria-label={lang === "ar" ? "العودة إلى لوحة المشرف" : lang === "sq" ? "Kthehu te paneli i edukatorit" : "Back to supervisor dashboard"}
           >
             <Image
               src="/headerlogo.png"
@@ -480,7 +480,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
             />
             <div className="tl-logo-frame" aria-hidden="true" />
             <span className="tl-logo-home-hint">
-              {lang === "ar" ? "لوحة المشرف" : lang === "sq" ? "Paneli i mësuesit" : "Teacher dashboard"}
+              {lang === "ar" ? "لوحة المشرف" : lang === "sq" ? "Paneli i edukatorit" : "Supervisor dashboard"}
               <b aria-hidden="true">↗</b>
             </span>
           </Link>
@@ -628,10 +628,10 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
               </div>
               <div className="tl-user-info">
                 <span className="tl-user-name">
-                  {name || (lang === "ar" ? "مشرف" : "Mësuesi")}
+                  {name || (lang === "ar" ? "مشرف" : "Edukatori")}
                 </span>
                 <span className="tl-user-role">
-                  {lang === "ar" ? "مشرف" : lang === "sq" ? "Mësues" : "Teacher"}
+                  {lang === "ar" ? "مشرف" : lang === "sq" ? "Edukator" : "Supervisor"}
                 </span>
               </div>
             </Link>
@@ -688,12 +688,14 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                 )}
               </div>
               <div className="tl-topbar-id">
-                <span className="tl-topbar-name">{name || (lang === "ar" ? "المشرف" : "Teacher")}</span>
+                <span className="tl-topbar-name">{name || (lang === "ar" ? "المشرف" : lang === "sq" ? "Edukatori" : "Supervisor")}</span>
                 {(schoolName || schoolNameAlt) && (
                   <span className="tl-topbar-sub">
                     {lang === "ar"
                       ? `مشرف في ${schoolName || schoolNameAlt}`
-                      : `Teacher of ${schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}`}
+                      : lang === "sq"
+                        ? `Edukator në ${schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}`
+                        : `Supervisor at ${schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}`}
                   </span>
                 )}
               </div>

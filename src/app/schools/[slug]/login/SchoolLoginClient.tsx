@@ -253,7 +253,7 @@ const STRINGS = {
     emailSuccess: "Email i vlefshëm ✓",
     haveAccount: "Nuk keni llogari?",
     signup: "Regjistrohu",
-    workshopNoAccount: "Nuk keni llogari mësuesi?",
+    workshopNoAccount: "Nuk keni llogari edukatori?",
     workshopSignup: "Krijoni llogari dhe plotësoni aplikimin",
     poweredBy: "E mundësuar nga",
     backTo: "Kthehu te faqja kryesore",

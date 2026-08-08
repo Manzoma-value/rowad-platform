@@ -11,21 +11,6 @@ interface ScoreInput {
   note?: string;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function computeWeights(
-  traits: { id: string }[],
-  mainTraitId: string | null,
-) {
-  const n = traits.length;
-  const otherWeight = n > 1 ? 50 / (n - 1) : 0;
-  return traits.map((t) => ({
-    traitId: t.id,
-    maxScore: t.id === mainTraitId ? 50 : otherWeight,
-    isMain: t.id === mainTraitId,
-  }));
-}
-
 // ── GET ───────────────────────────────────────────────────────────────────────
 
 export async function GET(
@@ -36,12 +21,15 @@ export async function GET(
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // All auth + data queries in parallel
-  const mod = await prisma.roadmapModule.findUnique({
-      where: { id: moduleId },
+  const mod = await prisma.roadmapModule.findFirst({
+      where: { id: moduleId, stage: { roadmap: { school_id: auth.teacher.school_id } } },
       select: {
         id: true,
         title: true,
-        main_trait_id: true,
+        trait_links: {
+          orderBy: { position: "asc" },
+          select: { trait_id: true, guidance_ar: true, guidance_sq: true },
+        },
         stage: {
           select: {
             id: true,
@@ -52,10 +40,12 @@ export async function GET(
                 id: true,
                 maqsad: true,
                 name: true,
+                name_sq: true,
                 definition: true,
+                definition_sq: true,
                 elements: {
                   orderBy: { order: "asc" },
-                  select: { id: true, text: true, order: true },
+                  select: { id: true, text: true, text_sq: true, order: true },
                 },
               },
             },
@@ -67,7 +57,7 @@ export async function GET(
     return NextResponse.json({ error: "Module not found" }, { status: 404 });
 
   // Student auth + attempt + existing assessment — all parallel
-  const [student, attempt, existing] = await Promise.all([
+  const [student, attempt, existing, educatorReadings] = await Promise.all([
     prisma.student.findFirst({
       where: { id: studentId, class: { teacher_id: auth.teacher.id } },
       select: { id: true },
@@ -80,28 +70,50 @@ export async function GET(
     }),
     prisma.traitAssessment.findUnique({
       where: {
-        module_id_student_id: { module_id: moduleId, student_id: studentId },
+        module_id_student_id_teacher_id: {
+          module_id: moduleId,
+          student_id: studentId,
+          teacher_id: auth.teacher.id,
+        },
       },
       select: {
         id: true,
         general_note: true,
         submitted_at: true,
         updated_at: true,
+        observed_at: true,
+        snapshots: {
+          orderBy: { created_at: "desc" },
+          take: 6,
+          select: { id: true, scores: true, general_note: true, observed_at: true, created_at: true },
+        },
         trait_scores: {
           select: { trait_id: true, score: true, note: true },
         },
+      },
+    }),
+    prisma.traitAssessment.findMany({
+      where: { module_id: moduleId, student_id: studentId },
+      orderBy: { updated_at: "desc" },
+      select: {
+        id: true,
+        teacher_id: true,
+        observed_at: true,
+        updated_at: true,
+        teacher: { select: { profile: { select: { full_name: true } } } },
+        trait_scores: { select: { trait_id: true, score: true } },
       },
     }),
   ]);
 
   if (!student)
     return NextResponse.json(
-      { error: "Student not found or not in your group" },
+      { error: "Beneficiary not found or not in your group" },
       { status: 404 },
     );
   if (!attempt)
     return NextResponse.json(
-      { error: "Student has not completed this module" },
+      { error: "Beneficiary has not completed this module" },
       { status: 400 },
     );
 
@@ -109,13 +121,20 @@ export async function GET(
     module: {
       id: mod.id,
       title: mod.title,
-      main_trait_id: mod.main_trait_id,
+      trait_links: mod.trait_links,
     },
     stage: { id: mod.stage.id, title: mod.stage.title },
     traits: mod.stage.traits,
-    weights: computeWeights(mod.stage.traits, mod.main_trait_id),
     attempt,
     assessment: existing ?? null,
+    educator_readings: educatorReadings.map((reading) => ({
+      id: reading.id,
+      educator_name: reading.teacher.profile.full_name,
+      is_mine: reading.teacher_id === auth.teacher.id,
+      observed_at: reading.observed_at,
+      updated_at: reading.updated_at,
+      scores: reading.trait_scores,
+    })),
   });
 }
 
@@ -132,9 +151,10 @@ export async function POST(
   ]);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { scores, general_note } = body as {
+  const { scores, general_note, observed_at } = body as {
     scores: ScoreInput[];
     general_note?: string;
+    observed_at?: string;
   };
 
   if (!Array.isArray(scores) || scores.length === 0)
@@ -144,11 +164,10 @@ export async function POST(
     );
 
   // Auth + module + student — all parallel
-  const mod = await prisma.roadmapModule.findUnique({
-      where: { id: moduleId },
+  const mod = await prisma.roadmapModule.findFirst({
+      where: { id: moduleId, stage: { roadmap: { school_id: auth.teacher.school_id } } },
       select: {
         id: true,
-        main_trait_id: true,
         stage: {
           select: {
             traits: { select: { id: true } },
@@ -173,7 +192,11 @@ export async function POST(
     }),
     prisma.traitAssessment.findUnique({
       where: {
-        module_id_student_id: { module_id: moduleId, student_id: studentId },
+        module_id_student_id_teacher_id: {
+          module_id: moduleId,
+          student_id: studentId,
+          teacher_id: auth.teacher.id,
+        },
       },
       select: { id: true },
     }),
@@ -181,44 +204,42 @@ export async function POST(
 
   if (!student)
     return NextResponse.json(
-      { error: "Student not found or not in your group" },
+      { error: "Beneficiary not found or not in your group" },
       { status: 404 },
     );
   if (!attempt)
     return NextResponse.json(
-      { error: "Student has not completed this module" },
+      { error: "Beneficiary has not completed this module" },
       { status: 400 },
     );
 
   // Validate scores
   const stageTraitIds = new Set(mod.stage.traits.map((t) => t.id));
-  const weights = computeWeights(mod.stage.traits, mod.main_trait_id);
-  const weightMap = new Map(weights.map((w) => [w.traitId, w.maxScore]));
-
+  const submittedTraitIds = new Set(scores.map((score) => score.trait_id));
+  if (scores.length !== stageTraitIds.size)
+    return NextResponse.json(
+      { error: "A score is required for every trait" },
+      { status: 400 },
+    );
+  if (submittedTraitIds.size !== scores.length)
+    return NextResponse.json({ error: "Each trait may appear only once" }, { status: 400 });
   for (const s of scores) {
     if (!stageTraitIds.has(s.trait_id))
       return NextResponse.json(
         { error: `Trait ${s.trait_id} does not belong to this stage` },
         { status: 400 },
       );
-    if (typeof s.score !== "number" || s.score < 0)
+    if (typeof s.score !== "number" || !Number.isInteger(s.score) || s.score < 0 || s.score > 100)
       return NextResponse.json(
         { error: "score must be a non-negative number" },
-        { status: 400 },
-      );
-    const max = weightMap.get(s.trait_id) ?? 0;
-    if (s.score > max + 0.01)
-      // small tolerance for float rounding
-      return NextResponse.json(
-        { error: `Score for trait ${s.trait_id} exceeds max (${max})` },
         { status: 400 },
       );
   }
 
   const total = scores.reduce((sum, s) => sum + s.score, 0);
-  if (total > 100.01)
+  if (total !== 100)
     return NextResponse.json(
-      { error: "Total score cannot exceed 100" },
+      { error: "Trait points must total exactly 100" },
       { status: 400 },
     );
 
@@ -229,31 +250,40 @@ export async function POST(
   }));
 
   const gnote = general_note?.trim() || null;
+  const observedAt = observed_at ? new Date(observed_at) : new Date();
+  if (Number.isNaN(observedAt.getTime()))
+    return NextResponse.json({ error: "Invalid observation date" }, { status: 400 });
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (observedAt > tomorrow)
+    return NextResponse.json({ error: "Observation date cannot be in the future" }, { status: 400 });
+  const snapshotScores = scoreRows.map((score) => ({
+    trait_id: score.trait_id,
+    score: score.score,
+    note: score.note,
+  }));
 
-  // ── Upsert without transaction ──
-  // deleteMany + create/update separately is safe because
-  // module_id + student_id is unique — no race condition possible.
   let assessment;
 
   if (existing) {
-    // Delete old scores then update parent
-    await prisma.traitEvaluation.deleteMany({
-      where: { assessment_id: existing.id },
-    });
-    assessment = await prisma.traitAssessment.update({
-      where: { id: existing.id },
-      data: {
-        teacher_id: auth.teacher.id,
-        general_note: gnote,
-        trait_scores: { create: scoreRows },
-      },
-      select: {
-        id: true,
-        general_note: true,
-        submitted_at: true,
-        updated_at: true,
-        trait_scores: { select: { trait_id: true, score: true, note: true } },
-      },
+    assessment = await prisma.$transaction(async (tx) => {
+      await tx.traitEvaluation.deleteMany({ where: { assessment_id: existing.id } });
+      const updated = await tx.traitAssessment.update({
+        where: { id: existing.id },
+        data: {
+          general_note: gnote,
+          observed_at: observedAt,
+          trait_scores: { create: scoreRows },
+        },
+        select: {
+          id: true, general_note: true, observed_at: true, submitted_at: true, updated_at: true,
+          trait_scores: { select: { trait_id: true, score: true, note: true } },
+        },
+      });
+      await tx.traitAssessmentSnapshot.create({
+        data: { assessment_id: existing.id, scores: snapshotScores, general_note: gnote, observed_at: observedAt },
+      });
+      return updated;
     });
   } else {
     assessment = await prisma.traitAssessment.create({
@@ -262,12 +292,16 @@ export async function POST(
         student_id: studentId,
         teacher_id: auth.teacher.id,
         general_note: gnote,
+        observed_at: observedAt,
         trait_scores: { create: scoreRows },
+        snapshots: {
+          create: { scores: snapshotScores, general_note: gnote, observed_at: observedAt },
+        },
       },
       select: {
         id: true,
         general_note: true,
-        submitted_at: true,
+        submitted_at: true, observed_at: true,
         updated_at: true,
         trait_scores: { select: { trait_id: true, score: true, note: true } },
       },

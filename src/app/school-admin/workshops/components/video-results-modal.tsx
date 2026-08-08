@@ -51,7 +51,7 @@ const T = {
   sq: {
     title: "Rezultatet dhe vlerësimi i përgjigjeve",
     subtitle: "Ndiq shikimin, vlerëso përgjigjet me shkrim dhe eksporto raportin.",
-    teachers: "Mësues",
+    teachers: "Edukator",
     watched: "E panë",
     completed: "Përfunduan pyetjet",
     pending: "Në pritje",
@@ -69,7 +69,7 @@ const T = {
     wrong: "Gabim",
     written: "Përgjigje me shkrim",
     awaiting: "Në pritje të vlerësimit",
-    feedback: "Koment për mësuesin (opsional)",
+    feedback: "Koment për edukatorin (opsional)",
     feedbackPh: "Shkruaj një koment të qartë...",
     markCorrect: "Vlerëso si të saktë",
     markWrong: "Vlerëso si të gabuar",

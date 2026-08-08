@@ -216,15 +216,15 @@ export default function SchoolAdminTeachersPage() {
 
   const labels = {
     title: tr.teachers,
-    eyebrow: lang === "ar" ? "إدارة الكوادر التعليمية" : lang === "sq" ? "Menaxhimi i mësuesve" : "Supervisor Management",
-    subtitle: lang === "ar" ? "ملف شامل لكل مشرف: مجموعاته، مجموعاته، بياناته والورش التي حضرها." : lang === "sq" ? "Pamje e plotë për çdo mësues: klasa, grupe, të dhëna dhe forumet." : "A complete view of each supervisor: groups, groups, info and workshops attended.",
-    search: lang === "ar" ? "ابحث باسم المشرف، البريد، المجموعة، المجموعة أو المدينة..." : lang === "sq" ? "Kërko sipas emrit, emailit, klasës, grupit ose qytetit..." : "Search by name, email, group, group or city...",
+    eyebrow: lang === "ar" ? "إدارة الكوادر التعليمية" : lang === "sq" ? "Menaxhimi i edukatorëve" : "Supervisor Management",
+    subtitle: lang === "ar" ? "ملف شامل لكل مشرف: مجموعاته التعليمية، مجتمعاته، بياناته والورش التي حضرها." : lang === "sq" ? "Pamje e plotë për çdo edukator: grupet mësimore, komunitetet, të dhënat dhe forumet." : "A complete view of each supervisor: learning groups, communities, profile and workshops attended.",
+    search: lang === "ar" ? "ابحث باسم المشرف، البريد، المجموعة، المجتمع أو المدينة..." : lang === "sq" ? "Kërko sipas emrit, emailit, grupit, komunitetit ose qytetit..." : "Search by name, email, group, community or city...",
     active: lang === "ar" ? "نشط" : lang === "sq" ? "Aktiv" : "Active",
     inactive: lang === "ar" ? "معطل" : lang === "sq" ? "Jo aktiv" : "Inactive",
-    teachers: lang === "ar" ? "مشرف" : lang === "sq" ? "mësues" : "teachers",
-    classes: lang === "ar" ? "المجموعات" : lang === "sq" ? "Klasat" : "Groups",
+    teachers: lang === "ar" ? "مشرف" : lang === "sq" ? "edukator" : "supervisors",
+    classes: lang === "ar" ? "المجموعات" : lang === "sq" ? "Grupet" : "Groups",
     groups: lang === "ar" ? "المجموعات" : lang === "sq" ? "Grupet" : "Groups",
-    teacherInfo: lang === "ar" ? "بيانات المشرف" : lang === "sq" ? "Të dhënat e mësuesit" : "Supervisor info",
+    teacherInfo: lang === "ar" ? "بيانات المشرف" : lang === "sq" ? "Të dhënat e edukatorit" : "Supervisor info",
     noApplication: lang === "ar" ? "لم يقدّم بياناته بعد" : lang === "sq" ? "Nuk ka plotësuar aplikimin ende" : "No info on file yet",
     savedProgress: lang === "ar" ? "التقدم المحفوظ" : lang === "sq" ? "Progresi i ruajtur" : "Saved progress",
     progressHint: lang === "ar" ? "بيانات تم إدخالها ولم يتم إرسال الطلب النهائي بعد." : lang === "sq" ? "Të dhëna të ruajtura para dërgimit përfundimtar." : "Details saved before the final submission.",
@@ -240,10 +240,10 @@ export default function SchoolAdminTeachersPage() {
     attendingNow: lang === "ar" ? "يحضر الآن" : lang === "sq" ? "Po merr pjesë tani" : "Attending now",
     daysAttended: lang === "ar" ? "أيام حضور" : lang === "sq" ? "ditë pjesëmarrje" : "days attended",
     noWorkshops: lang === "ar" ? "لم يسجّل في أي ورشة بعد" : lang === "sq" ? "Nuk është regjistruar në asnjë forum ende" : "Not registered in any workshop yet",
-    noClasses: lang === "ar" ? "لا توجد مجموعات مرتبطة" : lang === "sq" ? "Pa klasa" : "No groups assigned",
+    noClasses: lang === "ar" ? "لا توجد مجموعات مرتبطة" : lang === "sq" ? "Pa grupe" : "No groups assigned",
     noGroups: lang === "ar" ? "لا توجد مجموعات" : lang === "sq" ? "Pa grupe" : "No groups",
     content: lang === "ar" ? "المحتوى" : lang === "sq" ? "Përmbajtja" : "Content",
-    students: lang === "ar" ? "مستفيدون" : lang === "sq" ? "nxënës" : "students",
+    students: lang === "ar" ? "مستفيدون" : lang === "sq" ? "pjesëmarrës" : "beneficiaries",
     lessons: lang === "ar" ? "دروس" : lang === "sq" ? "mësime" : "lessons",
     quizzes: lang === "ar" ? "اختبارات" : lang === "sq" ? "kuize" : "quizzes",
     activate: lang === "ar" ? "تفعيل" : lang === "sq" ? "Aktivizo" : "Activate",
@@ -257,10 +257,10 @@ export default function SchoolAdminTeachersPage() {
     statusLbl: lang === "ar" ? "الحالة" : lang === "sq" ? "Statusi" : "Status",
     resetFilters: lang === "ar" ? "مسح التصفية" : lang === "sq" ? "Pastro filtrat" : "Clear filters",
     result: lang === "ar" ? "نتيجة" : lang === "sq" ? "rezultate" : "results",
-    noResults: lang === "ar" ? "لا يوجد مشرفون مطابقون لخيارات التصفية الحالية." : lang === "sq" ? "Asnjë mësues nuk përputhet me filtrat aktualë." : "No supervisors match the current filters.",
+    noResults: lang === "ar" ? "لا يوجد مشرفون مطابقون لخيارات التصفية الحالية." : lang === "sq" ? "Asnjë edukator nuk përputhet me filtrat aktualë." : "No supervisors match the current filters.",
     readMore: lang === "ar" ? "عرض التفاصيل" : lang === "sq" ? "Shfaq detajet" : "Read more",
     readLess: lang === "ar" ? "إخفاء التفاصيل" : lang === "sq" ? "Fshih detajet" : "Show less",
-    exportExcel: lang === "ar" ? "تصدير كل المشرفين Excel" : lang === "sq" ? "Eksporto mësuesit në Excel" : "Export all supervisors",
+    exportExcel: lang === "ar" ? "تصدير كل المشرفين Excel" : lang === "sq" ? "Eksporto edukatorët në Excel" : "Export all supervisors",
     exporting: lang === "ar" ? "جاري التصدير..." : lang === "sq" ? "Duke eksportuar..." : "Exporting...",
   };
 
@@ -378,11 +378,11 @@ export default function SchoolAdminTeachersPage() {
   const toggleTeacher = async (teacherId: string, currentActive: boolean) => {
     if (currentActive) {
       const ok = await confirm({
-        title: lang === "ar" ? "تعطيل المشرف" : lang === "sq" ? "Çaktivizo mësuesin" : "Deactivate supervisor",
+        title: lang === "ar" ? "تعطيل المشرف" : lang === "sq" ? "Çaktivizo edukatorin" : "Deactivate supervisor",
         message: lang === "ar"
           ? "سيتم تعطيل وصول هذا المشرف إلى لوحته فوراً. لن يتمكن من الدخول حتى تعيد تفعيله."
           : lang === "sq"
-            ? "Ky mësues do të humbasë qasjen menjëherë. Nuk do të mund të hyjë derisa ta riaktivizoni."
+            ? "Ky edukator do të humbasë qasjen menjëherë. Nuk do të mund të hyjë derisa ta riaktivizoni."
             : "This supervisor will lose access immediately. They won't be able to log in until you reactivate them.",
         variant: "warning",
         confirmText: labels.deactivate,
@@ -772,16 +772,16 @@ function DeleteTeacherModal({
 }) {
   const dir = lang === "ar" ? "rtl" : "ltr";
   const L = {
-    title: lang === "ar" ? "حذف المشرف نهائياً" : lang === "sq" ? "Fshije mësuesin përfundimisht" : "Delete teacher permanently",
+    title: lang === "ar" ? "حذف المشرف نهائياً" : lang === "sq" ? "Fshije edukatorin përfundimisht" : "Delete supervisor permanently",
     warn: lang === "ar"
       ? "سيتم حذف هذا المشرف نهائياً من قاعدة البيانات مع جميع بياناته. هذا الإجراء لا يمكن التراجع عنه."
       : lang === "sq"
-        ? "Ky mësues do të fshihet përfundimisht nga baza e të dhënave me të gjitha të dhënat e tij. Ky veprim nuk mund të zhbëhet."
-        : "This teacher will be permanently removed from the database along with all their data. This action cannot be undone.",
-    classesImpact: lang === "ar" ? "المجموعات التي سيفقد الوصول إليها" : lang === "sq" ? "Klasat që do të humbasë" : "Classes they will lose access to",
+        ? "Ky edukator do të fshihet përfundimisht nga baza e të dhënave me të gjitha të dhënat e tij. Ky veprim nuk mund të zhbëhet."
+        : "This supervisor will be permanently removed from the database along with all their data. This action cannot be undone.",
+    classesImpact: lang === "ar" ? "المجموعات التي سيفقد الوصول إليها" : lang === "sq" ? "Grupet që do të humbasë" : "Groups they will lose access to",
     groupsImpact: lang === "ar" ? "المجموعات التي سيُزال منها" : lang === "sq" ? "Grupet nga të cilat do të hiqet" : "Groups they will be removed from",
-    noImpact: lang === "ar" ? "لا توجد مجموعات أو مجموعات مرتبطة بهذا المشرف." : lang === "sq" ? "Nuk ka klasa apo grupe të lidhura me këtë mësues." : "No classes or groups linked to this teacher.",
-    students: lang === "ar" ? "مستفيد" : lang === "sq" ? "nxënës" : "students",
+    noImpact: lang === "ar" ? "لا توجد مجموعات مرتبطة بهذا المشرف." : lang === "sq" ? "Nuk ka grupe të lidhura me këtë edukator." : "No groups linked to this supervisor.",
+    students: lang === "ar" ? "مستفيد" : lang === "sq" ? "pjesëmarrës" : "beneficiaries",
     cancel: lang === "ar" ? "إلغاء" : lang === "sq" ? "Anulo" : "Cancel",
     confirm: lang === "ar" ? "حذف نهائياً" : lang === "sq" ? "Fshij përfundimisht" : "Delete permanently",
     deletingNow: lang === "ar" ? "جارٍ الحذف..." : lang === "sq" ? "Duke fshirë..." : "Deleting...",

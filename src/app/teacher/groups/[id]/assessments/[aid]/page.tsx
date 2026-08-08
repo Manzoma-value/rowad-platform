@@ -34,7 +34,7 @@ const UI = {
     back: "← العودة للمجموعة",
     locked: "هذا التقييم مغلق — العرض فقط.",
     sectionRate: "تقييم أعضاء المجموعة",
-    sectionRateSub: "وزّع 100 درجة على كل عضو (بما فيهم نفسك). يُحفظ تلقائيًا عند تحقّق المجموع 100.",
+    sectionRateSub: "وزّع 100 نقطة بالضبط على كل عضو وفق حضور السمات نسبيًا. هذه خريطة تطويرية وليست درجة نجاح أو حكمًا نهائيًا، وتُحفظ عند اكتمال المجموع.",
     targetSelf: "أنا",
     saved: "✓ محفوظ",
     notSavedYet: "لم يُحفظ بعد — يجب أن يصل المجموع 100",
@@ -51,7 +51,7 @@ const UI = {
     back: "← Kthehu te grupi",
     locked: "Ky vlerësim është i mbyllur — vetëm shikim.",
     sectionRate: "Vlerëso anëtarët e grupit",
-    sectionRateSub: "Shpërndaj 100 pikë për secilin anëtar (përfshirë veten). Ruhet automatikisht kur shuma arrin 100.",
+    sectionRateSub: "Shpërndaj saktësisht 100 pikë për secilin anëtar sipas pranisë relative të tipareve. Kjo është hartë zhvillimi, jo notë suksesi ose gjykim përfundimtar; ruhet kur shuma plotësohet.",
     targetSelf: "Unë",
     saved: "✓ U ruajt",
     notSavedYet: "Nuk u ruajt ende — shuma duhet të jetë 100",
@@ -341,7 +341,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                       </td>
                       {r.scores.map((v, i) => {
                         const isCore = d.coreIdx === i && d.hasCore;
-                        const isCollective = d.collectiveIdx === i;
+                        const isCollective = d.connectingIdx === i;
                         const cls = isCore ? "ap-cell-core" : isCollective ? "ap-cell-coll" : "";
                         return <td key={i} className={cls}>{v}</td>;
                       })}

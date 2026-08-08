@@ -14,7 +14,7 @@ const S = {
   sq: {
     title: "Aksesi në llogarinë tuaj u ndal",
     message: "Llogaria u çaktivizua ose periudha e caktuar e aksesit përfundoi. Nuk keni më akses në platformë.",
-    contact: "Nëse mendoni se kjo është gabim, kontaktoni administratën e shkollës suaj.",
+    contact: "Nëse mendoni se kjo është gabim, kontaktoni administratën e platformës suaj.",
     logout: "Dil nga llogaria",
   },
 } as const;

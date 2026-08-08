@@ -13,7 +13,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await getStudent(user.id);
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
   if (!student.school_id) return NextResponse.json({ error: "No platform assigned" }, { status: 400 });
 
   if (student.onboarding_status !== "SCHOOL_ASSIGNED") {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await getStudent(user.id);
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
   if (student.onboarding_status !== "SCHOOL_ASSIGNED") {
     return NextResponse.json({ error: "Already submitted" }, { status: 400 });
   }

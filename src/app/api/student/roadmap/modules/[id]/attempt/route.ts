@@ -1,4 +1,4 @@
-﻿// src/app/api/student/roadmap/modules/[id]/attempt/route.ts
+// src/app/api/student/roadmap/modules/[id]/attempt/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
@@ -21,7 +21,7 @@ export async function POST(
     }),
   ]);
 
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
   if (!student.school_id) return NextResponse.json({ error: "Not assigned to a platform" }, { status: 403 });
 
   const { answers } = body as {

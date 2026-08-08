@@ -61,7 +61,7 @@ const T = {
     typeTF: "E saktë / E gabuar",
     typeText: "Përgjigje me shkrim",
     writtenStep: "Vlerësim manual",
-    writtenHint: "Mësuesi shkruan lirshëm; përgjigjja shfaqet te rezultatet për vlerësim dhe komente.",
+    writtenHint: "Edukatori shkruan lirshëm; përgjigjja shfaqet te rezultatet për vlerësim dhe komente.",
     optionsHint: "Shkruaj opsionet, pastaj kliko ✓ te përgjigjja e saktë.",
     optionN: (i: number) => `Opsioni ${i + 1}`,
     addOption: "Shto opsion",

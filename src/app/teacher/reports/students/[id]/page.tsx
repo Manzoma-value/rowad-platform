@@ -8,6 +8,7 @@ import { useLang } from "@/lib/language-context";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import TraitEvalForm from "@/components/TraitEvalForm";
 import TeacherLoadError from "@/components/TeacherLoadError";
+import { derive } from "@/lib/rowad-assessment";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,7 @@ type Lang = string;
 
 interface TraitScore { trait_id:string; trait_name:string; maqsad:string; score:number; note:string|null; }
 interface TraitAssessment {
+  id:string; educator_name:string; observed_at:string;
   module_id:string; module_title:string; stage_title:string;
   total_score:number; general_note:string|null;
   submitted_at:string; updated_at:string; trait_scores:TraitScore[];
@@ -46,66 +48,78 @@ const TR: Record<string, Record<string, string>> = {
     loading: "جارٍ التحميل...",
     backBtn: "العودة للتقارير",
     attemptsStat: "محاولة",
-    traitsStat: "تقييم سمات",
+    traitsStat: "قراءة سمات",
     pendingStat: "معلّق",
     tabProgress: "المسار والتقييم",
     tabTraits: "السمات",
     tabStats: "الإحصائيات",
     timelineTitle: "سجل المستويات",
-    traitDone: "تم تقييم السمات",
-    traitEval: "تقييم السمات",
-    pendingTitle: "تقييمات معلّقة",
-    radarTitle: "متوسط السمات",
-    assessedTitle: "التقييمات المكتملة",
-    editBtn: "تعديل",
+    traitDone: "تم توثيق القراءة",
+    traitEval: "قراءة السمات",
+    pendingTitle: "قراءات تنتظر التوثيق",
+    radarTitle: "متوسط الحضور النسبي",
+    assessedTitle: "القراءات الموثقة",
+    editBtn: "مراجعة القراءة",
     emptyTraits: "لم يُكمل المستفيد أي مستوى بعد",
     typeAccTitle: "الدقة حسب نوع السؤال",
     stageTitle: "الأداء حسب المرحلة",
     moduleUnit: "وحدة",
+    core: "السمة الجوهرية",
+    connecting: "السمة الرابطة",
+    under: "تحت العتبة",
+    documentedBy: "وثّقها",
     noData: "—",
   },
   sq: {
     loading: "Duke ngarkuar...",
     backBtn: "Kthehu te raportet",
     attemptsStat: "tentativa",
-    traitsStat: "vlerësim tipari",
+    traitsStat: "lexime tiparesh",
     pendingStat: "në pritje",
     tabProgress: "Rruga dhe Vlerësimi",
     tabTraits: "Tiparet",
     tabStats: "Statistikat",
     timelineTitle: "Regjistri i Niveleve",
-    traitDone: "Tiparet u vlerësuan",
-    traitEval: "Vlerëso Tiparet",
-    pendingTitle: "Vlerësime në pritje",
-    radarTitle: "Mesatarja e Tipareve",
-    assessedTitle: "Vlerësimet e Plota",
-    editBtn: "Modifiko",
-    emptyTraits: "Nxënësi nuk ka përfunduar asnjë nivel akoma",
+    traitDone: "Leximi u dokumentua",
+    traitEval: "Lexo tiparet",
+    pendingTitle: "Lexime për dokumentim",
+    radarTitle: "Mesatarja e pranisë relative",
+    assessedTitle: "Leximet e dokumentuara",
+    editBtn: "Rishiko leximin",
+    emptyTraits: "Pjesëmarrësi nuk ka përfunduar asnjë nivel akoma",
     typeAccTitle: "Saktësia sipas Llojit të Pyetjes",
     stageTitle: "Performanca sipas Fazës",
     moduleUnit: "modul",
+    core: "Tipari thelbësor",
+    connecting: "Tipari ndërlidhës",
+    under: "Nën prag",
+    documentedBy: "Dokumentuar nga",
     noData: "—",
   },
   en: {
     loading: "Loading...",
     backBtn: "Back to reports",
     attemptsStat: "attempts",
-    traitsStat: "trait assessments",
+    traitsStat: "trait readings",
     pendingStat: "pending",
     tabProgress: "Progress & Evaluation",
     tabTraits: "Traits",
     tabStats: "Statistics",
     timelineTitle: "Level History",
-    traitDone: "Traits assessed",
-    traitEval: "Assess Traits",
-    pendingTitle: "Pending evaluations",
-    radarTitle: "Trait Averages",
-    assessedTitle: "Completed Assessments",
-    editBtn: "Edit",
-    emptyTraits: "Student has not completed any level yet",
+    traitDone: "Reading documented",
+    traitEval: "Read traits",
+    pendingTitle: "Readings to document",
+    radarTitle: "Average relative presence",
+    assessedTitle: "Documented readings",
+    editBtn: "Review reading",
+    emptyTraits: "Beneficiary has not completed any level yet",
     typeAccTitle: "Accuracy by Question Type",
     stageTitle: "Performance by Stage",
     moduleUnit: "module",
+    core: "Core trait",
+    connecting: "Connecting trait",
+    under: "Under threshold",
+    documentedBy: "Documented by",
     noData: "—",
   },
 };
@@ -410,7 +424,7 @@ export default function StudentReportPage() {
                         <div key={r.trait_id} className="sp-legend-row">
                           <span className="sp-legend-tag" style={{background:m.bg,color:m.color}}>{mLabel}</span>
                           <span className="sp-legend-name">{r.name}</span>
-                          <span className="sp-legend-avg" style={{color:scoreColor(r.average)}}>{r.average}%</span>
+                          <span className="sp-legend-avg">{r.average}%</span>
                         </div>
                       );
                     })}
@@ -430,8 +444,16 @@ export default function StudentReportPage() {
                   {tr.assessedTitle}
                 </div>
                 <div className="sp-assessed-list">
-                  {data.trait_assessments.map(a=>(
-                    <div key={a.module_id} className="sp-assessed-card">
+                  {data.trait_assessments.map(a=>{
+                    const reading = derive(a.trait_scores.map((item) => item.score));
+                    const coreName = reading.hasCore && reading.coreIdx !== null && reading.coreIdx >= 0
+                      ? a.trait_scores[reading.coreIdx]?.trait_name
+                      : null;
+                    const connectingName = reading.connectingIdx >= 0
+                      ? a.trait_scores[reading.connectingIdx]?.trait_name
+                      : null;
+                    return (
+                    <div key={a.id} className="sp-assessed-card">
                       {/* Card header */}
                       <div className="sp-assessed-hd">
                         <div className="sp-assessed-info">
@@ -439,25 +461,20 @@ export default function StudentReportPage() {
                           <span className="sp-assessed-mod">{a.module_title}</span>
                         </div>
                         <div className="sp-assessed-right">
-                          <div className="sp-assessed-ring">
-                            <svg width="54" height="54" style={{transform:"rotate(-90deg)"}}>
-                              <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(184,160,130,0.12)" strokeWidth="5"/>
-                              <circle cx="27" cy="27" r="22" fill="none"
-                                stroke={scoreColor(a.total_score)} strokeWidth="5" strokeLinecap="round"
-                                strokeDasharray={2*Math.PI*22}
-                                strokeDashoffset={2*Math.PI*22*(1-Math.min(a.total_score,100)/100)}
-                                style={{transition:"stroke-dashoffset 0.8s ease"}}/>
-                            </svg>
-                            <div className="sp-assessed-ring-inner">
-                              <span style={{fontSize:13,fontWeight:900,color:scoreColor(a.total_score)}}>
-                                {Math.round(a.total_score)}
-                              </span>
-                            </div>
+                          <div className={`sp-reading-badge ${reading.hasCore ? "is-core" : "is-under"}`}>
+                            <small>{reading.hasCore ? tr.core : tr.under}</small>
+                            <b>{coreName ?? tr.under}</b>
                           </div>
                           <button className="sp-reassess-btn" onClick={()=>setEvalModuleId(a.module_id)}>
                             {tr.editBtn}
                           </button>
                         </div>
+                      </div>
+
+                      <div className="sp-reading-meta">
+                        <span><b>{tr.documentedBy}:</b> {a.educator_name}</span>
+                        <span>{new Intl.DateTimeFormat(lang === "ar" ? "ar" : lang === "sq" ? "sq-AL" : "en", { dateStyle:"medium" }).format(new Date(a.observed_at))}</span>
+                        {connectingName && <span><b>{tr.connecting}:</b> {connectingName}</span>}
                       </div>
 
                       {/* Trait score bars */}
@@ -471,7 +488,7 @@ export default function StudentReportPage() {
                               <span className="sp-trait-name">{ts.trait_name}</span>
                               <div className="sp-trait-track">
                                 <div className="sp-trait-fill"
-                                  style={{width:`${Math.min(ts.score*2,100)}%`,
+                                  style={{width:`${Math.min(ts.score,100)}%`,
                                     background:`linear-gradient(90deg,${m.color}88,${m.color})`}}/>
                               </div>
                               <span className="sp-trait-score">{ts.score}</span>
@@ -484,7 +501,8 @@ export default function StudentReportPage() {
                         <div className="sp-note">&ldquo;{a.general_note}&rdquo;</div>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -790,14 +808,27 @@ const css = `
 .sp-assessed-stage{font-size:10px;font-weight:700;color:var(--sp-text3);text-transform:uppercase;letter-spacing:0.8px}
 .sp-assessed-mod{font-size:16px;font-weight:900;color:var(--sp-black)}
 .sp-assessed-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
-.sp-assessed-ring{position:relative;width:54px;height:54px;flex-shrink:0}
-.sp-assessed-ring-inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.sp-reading-badge{min-width:126px;max-width:190px;padding:9px 12px;border-radius:13px;display:flex;flex-direction:column;gap:2px;border:1px solid transparent}
+.sp-reading-badge small{font-size:9px;font-weight:900;letter-spacing:.35px;text-transform:uppercase}
+.sp-reading-badge b{font-size:12px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-reading-badge.is-core{background:rgba(107,30,45,.08);border-color:rgba(107,30,45,.14);color:#6B1E2D}
+.sp-reading-badge.is-under{background:rgba(184,160,130,.12);border-color:rgba(107,30,45,.18);color:#6B1E2D}
+.sp-reading-meta{padding:10px 18px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;background:rgba(184,160,130,.045);border-bottom:1px solid rgba(184,160,130,.08);font-size:11px;color:var(--sp-text3)}
+.sp-reading-meta b{color:var(--sp-text);font-weight:800}
 .sp-reassess-btn{
   padding:7px 16px;border-radius:10px;border:1.5px solid var(--sp-border);
   background:none;font-family:var(--sp-font);font-size:12px;font-weight:700;
   color:var(--sp-text3);cursor:pointer;transition:all 0.15s;
 }
 .sp-reassess-btn:hover{border-color:rgba(184,160,130,0.35);color:var(--sp-black)}
+
+@media(max-width:640px){
+  .sp-assessed-hd{flex-direction:column;align-items:stretch}
+  .sp-assessed-right{justify-content:space-between;width:100%}
+  .sp-reading-badge{flex:1;max-width:none}
+  .sp-trait-name{width:82px}
+  .sp-reading-meta{align-items:flex-start;flex-direction:column;gap:5px}
+}
 
 /* Trait bars */
 .sp-trait-bars{display:flex;flex-direction:column;gap:8px;padding:14px 18px}

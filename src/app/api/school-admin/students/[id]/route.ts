@@ -48,7 +48,7 @@ export async function DELETE(
     select: { id: true, profile_id: true },
   });
   if (!student)
-    return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   const supabase = createAdminClient();
   await supabase.auth.admin.deleteUser(student.profile_id);

@@ -31,7 +31,6 @@ export async function GET(
     where: { student_id: { in: studentIds } },
     select: {
       student_id: true,
-      module: { select: { main_trait_id: true } },
       trait_scores: {
         select: {
           score: true,
@@ -41,25 +40,20 @@ export async function GET(
     },
   });
 
-  // Class-wide radar: average normalized score per trait across all students
+  // Group-wide radar: average each trait's direct share of the 100-point reading.
   const traitTotals = new Map<string, { name: string; maqsad: string; sum: number; count: number }>();
 
   for (const a of allAssessments) {
-    const otherCount = a.trait_scores.length - 1;
     for (const ts of a.trait_scores) {
-      const isMain = a.module.main_trait_id === ts.trait.id;
-      const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-      const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
-
       const existing = traitTotals.get(ts.trait.id);
       if (existing) {
-        existing.sum += normalized;
+        existing.sum += ts.score;
         existing.count += 1;
       } else {
         traitTotals.set(ts.trait.id, {
           name: ts.trait.name,
           maqsad: ts.trait.maqsad,
-          sum: normalized,
+          sum: ts.score,
           count: 1,
         });
       }
@@ -79,20 +73,15 @@ export async function GET(
     const studentTraits = new Map<string, { name: string; sum: number; count: number }>();
 
     for (const a of studentAssessments) {
-      const otherCount = a.trait_scores.length - 1;
       for (const ts of a.trait_scores) {
-        const isMain = a.module.main_trait_id === ts.trait.id;
-        const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-        const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
-
         const existing = studentTraits.get(ts.trait.id);
         if (existing) {
-          existing.sum += normalized;
+          existing.sum += ts.score;
           existing.count += 1;
         } else {
           studentTraits.set(ts.trait.id, {
             name: ts.trait.name,
-            sum: normalized,
+            sum: ts.score,
             count: 1,
           });
         }

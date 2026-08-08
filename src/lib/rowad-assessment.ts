@@ -20,7 +20,7 @@ export const DEFAULT_TRAITS: { key: TraitKey; ar: string; sq: string; color: str
   { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#F2B705" },
   { key: "distinct",  ar: "المميز",    sq: "Dallimi",   color: "#9AA3AC" },
   { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#B33A3A" },
-  { key: "awareness", ar: "الدراية",   sq: "Vetëdija",  color: "#1A1A1A" },
+  { key: "awareness", ar: "الدراية",   sq: "Drajah",    color: "#1A1A1A" },
 ];
 
 export const DEFAULT_STATEMENTS = {
@@ -106,13 +106,13 @@ export type ScoresTuple = number[];
 
 // ── The Rowad derivation rule, generalized to N traits:
 //    - Core (السمة الجوهرية)  = the index of the top score IF that score >= 50
-//    - Collective (الجماعية)  = the index of the next-highest score
+//    - Connecting (الرابطة)   = the index of the next-highest score
 //                              (if no Core exists, this is simply the top)
 //    - Supporting (المساندة) = everything else, in descending score order
 export type Derivation = {
   hasCore: boolean;
   coreIdx: number | null;
-  collectiveIdx: number;
+  connectingIdx: number;
   supportingIdxs: number[];
   sortedIdxs: number[];
 };
@@ -128,12 +128,12 @@ export function derive(scores: ScoresTuple): Derivation {
   const top = ranked[0];
   const hasCore = !!top && top.s >= CORE_THRESHOLD;
   const coreIdx = hasCore ? top.idx : null;
-  const collectiveIdx = hasCore && ranked[1] ? ranked[1].idx : ranked[0]?.idx ?? 0;
+  const connectingIdx = hasCore && ranked[1] ? ranked[1].idx : ranked[0]?.idx ?? 0;
   const supportingIdxs = sortedIdxs.filter(
-    (i) => i !== coreIdx && i !== collectiveIdx,
+    (i) => i !== coreIdx && i !== connectingIdx,
   );
 
-  return { hasCore, coreIdx, collectiveIdx, supportingIdxs, sortedIdxs };
+  return { hasCore, coreIdx, connectingIdx, supportingIdxs, sortedIdxs };
 }
 
 // Average a list of scores arrays element-wise. Returns null when the list
@@ -160,9 +160,9 @@ export function isValid100(scores: ScoresTuple, expectedLength?: number): boolea
 export const ASSESS_UI = {
   ar: {
     coreLabel:        "السمة الجوهرية",
-    collectiveLabel:  "السمة الجماعية",
+    connectingLabel:  "السمة الرابطة",
     supportingLabel:  "السمات المساندة",
-    noCore:           "لا توجد سمة جوهرية",
+    noCore:           "تحت العتبة — لا توجد سمة جوهرية بعد",
     statementCol:     "العبارة",
     totalRow:         "المجموع",
     statusOk:         "✓ مكتمل (100)",
@@ -173,9 +173,9 @@ export const ASSESS_UI = {
   },
   sq: {
     coreLabel:        "Tipari Thelbësor",
-    collectiveLabel:  "Tipari Kolektiv",
+    connectingLabel:  "Tipari ndërlidhës",
     supportingLabel:  "Tiparet Mbështetëse",
-    noCore:           "Nuk ka tipar thelbësor",
+    noCore:           "Nën prag — ende pa tipar thelbësor",
     statementCol:     "Pohimi",
     totalRow:         "Shuma",
     statusOk:         "✓ E plotë (100)",

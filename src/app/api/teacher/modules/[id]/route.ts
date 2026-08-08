@@ -26,12 +26,27 @@ export async function GET(
         select: {
           id: true,
           title: true,
+          qualification_ar: true,
+          qualification_sq: true,
           order: true,
           roadmap: { select: { title: true } },
         },
       },
       main_trait: {
         select: { id: true, name: true, definition: true, maqsad: true },
+      },
+      trait_links: {
+        orderBy: { position: "asc" },
+        select: {
+          guidance_ar: true,
+          guidance_sq: true,
+          trait: {
+            select: {
+              id: true, name: true, name_sq: true, definition: true, definition_sq: true, maqsad: true,
+              elements: { orderBy: { order: "asc" }, select: { id: true, text: true, text_sq: true } },
+            },
+          },
+        },
       },
       contents: {
         orderBy: { order: "asc" },

@@ -45,7 +45,9 @@ interface Props {
 interface TraitFormState {
   maqsad: Maqsad;
   name: string;
+  name_sq: string;
   definition: string;
+  definition_sq: string;
 }
 
 export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
@@ -56,7 +58,9 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
   const [form, setForm] = useState<TraitFormState>({
     maqsad: "DEEN",
     name: "",
+    name_sq: "",
     definition: "",
+    definition_sq: "",
   });
   const [formError, setFormError] = useState("");
 
@@ -65,15 +69,17 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
 
   // Edit trait inline
   const [editingTrait, setEditingTrait] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", definition: "" });
+  const [editForm, setEditForm] = useState({ name: "", name_sq: "", definition: "", definition_sq: "" });
   const [editSaving, setEditSaving] = useState(false);
 
   // Elements
   const [addingElementFor, setAddingElementFor] = useState<string | null>(null);
   const [elementText, setElementText] = useState("");
+  const [elementTextSq, setElementTextSq] = useState("");
   const [elementSaving, setElementSaving] = useState(false);
   const [editingElement, setEditingElement] = useState<string | null>(null);
   const [editElementText, setEditElementText] = useState("");
+  const [editElementTextSq, setEditElementTextSq] = useState("");
 
   const usedMaqasid = new Set(traits.map((t) => t.maqsad));
   const availableMaqasid = MAQASID.filter((m) => !usedMaqasid.has(m.value));
@@ -95,7 +101,9 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
           body: JSON.stringify({
             maqsad: form.maqsad,
             name: form.name.trim(),
+            name_sq: form.name_sq.trim() || null,
             definition: form.definition.trim() || null,
+            definition_sq: form.definition_sq.trim() || null,
           }),
         },
       );
@@ -107,7 +115,9 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
       setForm({
         maqsad: availableMaqasid[1]?.value ?? "DEEN",
         name: "",
+        name_sq: "",
         definition: "",
+        definition_sq: "",
       });
       setAdding(false);
       onRefresh();
@@ -138,7 +148,9 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: editForm.name.trim(),
+          name_sq: editForm.name_sq.trim() || null,
           definition: editForm.definition.trim() || null,
+          definition_sq: editForm.definition_sq.trim() || null,
         }),
       });
       setEditingTrait(null);
@@ -156,9 +168,10 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
       await fetch(`/api/school-admin/roadmap/traits/${traitId}/elements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: elementText.trim() }),
+        body: JSON.stringify({ text: elementText.trim(), text_sq: elementTextSq.trim() || null }),
       });
       setElementText("");
+      setElementTextSq("");
       setAddingElementFor(null);
       onRefresh();
     } finally {
@@ -167,22 +180,23 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
   }
 
   // ── Edit element ──
-  async function handleSaveElement(elementId: string) {
+  async function handleSaveElement(traitId: string, elementId: string) {
     if (!editElementText.trim()) return;
-    await fetch(`/api/school-admin/roadmap/elements/${elementId}`, {
+    await fetch(`/api/school-admin/roadmap/traits/${traitId}/elements/${elementId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: editElementText.trim() }),
+      body: JSON.stringify({ text: editElementText.trim(), text_sq: editElementTextSq.trim() || null }),
     });
     setEditingElement(null);
     setEditElementText("");
+    setEditElementTextSq("");
     onRefresh();
   }
 
   // ── Delete element ──
-  async function handleDeleteElement(elementId: string) {
+  async function handleDeleteElement(traitId: string, elementId: string) {
     if (!(await confirm({ message: "حذف هذا العنصر؟" }))) return;
-    await fetch(`/api/school-admin/roadmap/elements/${elementId}`, {
+    await fetch(`/api/school-admin/roadmap/traits/${traitId}/elements/${elementId}`, {
       method: "DELETE",
     });
     onRefresh();
@@ -295,6 +309,13 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                           />
                           <input
                             className="rb-input"
+                            value={editForm.name_sq}
+                            onChange={(e) => setEditForm((f) => ({ ...f, name_sq: e.target.value }))}
+                            placeholder="Emri i tiparit (shqip)"
+                            dir="ltr"
+                          />
+                          <input
+                            className="rb-input"
                             value={editForm.definition}
                             onChange={(e) =>
                               setEditForm((f) => ({
@@ -304,6 +325,13 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                             }
                             placeholder="التعريف (اختياري)"
                             dir="rtl"
+                          />
+                          <input
+                            className="rb-input"
+                            value={editForm.definition_sq}
+                            onChange={(e) => setEditForm((f) => ({ ...f, definition_sq: e.target.value }))}
+                            placeholder="Përkufizimi (opsional)"
+                            dir="ltr"
                           />
                           <div className="trait-edit-actions">
                             <button
@@ -331,11 +359,13 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                           }
                         >
                           <span className="trait-name">{trait.name}</span>
+                          {trait.name_sq && <span className="trait-name-sq">{trait.name_sq}</span>}
                           {trait.definition && (
                             <span className="trait-def">
                               {trait.definition}
                             </span>
                           )}
+                          {trait.definition_sq && <span className="trait-def" dir="ltr">{trait.definition_sq}</span>}
                         </div>
                       )}
 
@@ -350,7 +380,9 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               setEditingTrait(trait.id);
                               setEditForm({
                                 name: trait.name,
+                                name_sq: trait.name_sq ?? "",
                                 definition: trait.definition ?? "",
+                                definition_sq: trait.definition_sq ?? "",
                               });
                               setExpandedTrait(trait.id);
                             }}
@@ -432,13 +464,12 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                             <polyline points="9 11 12 14 22 4" />
                             <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
                           </svg>
-                          عناصر التقييم
+                          المؤشرات والأفعال الظاهرة
                         </div>
 
                         {trait.elements.length === 0 ? (
                           <div className="elements-empty">
-                            لا توجد عناصر بعد — أضف معايير تساعد المشرف على
-                            التقييم
+                            لا توجد مؤشرات بعد — أضف أفعالًا يمكن للمشرف ملاحظتها في الواقع
                           </div>
                         ) : (
                           <div className="elements-list">
@@ -457,10 +488,17 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                       autoFocus
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter")
-                                          handleSaveElement(el.id);
+                                          handleSaveElement(trait.id, el.id);
                                         if (e.key === "Escape")
                                           setEditingElement(null);
                                       }}
+                                    />
+                                    <input
+                                      className="rb-input"
+                                      value={editElementTextSq}
+                                      onChange={(e) => setEditElementTextSq(e.target.value)}
+                                      placeholder="Treguesi i dukshëm (shqip)"
+                                      dir="ltr"
                                     />
                                     <button
                                       className="rb-btn-primary"
@@ -468,7 +506,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                         padding: "6px 14px",
                                         fontSize: 12,
                                       }}
-                                      onClick={() => handleSaveElement(el.id)}
+                                      onClick={() => handleSaveElement(trait.id, el.id)}
                                     >
                                       حفظ
                                     </button>
@@ -487,6 +525,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                   <>
                                     <span className="element-text">
                                       {el.text}
+                                      {el.text_sq && <small dir="ltr">{el.text_sq}</small>}
                                     </span>
                                     <div className="element-actions">
                                       <button
@@ -494,6 +533,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                         onClick={() => {
                                           setEditingElement(el.id);
                                           setEditElementText(el.text);
+                                          setEditElementTextSq(el.text_sq ?? "");
                                         }}
                                       >
                                         <svg
@@ -512,7 +552,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                       <button
                                         className="rb-icon-btn danger"
                                         onClick={() =>
-                                          handleDeleteElement(el.id)
+                                          handleDeleteElement(trait.id, el.id)
                                         }
                                       >
                                         <svg
@@ -542,7 +582,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               className="rb-input"
                               value={elementText}
                               onChange={(e) => setElementText(e.target.value)}
-                              placeholder="اكتب عنصر التقييم..."
+                              placeholder="اكتب فعلًا أو مؤشرًا يمكن ملاحظته..."
                               dir="rtl"
                               autoFocus
                               onKeyDown={(e) => {
@@ -553,6 +593,13 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                                   setElementText("");
                                 }
                               }}
+                            />
+                            <input
+                              className="rb-input"
+                              value={elementTextSq}
+                              onChange={(e) => setElementTextSq(e.target.value)}
+                              placeholder="Shkruaj treguesin e dukshëm në shqip..."
+                              dir="ltr"
                             />
                             <button
                               className="rb-btn-primary"
@@ -567,7 +614,8 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               style={{ padding: "8px 12px", fontSize: 12 }}
                               onClick={() => {
                                 setAddingElementFor(null);
-                                setElementText("");
+                                  setElementText("");
+                                  setElementTextSq("");
                               }}
                             >
                               إلغاء
@@ -578,7 +626,8 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                             className="element-add-btn"
                             onClick={() => {
                               setAddingElementFor(trait.id);
-                              setElementText("");
+                                setElementText("");
+                                setElementTextSq("");
                             }}
                           >
                             <svg
@@ -593,7 +642,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                               <line x1="12" y1="5" x2="12" y2="19" />
                               <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
-                            إضافة عنصر تقييم
+                            إضافة مؤشر ظاهر
                           </button>
                         )}
                       </div>
@@ -609,7 +658,7 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
             <>
               {adding ? (
                 <div className="trait-add-form">
-                  <div className="trait-add-form-title">إضافة سمة جديدة</div>
+                  <div className="trait-add-form-title">إضافة سمة جديدة — ما الذي نريد بناءه؟</div>
 
                   {/* Maqsad selector */}
                   <div className="rb-field">
@@ -654,6 +703,17 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                   </div>
 
                   <div className="rb-field">
+                    <label className="rb-label">Emri i tiparit (shqip)</label>
+                    <input
+                      className="rb-input"
+                      placeholder="Shembull: Drajah"
+                      value={form.name_sq}
+                      onChange={(e) => setForm((f) => ({ ...f, name_sq: e.target.value }))}
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div className="rb-field">
                     <label className="rb-label">
                       التعريف
                       <span className="rb-label-hint">(اختياري)</span>
@@ -666,6 +726,19 @@ export function StageTraitsPanel({ stageId, traits, onRefresh }: Props) {
                         setForm((f) => ({ ...f, definition: e.target.value }))
                       }
                       dir="rtl"
+                      rows={2}
+                      style={{ minHeight: 60 }}
+                    />
+                  </div>
+
+                  <div className="rb-field">
+                    <label className="rb-label">Përkufizimi <span className="rb-label-hint">(opsional)</span></label>
+                    <textarea
+                      className="rb-textarea"
+                      placeholder="Përshkruaj aftësinë e brendshme që synojmë të ndërtojmë"
+                      value={form.definition_sq}
+                      onChange={(e) => setForm((f) => ({ ...f, definition_sq: e.target.value }))}
+                      dir="ltr"
                       rows={2}
                       style={{ minHeight: 60 }}
                     />
@@ -883,6 +956,12 @@ const traitsCSS = `
   font-weight: 700;
   color: rgba(255,255,255,0.88);
 }
+.trait-name-sq {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: rgba(217,201,176,0.62);
+  direction: ltr;
+}
 .trait-def {
   font-size: 11px;
   color: rgba(255,255,255,0.35);
@@ -976,6 +1055,13 @@ const traitsCSS = `
   color: rgba(255,255,255,0.65);
   line-height: 1.5;
   direction: rtl;
+}
+.element-text small {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255,255,255,0.38);
+  font-size: 10px;
+  direction: ltr;
 }
 .element-actions {
   display: flex;

@@ -58,7 +58,7 @@ const T = {
     mcq: "Opsione",
     tf: "Saktë/Gabim",
     textType: "Me shkrim",
-    confirmDeleteVideo: "Kjo do të fshijë videon, pyetjet dhe rezultatet e mësuesve. Vazhdo?",
+    confirmDeleteVideo: "Kjo do të fshijë videon, pyetjet dhe rezultatet e edukatorëve. Vazhdo?",
     confirmDeleteQuestion: "Ta fshijmë këtë pyetje?",
     error: "Ndodhi një gabim. Provo përsëri.",
     tooLarge: "Skedari është shumë i madh (max 350 MB).",

@@ -43,11 +43,11 @@ export default function OwnerDataRoomPage() {
   function exportCurrent() {
     if (!rows.length) return;
     const headers: Record<Tab, string[]> = {
-      schools: ["ID", "Name", "Slug", "Language", "Active", "Teachers", "Students", "Classes", "Admins"],
-      teachers: ["ID", "Name", "Email", "School", "Status", "Active", "Classes", "Ratings received", "Qualification vote"],
-      classes: ["ID", "Class", "School", "Teacher", "Students", "Assessments", "Quizzes", "Lessons"],
-      admins: ["ID", "Name", "Email", "School", "Active", "Joined"],
-      performance: ["ID", "School", "Teacher groups", "Group assessments", "Assessment attempts", "Qualification votes", "Average score"],
+      schools: ["ID", "Name", "Slug", "Language", "Active", "Supervisors", "Beneficiaries", "Groups", "Admins"],
+      teachers: ["ID", "Name", "Email", "Platform", "Status", "Active", "Groups", "Ratings received", "Qualification vote"],
+      classes: ["ID", "Group", "Platform", "Supervisor", "Beneficiaries", "Assessments", "Quizzes", "Lessons"],
+      admins: ["ID", "Name", "Email", "Platform", "Active", "Joined"],
+      performance: ["ID", "Platform", "Supervisor groups", "Group assessments", "Assessment attempts", "Qualification votes", "Average score"],
     };
     const values: Record<Tab, (row: Row) => unknown[]> = {
       schools: (x) => [x.id, x.name, x.slug, x.language, x.is_active, get(x, "_count.teachers"), get(x, "_count.students"), get(x, "_count.classes"), get(x, "_count.admins")],

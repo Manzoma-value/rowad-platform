@@ -14,7 +14,7 @@ const COPY = {
   sq: {
     badge: "Aplikim",
     title: "Aplikimi yt po shqyrtohet",
-    body: "Aplikimi yt u pranua me sukses. Administrata e shkollës po shqyrton të dhënat tua dhe llogaria do të aktivizohet sapo të miratohet. Faleminderit që aplikove në projektin e Ruvadëve.",
+    body: "Aplikimi yt u pranua me sukses. Administrata e platformës po shqyrton të dhënat tua dhe llogaria do të aktivizohet sapo të miratohet. Faleminderit që aplikove në projektin e Ruvadëve.",
   },
 } as const;
 

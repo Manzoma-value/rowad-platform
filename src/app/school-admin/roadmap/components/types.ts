@@ -7,6 +7,7 @@ export type Maqsad = "DEEN" | "AQL" | "NAFS" | "NASL" | "MAL";
 export interface TraitElement {
   id: string;
   text: string;
+  text_sq?: string | null;
   order: number;
 }
 
@@ -14,7 +15,9 @@ export interface StageTrait {
   id: string;
   maqsad: Maqsad;
   name: string;
+  name_sq?: string | null;
   definition: string | null;
+  definition_sq?: string | null;
   elements: TraitElement[];
   module_main_traits?: { id: string; title: string }[];
 }
@@ -60,6 +63,7 @@ export interface Module {
   description?: string | null;
   order: number;
   main_trait_id?: string | null;
+  trait_links?: { trait_id: string; position: number; guidance_ar?: string | null; guidance_sq?: string | null }[];
   contents?: ModuleContent[];
   questions?: Question[];
   _count?: { attempts: number };
@@ -68,6 +72,8 @@ export interface Module {
 export interface Stage {
   id: string;
   title: string;
+  qualification_ar?: string | null;
+  qualification_sq?: string | null;
   order: number;
   modules: Module[];
   traits?: StageTrait[];

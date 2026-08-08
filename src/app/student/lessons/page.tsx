@@ -37,9 +37,9 @@ const T = {
   },
   sq: {
     title: "Mësimet",
-    sub: (n: number) => `${n} mësim${n === 1 ? "" : "e"} në klasën tënde`,
+    sub: (n: number) => `${n} mësim${n === 1 ? "" : "e"} në grupin tënd`,
     emptyTitle: "Ende nuk ka mësime",
-    emptySub: "Mësuesi ende nuk ka publikuar mësime. Kontrollo më vonë!",
+    emptySub: "Edukatori ende nuk ka publikuar mësime. Kontrollo më vonë!",
     byTeacher: "nga",
     blocks: "blloqe",
     questions: "pyetje",

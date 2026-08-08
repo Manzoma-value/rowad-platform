@@ -160,6 +160,10 @@ export const css = `
 .rb-stage-stat svg { width: 13px; height: 13px; }
 .rb-stage-div { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.2); }
 .rb-stage-body { padding: 18px; display: flex; flex-direction: column; gap: 12px; background: var(--surface2); }
+.rb-qualification{border:1px solid rgba(184,160,130,.32);border-radius:18px;background:linear-gradient(145deg,#FFFBF5,#F7F0E6);padding:16px;box-shadow:0 10px 24px rgba(50,16,26,.045)}
+.rb-qualification-head{display:flex;align-items:flex-start;gap:11px}.rb-qualification-head>span{display:grid;place-items:center;width:36px;height:36px;flex:none;border-radius:11px;background:#4A0E1C;color:#D9C9B0}.rb-qualification-head small{display:block;color:#8F765B;font-size:9px;font-weight:900;letter-spacing:.06em}.rb-qualification-head h3{margin:3px 0 2px;color:#32101A;font-size:14px}.rb-qualification-head p{margin:0;max-width:760px;color:#655B53;font-size:10.5px;line-height:1.7}
+.rb-qualification-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.rb-qualification-fields label span{display:block;margin-bottom:5px;color:#655B53;font-size:9.5px;font-weight:900}.rb-qualification-fields textarea{box-sizing:border-box;width:100%;min-height:72px;resize:vertical;border:1px solid rgba(107,30,45,.18);border-radius:11px;background:#fff;padding:9px 10px;color:#32101A;font:11px/1.65 var(--font);outline:none}.rb-qualification-fields textarea:focus{border-color:#B8A082;box-shadow:0 0 0 3px rgba(184,160,130,.12)}
+.rb-qualification-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:10px}.rb-qualification-actions small{color:#8F765B;font-size:9.5px}.rb-qualification-actions button{border:0;border-radius:10px;background:#6B1E2D;padding:8px 14px;color:#fff;font:900 11px var(--font);cursor:pointer}.rb-qualification-actions button:disabled{opacity:.55}.rb-qualification-error{margin:8px 0 0;border-radius:9px;background:rgba(107,30,45,.08);padding:7px 9px;color:#6B1E2D;font-size:10.5px;font-weight:800}
 .rb-chevron { display: flex; align-items: center; color: rgba(255,255,255,.3); transition: transform .3s var(--ease); }
 .rb-chevron.open { transform: rotate(180deg); }
 .rb-chevron.dark { color: var(--ink4); }
@@ -574,6 +578,7 @@ export const css = `
 @media (max-width: 768px) {
   .rb-stats { grid-template-columns: repeat(2, 1fr); }
   .rb-page { padding: 20px 16px 60px; }
+  .rb-qualification-fields{grid-template-columns:1fr}.rb-qualification-actions{align-items:stretch;flex-direction:column}.rb-qualification-actions button{width:100%}
 }
 @media (max-width: 480px) {
   .rb-stats { grid-template-columns: 1fr 1fr; gap: 8px; }

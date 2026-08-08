@@ -355,16 +355,19 @@ enum InviteType {
 
 // One trait per Maqsad per stage (so max 5 traits per stage)
 model StageTrait {
-  id         String   @id @default(uuid()) @db.Uuid
-  stage_id   String   @db.Uuid
-  maqsad     Maqsad
-  name       String // e.g. "الدراية"
-  definition String // e.g. "قدرة المستفيد على فهم سبب الفعل..."
-  created_at DateTime @default(now())
+  id            String   @id @default(uuid()) @db.Uuid
+  stage_id      String   @db.Uuid
+  maqsad        Maqsad
+  name          String // e.g. "الدراية"
+  name_sq       String?
+  definition    String? // e.g. "قدرة المستفيد على فهم سبب الفعل..."
+  definition_sq String?
+  created_at    DateTime @default(now())
 
   stage              RoadmapStage      @relation(fields: [stage_id], references: [id], onDelete: Cascade)
   elements           TraitElement[]
   module_main_traits RoadmapModule[]   @relation("ModuleMainTrait")
+  module_links       ModuleTraitLink[]
   evaluations        TraitEvaluation[]
 
   @@unique([stage_id, maqsad]) // one trait per Maqsad per stage
@@ -376,6 +379,7 @@ model TraitElement {
   id         String   @id @default(uuid()) @db.Uuid
   trait_id   String   @db.Uuid
   text       String // e.g. "يفهم المستفيد لماذا يتحرك"
+  text_sq    String?
   order      Int
   created_at DateTime @default(now())
 
@@ -396,16 +400,36 @@ model TraitAssessment {
   student_id   String   @db.Uuid
   teacher_id   String   @db.Uuid
   general_note String?
+  observed_at  DateTime @default(now())
   submitted_at DateTime @default(now())
   updated_at   DateTime @updatedAt
 
-  module       RoadmapModule     @relation(fields: [module_id], references: [id], onDelete: Cascade)
-  student      Student           @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  teacher      Teacher           @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  module       RoadmapModule             @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  student      Student                   @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  teacher      Teacher                   @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   trait_scores TraitEvaluation[]
+  snapshots    TraitAssessmentSnapshot[]
 
-  @@unique([module_id, student_id]) // one assessment per student per module, but updatable
+  @@unique([module_id, student_id, teacher_id])
+  @@index([module_id, student_id])
   @@map("trait_assessments")
+}
+
+// Immutable history for every educator submission. The parent assessment is
+// the educator's current reading; snapshots preserve how that reading evolved
+// as new actions and evidence were observed.
+model TraitAssessmentSnapshot {
+  id            String   @id @default(uuid()) @db.Uuid
+  assessment_id String   @db.Uuid
+  scores        Json
+  general_note  String?
+  observed_at   DateTime
+  created_at    DateTime @default(now())
+
+  assessment TraitAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+
+  @@index([assessment_id, created_at(sort: Desc)])
+  @@map("trait_assessment_snapshots")
 }
 
 // One score row per trait inside the assessment
@@ -456,8 +480,8 @@ model Profile {
   authoredWorkshops            Workshop[]                 @relation("WorkshopAuthor")
   authoredWorkshopVideos       WorkshopVideo[]            @relation("WorkshopVideoAuthor")
   authoredWorkshopRequirements WorkshopRequirement[]      @relation("WorkshopRequirementAuthor")
-  gradedWorkshopVideoAnswers   WorkshopVideoAnswer[]       @relation("WorkshopVideoAnswerGrader")
-  gradedWorkshopQuizAnswers    WorkshopQuizAnswer[]        @relation("WorkshopQuizAnswerGrader")
+  gradedWorkshopVideoAnswers   WorkshopVideoAnswer[]      @relation("WorkshopVideoAnswerGrader")
+  gradedWorkshopQuizAnswers    WorkshopQuizAnswer[]       @relation("WorkshopQuizAnswerGrader")
   authoredAttendanceCodes      WorkshopAttendanceCode[]   @relation("WorkshopAttendanceCodeAuthor")
   workshopMessages             WorkshopMessage[]          @relation("WorkshopMessageAuthor")
   createdWorkshopEnrollments   WorkshopEnrollment[]       @relation("WorkshopEnrollmentAuthor")
@@ -536,38 +560,38 @@ model SchoolAdminMember {
 }
 
 model Teacher {
-  id                  String                  @id @default(uuid()) @db.Uuid
-  created_at          DateTime                @default(now())
-  profile_id          String                  @unique @db.Uuid
-  school_id           String                  @db.Uuid
-  onboarding_status   TeacherOnboardingStatus @default(PENDING_APPLICATION)
+  id                               String                          @id @default(uuid()) @db.Uuid
+  created_at                       DateTime                        @default(now())
+  profile_id                       String                          @unique @db.Uuid
+  school_id                        String                          @db.Uuid
+  onboarding_status                TeacherOnboardingStatus         @default(PENDING_APPLICATION)
   // Server-side copy of an unfinished application, visible to the school
   // admin so they can follow progress before final submission.
-  application_draft   Json?
-  application_draft_updated_at DateTime?
+  application_draft                Json?
+  application_draft_updated_at     DateTime?
   // Workshop the teacher signed up via, if any (nullable — teachers can
   // still sign up outside of a workshop through the classic flow).
-  workshop_signup_id  String?                 @db.Uuid
-  workshop_signup     Workshop?               @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
-  workshop_enrollments WorkshopEnrollment[]
-  workshop_attendance WorkshopAttendance[]
-  workshop_video_views WorkshopVideoView[]
-  workshop_video_attempts WorkshopVideoAttempt[]
-  workshop_quiz_attempts WorkshopQuizAttempt[]
+  workshop_signup_id               String?                         @db.Uuid
+  workshop_signup                  Workshop?                       @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
+  workshop_enrollments             WorkshopEnrollment[]
+  workshop_attendance              WorkshopAttendance[]
+  workshop_video_views             WorkshopVideoView[]
+  workshop_video_attempts          WorkshopVideoAttempt[]
+  workshop_quiz_attempts           WorkshopQuizAttempt[]
   workshop_requirement_completions WorkshopRequirementCompletion[]
-  workshop_completions WorkshopCompletion[]
-  announcements       Announcement[]
-  classes             Class[]
-  quizzes             Quiz[]
-  lessons             Lesson[]
-  profile             Profile                 @relation(fields: [profile_id], references: [id], onDelete: Cascade)
-  school              School                  @relation(fields: [school_id], references: [id], onDelete: Cascade)
-  traitAssessments    TraitAssessment[]
-  application         TeacherApplication?
-  group_memberships   TeacherGroupMember[]
-  ratings_given       AssessmentRating[]      @relation("AssessmentRater")
-  ratings_received    AssessmentRating[]      @relation("AssessmentTarget")
-  future_qualification_vote FutureQualificationVote?
+  workshop_completions             WorkshopCompletion[]
+  announcements                    Announcement[]
+  classes                          Class[]
+  quizzes                          Quiz[]
+  lessons                          Lesson[]
+  profile                          Profile                         @relation(fields: [profile_id], references: [id], onDelete: Cascade)
+  school                           School                          @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  traitAssessments                 TraitAssessment[]
+  application                      TeacherApplication?
+  group_memberships                TeacherGroupMember[]
+  ratings_given                    AssessmentRating[]              @relation("AssessmentRater")
+  ratings_received                 AssessmentRating[]              @relation("AssessmentTarget")
+  future_qualification_vote        FutureQualificationVote?
 
   @@index([school_id])
   @@map("teachers")
@@ -1006,14 +1030,16 @@ model Roadmap {
 }
 
 model RoadmapStage {
-  id         String          @id @default(uuid()) @db.Uuid
-  roadmap_id String          @db.Uuid
-  title      String
-  order      Int
-  created_at DateTime        @default(now())
-  modules    RoadmapModule[]
-  roadmap    Roadmap         @relation(fields: [roadmap_id], references: [id], onDelete: Cascade)
-  traits     StageTrait[]
+  id               String          @id @default(uuid()) @db.Uuid
+  roadmap_id       String          @db.Uuid
+  title            String
+  qualification_ar String?
+  qualification_sq String?
+  order            Int
+  created_at       DateTime        @default(now())
+  modules          RoadmapModule[]
+  roadmap          Roadmap         @relation(fields: [roadmap_id], references: [id], onDelete: Cascade)
+  traits           StageTrait[]
 
   @@map("roadmap_stages")
 }
@@ -1031,12 +1057,31 @@ model RoadmapModule {
   attempts         ModuleAttempt[]
   main_trait_id    String?           @db.Uuid
   main_trait       StageTrait?       @relation("ModuleMainTrait", fields: [main_trait_id], references: [id])
+  trait_links      ModuleTraitLink[]
   traitAssessments TraitAssessment[]
   // Teacher-authored content tied to this concept
   lessons          Lesson[]          @relation("ModuleLessons")
   quizzes          Quiz[]            @relation("ModuleQuizzes")
 
   @@map("roadmap_modules")
+}
+
+// A concept can activate several traits, and every trait can be developed by
+// several concepts. This replaces the old single, pre-weighted main trait in
+// the UI while retaining main_trait_id temporarily for historical data.
+model ModuleTraitLink {
+  module_id   String  @db.Uuid
+  trait_id    String  @db.Uuid
+  position    Int     @default(0)
+  guidance_ar String?
+  guidance_sq String?
+
+  module RoadmapModule @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  trait  StageTrait    @relation(fields: [trait_id], references: [id], onDelete: Cascade)
+
+  @@id([module_id, trait_id])
+  @@index([trait_id])
+  @@map("module_trait_links")
 }
 
 model ModuleContent {
@@ -1463,39 +1508,39 @@ enum WorkshopRequirementType {
 }
 
 model WorkshopRequirement {
-  id           String                  @id @default(uuid()) @db.Uuid
-  workshop_id  String                  @db.Uuid
-  type         WorkshopRequirementType
-  title        String
-  description  String?
-  order        Int                     @default(0)
-  is_required  Boolean                 @default(true)
-  min_length   Int                     @default(1)
-  created_by   String                  @db.Uuid
-  created_at   DateTime                @default(now())
-  updated_at   DateTime                @updatedAt
+  id          String                  @id @default(uuid()) @db.Uuid
+  workshop_id String                  @db.Uuid
+  type        WorkshopRequirementType
+  title       String
+  description String?
+  order       Int                     @default(0)
+  is_required Boolean                 @default(true)
+  min_length  Int                     @default(1)
+  created_by  String                  @db.Uuid
+  created_at  DateTime                @default(now())
+  updated_at  DateTime                @updatedAt
 
-  workshop     Workshop                 @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
-  author       Profile                  @relation("WorkshopRequirementAuthor", fields: [created_by], references: [id])
-  quiz         WorkshopQuiz?
-  completions  WorkshopRequirementCompletion[]
+  workshop    Workshop                        @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  author      Profile                         @relation("WorkshopRequirementAuthor", fields: [created_by], references: [id])
+  quiz        WorkshopQuiz?
+  completions WorkshopRequirementCompletion[]
 
   @@index([workshop_id, order])
   @@map("workshop_requirements")
 }
 
 model WorkshopQuiz {
-  id             String                 @id @default(uuid()) @db.Uuid
-  requirement_id String                 @unique @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  requirement_id String   @unique @db.Uuid
   title          String
   description    String?
-  passing_score  Int                    @default(70)
-  created_at     DateTime               @default(now())
-  updated_at     DateTime               @updatedAt
+  passing_score  Int      @default(70)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
-  requirement    WorkshopRequirement    @relation(fields: [requirement_id], references: [id], onDelete: Cascade)
-  questions     WorkshopQuizQuestion[]
-  attempts      WorkshopQuizAttempt[]
+  requirement WorkshopRequirement    @relation(fields: [requirement_id], references: [id], onDelete: Cascade)
+  questions   WorkshopQuizQuestion[]
+  attempts    WorkshopQuizAttempt[]
 
   @@map("workshop_quizzes")
 }
@@ -1507,47 +1552,47 @@ enum WorkshopQuizQuestionType {
 }
 
 model WorkshopQuizQuestion {
-  id             String                  @id @default(uuid()) @db.Uuid
-  quiz_id        String                  @db.Uuid
+  id             String                   @id @default(uuid()) @db.Uuid
+  quiz_id        String                   @db.Uuid
   type           WorkshopQuizQuestionType
   text           String
   correct_answer String?
-  order          Int                     @default(0)
-  created_at     DateTime                @default(now())
+  order          Int                      @default(0)
+  created_at     DateTime                 @default(now())
 
-  quiz           WorkshopQuiz             @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
-  options        WorkshopQuizQuestionOption[]
-  answers        WorkshopQuizAnswer[]
+  quiz    WorkshopQuiz                 @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  options WorkshopQuizQuestionOption[]
+  answers WorkshopQuizAnswer[]
 
   @@index([quiz_id, order])
   @@map("workshop_quiz_questions")
 }
 
 model WorkshopQuizQuestionOption {
-  id          String               @id @default(uuid()) @db.Uuid
-  question_id String               @db.Uuid
+  id          String @id @default(uuid()) @db.Uuid
+  question_id String @db.Uuid
   text        String
-  order       Int                  @default(0)
+  order       Int    @default(0)
 
-  question    WorkshopQuizQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  question WorkshopQuizQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   @@map("workshop_quiz_question_options")
 }
 
 model WorkshopQuizAttempt {
-  id           String               @id @default(uuid()) @db.Uuid
-  quiz_id      String               @db.Uuid
-  teacher_id   String               @db.Uuid
-  score        Int                  @default(0)
-  total        Int                  @default(0)
+  id           String    @id @default(uuid()) @db.Uuid
+  quiz_id      String    @db.Uuid
+  teacher_id   String    @db.Uuid
+  score        Int       @default(0)
+  total        Int       @default(0)
   completed_at DateTime?
   passed_at    DateTime?
-  created_at   DateTime             @default(now())
-  updated_at   DateTime             @updatedAt
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
 
-  quiz         WorkshopQuiz          @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
-  teacher      Teacher               @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  answers      WorkshopQuizAnswer[]
+  quiz    WorkshopQuiz         @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  teacher Teacher              @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  answers WorkshopQuizAnswer[]
 
   @@unique([quiz_id, teacher_id])
   @@index([teacher_id, updated_at(sort: Desc)])
@@ -1555,20 +1600,20 @@ model WorkshopQuizAttempt {
 }
 
 model WorkshopQuizAnswer {
-  id             String                   @id @default(uuid()) @db.Uuid
-  attempt_id     String                   @db.Uuid
-  question_id    String                   @db.Uuid
+  id             String                    @id @default(uuid()) @db.Uuid
+  attempt_id     String                    @db.Uuid
+  question_id    String                    @db.Uuid
   answer         String
-  is_correct     Boolean                  @default(false)
-  grading_status  WorkshopVideoAnswerStatus @default(AUTO_GRADED)
-  grader_id      String?                  @db.Uuid
+  is_correct     Boolean                   @default(false)
+  grading_status WorkshopVideoAnswerStatus @default(AUTO_GRADED)
+  grader_id      String?                   @db.Uuid
   graded_at      DateTime?
   feedback       String?
-  created_at     DateTime                 @default(now())
+  created_at     DateTime                  @default(now())
 
-  attempt        WorkshopQuizAttempt      @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
-  question       WorkshopQuizQuestion     @relation(fields: [question_id], references: [id], onDelete: Cascade)
-  grader         Profile?                @relation("WorkshopQuizAnswerGrader", fields: [grader_id], references: [id], onDelete: SetNull)
+  attempt  WorkshopQuizAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
+  question WorkshopQuizQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  grader   Profile?             @relation("WorkshopQuizAnswerGrader", fields: [grader_id], references: [id], onDelete: SetNull)
 
   @@unique([attempt_id, question_id])
   @@index([grading_status, created_at(sort: Desc)])
@@ -1576,14 +1621,14 @@ model WorkshopQuizAnswer {
 }
 
 model WorkshopRequirementCompletion {
-  id             String              @id @default(uuid()) @db.Uuid
-  requirement_id String              @db.Uuid
-  teacher_id     String              @db.Uuid
+  id             String   @id @default(uuid()) @db.Uuid
+  requirement_id String   @db.Uuid
+  teacher_id     String   @db.Uuid
   response       String?
-  completed_at   DateTime            @default(now())
+  completed_at   DateTime @default(now())
 
-  requirement    WorkshopRequirement @relation(fields: [requirement_id], references: [id], onDelete: Cascade)
-  teacher        Teacher             @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  requirement WorkshopRequirement @relation(fields: [requirement_id], references: [id], onDelete: Cascade)
+  teacher     Teacher             @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
   @@unique([requirement_id, teacher_id])
   @@index([teacher_id, completed_at(sort: Desc)])
@@ -1591,13 +1636,13 @@ model WorkshopRequirementCompletion {
 }
 
 model WorkshopCompletion {
-  id           String    @id @default(uuid()) @db.Uuid
-  workshop_id  String    @db.Uuid
-  teacher_id   String    @db.Uuid
-  completed_at DateTime  @default(now())
+  id           String   @id @default(uuid()) @db.Uuid
+  workshop_id  String   @db.Uuid
+  teacher_id   String   @db.Uuid
+  completed_at DateTime @default(now())
 
-  workshop     Workshop  @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
-  teacher      Teacher   @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
 
   @@unique([workshop_id, teacher_id])
   @@index([workshop_id, completed_at(sort: Desc)])
@@ -1605,13 +1650,13 @@ model WorkshopCompletion {
 }
 
 model WorkshopAttendance {
-  id            String   @id @default(uuid()) @db.Uuid
-  workshop_id   String   @db.Uuid
-  teacher_id    String   @db.Uuid
-  day_date      DateTime @db.Date
-  checked_in_at DateTime @default(now())
+  id            String                   @id @default(uuid()) @db.Uuid
+  workshop_id   String                   @db.Uuid
+  teacher_id    String                   @db.Uuid
+  day_date      DateTime                 @db.Date
+  checked_in_at DateTime                 @default(now())
   source        WorkshopAttendanceSource @default(QR)
-  recorded_by   String?  @db.Uuid
+  recorded_by   String?                  @db.Uuid
 
   workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
   teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
@@ -1659,23 +1704,23 @@ enum WorkshopVideoAnswerStatus {
 }
 
 model WorkshopVideo {
-  id           String   @id @default(uuid()) @db.Uuid
-  workshop_id  String   @db.Uuid
-  title        String
+  id               String              @id @default(uuid()) @db.Uuid
+  workshop_id      String              @db.Uuid
+  title            String
   // Supabase objects have a storage path; Drive-backed videos have a Drive ID.
-  storage_path String?
-  source_type  WorkshopVideoSource @default(SUPABASE)
-  drive_file_id String?
-  url          String
-  mime_type    String?
-  size_bytes   Int?
+  storage_path     String?
+  source_type      WorkshopVideoSource @default(SUPABASE)
+  drive_file_id    String?
+  url              String
+  mime_type        String?
+  size_bytes       Int?
   // Playback length, measured in the browser at upload time. Used to keep
   // question timestamps inside the video and to show duration in the UI.
   duration_seconds Int?
-  order        Int      @default(0)
-  created_by   String   @db.Uuid
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  order            Int                 @default(0)
+  created_by       String              @db.Uuid
+  created_at       DateTime            @default(now())
+  updated_at       DateTime            @updatedAt
 
   workshop  Workshop                @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
   author    Profile                 @relation("WorkshopVideoAuthor", fields: [created_by], references: [id])

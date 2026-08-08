@@ -29,7 +29,7 @@ export async function PATCH(
   const element = await verifyElement(id, auth.school.id);
   if (!element) return NextResponse.json({ error: "Element not found" }, { status: 404 });
 
-  const { text, order } = body;
+  const { text, text_sq, order } = body;
 
   if (!text?.trim() && typeof order !== "number")
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
@@ -38,9 +38,10 @@ export async function PATCH(
     where: { id },
     data: {
       ...(text?.trim() && { text: text.trim() }),
+      ...(text_sq !== undefined && { text_sq: text_sq?.trim() || null }),
       ...(typeof order === "number" && { order }),
     },
-    select: { id: true, text: true, order: true },
+    select: { id: true, text: true, text_sq: true, order: true },
   });
 
   return NextResponse.json({ element: updated });

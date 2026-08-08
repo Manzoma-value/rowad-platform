@@ -18,6 +18,11 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
   const [open, setOpen] = useState(true);
   const [moduleName, setModuleName] = useState("");
   const [adding, setAdding] = useState(false);
+  const [qualificationAr, setQualificationAr] = useState(stage.qualification_ar ?? "");
+  const [qualificationSq, setQualificationSq] = useState(stage.qualification_sq ?? "");
+  const [savingQualification, setSavingQualification] = useState(false);
+  const [qualificationSaved, setQualificationSaved] = useState(false);
+  const [qualificationError, setQualificationError] = useState("");
 
   const traits = stage.traits ?? [];
 
@@ -51,6 +56,26 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
       onRefresh();
     } finally {
       setAdding(false);
+    }
+  };
+
+  const saveQualification = async () => {
+    setSavingQualification(true);
+    setQualificationSaved(false);
+    setQualificationError("");
+    try {
+      const response = await fetch(`/api/school-admin/roadmap/stages/${stage.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qualification_ar: qualificationAr, qualification_sq: qualificationSq }),
+      });
+      if (!response.ok) throw new Error("تعذر حفظ الأهلية");
+      setQualificationSaved(true);
+      onRefresh();
+    } catch (reason) {
+      setQualificationError(reason instanceof Error ? reason.message : "تعذر حفظ الأهلية");
+    } finally {
+      setSavingQualification(false);
     }
   };
 
@@ -107,6 +132,34 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
       {/* Stage Body */}
       {open && (
         <div className="rb-stage-body">
+          <section className="rb-qualification">
+            <div className="rb-qualification-head">
+              <span>✦</span>
+              <div>
+                <small>الوجهة النهائية · Aftësia përfundimtare</small>
+                <h3>الأهلية المستهدفة في نهاية المرحلة</h3>
+                <p>صف القدرة التي يصبح المستفيد مؤهلاً لممارستها بعد تكامل المفاهيم والسمات والأفعال الملحوظة.</p>
+              </div>
+            </div>
+            <div className="rb-qualification-fields">
+              <label>
+                <span>الأهلية بالعربية</span>
+                <textarea dir="rtl" value={qualificationAr} onChange={(event) => { setQualificationAr(event.target.value); setQualificationSaved(false); }} placeholder="مثال: يتخذ قراراً مسؤولاً ويشرح أثره على نفسه ومجتمعه" />
+              </label>
+              <label>
+                <span>Aftësia në shqip</span>
+                <textarea dir="ltr" value={qualificationSq} onChange={(event) => { setQualificationSq(event.target.value); setQualificationSaved(false); }} placeholder="Shembull: merr një vendim të përgjegjshëm dhe shpjegon ndikimin e tij" />
+              </label>
+            </div>
+            <div className="rb-qualification-actions">
+              <small>المفهوم يعلّم، السمة تُبنى، الفعل يُلاحظ، والأهلية هي المحصلة.</small>
+              <button type="button" onClick={saveQualification} disabled={savingQualification}>
+                {savingQualification ? "جارٍ الحفظ…" : qualificationSaved ? "تم الحفظ ✓" : "حفظ الأهلية"}
+              </button>
+            </div>
+            {qualificationError && <p className="rb-qualification-error">{qualificationError}</p>}
+          </section>
+
           {/* Modules */}
           {stage.modules.length === 0 ? (
             <div className="rb-empty-sm">

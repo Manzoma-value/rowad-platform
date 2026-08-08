@@ -17,12 +17,11 @@ export async function GET(
       class: { select: { id: true, name: true } },
     },
   });
-  if (!student) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
   const assessments = await prisma.traitAssessment.findMany({
     where: { student_id: studentId },
     select: {
-      module: { select: { main_trait_id: true } },
       trait_scores: {
         select: {
           score: true,
@@ -34,19 +33,16 @@ export async function GET(
 
   const totals = new Map<string, { name: string; maqsad: string; sum: number; count: number }>();
   for (const assessment of assessments) {
-    const supportingCount = Math.max(1, assessment.trait_scores.length - 1);
     for (const score of assessment.trait_scores) {
-      const maximum = score.trait.id === assessment.module.main_trait_id ? 50 : 50 / supportingCount;
-      const normalized = maximum > 0 ? Math.min(100, (score.score / maximum) * 100) : 0;
       const current = totals.get(score.trait.id);
       if (current) {
-        current.sum += normalized;
+        current.sum += score.score;
         current.count += 1;
       } else {
         totals.set(score.trait.id, {
           name: score.trait.name,
           maqsad: score.trait.maqsad,
-          sum: normalized,
+          sum: score.score,
           count: 1,
         });
       }

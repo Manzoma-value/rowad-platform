@@ -26,7 +26,7 @@ export async function PATCH(
   const trait = await verifyTrait(id, auth.school.id);
   if (!trait) return NextResponse.json({ error: "Trait not found" }, { status: 404 });
 
-  const { name, definition } = body;
+  const { name, name_sq, definition, definition_sq } = body;
 
   if (!name?.trim() && definition === undefined)
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
@@ -35,11 +35,13 @@ export async function PATCH(
     where: { id },
     data: {
       ...(name?.trim() && { name: name.trim() }),
+      ...(name_sq !== undefined && { name_sq: name_sq?.trim() || null }),
       ...(definition !== undefined && { definition: definition?.trim() || null }),
+      ...(definition_sq !== undefined && { definition_sq: definition_sq?.trim() || null }),
     },
     select: {
-      id: true, maqsad: true, name: true, definition: true,
-      elements: { orderBy: { order: "asc" }, select: { id: true, text: true, order: true } },
+      id: true, maqsad: true, name: true, name_sq: true, definition: true, definition_sq: true,
+      elements: { orderBy: { order: "asc" }, select: { id: true, text: true, text_sq: true, order: true } },
     },
   });
 

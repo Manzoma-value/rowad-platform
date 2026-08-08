@@ -37,7 +37,6 @@ export async function GET(
               id: true,
               title: true,
               order: true,
-              main_trait_id: true,
               stage: { select: { id: true, title: true, order: true } },
             },
           },
@@ -61,9 +60,12 @@ export async function GET(
     select: {
       id: true,
       module_id: true,
+      teacher_id: true,
       general_note: true,
       submitted_at: true,
       updated_at: true,
+      observed_at: true,
+      teacher: { select: { profile: { select: { full_name: true } } } },
       trait_scores: {
         select: {
           score: true,
@@ -86,15 +88,20 @@ export async function GET(
   interface Assessment {
     id: string;
     module_id: string;
+    teacher_id: string;
     general_note: string | null;
     submitted_at: Date;
     updated_at: Date;
+    observed_at: Date;
+    teacher: { profile: { full_name: string } };
     trait_scores: TraitScore[];
   }
 
   const assessments: Assessment[] = rawAssessments as Assessment[];
   const attempts = student.moduleAttempts;
-  const assessedModuleIds = new Set<string>(assessments.map((a) => a.module_id));
+  const myAssessedModuleIds = new Set<string>(
+    assessments.filter((assessment) => assessment.teacher_id === auth.teacher.id).map((assessment) => assessment.module_id),
+  );
 
   // ── Question score stats ──
   const avgScore =
@@ -116,7 +123,7 @@ export async function GET(
     passed: a.passed,
     score: a.score,
     total: a.total,
-    trait_assessed: assessedModuleIds.has(a.module.id),
+    trait_assessed: myAssessedModuleIds.has(a.module.id),
   }));
 
   const byType: Record<string, { correct: number; total: number }> = {};
@@ -157,7 +164,7 @@ export async function GET(
 
   // ── Pending trait assessments ──
   const pending_trait_assessments = attempts
-  .filter((a) => !assessedModuleIds.has(a.module.id))
+    .filter((a) => !myAssessedModuleIds.has(a.module.id))
     .map((a) => ({
       module_id: a.module.id,
       module_title: a.module.title,
@@ -166,31 +173,23 @@ export async function GET(
       completed_at: a.created_at,
     }));
 
-  // ── Trait radar: normalize each score against its max weight ──
+  // ── Trait radar: average the exact 100-point relative readings ──
   const traitTotals = new Map<
     string,
     { name: string; maqsad: string; sum: number; count: number }
   >();
 
   assessments.forEach((assessment) => {
-    const moduleAttempt = attempts.find((a) => a.module.id === assessment.module_id);
-    const mainTraitId = moduleAttempt?.module.main_trait_id ?? null;
-    const otherCount = assessment.trait_scores.length - 1;
-
     assessment.trait_scores.forEach((ts) => {
-      const isMain = ts.trait.id === mainTraitId;
-      const maxScore = isMain ? 50 : otherCount > 0 ? 50 / otherCount : 50;
-      const normalized = maxScore > 0 ? (ts.score / maxScore) * 100 : 0;
-
       const existing = traitTotals.get(ts.trait.id);
       if (existing) {
-        existing.sum += normalized;
+        existing.sum += ts.score;
         existing.count += 1;
       } else {
         traitTotals.set(ts.trait.id, {
           name: ts.trait.name,
           maqsad: ts.trait.maqsad,
-          sum: normalized,
+          sum: ts.score,
           count: 1,
         });
       }
@@ -209,10 +208,13 @@ export async function GET(
     const moduleAttempt = attempts.find((att) => att.module.id === a.module_id);
     const total = a.trait_scores.reduce((sum, ts) => sum + ts.score, 0);
     return {
+      id: a.id,
       module_id: a.module_id,
       module_title: moduleAttempt?.module.title ?? "",
       stage_title: moduleAttempt?.module.stage.title ?? "",
       total_score: Math.round(total * 10) / 10,
+      educator_name: a.teacher.profile.full_name,
+      observed_at: a.observed_at,
       general_note: a.general_note,
       submitted_at: a.submitted_at,
       updated_at: a.updated_at,
