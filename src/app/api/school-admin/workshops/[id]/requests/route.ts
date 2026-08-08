@@ -1,5 +1,5 @@
 // GET /api/school-admin/workshops/[id]/requests
-//   Lists every WorkshopEnrollment row for this workshop (all statuses),
+//   Lists every teacher-initiated request for this workshop (all statuses),
 //   PENDING/WAITLISTED first, so the admin can review pending requests
 //   alongside decision history.
 import { NextResponse } from "next/server";
@@ -30,7 +30,7 @@ export async function GET(
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const rows = await prisma.workshopEnrollment.findMany({
-    where: { workshop_id: id },
+    where: { workshop_id: id, source: "REQUEST" },
     select: {
       teacher_id: true,
       status: true,

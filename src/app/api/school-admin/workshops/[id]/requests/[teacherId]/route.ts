@@ -62,9 +62,19 @@ export async function PATCH(
 
   const existing = await prisma.workshopEnrollment.findUnique({
     where: { workshop_id_teacher_id: { workshop_id: id, teacher_id: teacherId } },
-    select: { id: true, teacher: { select: { profile_id: true } } },
+    select: {
+      id: true,
+      source: true,
+      teacher: { select: { profile_id: true, school_id: true } },
+    },
   });
-  if (!existing) return NextResponse.json({ error: "No request found" }, { status: 404 });
+  if (
+    !existing ||
+    existing.source !== "REQUEST" ||
+    existing.teacher.school_id !== auth.school.id
+  ) {
+    return NextResponse.json({ error: "No request found" }, { status: 404 });
+  }
 
   await prisma.workshopEnrollment.update({
     where: { id: existing.id },

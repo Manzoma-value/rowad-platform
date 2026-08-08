@@ -23,9 +23,12 @@ export async function POST(
 
   const workshop = await prisma.workshop.findFirst({
     where: { id, school_id: auth.teacher.school_id },
-    select: { id: true, title: true, status: true, school_id: true },
+    select: { id: true, title: true, status: true, school_id: true, audience: true },
   });
   if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!workshop.audience.includes("TEACHERS")) {
+    return NextResponse.json({ error: "not_available_for_teachers" }, { status: 403 });
+  }
   if (workshop.status === "CLOSED") {
     return NextResponse.json({ error: "workshop_closed" }, { status: 410 });
   }
@@ -72,5 +75,7 @@ export async function POST(
     }).catch(() => undefined);
   }
 
-  return NextResponse.json({ success: true, status: "PENDING" });
+  const status = shouldNotify ? "PENDING" : existing?.status ?? "PENDING";
+
+  return NextResponse.json({ success: true, status });
 }
