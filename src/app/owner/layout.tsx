@@ -19,6 +19,7 @@ import {
   FileText,
   Database,
   LucideIcon,
+  X,
 } from "lucide-react";
 
 /* ─────────────────────────────────────────────
@@ -227,79 +228,6 @@ function Mandala({
   );
 }
 
-function GeoMark({
-  size = 22,
-  color = "var(--gold)",
-}: {
-  size?: number;
-  color?: string;
-}) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 22 22" fill="none">
-      <circle
-        cx="11"
-        cy="11"
-        r="9.5"
-        stroke={color}
-        strokeWidth="0.7"
-        opacity="0.65"
-      />
-      <circle
-        cx="11"
-        cy="11"
-        r="6.5"
-        stroke={color}
-        strokeWidth="0.6"
-        opacity="0.55"
-      />
-      <circle
-        cx="11"
-        cy="11"
-        r="3.2"
-        stroke={color}
-        strokeWidth="0.55"
-        opacity="0.65"
-      />
-      <line
-        x1="11"
-        y1="1"
-        x2="11"
-        y2="21"
-        stroke={color}
-        strokeWidth="0.45"
-        opacity="0.40"
-      />
-      <line
-        x1="1"
-        y1="11"
-        x2="21"
-        y2="11"
-        stroke={color}
-        strokeWidth="0.45"
-        opacity="0.40"
-      />
-      <line
-        x1="3.7"
-        y1="3.7"
-        x2="18.3"
-        y2="18.3"
-        stroke={color}
-        strokeWidth="0.35"
-        opacity="0.28"
-      />
-      <line
-        x1="18.3"
-        y1="3.7"
-        x2="3.7"
-        y2="18.3"
-        stroke={color}
-        strokeWidth="0.35"
-        opacity="0.28"
-      />
-    </svg>
-  );
-}
-
 /* ─────────────────────────────────────────────
    Nav items
 ───────────────────────────────────────────── */
@@ -415,13 +343,30 @@ export default function OwnerLayout({
 
         {/* ── Logo block ── */}
         <div className="ow-logo-block">
-          <div className="ow-logo-icon">
-            <GeoMark size={26} color="var(--gold)" />
-          </div>
-          <div className="ow-logo-text">
-            <span className="ow-logo-name">بناء الأهلية</span>
-            <span className="ow-logo-sub">Institutional Suite</span>
-          </div>
+          <Link
+            href="/owner"
+            className="ow-logo-home"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="العودة إلى لوحة التحكم"
+          >
+            <Image
+              src="/headerlogo.png"
+              alt="بناء الأهلية"
+              fill
+              style={{ objectFit: "cover", objectPosition: "center" }}
+              priority
+            />
+            <div className="ow-logo-frame" aria-hidden="true" />
+            <span className="ow-logo-home-hint">لوحة التحكم <b aria-hidden="true">↗</b></span>
+          </Link>
+          <button
+            type="button"
+            className="ow-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="إغلاق القائمة"
+          >
+            <X size={14} strokeWidth={2} />
+          </button>
         </div>
 
         {/* ── Gold rule ── */}
@@ -546,9 +491,6 @@ export default function OwnerLayout({
 
           {/* Breadcrumb */}
           <div className="ow-breadcrumb-wrap">
-            <div className="ow-breadcrumb-geo">
-              <GeoMark size={18} color="var(--gold-deep)" />
-            </div>
             <div className="ow-breadcrumb">
               <span className="ow-bc-cur">{current?.label ?? "الصفحة"}</span>
             </div>
@@ -580,7 +522,10 @@ export default function OwnerLayout({
                   <span className="ow-topbar-initial">{initial}</span>
                 )}
               </div>
-              <span className="ow-topbar-name">{displayName}</span>
+              <span className="ow-topbar-id">
+                <span className="ow-topbar-name">{displayName}</span>
+                <span className="ow-topbar-sub">مالك المنظومة</span>
+              </span>
             </Link>
           </div>
         </header>
@@ -720,7 +665,7 @@ const styles = `
     --bdr-gold:     rgba(184,160,130,0.38);
 
     --sidebar-w:    286px;
-    --topbar-h:     68px;
+    --topbar-h:     72px;
 
     --font-heading: 'El Messiri', 'Cairo', serif;
     --font-mono:    'IBM Plex Mono', monospace;
@@ -780,29 +725,23 @@ const styles = `
   /* ── Logo block ── */
   .ow-logo-block {
     position: relative; z-index: 10; flex-shrink: 0;
-    display: flex; align-items: center; gap: 12px;
-    padding: 28px 24px 20px;
+    width: 100%; height: 86px; overflow: hidden;
+    background: #1A1A1A;
+    border-top: 1.5px solid rgba(184,160,130,0.55);
+    border-bottom: 1px solid rgba(184,160,130,0.20);
+    box-shadow: 0 6px 28px rgba(184,160,130,0.07), inset 0 -1px 0 rgba(184,160,130,0.08);
   }
-  .ow-logo-icon {
-    display: flex; align-items: center; justify-content: center;
-    width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
-    border: 1px solid rgba(184,160,130,0.30);
-    background: linear-gradient(135deg, rgba(184,160,130,0.18), rgba(184,160,130,0.04));
-  }
-  .ow-logo-text {
-    display: flex; flex-direction: column; gap: 2px; min-width: 0;
-  }
-  .ow-logo-name {
-    font-family: var(--font-heading);
-    font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
-    color: #FFFBF5; white-space: nowrap;
-  }
-  .ow-logo-sub {
-    font-family: var(--font-mono);
-    font-size: 9px; font-weight: 500;
-    letter-spacing: 0.22em; text-transform: uppercase;
-    color: rgba(184,160,130,0.55);
-  }
+  .ow-logo-home { position:absolute; inset:0; z-index:1; display:block; color:#FFFBF5; text-decoration:none; outline:none; }
+  .ow-logo-home img { transition:transform .35s var(--ease-out),filter .35s ease; }
+  .ow-logo-home:hover img,.ow-logo-home:focus-visible img { transform:scale(1.035); filter:brightness(.86); }
+  .ow-logo-home:focus-visible { box-shadow:inset 0 0 0 3px #D9C9B0; }
+  .ow-logo-frame { position:absolute; inset:0; pointer-events:none; z-index:2; background:linear-gradient(to right,rgba(26,26,26,.65),transparent 26%,transparent 74%,rgba(26,26,26,.65)),linear-gradient(to bottom,transparent 50%,rgba(26,26,26,.72)); }
+  .ow-logo-home-hint { position:absolute; inset-inline-end:12px; bottom:9px; z-index:3; display:flex; align-items:center; gap:6px; border:1px solid rgba(217,201,176,.24); border-radius:999px; background:rgba(18,7,11,.72); padding:4px 9px; color:#F7F3EB; font-size:9px; font-weight:900; opacity:0; transform:translateY(4px); transition:.22s ease; backdrop-filter:blur(8px); }
+  .ow-logo-home:hover .ow-logo-home-hint,.ow-logo-home:focus-visible .ow-logo-home-hint { opacity:1; transform:none; }
+  .ow-logo-home-hint b { color:#D9C9B0; font-size:11px; }
+  .ow-close-btn { display:none; align-items:center; justify-content:center; position:absolute; top:10px; inset-inline-end:10px; width:28px; height:28px; border-radius:8px; background:rgba(26,26,26,.55); border:0; cursor:pointer; color:rgba(184,160,130,.70); z-index:4; }
+  .ow-close-btn:hover { color:var(--gold); background:rgba(26,26,26,.80); }
+  @media (max-width:767px) { .ow-close-btn { display:flex; } }
 
   /* ── Gold rule ── */
   .ow-gold-rule {
@@ -1004,11 +943,11 @@ const styles = `
     height: var(--topbar-h);
     display: flex; align-items: center; gap: 16px;
     padding: 0 20px;
-    background: rgba(251,250,246,0.82);
+    background: linear-gradient(110deg, #32101AFA, #4A0E1CF5 58%, #32101AF7);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(26,26,26,0.07);
-    box-shadow: 0 1px 0 rgba(26,26,26,0.04), 0 6px 24px rgba(26,26,26,0.025);
+    border-bottom: 1px solid rgba(217,201,176,.24);
+    box-shadow: 0 8px 28px #32101A2E, inset 0 -1px 0 rgba(255,255,255,.03);
   }
   @media (min-width: 768px) { .ow-topbar { padding: 0 36px; } }
 
@@ -1042,7 +981,8 @@ const styles = `
     color: var(--graphite-muted);
     transition: all 0.15s; flex-shrink: 0;
   }
-  .ow-hamburger:hover { background: rgba(184,160,130,0.10); color: var(--graphite); }
+  .ow-hamburger { color: var(--gold-soft); }
+  .ow-hamburger:hover { background: rgba(217,201,176,.12); color: #FFFBF5; }
   @media (min-width: 768px) { .ow-hamburger { display: none; } }
 
   /* Breadcrumb */
@@ -1067,9 +1007,7 @@ const styles = `
   .ow-bc-sep-icon {
     color: var(--graphite-muted); opacity: 0.38; flex-shrink: 0;
   }
-  .ow-bc-cur {
-    font-size: 13.5px; font-weight: 700; color: var(--graphite);
-  }
+  .ow-bc-cur { font-size: 13.5px; font-weight: 800; color: #FFFBF5; letter-spacing:.01em; }
 
   .ow-topbar-spacer { flex: 1; }
 
@@ -1114,14 +1052,15 @@ const styles = `
     display: none; align-items: center; gap: 8px;
     padding: 4px 12px 4px 4px;
     border-radius: 999px;
-    border: 1px solid var(--bdr-soft);
-    background: var(--bg-card);
+    border: 1px solid rgba(217,201,176,.24);
+    background: rgba(255,251,245,.075);
     text-decoration: none;
     transition: all 0.18s var(--ease-out);
   }
   .ow-topbar-user-pill:hover {
-    border-color: var(--bdr-gold);
-    box-shadow: 0 4px 16px rgba(26,26,26,0.06);
+    border-color: rgba(217,201,176,.52);
+    background: rgba(255,251,245,.11);
+    box-shadow: 0 8px 24px #32101A38;
   }
   @media (min-width: 768px) { .ow-topbar-user-pill { display: flex; } }
 
@@ -1135,9 +1074,11 @@ const styles = `
     font-family: var(--font-heading);
   }
   .ow-topbar-name {
-    font-size: 12.5px; font-weight: 700; color: var(--graphite);
-    white-space: nowrap; padding-inline-start: 2px;
+    font-size: 12.5px; font-weight: 800; color: #FFFBF5;
+    white-space: nowrap;
   }
+  .ow-topbar-id { display:flex; flex-direction:column; gap:1px; padding-inline:4px 2px; line-height:1.15; }
+  .ow-topbar-sub { font-size:10px; font-weight:600; color:var(--gold-soft); white-space:nowrap; opacity:.78; }
 
   /* ══ CONTENT ══ */
   .ow-content {
@@ -1153,7 +1094,44 @@ const styles = `
     opacity: 0.04; pointer-events: none;
   }
 
-  .ow-content-inner { position: relative; z-index: 10; }
+  .ow-content-inner { position: relative; z-index: 10; min-width: 0; }
+
+  /* ══ OWNER PAGE SYSTEM ══
+     One visual contract for every owner route, matching the school-admin
+     surfaces while preserving each page's existing data and interactions. */
+  .ow-content-inner > :is(.dash,.pg,.owner-admins-page,.dr,.ia-page,.pf-root,.or-page,.oe-wrap,.sd-page,.s-page,.sr-page) { width:100%; max-width:none; color:#1A1A1A; }
+  .ow-shell :is(h1,h2,h3) { font-family:'El Messiri','Cairo',sans-serif; }
+  .ow-shell :is(input,textarea,select) { background:#FFFBF5; border-color:rgba(184,160,130,.30); color:#1A1A1A; }
+  .ow-shell :is(input,textarea,select):focus { border-color:#B8A082 !important; box-shadow:0 0 0 3px rgba(184,160,130,.14) !important; outline:none; }
+
+  .ow-shell :is(.stat-card,.section-card,.owner-admins-stat,.owner-admins-card,.dr-kpi,.dr-panel,.ia-q-card,.ia-create-card,.pf-avatar-card,.pf-card,.or-card,.oe-section,.school-card,.sd-ov-card,.sd-info-card,.sd-landing-preview,.sd-list,.sd-settings-card,.s-summary,.s-row,.s-empty,.sr-ans-card,.sr-panel) {
+    background:linear-gradient(180deg,#FFFBF5,#F7F3EB);
+    border:1px solid rgba(184,160,130,.24);
+    border-radius:20px;
+    box-shadow:0 12px 30px rgba(50,16,26,.05);
+  }
+  .ow-shell :is(.stat-card,.owner-admins-card,.dr-kpi,.or-card,.school-card,.s-row) { transition:transform .22s var(--ease-out),border-color .22s ease,box-shadow .22s ease; }
+  .ow-shell :is(.stat-card,.owner-admins-card,.dr-kpi,.or-card,.school-card,.s-row):hover { transform:translateY(-3px); border-color:rgba(184,160,130,.58); box-shadow:0 18px 40px rgba(50,16,26,.10); }
+
+  .ow-shell :is(.dash-header,.dr-hero) { position:relative; overflow:hidden; padding:30px 32px; border:1px solid rgba(184,160,130,.38); border-radius:26px; background:radial-gradient(circle at 85% -30%,rgba(184,160,130,.22),transparent 44%),radial-gradient(circle at 10% 120%,rgba(107,30,45,.55),transparent 46%),linear-gradient(140deg,#32101A,#4A0E1C 55%,#5B1526); box-shadow:0 24px 60px rgba(50,16,26,.22); }
+  .ow-shell :is(.dash-header,.dr-hero):before { content:""; position:absolute; top:0; inset-inline:30px; height:1.5px; background:linear-gradient(90deg,transparent,rgba(217,201,176,.62),transparent); }
+  .ow-shell :is(.dash-title,.dr-hero h1) { color:#FFFBF5 !important; }
+  .ow-shell :is(.dash-subtitle,.dr-hero p,.dr-kicker) { color:#D9C9B0 !important; }
+
+  .ow-shell :is(.dash-cta-btn,.owner-admins-primary-btn,.dr-export,.ia-btn-primary,.or-new,.or-dlg-submit,.oe-publish,.sd-save-btn,.sr-submit-btn,.btn-create,.btn-manage) { background:#4A0E1C !important; color:#FFFBF5 !important; border:1px solid rgba(184,160,130,.38) !important; border-radius:12px !important; box-shadow:0 8px 20px rgba(74,14,28,.16); }
+  .ow-shell :is(.dash-cta-btn,.owner-admins-primary-btn,.dr-export,.ia-btn-primary,.or-new,.or-dlg-submit,.oe-publish,.sd-save-btn,.sr-submit-btn,.btn-create,.btn-manage):hover { background:#6B1E2D !important; transform:translateY(-1px); }
+  .ow-shell :is(.sr-score-banner,.dr-trust) { background:linear-gradient(135deg,#32101A,#4A0E1C 58%,#5B1526); border:1px solid rgba(184,160,130,.34); border-radius:20px; box-shadow:0 16px 36px rgba(50,16,26,.18); }
+
+  .ow-shell :is(.owner-admins-modal,.or-dlg,.ia-modal) { background:#FFFBF5; border:1px solid rgba(184,160,130,.38); border-radius:22px; box-shadow:0 28px 80px rgba(50,16,26,.28); }
+  .ow-shell :is(.owner-admins-modal-overlay,.or-dlg-overlay,.ia-overlay) { background:rgba(26,16,18,.60); backdrop-filter:blur(8px); }
+  .ow-shell table thead th { background:rgba(239,234,224,.72); color:#655B53; }
+  .ow-shell table tbody tr:hover { background:rgba(184,160,130,.06); }
+
+  @media (max-width:767px) {
+    .ow-content { padding:20px 14px; }
+    .ow-shell :is(.dash-header,.dr-hero) { padding:24px 20px; border-radius:20px; }
+    .ow-footer-text { letter-spacing:.12em; }
+  }
 
   /* ══ BOTTOM BAND ══ */
   .ow-bottom-band {

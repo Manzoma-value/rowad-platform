@@ -4,6 +4,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { cachedFetch } from "@/lib/api-cache";
+import {
+  Building2,
+  ClipboardCheck,
+  FileCheck2,
+  GraduationCap,
+  Users,
+} from "lucide-react";
 
 interface Stats {
   schoolCount: number;
@@ -31,20 +38,39 @@ const STATUS_COLORS: Record<string, string> = {
   CLASS_ASSIGNED: "#B8A082",
 };
 
+function dashboardIconFor(href: string) {
+  if (href.includes("intake-assessment")) return <ClipboardCheck size={21} strokeWidth={1.7} />;
+  if (href.includes("submissions")) return <FileCheck2 size={21} strokeWidth={1.7} />;
+  if (href.includes("schools")) return <Building2 size={21} strokeWidth={1.7} />;
+  if (href.includes("teachers")) return <GraduationCap size={21} strokeWidth={1.7} />;
+  return <Users size={21} strokeWidth={1.7} />;
+}
+
+const dashboardStatIcons = [
+  <Building2 key="schools" size={21} strokeWidth={1.7} />,
+  <GraduationCap key="supervisors" size={21} strokeWidth={1.7} />,
+  <Users key="students" size={21} strokeWidth={1.7} />,
+  <FileCheck2 key="pending" size={21} strokeWidth={1.7} />,
+];
+
+const MANDALA_LOADING_LABELS = [
+  "جارٍ تهيئة النظام",
+  "جارٍ استرداد البيانات",
+  "جارٍ إعداد اللوحة",
+];
+
 function MandalaLoader() {
   const [phase, setPhase] = useState(0);
   const [label, setLabel] = useState("جارٍ تهيئة النظام");
   const [mounted, setMounted] = useState(false);
-
-  const labels = ["جارٍ تهيئة النظام", "جارٍ استرداد البيانات", "جارٍ إعداد اللوحة"];
 
   useEffect(() => {
     setMounted(true);
     const interval = setInterval(() => setPhase((p) => (p + 1) % 360), 16);
     const labelInterval = setInterval(() => {
       setLabel((l) => {
-        const idx = labels.indexOf(l);
-        return labels[(idx + 1) % labels.length];
+        const idx = MANDALA_LOADING_LABELS.indexOf(l);
+        return MANDALA_LOADING_LABELS[(idx + 1) % MANDALA_LOADING_LABELS.length];
       });
     }, 1400);
     return () => { clearInterval(interval); clearInterval(labelInterval); };
@@ -238,7 +264,7 @@ export default function OwnerDashboardPage() {
             <div className="stat-card-inner">
               <div className="stat-top">
                 <div className="stat-icon-box" style={{ borderColor: `${card.accent}22`, background: `${card.accent}0d` }}>
-                  <span className="stat-icon">{card.icon}</span>
+                  <span className="stat-icon">{dashboardStatIcons[i]}</span>
                 </div>
                 {card.alert && (
                   <div className="stat-pulse-ring">
@@ -321,7 +347,7 @@ export default function OwnerDashboardPage() {
               },
             ].map((link, i) => (
               <Link key={link.href} href={link.href} className="quick-link" style={{ animationDelay: `${i * 70}ms` }}>
-                <div className="ql-icon">{link.icon}</div>
+                <div className="ql-icon">{dashboardIconFor(link.href)}</div>
                 <div className="ql-body">
                   <div className="ql-title">{link.title}</div>
                   <div className="ql-sub">{link.sub}</div>
