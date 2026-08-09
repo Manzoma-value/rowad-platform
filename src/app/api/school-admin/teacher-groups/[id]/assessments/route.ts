@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
+import { defaultTraitDrafts } from "@/lib/rowad-assessment";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const assessments = await prisma.groupAssessment.findMany({
-    where: { group_id: id },
+    where: { school_id: auth.school.id, target_groups: { some: { group_id: id } } },
     orderBy: [{ created_at: "desc" }],
     select: {
       id: true,
@@ -55,14 +56,22 @@ export async function POST(
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const assessment = await prisma.groupAssessment.create({
-    data: {
-      group_id: id,
-      school_id: auth.school.id,
-      created_by: auth.profile.id,
-      title: title.slice(0, 160),
-    },
-    select: { id: true, title: true, status: true },
+  const traits = defaultTraitDrafts();
+  const assessment = await prisma.$transaction(async (tx) => {
+    const created = await tx.groupAssessment.create({
+      data: {
+        group_id: id,
+        school_id: auth.school.id,
+        created_by: auth.profile.id,
+        title: title.slice(0, 160),
+      },
+      select: { id: true, title: true, status: true },
+    });
+    await tx.groupAssessmentGroup.create({ data: { assessment_id: created.id, group_id: id } });
+    await tx.assessmentTrait.createMany({
+      data: traits.map((trait, position) => ({ assessment_id: created.id, position, ...trait })),
+    });
+    return created;
   });
   return NextResponse.json({ assessment }, { status: 201 });
 }

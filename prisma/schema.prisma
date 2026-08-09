@@ -674,6 +674,11 @@ enum GroupAssessmentStatus {
   CLOSED
 }
 
+enum AssessmentTraitKind {
+  TARGET
+  EARLY_OBSERVATION
+}
+
 model GroupAssessment {
   id         String                @id @default(uuid()) @db.Uuid
   // Legacy "primary group" pointer — the first group selected at creation.
@@ -718,15 +723,18 @@ model GroupAssessmentGroup {
 // order the 100-point distributor and every report renders them.
 // `position` is the stable index used to align AssessmentRating.scores.
 model AssessmentTrait {
-  id            String   @id @default(uuid()) @db.Uuid
-  assessment_id String   @db.Uuid
+  id            String              @id @default(uuid()) @db.Uuid
+  assessment_id String              @db.Uuid
   position      Int
   label_ar      String
   label_sq      String
   statement_ar  String
   statement_sq  String
-  color         String   @default("#6B1E2D")
-  created_at    DateTime @default(now())
+  color         String              @default("#6B1E2D")
+  kind          AssessmentTraitKind @default(TARGET)
+  objective_ar  String?
+  objective_sq  String?
+  created_at    DateTime            @default(now())
 
   assessment GroupAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
 
@@ -752,14 +760,37 @@ model AssessmentRating {
   scores            Json
   updated_at        DateTime @updatedAt
 
-  assessment GroupAssessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
-  rater      Teacher         @relation("AssessmentRater", fields: [rater_teacher_id], references: [id], onDelete: Cascade)
-  target     Teacher         @relation("AssessmentTarget", fields: [target_teacher_id], references: [id], onDelete: Cascade)
+  assessment GroupAssessment            @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  rater      Teacher                    @relation("AssessmentRater", fields: [rater_teacher_id], references: [id], onDelete: Cascade)
+  target     Teacher                    @relation("AssessmentTarget", fields: [target_teacher_id], references: [id], onDelete: Cascade)
+  revisions  AssessmentRatingRevision[]
 
   @@id([assessment_id, rater_teacher_id, target_teacher_id])
   @@index([assessment_id, target_teacher_id])
   @@index([assessment_id, rater_teacher_id])
   @@map("assessment_ratings")
+}
+
+// An immutable snapshot of the score array that was replaced after the
+// current rating had remained unchanged for at least 24 hours. Changes made
+// inside the first 24 hours refine the same working reading and do not create
+// audit noise; later changes preserve the prior reading for administrators.
+model AssessmentRatingRevision {
+  id                  String   @id @default(uuid()) @db.Uuid
+  assessment_id       String   @db.Uuid
+  rater_teacher_id    String   @db.Uuid
+  target_teacher_id   String   @db.Uuid
+  scores              Json
+  replacement_scores  Json
+  original_updated_at DateTime
+  archived_at         DateTime @default(now())
+
+  rating AssessmentRating @relation(fields: [assessment_id, rater_teacher_id, target_teacher_id], references: [assessment_id, rater_teacher_id, target_teacher_id], onDelete: Cascade)
+
+  @@unique([assessment_id, rater_teacher_id, target_teacher_id, original_updated_at])
+  @@index([assessment_id, archived_at(sort: Desc)])
+  @@index([rater_teacher_id, target_teacher_id, archived_at(sort: Desc)])
+  @@map("assessment_rating_revisions")
 }
 
 // Private announcement feed inside a teacher group. Authors can be school

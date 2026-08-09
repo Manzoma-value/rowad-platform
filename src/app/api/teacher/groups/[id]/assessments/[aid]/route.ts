@@ -10,6 +10,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { buildAssessmentSpectra } from "@/lib/assessment-aggregates";
 
 export const dynamic = "force-dynamic";
 
@@ -52,15 +53,21 @@ export async function GET(
       status: true,
       created_at: true,
       closed_at: true,
-      group: { select: { id: true, name: true, description: true } },
       traits: {
         orderBy: { position: "asc" },
-        select: { position: true, label_ar: true, label_sq: true, statement_ar: true, statement_sq: true, color: true },
+        select: {
+          position: true, label_ar: true, label_sq: true,
+          statement_ar: true, statement_sq: true, color: true,
+          kind: true, objective_ar: true, objective_sq: true,
+        },
       },
       target_groups: {
         select: {
           group: {
             select: {
+              id: true,
+              name: true,
+              description: true,
               members: {
                 orderBy: { joined_at: "asc" },
                 select: {
@@ -77,14 +84,15 @@ export async function GET(
   });
   if (!assessment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Union of members across every group this model targets, deduped.
-  const memberMap = new Map<string, { teacher_id: string; profile: { id: string; full_name: string } }>();
-  for (const link of assessment.target_groups) {
-    for (const m of link.group.members) {
-      memberMap.set(m.teacher.id, { teacher_id: m.teacher.id, profile: m.teacher.profile });
-    }
-  }
-  const members = Array.from(memberMap.values());
+  // Rating is deliberately bounded to the group in the URL. A model can
+  // span both 30-person cohorts for shared reporting, but teachers never
+  // score people outside their own cohort.
+  const entryGroup = assessment.target_groups.find((link) => link.group.id === id)?.group;
+  if (!entryGroup) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const members = entryGroup.members.map((member) => ({
+    teacher_id: member.teacher.id,
+    profile: member.teacher.profile,
+  }));
 
   const scoresSelect = { target_teacher_id: true, scores: true, updated_at: true } as const;
 
@@ -101,6 +109,24 @@ export async function GET(
       rater: { select: { profile: { select: { full_name: true } } } },
     },
   });
+
+  const aggregateRatings = await prisma.assessmentRating.findMany({
+    where: { assessment_id: aid },
+    select: { rater_teacher_id: true, target_teacher_id: true, scores: true },
+  });
+
+  const spectra = buildAssessmentSpectra(
+    assessment.target_groups.map((link) => ({
+      id: link.group.id,
+      name: link.group.name,
+      member_ids: link.group.members.map((member) => member.teacher.id),
+    })),
+    aggregateRatings.map((rating) => ({
+      ...rating,
+      scores: rating.scores as ScoresArray,
+    })),
+    assessment.traits.length,
+  );
 
   const allRatings = openVisibility
     ? await prisma.assessmentRating.findMany({
@@ -121,7 +147,7 @@ export async function GET(
       status: assessment.status,
       created_at: assessment.created_at,
       closed_at: assessment.closed_at,
-      group: assessment.group,
+      group: { id: entryGroup.id, name: entryGroup.name, description: entryGroup.description },
       traits: assessment.traits,
       members: members.map((m) => ({ ...m, is_self: m.teacher_id === auth.teacher.id })),
       my_ratings_given: myGiven.map((r) => ({
@@ -146,6 +172,7 @@ export async function GET(
       })),
       openVisibility,
       is_member: !!membership,
+      ...spectra,
     },
   });
 }

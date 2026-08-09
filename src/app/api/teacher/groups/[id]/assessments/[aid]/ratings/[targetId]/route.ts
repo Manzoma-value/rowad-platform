@@ -7,7 +7,8 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
-import { isValid100, type ScoresTuple } from "@/lib/rowad-assessment";
+import { isValid100, shouldArchiveRating, type ScoresTuple } from "@/lib/rowad-assessment";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export async function PUT(
       id: true,
       status: true,
       traits: { select: { position: true } },
-      target_groups: { select: { group: { select: { members: { select: { teacher_id: true } } } } } },
+      target_groups: { select: { group: { select: { id: true, members: { select: { teacher_id: true } } } } } },
     },
   });
   if (!assessment) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -40,12 +41,12 @@ export async function PUT(
     return NextResponse.json({ error: "Assessment is closed" }, { status: 409 });
   }
 
-  // Target must belong to one of this model's linked groups (not
-  // necessarily the URL group — a multi-group model pools everyone).
-  const targetIsInPool = assessment.target_groups.some((link) =>
-    link.group.members.some((m) => m.teacher_id === targetId),
-  );
-  if (!targetIsInPool) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  // Teachers rate only colleagues in the group they entered through. The
+  // same model may cover another cohort for shared spectra, but it never
+  // turns the two cohorts into one cross-rating pool.
+  const entryGroup = assessment.target_groups.find((link) => link.group.id === id);
+  const targetIsInMyGroup = entryGroup?.group.members.some((member) => member.teacher_id === targetId) ?? false;
+  if (!targetIsInMyGroup) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   let body: { scores?: unknown };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
@@ -59,29 +60,54 @@ export async function PUT(
     );
   }
 
-  const rating = await prisma.assessmentRating.upsert({
-    where: {
-      assessment_id_rater_teacher_id_target_teacher_id: {
-        assessment_id: aid,
-        rater_teacher_id: auth.teacher.id,
-        target_teacher_id: targetId,
+  const key = {
+    assessment_id: aid,
+    rater_teacher_id: auth.teacher.id,
+    target_teacher_id: targetId,
+  };
+  let historyArchived = false;
+
+  const rating = await prisma.$transaction(async (tx) => {
+    const existing = await tx.assessmentRating.findUnique({
+      where: { assessment_id_rater_teacher_id_target_teacher_id: key },
+      select: { scores: true, updated_at: true },
+    });
+
+    if (existing && shouldArchiveRating(existing.updated_at)) {
+      const archived = await tx.assessmentRatingRevision.createMany({
+        data: [{
+          ...key,
+          scores: existing.scores as Prisma.InputJsonValue,
+          replacement_scores: scores,
+          original_updated_at: existing.updated_at,
+        }],
+        skipDuplicates: true,
+      });
+      historyArchived = archived.count > 0;
+    }
+
+    if (existing) {
+      return tx.assessmentRating.update({
+        where: { assessment_id_rater_teacher_id_target_teacher_id: key },
+        data: { scores },
+        select: { target_teacher_id: true, scores: true, updated_at: true },
+      });
+    }
+
+    return tx.assessmentRating.create({
+      data: {
+        ...key,
+        scores,
+        // Legacy columns remain NOT NULL. Mirror the first five values only
+        // for schema compatibility; all application reads use `scores`.
+        s_lineage: scores[0] ?? 0,
+        s_atonement: scores[1] ?? 0,
+        s_awareness: scores[2] ?? 0,
+        s_zeal: scores[3] ?? 0,
+        s_distinct: scores[4] ?? 0,
       },
-    },
-    create: {
-      assessment_id: aid,
-      rater_teacher_id: auth.teacher.id,
-      target_teacher_id: targetId,
-      scores,
-      // Legacy columns are NOT NULL — mirror the first five entries (or 0)
-      // purely to satisfy the historical schema; the app never reads them.
-      s_lineage: scores[0] ?? 0,
-      s_atonement: scores[1] ?? 0,
-      s_awareness: scores[2] ?? 0,
-      s_zeal: scores[3] ?? 0,
-      s_distinct: scores[4] ?? 0,
-    },
-    update: { scores },
-    select: { target_teacher_id: true, scores: true, updated_at: true },
+      select: { target_teacher_id: true, scores: true, updated_at: true },
+    });
   });
 
   // Bump the assessment's updated_at so admin lists reorder when ratings stream in.
@@ -89,5 +115,5 @@ export async function PUT(
     where: { id: aid }, data: { updated_at: new Date() },
   });
 
-  return NextResponse.json({ rating });
+  return NextResponse.json({ rating, history_archived: historyArchived });
 }

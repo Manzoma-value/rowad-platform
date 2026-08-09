@@ -17,6 +17,7 @@ import {
 import {
   SlidersHorizontal, X, Search, Plus, Pencil, Download, Lock, Unlock,
   Trash2, Users2, ClipboardList, Target, GripVertical, Layers3, Sparkles, CheckSquare,
+  Globe2, History, ChevronLeft, ChevronRight, Activity,
 } from "lucide-react";
 
 // ── Types ──
@@ -32,9 +33,24 @@ type AssessmentRow = {
   _count: { ratings: number; traits: number };
 };
 
-type Trait = { id: string; position: number; label_ar: string; label_sq: string; statement_ar: string; statement_sq: string; color: string };
+type Trait = {
+  id: string; position: number; label_ar: string; label_sq: string;
+  statement_ar: string; statement_sq: string; color: string;
+  kind: "TARGET" | "EARLY_OBSERVATION";
+  objective_ar: string | null; objective_sq: string | null;
+};
 type Member = { teacher_id: string; profile: { id: string; full_name: string; email: string | null } };
 type RatingRow = { rater_teacher_id: string; target_teacher_id: string; scores: ScoresTuple; updated_at: string };
+type SpectrumAggregate = {
+  group_id: string | null; group_name: string; member_count: number;
+  rating_count: number; expected_count: number; completion_pct: number;
+  participating_raters: number; average: ScoresTuple | null;
+};
+type RatingRevision = {
+  id: string; rater_name: string; target_name: string;
+  scores: ScoresTuple; replacement_scores: ScoresTuple;
+  original_updated_at: string; archived_at: string;
+};
 type AssessmentFull = {
   id: string;
   title: string;
@@ -43,6 +59,9 @@ type AssessmentFull = {
   traits: Trait[];
   members: Member[];
   ratings: RatingRow[];
+  history_count: number;
+  group_spectra: SpectrumAggregate[];
+  overall_spectrum: SpectrumAggregate;
 };
 
 function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
@@ -50,7 +69,7 @@ function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.labe
 // Lead with the five official canonical trait colors, followed by extra
 // brand choices for fully custom trait sets.
 const SWATCHES = [
-  "#4F6B5A", "#F2B705", "#9AA3AC", "#B33A3A", "#1A1A1A",
+  "#1A1A1A", "#B33A3A", "#9AA3AC", "#F2EFE6", "#F2B705", "#2F6B5F", "#315C9B", "#70528F",
   "#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0",
 ];
 
@@ -85,7 +104,7 @@ const UI = {
     titleLbl: "عنوان النموذج",
     titlePh: "مثال: نموذج قياس السمات (المرحلة الأولى) — مارس 2026",
     groupsPickLbl: "المجموعات المستهدفة",
-    groupsPickSub: "كل الأعضاء في المجموعات المختارة سيقيّمون بعضهم بعضاً كمجموعة واحدة. الكل مُحدَّد افتراضياً.",
+    groupsPickSub: "كل مشرف يقيّم أعضاء مجموعته فقط، ثم يجمع النظام أطياف المجموعات في طيف عام واحد. الكل مُحدَّد افتراضياً.",
     scopeLbl: "نطاق التطبيق",
     scopeAll: "كل المجموعات",
     scopeAllSub: "تطبيق النموذج على جميع مجموعات المشرفين الحالية.",
@@ -130,6 +149,26 @@ const UI = {
     hideMatrix: "إخفاء المصفوفة",
     aggHead: "نتائج الأعضاء",
     aggSub: "السمة الجوهرية والرابطة لكل عضو، مبنيّة على متوسط كل القراءات التي تلقّاها.",
+    collectiveHead: "الأطياف الجماعية",
+    collectiveSub: "قراءة مستقلة لكل مجموعة، ثم قراءة عامة موزونة من جميع التقييمات الحالية داخل المجموعتين.",
+    overallSpectrum: "الطيف العام لكل المشرفين",
+    completion: "اكتمال التقييم",
+    submittedOf: (done: number, total: number) => `${done} من ${total} قراءة`,
+    noSpectrum: "يظهر الطيف عند وصول أول تقييم مكتمل.",
+    targetTrait: "سمة مستهدفة",
+    earlyTrait: "مؤشر ملاحظة مبكر",
+    objective: "المقصد",
+    historyHead: "سجل تغييرات التقييمات",
+    historySub: "يحفظ النظام القراءة السابقة تلقائياً عندما تُعدّل بعد مرور 24 ساعة، مع إظهار القراءة البديلة ووقت التغيير.",
+    showHistory: "عرض سجل التغييرات",
+    hideHistory: "إخفاء سجل التغييرات",
+    historyEmpty: "لا توجد تغييرات مؤرشفة بعد.",
+    before: "قبل",
+    after: "بعد",
+    changedBy: "المقيّم",
+    changedFor: "المقيّم له",
+    changedAt: "وقت التغيير",
+    pageOf: (page: number, pages: number) => `صفحة ${page} من ${pages}`,
     teacherSearch: "ابحث عن مشرف داخل هذا النموذج…",
     resultFilter: "تصفية حسب السمة الجوهرية",
     resultFilterAll: "كل السمات",
@@ -167,7 +206,7 @@ const UI = {
     titleLbl: "Titulli",
     titlePh: "Shembull: Modeli i Tipareve (Faza 1) — Mars 2026",
     groupsPickLbl: "Grupet e synuara",
-    groupsPickSub: "Të gjithë anëtarët e grupeve të zgjedhura do të vlerësojnë njëri-tjetrin si një grup i vetëm. Të gjitha janë të zgjedhura si parazgjedhje.",
+    groupsPickSub: "Çdo edukator vlerëson vetëm anëtarët e grupit të vet; sistemi më pas bashkon spektrat e grupeve në një spektër të përgjithshëm. Të gjitha janë të zgjedhura si parazgjedhje.",
     scopeLbl: "Shtrirja e modelit",
     scopeAll: "Të gjitha grupet",
     scopeAllSub: "Zbatoje modelin në të gjitha grupet aktuale të edukatorëve.",
@@ -212,6 +251,26 @@ const UI = {
     hideMatrix: "Fshih matricën",
     aggHead: "Rezultatet e Anëtarëve",
     aggSub: "Tipari thelbësor dhe ndërlidhës për secilin, bazuar në mesataren e leximeve.",
+    collectiveHead: "Spektrat e përbashkët",
+    collectiveSub: "Një lexim i veçantë për çdo grup dhe një lexim i përgjithshëm i peshuar nga të gjitha vlerësimet aktuale brenda dy grupeve.",
+    overallSpectrum: "Spektri i përgjithshëm i edukatorëve",
+    completion: "Përfundimi i vlerësimit",
+    submittedOf: (done: number, total: number) => `${done} nga ${total} lexime`,
+    noSpectrum: "Spektri shfaqet pas vlerësimit të parë të plotë.",
+    targetTrait: "Tipar i synuar",
+    earlyTrait: "Tregues i hershëm vëzhgimi",
+    objective: "Objektivi",
+    historyHead: "Historiku i ndryshimeve",
+    historySub: "Sistemi ruan automatikisht leximin e mëparshëm kur ndryshohet pas 24 orësh, bashkë me leximin e ri dhe kohën.",
+    showHistory: "Shfaq historikun",
+    hideHistory: "Fshih historikun",
+    historyEmpty: "Ende nuk ka ndryshime të arkivuara.",
+    before: "Para",
+    after: "Pas",
+    changedBy: "Vlerësuesi",
+    changedFor: "I vlerësuari",
+    changedAt: "Koha e ndryshimit",
+    pageOf: (page: number, pages: number) => `Faqja ${page} nga ${pages}`,
     teacherSearch: "Kërko një edukator brenda këtij modeli…",
     resultFilter: "Filtro sipas tiparit thelbësor",
     resultFilterAll: "Të gjitha tiparet",
@@ -246,6 +305,11 @@ export default function AssessmentsHubPage() {
   const [teacherSearch, setTeacherSearch] = useState("");
   const [traitFilter, setTraitFilter] = useState<number | null>(null);
   const [showMatrix, setShowMatrix] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyRows, setHistoryRows] = useState<RatingRevision[]>([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPages, setHistoryPages] = useState(1);
 
   const [dlg, setDlg] = useState<{ mode: "create" | "edit" } | null>(null);
   const [form, setForm] = useState<{ title: string; groupIds: string[]; traits: TraitDraft[] }>({ title: "", groupIds: [], traits: [] });
@@ -284,6 +348,9 @@ export default function AssessmentsHubPage() {
     setTeacherSearch("");
     setTraitFilter(null);
     setShowMatrix(false);
+    setShowHistory(false);
+    setHistoryRows([]);
+    setHistoryPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
@@ -324,7 +391,13 @@ export default function AssessmentsHubPage() {
     setForm({
       title: detail.title,
       groupIds: detail.groups.map((g) => g.id),
-      traits: detail.traits.map((t) => ({ label_ar: t.label_ar, label_sq: t.label_sq, statement_ar: t.statement_ar, statement_sq: t.statement_sq, color: t.color })),
+      traits: detail.traits.map((t) => ({
+        label_ar: t.label_ar, label_sq: t.label_sq,
+        statement_ar: t.statement_ar, statement_sq: t.statement_sq,
+        color: t.color, kind: t.kind,
+        objective_ar: t.objective_ar ?? undefined,
+        objective_sq: t.objective_sq ?? undefined,
+      })),
     });
     setDlgError("");
     setDlg({ mode: "edit" });
@@ -344,7 +417,11 @@ export default function AssessmentsHubPage() {
   function addTrait() {
     setForm((f) => ({
       ...f,
-      traits: [...f.traits, { label_ar: "", label_sq: "", statement_ar: "", statement_sq: "", color: SWATCHES[f.traits.length % SWATCHES.length] }],
+      traits: [...f.traits, {
+        label_ar: "", label_sq: "", statement_ar: "", statement_sq: "",
+        color: SWATCHES[f.traits.length % SWATCHES.length], kind: "TARGET",
+        objective_ar: "", objective_sq: "",
+      }],
     }));
   }
   function removeTrait(idx: number) {
@@ -465,6 +542,27 @@ export default function AssessmentsHubPage() {
 
   const ratingFor = (raterId: string, targetId: string) =>
     detail?.ratings.find((r) => r.rater_teacher_id === raterId && r.target_teacher_id === targetId);
+
+  const loadHistory = useCallback(async (page = 1) => {
+    if (!selectedId) return;
+    setHistoryLoading(true);
+    try {
+      const response = await fetch(`/api/school-admin/assessments/${selectedId}/history?page=${page}&limit=40`, { cache: "no-store" });
+      if (!response.ok) return;
+      const payload = await response.json();
+      setHistoryRows(payload?.revisions ?? []);
+      setHistoryPage(payload?.page ?? page);
+      setHistoryPages(payload?.pages ?? 1);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [selectedId]);
+
+  async function toggleHistoryPanel() {
+    const next = !showHistory;
+    setShowHistory(next);
+    if (next) await loadHistory(1);
+  }
 
   async function exportPdf() {
     if (!exportRef.current || !detail) return;
@@ -667,6 +765,58 @@ export default function AssessmentsHubPage() {
                 </div>
               </div>
 
+              <section className="am-collective">
+                <div className="am-collective-head">
+                  <div>
+                    <span><Globe2 size={14} />{T.collectiveHead}</span>
+                    <p>{T.collectiveSub}</p>
+                  </div>
+                  <strong>{detail.overall_spectrum.completion_pct}%</strong>
+                </div>
+                <div className="am-methodology-strip">
+                  {detail.traits.map((trait) => (
+                    <div key={trait.id}>
+                      <i style={{ background: trait.color }} />
+                      <span><strong>{traitLabel(trait, L)}</strong><small>{trait.kind === "EARLY_OBSERVATION" ? T.earlyTrait : T.targetTrait}</small></span>
+                      {(L === "ar" ? trait.objective_ar : trait.objective_sq) && <em>{T.objective}: {L === "ar" ? trait.objective_ar : trait.objective_sq}</em>}
+                    </div>
+                  ))}
+                </div>
+                <div className="am-collective-grid">
+                  {[{
+                    ...detail.overall_spectrum,
+                    group_name: T.overallSpectrum,
+                  }, ...detail.group_spectra].map((spectrum, spectrumIndex) => (
+                    <article className={`am-collective-card ${spectrum.group_id === null ? "overall" : ""}`} key={spectrum.group_id ?? "overall"}>
+                      <header>
+                        <div>
+                          <span>{spectrum.group_id === null ? <Globe2 size={13} /> : <Users2 size={13} />}</span>
+                          <strong>{spectrum.group_name}</strong>
+                        </div>
+                        <em>{spectrum.member_count} {T.matrixOf(spectrum.member_count).replace(/^\d+\s*/, "")}</em>
+                      </header>
+                      <div className="am-collective-progress">
+                        <div><span>{T.completion}</span><b>{spectrum.completion_pct}%</b></div>
+                        <i><span style={{ width: `${Math.min(100, spectrum.completion_pct)}%` }} /></i>
+                        <small>{T.submittedOf(spectrum.rating_count, spectrum.expected_count)}</small>
+                      </div>
+                      {spectrum.average ? (
+                        <TraitSpectrumPanel
+                          traits={detail.traits.map((trait, index) => ({
+                            label: traitLabel(trait, L),
+                            color: trait.color,
+                            pct: spectrum.average?.[index] ?? 0,
+                          }))}
+                          seed={seedFromString(`${detail.id}:${spectrum.group_id ?? "overall"}:${spectrumIndex}`)}
+                          lang={L}
+                          compact
+                        />
+                      ) : <div className="am-collective-empty">{T.noSpectrum}</div>}
+                    </article>
+                  ))}
+                </div>
+              </section>
+
               {visibleAggregation.length === 0 ? (
                 <div className="am-empty">{T.noMembersMatch}</div>
               ) : (
@@ -779,6 +929,50 @@ export default function AssessmentsHubPage() {
                           </table>
                         </div>
                       </>
+                    )}
+                  </section>
+
+                  <section className="am-sub am-history">
+                    <div className="am-history-head">
+                      <div>
+                        <h3><History size={15} />{T.historyHead}<span>{detail.history_count}</span></h3>
+                        <p>{T.historySub}</p>
+                      </div>
+                      <button className="am-matrix-toggle" onClick={toggleHistoryPanel}>
+                        <Activity size={13} />
+                        {showHistory ? T.hideHistory : T.showHistory}
+                      </button>
+                    </div>
+                    {showHistory && (
+                      historyLoading ? <MandalaLoader compact /> : historyRows.length === 0 ? (
+                        <div className="am-collective-empty">{T.historyEmpty}</div>
+                      ) : (
+                        <>
+                          <div className="am-table-wrap">
+                            <table className="am-history-table">
+                              <thead><tr>
+                                <th>{T.changedBy}</th><th>{T.changedFor}</th><th>{T.before}</th><th>{T.after}</th><th>{T.changedAt}</th>
+                              </tr></thead>
+                              <tbody>
+                                {historyRows.map((revision) => (
+                                  <tr key={revision.id}>
+                                    <td className="am-name-cell">{revision.rater_name}</td>
+                                    <td className="am-name-cell">{revision.target_name}</td>
+                                    <td><div className="am-history-scores">{revision.scores.map((score, index) => <span key={index} style={{ borderColor: detail.traits[index]?.color }}>{score}</span>)}</div></td>
+                                    <td><div className="am-history-scores after">{revision.replacement_scores.map((score, index) => <span key={index} style={{ borderColor: detail.traits[index]?.color }}>{score}</span>)}</div></td>
+                                    <td><time>{new Intl.DateTimeFormat(L === "ar" ? "ar-SA" : "sq-AL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(revision.archived_at))}</time></td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="am-history-pages">
+                            <button disabled={historyPage <= 1 || historyLoading} onClick={() => loadHistory(historyPage - 1)}><ChevronRight size={14} /></button>
+                            <span>{T.pageOf(historyPage, historyPages)}</span>
+                            <button disabled={historyPage >= historyPages || historyLoading} onClick={() => loadHistory(historyPage + 1)}><ChevronLeft size={14} /></button>
+                          </div>
+                        </>
+                      )
                     )}
                   </section>
                 </>
@@ -908,6 +1102,28 @@ export default function AssessmentsHubPage() {
                                 value={t.statement_sq}
                                 onChange={(e) => updateTrait(i, { statement_sq: e.target.value })}
                                 rows={2}
+                              />
+                            </div>
+                            <div className="am-trait-meta">
+                              <select
+                                value={t.kind ?? "TARGET"}
+                                onChange={(event) => updateTrait(i, { kind: event.target.value as "TARGET" | "EARLY_OBSERVATION" })}
+                              >
+                                <option value="TARGET">{T.targetTrait}</option>
+                                <option value="EARLY_OBSERVATION">{T.earlyTrait}</option>
+                              </select>
+                              <input
+                                className="am-trait-input"
+                                placeholder={`${T.objective} (عربي)`}
+                                value={t.objective_ar ?? ""}
+                                onChange={(event) => updateTrait(i, { objective_ar: event.target.value })}
+                                dir="rtl"
+                              />
+                              <input
+                                className="am-trait-input"
+                                placeholder={`${T.objective} (Shqip)`}
+                                value={t.objective_sq ?? ""}
+                                onChange={(event) => updateTrait(i, { objective_sq: event.target.value })}
                               />
                             </div>
                           </div>
@@ -1110,6 +1326,36 @@ const styles = `
   .am-trait-chip:hover { border-color:rgba(184,160,130,.55); }
   .am-trait-chip.active { border-color:transparent; color:#FFFBF5; font-weight:800; }
 
+  .am-collective { margin:4px 0 24px; padding:18px; border:1px solid rgba(107,30,45,.18); border-radius:20px; background:linear-gradient(145deg,#F1EBE2,#FFFBF5 48%,#EFEAE0); box-shadow:0 14px 32px rgba(50,16,26,.07); }
+  .am-collective-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; }
+  .am-collective-head>div>span { display:flex; align-items:center; gap:7px; color:#4A0E1C; font-family:var(--font-head); font-size:14px; font-weight:700; }
+  .am-collective-head>div>span svg { color:#8F765B; }
+  .am-collective-head p { max-width:720px; margin:5px 0 0; color:#655B53; font-size:11.5px; font-weight:700; line-height:1.75; }
+  .am-collective-head>strong { flex:none; min-width:64px; border:1px solid rgba(107,30,45,.18); border-radius:14px; background:#FFFBF5; padding:8px 12px; color:#6B1E2D; text-align:center; font:900 16px ui-monospace,monospace; }
+  .am-methodology-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:7px; margin-bottom:13px; }
+  .am-methodology-strip>div { display:grid; grid-template-columns:13px minmax(0,1fr); align-items:center; gap:7px; min-width:0; border:1px solid rgba(184,160,130,.24); border-radius:11px; background:rgba(255,255,255,.68); padding:8px; }
+  .am-methodology-strip i { width:12px; height:24px; border:1px solid rgba(26,26,26,.2); border-radius:5px; }
+  .am-methodology-strip span { min-width:0; }
+  .am-methodology-strip strong,.am-methodology-strip small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .am-methodology-strip strong { color:#32101A; font-size:10.5px; }
+  .am-methodology-strip small { color:#8F765B; font-size:8.5px; font-weight:800; }
+  .am-methodology-strip em { grid-column:2; margin-top:-4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#655B53; font-size:8.5px; font-style:normal; font-weight:700; }
+  .am-collective-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr)); gap:12px; }
+  .am-collective-card { min-width:0; overflow:hidden; border:1px solid rgba(184,160,130,.30); border-radius:18px; background:#FFFBF5; padding:13px; }
+  .am-collective-card.overall { border-color:rgba(107,30,45,.32); box-shadow:inset 0 3px 0 #6B1E2D; }
+  .am-collective-card>header { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px; }
+  .am-collective-card>header>div { display:flex; align-items:center; gap:7px; min-width:0; }
+  .am-collective-card>header>div>span { display:grid; place-items:center; width:27px; height:27px; border-radius:9px; background:#EFEAE0; color:#6B1E2D; }
+  .am-collective-card>header strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-size:12.5px; }
+  .am-collective-card>header em { flex:none; font-style:normal; color:#8F765B; font-size:10px; font-weight:800; }
+  .am-collective-progress { margin-bottom:10px; padding:9px 10px; border-radius:12px; background:#F7F3EB; }
+  .am-collective-progress>div { display:flex; justify-content:space-between; gap:8px; color:#655B53; font-size:10px; font-weight:800; }
+  .am-collective-progress>div b { color:#6B1E2D; }
+  .am-collective-progress>i { display:block; height:6px; margin:6px 0; overflow:hidden; border-radius:999px; background:#D9C9B0; }
+  .am-collective-progress>i span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#8F765B,#6B1E2D); }
+  .am-collective-progress small { color:#796A62; font-size:9.5px; font-weight:700; }
+  .am-collective-empty { display:grid; place-items:center; min-height:82px; border:1px dashed rgba(184,160,130,.32); border-radius:14px; background:#F7F3EB; padding:15px; color:#796A62; text-align:center; font-size:11.5px; font-weight:700; }
+
   .am-sub { margin-top:20px; }
   .am-sub-head { margin-bottom:11px; }
   .am-sub-head h3 { margin:0 0 4px; font-family:var(--font-head); font-size:14px; font-weight:700; color:#1A1A1A; }
@@ -1139,6 +1385,24 @@ const styles = `
 
   .am-matrix-toggle { display:inline-flex; align-items:center; gap:7px; background:rgba(184,160,130,.10); border:1px solid rgba(184,160,130,.26); color:#6B1E2D; padding:9px 16px; border-radius:12px; font:800 12px 'Cairo',sans-serif; cursor:pointer; transition:all .16s ease; }
   .am-matrix-toggle:hover { background:rgba(184,160,130,.18); }
+
+  .am-history { border-top:1px solid rgba(184,160,130,.22); padding-top:18px; }
+  .am-history-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:12px; }
+  .am-history-head h3 { display:flex; align-items:center; gap:7px; margin:0; color:#32101A; font-family:var(--font-head); font-size:14px; }
+  .am-history-head h3 svg { color:#8F765B; }
+  .am-history-head h3 span { border-radius:999px; background:rgba(107,30,45,.09); padding:2px 8px; color:#6B1E2D; font:900 10px ui-monospace,monospace; }
+  .am-history-head p { max-width:720px; margin:5px 0 0; color:#796A62; font-size:11.5px; font-weight:700; line-height:1.7; }
+  .am-history-table { width:100%; border-collapse:collapse; min-width:850px; }
+  .am-history-table th { padding:9px; border-bottom:1px solid rgba(184,160,130,.25); background:#EFEAE0; color:#6B1E2D; font-size:10.5px; white-space:nowrap; }
+  .am-history-table td { padding:9px; border-bottom:1px solid rgba(26,26,26,.05); text-align:center; font-size:11px; }
+  .am-history-table time { color:#655B53; font-weight:700; white-space:nowrap; }
+  .am-history-scores { display:flex; justify-content:center; gap:3px; flex-wrap:wrap; min-width:190px; }
+  .am-history-scores span { min-width:23px; border:1px solid; border-radius:6px; background:#FFFBF5; padding:2px 4px; color:#32101A; font:800 10px ui-monospace,monospace; }
+  .am-history-scores.after span { background:#F7F3EB; }
+  .am-history-pages { display:flex; justify-content:center; align-items:center; gap:10px; margin-top:10px; }
+  .am-history-pages button { display:grid; place-items:center; width:32px; height:32px; border:1px solid rgba(184,160,130,.3); border-radius:10px; background:#FFF; color:#6B1E2D; cursor:pointer; }
+  .am-history-pages button:disabled { opacity:.4; cursor:not-allowed; }
+  .am-history-pages span { color:#655B53; font-size:11px; font-weight:800; }
 
   .am-table-wrap { overflow-x:auto; border:1px solid rgba(184,160,130,.18); border-radius:14px; background:#FFFBF5; }
   .am-table, .am-matrix { width:100%; border-collapse:collapse; }
@@ -1205,6 +1469,8 @@ const styles = `
   .am-trait-label { flex:1; min-width:0; }
   .am-trait-statement { resize:vertical; min-height:44px; line-height:1.5; }
   .am-trait-statements { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .am-trait-meta { display:grid; grid-template-columns:minmax(160px,.8fr) repeat(2,minmax(0,1fr)); gap:8px; }
+  .am-trait-meta select { border:1.5px solid rgba(184,160,130,.26); border-radius:9px; background:#FBF8F1; padding:7px 10px; color:#4A0E1C; font:700 11.5px 'Cairo',sans-serif; outline:none; }
   .am-trait-remove { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:rgba(107,30,45,.06); border:1px solid rgba(107,30,45,.20); color:#6B1E2D; cursor:pointer; flex-shrink:0; transition:background .16s ease; }
   .am-trait-remove:hover { background:rgba(107,30,45,.14); }
   .am-add-trait { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; background:rgba(184,160,130,.10); border:1px dashed rgba(184,160,130,.4); border-radius:11px; padding:8px 16px; color:#6B1E2D; font:700 12px 'Cairo',sans-serif; cursor:pointer; transition:background .16s ease; }
@@ -1250,7 +1516,8 @@ const styles = `
     .am-dlg { max-height:100dvh; height:100dvh; border:0; border-radius:0; }
     .am-dlg-head,.am-dlg-body,.am-dlg-actions { padding-inline:15px; }
     .am-form-section { grid-template-columns:1fr; padding:13px; }
-    .am-scope-grid,.am-trait-statements { grid-template-columns:1fr; }
+    .am-scope-grid,.am-trait-statements,.am-trait-meta { grid-template-columns:1fr; }
+    .am-history-head { flex-direction:column; }
     .am-trait-row-head { flex-wrap:wrap; }
     .am-trait-label { flex-basis:calc(50% - 38px); }
   }
@@ -1301,6 +1568,17 @@ const styles = `
   .am-table-wrap { background:#FFFDF9; border-color:rgba(107,30,45,.16); }
   .am-table th, .am-matrix th { background:#EFE2D1; color:#4A0E1C; border-bottom-color:rgba(107,30,45,.18); }
   .am-name-cell { background:#F7F0E5; color:#32101A; }
+  @media (min-width:1001px) {
+    .am-layout { display:flex; flex-direction:column; gap:14px; }
+    .am-side { width:100%; min-height:0; }
+    .am-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px; }
+    .am-collective-card.overall { grid-column:1 / -1; }
+  }
   @media (max-width:1000px) { .am-layout { grid-template-columns:minmax(0,1fr); } }
-  @media (max-width:700px) { .am-detail { padding:16px; } .am-side:before { margin-inline:4px; } }
+  @media (max-width:700px) {
+    .am-hero { grid-template-columns:1fr; min-height:auto; }
+    .am-hero-metrics { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .am-detail { padding:16px; }
+    .am-side:before { margin-inline:4px; }
+  }
 `;

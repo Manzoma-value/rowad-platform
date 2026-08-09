@@ -66,6 +66,9 @@ function normalizeTraits(input: unknown): TraitDraft[] | null {
       label_ar: label_ar.slice(0, 80), label_sq: label_sq.slice(0, 80),
       statement_ar: statement_ar.slice(0, 400), statement_sq: statement_sq.slice(0, 400),
       color: /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#6B1E2D",
+      kind: t.kind === "EARLY_OBSERVATION" ? "EARLY_OBSERVATION" : "TARGET",
+      objective_ar: String(t.objective_ar ?? "").trim().slice(0, 120) || undefined,
+      objective_sq: String(t.objective_sq ?? "").trim().slice(0, 120) || undefined,
     });
   }
   return traits;

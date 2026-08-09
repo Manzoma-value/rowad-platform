@@ -1,42 +1,65 @@
-// Rowad assessment — peer-scoring "distribute 100 points" methodology.
-// Traits are now authored per assessment model by the admin (see
-// AssessmentTrait in schema.prisma); the five below are only the
-// *starting template* offered when creating a new model, preserved
-// exactly as the original canonical Rowad First-Stage set so existing
-// models keep behaving identically after the migration to custom traits.
+// Rowad first-stage assessment — peer scoring through a 100-point relative
+// distribution. The canonical source defines five formation targets and
+// three additional early-observation traits. Admins may still author custom
+// models, but every new first-stage model starts from this exact eight-trait
+// bilingual reference set.
 
-export type TraitKey = "lineage" | "atonement" | "distinct" | "zeal" | "awareness";
+export type TraitKey =
+  | "awareness"
+  | "zeal"
+  | "distinct"
+  | "lineage"
+  | "atonement"
+  | "resilience"
+  | "faith_brotherhood"
+  | "maturity";
+
+export type TraitKind = "TARGET" | "EARLY_OBSERVATION";
 
 export const TRAIT_KEYS: readonly TraitKey[] = [
-  "lineage", "atonement", "distinct", "zeal", "awareness",
+  "awareness", "zeal", "distinct", "lineage", "atonement",
+  "resilience", "faith_brotherhood", "maturity",
 ] as const;
 
-// The canonical five — kept in the exact methodology order used by the
-// statements and saved score arrays, with the official identity palette.
-export const DEFAULT_TRAITS: { key: TraitKey; ar: string; sq: string; color: string }[] = [
-  // A muted evergreen keeps the first trait distinct from the paper surfaces
-  // used throughout the spectrum panel while remaining formal and on-brand.
-  { key: "lineage",   ar: "الفرد",     sq: "Individi",  color: "#4F6B5A" },
-  { key: "atonement", ar: "الكفارات", sq: "Shlyerja",  color: "#F2B705" },
-  { key: "distinct",  ar: "المميز",    sq: "Dallimi",   color: "#9AA3AC" },
-  { key: "zeal",      ar: "الحمية",    sq: "Zelli",     color: "#B33A3A" },
-  { key: "awareness", ar: "الدراية",   sq: "Drajah",    color: "#1A1A1A" },
+export const DEFAULT_TRAITS: {
+  key: TraitKey;
+  ar: string;
+  sq: string;
+  color: string;
+  kind: TraitKind;
+  objective_ar: string;
+  objective_sq: string;
+}[] = [
+  { key: "awareness", ar: "الدراية", sq: "Dituria", color: "#1A1A1A", kind: "TARGET", objective_ar: "حفظ الدين", objective_sq: "Ruajtja e fesë" },
+  { key: "zeal", ar: "الحمية", sq: "Vendosmëria", color: "#B33A3A", kind: "TARGET", objective_ar: "حفظ النفس", objective_sq: "Ruajtja e jetës" },
+  { key: "distinct", ar: "المميز", sq: "Dallueshmëria", color: "#9AA3AC", kind: "TARGET", objective_ar: "حفظ العقل", objective_sq: "Ruajtja e mendjes" },
+  { key: "lineage", ar: "الفرد", sq: "Individi", color: "#F2EFE6", kind: "TARGET", objective_ar: "حفظ النسل", objective_sq: "Ruajtja e pasardhësve" },
+  { key: "atonement", ar: "الكفارات", sq: "Shlyerjet", color: "#F2B705", kind: "TARGET", objective_ar: "حفظ المال", objective_sq: "Ruajtja e pasurisë" },
+  { key: "resilience", ar: "الصمود", sq: "Qëndresa", color: "#2F6B5F", kind: "EARLY_OBSERVATION", objective_ar: "حفظ النفس", objective_sq: "Ruajtja e jetës" },
+  { key: "faith_brotherhood", ar: "الأخوة الإيمانية", sq: "Vëllazëria e besimit", color: "#315C9B", kind: "EARLY_OBSERVATION", objective_ar: "حفظ النسل", objective_sq: "Ruajtja e pasardhësve" },
+  { key: "maturity", ar: "الرشيد", sq: "Pjekuria e gjykimit", color: "#70528F", kind: "EARLY_OBSERVATION", objective_ar: "حفظ العقل", objective_sq: "Ruajtja e mendjes" },
 ];
 
 export const DEFAULT_STATEMENTS = {
   ar: [
-    "أعتبر نفسي فردًا يحمل واجبًا، يلتزم به بوصفه أمانة الاستخلاف، ويؤديه تجاه النسل والأمة.",
-    "أربط التقصير في واجبي بما شرعه الله من تكفير وجبر للتقصير.",
-    "لدي عقلية تميز بين الأشياء في ظل تصوري كرائد.",
-    "تأبى نفسي الضيم عند الاعتداء على عرضي أو مالي أو نسلي أو سمعتي أو حقوقي.",
     "أستخدم حدسي للوعي بالأشياء، وأراجع قواعد الذكاء بما يوافق الفطرة.",
+    "تأبى نفسي الضيم عند الاعتداء على عرضي أو مالي أو وطني أو سمعتي أو حقوقي.",
+    "لدي عقلية تميز بين الأشياء في ظل تصوري كرائد.",
+    "أعتبر نفسي فردًا يحمل واجبًا، يلتزم به بوصفه أمانة الاستخلاف، ويؤديه بولاء لوطني وأمتي.",
+    "أربط التقصير في واجبي بما شرعه الله من تكفيرٍ وجبرٍ للتقصير.",
+    "قد تهزّني الحوادث ولكن لا تمحوني؛ بل أنهض وأواصل طريقي.",
+    "أبادر إلى مؤازرة إخوتي في الإيمان والتعاون معهم بما أستطيع، ولا أترك المحتاج منهم للعزلة.",
+    "أُصيب في دورتي الريادية الصوابَ الكامل اليقيني الذي لا شك فيه.",
   ],
   sq: [
-    "E konsideroj veten si person që mban një detyrim, i përkushtohet atij si një amanet trashëgimie, dhe e përmbush ndaj pasardhësisë dhe umetit.",
-    "E lidh mangësinë në detyrën time me atë që Allahu e ka përcaktuar si shlyerje dhe ndreqje për mangësinë.",
-    "Kam një mendje që dallon gjërat nën konceptin tim si pionier (rowad).",
-    "Shpirti im refuzon padrejtësinë kur cenohet nderi, pasuria, pasardhësia, reputacioni ose të drejtat e mia.",
-    "E përdor intuitën time për vetëdijësim ndaj gjërave, dhe i rishikoj rregullat e intelektit në përputhje me natyrën njerëzore (fitra).",
+    "Përdor intuitën time për të kuptuar gjërat dhe i rishikoj rregullat e mendjes në përputhje me natyrshmërinë e krijimit (fitren).",
+    "Vetja ime nuk e pranon padrejtësinë kur cenohet nderi im, pasuria ime, atdheu im, reputacioni im ose të drejtat e mia.",
+    "Kam një mendësi që dallon mes gjërave, në dritën e konceptimit tim si pionier (raid).",
+    "E konsideroj veten një individ që mbart një detyrë, e cila i përmbahet asaj si amanet i mëkëmbësisë (istihlaf) dhe e kryen me besnikëri ndaj atdheut dhe ummetit tim.",
+    "Mangësinë në detyrën time e lidh me atë që Allahu ka caktuar si shlyerje dhe si kompensim për mangësinë.",
+    "Ngjarjet mund të më tronditin, por nuk më shuajnë; përkundrazi, ngrihem dhe vazhdoj rrugën time.",
+    "Marr nismën për t’i përkrahur vëllezërit e mi në besim dhe për të bashkëpunuar me ta sipas mundësive të mia, dhe nuk e lë në izolim atë prej tyre që ka nevojë.",
+    "Në ciklin tim udhëheqës e godas të drejtën e plotë dhe të sigurt, në të cilën nuk ka dyshim.",
   ],
 } as const;
 
@@ -49,6 +72,9 @@ export function defaultTraitDrafts(): TraitDraft[] {
     statement_ar: DEFAULT_STATEMENTS.ar[i],
     statement_sq: DEFAULT_STATEMENTS.sq[i],
     color: t.color,
+    kind: t.kind,
+    objective_ar: t.objective_ar,
+    objective_sq: t.objective_sq,
   }));
 }
 
@@ -58,6 +84,9 @@ export type TraitDraft = {
   statement_ar: string;
   statement_sq: string;
   color: string;
+  kind?: TraitKind;
+  objective_ar?: string;
+  objective_sq?: string;
 };
 
 type CanonicalizableTrait = {
@@ -67,10 +96,14 @@ type CanonicalizableTrait = {
   statement_ar: string;
   statement_sq: string;
   color: string;
+  kind?: TraitKind;
+  objective_ar?: string | null;
+  objective_sq?: string | null;
 };
 
 const CANONICAL_AR_LABELS = new Set([
   "الفرد", "النسل", "الكفارات", "المميز", "التمييز", "الحمية", "الدراية",
+  "الصمود", "الأخوة الإيمانية", "الاخوة الإيمانية", "الرشيد",
 ]);
 
 /**
@@ -94,6 +127,9 @@ export function canonicalizeDefaultTraits<T extends CanonicalizableTrait>(traits
     statement_ar: DEFAULT_STATEMENTS.ar[index],
     statement_sq: DEFAULT_STATEMENTS.sq[index],
     color: DEFAULT_TRAITS[index].color,
+    kind: DEFAULT_TRAITS[index].kind,
+    objective_ar: DEFAULT_TRAITS[index].objective_ar,
+    objective_sq: DEFAULT_TRAITS[index].objective_sq,
   }));
 }
 
@@ -153,6 +189,12 @@ export function isValid100(scores: ScoresTuple, expectedLength?: number): boolea
   if (scores.length === 0) return false;
   if (scores.some((s) => !Number.isInteger(s) || s < 0 || s > 100)) return false;
   return scores.reduce((a, b) => a + b, 0) === 100;
+}
+
+export const RATING_HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+export function shouldArchiveRating(previousUpdatedAt: Date, now = new Date()): boolean {
+  return now.getTime() - previousUpdatedAt.getTime() >= RATING_HISTORY_WINDOW_MS;
 }
 
 // UI string bundle — separated from the components so the API can also

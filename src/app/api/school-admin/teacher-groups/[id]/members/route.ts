@@ -6,6 +6,7 @@ import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+const GROUP_CAPACITY = 30;
 
 export async function POST(
   req: Request,
@@ -21,21 +22,32 @@ export async function POST(
   if (teacher_ids.length === 0) return NextResponse.json({ error: "teacher_ids required" }, { status: 400 });
 
   const group = await prisma.teacherGroup.findFirst({
-    where: { id, school_id: auth.school.id }, select: { id: true },
+    where: { id, school_id: auth.school.id }, select: { id: true, _count: { select: { members: true } } },
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Only teachers in THIS school may be added, and only those who are active.
+  // The first-stage deployment uses two distinct cohorts of 30. A teacher
+  // belongs to one cohort only, keeping peer scoring and its denominator
+  // unambiguous.
   const valid = await prisma.teacher.findMany({
     where: {
       id: { in: teacher_ids },
       school_id: auth.school.id,
       onboarding_status: "ACTIVE",
+      group_memberships: { none: {} },
     },
     select: { id: true },
   });
 
   if (valid.length === 0) return NextResponse.json({ added: 0 });
+
+  const available = Math.max(0, GROUP_CAPACITY - group._count.members);
+  if (valid.length > available) {
+    return NextResponse.json(
+      { error: "Group capacity is 30 teachers", capacity: GROUP_CAPACITY, available },
+      { status: 409 },
+    );
+  }
 
   await prisma.teacherGroupMember.createMany({
     data: valid.map((t) => ({ group_id: id, teacher_id: t.id })),
@@ -43,7 +55,7 @@ export async function POST(
   });
   // bump updated_at on the group so admin list reorders correctly
   await prisma.teacherGroup.update({ where: { id }, data: { updated_at: new Date() } });
-  return NextResponse.json({ added: valid.length });
+  return NextResponse.json({ added: valid.length, capacity: GROUP_CAPACITY, remaining: available - valid.length });
 }
 
 export async function DELETE(

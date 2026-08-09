@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import type { TraitDraft } from "@/lib/rowad-assessment";
+import { buildAssessmentSpectra } from "@/lib/assessment-aggregates";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,11 @@ export async function GET(
       closed_at: true,
       traits: {
         orderBy: { position: "asc" },
-        select: { id: true, position: true, label_ar: true, label_sq: true, statement_ar: true, statement_sq: true, color: true },
+        select: {
+          id: true, position: true, label_ar: true, label_sq: true,
+          statement_ar: true, statement_sq: true, color: true,
+          kind: true, objective_ar: true, objective_sq: true,
+        },
       },
       target_groups: {
         select: {
@@ -59,14 +64,32 @@ export async function GET(
   });
   if (!assessment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const historyCount = await prisma.assessmentRatingRevision.count({
+    where: { assessment_id: aid },
+  });
+
   const memberMap = new Map<string, { teacher_id: string; profile: { id: string; full_name: string; email: string | null } }>();
-  const groups: { id: string; name: string }[] = [];
+  const groups: { id: string; name: string; member_ids: string[] }[] = [];
   for (const link of assessment.target_groups) {
-    groups.push({ id: link.group.id, name: link.group.name });
+    groups.push({
+      id: link.group.id,
+      name: link.group.name,
+      member_ids: link.group.members.map((member) => member.teacher.id),
+    });
     for (const m of link.group.members) {
       memberMap.set(m.teacher.id, { teacher_id: m.teacher.id, profile: m.teacher.profile });
     }
   }
+
+  const spectra = buildAssessmentSpectra(
+    groups,
+    assessment.ratings.map((rating) => ({
+      rater_teacher_id: rating.rater_teacher_id,
+      target_teacher_id: rating.target_teacher_id,
+      scores: rating.scores as number[],
+    })),
+    assessment.traits.length,
+  );
 
   return NextResponse.json({
     assessment: {
@@ -76,10 +99,12 @@ export async function GET(
       created_at: assessment.created_at,
       updated_at: assessment.updated_at,
       closed_at: assessment.closed_at,
-      groups,
+      groups: groups.map((group) => ({ id: group.id, name: group.name })),
       traits: assessment.traits,
       members: Array.from(memberMap.values()),
       ratings: assessment.ratings,
+      history_count: historyCount,
+      ...spectra,
     },
   });
 }
@@ -100,6 +125,9 @@ function normalizeTraits(input: unknown): TraitDraft[] | null {
       label_ar: label_ar.slice(0, 80), label_sq: label_sq.slice(0, 80),
       statement_ar: statement_ar.slice(0, 400), statement_sq: statement_sq.slice(0, 400),
       color: /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#6B1E2D",
+      kind: t.kind === "EARLY_OBSERVATION" ? "EARLY_OBSERVATION" : "TARGET",
+      objective_ar: String(t.objective_ar ?? "").trim().slice(0, 120) || undefined,
+      objective_sq: String(t.objective_sq ?? "").trim().slice(0, 120) || undefined,
     });
   }
   return traits;

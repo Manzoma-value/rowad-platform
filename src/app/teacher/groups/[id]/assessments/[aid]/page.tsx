@@ -13,12 +13,22 @@ import {
   type ScoresTuple,
 } from "@/lib/rowad-assessment";
 
-type Trait = { position: number; label_ar: string; label_sq: string; statement_ar: string; statement_sq: string; color: string };
+type Trait = {
+  position: number; label_ar: string; label_sq: string;
+  statement_ar: string; statement_sq: string; color: string;
+  kind: "TARGET" | "EARLY_OBSERVATION";
+  objective_ar: string | null; objective_sq: string | null;
+};
 type Member = { teacher_id: string; profile: { full_name: string }; is_self: boolean };
 type Given  = { target_teacher_id: string; scores: ScoresTuple; updated_at: string };
 type Received = {
   rater_teacher_id: string; rater_name: string; is_self: boolean;
   scores: ScoresTuple; updated_at: string;
+};
+type SpectrumAggregate = {
+  group_id: string | null; group_name: string; member_count: number;
+  rating_count: number; expected_count: number; completion_pct: number;
+  participating_raters: number; average: ScoresTuple | null;
 };
 type AssessmentData = {
   id: string; title: string; status: "OPEN" | "CLOSED";
@@ -27,6 +37,8 @@ type AssessmentData = {
   members: Member[];
   my_ratings_given: Given[];
   my_ratings_received: Received[];
+  group_spectra: SpectrumAggregate[];
+  overall_spectrum: SpectrumAggregate;
 };
 
 const UI = {
@@ -46,6 +58,13 @@ const UI = {
     averageOf: (n: number) => `متوسط ${n} تقييم${n === 1 ? "" : "ات"}`,
     raterCol: "المُقَيِّم",
     tableHelp: "كل صف يمثّل تقييم شخص لك. الصف العلوي هو متوسط الكل.",
+    collectiveTitle: "طيف المجموعات",
+    collectiveSub: "هذه قراءة جماعية حيّة؛ ترى طيف مجموعتك، طيف المجموعة الأخرى، والطيف العام دون كشف تقييمات الأفراد.",
+    overall: "الطيف العام لكل المشرفين",
+    completion: "اكتمال القراءات",
+    ratingsOf: (done: number, total: number) => `${done} من ${total}`,
+    noCollective: "سيظهر الطيف بعد وصول أول تقييم مكتمل.",
+    earlyNote: "السمات الثلاث الأخيرة مؤشرات ملاحظة مبكرة تُنمّى تدريجياً وليست حكماً نهائياً.",
   },
   sq: {
     back: "← Kthehu te grupi",
@@ -63,6 +82,13 @@ const UI = {
     averageOf: (n: number) => `Mesatare e ${n} vlerësime`,
     raterCol: "Vlerësuesi",
     tableHelp: "Çdo rresht është një vlerësim që dikush ka dhënë për ty. Rreshti i parë është mesatarja.",
+    collectiveTitle: "Spektri i grupeve",
+    collectiveSub: "Ky është një lexim i përbashkët në kohë reale: spektri i grupit tënd, grupit tjetër dhe spektri i përgjithshëm pa zbuluar vlerësimet individuale.",
+    overall: "Spektri i përgjithshëm i edukatorëve",
+    completion: "Përfundimi i leximeve",
+    ratingsOf: (done: number, total: number) => `${done} nga ${total}`,
+    noCollective: "Spektri shfaqet pas vlerësimit të parë të plotë.",
+    earlyNote: "Tre tiparet e fundit janë tregues të hershëm vëzhgimi që zhvillohen gradualisht, jo gjykime përfundimtare.",
   },
 } as const;
 
@@ -232,6 +258,40 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         </div>
       </section>
 
+      <section className="ap-section ap-collective">
+        <div className="ap-collective-head">
+          <div>
+            <span>{T.collectiveTitle}</span>
+            <h2>{data.title}</h2>
+            <p>{T.collectiveSub}</p>
+          </div>
+          <strong>{data.overall_spectrum.completion_pct}%</strong>
+        </div>
+        <div className="ap-collective-note">{T.earlyNote}</div>
+        <div className="ap-collective-grid">
+          {[{ ...data.overall_spectrum, group_name: T.overall }, ...data.group_spectra].map((spectrum, index) => (
+            <article className={`ap-collective-card ${spectrum.group_id === id ? "mine" : ""} ${spectrum.group_id === null ? "overall" : ""}`} key={spectrum.group_id ?? "overall"}>
+              <header>
+                <div><strong>{spectrum.group_name}</strong><span>{spectrum.member_count}</span></div>
+                <em>{T.completion} · {spectrum.completion_pct}%</em>
+              </header>
+              <div className="ap-collective-track"><span style={{ width: `${Math.min(100, spectrum.completion_pct)}%` }} /></div>
+              <small>{T.ratingsOf(spectrum.rating_count, spectrum.expected_count)}</small>
+              {spectrum.average ? (
+                <TraitSpectrumPanel
+                  traits={traits.map((trait, traitIndex) => ({
+                    label: traitLabel(trait, L), color: trait.color, pct: spectrum.average?.[traitIndex] ?? 0,
+                  }))}
+                  seed={seedFromString(`${aid}:${spectrum.group_id ?? "overall"}:${index}`)}
+                  lang={L}
+                  compact
+                />
+              ) : <div className="ap-collective-empty">{T.noCollective}</div>}
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* ── Focused carousel — one target at a time, self ("انا") first. ── */}
       {(() => {
         const orderedMembers = membersSelfFirst(data.members);
@@ -385,6 +445,28 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-section { margin-top: 28px; }
         .ap-section-h { font-size: 18px; font-weight: 900; color: #32101A; margin: 0 0 6px; }
         .ap-section-sub { font-size: 13px; color: #655B53; margin: 0 0 14px; line-height: 1.85; }
+
+        .ap-collective { margin: 0 0 24px; padding: 18px; overflow: hidden; border: 1px solid rgba(107,30,45,.24); border-radius: 22px; background: radial-gradient(circle at 90% -20%,rgba(184,160,130,.22),transparent 38%),linear-gradient(145deg,#EFEAE0,#FFFBF5 52%,#F7F3EB); box-shadow: 0 18px 38px rgba(107,30,45,.08); }
+        .ap-collective-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .ap-collective-head span { color: #8F765B; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+        .ap-collective-head h2 { margin: 4px 0; color: #32101A; font-size: 18px; font-weight: 900; }
+        .ap-collective-head p { max-width: 720px; margin: 0; color: #655B53; font-size: 12px; font-weight: 700; line-height: 1.75; }
+        .ap-collective-head>strong { flex: none; min-width: 70px; border-radius: 15px; background: #32101A; padding: 10px 12px; color: #D9C9B0; text-align: center; font-size: 18px; }
+        .ap-collective-note { margin: 12px 0; border-inline-start: 3px solid #8F765B; border-radius: 9px; background: rgba(184,160,130,.12); padding: 9px 11px; color: #655B53; font-size: 11px; font-weight: 800; }
+        .ap-collective-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap: 12px; }
+        .ap-collective-card { min-width: 0; overflow: hidden; border: 1px solid rgba(184,160,130,.32); border-radius: 18px; background: #FFFBF5; padding: 13px; }
+        .ap-collective-card.mine { border-color: rgba(107,30,45,.42); box-shadow: inset 0 3px 0 #6B1E2D; }
+        .ap-collective-card.overall { background: linear-gradient(155deg,#FFFBF5,#EFEAE0); }
+        .ap-collective-card>header { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+        .ap-collective-card>header>div { display: flex; align-items: center; gap: 7px; min-width: 0; }
+        .ap-collective-card>header strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #32101A; font-size: 12.5px; }
+        .ap-collective-card>header span { display: grid; place-items: center; min-width: 25px; height: 25px; border-radius: 8px; background: #EFEAE0; color: #6B1E2D; font-size: 10px; font-weight: 900; }
+        .ap-collective-card>header em { flex: none; color: #8F765B; font-size: 9.5px; font-style: normal; font-weight: 800; }
+        .ap-collective-track { height: 7px; margin: 8px 0 5px; overflow: hidden; border-radius: 99px; background: #D9C9B0; }
+        .ap-collective-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#8F765B,#6B1E2D); }
+        .ap-collective-card>small { display: block; margin-bottom: 9px; color: #796A62; font-size: 9.5px; font-weight: 800; }
+        .ap-collective-empty { display: grid; place-items: center; min-height: 100px; border: 1px dashed rgba(184,160,130,.35); border-radius: 14px; background: #F7F3EB; padding: 12px; color: #796A62; text-align: center; font-size: 11px; font-weight: 800; }
+        @media (max-width: 620px) { .ap-collective { padding: 13px; } .ap-collective-head { flex-direction: column; } }
 
         /* ─── Focused carousel (one target at a time) ─── */
         .ap-carousel-section { margin-top: 16px; }
