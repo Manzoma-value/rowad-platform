@@ -1,12 +1,22 @@
 -- First-stage peer spectrum v3: eight canonical traits, source metadata,
 -- and immutable rating revisions after the 24-hour working window.
 
-CREATE TYPE "AssessmentTraitKind" AS ENUM ('TARGET', 'EARLY_OBSERVATION');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_type
+    WHERE typname = 'AssessmentTraitKind'
+  ) THEN
+    CREATE TYPE "AssessmentTraitKind" AS ENUM ('TARGET', 'EARLY_OBSERVATION');
+  END IF;
+END
+$$;
 
 ALTER TABLE "assessment_traits"
-  ADD COLUMN "kind" "AssessmentTraitKind" NOT NULL DEFAULT 'TARGET',
-  ADD COLUMN "objective_ar" TEXT,
-  ADD COLUMN "objective_sq" TEXT;
+  ADD COLUMN IF NOT EXISTS "kind" "AssessmentTraitKind" NOT NULL DEFAULT 'TARGET',
+  ADD COLUMN IF NOT EXISTS "objective_ar" TEXT,
+  ADD COLUMN IF NOT EXISTS "objective_sq" TEXT;
 
 -- The original table constrained the five legacy columns to total 100.
 -- Scores are now an N-trait JSON array, so move the invariant to that
@@ -14,7 +24,7 @@ ALTER TABLE "assessment_traits"
 ALTER TABLE "assessment_ratings"
   DROP CONSTRAINT IF EXISTS "assessment_ratings_sum_100_chk";
 
-CREATE FUNCTION "assessment_scores_valid_100"(input JSONB)
+CREATE OR REPLACE FUNCTION "assessment_scores_valid_100"(input JSONB)
 RETURNS BOOLEAN
 LANGUAGE SQL
 IMMUTABLE
@@ -36,11 +46,22 @@ AS $$
     ) = 100;
 $$;
 
-ALTER TABLE "assessment_ratings"
-  ADD CONSTRAINT "assessment_ratings_scores_100_chk"
-  CHECK ("assessment_scores_valid_100"("scores"));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conrelid = 'assessment_ratings'::regclass
+      AND conname = 'assessment_ratings_scores_100_chk'
+  ) THEN
+    ALTER TABLE "assessment_ratings"
+      ADD CONSTRAINT "assessment_ratings_scores_100_chk"
+      CHECK ("assessment_scores_valid_100"("scores"));
+  END IF;
+END
+$$;
 
-CREATE TABLE "assessment_rating_revisions" (
+CREATE TABLE IF NOT EXISTS "assessment_rating_revisions" (
   "id" UUID NOT NULL DEFAULT gen_random_uuid(),
   "assessment_id" UUID NOT NULL,
   "rater_teacher_id" UUID NOT NULL,
@@ -56,17 +77,19 @@ CREATE TABLE "assessment_rating_revisions" (
     ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE UNIQUE INDEX "assessment_rating_revisions_rating_original_key"
+CREATE UNIQUE INDEX IF NOT EXISTS "assessment_rating_revisions_rating_original_key"
   ON "assessment_rating_revisions"("assessment_id", "rater_teacher_id", "target_teacher_id", "original_updated_at");
-CREATE INDEX "assessment_rating_revisions_assessment_archived_idx"
+CREATE INDEX IF NOT EXISTS "assessment_rating_revisions_assessment_archived_idx"
   ON "assessment_rating_revisions"("assessment_id", "archived_at" DESC);
-CREATE INDEX "assessment_rating_revisions_people_archived_idx"
+CREATE INDEX IF NOT EXISTS "assessment_rating_revisions_people_archived_idx"
   ON "assessment_rating_revisions"("rater_teacher_id", "target_teacher_id", "archived_at" DESC);
 ALTER TABLE "assessment_rating_revisions" ENABLE ROW LEVEL SECURITY;
 
--- Only migrate models that are recognizably the canonical five-trait Rowad
--- template. Fully custom admin-authored models remain untouched.
-CREATE TEMP TABLE "_canonical_first_stage_assessments" ON COMMIT DROP AS
+-- Keep the helper relation across statements because Prisma/PostgreSQL may
+-- commit each statement independently. The previous ON COMMIT DROP temporary
+-- table disappeared before the UPDATE and caused production error 42P01.
+-- The stable migration-specific table also makes a partial run safely resumable.
+CREATE TABLE IF NOT EXISTS "_migration_20260809_canonical_assessments" AS
 SELECT "assessment_id"
 FROM "assessment_traits"
 GROUP BY "assessment_id"
@@ -89,18 +112,18 @@ SET "scores" = jsonb_build_array(
   to_jsonb(0),
   to_jsonb(0)
 )
-WHERE r."assessment_id" IN (SELECT "assessment_id" FROM "_canonical_first_stage_assessments")
+WHERE r."assessment_id" IN (SELECT "assessment_id" FROM "_migration_20260809_canonical_assessments")
   AND jsonb_array_length(r."scores") = 5;
 
 DELETE FROM "assessment_traits"
-WHERE "assessment_id" IN (SELECT "assessment_id" FROM "_canonical_first_stage_assessments");
+WHERE "assessment_id" IN (SELECT "assessment_id" FROM "_migration_20260809_canonical_assessments");
 
 INSERT INTO "assessment_traits"
   ("id", "assessment_id", "position", "label_ar", "label_sq", "statement_ar", "statement_sq", "color", "kind", "objective_ar", "objective_sq", "created_at")
 SELECT gen_random_uuid(), a."assessment_id", t.position, t.label_ar, t.label_sq,
        t.statement_ar, t.statement_sq, t.color, t.kind::"AssessmentTraitKind",
        t.objective_ar, t.objective_sq, CURRENT_TIMESTAMP
-FROM "_canonical_first_stage_assessments" a
+FROM "_migration_20260809_canonical_assessments" a
 CROSS JOIN (VALUES
   (0, 'الدراية', 'Dituria',
    'أستخدم حدسي للوعي بالأشياء، وأراجع قواعد الذكاء بما يوافق الفطرة.',
@@ -135,3 +158,5 @@ CROSS JOIN (VALUES
    'Në ciklin tim udhëheqës e godas të drejtën e plotë dhe të sigurt, në të cilën nuk ka dyshim.',
    '#70528F', 'EARLY_OBSERVATION', 'حفظ العقل', 'Ruajtja e mendjes')
 ) AS t(position, label_ar, label_sq, statement_ar, statement_sq, color, kind, objective_ar, objective_sq);
+
+DROP TABLE IF EXISTS "_migration_20260809_canonical_assessments";
