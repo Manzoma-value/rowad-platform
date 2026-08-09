@@ -114,12 +114,17 @@ interface NavItem2 extends Omit<NavItem, "key"> {
 
 const navItems: NavItem2[] = [
   { href: "/teacher",          key: "dashboard", sublabel: "Dashboard", exact: true,  icon: LayoutDashboard },
-  { href: "/teacher/classes",  key: "myClasses", sublabel: "Groups",   exact: false, icon: Users },
   {
-    href: "/teacher/groups",   key: "groups",    sublabel: "My Groups", exact: false, icon: Network,
-    labelAr: "مجموعاتي",
-    labelSq: "Grupet e mia",
-    labelEn: "My Groups",
+    href: "/teacher/classes",  key: "myClasses", sublabel: "Beneficiaries", exact: false, icon: Users,
+    labelAr: "مجموعة المستفيدين",
+    labelSq: "Grupi i Përfituesve",
+    labelEn: "Beneficiaries Group",
+  },
+  {
+    href: "/teacher/groups",   key: "groups",    sublabel: "Supervisors", exact: false, icon: Network,
+    labelAr: "مجموعة المشرفين",
+    labelSq: "Grupi i Mbikëqyrësve",
+    labelEn: "Supervisors Group",
   },
   { 
     href: "/teacher/workshops", key: "workshops", sublabel: "Workshops", exact: false, icon: CalendarRange,
