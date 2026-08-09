@@ -65,7 +65,11 @@ export default function ForgotPasswordPage() {
       const siteUrl = window.location.origin;
       const { error: sbError } = await supabase.auth.resetPasswordForEmail(
         email.trim().toLowerCase(),
-        { redirectTo: `${siteUrl}/auth/callback` },
+        // `flow=recovery` rides along through Supabase's own redirect (which
+        // appends `code=...`), giving /auth/callback an explicit, reliable
+        // signal that this is a password-reset link — see the comment there
+        // for why inferring this from timing was unsafe.
+        { redirectTo: `${siteUrl}/auth/callback?flow=recovery` },
       );
       if (sbError) { setError(T.errServer); return; }
       setSent(true);

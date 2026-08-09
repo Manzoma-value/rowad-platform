@@ -6,12 +6,31 @@
 //     Supabase sends:  /auth/callback?token_hash=xxx&type=signup
 //     We call:         supabase.auth.verifyOtp({ token_hash, type })
 //
-//  2. PKCE code exchange (OAuth / SSO):
+//  2. PKCE code exchange (OAuth / SSO / password recovery):
 //     Provider sends:  /auth/callback?code=xxx
 //     We call:         supabase.auth.exchangeCodeForSession(code)
 //
 // After either succeeds the session cookie is set and we redirect the user
-// to their role-specific dashboard.
+// to their role-specific dashboard — UNLESS this is a password-recovery
+// link, in which case we must send them to /reset-password instead and
+// never let them into a dashboard with the old password still active.
+//
+// Recovery detection: for the OTP path, Supabase gives us `type=recovery`
+// directly. For the PKCE `code=` path it does NOT — Supabase's redirect
+// only appends `code`, with no flow-type marker of its own. This used to
+// be inferred from the user's `recovery_sent_at` timestamp being "recent"
+// (within an arbitrary 1-hour window), which is unreliable: that field is
+// set on the user record itself (not per-session), so it can be stale,
+// missing, or — worse — still "recent" for an unrelated login shortly
+// after a reset was requested. When the heuristic guessed wrong, a
+// recovery link would exchange straight into a normal authenticated
+// session and redirect to the role dashboard, skipping the password
+// change entirely.
+//
+// Fixed by having /forgot-password append `?flow=recovery` to its own
+// `redirectTo` — Supabase preserves that query param and just adds `code`
+// alongside it, so we get a deterministic, first-party signal instead of
+// guessing.
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -33,6 +52,7 @@ export async function GET(request: NextRequest) {
 
   const code       = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
+  const flow       = searchParams.get("flow");
   // Valid email OTP types (excludes "sms" which requires a phone number)
   const type = searchParams.get("type") as
     | "signup" | "recovery" | "email" | "email_change" | "invite" | null;
@@ -40,7 +60,7 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   // ── 1. Verify the token / exchange the code ──────────────────────────────
-  let isRecovery = type === "recovery";
+  const isRecovery = type === "recovery" || flow === "recovery";
 
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ token_hash, type });
@@ -49,20 +69,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=link_invalid`);
     }
   } else if (code) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
       console.error("[auth/callback] exchangeCodeForSession error:", error.message);
       return NextResponse.redirect(`${origin}/login?error=oauth_failed`);
-    }
-    // PKCE recovery: Supabase puts type in the session's AMR claims
-    // Check if this session was created via a recovery flow
-    if (data?.session?.user?.recovery_sent_at) {
-      const recoverySentAt = new Date(data.session.user.recovery_sent_at).getTime();
-      const now = Date.now();
-      // If recovery was sent within the last hour, this is a password reset flow
-      if (now - recoverySentAt < 60 * 60 * 1000) {
-        isRecovery = true;
-      }
     }
   } else {
     return NextResponse.redirect(`${origin}/login?error=missing_params`);
