@@ -11,7 +11,7 @@ import IdentityMandala from "@/components/IdentityMandala";
 import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
 import { seedFromString, blendCmykWeighted } from "@/lib/trait-spectrum";
 import {
-  ASSESS_UI, derive, averageTuples, pickAssessLang, defaultTraitDrafts, canonicalizeDefaultTraits,
+  ASSESS_UI, derive, averageTuples, pickAssessLang, defaultTraitDrafts, canonicalizeDefaultTraits, DEFAULT_TRAITS,
   type ScoresTuple, type TraitDraft,
 } from "@/lib/rowad-assessment";
 import {
@@ -70,7 +70,7 @@ function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.labe
 // Lead with the five official canonical trait colors, followed by extra
 // brand choices for fully custom trait sets.
 const SWATCHES = [
-  "#1A1A1A", "#B33A3A", "#9AA3AC", "#F2EFE6", "#F2B705", "#2F6B5F", "#315C9B", "#70528F",
+  "#1A1A1A", "#B33A3A", "#9AA3AC", "#F2EFE6", "#F2B705", "#5C6670", "#A0522D", "#D97706",
   "#6B1E2D", "#B8A082", "#8F765B", "#4A0E1C", "#A55A68", "#1B5E20", "#32101A", "#D9C9B0",
 ];
 
@@ -171,7 +171,6 @@ const UI = {
     changedAt: "وقت التغيير",
     pageOf: (page: number, pages: number) => `صفحة ${page} من ${pages}`,
     teacherSearch: "ابحث عن مشرف داخل هذا النموذج…",
-    resultFilter: "تصفية حسب السمة الجوهرية",
     resultFilterAll: "كل السمات",
     perTraitHead: "متوسط كل سمة لكل عضو",
     noRating: "—",
@@ -299,7 +298,6 @@ const UI = {
     changedAt: "Koha e ndryshimit",
     pageOf: (page: number, pages: number) => `Faqja ${page} nga ${pages}`,
     teacherSearch: "Kërko një edukator brenda këtij modeli…",
-    resultFilter: "Filtro sipas tiparit thelbësor",
     resultFilterAll: "Të gjitha tiparet",
     perTraitHead: "Mesatarja e çdo tipari për secilin anëtar",
     noRating: "—",
@@ -704,6 +702,15 @@ export default function AssessmentsHubPage() {
           <Metric value={totals.closed} label={T.metricClosed} />
           <Metric value={totals.ratings} label={T.metricRatings} />
         </div>
+        <div className="am-hero-palette" aria-label={L === "ar" ? "ألوان السمات الثمانية المعتمدة" : "Paleta zyrtare e tetë tipareve"}>
+          {DEFAULT_TRAITS.map((trait) => (
+            <span
+              key={trait.key}
+              style={{ background: trait.color }}
+              title={`${L === "ar" ? trait.ar : trait.sq} — ${trait.color}`}
+            />
+          ))}
+        </div>
       </section>
 
       {!viewOnly && (
@@ -845,7 +852,6 @@ export default function AssessmentsHubPage() {
                   <input value={teacherSearch} onChange={(e) => setTeacherSearch(e.target.value)} placeholder={T.teacherSearch} />
                 </div>
                 <div className="am-trait-chips">
-                  <span className="am-trait-chips-label">{T.resultFilter}:</span>
                   <button
                     className={`am-trait-chip ${traitFilter === null ? "active" : ""}`}
                     onClick={() => setTraitFilter(null)}
@@ -856,9 +862,11 @@ export default function AssessmentsHubPage() {
                     <button
                       key={tr.id}
                       className={`am-trait-chip ${traitFilter === i ? "active" : ""}`}
-                      style={traitFilter === i ? { background: tr.color, borderColor: tr.color, color: "#FFFBF5" } : undefined}
+                      style={traitFilter === i ? { background: tr.color, borderColor: tr.color, color: tr.color.toUpperCase() === "#F2EFE6" ? "#1A1A1A" : "#FFFBF5" } : undefined}
                       onClick={() => setTraitFilter(i)}
+                      title={L === "ar" ? tr.statement_ar : tr.statement_sq}
                     >
+                      <i style={{ background: tr.color }} />
                       {traitLabel(tr, L)}
                     </button>
                   ))}
@@ -1562,6 +1570,10 @@ const styles = `
   .am-metric { padding:12px 14px; border-radius:16px; background:rgba(50,16,26,.45); border:1px solid rgba(184,160,130,.30); backdrop-filter:blur(10px); min-width:78px; box-shadow:inset 0 1px 0 rgba(217,201,176,.10); }
   .am-metric strong { display:block; color:#D9C9B0; font-family:var(--font-head); font-size:22px; line-height:1.2; font-weight:700; }
   .am-metric span { display:block; margin-top:6px; color:rgba(239,234,224,.68); font-size:11px; font-weight:600; }
+  .am-hero-palette { position:relative; z-index:2; grid-column:1 / -1; display:grid; grid-template-columns:repeat(8,1fr); height:12px; overflow:hidden; border:1px solid rgba(255,251,245,.28); border-radius:999px; background:rgba(26,10,16,.45); box-shadow:0 7px 18px rgba(26,10,16,.22); }
+  .am-hero-palette span { display:block; min-width:0; border-inline-end:1px solid rgba(255,255,255,.32); transition:filter .18s ease,transform .18s ease; }
+  .am-hero-palette span:last-child { border-inline-end:0; }
+  .am-hero-palette span:hover { filter:brightness(1.14); transform:scaleY(1.7); transform-origin:center; }
 
   .am-createbar { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 18px; border:1px solid rgba(184,160,130,.28); border-radius:18px; background:linear-gradient(115deg,#FFFBF5,#F1E9DE); box-shadow:0 10px 26px rgba(50,16,26,.055); }
   .am-createbar-copy { min-width:0; }
@@ -1635,10 +1647,11 @@ const styles = `
 
   .am-detail-filters { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
   .am-trait-chips { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .am-trait-chips-label { font-size:11px; font-weight:800; color:#8F765B; margin-inline-end:2px; }
-  .am-trait-chip { border:1.5px solid rgba(184,160,130,.30); background:#FFFFFF; color:#655B53; padding:6px 13px; border-radius:999px; font:700 11.5px 'Cairo',sans-serif; cursor:pointer; transition:all .16s ease; }
-  .am-trait-chip:hover { border-color:rgba(184,160,130,.55); }
+  .am-trait-chip { display:inline-flex; align-items:center; gap:7px; border:1.5px solid rgba(184,160,130,.30); background:#FFFFFF; color:#655B53; padding:7px 13px; border-radius:999px; font:700 11.5px 'Cairo',sans-serif; cursor:pointer; transition:all .16s ease; }
+  .am-trait-chip i { width:10px; height:10px; flex:none; border:1px solid rgba(26,26,26,.20); border-radius:4px; box-shadow:0 0 0 2px rgba(255,255,255,.72); }
+  .am-trait-chip:hover { border-color:rgba(184,160,130,.65); background:#FFFDF9; box-shadow:0 5px 12px rgba(50,16,26,.08); transform:translateY(-1px); }
   .am-trait-chip.active { border-color:transparent; color:#FFFBF5; font-weight:800; }
+  .am-trait-chip.active i { border-color:rgba(255,255,255,.72); box-shadow:0 0 0 2px rgba(50,16,26,.18); }
 
   .am-collective { margin:4px 0 24px; padding:18px; border:1px solid rgba(107,30,45,.18); border-radius:20px; background:linear-gradient(145deg,#F1EBE2,#FFFBF5 48%,#EFEAE0); box-shadow:0 14px 32px rgba(50,16,26,.07); }
   .am-collective-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; }
@@ -1870,8 +1883,8 @@ const styles = `
   .am-btn { background:#FFFDF9; border-color:rgba(107,30,45,.22); color:#4A0E1C; }
   .am-btn:hover:not(:disabled) { border-color:#6B1E2D; background:#F7F0E5; }
   .am-btn-primary { color:#FFF8EA; }
-  .am-detail-filters { padding:12px; border:1px solid rgba(107,30,45,.12); border-radius:14px; background:#F3EDE3; }
-  .am-search-box--detail { background:#FFFDF9; }
+  .am-detail-filters { padding:13px; border:1px solid rgba(107,30,45,.14); border-radius:16px; background:linear-gradient(135deg,#F5EEE4,#EDE3D6); box-shadow:inset 0 1px rgba(255,255,255,.9),0 9px 20px rgba(50,16,26,.045); }
+  .am-search-box--detail { width:min(100%,310px); background:#FFFDF9; box-shadow:0 4px 12px rgba(50,16,26,.04); }
   .am-trait-chip { background:#FFFDF9; border-color:rgba(107,30,45,.20); color:#4A0E1C; }
   .am-trait-chip.active:not([style]) { background:#6B1E2D; color:#FFF8EA; }
   .am-sub { margin-top:24px; }

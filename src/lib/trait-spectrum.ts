@@ -140,8 +140,9 @@ export function computeBlobLayers(
 export type RadarGeometry = {
   gridRings: string[]; // SVG polygon `points` strings, outer→inner
   axisLines: { x1: number; y1: number; x2: number; y2: number }[];
-  dataPoints: { x: number; y: number; color: string }[];
+  dataPoints: { x: number; y: number; color: string; label: string; pct: number }[];
   dataPolygonPoints: string;
+  scaleMax: number;
 };
 
 export function computeRadarGeometry(
@@ -153,6 +154,13 @@ export function computeRadarGeometry(
   const maxR = opts?.maxR ?? 82;
   const n = traits.length || 1;
   const angleOf = (i: number) => ((-90 + (360 / n) * i) * Math.PI) / 180;
+
+  // The trait values are parts of one 100-point distribution. With eight
+  // traits, a healthy value usually sits around 8–25 rather than 100. Scaling
+  // every axis to 100 compresses the useful shape into an unreadable dot, so
+  // the visual ceiling adapts to the strongest trait in clear 5-point steps.
+  const highest = Math.max(0, ...traits.map((trait) => Math.max(0, Math.min(100, trait.pct))));
+  const scaleMax = Math.min(100, Math.max(20, Math.ceil(highest / 5) * 5 || 20));
 
   const gridRings = [0.25, 0.5, 0.75, 1].map((f) =>
     traits
@@ -170,8 +178,9 @@ export function computeRadarGeometry(
 
   const dataPoints = traits.map((t, i) => {
     const a = angleOf(i);
-    const r = maxR * (Math.max(0, Math.min(100, t.pct)) / 100);
-    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a), color: t.color };
+    const pct = Math.max(0, Math.min(100, t.pct));
+    const r = maxR * Math.min(1, pct / scaleMax);
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a), color: t.color, label: t.label, pct };
   });
 
   return {
@@ -179,6 +188,7 @@ export function computeRadarGeometry(
     axisLines,
     dataPoints,
     dataPolygonPoints: dataPoints.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" "),
+    scaleMax,
   };
 }
 

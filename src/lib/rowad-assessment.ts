@@ -35,9 +35,9 @@ export const DEFAULT_TRAITS: {
   { key: "distinct", ar: "المميز", sq: "Dallueshmëria", color: "#9AA3AC", kind: "TARGET", objective_ar: "حفظ العقل", objective_sq: "Ruajtja e mendjes" },
   { key: "lineage", ar: "الفرد", sq: "Individi", color: "#F2EFE6", kind: "TARGET", objective_ar: "حفظ النسل", objective_sq: "Ruajtja e pasardhësve" },
   { key: "atonement", ar: "الكفارات", sq: "Shlyerjet", color: "#F2B705", kind: "TARGET", objective_ar: "حفظ المال", objective_sq: "Ruajtja e pasurisë" },
-  { key: "resilience", ar: "الصمود", sq: "Qëndresa", color: "#2F6B5F", kind: "EARLY_OBSERVATION", objective_ar: "حفظ النفس", objective_sq: "Ruajtja e jetës" },
-  { key: "faith_brotherhood", ar: "الأخوة الإيمانية", sq: "Vëllazëria e besimit", color: "#315C9B", kind: "EARLY_OBSERVATION", objective_ar: "حفظ النسل", objective_sq: "Ruajtja e pasardhësve" },
-  { key: "maturity", ar: "الرشيد", sq: "Pjekuria e gjykimit", color: "#70528F", kind: "EARLY_OBSERVATION", objective_ar: "حفظ العقل", objective_sq: "Ruajtja e mendjes" },
+  { key: "resilience", ar: "الصمود", sq: "Qëndresa", color: "#5C6670", kind: "EARLY_OBSERVATION", objective_ar: "حفظ النفس", objective_sq: "Ruajtja e jetës" },
+  { key: "faith_brotherhood", ar: "الأخوة الإيمانية", sq: "Vëllazëria e besimit", color: "#A0522D", kind: "EARLY_OBSERVATION", objective_ar: "حفظ النسل", objective_sq: "Ruajtja e pasardhësve" },
+  { key: "maturity", ar: "الرشيد", sq: "Pjekuria e gjykimit", color: "#D97706", kind: "EARLY_OBSERVATION", objective_ar: "حفظ العقل", objective_sq: "Ruajtja e mendjes" },
 ];
 
 export const DEFAULT_STATEMENTS = {
