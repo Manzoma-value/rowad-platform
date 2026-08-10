@@ -18,7 +18,8 @@
 //   - onCommit: called when the user releases a slider. Caller can debounce or
 //               throttle persistence here. Only called if the new array is valid (sum=100).
 
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
+import { ChevronDown, ChevronUp, Minus, Plus } from "lucide-react";
 import {
   ASSESS_UI,
   derive, isValid100, type ScoresTuple, type AssessLang,
@@ -51,6 +52,7 @@ export default function RowadDistributor({
   spectrumSeed?: number;
 }) {
   const T = ASSESS_UI[lang];
+  const [showSpectrumDetails, setShowSpectrumDetails] = useState(false);
   const total = value.reduce((a, b) => a + b, 0);
   const status: "ok" | "over" | "under" =
     total === 100 ? "ok" : total > 100 ? "over" : "under";
@@ -69,6 +71,14 @@ export default function RowadDistributor({
     const next = [...value];
     next[i] = Math.max(0, Math.min(100, Math.round(raw)));
     if (isValid100(next, traits.length)) onCommit(next);
+  }
+
+  function nudgeIdx(i: number, delta: number) {
+    if (disabled) return;
+    const next = [...value];
+    next[i] = Math.max(0, Math.min(100, (next[i] ?? 0) + delta));
+    onChange(next);
+    if (onCommit && isValid100(next, traits.length)) onCommit(next);
   }
 
   return (
@@ -90,7 +100,12 @@ export default function RowadDistributor({
             seed={spectrumSeed ?? 1}
             lang={lang}
             live
+            summary={!showSpectrumDetails}
           />
+          <button className="rwd-spectrum-toggle" type="button" onClick={() => setShowSpectrumDetails((shown) => !shown)} aria-expanded={showSpectrumDetails}>
+            {showSpectrumDetails ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            {lang === "ar" ? (showSpectrumDetails ? "إخفاء تفاصيل الطيف" : "عرض تفاصيل الطيف") : (showSpectrumDetails ? "Fshih detajet e spektrit" : "Shfaq detajet e spektrit")}
+          </button>
         </div>
       )}
 
@@ -100,7 +115,7 @@ export default function RowadDistributor({
             <div className="rwd-row-head">
               <span className="rwd-dot" style={{ background: trait.color }} />
               <span className="rwd-tname">{trait.label}</span>
-              <span className="rwd-tval">{value[i] ?? 0}</span>
+              <span className="rwd-tval">{value[i] ?? 0} / 100</span>
             </div>
             <div className="rwd-stmt">{trait.statement}</div>
             <input
@@ -114,14 +129,19 @@ export default function RowadDistributor({
               className="rwd-range"
               style={{ accentColor: trait.color }}
             />
-            <input
-              type="number" min={0} max={100} step={1}
-              value={value[i] ?? 0}
-              disabled={disabled}
-              onChange={(e) => setIdx(i, Number(e.target.value))}
-              onBlur={(e) => commitIdx(i, Number(e.target.value))}
-              className="rwd-num"
-            />
+            <div className="rwd-number-control">
+              <button type="button" onClick={() => nudgeIdx(i, -1)} disabled={disabled || (value[i] ?? 0) <= 0} aria-label={lang === "ar" ? `إنقاص ${trait.label}` : `Ul ${trait.label}`}><Minus size={14} /></button>
+              <input
+                type="number" min={0} max={100} step={1}
+                value={value[i] ?? 0}
+                disabled={disabled}
+                onChange={(e) => setIdx(i, Number(e.target.value))}
+                onBlur={(e) => commitIdx(i, Number(e.target.value))}
+                className="rwd-num"
+                aria-label={trait.label}
+              />
+              <button type="button" onClick={() => nudgeIdx(i, 1)} disabled={disabled || (value[i] ?? 0) >= 100} aria-label={lang === "ar" ? `زيادة ${trait.label}` : `Rrit ${trait.label}`}><Plus size={14} /></button>
+            </div>
           </div>
         ))}
       </div>
@@ -152,7 +172,7 @@ export default function RowadDistributor({
       )}
 
       <style>{`
-        .rwd { background: linear-gradient(180deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(107,30,45,0.32); border-radius:14px; padding:14px; font-family:'Cairo',sans-serif; }
+        .rwd { background: linear-gradient(180deg,#FFFBF5,#F7F3EB); border:1px solid rgba(107,30,45,0.18); border-radius:24px; padding:18px; font-family:'Cairo',sans-serif; box-shadow:0 18px 44px rgba(107,30,45,.08); }
         .rwd-disabled { opacity:.85; }
         .rwd-top { display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap; margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed rgba(107,30,45,0.4); }
         .rwd-total { display:flex; align-items:baseline; gap:6px; }
@@ -166,20 +186,22 @@ export default function RowadDistributor({
         .rwd-status-over  { background:rgba(107,30,45,0.10); color:#6B1E2D; }
         .rwd-status-under { background:rgba(107,30,45,0.14);color:#8F765B; }
 
-        .rwd-spectrum { display:flex; justify-content:center; align-items:center; padding:6px 0 18px; }
+        .rwd-spectrum { display:flex; flex-direction:column; justify-content:center; align-items:stretch; gap:9px; padding:6px 0 18px; }
+        .rwd-spectrum-toggle { align-self:center; display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:40px; padding:0 16px; border:1px solid rgba(107,30,45,.2); border-radius:12px; background:#F7F3EB; color:#6B1E2D; font:900 11px 'Cairo',sans-serif; cursor:pointer; }
+        .rwd-spectrum-toggle:hover { border-color:#6B1E2D; background:#FFFBF5; }
 
         .rwd-sliders { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:10px; }
         .rwd-row {
           background: linear-gradient(160deg,#FFFBF5,#F7F3EB);
-          border:1px solid rgba(107,30,45,0.18); border-radius:12px; padding:10px 12px;
-          display:grid; grid-template-columns: 1fr 58px; column-gap:10px; align-items:center;
+          border:1px solid rgba(107,30,45,0.15); border-radius:16px; padding:13px 14px;
+          display:grid; grid-template-columns: 1fr 112px; column-gap:12px; align-items:center;
           transition: box-shadow .25s, border-color .25s, transform .15s;
         }
         .rwd-row:hover { border-color: color-mix(in srgb, var(--tc) 55%, rgba(107,30,45,0.3)); box-shadow: 0 6px 18px rgba(26,26,26,0.07); }
         .rwd-row-head { grid-column: 1 / -1; display:flex; align-items:center; gap:8px; }
         .rwd-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--tc) 22%, transparent); }
         .rwd-tname { font-size:13.5px; font-weight:800; color:#32101A; flex:1; }
-        .rwd-tval { font-family:'JetBrains Mono', ui-monospace, monospace; font-size:14.5px; font-weight:800; color:#6B1E2D; }
+        .rwd-tval { font-family:'JetBrains Mono', ui-monospace, monospace; font-size:12px; font-weight:800; color:#6B1E2D; }
         .rwd-stmt { grid-column: 1 / -1; font-size:12px; color:#6B1E2D; line-height:1.55; margin-bottom:3px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
         .rwd-range { width:100%; height:6px; cursor: pointer; appearance:none; -webkit-appearance:none; background: rgba(107,30,45,0.14); border-radius:99px; }
         .rwd-range::-webkit-slider-thumb {
@@ -195,12 +217,16 @@ export default function RowadDistributor({
           cursor:pointer;
         }
         .rwd-range:disabled { cursor: not-allowed; opacity:.5; }
-        .rwd-num { width:100%; padding:6px 8px; border:1.5px solid rgba(107,30,45,0.32); border-radius:8px; font-family:'JetBrains Mono', ui-monospace, monospace; font-weight:800; font-size:13px; text-align:center; background:#FFF; outline:none; }
+        .rwd-number-control { display:grid; grid-template-columns:30px minmax(0,1fr) 30px; align-items:center; overflow:hidden; border:1px solid rgba(107,30,45,.22); border-radius:10px; background:#FFF; }
+        .rwd-number-control button { width:30px; height:34px; display:grid; place-items:center; border:0; background:#F7F3EB; color:#6B1E2D; cursor:pointer; }
+        .rwd-number-control button:disabled { opacity:.35; cursor:not-allowed; }
+        .rwd-num { width:100%; min-width:0; padding:6px 2px; border:0; font-family:'JetBrains Mono', ui-monospace, monospace; font-weight:800; font-size:13px; text-align:center; background:#FFF; outline:none; }
         .rwd-num:focus { border-color:#B8A082; }
 
         .rwd-readout { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:10px; }
         ${compact ? ".rwd-readout { margin-top:6px; }" : ""}
         @media (max-width: 900px) { .rwd-sliders { grid-template-columns: 1fr; } }
+        @media (max-width: 520px) { .rwd{padding:12px}.rwd-row{grid-template-columns:1fr;row-gap:10px}.rwd-number-control{grid-column:1/-1}.rwd-stmt{margin-bottom:0} }
         @media (max-width: 680px) { .rwd-readout { grid-template-columns: 1fr; } }
         .rwd-rb { border:1px solid rgba(107,30,45,0.28); border-radius:10px; padding:10px 12px; background:#FFF; }
         .rwd-rb-lbl { font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:800; margin-bottom:4px; }

@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Network, Users, ArrowUpRight } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
@@ -28,6 +29,7 @@ const UI = {
     noResults: "لا توجد مجموعات مطابقة للبحث.",
     emptyTitle: "لا توجد مجموعات بعد",
     emptySub: "عندما يضيفك مدير المنصة إلى مجموعة، ستظهر هنا.",
+    opening: "جارٍ فتح مجموعتك…",
   },
   sq: {
     title: "Grupet e mia",
@@ -39,10 +41,12 @@ const UI = {
     noResults: "Nuk ka grupe që përputhen me kërkimin.",
     emptyTitle: "Nuk ka grupe ende",
     emptySub: "Kur administratori ju shton në një grup, ai do të shfaqet këtu.",
+    opening: "Po hapim grupin tënd…",
   },
 } as const;
 
 export default function TeacherGroupsPage() {
+  const router = useRouter();
   const { lang } = useLang();
   const L = lang === "sq" ? "sq" : "ar";
   const T = UI[L];
@@ -68,6 +72,12 @@ export default function TeacherGroupsPage() {
     return () => cancelAnimationFrame(frame);
   }, [loadGroups]);
 
+  useEffect(() => {
+    if (!loading && !loadError && groups.length === 1) {
+      router.replace(`/teacher/groups/${groups[0].id}`);
+    }
+  }, [groups, loadError, loading, router]);
+
   const visibleGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return groups;
@@ -85,6 +95,14 @@ export default function TeacherGroupsPage() {
     );
   }
   if (loadError) return <TeacherLoadError onRetry={loadGroups} />;
+  if (groups.length === 1) {
+    return (
+      <div className="tg-page" dir={dir}>
+        <div className="tg-opening"><MandalaLoader /><strong>{T.opening}</strong></div>
+        <style>{styles}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="tg-page" dir={dir}>
@@ -147,6 +165,8 @@ const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
   .tg-page { min-height: 100%; padding: 28px; background: #EFEAE0; font-family: 'Cairo', sans-serif; color: #1A1A1A; }
   .tg-loading { min-height: 50vh; display: flex; align-items: center; justify-content: center; }
+  .tg-opening { min-height: 56vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: #6B1E2D; }
+  .tg-opening strong { font-size: 14px; }
   .tg-head {
     display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
     padding: 22px 24px; margin-bottom: 18px; border-radius: 18px;

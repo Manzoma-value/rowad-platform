@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Languages, MapPin, Network, Send, Trash2, UserRound, Users } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, ClipboardCheck, Languages, MapPin, MessageSquare, Network, Send, Trash2, UserRound, Users } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 
@@ -69,6 +69,13 @@ const UI = {
     assessmentOpenStatus: "مفتوح",
     showMore: "المزيد ↓",
     showLess: "أقل ↑",
+    groupHome: "مساحة مجموعتي",
+    groupHomeSub: "كل ما تحتاجه مع مجموعتك في مكان واحد.",
+    assessmentHint: "ابدأ أو أكمل تقييم أعضاء مجموعتك",
+    openAssessments: "نماذج مفتوحة",
+    browseAssessments: "عرض كل نماذج القياس",
+    membersHint: "تعرّف على أعضاء مجموعتك",
+    communityHint: "تابع الإعلانات والنقاشات",
   },
   sq: {
     back: "Kthehu te grupet",
@@ -97,6 +104,13 @@ const UI = {
     assessmentOpenStatus: "I hapur",
     showMore: "Më shumë ↓",
     showLess: "Më pak ↑",
+    groupHome: "Hapësira e grupit tim",
+    groupHomeSub: "Gjithçka që të duhet me grupin tënd, në një vend.",
+    assessmentHint: "Fillo ose vazhdo vlerësimin e anëtarëve",
+    openAssessments: "modele të hapura",
+    browseAssessments: "Shiko të gjitha modelet",
+    membersHint: "Njih anëtarët e grupit",
+    communityHint: "Ndiq njoftimet dhe diskutimet",
   },
 } as const;
 
@@ -213,6 +227,7 @@ export default function TeacherGroupDetailPage() {
   }
 
   const memberCount = group?.members.length ?? 0;
+  const openAssessmentCount = assessments.filter((assessment) => assessment.status === "OPEN").length;
   const visibleMembers = useMemo(() => {
     const q = memberQuery.trim().toLowerCase();
     const members = group?.members ?? [];
@@ -270,8 +285,9 @@ export default function TeacherGroupDetailPage() {
         <div className="gd-head-main">
           <span className="gd-mark"><Network size={20} strokeWidth={1.8} /></span>
           <div>
+            <span className="gd-eyebrow">{T.groupHome}</span>
             <h1 className="gd-title">{group.name}</h1>
-            <p className="gd-desc">{group.description || T.overview}</p>
+            <p className="gd-desc">{group.description || T.groupHomeSub}</p>
           </div>
         </div>
         <div className="gd-stat">
@@ -280,7 +296,23 @@ export default function TeacherGroupDetailPage() {
         </div>
       </header>
 
-      <section className="gd-section">
+      <nav className="gd-hub" aria-label={T.groupHome}>
+        <Link href={`/teacher/groups/${params?.id}/assessments`} className="gd-hub-card gd-hub-primary">
+          <span className="gd-hub-icon"><ClipboardCheck size={22} /></span>
+          <div><strong>{T.assessments}</strong><p>{T.assessmentHint}</p><small>{openAssessmentCount} {T.openAssessments}</small></div>
+          <span className="gd-hub-arrow"><ArrowUpRight size={19} /></span>
+        </Link>
+        <a href="#group-members" className="gd-hub-card">
+          <span className="gd-hub-icon"><Users size={20} /></span>
+          <div><strong>{T.members}</strong><p>{T.membersHint}</p><small>{memberCount}</small></div>
+        </a>
+        <a href="#group-community" className="gd-hub-card">
+          <span className="gd-hub-icon"><MessageSquare size={20} /></span>
+          <div><strong>{T.activities}</strong><p>{T.communityHint}</p><small>{announcements.length}</small></div>
+        </a>
+      </nav>
+
+      <section className="gd-section" id="group-members">
         <div className="gd-section-head">
           <Users size={18} strokeWidth={1.7} />
           <h2>{T.members}</h2>
@@ -316,6 +348,7 @@ export default function TeacherGroupDetailPage() {
         <div className="gd-section-head">
           <Network size={18} strokeWidth={1.7} />
           <h2>{T.assessments}</h2>
+          <Link href={`/teacher/groups/${params?.id}/assessments`} className="gd-section-link">{T.browseAssessments}</Link>
         </div>
         {assessments.length === 0 ? (
           <div className="gd-muted">{T.assessmentsEmpty}</div>
@@ -339,7 +372,7 @@ export default function TeacherGroupDetailPage() {
         )}
       </section>
 
-      <section className="gd-section">
+      <section className="gd-section" id="group-community">
         <div className="gd-section-head">
           <Network size={18} strokeWidth={1.7} />
           <h2>{T.activities}</h2>
@@ -468,7 +501,7 @@ function normalizeLanguages(value: unknown, lang: "ar" | "sq") {
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
-  .gd-page { min-height: 100%; padding: 28px; background: #EFEAE0; font-family: 'Cairo', sans-serif; color: #1A1A1A; }
+  .gd-page { min-height: 100%; max-width: 1240px; margin: 0 auto; padding: 18px 28px 60px; font-family: 'Cairo', sans-serif; color: #1A1A1A; }
   .gd-loading { min-height: 50vh; display: flex; align-items: center; justify-content: center; }
   .gd-back {
     display: inline-flex; align-items: center; gap: 7px; margin-bottom: 16px;
@@ -478,14 +511,15 @@ const styles = `
   [dir="rtl"] .gd-back svg { transform: scaleX(-1); }
   .gd-head {
     display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    padding: 24px; margin-bottom: 16px; background: #1A1A1A; border-radius: 18px; border: 1px solid rgba(184,160,130,0.14);
+    position: relative; overflow: hidden; padding: 30px; margin-bottom: 14px; background: radial-gradient(circle at 8% 0,rgba(217,201,176,.18),transparent 34%),linear-gradient(135deg,#32101A,#6B1E2D); border-radius: 26px; border: 1px solid rgba(184,160,130,0.18); box-shadow: 0 22px 48px rgba(107,30,45,.17);
   }
   .gd-head-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
   .gd-mark {
     width: 46px; height: 46px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center;
-    background: rgba(184,160,130,0.12); color: #B8A082; border: 1px solid rgba(184,160,130,0.22); flex-shrink: 0;
+    background: rgba(255,251,245,.09); color: #D9C9B0; border: 1px solid rgba(217,201,176,.22); flex-shrink: 0;
   }
-  .gd-title { margin: 0 0 5px; color: #B8A082; font-size: 24px; font-weight: 900; }
+  .gd-eyebrow { display:block; margin-bottom:3px; color:#D9C9B0; font-size:10px; font-weight:900; letter-spacing:.08em; }
+  .gd-title { margin: 0 0 5px; color: #FFFBF5; font-size: 27px; font-weight: 900; }
   .gd-desc { margin: 0; max-width: 720px; color: rgba(255,251,245,0.72); font-size: 13.5px; line-height: 1.8; }
   .gd-stat {
     display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -493,9 +527,18 @@ const styles = `
   }
   .gd-stat strong { color: #B8A082; font-size: 25px; line-height: 1; }
   .gd-stat span { color: rgba(255,251,245,0.64); font-size: 11.5px; font-weight: 800; }
-  .gd-section { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+  .gd-hub { display:grid; grid-template-columns:1.35fr repeat(2,minmax(0,.75fr)); gap:12px; margin:0 0 18px; }
+  .gd-hub-card { position:relative; display:flex; align-items:center; gap:12px; min-width:0; min-height:112px; padding:16px; overflow:hidden; border:1px solid rgba(107,30,45,.13); border-radius:20px; background:#FFFBF5; color:#32101A; text-decoration:none; box-shadow:0 10px 26px rgba(107,30,45,.05); transition:.18s; }
+  .gd-hub-card:hover { transform:translateY(-2px); border-color:rgba(107,30,45,.38); box-shadow:0 16px 32px rgba(107,30,45,.1); }
+  .gd-hub-primary { background:linear-gradient(145deg,#FFFBF5,#F7F3EB); box-shadow:inset 4px 0 0 #6B1E2D,0 10px 26px rgba(107,30,45,.06); }
+  [dir="rtl"] .gd-hub-primary { box-shadow:inset -4px 0 0 #6B1E2D,0 10px 26px rgba(107,30,45,.06); }
+  .gd-hub-icon { width:44px; height:44px; flex:none; display:grid; place-items:center; border-radius:14px; background:#F7F3EB; color:#6B1E2D; }
+  .gd-hub-primary .gd-hub-icon { background:#6B1E2D; color:#FFFBF5; }
+  .gd-hub-card>div { min-width:0; flex:1; }.gd-hub-card strong{display:block;font-size:14px;font-weight:900}.gd-hub-card p{margin:3px 0;color:#655B53;font-size:10.5px;line-height:1.55;font-weight:700}.gd-hub-card small{color:#8F765B;font-size:10px;font-weight:900}.gd-hub-arrow{color:#6B1E2D}
+  .gd-section { scroll-margin-top:18px; background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 20px; padding: 20px; margin-bottom: 14px; box-shadow:0 10px 26px rgba(107,30,45,.04); }
   .gd-section-head { display: flex; align-items: center; gap: 9px; padding-bottom: 11px; margin-bottom: 14px; border-bottom: 1px solid rgba(107,30,45,0.18); color: #6B1E2D; }
   .gd-section-head h2 { margin: 0; font-size: 15px; font-weight: 900; color: #6B1E2D; }
+  .gd-section-link { margin-inline-start:auto; color:#6B1E2D; font-size:10.5px; font-weight:900; text-decoration:none; }
   .gd-filter { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; }
   .gd-filter input {
     flex: 1; min-width: 0; border: 1.5px solid rgba(107,30,45,0.24); border-radius: 12px;
@@ -557,5 +600,7 @@ const styles = `
     .gd-head { padding: 18px; }
     .gd-title { font-size: 20px; }
     .gd-members { grid-template-columns: 1fr; }
+    .gd-hub { grid-template-columns:1fr; }
   }
+  @media (min-width:641px) and (max-width:900px){.gd-hub{grid-template-columns:1fr 1fr}.gd-hub-primary{grid-column:1/-1}}
 `;

@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, CheckCircle2, Clock3 } from "lucide-react";
+import { Search, CheckCircle2, ChevronDown, ChevronUp, Clock3 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
@@ -54,6 +54,8 @@ const UI = {
     coreNow: "القراءة الحالية",
     noCoreYet: "لا توجد قراءة بعد",
     loadError: "تعذّر تحميل التقييم.",
+    showSpectrumDetails: "عرض تفاصيل الطيف",
+    hideSpectrumDetails: "إخفاء التفاصيل",
   },
   sq: {
     back: "← Kthehu te grupi",
@@ -92,6 +94,8 @@ const UI = {
     coreNow: "Leximi aktual",
     noCoreYet: "Ende pa lexim",
     loadError: "Vlerësimi nuk u ngarkua.",
+    showSpectrumDetails: "Shfaq detajet e spektrit",
+    hideSpectrumDetails: "Fshih detajet",
   },
 } as const;
 
@@ -177,6 +181,16 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
   const { data, loading, notFound } = useAssessmentData(id, aid);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "rated" | "pending">("all");
+  const [expandedSpectra, setExpandedSpectra] = useState<Set<string>>(() => new Set());
+  const [showAverageDetails, setShowAverageDetails] = useState(false);
+
+  function toggleSpectrum(key: string) {
+    setExpandedSpectra((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
 
   const traits = useMemo(() => data?.traits ?? [], [data?.traits]);
   const traitMeta = useMemo(
@@ -274,8 +288,11 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         </div>
         <div className="ap-collective-note">{T.earlyNote}</div>
         <div className="ap-collective-grid">
-          {[{ ...data.overall_spectrum, group_name: T.overall }, ...data.group_spectra].map((spectrum, index) => (
-            <article className={`ap-collective-card ${spectrum.group_id === id ? "mine" : ""} ${spectrum.group_id === null ? "overall" : ""}`} key={spectrum.group_id ?? "overall"}>
+          {[{ ...data.overall_spectrum, group_name: T.overall }, ...data.group_spectra].map((spectrum, index) => {
+            const spectrumKey = spectrum.group_id ?? "overall";
+            const expanded = expandedSpectra.has(spectrumKey);
+            return (
+            <article className={`ap-collective-card ${spectrum.group_id === id ? "mine" : ""} ${spectrum.group_id === null ? "overall" : ""}`} key={spectrumKey}>
               <header>
                 <div><strong>{spectrum.group_name}</strong><span>{spectrum.member_count}</span></div>
                 <em>{T.completion} · {spectrum.completion_pct}%</em>
@@ -290,10 +307,17 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                   seed={seedFromString(`${aid}:${spectrum.group_id ?? "overall"}:${index}`)}
                   lang={L}
                   compact
+                  summary={!expanded}
                 />
               ) : <div className="ap-collective-empty">{T.noCollective}</div>}
+              {spectrum.average && (
+                <button className="ap-details-btn" onClick={() => toggleSpectrum(spectrumKey)} aria-expanded={expanded}>
+                  {expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  {expanded ? T.hideSpectrumDetails : T.showSpectrumDetails}
+                </button>
+              )}
             </article>
-          ))}
+          )})}
         </div>
       </section>
 
@@ -361,7 +385,12 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                   traits={traitMeta.map((t, i) => ({ label: t.label, color: t.color, pct: avg[i] ?? 0 }))}
                   seed={seedFromString(`${aid}:my-results`)}
                   lang={L}
+                  summary={!showAverageDetails}
                 />
+                <button className="ap-details-btn ap-details-wide" onClick={() => setShowAverageDetails((value) => !value)} aria-expanded={showAverageDetails}>
+                  {showAverageDetails ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  {showAverageDetails ? T.hideSpectrumDetails : T.showSpectrumDetails}
+                </button>
               </div>
             </div>
           )}
@@ -398,7 +427,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
-        .ap { font-family: 'Cairo', sans-serif; padding-bottom: 60px; }
+        .ap { max-width: 1240px; margin: 0 auto; font-family: 'Cairo', sans-serif; padding: 8px 0 60px; }
         .ap-back { display: inline-block; color: #6B1E2D; font-weight: 800; font-size: 13px; text-decoration: none; margin-bottom: 14px; }
         .ap-back:hover { text-decoration: underline; }
         .ap-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid rgba(107,30,45,0.32); }
@@ -447,6 +476,9 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-collective-track { height: 7px; margin: 8px 0 5px; overflow: hidden; border-radius: 99px; background: #D9C9B0; }
         .ap-collective-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#8F765B,#6B1E2D); }
         .ap-collective-card>small { display: block; margin-bottom: 9px; color: #796A62; font-size: 9.5px; font-weight: 800; }
+        .ap-details-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:7px; min-height:42px; margin-top:10px; border:1px solid rgba(107,30,45,.2); border-radius:12px; background:#F7F3EB; color:#6B1E2D; font:900 11px 'Cairo',sans-serif; cursor:pointer; transition:.15s; }
+        .ap-details-btn:hover { border-color:#6B1E2D; background:#FFFBF5; }
+        .ap-details-wide { max-width:320px; align-self:center; }
         .ap-collective-empty { display: grid; place-items: center; min-height: 100px; border: 1px dashed rgba(184,160,130,.35); border-radius: 14px; background: #F7F3EB; padding: 12px; color: #796A62; text-align: center; font-size: 11px; font-weight: 800; }
         @media (max-width: 620px) { .ap-collective { padding: 13px; } .ap-collective-head { flex-direction: column; } }
 

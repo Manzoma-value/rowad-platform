@@ -33,6 +33,10 @@ const UI = {
     backToGrid: "العودة إلى قائمة الأعضاء",
     notFound: "تعذّر إيجاد هذا العضو ضمن المجموعة.",
     loadError: "تعذّر تحميل التقييم.",
+    stepTitle: "وزّع النقاط",
+    remaining: (n: number) => `بقي ${n} للوصول إلى 100`,
+    exceeded: (n: number) => `خفّض ${n} للعودة إلى 100`,
+    complete: "اكتمل التوزيع — سيتم الحفظ تلقائياً",
   },
   sq: {
     back: "← Kthehu te anëtarët e grupit",
@@ -52,6 +56,10 @@ const UI = {
     backToGrid: "Kthehu te lista e anëtarëve",
     notFound: "Ky anëtar nuk u gjet në grup.",
     loadError: "Vlerësimi nuk u ngarkua.",
+    stepTitle: "Shpërndaj pikët",
+    remaining: (n: number) => `Mbeten ${n} për të arritur 100`,
+    exceeded: (n: number) => `Ul ${n} për t'u kthyer në 100`,
+    complete: "Shpërndarja u plotësua — ruhet automatikisht",
   },
 } as const;
 
@@ -102,6 +110,7 @@ function RatingPanel({
       }}
       onCommit={(next) => { if (isValid100(next, traits.length)) void persist(next); }}
       showSpectrum
+      hideReadout
       spectrumSeed={spectrumSeed}
     />
   );
@@ -117,8 +126,8 @@ export default function RateMemberPage({ params }: { params: Promise<{ id: strin
 
   const { data, loading, notFound } = useAssessmentData(id, aid);
 
-  const [saveInfo, setSaveInfo] = useState<{ state: SaveState; total: number }>({ state: "dirty", total: 0 });
-  const onSaveInfo = useCallback((state: SaveState, total: number) => setSaveInfo({ state, total }), []);
+  const [saveInfo, setSaveInfo] = useState<{ targetId: string; state: SaveState; total: number }>({ targetId: "", state: "dirty", total: 0 });
+  const onSaveInfo = useCallback((state: SaveState, total: number) => setSaveInfo({ targetId, state, total }), [targetId]);
 
   const traits = useMemo(() => data?.traits ?? [], [data?.traits]);
   const distributorTraits = useMemo(
@@ -176,7 +185,10 @@ export default function RateMemberPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const { state: saveState, total } = saveInfo;
+  const initialTotal = initialScores.reduce((sum, score) => sum + score, 0);
+  const { state: saveState, total } = saveInfo.targetId === targetId
+    ? saveInfo
+    : { state: existing ? "saved" as const : "dirty" as const, total: initialTotal };
 
   return (
     <div className="rt" dir={dir}>
@@ -206,6 +218,15 @@ export default function RateMemberPage({ params }: { params: Promise<{ id: strin
       </header>
 
       <p className="rt-instructions">{T.instructions}</p>
+
+      <section className={`rt-total-guide ${total === 100 ? "done" : total > 100 ? "over" : "under"}`} aria-live="polite">
+        <div className="rt-total-copy">
+          <span>{T.stepTitle}</span>
+          <strong>{total === 100 ? T.complete : total > 100 ? T.exceeded(total - 100) : T.remaining(100 - total)}</strong>
+        </div>
+        <div className="rt-total-number"><b>{total}</b><span>/ 100</span></div>
+        <div className="rt-total-track"><i style={{ width: `${Math.min(100, total)}%` }} /></div>
+      </section>
 
       <div className="rt-nav">
         <button className="rt-nav-btn" onClick={() => goTo(targetIdx - 1)} disabled={targetIdx <= 0}>
@@ -257,7 +278,7 @@ export default function RateMemberPage({ params }: { params: Promise<{ id: strin
 
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
-.rt { font-family: 'Cairo', sans-serif; max-width: 900px; margin: 0 auto; padding-bottom: 60px; }
+.rt { font-family: 'Cairo', sans-serif; max-width: 1120px; margin: 0 auto; padding: 8px 0 60px; }
 .rt-back { display: inline-block; color: #6B1E2D; font-weight: 800; font-size: 13px; text-decoration: none; margin-bottom: 16px; }
 .rt-back:hover { text-decoration: underline; }
 .rt-notfound { padding: 60px; text-align: center; color: #6B1E2D; font-weight: 800; background: rgba(107,30,45,.05); border: 1px dashed rgba(107,30,45,.3); border-radius: 16px; }
@@ -276,7 +297,9 @@ const styles = `
 .rt-save-err { background: rgba(107,30,45,.4); color: #F7F3EB; }
 .rt-save-dirty { background: rgba(217,201,176,.16); color: #D9C9B0; }
 
-.rt-instructions { margin: 14px 0 18px; color: #655B53; font-size: 13px; line-height: 1.85; }
+.rt-instructions { margin: 14px 0 10px; color: #655B53; font-size: 13px; line-height: 1.85; }
+.rt-total-guide { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 18px; align-items:center; margin-bottom:16px; padding:14px 16px; border:1px solid rgba(107,30,45,.16); border-radius:16px; background:#FFFBF5; }
+.rt-total-copy{display:flex;flex-direction:column;gap:2px}.rt-total-copy span{color:#8F765B;font-size:10px;font-weight:900;letter-spacing:.06em}.rt-total-copy strong{color:#655B53;font-size:12px}.rt-total-number{display:flex;align-items:baseline;gap:4px}.rt-total-number b{color:#8F765B;font:900 28px ui-monospace,Consolas,monospace}.rt-total-number span{color:#796A62;font-size:10px;font-weight:900}.rt-total-track{grid-column:1/-1;height:8px;overflow:hidden;border-radius:999px;background:#D9C9B0}.rt-total-track i{display:block;height:100%;border-radius:inherit;background:#8F765B;transition:width .2s}.rt-total-guide.done{border-color:rgba(27,94,32,.2);background:rgba(27,94,32,.05)}.rt-total-guide.done .rt-total-copy strong,.rt-total-guide.done .rt-total-number b{color:#1B5E20}.rt-total-guide.done .rt-total-track i{background:#1B5E20}.rt-total-guide.over{border-color:rgba(107,30,45,.3);background:rgba(107,30,45,.05)}.rt-total-guide.over .rt-total-copy strong,.rt-total-guide.over .rt-total-number b{color:#6B1E2D}.rt-total-guide.over .rt-total-track i{background:#6B1E2D}
 
 .rt-nav { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; margin-bottom: 16px; }
 .rt-nav-btn { display: flex; align-items: center; gap: 6px; height: 42px; padding: 0 14px; border: 1.5px solid rgba(107,30,45,.28); border-radius: 12px; background: #FFFBF5; color: #6B1E2D; font: 800 12px 'Cairo',sans-serif; cursor: pointer; transition: .15s; white-space: nowrap; }
