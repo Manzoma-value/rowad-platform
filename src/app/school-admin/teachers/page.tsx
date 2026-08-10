@@ -199,7 +199,6 @@ export default function SchoolAdminTeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
   const [exportingExcel, setExportingExcel] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState("");
@@ -258,19 +257,10 @@ export default function SchoolAdminTeachersPage() {
     resetFilters: lang === "ar" ? "مسح التصفية" : lang === "sq" ? "Pastro filtrat" : "Clear filters",
     result: lang === "ar" ? "نتيجة" : lang === "sq" ? "rezultate" : "results",
     noResults: lang === "ar" ? "لا يوجد مشرفون مطابقون لخيارات التصفية الحالية." : lang === "sq" ? "Asnjë edukator nuk përputhet me filtrat aktualë." : "No supervisors match the current filters.",
-    readMore: lang === "ar" ? "عرض التفاصيل" : lang === "sq" ? "Shfaq detajet" : "Read more",
+    readMore: lang === "ar" ? "فتح الملف الشامل للمشرف" : lang === "sq" ? "Hap profilin e plotë" : "Open complete profile",
     readLess: lang === "ar" ? "إخفاء التفاصيل" : lang === "sq" ? "Fshih detajet" : "Show less",
     exportExcel: lang === "ar" ? "تصدير كل المشرفين Excel" : lang === "sq" ? "Eksporto edukatorët në Excel" : "Export all supervisors",
     exporting: lang === "ar" ? "جاري التصدير..." : lang === "sq" ? "Duke eksportuar..." : "Exporting...",
-  };
-
-  const toggleExpanded = (teacherId: string) => {
-    setExpandedIds((current) => {
-      const next = new Set(current);
-      if (next.has(teacherId)) next.delete(teacherId);
-      else next.add(teacherId);
-      return next;
-    });
   };
 
   useEffect(() => {
@@ -535,7 +525,7 @@ export default function SchoolAdminTeachersPage() {
         <div className="te-grid">
           {filteredTeachers.map((teacher, index) => {
             const workshopSummaries = summarizeWorkshops(teacher);
-            const expanded = expandedIds.has(teacher.id);
+            const expanded = false;
             return (
               <article key={teacher.id} className={`te-card ${expanded ? "is-expanded" : "is-compact"} ${teacher.profile.is_active ? "" : "is-inactive"}`} style={{ animationDelay: `${index * 35}ms` }}>
                 <div className="te-card-watermark" aria-hidden="true">
@@ -585,14 +575,12 @@ export default function SchoolAdminTeachersPage() {
                   </div>
                 </div>
 
-                <button
-                  type="button"
+                <Link
+                  href={`/school-admin/teachers/${teacher.id}`}
                   className="te-read-more"
-                  onClick={() => toggleExpanded(teacher.id)}
-                  aria-expanded={expanded}
                 >
-                  {expanded ? labels.readLess : labels.readMore}
-                </button>
+                  {labels.readMore}
+                </Link>
 
                 <div className="te-compact-summary">
                   <span><GraduationCap size={12} />{teacher.application ? qualificationLabel(teacher.application.qualification, lang) : labels.noApplication}</span>
@@ -959,7 +947,7 @@ const styles = `
   .te-toggle:disabled { opacity:.55; cursor:not-allowed; }
   .te-delete { color:#6B1E2D; background:rgba(107,30,45,.05); border-color:rgba(107,30,45,.20); }
   .te-delete:hover { background:rgba(107,30,45,.11); border-color:rgba(107,30,45,.38); transform:translateY(-1px); box-shadow:0 6px 14px rgba(107,30,45,.12); }
-  .te-read-more { grid-column:1 / -1; width:auto; min-width:96px; height:34px; padding:0 12px; color:#F7F3EB; background:linear-gradient(180deg,#5B1526,#32101A); border-color:rgba(184,160,130,.34); }
+  .te-read-more { grid-column:1 / -1; width:auto; min-width:96px; height:34px; padding:0 12px; color:#F7F3EB; background:linear-gradient(180deg,#5B1526,#32101A); border-color:rgba(184,160,130,.34); text-decoration:none; }
   .te-read-more:hover { color:#FFF; border-color:rgba(217,201,176,.68); box-shadow:0 7px 18px rgba(50,16,26,.18); }
 
   .te-compact-summary { position:relative; z-index:1; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }

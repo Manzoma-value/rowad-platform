@@ -880,7 +880,7 @@ const styles = `
   ::selection { background: rgba(184,160,130,0.20); }
 
   /* ══ SHELL ══ */
-  .sa-shell { display: flex; min-height: 100vh; width: 100%; }
+  .sa-shell { display: flex; min-height: 100vh; width: 100%; overflow-x: clip; }
 
   /* ══ OVERLAY ══ */
   .sa-overlay {
