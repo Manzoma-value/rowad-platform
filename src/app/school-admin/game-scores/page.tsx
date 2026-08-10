@@ -7,7 +7,7 @@ import MandalaLoader from "@/components/MandalaLoader";
 import { Check, Clock3, MapPin, Trophy, Users, X } from "lucide-react";
 import { COLUMN_LABELS, COLUMN_ORDER } from "@/lib/rowad";
 
-type MiniGameKind = "MEMORY" | "HUNTER" | "SPEED" | "COLLECTOR" | "WORDRAIN";
+type MiniGameKind = "MEMORY" | "HUNTER" | "SPEED" | "COLLECTOR" | "WORDRAIN" | "IMPACT_PATH";
 
 type ModelAnswer = {
   concept_id: string;
@@ -78,12 +78,13 @@ const GAME_LABELS: Record<string, { ar: string; sq: string; emoji: string }> = {
   SPEED: { ar: "تحدي السرعة", sq: "Sfida e Shpejtësisë", emoji: "⚡" },
   COLLECTOR: { ar: "جامع المقاصد", sq: "Mbledhësi i Qëllimeve", emoji: "🧭" },
   WORDRAIN: { ar: "مطر الكلمات", sq: "Shiu i Fjalëve", emoji: "🌧️" },
+  IMPACT_PATH: { ar: "رحلة الأثر", sq: "Rruga e Ndikimit", emoji: "🧭" },
 };
 
 const UI = {
   ar: {
     title: "أدوات التعلم — الاستخدام والتفاعل",
-    sub: "نظرة شاملة على أدوات التعلم في المنصة: بطاقات النموذج التعليمي وخمسة أنشطة تدريبية. تابع مستوى الاستخدام والمشاركة.",
+    sub: "نظرة شاملة على أدوات التعلم في المنصة: بطاقات النموذج التعليمي وستة أنشطة تدريبية. تابع مستوى الاستخدام والمشاركة.",
     totalPlays: "إجمالي المحاولات",
     uniquePlayers: "عدد المشاركين",
     mostPlayed: "الأكثر استخداماً",
@@ -98,7 +99,7 @@ const UI = {
     lastActive: "آخر نشاط",
     modelSection: "النموذج التعليمي (بطاقات)",
     modelSectionSub: "نتائج بطاقتي النموذج التعليمي الأولى والثانية.",
-    miniSection: "الأنشطة التدريبية الخمسة",
+    miniSection: "الأنشطة التدريبية الستة",
     miniSectionSub: "لا تُقيَّم هذه الأنشطة؛ الهدف متابعة الاستخدام وعدد المحاولات والأداة المفضلة.",
     filterAll: "الكل",
     filterTeachers: "المشرفون فقط",
@@ -142,7 +143,7 @@ const UI = {
   },
   sq: {
     title: "Mjetet mësimore — përdorimi dhe angazhimi",
-    sub: "Pamje e plotë e mjeteve mësimore: kartat e Modelit Edukativ dhe pesë aktivitete ushtrimi. Ndiq përdorimin dhe pjesëmarrjen.",
+    sub: "Pamje e plotë e mjeteve mësimore: kartat e Modelit Edukativ dhe gjashtë aktivitete ushtrimi. Ndiq përdorimin dhe pjesëmarrjen.",
     totalPlays: "Përpjekje gjithsej",
     uniquePlayers: "Numri i pjesëmarrësve",
     mostPlayed: "Më e përdorura",
@@ -157,7 +158,7 @@ const UI = {
     lastActive: "Aktiviteti i fundit",
     modelSection: "Modeli Edukativ (karta)",
     modelSectionSub: "Rezultatet e kartës së parë dhe të dytë të modelit.",
-    miniSection: "Pesë aktivitete ushtrimi",
+    miniSection: "Gjashtë aktivitete ushtrimi",
     miniSectionSub: "Këto aktivitete nuk vlerësohen; ndiqet vetëm përdorimi, numri i përpjekjeve dhe mjeti i preferuar.",
     filterAll: "Të gjithë",
     filterTeachers: "Vetëm edukatorët",

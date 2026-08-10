@@ -1,6 +1,6 @@
 // api/teacher/mini-games/submit — log one completed round of a practice
 // mini-game (Memory Match, Maqsad Hunter, Speed Drill, Maqsad Collector,
-// Word Rain). These games have no server-side answer key, so unlike the
+// Word Rain, Impact Path). These games have no server-side answer key, so unlike the
 // card-game submit route this never grades anything — it exists purely so
 // admins can see usage: who played, how often, which game is most popular.
 import { NextResponse } from "next/server";
@@ -10,7 +10,7 @@ import type { MiniGameKind } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const VALID_GAMES: MiniGameKind[] = ["MEMORY", "HUNTER", "SPEED", "COLLECTOR", "WORDRAIN"];
+const VALID_GAMES: MiniGameKind[] = ["MEMORY", "HUNTER", "SPEED", "COLLECTOR", "WORDRAIN", "IMPACT_PATH"];
 const MAX_SCORE = 100_000;
 const MAX_META_ENTRIES = 8;
 

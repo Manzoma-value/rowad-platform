@@ -1,13 +1,13 @@
 // GET /api/school-admin/game-scores — unified play analytics for every game
 // on the platform: the graded card/model game (RowadGameSubmission), the
-// 5 practice mini-games (MiniGameSubmission), and who's mid-attempt right
+// practice mini-games (MiniGameSubmission), and who's mid-attempt right
 // now on the card game but hasn't submitted yet (RowadGameDraft).
 //
 //   - Default: { overview, modelRows, miniRows, inProgressRows }
 //     overview       — cross-game ranking (plays + unique players per game),
 //                      used to answer "which game is most played".
 //     modelRows      — per-user roll-up for the card game (unchanged shape).
-//     miniRows       — per-user roll-up for the 5 mini-games.
+//     miniRows       — per-user roll-up for the practice games.
 //     inProgressRows — players with an unsubmitted, autosaved card-game
 //                      board: which stage, how many of 25 cards placed, and
 //                      when they were last active.
@@ -20,7 +20,7 @@ import type { MiniGameKind } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-const MINI_GAMES: MiniGameKind[] = ["MEMORY", "HUNTER", "SPEED", "COLLECTOR", "WORDRAIN"];
+const MINI_GAMES: MiniGameKind[] = ["MEMORY", "HUNTER", "SPEED", "COLLECTOR", "WORDRAIN", "IMPACT_PATH"];
 
 export async function GET(req: Request) {
   const auth = await requireSchoolAdmin();

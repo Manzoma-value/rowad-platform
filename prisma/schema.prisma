@@ -199,8 +199,8 @@ model RowadGameSubmission {
   @@map("rowad_game_submissions")
 }
 
-// The five practice mini-games on the Games page (Memory Match, Maqsad
-// Hunter, Speed Drill, Maqsad Collector, Word Rain). Unlike the graded card
+// The practice mini-games on the Games page (Memory Match, Maqsad Hunter,
+// Speed Drill, Maqsad Collector, Word Rain, Impact Path). Unlike the graded card
 // game these have no answer key to validate server-side — every completed
 // round is logged as-is purely so admins can see usage (who played, how
 // often, which game is most popular). Never used for grading.
@@ -210,6 +210,7 @@ enum MiniGameKind {
   SPEED
   COLLECTOR
   WORDRAIN
+  IMPACT_PATH
 }
 
 model MiniGameSubmission {

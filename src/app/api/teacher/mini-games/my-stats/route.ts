@@ -1,5 +1,5 @@
 // api/teacher/mini-games/my-stats — the current player's own best score,
-// play count and last-played time for each of the 5 mini-games. Powers the
+// play count and last-played time for each practice game. Powers the
 // per-tile progress badges on the Games hub.
 import { NextResponse } from "next/server";
 import { requireActivePlayer } from "@/lib/player-auth";
@@ -26,6 +26,7 @@ export async function GET() {
     SPEED: { plays: 0, best_score: 0, wins: 0, last_played_at: null },
     COLLECTOR: { plays: 0, best_score: 0, wins: 0, last_played_at: null },
     WORDRAIN: { plays: 0, best_score: 0, wins: 0, last_played_at: null },
+    IMPACT_PATH: { plays: 0, best_score: 0, wins: 0, last_played_at: null },
   };
 
   for (const row of rows) {

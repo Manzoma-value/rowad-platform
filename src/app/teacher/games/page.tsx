@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLang } from "@/lib/language-context";
+import ImpactPathGame from "@/components/games/ImpactPathGame";
 
 /* ─────────────────────────────────────────────────────────────────────
    Three mini-games for teachers — pure client state, no DB writes.
@@ -13,7 +14,7 @@ import { useLang } from "@/lib/language-context";
    ───────────────────────────────────────────────────────────────────── */
 
 type Lang = "ar" | "sq" | "en";
-type GameId = "hub" | "memory" | "hunter" | "speed" | "collector" | "wordrain";
+type GameId = "hub" | "impact" | "memory" | "hunter" | "speed" | "collector" | "wordrain";
 
 /* ─── Localized strings ──────────────────────────────────────────────── */
 const STR = {
@@ -23,6 +24,8 @@ const STR = {
     playBtn: "ابدأ النشاط",
     backToHub: "كل أدوات التعلم",
     restart: "إعادة",
+    impactTitle: "رحلة الأثر",
+    impactDesc: "ست محطات واقعية تختار فيها الفعل الذي يحوّل المفهوم إلى أثر مرئي وسمة تنمو.",
     // Memory
     memTitle: "تحدي الذاكرة",
     memDesc: "اقلب الكروت وطابق المستوى مع رقمه والمقصد مع معناه. كلما قلّت محاولاتك زادت نجومك.",
@@ -118,6 +121,8 @@ const STR = {
     playBtn: "Fillo aktivitetin",
     backToHub: "Të gjitha mjetet",
     restart: "Rinis",
+    impactTitle: "Rruga e Ndikimit",
+    impactDesc: "Gjashtë stacione reale ku zgjedh veprimin që e kthen konceptin në ndikim të dukshëm dhe tipar që zhvillohet.",
     // Memory
     memTitle: "Sfida e Kujtesës",
     memDesc: "Ktheji kartat dhe përshtati nivelet me numrat dhe qëllimet me kuptimet. Sa më pak tentativa, aq më shumë yje.",
@@ -348,7 +353,7 @@ const localize = <T extends { ar: string; sq: string }>(item: T, lang: Lang) =>
    blocks or interrupts the player if it fails.
    ───────────────────────────────────────────────────────────────────── */
 
-type ServerGameKind = "MEMORY" | "HUNTER" | "SPEED" | "COLLECTOR" | "WORDRAIN";
+type ServerGameKind = "MEMORY" | "HUNTER" | "SPEED" | "COLLECTOR" | "WORDRAIN" | "IMPACT_PATH";
 
 function submitMiniGame(game: ServerGameKind, score: number, won: boolean, meta?: Record<string, unknown>) {
   void fetch("/api/teacher/mini-games/submit", {
@@ -395,6 +400,7 @@ export default function GamesPage({ cardBase = "/teacher/games/card" }: { cardBa
   return (
     <div className="gm-shell" dir={dir}>
       {game === "hub"       && <Hub T={T} onPlay={setGame} cardBase={cardBase} lang={L} stats={myStats} />}
+      {game === "impact"    && <ImpactPathGame lang={L} onBack={goHub} onComplete={(score, won, meta) => submitMiniGame("IMPACT_PATH", score, won, meta)} />}
       {game === "memory"    && <MemoryGame    T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("MEMORY", score, won, meta)} />}
       {game === "hunter"    && <HunterGame    T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("HUNTER", score, won, meta)} />}
       {game === "speed"     && <SpeedGame     T={T} lang={L} onBack={goHub} onRoundEnd={(score, won, meta) => submitMiniGame("SPEED", score, won, meta)} />}
@@ -412,7 +418,7 @@ type RoundEnd = (score: number, won: boolean, meta?: Record<string, unknown>) =>
    ───────────────────────────────────────────────────────────────────── */
 
 const TILE_KIND: Record<Exclude<GameId, "hub">, ServerGameKind> = {
-  memory: "MEMORY", hunter: "HUNTER", speed: "SPEED", collector: "COLLECTOR", wordrain: "WORDRAIN",
+  impact: "IMPACT_PATH", memory: "MEMORY", hunter: "HUNTER", speed: "SPEED", collector: "COLLECTOR", wordrain: "WORDRAIN",
 };
 
 function Hub({
@@ -429,6 +435,7 @@ function Hub({
   stats: MyStats | null;
 }) {
   const tiles: { id: Exclude<GameId, "hub">; title: string; desc: string; emoji: string; hue: string }[] = [
+    { id: "impact",    title: T.impactTitle, desc: T.impactDesc, emoji: "🧭",  hue: "rgba(107,30,45,0.12)" },
     { id: "memory",    title: T.memTitle, desc: T.memDesc, emoji: "🧠",  hue: "rgba(184,160,130,0.18)" },
     { id: "hunter",    title: T.hunTitle, desc: T.hunDesc, emoji: "🎯",  hue: "rgba(107,30,45,0.10)" },
     { id: "speed",     title: T.spdTitle, desc: T.spdDesc, emoji: "⚡",  hue: "rgba(27,94,32,0.10)" },
