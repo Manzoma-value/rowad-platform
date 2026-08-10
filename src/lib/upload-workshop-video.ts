@@ -1,11 +1,18 @@
+import { MAX_VIDEO_FILE } from "@/lib/workshop-videos";
+
+const DRIVE_UNAVAILABLE_ERRORS = new Set([
+  "drive_upload_not_configured",
+  "drive_upload_auth_failed",
+  "drive_upload_folder_not_configured",
+  "drive_folder_not_writable",
+  "drive_upload_session_failed",
+]);
+
 /**
- * Uploads a workshop video from the browser straight into Google Drive,
- * then registers it with our API.
- *
- * Google does not allow a server-created resumable URL to be used cross-origin
- * by the browser. We therefore relay 4 MB chunks through our same-origin API:
- * each request stays below Vercel's 4.5 MB limit and the API forwards it into
- * the resumable Drive session.
+ * Uploads a workshop video from the browser, preferring Google Drive and
+ * automatically falling back to Supabase Storage when the shared Drive OAuth
+ * connection is unavailable. Video bytes never cross a single large Next.js
+ * request, which keeps the flow below Vercel's request-body limit.
  */
 export async function uploadWorkshopVideo({
   workshopId,
@@ -32,7 +39,16 @@ export async function uploadWorkshopVideo({
     signal,
   });
   const urlPayload = await urlResponse.json().catch(() => ({}));
-  if (!urlResponse.ok) throw new Error(urlPayload.error ?? "upload_url_failed");
+  if (urlResponse.ok && urlPayload.upload_strategy === "SUPABASE") {
+    return uploadToSupabase({ workshopId, file, title, durationSeconds, onProgress, signal });
+  }
+  if (!urlResponse.ok) {
+    const code = typeof urlPayload.error === "string" ? urlPayload.error : "upload_url_failed";
+    if (file.size <= MAX_VIDEO_FILE && DRIVE_UNAVAILABLE_ERRORS.has(code)) {
+      return uploadToSupabase({ workshopId, file, title, durationSeconds, onProgress, signal });
+    }
+    throw new Error(code);
+  }
 
   const driveFileId = await uploadDriveChunks({
     workshopId,
@@ -58,6 +74,85 @@ export async function uploadWorkshopVideo({
   const savePayload = await saveResponse.json().catch(() => ({}));
   if (!saveResponse.ok) throw new Error(savePayload.error ?? "save_failed");
   return savePayload.video;
+}
+
+/** Direct signed upload used as the resilient fallback for files up to 350 MB. */
+async function uploadToSupabase({
+  workshopId,
+  file,
+  title,
+  durationSeconds,
+  onProgress,
+  signal,
+}: {
+  workshopId: string;
+  file: File;
+  title: string;
+  durationSeconds: number | null;
+  onProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+}) {
+  const urlResponse = await fetch(`/api/school-admin/workshops/${workshopId}/videos/upload-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, mime_type: file.type, size_bytes: file.size }),
+    signal,
+  });
+  const urlPayload = await urlResponse.json().catch(() => ({}));
+  if (!urlResponse.ok) {
+    throw new Error(urlResponse.status === 413 ? "too_large" : (urlPayload.error ?? "upload_url_failed"));
+  }
+
+  await putToSignedUrl({ signedUrl: urlPayload.signed_url, file, onProgress, signal });
+
+  const saveResponse = await fetch(`/api/school-admin/workshops/${workshopId}/videos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      storage_path: urlPayload.path,
+      title,
+      mime_type: file.type,
+      size_bytes: file.size,
+      duration_seconds: durationSeconds,
+    }),
+    signal,
+  });
+  const savePayload = await saveResponse.json().catch(() => ({}));
+  if (!saveResponse.ok) throw new Error(savePayload.error ?? "save_failed");
+  return savePayload.video;
+}
+
+/** Upload the file to a signed storage URL while reporting browser progress. */
+function putToSignedUrl({
+  signedUrl,
+  file,
+  onProgress,
+  signal,
+}: {
+  signedUrl: string;
+  file: File;
+  onProgress?: (percent: number) => void;
+  signal?: AbortSignal;
+}) {
+  return new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", signedUrl);
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * 100));
+    };
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) resolve();
+      else reject(new Error(`storage_${request.status}`));
+    };
+    request.onerror = () => reject(new Error("network_error"));
+    request.onabort = () => reject(new Error("aborted"));
+    signal?.addEventListener("abort", () => request.abort(), { once: true });
+
+    const body = new FormData();
+    body.append("cacheControl", "3600");
+    body.append("", file);
+    request.send(body);
+  });
 }
 
 /**

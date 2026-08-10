@@ -3,6 +3,7 @@ import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { googleDriveOAuthAccessToken, googleDriveUploadFolderId } from "@/lib/google-drive";
 import { createDriveUploadSession, readDriveUploadSession } from "@/lib/drive-upload-session";
+import { MAX_VIDEO_FILE } from "@/lib/workshop-videos";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     ]);
   } catch (error) {
     const code = error instanceof Error ? error.message : "drive_upload_not_configured";
+    if (size <= MAX_VIDEO_FILE) {
+      console.warn("[workshop-drive upload] using storage fallback", code);
+      return NextResponse.json({ upload_strategy: "SUPABASE" });
+    }
     return NextResponse.json({ error: code }, { status: 503 });
   }
 
@@ -59,6 +64,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!response.ok || !uploadUrl) {
     const detail = await response.text().catch(() => "");
     console.error("[workshop-drive upload session]", response.status, detail.slice(0, 500));
+    if (size <= MAX_VIDEO_FILE) {
+      return NextResponse.json({ upload_strategy: "SUPABASE" });
+    }
     return NextResponse.json({ error: response.status === 403 ? "drive_folder_not_writable" : "drive_upload_session_failed" }, { status: 502 });
   }
 
