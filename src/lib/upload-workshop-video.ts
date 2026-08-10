@@ -1,4 +1,4 @@
-import { MAX_VIDEO_FILE } from "@/lib/workshop-videos";
+import { DIRECT_VIDEO_STORAGE_LIMIT } from "@/lib/workshop-videos";
 
 const DRIVE_UNAVAILABLE_ERRORS = new Set([
   "drive_upload_not_configured",
@@ -44,7 +44,7 @@ export async function uploadWorkshopVideo({
   }
   if (!urlResponse.ok) {
     const code = typeof urlPayload.error === "string" ? urlPayload.error : "upload_url_failed";
-    if (file.size <= MAX_VIDEO_FILE && DRIVE_UNAVAILABLE_ERRORS.has(code)) {
+    if (file.size <= DIRECT_VIDEO_STORAGE_LIMIT && DRIVE_UNAVAILABLE_ERRORS.has(code)) {
       return uploadToSupabase({ workshopId, file, title, durationSeconds, onProgress, signal });
     }
     throw new Error(code);

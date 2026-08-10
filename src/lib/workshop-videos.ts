@@ -68,6 +68,7 @@ export type TeacherWorkshopVideo = {
 
 export const VIDEO_BUCKET = "workshop-videos";
 export const MAX_VIDEO_FILE = 350 * 1024 * 1024;
+export const DIRECT_VIDEO_STORAGE_LIMIT = 200 * 1024 * 1024;
 export const MAX_QUESTIONS_PER_VIDEO = 30;
 
 const SAFE_EXTENSIONS = new Set(["mp4", "webm", "ogg", "ogv", "mov", "m4v", "mkv"]);

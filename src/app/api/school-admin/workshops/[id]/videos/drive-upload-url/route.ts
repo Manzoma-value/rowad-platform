@@ -3,7 +3,7 @@ import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { googleDriveOAuthAccessToken, googleDriveUploadFolderId } from "@/lib/google-drive";
 import { createDriveUploadSession, readDriveUploadSession } from "@/lib/drive-upload-session";
-import { MAX_VIDEO_FILE } from "@/lib/workshop-videos";
+import { DIRECT_VIDEO_STORAGE_LIMIT } from "@/lib/workshop-videos";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +30,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return NextResponse.json({ error: "A valid video file is required" }, { status: 400 });
   }
 
+  // The workshop bucket accepts videos up to 350 MB and its signed URL sends
+  // bytes directly from the browser to storage. Prefer that path instead of
+  // relaying dozens of chunks through Vercel and Google Drive for videos up to
+  // 200 MB. Larger videos are deliberately stored in Google Drive.
+  if (size <= DIRECT_VIDEO_STORAGE_LIMIT) {
+    return NextResponse.json({ upload_strategy: "SUPABASE" });
+  }
+
   let accessToken: string;
   let folderId: string;
   try {
@@ -39,7 +47,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     ]);
   } catch (error) {
     const code = error instanceof Error ? error.message : "drive_upload_not_configured";
-    if (size <= MAX_VIDEO_FILE) {
+    if (size <= DIRECT_VIDEO_STORAGE_LIMIT) {
       console.warn("[workshop-drive upload] using storage fallback", code);
       return NextResponse.json({ upload_strategy: "SUPABASE" });
     }
@@ -64,7 +72,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!response.ok || !uploadUrl) {
     const detail = await response.text().catch(() => "");
     console.error("[workshop-drive upload session]", response.status, detail.slice(0, 500));
-    if (size <= MAX_VIDEO_FILE) {
+    if (size <= DIRECT_VIDEO_STORAGE_LIMIT) {
       return NextResponse.json({ upload_strategy: "SUPABASE" });
     }
     return NextResponse.json({ error: response.status === 403 ? "drive_folder_not_writable" : "drive_upload_session_failed" }, { status: 502 });
