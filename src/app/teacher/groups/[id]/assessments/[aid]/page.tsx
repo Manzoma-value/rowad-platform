@@ -1,59 +1,41 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { use, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Search, CheckCircle2, Clock3 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
-import RowadDistributor from "@/components/RowadDistributor";
 import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
+import TraitSpectrumBlob from "@/components/TraitSpectrumBlob";
 import { seedFromString } from "@/lib/trait-spectrum";
+import { ASSESS_UI, derive, averageTuples, pickAssessLang } from "@/lib/rowad-assessment";
 import {
-  ASSESS_UI, derive, averageTuples, pickAssessLang, canonicalizeDefaultTraits,
-  type ScoresTuple,
-} from "@/lib/rowad-assessment";
-
-type Trait = {
-  position: number; label_ar: string; label_sq: string;
-  statement_ar: string; statement_sq: string; color: string;
-  kind: "TARGET" | "EARLY_OBSERVATION";
-  objective_ar: string | null; objective_sq: string | null;
-};
-type Member = { teacher_id: string; profile: { full_name: string }; is_self: boolean };
-type Given  = { target_teacher_id: string; scores: ScoresTuple; updated_at: string };
-type Received = {
-  rater_teacher_id: string; rater_name: string; is_self: boolean;
-  scores: ScoresTuple; updated_at: string;
-};
-type SpectrumAggregate = {
-  group_id: string | null; group_name: string; member_count: number;
-  rating_count: number; expected_count: number; completion_pct: number;
-  participating_raters: number; average: ScoresTuple | null;
-};
-type AssessmentData = {
-  id: string; title: string; status: "OPEN" | "CLOSED";
-  group: { id: string; name: string; description: string | null };
-  traits: Trait[];
-  members: Member[];
-  my_ratings_given: Given[];
-  my_ratings_received: Received[];
-  group_spectra: SpectrumAggregate[];
-  overall_spectrum: SpectrumAggregate;
-};
+  useAssessmentData, traitLabel, membersSelfFirst,
+  type Member, type Given,
+} from "./useAssessmentData";
 
 const UI = {
   ar: {
     back: "← العودة للمجموعة",
     locked: "هذا التقييم مغلق — العرض فقط.",
     sectionRate: "تقييم أعضاء المجموعة",
-    sectionRateSub: "وزّع 100 نقطة بالضبط على كل عضو وفق حضور السمات نسبيًا. هذه خريطة تطويرية وليست درجة نجاح أو حكمًا نهائيًا، وتُحفظ عند اكتمال المجموع.",
+    sectionRateSub: "اختر عضوًا من القائمة أدناه لبدء تقييمه. توزّع 100 نقطة بالضبط لكل عضو، وليست هذه القراءة درجة نجاح أو حكمًا نهائيًا.",
+    searchPlaceholder: "ابحث عن عضو بالاسم...",
+    filterAll: "الكل",
+    filterRated: "تم تقييمهم",
+    filterPending: "بانتظار التقييم",
+    noResults: "لا يوجد عضو مطابق للبحث.",
     targetSelf: "أنا",
-    saved: "✓ محفوظ",
-    notSavedYet: "لم يُحفظ بعد — يجب أن يصل المجموع 100",
-    saving: "جارٍ الحفظ…",
-    saveErr: "تعذّر الحفظ",
+    ratedBadge: "تم التقييم",
+    pendingBadge: "لم يُقيَّم بعد",
+    lastRated: "آخر تحديث",
+    dominant: "الأبرز",
+    rateBtn: "بدء التقييم",
+    editBtn: "تعديل التقييم",
+    rateSelfBtn: "قيّم نفسك",
     sectionMine: "ما تلقّيته من تقييمات",
-    mineEmpty: "لم يقم أحد بتقييمك بعد.",
     average: "المتوسط",
     averageOf: (n: number) => `متوسط ${n} تقييم${n === 1 ? "" : "ات"}`,
     raterCol: "المُقَيِّم",
@@ -65,19 +47,33 @@ const UI = {
     ratingsOf: (done: number, total: number) => `${done} من ${total}`,
     noCollective: "سيظهر الطيف بعد وصول أول تقييم مكتمل.",
     earlyNote: "السمات الثلاث الأخيرة مؤشرات ملاحظة مبكرة تُنمّى تدريجياً وليست حكماً نهائياً.",
+    progressTitle: "تقدمك في التقييم",
+    completed: "مكتمل",
+    pending: "متبقي",
+    receivedCount: "تقييمات وصلتك",
+    coreNow: "القراءة الحالية",
+    noCoreYet: "لا توجد قراءة بعد",
+    loadError: "تعذّر تحميل التقييم.",
   },
   sq: {
     back: "← Kthehu te grupi",
     locked: "Ky vlerësim është i mbyllur — vetëm shikim.",
     sectionRate: "Vlerëso anëtarët e grupit",
-    sectionRateSub: "Shpërndaj saktësisht 100 pikë për secilin anëtar sipas pranisë relative të tipareve. Kjo është hartë zhvillimi, jo notë suksesi ose gjykim përfundimtar; ruhet kur shuma plotësohet.",
+    sectionRateSub: "Zgjidh një anëtar nga lista më poshtë për ta vlerësuar. Shpërndaj saktësisht 100 pikë për secilin; kjo nuk është notë suksesi apo gjykim përfundimtar.",
+    searchPlaceholder: "Kërko anëtar me emër...",
+    filterAll: "Të gjithë",
+    filterRated: "Të vlerësuar",
+    filterPending: "Në pritje",
+    noResults: "Nuk u gjet anëtar me këtë kërkim.",
     targetSelf: "Unë",
-    saved: "✓ U ruajt",
-    notSavedYet: "Nuk u ruajt ende — shuma duhet të jetë 100",
-    saving: "Po ruhet…",
-    saveErr: "Ruajtja dështoi",
+    ratedBadge: "U vlerësua",
+    pendingBadge: "Ende pa vlerësim",
+    lastRated: "Përditësimi i fundit",
+    dominant: "Kryesori",
+    rateBtn: "Fillo vlerësimin",
+    editBtn: "Ndrysho vlerësimin",
+    rateSelfBtn: "Vlerëso veten",
     sectionMine: "Vlerësimet që ke marrë",
-    mineEmpty: "Askush nuk të ka vlerësuar ende.",
     average: "Mesatarja",
     averageOf: (n: number) => `Mesatare e ${n} vlerësime`,
     raterCol: "Vlerësuesi",
@@ -89,25 +85,84 @@ const UI = {
     ratingsOf: (done: number, total: number) => `${done} nga ${total}`,
     noCollective: "Spektri shfaqet pas vlerësimit të parë të plotë.",
     earlyNote: "Tre tiparet e fundit janë tregues të hershëm vëzhgimi që zhvillohen gradualisht, jo gjykime përfundimtare.",
+    progressTitle: "Progresi yt",
+    completed: "Te plota",
+    pending: "Te mbetura",
+    receivedCount: "Vleresime te marra",
+    coreNow: "Leximi aktual",
+    noCoreYet: "Ende pa lexim",
+    loadError: "Vlerësimi nuk u ngarkua.",
   },
 } as const;
 
-/** Reorder members so the "self" entry is always first (matches the
- *  methodology: the supervisor rates themselves before their colleagues). */
-function membersSelfFirst<T extends { is_self: boolean }>(list: T[]): T[] {
-  const self = list.find((m) => m.is_self);
-  const others = list.filter((m) => !m.is_self);
-  return self ? [self, ...others] : list;
+function formatDate(value: string, lang: "ar" | "sq") {
+  return new Date(value).toLocaleDateString(
+    lang === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "sq-AL",
+    { day: "numeric", month: "short", timeZone: "UTC" },
+  );
 }
 
-function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
-function traitStatement(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.statement_ar : t.statement_sq; }
-function evenSplit(n: number): ScoresTuple {
-  if (n <= 0) return [];
-  const base = Math.floor(100 / n);
-  const arr = new Array(n).fill(base);
-  arr[0] += 100 - base * n;
-  return arr;
+function MemberCard({
+  member, given, traitMeta, lang, T, onOpen,
+}: {
+  member: Member;
+  given: Given | undefined;
+  traitMeta: { label: string; color: string }[];
+  lang: "ar" | "sq";
+  T: {
+    targetSelf: string; ratedBadge: string; pendingBadge: string;
+    dominant: string; lastRated: string; editBtn: string; rateBtn: string; rateSelfBtn: string;
+  };
+  onOpen: () => void;
+}) {
+  const rated = !!given;
+  const spectrumTraits = useMemo(
+    () => traitMeta.map((t, i) => ({ label: t.label, color: t.color, pct: given?.scores[i] ?? 0 })),
+    [traitMeta, given],
+  );
+  const dominance = useMemo(() => rated ? derive(given!.scores) : null, [rated, given]);
+  const dominantLabel = dominance
+    ? (dominance.hasCore && dominance.coreIdx !== null ? traitMeta[dominance.coreIdx]?.label : traitMeta[dominance.connectingIdx]?.label)
+    : null;
+
+  return (
+    <article className={`mc-card ${rated ? "rated" : "pending"} ${member.is_self ? "self" : ""}`} onClick={onOpen}>
+      <div className="mc-head">
+        <div className="mc-avatar">{member.profile.full_name.trim().charAt(0).toUpperCase()}</div>
+        <div className="mc-name-wrap">
+          <strong className="mc-name">{member.profile.full_name}</strong>
+          {member.is_self && <span className="mc-self-tag">{T.targetSelf}</span>}
+        </div>
+        <span className={`mc-status ${rated ? "rated" : "pending"}`}>
+          {rated ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
+          {rated ? T.ratedBadge : T.pendingBadge}
+        </span>
+      </div>
+
+      <div className="mc-visual">
+        {rated ? (
+          <TraitSpectrumBlob traits={spectrumTraits} size={104} seed={seedFromString(`${member.teacher_id}:card`)} mode="compact" />
+        ) : (
+          <div className="mc-visual-empty">?</div>
+        )}
+      </div>
+
+      <div className="mc-foot">
+        {rated ? (
+          <>
+            <span className="mc-dominant">{T.dominant}: <b>{dominantLabel}</b></span>
+            <span className="mc-lastrated">{T.lastRated}: {formatDate(given!.updated_at, lang)}</span>
+          </>
+        ) : (
+          <span className="mc-nodata">{T.pendingBadge}</span>
+        )}
+      </div>
+
+      <button className="mc-btn" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
+        {rated ? T.editBtn : (member.is_self ? T.rateSelfBtn : T.rateBtn)}
+      </button>
+    </article>
+  );
 }
 
 export default function AssessmentPage({ params }: { params: Promise<{ id: string; aid: string }> }) {
@@ -116,103 +171,53 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
   const L = pickAssessLang(lang);
   const T = UI[L];
   const AT = ASSESS_UI[L];
-  const UX = {
-    readyToSave: L === "ar" ? "جاهز للحفظ - اترك المؤشر أو اخرج من الرقم" : "Gati per ruajtje - lesho rreshqitesin ose dil nga numri",
-    progressTitle: L === "ar" ? "تقدمك في التقييم" : "Progresi yt",
-    completed: L === "ar" ? "مكتمل" : "Te plota",
-    pending: L === "ar" ? "متبقي" : "Te mbetura",
-    receivedCount: L === "ar" ? "تقييمات وصلتك" : "Vleresime te marra",
-    coreNow: L === "ar" ? "القراءة الحالية" : "Leximi aktual",
-    noCoreYet: L === "ar" ? "لا توجد قراءة بعد" : "Ende pa lexim",
-    prev:      L === "ar" ? "السابق" : "Prapa",
-    next:      L === "ar" ? "التالي" : "Tjetri",
-    memberOf:  (i: number, n: number) => L === "ar" ? `${i} من ${n}` : `${i} nga ${n}`,
-  };
   const dir = L === "ar" ? "rtl" : "ltr";
+  const router = useRouter();
 
-  const [data, setData] = useState<AssessmentData | null>(null);
-  const [loading, setLoading] = useState(true);
-  // One-target-at-a-time carousel — self first.
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [scoresByTarget, setScoresByTarget] = useState<Record<string, ScoresTuple>>({});
-  const [saveState, setSaveState] = useState<Record<string, "saved" | "saving" | "err" | "dirty">>({});
-  const lastSaved = useRef<Record<string, string>>({});
-
-  const reload = useCallback(async () => {
-    setLoading(true);
-    try {
-      const r = await fetch(`/api/teacher/groups/${id}/assessments/${aid}`, { cache: "no-store" });
-      if (!r.ok) { setData(null); return; }
-      const d = await r.json();
-      const raw = d?.assessment as AssessmentData | undefined;
-      if (!raw) { setData(null); return; }
-      const a: AssessmentData = { ...raw, traits: canonicalizeDefaultTraits(raw.traits) };
-      setData(a);
-      const emptyScores = evenSplit(a.traits.length);
-      const map: Record<string, ScoresTuple> = {};
-      const sav: Record<string, "saved"> = {};
-      for (const m of a.members) {
-        const g = a.my_ratings_given.find((x) => x.target_teacher_id === m.teacher_id);
-        if (g) {
-          map[m.teacher_id] = g.scores;
-          lastSaved.current[m.teacher_id] = g.scores.join(",");
-          sav[m.teacher_id] = "saved";
-        } else {
-          map[m.teacher_id] = [...emptyScores];
-        }
-      }
-      setScoresByTarget(map);
-      setSaveState(sav);
-    } finally { setLoading(false); }
-  }, [id, aid]);
-
-  useEffect(() => { reload(); }, [reload]);
-
-  function onChange(targetId: string, next: ScoresTuple) {
-    setScoresByTarget((prev) => ({ ...prev, [targetId]: next }));
-    setSaveState((prev) => ({ ...prev, [targetId]: "dirty" }));
-  }
-
-  const persist = useCallback(async (targetId: string, next: ScoresTuple) => {
-    const sig = next.join(",");
-    if (lastSaved.current[targetId] === sig) return;
-    setSaveState((prev) => ({ ...prev, [targetId]: "saving" }));
-    try {
-      const r = await fetch(`/api/teacher/groups/${id}/assessments/${aid}/ratings/${targetId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scores: next }),
-      });
-      if (!r.ok) { setSaveState((prev) => ({ ...prev, [targetId]: "err" })); return; }
-      lastSaved.current[targetId] = sig;
-      setSaveState((prev) => ({ ...prev, [targetId]: "saved" }));
-    } catch {
-      setSaveState((prev) => ({ ...prev, [targetId]: "err" }));
-    }
-  }, [id, aid]);
+  const { data, loading, notFound } = useAssessmentData(id, aid);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<"all" | "rated" | "pending">("all");
 
   const traits = useMemo(() => data?.traits ?? [], [data?.traits]);
-  const distributorTraits = useMemo(
-    () => traits.map((t) => ({ label: traitLabel(t, L), statement: traitStatement(t, L), color: t.color })),
+  const traitMeta = useMemo(
+    () => traits.map((t) => ({ label: traitLabel(t, L), color: t.color })),
     [traits, L],
   );
 
-  // ── My received panel: compute average across all rows, then derive.
+  const givenByTarget = useMemo(() => {
+    const map: Record<string, Given> = {};
+    for (const g of data?.my_ratings_given ?? []) map[g.target_teacher_id] = g;
+    return map;
+  }, [data?.my_ratings_given]);
+
+  const orderedMembers = useMemo(
+    () => data ? membersSelfFirst(data.members) : [],
+    [data],
+  );
+
+  const visibleMembers = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return orderedMembers.filter((m) => {
+      if (q && !m.profile.full_name.toLowerCase().includes(q)) return false;
+      const rated = !!givenByTarget[m.teacher_id];
+      if (filter === "rated" && !rated) return false;
+      if (filter === "pending" && rated) return false;
+      return true;
+    });
+  }, [orderedMembers, query, filter, givenByTarget]);
+
   const received = useMemo(() => data?.my_ratings_received ?? [], [data?.my_ratings_received]);
   const avg = useMemo(() => averageTuples(received.map((r) => r.scores)), [received]);
-  const avgDerive = avg ? derive(avg) : null;
-  const completedCount = useMemo(() => {
-    if (!data) return 0;
-    return data.members.filter((m) => saveState[m.teacher_id] === "saved").length;
-  }, [data, saveState]);
+  const completedCount = data?.members.filter((m) => !!givenByTarget[m.teacher_id]).length ?? 0;
   const memberCount = data?.members.length ?? 0;
+  const pendingCount = Math.max(0, memberCount - completedCount);
   const completionPct = memberCount > 0 ? Math.round((completedCount / memberCount) * 100) : 0;
 
   if (loading) return <MandalaLoader />;
-  if (!data) {
+  if (notFound || !data) {
     return (
       <div style={{ padding: 40, textAlign: "center", color: "#6B1E2D", fontWeight: 800, fontFamily: "'Cairo',sans-serif" }} dir={dir}>
-        {L === "ar" ? "تعذّر تحميل التقييم." : "Vlerësimi nuk u ngarkua."}
+        {T.loadError}
       </div>
     );
   }
@@ -231,10 +236,10 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         {locked && <div className="ap-locked">{T.locked}</div>}
       </header>
 
-      <section className="ap-overview" aria-label={UX.progressTitle}>
+      <section className="ap-overview" aria-label={T.progressTitle}>
         <div className="ap-progress-card ap-progress-main">
           <div>
-            <span className="ap-card-kicker">{UX.progressTitle}</span>
+            <span className="ap-card-kicker">{T.progressTitle}</span>
             <strong>{completionPct}%</strong>
           </div>
           <div className="ap-progress-track">
@@ -242,19 +247,19 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
         <div className="ap-progress-card">
-          <span className="ap-card-kicker">{UX.completed}</span>
+          <span className="ap-card-kicker">{T.completed}</span>
           <strong>{completedCount}</strong>
           <small>/ {memberCount}</small>
         </div>
         <div className="ap-progress-card">
-          <span className="ap-card-kicker">{UX.pending}</span>
-          <strong>{Math.max(0, memberCount - completedCount)}</strong>
+          <span className="ap-card-kicker">{T.pending}</span>
+          <strong>{pendingCount}</strong>
           <small>/ {memberCount}</small>
         </div>
         <div className="ap-progress-card">
-          <span className="ap-card-kicker">{UX.receivedCount}</span>
+          <span className="ap-card-kicker">{T.receivedCount}</span>
           <strong>{received.length}</strong>
-          <small>{avg && avgDerive ? UX.coreNow : UX.noCoreYet}</small>
+          <small>{avg ? T.coreNow : T.noCoreYet}</small>
         </div>
       </section>
 
@@ -279,8 +284,8 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               <small>{T.ratingsOf(spectrum.rating_count, spectrum.expected_count)}</small>
               {spectrum.average ? (
                 <TraitSpectrumPanel
-                  traits={traits.map((trait, traitIndex) => ({
-                    label: traitLabel(trait, L), color: trait.color, pct: spectrum.average?.[traitIndex] ?? 0,
+                  traits={traitMeta.map((trait, traitIndex) => ({
+                    label: trait.label, color: trait.color, pct: spectrum.average?.[traitIndex] ?? 0,
                   }))}
                   seed={seedFromString(`${aid}:${spectrum.group_id ?? "overall"}:${index}`)}
                   lang={L}
@@ -292,83 +297,60 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         </div>
       </section>
 
-      {/* ── Focused carousel — one target at a time, self ("انا") first. ── */}
-      {(() => {
-        const orderedMembers = membersSelfFirst(data.members);
-        const safeIdx = Math.min(Math.max(0, currentIdx), Math.max(0, orderedMembers.length - 1));
-        const current = orderedMembers[safeIdx];
-        if (!current) return null;
-        const scores = scoresByTarget[current.teacher_id] ?? evenSplit(traits.length);
-        const state = saveState[current.teacher_id];
-        const total = scores.reduce((a, b) => a + b, 0);
-        const goPrev = () => setCurrentIdx((i) => Math.max(0, i - 1));
-        const goNext = () => setCurrentIdx((i) => Math.min(orderedMembers.length - 1, i + 1));
-        return (
-          <section className="ap-section ap-carousel-section">
-            <h2 className="ap-section-h">{T.sectionRate}</h2>
-            <p className="ap-section-sub">{T.sectionRateSub}</p>
+      {/* ── Member grid — the primary "who do I rate" screen. Scales to any
+          group size via search + status filters, unlike a linear carousel. ── */}
+      <section className="ap-section ap-members-section">
+        <h2 className="ap-section-h">{T.sectionRate}</h2>
+        <p className="ap-section-sub">{T.sectionRateSub}</p>
 
-            <div className="ap-carousel-nav">
-              <button className="ap-cbtn" onClick={goPrev} disabled={safeIdx === 0} aria-label={UX.prev}>‹</button>
-              <div className="ap-cur-card">
-                <div className="ap-cur-name">
-                  {current.profile.full_name}
-                  {current.is_self && <span className="ap-self-tag">{T.targetSelf}</span>}
-                </div>
-                <div className="ap-cur-sub">{UX.memberOf(safeIdx + 1, orderedMembers.length)}</div>
-                <div className={`ap-save ap-save-${state ?? "dirty"}`}>
-                  {state === "saving" ? T.saving
-                    : state === "err" ? T.saveErr
-                    : state === "saved" ? T.saved
-                    : total === 100 ? UX.readyToSave
-                    : T.notSavedYet}
-                </div>
-              </div>
-              <button className="ap-cbtn" onClick={goNext} disabled={safeIdx === orderedMembers.length - 1} aria-label={UX.next}>›</button>
-            </div>
+        <div className="ap-members-tools">
+          <label className="ap-search">
+            <Search size={16} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={T.searchPlaceholder}
+            />
+          </label>
+          <div className="ap-filter-chips">
+            <button className={filter === "all" ? "on" : ""} onClick={() => setFilter("all")}>
+              {T.filterAll} <em>{memberCount}</em>
+            </button>
+            <button className={filter === "rated" ? "on" : ""} onClick={() => setFilter("rated")}>
+              {T.filterRated} <em>{completedCount}</em>
+            </button>
+            <button className={filter === "pending" ? "on" : ""} onClick={() => setFilter("pending")}>
+              {T.filterPending} <em>{pendingCount}</em>
+            </button>
+          </div>
+        </div>
 
-            {/* Dots to jump between members — compact, one row */}
-            <div className="ap-dots">
-              {orderedMembers.map((m, i) => (
-                <button
-                  key={m.teacher_id}
-                  className={`ap-dot ${i === safeIdx ? "on" : ""} ${saveState[m.teacher_id] === "saved" ? "done" : ""} ${m.is_self ? "self" : ""}`}
-                  onClick={() => setCurrentIdx(i)}
-                  title={m.profile.full_name}
-                  aria-label={m.profile.full_name}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
+        {visibleMembers.length === 0 ? (
+          <div className="ap-empty">{T.noResults}</div>
+        ) : (
+          <div className="ap-members-grid">
+            {visibleMembers.map((member) => (
+              <MemberCard
+                key={member.teacher_id}
+                member={member}
+                given={givenByTarget[member.teacher_id]}
+                traitMeta={traitMeta}
+                lang={L}
+                T={T}
+                onOpen={() => router.push(`/teacher/groups/${id}/assessments/${aid}/rate/${member.teacher_id}`)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
-            {/* Full-width focus view so completing the current evaluation stays visible. */}
-            <div className="ap-focus">
-              <div className="ap-focus-main">
-                <RowadDistributor
-                  traits={distributorTraits}
-                  value={scores}
-                  lang={L}
-                  disabled={locked}
-                  onChange={(next) => onChange(current.teacher_id, next)}
-                  onCommit={(next) => persist(current.teacher_id, next)}
-                  showSpectrum
-                  spectrumSeed={seedFromString(`${aid}:${current.teacher_id}`)}
-                />
-              </div>
-            </div>
-          </section>
-        );
-      })()}
-
-      {/* Per-rater breakdown — kept below the carousel for anyone who wants
-          to see each rater's individual scores. Aggregate lives here too,
-          below the active scoring flow so it never blocks completion. */}
+      {/* Per-rater breakdown — kept below the member grid for anyone who wants
+          to see each rater's individual scores. */}
       {received.length > 0 && (
         <section className="ap-section">
           <h2 className="ap-section-h">{T.sectionMine}</h2>
           <p className="ap-section-sub">{T.tableHelp}</p>
-          {avg && avgDerive && (
+          {avg && (
             <div className="ap-avg-card">
               <div className="ap-avg-head">
                 <span className="ap-avg-label">{T.average}</span>
@@ -376,7 +358,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               </div>
               <div className="ap-spectrum-row">
                 <TraitSpectrumPanel
-                  traits={traits.map((t, i) => ({ label: traitLabel(t, L), color: t.color, pct: avg[i] ?? 0 }))}
+                  traits={traitMeta.map((t, i) => ({ label: t.label, color: t.color, pct: avg[i] ?? 0 }))}
                   seed={seedFromString(`${aid}:my-results`)}
                   lang={L}
                 />
@@ -388,7 +370,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
               <thead>
                 <tr>
                   <th>{T.raterCol}</th>
-                  {traits.map((t, i) => <th key={i}>{traitLabel(t, L)}</th>)}
+                  {traitMeta.map((t, i) => <th key={i}>{t.label}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -468,46 +450,41 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-collective-empty { display: grid; place-items: center; min-height: 100px; border: 1px dashed rgba(184,160,130,.35); border-radius: 14px; background: #F7F3EB; padding: 12px; color: #796A62; text-align: center; font-size: 11px; font-weight: 800; }
         @media (max-width: 620px) { .ap-collective { padding: 13px; } .ap-collective-head { flex-direction: column; } }
 
-        /* ─── Focused carousel (one target at a time) ─── */
-        .ap-carousel-section { margin-top: 16px; }
-        .ap-carousel-nav {
-          display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; gap: 10px;
-          margin: 8px 0 10px;
-        }
-        .ap-cbtn {
-          height: 56px; border-radius: 14px;
-          background: #FFFBF5; border: 1.5px solid rgba(107,30,45,0.40);
-          color: #6B1E2D; font-size: 28px; font-weight: 900; cursor: pointer;
-          transition: all .15s;
-        }
-        .ap-cbtn:hover:not(:disabled) { background: #F7F3EB; transform: scale(1.03); }
-        .ap-cbtn:disabled { opacity: 0.35; cursor: not-allowed; }
-        .ap-cur-card {
-          background: linear-gradient(165deg,#FFFBF5,#F7F3EB);
-          border: 1.5px solid rgba(107,30,45,0.40);
-          border-radius: 14px; padding: 10px 16px;
-          display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px;
-        }
-        .ap-cur-name { font-size: 17px; font-weight: 900; color: #32101A; display: flex; align-items: center; gap: 8px; }
-        .ap-cur-sub { font-size: 11.5px; color: #8F765B; font-weight: 700; grid-column: 1; }
-        .ap-cur-card .ap-save { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+        /* ─── Member grid ─── */
+        .ap-members-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .ap-search { flex: 1 1 260px; display: flex; align-items: center; gap: 9px; min-height: 46px; padding: 0 14px; border: 1.5px solid rgba(107,30,45,.22); border-radius: 13px; background: #FFFBF5; color: #6B1E2D; }
+        .ap-search input { flex: 1; border: 0; outline: 0; background: transparent; font: inherit; font-size: 13px; color: #32101A; }
+        .ap-filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .ap-filter-chips button { display: flex; align-items: center; gap: 6px; min-height: 46px; padding: 0 14px; border: 1.5px solid rgba(107,30,45,.22); border-radius: 13px; background: #FFFBF5; color: #6B1E2D; font: 800 12px 'Cairo',sans-serif; cursor: pointer; transition: .15s; }
+        .ap-filter-chips button:hover { border-color: #B8A082; }
+        .ap-filter-chips button.on { background: #32101A; color: #D9C9B0; border-color: #32101A; }
+        .ap-filter-chips button em { font-style: normal; min-width: 20px; height: 20px; display: grid; place-items: center; border-radius: 999px; background: rgba(107,30,45,.12); color: #6B1E2D; font-size: 10px; font-weight: 900; padding: 0 5px; }
+        .ap-filter-chips button.on em { background: rgba(217,201,176,.22); color: #D9C9B0; }
 
-        .ap-dots { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
-        .ap-dot {
-          min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px;
-          background: #FFF; border: 1.5px solid rgba(107,30,45,0.32);
-          color: #6B1E2D; font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 12px; font-weight: 800; cursor: pointer;
-          transition: all .15s;
-        }
-        .ap-dot:hover { border-color: #B8A082; }
-        .ap-dot.on { background: #1A1A1A; color: #B8A082; border-color: transparent; transform: scale(1.05); }
-        .ap-dot.done { background: rgba(27,94,32,0.14); color: #1B5E20; border-color: rgba(27,94,32,0.32); }
-        .ap-dot.done.on { background: #1B5E20; color: #FFFBF5; }
-        .ap-dot.self { border-color: rgba(107,30,45,0.35); color: #6B1E2D; }
-        .ap-dot.self.on { background: #6B1E2D; color: #FFFBF5; }
-
-        .ap-focus { display: block; }
-        .ap-focus-main { min-width: 0; }
+        .ap-members-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+        .mc-card { display: flex; flex-direction: column; gap: 10px; border: 1.5px solid rgba(107,30,45,.16); border-radius: 18px; background: #FFFBF5; padding: 14px; cursor: pointer; transition: transform .15s, border-color .15s, box-shadow .15s; }
+        .mc-card:hover { transform: translateY(-3px); border-color: #B8A082; box-shadow: 0 14px 30px rgba(107,30,45,.10); }
+        .mc-card.rated { border-color: rgba(27,94,32,.28); }
+        .mc-card.self { border-color: rgba(107,30,45,.4); box-shadow: inset 0 3px 0 #6B1E2D; }
+        .mc-head { display: flex; align-items: center; gap: 9px; }
+        .mc-avatar { flex: none; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: linear-gradient(145deg,#32101A,#6B1E2D); color: #F7F3EB; font-size: 15px; font-weight: 900; }
+        .mc-name-wrap { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+        .mc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #32101A; }
+        .mc-self-tag { align-self: flex-start; margin-top: 2px; padding: 1px 7px; border-radius: 999px; background: rgba(107,30,45,.12); color: #6B1E2D; font-size: 9px; font-weight: 900; }
+        .mc-status { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; font-size: 9.5px; font-weight: 900; }
+        .mc-status.rated { background: rgba(27,94,32,.12); color: #1B5E20; }
+        .mc-status.pending { background: rgba(184,160,130,.22); color: #8F765B; }
+        .mc-visual { display: flex; justify-content: center; padding: 4px 0; }
+        .mc-visual-empty { width: 104px; height: 104px; display: grid; place-items: center; border: 1.5px dashed rgba(184,160,130,.4); border-radius: 50%; color: #B8A082; font-size: 26px; font-weight: 900; background: #F7F3EB; }
+        .mc-foot { display: flex; flex-direction: column; gap: 3px; min-height: 34px; text-align: center; }
+        .mc-dominant { font-size: 11px; font-weight: 700; color: #655B53; }
+        .mc-dominant b { color: #6B1E2D; font-weight: 900; }
+        .mc-lastrated { font-size: 10px; color: #8C8274; font-weight: 700; }
+        .mc-nodata { font-size: 11px; color: #8C8274; font-weight: 700; }
+        .mc-btn { border: 0; border-radius: 11px; padding: 10px; background: #6B1E2D; color: #fff; font: 800 12px 'Cairo',sans-serif; cursor: pointer; transition: background .15s; }
+        .mc-btn:hover { background: #4A0E1C; }
+        .mc-card.rated .mc-btn { background: rgba(27,94,32,.85); }
+        .mc-card.rated .mc-btn:hover { background: #1B5E20; }
 
         .ap-empty { padding: 40px; text-align: center; color: #8C8274; font-weight: 700; background: rgba(107,30,45,0.04); border: 1px dashed rgba(107,30,45,0.32); border-radius: 12px; }
 
@@ -515,35 +492,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-avg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .ap-avg-head strong { color: #32101A; font-size: 13px; font-weight: 900; }
         .ap-avg-label { font-size: 12px; font-weight: 800; color: #6B1E2D; letter-spacing: .04em; text-transform: uppercase; }
-        .ap-result-hero { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-        @media (max-width: 620px) { .ap-result-hero { grid-template-columns: 1fr; } }
-        .ap-result-chip { border-radius: 14px; padding: 14px; background: #FFFBF5; border: 1.5px solid rgba(107,30,45,.30); }
-        .ap-result-chip span { display: block; font-size: 10.5px; font-weight: 900; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 5px; }
-        .ap-result-chip strong { display: block; font-size: 18px; font-weight: 900; color: #32101A; line-height: 1.4; }
-        .ap-result-core { border-color: rgba(107,30,45,.34); background: linear-gradient(160deg,rgba(107,30,45,.08),#FFFBF5); }
-        .ap-result-core span { color: #6B1E2D; }
-        .ap-result-coll { border-color: rgba(107,30,45,.46); background: linear-gradient(160deg,rgba(107,30,45,.16),#FFFBF5); }
-        .ap-result-coll span { color: #8F765B; }
-
-        .ap-spectrum-row { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed rgba(107,30,45,0.28); }
-        .ap-spectrum-visuals { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 24px; }
-        .ap-spectrum-caption { display: flex; align-items: baseline; gap: 8px; text-align: center; }
-        .ap-spectrum-caption-lbl { font-size: 11px; font-weight: 800; color: #8F765B; letter-spacing: .05em; text-transform: uppercase; }
-        .ap-spectrum-caption strong { font-size: 15px; font-weight: 900; color: #6B1E2D; }
-        .ap-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-        .ap-bars-compact { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; }
-        @media (max-width: 760px) { .ap-bars-compact { grid-template-columns: 1fr; } }
-        .ap-bar { display: grid; grid-template-columns: 110px 1fr 50px; align-items: center; gap: 10px; }
-        @media (max-width: 540px) { .ap-bar { grid-template-columns: 90px 1fr 44px; gap: 6px; } }
-        .ap-bar-name { font-size: 13px; font-weight: 700; color: #32101A; }
-        .ap-bar-track { height: 10px; background: rgba(107,30,45,0.18); border-radius: 99px; overflow: hidden; }
-        .ap-bar-fill { display: block; height: 100%; border-radius: 99px; transition: width .25s; }
-        .ap-bar-val { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; font-weight: 800; text-align: center; color: #32101A; }
-        .ap-core .ap-bar-name { color: #6B1E2D; font-weight: 900; }
-        .ap-coll .ap-bar-name { color: #8F765B; font-weight: 900; }
-
-        .ap-avg-derived { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1px dashed rgba(107,30,45,0.32); font-size: 12.5px; color: #4A0E1C; line-height: 1.8; }
-        .ap-avg-derived strong { color: #6B1E2D; font-weight: 800; }
+        .ap-spectrum-row { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
         .ap-table-wrap { overflow-x: auto; border: 1px solid rgba(26,26,26,0.08); border-radius: 12px; background: #FFFBF5; }
         .ap-table { width: 100%; border-collapse: collapse; min-width: 560px; }

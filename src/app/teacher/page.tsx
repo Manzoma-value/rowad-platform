@@ -278,6 +278,8 @@ export default function TeacherPage() {
       <div className="td-glow td-glow-a" />
       <div className="td-glow td-glow-b" />
       <main className="td-shell">
+        <NotificationFeed basePath="/teacher" />
+
         <section className="td-hero">
           <div className="td-hero-copy">
             <span className="td-kicker">{tr.command}</span>
@@ -486,8 +488,6 @@ export default function TeacherPage() {
             </aside>
           </section>
         )}
-
-        <NotificationFeed basePath="/teacher" />
       </main>
       <style>{styles}</style>
     </div>

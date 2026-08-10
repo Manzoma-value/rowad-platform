@@ -92,6 +92,7 @@ export default function StudentPage() {
   return (
     <div className="sd-shell" dir={dir}>
       <main className="sd-main">
+        <NotificationFeed basePath="/student" />
         <StudentConceptBanner />
 
         <section className="sd-hero">
@@ -184,7 +185,6 @@ export default function StudentPage() {
             ))}
           </div>
         </section>
-        <NotificationFeed basePath="/student" />
       </main>
       <style>{styles}</style>
     </div>

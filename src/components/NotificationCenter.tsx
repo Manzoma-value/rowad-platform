@@ -45,6 +45,7 @@ const words = {
     latest: "أحدث الإشعارات",
     hide: "إخفاء",
     show: "إظهار",
+    newBadge: (n: number) => `${n} جديد${n === 1 ? "" : ""}`,
   },
   sq: {
     title: "Njoftimet",
@@ -55,6 +56,7 @@ const words = {
     latest: "Njoftimet më të reja",
     hide: "Fshih",
     show: "Shfaq",
+    newBadge: (n: number) => `${n} të reja`,
   },
   en: {
     title: "Notifications",
@@ -65,6 +67,7 @@ const words = {
     latest: "Latest notifications",
     hide: "Hide",
     show: "Show",
+    newBadge: (n: number) => `${n} new`,
   },
 } as const;
 
@@ -248,29 +251,41 @@ export function NotificationFeed({
   const { lang } = useLang();
   const copy = words[lang];
   const storageKey = `rowad:notification-feed:${basePath}`;
-  const [visible, setVisible] = useState(true);
+  // Manual collapse/expand preference — only consulted when there is
+  // nothing unread. Unread notifications always force the card open,
+  // no matter what was chosen last time.
+  const [manuallyHidden, setManuallyHidden] = useState(false);
   const [items, setItems] = useState<NotificationItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const initial = window.setTimeout(() => {
-      setVisible(localStorage.getItem(storageKey) !== "hidden");
+      setManuallyHidden(localStorage.getItem(storageKey) === "hidden");
       fetch("/api/notifications?limit=8", { cache: "no-store" })
         .then((response) => response.ok ? response.json() : null)
-        .then((data: NotificationResponse | null) => setItems(data?.notifications ?? []))
+        .then((data: NotificationResponse | null) => {
+          setItems(data?.notifications ?? []);
+          setUnreadCount(data?.unread_count ?? 0);
+        })
         .catch(() => undefined);
     }, 0);
     return () => window.clearTimeout(initial);
   }, [storageKey]);
 
+  const hasUnread = unreadCount > 0;
+  const visible = hasUnread || !manuallyHidden;
+
   function toggle() {
-    setVisible((current) => {
-      localStorage.setItem(storageKey, current ? "hidden" : "visible");
-      return !current;
+    setManuallyHidden((current) => {
+      const next = !current;
+      localStorage.setItem(storageKey, next ? "hidden" : "visible");
+      return next;
     });
   }
 
   function markRead(id: string) {
     setItems((current) => current.map((item) => item.id === id ? { ...item, read_at: item.read_at ?? new Date().toISOString() } : item));
+    setUnreadCount((current) => Math.max(0, current - 1));
     void fetch("/api/notifications", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -279,10 +294,17 @@ export function NotificationFeed({
   }
 
   return (
-    <section className="nf-card" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <section className={`nf-card ${hasUnread ? "nf-unread" : ""}`} dir={lang === "ar" ? "rtl" : "ltr"}>
       <header>
-        <div><span><Bell size={17} /></span><strong>{copy.latest}</strong></div>
-        <button onClick={toggle}>{visible ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{visible ? copy.hide : copy.show}</button>
+        <div>
+          <span><Bell size={17} /></span>
+          <strong>{copy.latest}</strong>
+          {hasUnread && <em className="nf-badge">{copy.newBadge(unreadCount)}</em>}
+        </div>
+        {/* Toggle is only meaningful once there's nothing unread forcing it open. */}
+        {!hasUnread && (
+          <button onClick={toggle}>{visible ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{visible ? copy.hide : copy.show}</button>
+        )}
       </header>
       {visible && <NotificationList compact items={items} basePath={basePath} lang={lang} onRead={markRead} />}
       <style>{sharedStyles + feedStyles}</style>
@@ -295,5 +317,12 @@ const sharedStyles = `
 `;
 
 const feedStyles = `
-.nf-card{margin-top:24px;overflow:hidden;border:1px solid #E5E0D5;border-radius:18px;background:#FFFBF5;box-shadow:0 10px 32px rgba(107,30,45,.055);font-family:'Cairo',sans-serif}.nf-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E0D5;background:linear-gradient(120deg,#FFFBF5,#EFEAE0)}.nf-card>header>div{display:flex;align-items:center;gap:9px;color:#32101A}.nf-card>header>div>span{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#6B1E2D;color:#fff}.nf-card>header strong{font-size:13px}.nf-card>header button{display:flex;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:9px;background:#fff;padding:7px 10px;color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.nf-card .nc-list.compact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;padding:12px}.nf-card .nc-empty{min-height:130px}@media(max-width:680px){.nf-card .nc-list.compact{grid-template-columns:1fr}}
+.nf-card{margin-bottom:24px;overflow:hidden;border:1px solid #E5E0D5;border-radius:18px;background:#FFFBF5;box-shadow:0 10px 32px rgba(107,30,45,.055);font-family:'Cairo',sans-serif}.nf-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E0D5;background:linear-gradient(120deg,#FFFBF5,#EFEAE0)}.nf-card>header>div{display:flex;align-items:center;gap:9px;color:#32101A}.nf-card>header>div>span{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#6B1E2D;color:#fff}.nf-card>header strong{font-size:13px}.nf-card>header button{display:flex;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:9px;background:#fff;padding:7px 10px;color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.nf-card .nc-list.compact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;padding:12px}.nf-card .nc-empty{min-height:130px}@media(max-width:680px){.nf-card .nc-list.compact{grid-template-columns:1fr}}
+.nf-card.nf-unread{border-color:#6B1E2D;box-shadow:0 14px 40px rgba(107,30,45,.16),0 0 0 1px rgba(107,30,45,.08)}
+.nf-card.nf-unread>header{background:linear-gradient(120deg,#32101A,#6B1E2D)}
+.nf-card.nf-unread>header>div{color:#FFFBF5}
+.nf-card.nf-unread>header>div>span{background:#D9C9B0;color:#4A0E1C;animation:nf-ring 1.8s ease-in-out infinite}
+.nf-badge{border-radius:999px;background:#D9C9B0;padding:4px 10px;color:#4A0E1C;font:900 10px 'Cairo',sans-serif;animation:nf-pulse 1.8s ease-in-out infinite}
+@keyframes nf-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.85;transform:scale(1.05)}}
+@keyframes nf-ring{0%,100%{transform:rotate(0)}10%{transform:rotate(-12deg)}20%{transform:rotate(10deg)}30%{transform:rotate(-8deg)}40%{transform:rotate(0)}}
 `;

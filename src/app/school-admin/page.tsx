@@ -116,6 +116,8 @@ export default function SchoolAdminDashboard() {
 
   return (
     <div className="school-dashboard-page" dir={dir}>
+      <NotificationFeed basePath="/school-admin" />
+
       <section className="school-dashboard-hero">
         <div className="school-dashboard-hero-star" aria-hidden="true">
           <IdentityMandala size={340} stroke="#D9C9B0" opacity={0.9} spin spinDuration={140} />
@@ -191,7 +193,6 @@ export default function SchoolAdminDashboard() {
           ))}
         </div>
       </section>
-      <NotificationFeed basePath="/school-admin" />
 
       <style>{styles}</style>
     </div>
