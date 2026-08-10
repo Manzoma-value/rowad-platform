@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { GoogleAuth, OAuth2Client } from "google-auth-library";
 
 const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
@@ -99,4 +100,45 @@ export async function getGoogleDriveVideo(fileId: string) {
     sizeBytes: Number.isSafeInteger(rawSize) && rawSize > 0 && rawSize <= 2_147_483_647 ? rawSize : null,
     durationSeconds: Number.isFinite(rawDuration) && rawDuration > 0 ? Math.round(rawDuration / 1000) : null,
   };
+}
+
+// ── OAuth reconnect flow (owner-only "Connect Google Drive" button) ──
+// The upload session's refresh token can expire or be revoked (Google
+// auto-expires refresh tokens for OAuth consent screens still in "Testing"
+// publishing status after 7 days, or after ~6 months of inactivity even in
+// production). When that happens every upload fails with a 503. This signed
+// `state` param lets the owner-only authorize/callback routes round-trip
+// through Google's consent screen without a server-side session store.
+const OAUTH_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+
+function oauthStateSigningKey() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) throw new Error("oauth_state_not_configured");
+  return key;
+}
+
+function oauthStateSignature(payload: string) {
+  return createHmac("sha256", oauthStateSigningKey()).update(`drive-oauth-state:${payload}`).digest("base64url");
+}
+
+export function signGoogleDriveOAuthState(ownerId: string): string {
+  const payload = Buffer.from(JSON.stringify({ ownerId, issuedAt: Date.now() })).toString("base64url");
+  return `${payload}.${oauthStateSignature(payload)}`;
+}
+
+export function verifyGoogleDriveOAuthState(state: string): { ownerId: string } | null {
+  const [payload, suppliedSignature, extra] = state.split(".");
+  if (!payload || !suppliedSignature || extra) return null;
+  const expected = oauthStateSignature(payload);
+  const suppliedBuffer = Buffer.from(suppliedSignature);
+  const expectedBuffer = Buffer.from(expected);
+  if (suppliedBuffer.length !== expectedBuffer.length || !timingSafeEqual(suppliedBuffer, expectedBuffer)) return null;
+  try {
+    const value = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { ownerId?: string; issuedAt?: number };
+    if (!value.ownerId || !Number.isFinite(value.issuedAt)) return null;
+    if (Date.now() - value.issuedAt! > OAUTH_STATE_MAX_AGE_MS) return null;
+    return { ownerId: value.ownerId };
+  } catch {
+    return null;
+  }
 }

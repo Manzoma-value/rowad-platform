@@ -39,6 +39,7 @@ const T = {
     tooLarge: "الملف كبير جداً (الحد الأقصى 350 ميجابايت).",
     mustBeVideo: "يجب اختيار ملف فيديو.",
     uploadFailed: "تعذر رفع الفيديو. تحقق من الاتصال وحاول مرة أخرى.",
+    uploadNotReady: "رفع الفيديوهات غير متاح حالياً — انتهت صلاحية اتصال Google Drive على مستوى المنصة. تواصل مع مالك المنصة لإعادة ربطه، أو استخدم «إضافة من Drive» أدناه في هذه الأثناء.",
   },
   sq: {
     title: "Videot interaktive",
@@ -64,6 +65,7 @@ const T = {
     tooLarge: "Skedari është shumë i madh (max 350 MB).",
     mustBeVideo: "Duhet të zgjedhësh një skedar video.",
     uploadFailed: "Ngarkimi dështoi. Kontrollo lidhjen dhe provo përsëri.",
+    uploadNotReady: "Ngarkimi i videove nuk është i disponueshëm tani — lidhja me Google Drive në nivel platforme ka skaduar. Kontakto pronarin e platformës për ta rilidhur, ose përdor «Shto nga Drive» më poshtë ndërkohë.",
   },
 } as const;
 
@@ -141,7 +143,22 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
       setPendingTitle("");
     } catch (uploadError) {
       const code = uploadError instanceof Error ? uploadError.message : "";
-      setError(code === "too_large" ? t.tooLarge : code === "not_video" ? t.mustBeVideo : t.uploadFailed);
+      // The last three come from the server when the shared Google Drive
+      // OAuth connection is unconfigured/expired/revoked — a platform-wide
+      // outage, not something retrying or picking a different file fixes.
+      const NOT_READY_CODES = new Set([
+        "drive_upload_not_configured",
+        "drive_upload_auth_failed",
+        "drive_upload_folder_not_configured",
+        "drive_folder_not_writable",
+        "drive_upload_session_failed",
+      ]);
+      setError(
+        code === "too_large" ? t.tooLarge
+        : code === "not_video" ? t.mustBeVideo
+        : NOT_READY_CODES.has(code) ? t.uploadNotReady
+        : t.uploadFailed,
+      );
     } finally {
       setUploadPercent(null);
       if (fileInputRef.current) fileInputRef.current.value = "";

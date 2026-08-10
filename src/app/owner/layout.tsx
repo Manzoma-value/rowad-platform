@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   FileText,
   Database,
+  Plug,
   LucideIcon,
   X,
 } from "lucide-react";
@@ -282,6 +283,12 @@ const navItems: NavItem[] = [
     label: "مركز البيانات",
     sublabel: "Data Room",
     icon: Database,
+  },
+  {
+    href: "/owner/integrations",
+    label: "الربط والتكاملات",
+    sublabel: "Integrations",
+    icon: Plug,
   },
 ];
 
