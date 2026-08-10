@@ -8,6 +8,7 @@
 //            data can never be silently misaligned.
 //   DELETE — hard delete (cascades to ratings, traits, group links).
 import { NextResponse } from "next/server";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import type { TraitDraft } from "@/lib/rowad-assessment";
@@ -68,7 +69,7 @@ export async function GET(
     where: { assessment_id: aid },
   });
 
-  const memberMap = new Map<string, { teacher_id: string; profile: { id: string; full_name: string; email: string | null } }>();
+  const memberMap = new Map<string, { teacher_id: string; group_ids: string[]; profile: { id: string; full_name: string; email: string | null } }>();
   const groups: { id: string; name: string; member_ids: string[] }[] = [];
   for (const link of assessment.target_groups) {
     groups.push({
@@ -77,7 +78,12 @@ export async function GET(
       member_ids: link.group.members.map((member) => member.teacher.id),
     });
     for (const m of link.group.members) {
-      memberMap.set(m.teacher.id, { teacher_id: m.teacher.id, profile: m.teacher.profile });
+      const current = memberMap.get(m.teacher.id);
+      if (current) {
+        if (!current.group_ids.includes(link.group.id)) current.group_ids.push(link.group.id);
+      } else {
+        memberMap.set(m.teacher.id, { teacher_id: m.teacher.id, group_ids: [link.group.id], profile: m.teacher.profile });
+      }
     }
   }
 
@@ -213,12 +219,41 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   context: { params: Promise<{ aid: string }> },
 ) {
   const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { aid } = await context.params;
+
+  let credentials: { email?: string; password?: string };
+  try {
+    credentials = await req.json();
+  } catch {
+    return NextResponse.json({ error: "credentials_required" }, { status: 400 });
+  }
+
+  const email = String(credentials.email ?? "").trim().toLowerCase();
+  const password = String(credentials.password ?? "");
+  if (!email || !password || email !== auth.profile.email?.trim().toLowerCase()) {
+    return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    return NextResponse.json({ error: "verification_unavailable" }, { status: 503 });
+  }
+
+  // Verify the password in an isolated, non-persistent auth client so the
+  // administrator's active browser session is never replaced or refreshed.
+  const verifier = createSupabaseClient(supabaseUrl, supabaseKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const { data: verification, error: verificationError } = await verifier.auth.signInWithPassword({ email, password });
+  if (verificationError || verification.user?.id !== auth.profile.id) {
+    return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
+  }
 
   const existing = await prisma.groupAssessment.findFirst({
     where: { id: aid, school_id: auth.school.id }, select: { id: true },

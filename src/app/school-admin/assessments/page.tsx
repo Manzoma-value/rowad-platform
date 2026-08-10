@@ -17,7 +17,8 @@ import {
 import {
   SlidersHorizontal, X, Search, Plus, Pencil, Download, Lock, Unlock,
   Trash2, Users2, ClipboardList, Target, GripVertical, Layers3, Sparkles, CheckSquare,
-  Globe2, History, ChevronLeft, ChevronRight, Activity,
+  Globe2, History, ChevronLeft, ChevronRight, Activity, ChevronDown, Eye,
+  ShieldCheck, Mail, KeyRound, CalendarClock, BarChart3, UserCheck,
 } from "lucide-react";
 
 // ── Types ──
@@ -39,7 +40,7 @@ type Trait = {
   kind: "TARGET" | "EARLY_OBSERVATION";
   objective_ar: string | null; objective_sq: string | null;
 };
-type Member = { teacher_id: string; profile: { id: string; full_name: string; email: string | null } };
+type Member = { teacher_id: string; group_ids: string[]; profile: { id: string; full_name: string; email: string | null } };
 type RatingRow = { rater_teacher_id: string; target_teacher_id: string; scores: ScoresTuple; updated_at: string };
 type SpectrumAggregate = {
   group_id: string | null; group_name: string; member_count: number;
@@ -175,6 +176,32 @@ const UI = {
     perTraitHead: "متوسط كل سمة لكل عضو",
     noRating: "—",
     noMembersMatch: "لا يوجد عضو مطابق للبحث أو التصفية الحالية.",
+    showDetails: "عرض التفاصيل",
+    hideDetails: "إخفاء التفاصيل",
+    receivedRatings: (n: number) => `استلم ${n} تقييم${n === 1 ? "" : "ات"}`,
+    distinctRaters: "مقيّمون مختلفون",
+    latestRating: "آخر تقييم",
+    ratingActivity: "سجل التقييمات المباشر",
+    ratingActivitySub: "يوضح كل تقييم: من قيّم، ومن تم تقييمه، ومتى، وكيف وُزّعت النقاط.",
+    showAnalytics: "عرض التحليل الكامل",
+    hideAnalytics: "إخفاء التحليل الكامل",
+    ratingTime: "وقت التقييم",
+    scoreDistribution: "توزيع النقاط",
+    noEmail: "لا يوجد بريد مسجل",
+    deleteDialogTitle: "تأكيد حذف النموذج",
+    deleteDialogSub: "إجراء نهائي يمسح النموذج وكل تقييماته وسجل نتائجه. أدخل بريد حسابك وكلمة المرور للمتابعة.",
+    emailLbl: "البريد الإلكتروني للحساب",
+    emailPh: "اكتب بريدك الإلكتروني",
+    passwordLbl: "كلمة المرور",
+    passwordPh: "اكتب كلمة المرور",
+    deleteVerify: "تحقق واحذف نهائياً",
+    deleting: "جارٍ التحقق والحذف…",
+    deleteError: "تعذر التحقق من بيانات الحساب أو حذف النموذج.",
+    deleteIconHelp: "حذف النموذج — يتطلب تأكيد البريد وكلمة المرور",
+    memberHelp: "افتح التفاصيل لمعرفة عدد التقييمات، أسماء المقيّمين، التوقيت، وتوزيع كل قراءة.",
+    groupHelp: "هذه قراءة مجمعة. افتح التفاصيل لرؤية نسبة الاكتمال والمقيّمين وكل عمليات التقييم.",
+    completionHelp: "نسبة التقييمات المستلمة من إجمالي التقييمات المتوقعة داخل هذا النطاق.",
+    radarHelp: "خريطة رادارية تقارن أوزان السمات بصرياً؛ كل محور يمثل سمة.",
   },
   sq: {
     eyebrow: "Paneli i Modeleve",
@@ -277,6 +304,32 @@ const UI = {
     perTraitHead: "Mesatarja e çdo tipari për secilin anëtar",
     noRating: "—",
     noMembersMatch: "Asnjë anëtar nuk përputhet me kërkimin ose filtrin aktual.",
+    showDetails: "Shfaq detajet",
+    hideDetails: "Fshih detajet",
+    receivedRatings: (n: number) => `${n} vlerësime të marra`,
+    distinctRaters: "Vlerësues të ndryshëm",
+    latestRating: "Vlerësimi i fundit",
+    ratingActivity: "Regjistri i drejtpërdrejtë i vlerësimeve",
+    ratingActivitySub: "Tregon çdo vlerësim: kush vlerësoi kë, kur dhe si u shpërndanë pikët.",
+    showAnalytics: "Shfaq analizën e plotë",
+    hideAnalytics: "Fshih analizën e plotë",
+    ratingTime: "Koha e vlerësimit",
+    scoreDistribution: "Shpërndarja e pikëve",
+    noEmail: "Nuk ka email të regjistruar",
+    deleteDialogTitle: "Konfirmo fshirjen e modelit",
+    deleteDialogSub: "Ky veprim fshin përgjithmonë modelin, vlerësimet dhe historikun. Shkruaj emailin dhe fjalëkalimin e llogarisë për të vazhduar.",
+    emailLbl: "Emaili i llogarisë",
+    emailPh: "Shkruaj emailin",
+    passwordLbl: "Fjalëkalimi",
+    passwordPh: "Shkruaj fjalëkalimin",
+    deleteVerify: "Verifiko dhe fshi përgjithmonë",
+    deleting: "Po verifikohet dhe fshihet…",
+    deleteError: "Nuk mund të verifikohej llogaria ose të fshihej modeli.",
+    deleteIconHelp: "Fshi modelin — kërkon emailin dhe fjalëkalimin",
+    memberHelp: "Hap detajet për numrin e vlerësimeve, emrat e vlerësuesve, kohën dhe shpërndarjen e çdo leximi.",
+    groupHelp: "Ky është lexim i përmbledhur. Hap detajet për progresin, vlerësuesit dhe çdo vlerësim.",
+    completionHelp: "Përqindja e vlerësimeve të marra nga të gjitha vlerësimet e pritshme në këtë shtrirje.",
+    radarHelp: "Harta radar krahason peshat e tipareve; çdo bosht përfaqëson një tipar.",
   },
 } as const;
 
@@ -305,7 +358,9 @@ export default function AssessmentsHubPage() {
   const [teacherSearch, setTeacherSearch] = useState("");
   const [traitFilter, setTraitFilter] = useState<number | null>(null);
   const [showMatrix, setShowMatrix] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyRows, setHistoryRows] = useState<RatingRevision[]>([]);
   const [historyPage, setHistoryPage] = useState(1);
@@ -316,6 +371,10 @@ export default function AssessmentsHubPage() {
   const [saving, setSaving] = useState(false);
   const [dlgError, setDlgError] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [deleteDlg, setDeleteDlg] = useState(false);
+  const [deleteForm, setDeleteForm] = useState({ email: "", password: "" });
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const exportRef = useRef<HTMLDivElement>(null);
 
@@ -348,7 +407,9 @@ export default function AssessmentsHubPage() {
     setTeacherSearch("");
     setTraitFilter(null);
     setShowMatrix(false);
+    setShowAnalytics(false);
     setShowHistory(false);
+    setExpandedCards(new Set());
     setHistoryRows([]);
     setHistoryPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -491,17 +552,42 @@ export default function AssessmentsHubPage() {
     await loadDetail(selectedId);
   }
 
+  function openDeleteDialog() {
+    setDeleteForm({ email: "", password: "" });
+    setDeleteError("");
+    setDeleteDlg(true);
+  }
+
   async function deleteAssessment() {
-    if (!selectedId) return;
-    const ok = await confirm({
-      title: T.deleteBtn, message: T.confirmDelete,
-      confirmText: T.deleteBtn, cancelText: T.cancel, variant: "danger",
+    if (!selectedId || !deleteForm.email.trim() || !deleteForm.password) return;
+    setDeleteError("");
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/school-admin/assessments/${selectedId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: deleteForm.email.trim(), password: deleteForm.password }),
+      });
+      if (!response.ok) {
+        setDeleteError(T.deleteError);
+        return;
+      }
+      setDeleteDlg(false);
+      setSelectedId(null);
+      setDetail(null);
+      await loadList();
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function toggleCard(key: string) {
+    setExpandedCards((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
-    if (!ok) return;
-    await fetch(`/api/school-admin/assessments/${selectedId}`, { method: "DELETE" });
-    setSelectedId(null);
-    setDetail(null);
-    loadList();
   }
 
   // ── Aggregation derived from the ratings rows ──
@@ -542,6 +628,15 @@ export default function AssessmentsHubPage() {
 
   const ratingFor = (raterId: string, targetId: string) =>
     detail?.ratings.find((r) => r.rater_teacher_id === raterId && r.target_teacher_id === targetId);
+
+  const memberById = useMemo(
+    () => new Map((detail?.members ?? []).map((member) => [member.teacher_id, member])),
+    [detail],
+  );
+
+  const formatRatingDate = useCallback((value: string) => (
+    new Intl.DateTimeFormat(L === "ar" ? "ar-SA" : "sq-AL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
+  ), [L]);
 
   const loadHistory = useCallback(async (page = 1) => {
     if (!selectedId) return;
@@ -720,18 +815,23 @@ export default function AssessmentsHubPage() {
                   </span>
                 </div>
                 <div className="am-detail-actions">
-                  <button className="am-btn" onClick={exportPdf} disabled={exporting} data-write="true">
+                  <button className="am-btn" onClick={exportPdf} disabled={exporting} data-write="true" title={T.exportBtn}>
                     <Download size={13} strokeWidth={2} />
                     {exporting ? T.exporting : T.exportBtn}
                   </button>
                   {!viewOnly && (
                     <>
                       {detail.status === "OPEN"
-                        ? <button className="am-btn" onClick={() => closeOrReopen(false)} data-write="true"><Lock size={13} strokeWidth={2} />{T.closeBtn}</button>
-                        : <button className="am-btn" onClick={() => closeOrReopen(true)} data-write="true"><Unlock size={13} strokeWidth={2} />{T.reopenBtn}</button>}
-                      <button className="am-btn am-btn-danger" onClick={deleteAssessment} data-write="true">
-                        <Trash2 size={13} strokeWidth={2} />
-                        {T.deleteBtn}
+                        ? <button className="am-btn" onClick={() => closeOrReopen(false)} data-write="true" title={T.confirmClose}><Lock size={13} strokeWidth={2} />{T.closeBtn}</button>
+                        : <button className="am-btn" onClick={() => closeOrReopen(true)} data-write="true" title={T.confirmReopen}><Unlock size={13} strokeWidth={2} />{T.reopenBtn}</button>}
+                      <button
+                        className="am-delete-icon"
+                        onClick={openDeleteDialog}
+                        data-write="true"
+                        title={T.deleteIconHelp}
+                        aria-label={T.deleteIconHelp}
+                      >
+                        <Trash2 size={16} strokeWidth={2} />
                       </button>
                     </>
                   )}
@@ -768,52 +868,92 @@ export default function AssessmentsHubPage() {
               <section className="am-collective">
                 <div className="am-collective-head">
                   <div>
-                    <span><Globe2 size={14} />{T.collectiveHead}</span>
+                    <span><Globe2 size={16} />{T.collectiveHead}</span>
                     <p>{T.collectiveSub}</p>
                   </div>
-                  <strong>{detail.overall_spectrum.completion_pct}%</strong>
-                </div>
-                <div className="am-methodology-strip">
-                  {detail.traits.map((trait) => (
-                    <div key={trait.id}>
-                      <i style={{ background: trait.color }} />
-                      <span><strong>{traitLabel(trait, L)}</strong><small>{trait.kind === "EARLY_OBSERVATION" ? T.earlyTrait : T.targetTrait}</small></span>
-                      {(L === "ar" ? trait.objective_ar : trait.objective_sq) && <em>{T.objective}: {L === "ar" ? trait.objective_ar : trait.objective_sq}</em>}
-                    </div>
-                  ))}
+                  <strong title={T.completionHelp}>{detail.overall_spectrum.completion_pct}%</strong>
                 </div>
                 <div className="am-collective-grid">
                   {[{
                     ...detail.overall_spectrum,
                     group_name: T.overallSpectrum,
-                  }, ...detail.group_spectra].map((spectrum, spectrumIndex) => (
-                    <article className={`am-collective-card ${spectrum.group_id === null ? "overall" : ""}`} key={spectrum.group_id ?? "overall"}>
-                      <header>
-                        <div>
-                          <span>{spectrum.group_id === null ? <Globe2 size={13} /> : <Users2 size={13} />}</span>
+                  }, ...detail.group_spectra].map((spectrum, spectrumIndex) => {
+                    const cardKey = `group:${spectrum.group_id ?? "overall"}`;
+                    const expanded = expandedCards.has(cardKey);
+                    const relevantRatings = detail.ratings.filter((rating) => {
+                      if (spectrum.group_id === null) return true;
+                      return memberById.get(rating.rater_teacher_id)?.group_ids.includes(spectrum.group_id)
+                        && memberById.get(rating.target_teacher_id)?.group_ids.includes(spectrum.group_id);
+                    });
+                    const latest = relevantRatings.reduce<string | null>((value, rating) => (
+                      !value || new Date(rating.updated_at) > new Date(value) ? rating.updated_at : value
+                    ), null);
+                    return (
+                      <article
+                        className={`am-spectrum-card ${spectrum.group_id === null ? "overall" : ""} ${expanded ? "expanded" : ""}`}
+                        key={spectrum.group_id ?? "overall"}
+                        title={T.groupHelp}
+                      >
+                        <header className="am-spectrum-card-head">
+                          <span>{spectrum.group_id === null ? <Globe2 size={15} /> : <Users2 size={15} />}</span>
                           <strong>{spectrum.group_name}</strong>
-                        </div>
-                        <em>{spectrum.member_count} {T.matrixOf(spectrum.member_count).replace(/^\d+\s*/, "")}</em>
-                      </header>
-                      <div className="am-collective-progress">
-                        <div><span>{T.completion}</span><b>{spectrum.completion_pct}%</b></div>
-                        <i><span style={{ width: `${Math.min(100, spectrum.completion_pct)}%` }} /></i>
-                        <small>{T.submittedOf(spectrum.rating_count, spectrum.expected_count)}</small>
-                      </div>
-                      {spectrum.average ? (
-                        <TraitSpectrumPanel
-                          traits={detail.traits.map((trait, index) => ({
-                            label: traitLabel(trait, L),
-                            color: trait.color,
-                            pct: spectrum.average?.[index] ?? 0,
-                          }))}
-                          seed={seedFromString(`${detail.id}:${spectrum.group_id ?? "overall"}:${spectrumIndex}`)}
-                          lang={L}
-                          compact
-                        />
-                      ) : <div className="am-collective-empty">{T.noSpectrum}</div>}
-                    </article>
-                  ))}
+                        </header>
+                        {spectrum.average ? (
+                          <TraitSpectrumPanel
+                            traits={detail.traits.map((trait, index) => ({
+                              label: traitLabel(trait, L),
+                              color: trait.color,
+                              pct: spectrum.average?.[index] ?? 0,
+                            }))}
+                            seed={seedFromString(`${detail.id}:${spectrum.group_id ?? "overall"}:${spectrumIndex}`)}
+                            lang={L}
+                            summary
+                          />
+                        ) : <div className="am-collective-empty">{T.noSpectrum}</div>}
+                        <button className="am-card-toggle" onClick={() => toggleCard(cardKey)} aria-expanded={expanded} title={expanded ? T.hideDetails : T.showDetails}>
+                          <Eye size={14} />
+                          {expanded ? T.hideDetails : T.showDetails}
+                          <ChevronDown size={15} className={expanded ? "rotated" : ""} />
+                        </button>
+                        {expanded && (
+                          <div className="am-card-details">
+                            <div className="am-insight-grid">
+                              <div title={T.completionHelp}><strong>{spectrum.completion_pct}%</strong><span>{T.completion}</span></div>
+                              <div title={T.groupHelp}><strong>{spectrum.rating_count}/{spectrum.expected_count}</strong><span>{T.ratingsCount}</span></div>
+                              <div title={T.distinctRaters}><strong>{spectrum.participating_raters}</strong><span>{T.distinctRaters}</span></div>
+                              <div title={T.latestRating}><strong>{latest ? formatRatingDate(latest) : "—"}</strong><span>{T.latestRating}</span></div>
+                            </div>
+                            <div className="am-detail-progress" title={T.completionHelp}>
+                              <span style={{ width: `${Math.min(100, spectrum.completion_pct)}%` }} />
+                            </div>
+                            <div className="am-trait-breakdown">
+                              {detail.traits.map((trait, index) => (
+                                <div key={trait.id} title={`${traitLabel(trait, L)}: ${Number(spectrum.average?.[index] ?? 0).toFixed(1)}%`}>
+                                  <i style={{ background: trait.color }} />
+                                  <span>{traitLabel(trait, L)}</span>
+                                  <b>{Number(spectrum.average?.[index] ?? 0).toFixed(1)}%</b>
+                                  <em><span style={{ width: `${Math.min(100, spectrum.average?.[index] ?? 0)}%`, background: trait.color }} /></em>
+                                </div>
+                              ))}
+                            </div>
+                            <RatingActivity
+                              ratings={relevantRatings}
+                              memberById={memberById}
+                              traits={detail.traits}
+                              lang={L}
+                              title={T.ratingActivity}
+                              raterLabel={T.raterCol}
+                              targetLabel={T.targetCol}
+                              timeLabel={T.ratingTime}
+                              scoreLabel={T.scoreDistribution}
+                              noRating={T.noRating}
+                              formatDate={formatRatingDate}
+                            />
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
 
@@ -825,69 +965,122 @@ export default function AssessmentsHubPage() {
                   <section className="am-sub">
                     <div className="am-sub-head"><h3>{T.aggHead}</h3><p>{T.aggSub}</p></div>
                     <div className="am-agg-grid">
-                      {visibleAggregation.map(({ member, count, avg }) => (
-                        <div key={member.teacher_id} className="am-agg">
-                          <div className="am-agg-watermark" aria-hidden="true">
-                            <IdentityMandala size={80} stroke="#4A0E1C" opacity={0.05} />
-                          </div>
-                          <div className="am-agg-head">
-                            <div className="am-agg-head-main">
-                              <div className="am-agg-name">{member.profile.full_name}</div>
-                            </div>
-                            <span className="am-agg-count">{count}</span>
-                          </div>
-                          {!avg ? (
-                            <div className="am-agg-empty">{T.noRating}</div>
-                          ) : (
-                            <>
-                              <div className="am-agg-spectrum-row">
-                                <TraitSpectrumPanel
-                                  traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
-                                  seed={seedFromString(member.teacher_id)}
+                      {visibleAggregation.map(({ member, count, avg }) => {
+                        const cardKey = `member:${member.teacher_id}`;
+                        const expanded = expandedCards.has(cardKey);
+                        const memberRatings = detail.ratings.filter((rating) => rating.target_teacher_id === member.teacher_id);
+                        const latest = memberRatings.reduce<string | null>((value, rating) => (
+                          !value || new Date(rating.updated_at) > new Date(value) ? rating.updated_at : value
+                        ), null);
+                        const distinctRaters = new Set(memberRatings.map((rating) => rating.rater_teacher_id)).size;
+                        return (
+                          <article key={member.teacher_id} className={`am-spectrum-card am-member-card ${expanded ? "expanded" : ""}`} title={T.memberHelp}>
+                            <header className="am-spectrum-card-head">
+                              <span><UserCheck size={15} /></span>
+                              <strong>{member.profile.full_name}</strong>
+                            </header>
+                            {!avg ? (
+                              <div className="am-agg-empty">{T.noRating}</div>
+                            ) : (
+                              <TraitSpectrumPanel
+                                traits={detail.traits.map((tr, i) => ({ label: traitLabel(tr, L), color: tr.color, pct: avg[i] ?? 0 }))}
+                                seed={seedFromString(member.teacher_id)}
+                                lang={L}
+                                summary
+                              />
+                            )}
+                            <button className="am-card-toggle" onClick={() => toggleCard(cardKey)} aria-expanded={expanded} title={expanded ? T.hideDetails : T.showDetails}>
+                              <Eye size={14} />
+                              {expanded ? T.hideDetails : T.showDetails}
+                              <ChevronDown size={15} className={expanded ? "rotated" : ""} />
+                            </button>
+                            {expanded && (
+                              <div className="am-card-details">
+                                <div className="am-member-identity">
+                                  <div><Mail size={13} /><span>{member.profile.email ?? T.noEmail}</span></div>
+                                  <span className="am-received-pill" title={T.memberHelp}>{T.receivedRatings(count)}</span>
+                                </div>
+                                <div className="am-insight-grid">
+                                  <div title={T.receivedRatings(count)}><strong>{count}</strong><span>{T.ratingsCount}</span></div>
+                                  <div title={T.distinctRaters}><strong>{distinctRaters}</strong><span>{T.distinctRaters}</span></div>
+                                  <div title={T.latestRating}><strong>{latest ? formatRatingDate(latest) : "—"}</strong><span>{T.latestRating}</span></div>
+                                </div>
+                                {avg && (
+                                  <div className="am-trait-breakdown">
+                                    {detail.traits.map((trait, index) => (
+                                      <div key={trait.id} title={`${traitLabel(trait, L)}: ${Number(avg[index] ?? 0).toFixed(1)}%`}>
+                                        <i style={{ background: trait.color }} />
+                                        <span>{traitLabel(trait, L)}</span>
+                                        <b>{Number(avg[index] ?? 0).toFixed(1)}%</b>
+                                        <em><span style={{ width: `${Math.min(100, avg[index] ?? 0)}%`, background: trait.color }} /></em>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                <RatingActivity
+                                  ratings={memberRatings}
+                                  memberById={memberById}
+                                  traits={detail.traits}
                                   lang={L}
-                                  compact
+                                  title={T.ratingActivity}
+                                  raterLabel={T.raterCol}
+                                  targetLabel={T.targetCol}
+                                  timeLabel={T.ratingTime}
+                                  scoreLabel={T.scoreDistribution}
+                                  noRating={T.noRating}
+                                  formatDate={formatRatingDate}
                                 />
                               </div>
-                            </>
-                          )}
-                        </div>
-                      ))}
+                            )}
+                          </article>
+                        );
+                      })}
                     </div>
                   </section>
 
-                  {/* Per-trait per-member table */}
-                  <section className="am-sub">
-                    <div className="am-sub-head"><h3>{T.perTraitHead}</h3></div>
-                    <div className="am-table-wrap">
-                      <table className="am-table">
-                        <thead>
-                          <tr>
-                            <th>{T.targetCol}</th>
-                            {detail.traits.map((tr) => <th key={tr.id}>{traitLabel(tr, L)}</th>)}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {visibleAggregation.map(({ member, avg }) => (
-                            <tr key={member.teacher_id}>
-                              <td className="am-name-cell">{member.profile.full_name}</td>
-                              {detail.traits.map((_, i) => (
-                                <td key={i}>{avg ? (avg[i] ?? 0).toFixed(1) : T.noRating}</td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </section>
-
-                  {/* Full rater × target matrix — collapsed by default */}
-                  <section className="am-sub">
-                    <button className="am-matrix-toggle" onClick={() => setShowMatrix((v) => !v)}>
-                      <Target size={13} strokeWidth={2} />
-                      {showMatrix ? T.hideMatrix : T.showMatrix}
+                  <section className="am-sub am-analysis-section">
+                    <button className="am-analysis-toggle" onClick={() => setShowAnalytics((value) => !value)} aria-expanded={showAnalytics} title={T.ratingActivitySub}>
+                      <BarChart3 size={16} />
+                      <span><strong>{showAnalytics ? T.hideAnalytics : T.showAnalytics}</strong><small>{T.ratingActivitySub}</small></span>
+                      <ChevronDown size={17} className={showAnalytics ? "rotated" : ""} />
                     </button>
-                    {showMatrix && (
+                    {showAnalytics && (
                       <>
+                        <div className="am-sub-head am-analysis-head"><h3>{T.perTraitHead}</h3></div>
+                        <div className="am-table-wrap">
+                          <table className="am-table">
+                            <thead><tr><th>{T.targetCol}</th>{detail.traits.map((tr) => <th key={tr.id} title={L === "ar" ? tr.statement_ar : tr.statement_sq}>{traitLabel(tr, L)}</th>)}</tr></thead>
+                            <tbody>
+                              {visibleAggregation.map(({ member, avg }) => (
+                                <tr key={member.teacher_id}>
+                                  <td className="am-name-cell">{member.profile.full_name}</td>
+                                  {detail.traits.map((trait, index) => <td key={trait.id} title={`${traitLabel(trait, L)} — ${member.profile.full_name}`}>{avg ? (avg[index] ?? 0).toFixed(1) : T.noRating}</td>)}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div className="am-sub-head am-analysis-head"><h3>{T.ratingActivity}</h3><p>{T.ratingActivitySub}</p></div>
+                        <RatingActivity
+                          ratings={detail.ratings}
+                          memberById={memberById}
+                          traits={detail.traits}
+                          lang={L}
+                          title={T.ratingActivity}
+                          raterLabel={T.raterCol}
+                          targetLabel={T.targetCol}
+                          timeLabel={T.ratingTime}
+                          scoreLabel={T.scoreDistribution}
+                          noRating={T.noRating}
+                          formatDate={formatRatingDate}
+                        />
+
+                        <button className="am-matrix-toggle" onClick={() => setShowMatrix((v) => !v)} title={T.matrixSub}>
+                          <Target size={13} strokeWidth={2} />
+                          {showMatrix ? T.hideMatrix : T.showMatrix}
+                        </button>
+                        {showMatrix && <>
                         <div className="am-sub-head" style={{ marginTop: 12 }}><h3>{T.matrixHead}</h3><p>{T.matrixSub}</p></div>
                         <div className="am-table-wrap">
                           <table className="am-matrix">
@@ -928,6 +1121,7 @@ export default function AssessmentsHubPage() {
                             </tbody>
                           </table>
                         </div>
+                        </>}
                       </>
                     )}
                   </section>
@@ -981,6 +1175,62 @@ export default function AssessmentsHubPage() {
           )}
         </section>
       </div>
+
+      {deleteDlg && !viewOnly && (
+        <div className="am-overlay" onClick={() => !deleting && setDeleteDlg(false)}>
+          <form
+            className="am-delete-dlg"
+            onClick={(event) => event.stopPropagation()}
+            onSubmit={(event) => { event.preventDefault(); deleteAssessment(); }}
+          >
+            <header>
+              <span className="am-delete-shield"><ShieldCheck size={22} /></span>
+              <div>
+                <h3>{T.deleteDialogTitle}</h3>
+                <p>{T.deleteDialogSub}</p>
+              </div>
+              <button type="button" onClick={() => !deleting && setDeleteDlg(false)} aria-label={T.cancel} title={T.cancel}><X size={18} /></button>
+            </header>
+            <div className="am-delete-target">
+              <Trash2 size={15} />
+              <span>{detail?.title}</span>
+            </div>
+            <label className="am-secure-field">
+              <span><Mail size={13} />{T.emailLbl}</span>
+              <input
+                type="email"
+                name="assessment-delete-email"
+                autoComplete="off"
+                value={deleteForm.email}
+                onChange={(event) => setDeleteForm((current) => ({ ...current, email: event.target.value }))}
+                placeholder={T.emailPh}
+                autoFocus
+                required
+              />
+            </label>
+            <label className="am-secure-field">
+              <span><KeyRound size={13} />{T.passwordLbl}</span>
+              <input
+                type="password"
+                name="assessment-delete-password"
+                autoComplete="new-password"
+                value={deleteForm.password}
+                onChange={(event) => setDeleteForm((current) => ({ ...current, password: event.target.value }))}
+                placeholder={T.passwordPh}
+                required
+              />
+            </label>
+            {deleteError && <p className="am-delete-error">{deleteError}</p>}
+            <footer>
+              <button type="button" className="am-btn" onClick={() => setDeleteDlg(false)} disabled={deleting}>{T.cancel}</button>
+              <button type="submit" className="am-delete-confirm" disabled={deleting || !deleteForm.email.trim() || !deleteForm.password}>
+                <Trash2 size={14} />
+                {deleting ? T.deleting : T.deleteVerify}
+              </button>
+            </footer>
+          </form>
+        </div>
+      )}
 
       {dlg && !viewOnly && (
         <div className="am-overlay" onClick={() => !saving && setDlg(null)}>
@@ -1219,9 +1469,73 @@ export default function AssessmentsHubPage() {
 
 function Metric({ value, label }: { value: number; label: string }) {
   return (
-    <div className="am-metric">
+    <div className="am-metric" title={`${label}: ${value}`}>
       <strong>{value}</strong>
       <span>{label}</span>
+    </div>
+  );
+}
+
+function RatingActivity({
+  ratings,
+  memberById,
+  traits,
+  lang,
+  title,
+  raterLabel,
+  targetLabel,
+  timeLabel,
+  scoreLabel,
+  noRating,
+  formatDate,
+}: {
+  ratings: RatingRow[];
+  memberById: Map<string, Member>;
+  traits: Trait[];
+  lang: "ar" | "sq";
+  title: string;
+  raterLabel: string;
+  targetLabel: string;
+  timeLabel: string;
+  scoreLabel: string;
+  noRating: string;
+  formatDate: (value: string) => string;
+}) {
+  if (ratings.length === 0) return <div className="am-collective-empty">{noRating}</div>;
+  return (
+    <div className="am-activity" title={title}>
+      <div className="am-activity-head">
+        <span><Activity size={13} />{title}</span>
+        <b>{ratings.length}</b>
+      </div>
+      <div className="am-activity-scroll">
+        <table>
+          <thead><tr><th>{raterLabel}</th><th>{targetLabel}</th><th>{scoreLabel}</th><th>{timeLabel}</th></tr></thead>
+          <tbody>
+            {[...ratings].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()).map((rating) => {
+              const raterName = memberById.get(rating.rater_teacher_id)?.profile.full_name ?? "—";
+              const targetName = memberById.get(rating.target_teacher_id)?.profile.full_name ?? "—";
+              return (
+                <tr key={`${rating.rater_teacher_id}:${rating.target_teacher_id}`}>
+                  <td><span className="am-person-cell"><UserCheck size={12} />{raterName}</span></td>
+                  <td><span className="am-person-cell"><Target size={12} />{targetName}</span></td>
+                  <td>
+                    <div className="am-rating-scores">
+                      {rating.scores.map((score, index) => (
+                        <span key={index} title={`${traits[index] ? traitLabel(traits[index], lang) : index + 1}: ${score}`} style={{ borderColor: traits[index]?.color }}>
+                          <i style={{ background: traits[index]?.color }} />
+                          {score}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td><time title={formatDate(rating.updated_at)}><CalendarClock size={12} />{formatDate(rating.updated_at)}</time></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1568,11 +1882,89 @@ const styles = `
   .am-table-wrap { background:#FFFDF9; border-color:rgba(107,30,45,.16); }
   .am-table th, .am-matrix th { background:#EFE2D1; color:#4A0E1C; border-bottom-color:rgba(107,30,45,.18); }
   .am-name-cell { background:#F7F0E5; color:#32101A; }
+
+  /* Progressive disclosure workspace */
+  .am-delete-icon { display:grid; place-items:center; width:38px; height:38px; flex:none; border:1px solid rgba(107,30,45,.22); border-radius:11px; background:#FFFDF9; color:#6B1E2D; cursor:pointer; transition:background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease; }
+  .am-delete-icon:hover { background:#6B1E2D; color:#FFF; transform:translateY(-1px); box-shadow:0 8px 18px rgba(107,30,45,.2); }
+  .am-spectrum-card { min-width:0; overflow:hidden; border:1px solid rgba(107,30,45,.15); border-radius:22px; background:#FFFDF9; padding:15px; box-shadow:0 10px 25px rgba(50,16,26,.055); transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+  .am-spectrum-card:hover { border-color:rgba(107,30,45,.28); box-shadow:0 16px 34px rgba(50,16,26,.09); transform:translateY(-1px); }
+  .am-spectrum-card.overall { border-color:rgba(107,30,45,.30); box-shadow:inset 0 3px 0 #6B1E2D,0 14px 30px rgba(50,16,26,.07); }
+  .am-spectrum-card.expanded { border-color:rgba(107,30,45,.38); }
+  .am-spectrum-card-head { display:flex; align-items:center; gap:9px; margin:0 2px 10px; }
+  .am-spectrum-card-head>span { display:grid; place-items:center; width:31px; height:31px; flex:none; border-radius:10px; background:#EFE7DC; color:#6B1E2D; }
+  .am-spectrum-card-head>strong { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-family:var(--font-head); font-size:14px; }
+  .am-card-toggle { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; border:1px solid rgba(107,30,45,.18); border-radius:12px; background:#F5EEE4; padding:9px 14px; color:#6B1E2D; font:800 11.5px 'Cairo',sans-serif; cursor:pointer; transition:background .18s ease,border-color .18s ease; }
+  .am-card-toggle:hover { background:#EDE2D4; border-color:rgba(107,30,45,.32); }
+  .am-card-toggle svg:last-child { margin-inline-start:auto; transition:transform .2s ease; }
+  .rotated { transform:rotate(180deg); }
+  .am-card-details { margin-top:12px; border-top:1px solid rgba(107,30,45,.12); padding-top:13px; animation:am-fadeUp .22s ease both; }
+  .am-insight-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+  .am-insight-grid>div { min-width:0; border:1px solid rgba(107,30,45,.10); border-radius:13px; background:#F7F0E7; padding:10px; }
+  .am-insight-grid strong,.am-insight-grid span { display:block; }
+  .am-insight-grid strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-size:13px; }
+  .am-insight-grid span { margin-top:3px; color:#796A62; font-size:9.5px; font-weight:800; }
+  .am-detail-progress { height:7px; margin:10px 0; overflow:hidden; border-radius:999px; background:#DED1BE; }
+  .am-detail-progress>span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#B8A082,#6B1E2D); }
+  .am-trait-breakdown { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:10px; }
+  .am-trait-breakdown>div { display:grid; grid-template-columns:12px minmax(0,1fr) auto; gap:7px; align-items:center; border:1px solid rgba(107,30,45,.09); border-radius:11px; background:#FFF; padding:8px 9px; }
+  .am-trait-breakdown i { width:11px; height:11px; border-radius:4px; box-shadow:0 0 0 1px rgba(26,26,26,.15); }
+  .am-trait-breakdown>div>span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-size:10.5px; font-weight:800; }
+  .am-trait-breakdown b { color:#6B1E2D; font:900 10.5px ui-monospace,Consolas,monospace; }
+  .am-trait-breakdown em { grid-column:2 / -1; height:5px; overflow:hidden; border-radius:999px; background:#E7DCCB; }
+  .am-trait-breakdown em span { display:block; height:100%; border-radius:inherit; }
+  .am-member-identity { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .am-member-identity>div { display:flex; align-items:center; gap:6px; min-width:0; color:#655B53; font-size:10.5px; font-weight:700; }
+  .am-member-identity>div span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .am-received-pill { flex:none; border:1px solid rgba(27,94,32,.15); border-radius:999px; background:rgba(27,94,32,.07); padding:4px 9px; color:#1B5E20; font-size:9.5px; font-weight:900; }
+  .am-activity { margin-top:12px; overflow:hidden; border:1px solid rgba(107,30,45,.12); border-radius:14px; background:#FFF; }
+  .am-activity-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(107,30,45,.10); background:#F3EADF; }
+  .am-activity-head>span { display:flex; align-items:center; gap:6px; color:#4A0E1C; font-size:10.5px; font-weight:900; }
+  .am-activity-head>b { min-width:24px; border-radius:999px; background:#6B1E2D; padding:2px 7px; color:#FFF; text-align:center; font:900 9.5px ui-monospace,monospace; }
+  .am-activity-scroll { max-height:340px; overflow:auto; }
+  .am-activity table { width:100%; min-width:720px; border-collapse:collapse; }
+  .am-activity th { position:sticky; top:0; z-index:1; background:#F7F0E7; padding:8px 9px; color:#6B1E2D; text-align:start; font-size:9.5px; white-space:nowrap; }
+  .am-activity td { padding:8px 9px; border-top:1px solid rgba(26,26,26,.05); color:#32101A; font-size:10.5px; vertical-align:middle; }
+  .am-person-cell,.am-activity time { display:inline-flex; align-items:center; gap:5px; white-space:nowrap; font-weight:700; }
+  .am-activity time { color:#655B53; font-size:9.5px; }
+  .am-rating-scores { display:flex; gap:4px; flex-wrap:wrap; min-width:210px; }
+  .am-rating-scores span { display:inline-flex; align-items:center; gap:3px; min-width:31px; border:1px solid; border-radius:7px; background:#FFFDF9; padding:2px 5px; font:900 9.5px ui-monospace,Consolas,monospace; }
+  .am-rating-scores i { width:5px; height:13px; border-radius:3px; }
+  .am-analysis-section { border:1px solid rgba(107,30,45,.13); border-radius:18px; background:#F7F0E7; padding:12px; }
+  .am-analysis-toggle { width:100%; display:flex; align-items:center; gap:10px; border:0; border-radius:13px; background:#FFFDF9; padding:12px 14px; color:#6B1E2D; text-align:start; font-family:'Cairo',sans-serif; cursor:pointer; box-shadow:0 5px 14px rgba(50,16,26,.04); }
+  .am-analysis-toggle>span { flex:1; min-width:0; }
+  .am-analysis-toggle strong,.am-analysis-toggle small { display:block; }
+  .am-analysis-toggle strong { font-size:12.5px; }
+  .am-analysis-toggle small { margin-top:2px; color:#796A62; font-size:9.5px; font-weight:700; }
+  .am-analysis-toggle>svg:last-child { transition:transform .2s ease; }
+  .am-analysis-head { margin-top:16px; }
+
+  /* Destructive action confirmation */
+  .am-delete-dlg { width:min(100%,520px); border:1px solid rgba(107,30,45,.28); border-radius:22px; background:#FFFDF9; padding:0; overflow:hidden; box-shadow:0 34px 90px rgba(50,16,26,.42); }
+  .am-delete-dlg>header { display:flex; align-items:flex-start; gap:12px; padding:19px 20px; background:linear-gradient(135deg,#3A0C17,#6B1E2D); color:#FFF; }
+  .am-delete-shield { display:grid; place-items:center; width:42px; height:42px; flex:none; border:1px solid rgba(255,255,255,.2); border-radius:13px; background:rgba(255,255,255,.08); color:#F2D9A7; }
+  .am-delete-dlg>header>div { flex:1; min-width:0; }
+  .am-delete-dlg h3 { margin:0; font-family:var(--font-head); font-size:15px; }
+  .am-delete-dlg header p { margin:5px 0 0; color:rgba(255,255,255,.74); font-size:10.5px; font-weight:700; line-height:1.7; }
+  .am-delete-dlg>header>button { display:grid; place-items:center; width:34px; height:34px; flex:none; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:rgba(255,255,255,.06); color:#FFF; cursor:pointer; }
+  .am-delete-target { display:flex; align-items:center; gap:8px; margin:16px 18px 5px; border:1px solid rgba(107,30,45,.13); border-radius:11px; background:#F7EDEB; padding:9px 11px; color:#6B1E2D; font-size:11px; font-weight:900; }
+  .am-delete-target span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .am-secure-field { display:block; margin:12px 18px 0; }
+  .am-secure-field>span { display:flex; align-items:center; gap:6px; margin-bottom:5px; color:#4A0E1C; font-size:10.5px; font-weight:900; }
+  .am-secure-field input { width:100%; height:43px; border:1.5px solid rgba(107,30,45,.18); border-radius:11px; background:#FFF; padding:0 12px; color:#32101A; font:700 12px 'Cairo',sans-serif; outline:none; }
+  .am-secure-field input:focus { border-color:#6B1E2D; box-shadow:0 0 0 4px rgba(107,30,45,.07); }
+  .am-delete-error { margin:10px 18px 0; border:1px solid rgba(107,30,45,.18); border-radius:10px; background:rgba(107,30,45,.07); padding:8px 10px; color:#6B1E2D; font-size:10.5px; font-weight:800; }
+  .am-delete-dlg>footer { display:flex; justify-content:flex-end; gap:8px; margin-top:17px; border-top:1px solid rgba(107,30,45,.11); background:#F7F0E7; padding:13px 18px; }
+  .am-delete-confirm { display:inline-flex; align-items:center; gap:6px; border:0; border-radius:11px; background:#6B1E2D; padding:9px 14px; color:#FFF; font:900 11px 'Cairo',sans-serif; cursor:pointer; }
+  .am-delete-confirm:disabled { opacity:.45; cursor:not-allowed; }
+
+  .am-collective-grid { grid-template-columns:minmax(0,1fr); }
+  .am-agg-grid { display:flex; flex-wrap:wrap; }
+  .am-member-card { flex:1 1 480px; }
+
   @media (min-width:1001px) {
     .am-layout { display:flex; flex-direction:column; gap:14px; }
     .am-side { width:100%; min-height:0; }
     .am-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px; }
-    .am-collective-card.overall { grid-column:1 / -1; }
   }
   @media (max-width:1000px) { .am-layout { grid-template-columns:minmax(0,1fr); } }
   @media (max-width:700px) {
@@ -1580,5 +1972,11 @@ const styles = `
     .am-hero-metrics { width:100%; grid-template-columns:repeat(2,minmax(0,1fr)); }
     .am-detail { padding:16px; }
     .am-side:before { margin-inline:4px; }
+    .am-collective,.am-spectrum-card { padding:11px; }
+    .am-collective-grid,.am-agg-grid { grid-template-columns:minmax(0,1fr); }
+    .am-insight-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .am-trait-breakdown { grid-template-columns:1fr; }
+    .am-member-identity { align-items:flex-start; flex-direction:column; }
+    .am-delete-dlg { min-height:100dvh; border:0; border-radius:0; }
   }
 `;

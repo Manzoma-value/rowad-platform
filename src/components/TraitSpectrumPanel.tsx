@@ -11,6 +11,7 @@ type Props = {
   seed: number;
   lang: AssessLang;
   compact?: boolean;
+  summary?: boolean;
   live?: boolean;
 };
 
@@ -58,6 +59,7 @@ export default function TraitSpectrumPanel({
   seed,
   lang,
   compact = false,
+  summary = false,
   live = false,
 }: Props) {
   const C = COPY[lang];
@@ -83,7 +85,11 @@ export default function TraitSpectrumPanel({
       : C.over(Math.round((total - 100) * 10) / 10);
 
   return (
-    <section className={`tsp ${compact ? "tsp-compact" : ""}`} dir={lang === "ar" ? "rtl" : "ltr"}>
+    <section
+      className={`tsp ${compact ? "tsp-compact" : ""} ${summary ? "tsp-summary" : ""}`}
+      dir={lang === "ar" ? "rtl" : "ltr"}
+      title={C.subtitle}
+    >
       <header className="tsp-head">
         <div>
           <span className="tsp-eyebrow">{C.eyebrow}</span>
@@ -99,8 +105,8 @@ export default function TraitSpectrumPanel({
             <TraitSpectrumBlob
               traits={traits}
               seed={seed}
-              size={compact ? 178 : 252}
-              mode={compact ? "compact" : "full"}
+              size={summary ? 224 : compact ? 178 : 252}
+              mode={summary ? "full" : compact ? "compact" : "full"}
               showFrame
             />
             <div className={`tsp-total ${total === 100 ? "done" : total > 100 ? "over" : ""}`}>
@@ -109,7 +115,7 @@ export default function TraitSpectrumPanel({
             </div>
           </div>
           <div className="tsp-radar">
-            <TraitRadarChart traits={traits} size={compact ? 88 : 118} />
+            <TraitRadarChart traits={traits} size={summary ? 168 : compact ? 88 : 118} />
             <span>{C.strongest}</span>
             <strong>{readingText}</strong>
           </div>
@@ -163,7 +169,9 @@ export default function TraitSpectrumPanel({
         .tsp-track{height:8px;margin-top:7px;margin-inline-start:58px;overflow:hidden;border-radius:999px;background:#D9C9B0}.tsp-track span{display:block;height:100%;min-width:2px;border-radius:inherit}
         .tsp-explain{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;border-top:1px solid rgba(107,30,45,.09);background:rgba(107,30,45,.06)}.tsp-explain>div{display:flex;align-items:center;gap:8px;background:#F7F3EB;padding:10px 12px}.tsp-explain span{border-radius:999px;padding:3px 8px;font-size:8.5px;font-weight:900}.tsp-explain small{color:#796A62;font-size:9px;font-weight:800}
         .tsp-compact{border-radius:18px;box-shadow:none}.tsp-compact .tsp-head{padding:14px 16px 11px}.tsp-compact .tsp-head h3{font-size:15px}.tsp-compact .tsp-head p{font-size:10.5px}.tsp-compact .tsp-main{grid-template-columns:1fr;gap:14px;padding:14px 16px}.tsp-compact .tsp-visual{width:100%;min-height:190px;padding:10px 14px}.tsp-compact .tsp-radar>span{margin-top:-3px;font-size:10.5px}.tsp-compact .tsp-radar>strong{font-size:12px;max-width:150px}.tsp-compact .tsp-progress{margin-bottom:10px}.tsp-compact .tsp-explain>div{padding:8px}.tsp-compact .tsp-explain small{display:none}
+        .tsp-summary{border:0;border-radius:18px;background:transparent;box-shadow:none}.tsp-summary .tsp-head,.tsp-summary .tsp-legend,.tsp-summary .tsp-explain{display:none}.tsp-summary .tsp-main{display:block;padding:0;background:transparent}.tsp-summary .tsp-visual{width:100%;min-height:242px;gap:26px;border-color:rgba(107,30,45,.10);background:radial-gradient(circle at 42% 45%,rgba(184,160,130,.16),transparent 34%),linear-gradient(145deg,#F7F3EB,#EFEAE0);padding:10px 18px}.tsp-summary .tsp-total{display:none}.tsp-summary .tsp-radar>span{margin-top:2px;color:#6B1E2D;font-size:10px}.tsp-summary .tsp-radar>strong{max-width:180px;margin-top:4px;font-size:12.5px;line-height:1.6}
         @media(max-width:760px){.tsp-head{padding:15px}.tsp-live{display:none}.tsp-main,.tsp-compact .tsp-main{grid-template-columns:1fr;padding:14px}.tsp-visual{flex-wrap:wrap}.tsp-explain{grid-template-columns:1fr}.tsp-explain small{display:block!important}.tsp-compact .tsp-head p{display:block}}
+        @media(max-width:520px){.tsp-summary .tsp-visual{gap:4px;padding:8px;min-height:210px}.tsp-summary .tsp-radar{transform:scale(.88);margin-inline-start:-12px}}
       `}</style>
     </section>
   );
