@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { canReadWorkshop, getWorkshopJourney } from "@/lib/workshop-journey";
 import { prisma } from "@/lib/prisma";
+import { markWorkshopActivityAttendance } from "@/lib/workshop-attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
   const { id } = await context.params;
   const quiz = await quizForTeacher(id, auth.teacher.school_id, auth.teacher.id);
   if (!quiz) return NextResponse.json({ quiz: null });
-  return NextResponse.json({ quiz: { id: quiz.id, title: quiz.title, description: quiz.description, passing_score: quiz.passing_score, questions: quiz.questions.map(({ correct_answer: _correct, ...question }) => question), attempt: quiz.attempts[0] ?? null } });
+  return NextResponse.json({ quiz: { id: quiz.id, title: quiz.title, description: quiz.description, passing_score: quiz.passing_score, questions: quiz.questions.map((question) => ({ id: question.id, quiz_id: question.quiz_id, type: question.type, text: question.text, order: question.order, created_at: question.created_at, options: question.options })), attempt: quiz.attempts[0] ?? null } });
 }
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
@@ -55,5 +56,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const percent = quiz.questions.length ? Math.round((score / quiz.questions.length) * 100) : 0;
   const passed = complete && !pending && percent >= quiz.passing_score;
   const updated = await prisma.workshopQuizAttempt.update({ where: { id: attempt.id }, data: { score, total: quiz.questions.length, completed_at: complete ? new Date() : null, passed_at: passed ? new Date() : null } });
-  return NextResponse.json({ answer: { id: saved.id, question_id: saved.question_id, answer: saved.answer, is_correct: saved.is_correct, grading_status: saved.grading_status }, attempt: updated, journey: await getWorkshopJourney(id, auth.teacher.id) });
+  const attendance = await markWorkshopActivityAttendance(id, auth.teacher.id);
+  return NextResponse.json({ answer: { id: saved.id, question_id: saved.question_id, answer: saved.answer, is_correct: saved.is_correct, grading_status: saved.grading_status }, attempt: updated, attendance, journey: await getWorkshopJourney(id, auth.teacher.id) });
 }

@@ -22,6 +22,7 @@ export async function GET() {
     select: {
       id: true, title: true, description: true, audience: true, audience_other: true,
       start_date: true, end_date: true, schedule: true, status: true, is_live: true,
+      delivery_mode: true, venue: true,
       attendance: { where: { teacher_id: auth.teacher.id }, select: { day_date: true } },
       enrollments: { where: { teacher_id: auth.teacher.id }, select: { id: true, status: true }, take: 1 },
       signed_up_teachers: { where: { id: auth.teacher.id }, select: { id: true }, take: 1 },

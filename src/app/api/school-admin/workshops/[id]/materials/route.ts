@@ -118,6 +118,7 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
   if (!materialId) return NextResponse.json({ error: "materialId required" }, { status: 400 });
   try {
     const { next, removed } = await removeMaterial(id, workshop, materialId);
+    await prisma.workshopMaterialView.deleteMany({ where: { workshop_id: id, material_id: materialId } });
     if (removed?.path) await adminSupabase().storage.from(BUCKET).remove([removed.path]).catch(() => null);
     return NextResponse.json({ materials: next });
   } catch (error) {

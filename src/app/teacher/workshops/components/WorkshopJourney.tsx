@@ -251,6 +251,7 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
       });
       const payload = await response.json();
       if (!response.ok) throw new Error("submit_failed");
+      window.dispatchEvent(new Event("workshop-attendance-recorded"));
       setQuiz((current) => current ? {
         ...current,
         attempt: payload.attempt ? {

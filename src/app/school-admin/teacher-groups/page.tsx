@@ -3,6 +3,11 @@ export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  Bell, BookOpenCheck, ChevronLeft, ChevronRight, Eye, EyeOff,
+  MapPin, Megaphone, PencilLine, Plus, Search, Trash2, UserMinus,
+  UserPlus, Users, X,
+} from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
@@ -13,6 +18,7 @@ type GroupRow = {
   name: string;
   description: string | null;
   updated_at: string;
+  created_at?: string;
   _count: { members: number };
 };
 
@@ -150,6 +156,7 @@ export default function TeacherGroupsPage() {
   };
   const viewOnly = useViewOnly();
   const confirm = useConfirm();
+  const IconChevron = dir === "rtl" ? ChevronLeft : ChevronRight;
 
   const [groups, setGroups] = useState<GroupRow[]>([]);
   const [openVisibility, setOpenVisibility] = useState(false);
@@ -187,7 +194,9 @@ export default function TeacherGroupsPage() {
     try {
       const r = await fetch("/api/school-admin/teacher-groups", { cache: "no-store" });
       const d = await r.json();
-      setGroups(d?.groups ?? []);
+      const nextGroups = d?.groups ?? [];
+      setGroups(nextGroups);
+      setSelectedId((current) => current ?? nextGroups[0]?.id ?? null);
       setOpenVisibility(d?.openVisibility === true);
     } finally { setLoadingList(false); }
   }, []);
@@ -384,7 +393,8 @@ export default function TeacherGroupsPage() {
   return (
     <div className="tg" dir={dir}>
       <header className="tg-hero">
-        <div>
+        <div className="tg-hero-copy">
+          <span className="tg-eyebrow"><Users size={15} />{L === "ar" ? "مساحة تنظيم المشرفين" : "Hapësira e organizimit"}</span>
           <h1 className="tg-title">{T.title}</h1>
           <p className="tg-sub">{T.sub}</p>
         </div>
@@ -396,13 +406,15 @@ export default function TeacherGroupsPage() {
               disabled={savingVisibility}
               data-write="true"
             >
-              <strong>{L === "ar" ? "رؤية المجموعات" : "Shikimi i grupeve"}</strong>
+              <span className="tg-visibility-icon">{openVisibility ? <Eye size={17} /> : <EyeOff size={17} />}</span>
+              <span><strong>{L === "ar" ? "رؤية المجموعات" : "Shikimi i grupeve"}</strong>
               <span>{openVisibility ? (L === "ar" ? "مفتوحة لكل المشرفين" : "E hapur për edukatorët") : (L === "ar" ? "خاصة بكل مجموعة" : "Private për çdo grup")}</span>
+              </span>
             </button>
           )}
           {!viewOnly && (
             <button className="tg-new" onClick={() => setCreateOpen(true)} data-write="true">
-              {T.create}
+              <Plus size={17} />{T.create.replace(/^\+\s*/, "")}
             </button>
           )}
         </div>
@@ -410,13 +422,12 @@ export default function TeacherGroupsPage() {
 
       <div className="tg-layout">
         <aside className="tg-side">
+          <div className="tg-side-head">
+            <div><strong>{L === "ar" ? "كل المجموعات" : "Të gjitha grupet"}</strong><span>{groups.length} {T.members.replace(/.*/, L === "ar" ? "مجموعات" : "grupe")}</span></div>
+            {!viewOnly && <button onClick={() => setCreateOpen(true)} aria-label={T.create}><Plus size={16} /></button>}
+          </div>
           {groups.length > 0 && (
-            <input
-              className="tg-side-search"
-              value={groupQuery}
-              onChange={(e) => setGroupQuery(e.target.value)}
-              placeholder={T.groupSearchPh}
-            />
+            <label className="tg-side-search"><Search size={16}/><input value={groupQuery} onChange={(e) => setGroupQuery(e.target.value)} placeholder={T.groupSearchPh}/></label>
           )}
           {loadingList ? <MandalaLoader /> : visibleGroups.length === 0 ? (
             <div className="tg-empty">{groups.length === 0 ? T.empty : T.noGroupResults}</div>
@@ -428,10 +439,9 @@ export default function TeacherGroupsPage() {
                     className={`tg-list-item${selectedId === g.id ? " active" : ""}`}
                     onClick={() => setSelectedId(g.id)}
                   >
-                    <span className="tg-list-name">{g.name}</span>
-                    <span className="tg-list-meta">
-                      {g._count.members} {T.members}
-                    </span>
+                    <span className="tg-group-mark">{g.name.trim().slice(0, 1).toUpperCase()}</span>
+                    <span className="tg-list-copy"><span className="tg-list-name">{g.name}</span><span className="tg-list-meta">{g._count.members} {T.members}</span></span>
+                    <IconChevron className="tg-list-arrow" size={16}/>
                   </button>
                 </li>
               ))}
@@ -447,44 +457,32 @@ export default function TeacherGroupsPage() {
           ) : (
             <>
               <div className="tg-detail-head">
-                <input
-                  className="tg-meta-name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  disabled={viewOnly}
-                  data-write={viewOnly ? undefined : "true"}
-                />
-                <textarea
-                  className="tg-meta-desc"
-                  placeholder={T.descPh}
-                  rows={2}
-                  value={editForm.description}
-                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                  disabled={viewOnly}
-                  data-write={viewOnly ? undefined : "true"}
-                />
+                <div className="tg-detail-title-row">
+                  <div className="tg-detail-mark"><Users size={25}/></div>
+                  <div><span className="tg-detail-kicker">{L === "ar" ? "مجموعة مشرفين" : "Grup edukatorësh"}</span><h2>{detail.name}</h2><p>{detail.description || (L === "ar" ? "لا يوجد وصف لهذه المجموعة بعد." : "Nuk ka përshkrim për këtë grup.")}</p></div>
+                </div>
+                {!viewOnly && <details className="tg-edit-panel"><summary><PencilLine size={14}/>{T.rename}</summary><div className="tg-edit-fields"><label>{T.name}<input className="tg-meta-name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}/></label><label>{T.desc}<textarea className="tg-meta-desc" placeholder={T.descPh} rows={2} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}/></label><button className="tg-btn tg-btn-primary" onClick={saveMeta} disabled={savingMeta || !editForm.name.trim()}>{savingMeta ? T.saving : T.save}</button></div></details>}
                 <div className="tg-meta-actions">
-                  {!viewOnly && (
-                    <>
-                      <button className="tg-btn" onClick={saveMeta} disabled={savingMeta || !editForm.name.trim()} data-write="true">
-                        {savingMeta ? T.saving : T.save}
-                      </button>
-                      <button className="tg-btn tg-btn-danger" onClick={deleteGroup} data-write="true">
-                        {T.deleteGroup}
-                      </button>
-                    </>
-                  )}
                   <Link className="tg-btn" href={`/school-admin/assessments?group=${detail.id}`}>
-                    {T.assessments} →
+                    <BookOpenCheck size={15}/>{T.assessments}
                   </Link>
                   <span className="tg-spacer" />
                   {!viewOnly && (
                     <button className="tg-btn tg-btn-primary" onClick={() => { setAddOpen(true); setPicked(new Set()); setSearchQ(""); }} data-write="true">
-                      {T.addMembers}
+                      <UserPlus size={15}/>{T.addMembers.replace(/^\+\s*/, "")}
                     </button>
                   )}
+                  {!viewOnly && <button className="tg-icon-danger" onClick={deleteGroup} title={T.deleteGroup}><Trash2 size={16}/></button>}
                 </div>
               </div>
+
+              <div className="tg-overview-strip">
+                <div><span className="tg-overview-icon"><Users size={18}/></span><strong>{detail.members.length}</strong><small>{T.members}</small></div>
+                <div><span className="tg-overview-icon"><Megaphone size={18}/></span><strong>{announcements.length}</strong><small>{A.announcements}</small></div>
+                <div><span className="tg-overview-icon"><Eye size={18}/></span><strong>{openVisibility ? (L === "ar" ? "مفتوحة" : "E hapur") : (L === "ar" ? "خاصة" : "Private")}</strong><small>{L === "ar" ? "خصوصية المجموعة" : "Privatësia e grupit"}</small></div>
+              </div>
+
+              <div className="tg-section-heading"><div><Users size={18}/><span><strong>{L === "ar" ? "أعضاء المجموعة" : "Anëtarët e grupit"}</strong><small>{L === "ar" ? "ملفات المشرفين ومعلوماتهم الأساسية" : "Profilet dhe të dhënat kryesore"}</small></span></div></div>
 
               {detail.members.length > 0 && (
                 <div className="tg-member-filter">
@@ -503,6 +501,7 @@ export default function TeacherGroupsPage() {
                   <div className="tg-members-empty">{T.noMemberResults}</div>
                 ) : visibleMembers.map((m) => (
                   <div key={m.teacher.id} className="tg-member">
+                    <div className="tg-member-avatar">{m.teacher.profile.full_name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase()}</div>
                     <div className="tg-member-main">
                       <div className="tg-member-name">{m.teacher.profile.full_name}</div>
                       {m.teacher.profile.email && <div className="tg-member-email">{m.teacher.profile.email}</div>}
@@ -512,20 +511,20 @@ export default function TeacherGroupsPage() {
                             <span>{T.spec}: <strong>{m.teacher.application.specialization}</strong></span>
                           )}
                           {(m.teacher.application.country || m.teacher.application.city) && (
-                            <span>{T.location}: <strong>{m.teacher.application.country}{m.teacher.application.city ? " · " + m.teacher.application.city : ""}</strong></span>
+                            <span><MapPin size={12}/>{m.teacher.application.country}{m.teacher.application.city ? " · " + m.teacher.application.city : ""}</span>
                           )}
                         </div>
                       )}
                     </div>
                     {!viewOnly && (
-                      <button className="tg-mini-x" onClick={() => removeMember(m.teacher.id)} data-write="true" title={T.remove}>×</button>
+                      <button className="tg-mini-x" onClick={() => removeMember(m.teacher.id)} data-write="true" title={T.remove}><UserMinus size={15}/></button>
                     )}
                   </div>
                 ))}
               </div>
 
               <div className="tg-ann-section">
-                <h3 className="tg-ann-title">{A.announcements}</h3>
+                <div className="tg-section-heading"><div><Bell size={18}/><span><strong>{A.announcements}</strong><small>{L === "ar" ? "تحديثات واضحة تصل لكل أعضاء المجموعة" : "Përditësime për të gjithë anëtarët"}</small></span></div></div>
                 {!viewOnly && (
                   <div className="tg-ann-composer" data-write="true">
                     <textarea
@@ -575,7 +574,7 @@ export default function TeacherGroupsPage() {
                             title={A.delete}
                             data-write="true"
                           >
-                            x
+                            <X size={14}/>
                           </button>
                         )}
                       </article>
@@ -750,6 +749,81 @@ export default function TeacherGroupsPage() {
         .tg-elig-tick { position: absolute; inset-inline-end: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; background: #B8A082; color: #4A0E1C; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12.5px; }
         .tg-elig:not(.on) .tg-elig-tick { background: rgba(194,160,89,0.18); color: #8F765B; }
         .tg-mini-load { padding: 20px; text-align: center; color: #8F765B; font-weight: 700; }
+
+        /* 2026 workspace refresh: clearer hierarchy, calmer density and stronger actions. */
+        .tg { max-width: 1480px; margin: 0 auto; color: #32101A; }
+        .tg-hero { position: relative; overflow: hidden; align-items: center; padding: 25px 27px; border: 1px solid rgba(217,201,176,.28); border-radius: 22px; background: radial-gradient(circle at 86% -20%,rgba(217,201,176,.2),transparent 36%),linear-gradient(135deg,#32101A 0%,#5D1728 100%); box-shadow: 0 18px 48px rgba(50,16,26,.14); }
+        .tg-hero:after { content:""; position:absolute; width:210px; height:210px; inset-inline-end:-90px; bottom:-145px; border:32px solid rgba(217,201,176,.08); border-radius:50%; pointer-events:none; }
+        .tg-hero-copy { position:relative; z-index:1; }
+        .tg-eyebrow { display:inline-flex; align-items:center; gap:7px; color:#D9C9B0; font-size:11px; font-weight:900; letter-spacing:.03em; }
+        .tg-title { color:#FFF9EF; font-size:29px; margin-top:7px; }
+        .tg-sub { color:#DDCEBA; max-width:740px; }
+        .tg-hero-actions { position:relative; z-index:1; }
+        .tg-new { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:48px; color:#32101A; background:#F2DFC0; box-shadow:0 7px 18px rgba(0,0,0,.14); }
+        .tg-visibility { min-height:48px; min-width:245px; flex-direction:row; align-items:center; gap:10px; color:#FFF9EF; background:rgba(255,255,255,.07); border-color:rgba(217,201,176,.3); }
+        .tg-visibility.on { background:rgba(217,201,176,.13); border-color:rgba(217,201,176,.48); }
+        .tg-visibility-icon { width:31px; height:31px; display:grid; place-items:center; flex:0 0 auto; border-radius:9px; color:#F2DFC0; background:rgba(255,255,255,.09); }
+        .tg-visibility > span:last-child { display:flex; flex-direction:column; gap:1px; }
+        .tg-visibility span span { color:#D9C9B0; }
+        .tg-layout { grid-template-columns:minmax(260px,330px) minmax(0,1fr); align-items:start; gap:18px; }
+        .tg-side,.tg-detail { border-color:#E4DACB; border-radius:18px; background:rgba(255,252,247,.88); box-shadow:0 10px 34px rgba(67,35,28,.055); }
+        .tg-side { position:sticky; top:18px; padding:12px; max-height:calc(100vh - 40px); overflow:auto; }
+        .tg-side-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 4px 12px; }
+        .tg-side-head>div { display:flex; flex-direction:column; gap:1px; }
+        .tg-side-head strong { font-size:13px; }
+        .tg-side-head span { font-size:10px; color:#8F765B; font-weight:800; }
+        .tg-side-head button { width:31px; height:31px; border:0; border-radius:9px; display:grid; place-items:center; background:#32101A; color:#F2DFC0; cursor:pointer; }
+        .tg-side-search { display:flex; align-items:center; gap:7px; padding:0 11px; margin-bottom:10px; color:#8F765B; border:1.5px solid #E4DACB; border-radius:11px; background:#FFF; }
+        .tg-side-search input { width:100%; min-width:0; padding:10px 0; border:0; outline:0; background:transparent; font:inherit; font-size:12px; }
+        .tg-list { gap:6px; }
+        .tg-list-item { display:grid; grid-template-columns:38px minmax(0,1fr) 18px; align-items:center; gap:10px; padding:10px; border-color:transparent; }
+        .tg-list-item.active { background:#32101A; border-color:#32101A; box-shadow:0 8px 19px rgba(50,16,26,.14); }
+        .tg-group-mark { width:38px; height:38px; display:grid; place-items:center; border-radius:11px; background:#F0E7D9; color:#6B1E2D; font-weight:900; }
+        .tg-list-item.active .tg-group-mark { background:#F2DFC0; color:#32101A; }
+        .tg-list-copy { display:flex; flex-direction:column; min-width:0; gap:2px; }
+        .tg-list-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .tg-list-item.active :is(.tg-list-name,.tg-list-meta,.tg-list-arrow) { color:#FFF9EF; }
+        .tg-list-arrow { color:#B8A082; }
+        .tg-detail { padding:22px; }
+        .tg-detail-head { gap:14px; margin-bottom:15px; }
+        .tg-detail-title-row { display:grid; grid-template-columns:52px minmax(0,1fr); gap:13px; align-items:start; }
+        .tg-detail-mark { width:52px; height:52px; display:grid; place-items:center; border-radius:15px; color:#F2DFC0; background:linear-gradient(145deg,#32101A,#6B1E2D); }
+        .tg-detail-kicker { display:block; color:#8F765B; font-size:10px; font-weight:900; }
+        .tg-detail-title-row h2 { margin:1px 0 3px; font-size:23px; line-height:1.3; }
+        .tg-detail-title-row p { margin:0; color:#6E625A; font-size:12px; line-height:1.65; }
+        .tg-edit-panel { border:1px solid #E5DCCD; border-radius:12px; background:#FFF; }
+        .tg-edit-panel summary { display:flex; align-items:center; gap:7px; padding:9px 12px; cursor:pointer; color:#6B1E2D; font-size:11px; font-weight:900; list-style:none; }
+        .tg-edit-panel summary::-webkit-details-marker { display:none; }
+        .tg-edit-fields { display:grid; grid-template-columns:minmax(170px,.7fr) minmax(250px,1.3fr) auto; align-items:end; gap:10px; padding:0 12px 12px; }
+        .tg-edit-fields label { color:#7B6B52; font-size:10px; font-weight:900; }
+        .tg-edit-fields :is(input,textarea) { display:block; width:100%; min-height:40px; margin-top:4px; border:1px solid #DCCFBD; border-radius:9px; background:#FFFCF7; padding:8px 10px; font:inherit; font-size:12px; }
+        .tg-meta-actions { margin:0; }
+        .tg-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:36px; text-decoration:none; }
+        .tg-icon-danger { width:36px; height:36px; display:grid; place-items:center; border-radius:9px; border:1px solid rgba(139,26,26,.18); color:#8B1A1A; background:#FFF4F1; cursor:pointer; }
+        .tg-overview-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:0 0 19px; }
+        .tg-overview-strip>div { display:grid; grid-template-columns:38px 1fr; grid-template-rows:auto auto; gap:0 9px; padding:12px; border:1px solid #E8DFD2; border-radius:13px; background:linear-gradient(145deg,#FFF,#FBF6EF); }
+        .tg-overview-icon { grid-row:1/3; width:38px; height:38px; display:grid; place-items:center; border-radius:11px; color:#6B1E2D; background:#F0E7D9; }
+        .tg-overview-strip strong { align-self:end; font-size:16px; line-height:1.2; }
+        .tg-overview-strip small { color:#8F765B; font-size:9px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .tg-section-heading { display:flex; align-items:center; justify-content:space-between; margin:16px 0 10px; }
+        .tg-section-heading>div { display:flex; align-items:center; gap:8px; }
+        .tg-section-heading>div>svg { color:#6B1E2D; }
+        .tg-section-heading span { display:flex; flex-direction:column; }
+        .tg-section-heading strong { font-size:13px; }
+        .tg-section-heading small { color:#8F765B; font-size:9.5px; font-weight:700; }
+        .tg-member { align-items:center; padding:11px 12px; border-radius:13px; transition:transform .15s,border-color .15s,box-shadow .15s; }
+        .tg-member:hover { transform:translateY(-1px); border-color:#D1BFA8; box-shadow:0 7px 18px rgba(67,35,28,.06); }
+        .tg-member-avatar { width:39px; height:39px; display:grid; place-items:center; flex:0 0 auto; border-radius:12px; color:#F2DFC0; background:#32101A; font-size:10px; font-weight:900; }
+        .tg-member-meta span { display:inline-flex; align-items:center; gap:4px; }
+        .tg-mini-x { display:grid; place-items:center; border-radius:9px; }
+        .tg-ann-section { margin-top:22px; }
+        .tg-ann-title { display:none; }
+        .tg-ann-composer { border-radius:14px; background:#F8F2E9; }
+        .tg-ann { border-radius:13px; }
+        .tg-dialog { border:1px solid #E1D5C5; border-radius:20px; box-shadow:0 26px 80px rgba(26,12,13,.32); }
+        @media(max-width:980px){.tg-layout{grid-template-columns:280px minmax(0,1fr)}.tg-overview-strip{grid-template-columns:1fr}.tg-edit-fields{grid-template-columns:1fr}}
+        @media(max-width:760px){.tg-hero{padding:21px}.tg-hero-actions,.tg-visibility{width:100%}.tg-new{flex:1}.tg-layout{grid-template-columns:1fr}.tg-side{position:static;max-height:none}.tg-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.tg-detail{padding:16px}.tg-detail-title-row{grid-template-columns:44px 1fr}.tg-detail-mark{width:44px;height:44px}.tg-overview-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.tg-overview-strip>div{grid-template-columns:1fr;text-align:center}.tg-overview-icon{grid-row:auto;margin:auto}.tg-meta-actions{align-items:stretch}.tg-spacer{display:none}}
+        @media(max-width:500px){.tg-title{font-size:24px}.tg-list{grid-template-columns:1fr}.tg-overview-strip{grid-template-columns:1fr}.tg-overview-strip>div{grid-template-columns:38px 1fr;text-align:start}.tg-overview-icon{grid-row:1/3;margin:0}.tg-member{align-items:flex-start}.tg-member-meta{gap:6px;flex-direction:column}.tg-meta-actions .tg-btn{flex:1}}
       `}</style>
     </div>
   );

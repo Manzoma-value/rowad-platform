@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { newSignupToken } from "@/lib/workshop-tokens";
-import { AUDIENCES, cleanSchedule, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
+import { AUDIENCES, cleanSchedule, cleanWorkshopUrl, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
 import { notifyProfiles, schoolTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +28,9 @@ export async function GET() {
       end_date: true,
       schedule: true,
       materials: true,
+      delivery_mode: true,
+      venue: true,
+      meeting_url: true,
       status: true,
       is_live: true,
       sort_order: true,
@@ -76,7 +79,7 @@ export async function POST(req: Request) {
   const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  let body: { title?: string; description?: string; audience?: string[]; audience_other?: string; start_date?: string; end_date?: string; schedule?: unknown; notes?: string };
+  let body: { title?: string; description?: string; audience?: string[]; audience_other?: string; start_date?: string; end_date?: string; schedule?: unknown; notes?: string; delivery_mode?: "ONLINE" | "OFFLINE"; venue?: string; meeting_url?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
   const title = body.title?.trim();
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
@@ -84,6 +87,8 @@ export async function POST(req: Request) {
   const dates = workshopDates(schedule, body.start_date, body.end_date);
   const audience = Array.from(new Set((body.audience ?? []).filter((item) => AUDIENCES.includes(item as typeof AUDIENCES[number]))));
   if (!audience.length) return NextResponse.json({ error: "audience required" }, { status: 400 });
+  const meetingUrl = cleanWorkshopUrl(body.meeting_url);
+  if (body.delivery_mode === "ONLINE" && body.meeting_url?.trim() && !meetingUrl) return NextResponse.json({ error: "valid meeting_url required" }, { status: 400 });
   const lastOrder = await prisma.workshop.aggregate({
     where: { school_id: auth.school.id },
     _max: { sort_order: true },
@@ -105,6 +110,9 @@ export async function POST(req: Request) {
           end_date: dates.end ? new Date(`${dates.end}T00:00:00Z`) : null,
           schedule,
           notes: body.notes?.trim().slice(0, 5000) || null,
+          delivery_mode: body.delivery_mode === "ONLINE" ? "ONLINE" : "OFFLINE",
+          venue: body.delivery_mode === "ONLINE" ? null : body.venue?.trim().slice(0, 300) || null,
+          meeting_url: body.delivery_mode === "ONLINE" ? meetingUrl : null,
           sort_order: (lastOrder._max.sort_order ?? -1) + 1,
           signup_token: newSignupToken(),
         },

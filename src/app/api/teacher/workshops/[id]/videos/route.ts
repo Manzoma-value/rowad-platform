@@ -18,7 +18,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
     where: { id, school_id: teacher.school_id },
     select: {
       id: true,
-      enrollments: { where: { teacher_id: teacher.id }, select: { id: true }, take: 1 },
+      enrollments: { where: { teacher_id: teacher.id, status: "APPROVED" }, select: { id: true }, take: 1 },
       signed_up_teachers: { where: { id: teacher.id }, select: { id: true }, take: 1 },
       attendance: { where: { teacher_id: teacher.id }, select: { id: true }, take: 1 },
     },

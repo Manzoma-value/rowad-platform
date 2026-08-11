@@ -576,6 +576,7 @@ model Teacher {
   workshop_signup                  Workshop?                       @relation("WorkshopSignedUpTeachers", fields: [workshop_signup_id], references: [id], onDelete: SetNull)
   workshop_enrollments             WorkshopEnrollment[]
   workshop_attendance              WorkshopAttendance[]
+  workshop_material_views          WorkshopMaterialView[]
   workshop_video_views             WorkshopVideoView[]
   workshop_video_attempts          WorkshopVideoAttempt[]
   workshop_quiz_attempts           WorkshopQuizAttempt[]
@@ -1427,6 +1428,11 @@ enum WorkshopStatus {
   CLOSED
 }
 
+enum WorkshopDeliveryMode {
+  OFFLINE
+  ONLINE
+}
+
 enum WorkshopEnrollmentSource {
   QR
   MANUAL
@@ -1443,39 +1449,43 @@ enum WorkshopEnrollmentStatus {
 enum WorkshopAttendanceSource {
   QR
   MANUAL
+  ACTIVITY
 }
 
 model Workshop {
-  id               String         @id @default(uuid()) @db.Uuid
-  school_id        String         @db.Uuid
+  id               String               @id @default(uuid()) @db.Uuid
+  school_id        String               @db.Uuid
   title            String
   description      String?
-  audience         String[]       @default(["TEACHERS"])
+  audience         String[]             @default(["TEACHERS"])
   audience_other   String?
-  start_date       DateTime?      @db.Date
-  end_date         DateTime?      @db.Date
+  start_date       DateTime?            @db.Date
+  end_date         DateTime?            @db.Date
   // Ordered entries: [{date,type:"WORK"|"REST",start_time?,end_time?,label?}]
-  schedule         Json           @default("[]")
+  schedule         Json                 @default("[]")
   notes            String?
+  delivery_mode    WorkshopDeliveryMode @default(OFFLINE)
+  venue            String?
+  meeting_url      String?
   // Ordered entries: [{id,type:"FILE"|"IMAGE"|"VIDEO"|"LINK",title,url,path?,mime?,size?}]
-  materials        Json           @default("[]")
-  status           WorkshopStatus @default(OPEN)
+  materials        Json                 @default("[]")
+  status           WorkshopStatus       @default(OPEN)
   // School-admin controlled display order on the workshop management page.
-  sort_order       Int            @default(0)
+  sort_order       Int                  @default(0)
   // Operational state: registration can remain OPEN while the session is
   // explicitly marked live by an admin during the lecture/training.
-  is_live          Boolean        @default(false)
+  is_live          Boolean              @default(false)
   live_started_at  DateTime?
   live_ended_at    DateTime?
   // Public random slug used in the signup URL and encoded in the signup QR.
   // Kept unique globally so /workshop/[token] doesn't need the school in the URL.
-  signup_token     String         @unique
+  signup_token     String               @unique
   // Permanent attendance URL token. The scan date is resolved at check-in time,
   // so one printed QR serves every scheduled work day in this workshop.
-  attendance_token String?        @unique
-  created_by       String         @db.Uuid
-  created_at       DateTime       @default(now())
-  updated_at       DateTime       @updatedAt
+  attendance_token String?              @unique
+  created_by       String               @db.Uuid
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
 
   school             School                   @relation(fields: [school_id], references: [id], onDelete: Cascade)
   author             Profile                  @relation("WorkshopAuthor", fields: [created_by], references: [id])
@@ -1483,6 +1493,7 @@ model Workshop {
   enrollments        WorkshopEnrollment[]
   attendance         WorkshopAttendance[]
   attendance_codes   WorkshopAttendanceCode[]
+  material_views     WorkshopMaterialView[]
   messages           WorkshopMessage[]
   videos             WorkshopVideo[]
   requirements       WorkshopRequirement[]
@@ -1698,6 +1709,25 @@ model WorkshopAttendance {
   @@unique([workshop_id, teacher_id, day_date])
   @@index([workshop_id, day_date])
   @@map("workshop_attendance")
+}
+
+// Auditable document engagement. Materials remain stored as ordered JSON,
+// while this table records each teacher's first/latest PDF open and total opens.
+model WorkshopMaterialView {
+  id              String   @id @default(uuid()) @db.Uuid
+  workshop_id     String   @db.Uuid
+  teacher_id      String   @db.Uuid
+  material_id     String
+  first_opened_at DateTime @default(now())
+  last_opened_at  DateTime @default(now())
+  open_count      Int      @default(1)
+
+  workshop Workshop @relation(fields: [workshop_id], references: [id], onDelete: Cascade)
+  teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@unique([workshop_id, teacher_id, material_id])
+  @@index([workshop_id, material_id, last_opened_at(sort: Desc)])
+  @@map("workshop_material_views")
 }
 
 // Rotating attendance code — admin generates one per day, teachers scan to

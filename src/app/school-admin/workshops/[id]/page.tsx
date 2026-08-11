@@ -10,7 +10,7 @@ import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
-import { CheckCircle2, Download, ExternalLink, FileText, Image as ImageIcon, Link2, MessageSquareText, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, Eye, FileText, Image as ImageIcon, Link2, MapPin, MessageSquareText, MonitorPlay, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import { makeWorkshopDays, type WorkshopDay, type WorkshopMaterial } from "@/lib/workshops";
 import { VideoManager } from "../components/VideoManager";
 import { WorkshopJourneyManager } from "../components/WorkshopJourneyManager";
@@ -26,6 +26,9 @@ type Workshop = {
   end_date: string | null;
   schedule: WorkshopDay[];
   notes: string | null;
+  delivery_mode: "ONLINE" | "OFFLINE";
+  venue: string | null;
+  meeting_url: string | null;
   materials: WorkshopMaterial[];
   status: "OPEN" | "CLOSED";
   is_live: boolean;
@@ -35,6 +38,15 @@ type Workshop = {
   created_at: string;
   updated_at: string;
   messages: WorkshopMessage[];
+  material_views: MaterialView[];
+};
+
+type MaterialView = {
+  material_id: string;
+  first_opened_at: string;
+  last_opened_at: string;
+  open_count: number;
+  teacher: { id: string; profile: { full_name: string; email: string | null; avatar_url: string | null } };
 };
 
 type WorkshopMessage = {
@@ -64,7 +76,7 @@ type AttendancePayload = {
     attendance: ({
       id: string;
       checked_in_at: string;
-      source: "QR" | "MANUAL";
+      source: "QR" | "MANUAL" | "ACTIVITY";
       recorded_by: string | null;
     } | null)[];
     total_present: number;
@@ -87,6 +99,10 @@ type AttendanceCode = {
   qrPng?: string;
   created_at?: string;
 };
+
+function isPdfMaterial(material: WorkshopMaterial) {
+  return material.mime?.toLowerCase() === "application/pdf" || material.title.toLowerCase().endsWith(".pdf") || material.url.toLowerCase().split(/[?#]/)[0].endsWith(".pdf");
+}
 
 const UI = {
   ar: {
@@ -185,6 +201,7 @@ const OPS = {
     checkedAt: "وقت الدخول",
     qrSource: "عبر QR",
     manualSource: "يدوي",
+    activitySource: "نشاط رقمي",
     late: "متأخر",
     removeAttendance: "حذف سجل الحضور",
     removeConfirm: "هل تريد حذف سجل الحضور هذا؟",
@@ -224,6 +241,7 @@ const OPS = {
     checkedAt: "Ora e hyrjes",
     qrSource: "Me QR",
     manualSource: "Manuale",
+    activitySource: "Aktivitet digjital",
     late: "Me vonesë",
     removeAttendance: "Fshi praninë",
     removeConfirm: "Ta fshijmë këtë regjistrim të pranisë?",
@@ -311,6 +329,9 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     start_date: "",
     end_date: "",
     schedule: [] as WorkshopDay[],
+    delivery_mode: "OFFLINE" as "ONLINE" | "OFFLINE",
+    venue: "",
+    meeting_url: "",
   });
 
   const loadAll = useCallback(async () => {
@@ -389,6 +410,9 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
       start_date: detail.workshop.start_date?.slice(0, 10) ?? "",
       end_date: detail.workshop.end_date?.slice(0, 10) ?? "",
       schedule: detail.workshop.schedule,
+      delivery_mode: detail.workshop.delivery_mode,
+      venue: detail.workshop.venue ?? "",
+      meeting_url: detail.workshop.meeting_url ?? "",
     });
     setEditingBasics(true);
   }
@@ -412,6 +436,9 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           start_date: basicsForm.start_date,
           end_date: basicsForm.end_date,
           schedule: basicsForm.schedule,
+          delivery_mode: basicsForm.delivery_mode,
+          venue: basicsForm.delivery_mode === "OFFLINE" ? basicsForm.venue : null,
+          meeting_url: basicsForm.delivery_mode === "ONLINE" ? basicsForm.meeting_url : null,
         }),
       });
       const payload = await response.json().catch(() => ({}));
@@ -641,7 +668,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
       t.full_name,
       t.email ?? "",
       t.status,
-      ...t.attendance.map(entry => entry ? `${T.present} - ${fmtTime(entry.checked_in_at)} (${entry.source === "MANUAL" ? O.manualSource : O.qrSource})` : ""),
+      ...t.attendance.map(entry => entry ? `${T.present} - ${fmtTime(entry.checked_in_at)} (${entry.source === "MANUAL" ? O.manualSource : entry.source === "ACTIVITY" ? O.activitySource : O.qrSource})` : ""),
       `${t.total_present}/${attendance.days.length}`,
     ]);
     if (format === "xlsx") {
@@ -696,6 +723,11 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
             <span>{fmtDate(detail.workshop.start_date)}</span>
             <span>{fmtDate(detail.workshop.end_date)}</span>
           </div>
+          <div className={`wd-delivery ${detail.workshop.delivery_mode.toLowerCase()}`}>
+            {detail.workshop.delivery_mode === "ONLINE" ? <MonitorPlay size={17}/> : <MapPin size={17}/>}
+            <span><strong>{detail.workshop.delivery_mode === "ONLINE" ? (L === "ar" ? "ورشة أونلاين" : "Forum online") : (L === "ar" ? "ورشة حضورية" : "Forum fizik")}</strong>
+            <small>{detail.workshop.delivery_mode === "ONLINE" ? (detail.workshop.meeting_url ? (L === "ar" ? "رابط اللقاء جاهز للمشاركين" : "Lidhja e takimit është gati") : (L === "ar" ? "لم يضف رابط اللقاء بعد" : "Lidhja nuk është shtuar")) : (detail.workshop.venue || (L === "ar" ? "لم يحدد الموقع بعد" : "Vendi nuk është caktuar"))}</small></span>
+          </div>
         </div>
         {!viewOnly && <div className="wd-hero-actions" data-write="true">
           <button className="wd-edit-btn" onClick={openBasicsEditor}><Pencil size={16}/>{E.action}</button>
@@ -724,7 +756,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         <div className="wd-table-head"><div><h2>{T.content}</h2><p>{T.contentHelp}</p></div>{!viewOnly&&<div className="wd-content-actions"><label className="wd-small-btn"><Upload size={14}/>{uploading?T.saving:T.addFile}<input hidden type="file" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx" onChange={e=>e.target.files?.[0]&&void uploadMaterial(e.target.files[0])}/></label><button className="wd-small-btn ghost" onClick={()=>setShowLink(v=>!v)}><Plus size={14}/>{T.addLink}</button></div>}</div>
         {showLink&&<div className="wd-link-form"><select value={linkType} onChange={e=>setLinkType(e.target.value as typeof linkType)}><option value="LINK">Link</option><option value="VIDEO">Video link</option><option value="READING">Reading</option></select><input placeholder={T.linkTitle} value={linkForm.title} onChange={e=>setLinkForm({...linkForm,title:e.target.value})}/><input dir="ltr" placeholder={T.linkUrl} value={linkForm.url} onChange={e=>setLinkForm({...linkForm,url:e.target.value})}/><button className="wd-small-btn" onClick={addLink} disabled={uploading}>{T.add}</button></div>}
         {materialError&&<p className="wd-material-error" role="alert">{materialError}</p>}
-        {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=><div className="wd-material" key={m.id}>{m.type==="IMAGE"?<ImageIcon/>:m.type==="VIDEO"?<Video/>:m.type==="LINK"?<Link2/>:<FileText/>}<div><strong>{m.title}</strong><small>{m.mime || m.type}</small></div><a href={m.url} target="_blank" rel="noreferrer" aria-label={m.title}><ExternalLink size={17}/></a>{!viewOnly&&<button onClick={()=>void removeMaterial(m.id)} aria-label={T.remove}><Trash2 size={16}/></button>}</div>)}</div>}
+        {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=>{const viewers=detail.workshop.material_views.filter(view=>view.material_id===m.id);return <div className={`wd-material${isPdfMaterial(m)?" pdf":""}`} key={m.id}>{m.type==="IMAGE"?<ImageIcon/>:m.type==="VIDEO"?<Video/>:m.type==="LINK"?<Link2/>:<FileText/>}<div><strong>{m.title}</strong><small>{m.mime || m.type}</small></div><a href={m.url} target="_blank" rel="noreferrer" aria-label={m.title}><ExternalLink size={17}/></a>{!viewOnly&&<button onClick={()=>void removeMaterial(m.id)} aria-label={T.remove}><Trash2 size={16}/></button>}{isPdfMaterial(m)&&<div className="wd-pdf-insight"><div><Eye size={15}/><strong>{viewers.length}</strong><span>{L==="ar"?"مشرفون فتحوا الملف":"edukatorë e hapën"}</span></div>{viewers.length===0?<small>{L==="ar"?"لم يفتح هذا الملف أحد بعد":"Askush nuk e ka hapur ende"}</small>:<div className="wd-pdf-viewers">{viewers.map(view=><span key={view.teacher.id} title={`${view.open_count} × · ${fmtTime(view.last_opened_at)}`}><b>{view.teacher.profile.full_name}</b><small>{view.open_count}× · {fmtDate(view.last_opened_at)}</small></span>)}</div>}</div>}</div>})}</div>}
         {detail.workshop.notes&&<div className="wd-notes"><b>{T.notes}</b><p>{detail.workshop.notes}</p></div>}
       </section>
 
@@ -826,7 +858,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
                         {entry ? <div className="wd-checkin">
                           <CheckCircle2 size={16}/>
                           <time title={O.checkedAt}>{fmtTime(entry.checked_in_at)}</time>
-                          <small>{entry.source === "MANUAL" ? O.manualSource : O.qrSource}</small>
+                          <small>{entry.source === "MANUAL" ? O.manualSource : entry.source === "ACTIVITY" ? O.activitySource : O.qrSource}</small>
                           {isLate(entry.checked_in_at, day) && <small className="wd-late">{O.late}</small>}
                           {!viewOnly && <button onClick={() => void removeAttendance(entry.id)} disabled={attendanceBusy === entry.id} aria-label={O.removeAttendance} title={O.removeAttendance}><Trash2 size={13}/></button>}
                         </div> : <button className="wd-mark-present" onClick={() => void markAttendance(teacher.teacher_id, day)} disabled={viewOnly || attendanceBusy === busyKey} title={O.manualAttendance}>
@@ -868,6 +900,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           <header><div><span><Pencil size={16}/>{E.action}</span><h2>{E.title}</h2><p>{E.helper}</p></div><button onClick={() => setEditingBasics(false)} disabled={savingBasics} aria-label={E.cancel}><X size={20}/></button></header>
           <label>{E.title}<input autoFocus maxLength={200} value={basicsForm.title} onChange={(event) => setBasicsForm((current) => ({ ...current, title: event.target.value }))}/></label>
           <label>{E.description}<textarea rows={5} maxLength={1000} value={basicsForm.description} onChange={(event) => setBasicsForm((current) => ({ ...current, description: event.target.value }))}/></label>
+          <fieldset className="wd-edit-delivery"><legend>{L === "ar" ? "طريقة تقديم الورشة" : "Mënyra e zhvillimit"}</legend><div><button type="button" className={basicsForm.delivery_mode === "OFFLINE" ? "active" : ""} onClick={() => setBasicsForm((current) => ({ ...current, delivery_mode: "OFFLINE" }))}><MapPin size={17}/>{L === "ar" ? "حضورية" : "Fizikisht"}</button><button type="button" className={basicsForm.delivery_mode === "ONLINE" ? "active" : ""} onClick={() => setBasicsForm((current) => ({ ...current, delivery_mode: "ONLINE" }))}><MonitorPlay size={17}/>{L === "ar" ? "أونلاين" : "Online"}</button></div><label>{basicsForm.delivery_mode === "ONLINE" ? (L === "ar" ? "رابط اللقاء" : "Lidhja e takimit") : (L === "ar" ? "المكان والعنوان" : "Vendi dhe adresa")}<input type={basicsForm.delivery_mode === "ONLINE" ? "url" : "text"} dir={basicsForm.delivery_mode === "ONLINE" ? "ltr" : undefined} value={basicsForm.delivery_mode === "ONLINE" ? basicsForm.meeting_url : basicsForm.venue} onChange={(event) => setBasicsForm((current) => basicsForm.delivery_mode === "ONLINE" ? { ...current, meeting_url: event.target.value } : { ...current, venue: event.target.value })}/></label></fieldset>
           <div className="wd-edit-date-row">
             <label>{E.start}<input type="date" value={basicsForm.start_date} onChange={(event) => { const start = event.target.value; setBasicsForm((current) => ({ ...current, start_date: start, schedule: makeWorkshopDays(start, current.end_date, current.schedule) })); }}/></label>
             <label>{E.end}<input type="date" min={basicsForm.start_date} value={basicsForm.end_date} onChange={(event) => { const end = event.target.value; setBasicsForm((current) => ({ ...current, end_date: end, schedule: makeWorkshopDays(current.start_date, end, current.schedule) })); }}/></label>
@@ -920,6 +953,7 @@ const styles = `
 .wd-status{display:inline-flex;border-radius:999px;padding:4px 12px;font-size:11px;font-weight:900}
 .wd-status-OPEN{background:rgba(76,107,60,.18);color:#D9F0C9;border:1px solid rgba(142,183,104,.28)}
 .wd-status-CLOSED{background:rgba(255,255,255,.08);color:#E8DCBC;border:1px solid rgba(255,255,255,.14)}
+.wd-delivery{display:flex;align-items:center;gap:9px;width:max-content;max-width:100%;margin-top:12px;border:1px solid rgba(217,201,176,.24);border-radius:11px;background:rgba(255,255,255,.07);padding:8px 10px;color:#F7F3EB}.wd-delivery.online{border-color:rgba(169,211,238,.32);background:rgba(65,139,183,.12)}.wd-delivery>span{display:flex;flex-direction:column}.wd-delivery strong{font-size:11px}.wd-delivery small{color:#D9C9B0;font-size:9px}
 .wd-dates{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.wd-dates span{border:1px solid rgba(184,160,130,.18);background:rgba(255,255,255,.06);border-radius:10px;padding:6px 10px;color:#E8DCBC;font-size:12px;font-weight:800}
 .wd-hero-btn,.wd-small-btn,.wd-copy{border:0;border-radius:11px;background:#1A1A1A;color:#B8A082;padding:10px 15px;font:inherit;font-weight:900;cursor:pointer}
 .wd-hero-btn:disabled,.wd-small-btn:disabled{opacity:.55;cursor:progress}.wd-small-btn{font-size:12px;padding:8px 12px}.wd-small-btn.ghost{background:#FFF;border:1.5px solid rgba(184,155,94,.28);color:#6B1E2D}
@@ -930,6 +964,7 @@ const styles = `
 .wd-material-error{margin:0 0 10px!important;padding:9px 11px;background:#F7F3EB;border-inline-start:3px solid #6B1E2D;color:#6B1E2D!important;font-size:11px!important;font-weight:700}
 .wd-discussion{margin-bottom:14px}.wd-messages{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto}.wd-message{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:11px;border:1px solid #E5E0D5;background:#fff}.wd-message.admin{background:#F7F3EB;border-color:#D9C9B0;border-inline-start:3px solid #6B1E2D}.wd-message-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.wd-message-meta strong{font-size:11px}.wd-message-meta b{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#EFEAE0;color:#655B53;font-size:8px}.wd-message-meta b.admin{background:#6B1E2D;color:#F7F3EB}.wd-message-meta time{margin-inline-start:auto;font-size:9px;color:#8C8274}.wd-message p{margin:5px 0 0!important;white-space:pre-wrap;font-size:12px!important;color:#32101A!important}.wd-composer{margin-top:10px;padding:10px;border:1px solid #D9C9B0;background:#FFFBF5}.wd-composer textarea{width:100%;min-height:80px;resize:vertical;border:0;outline:0;background:transparent;color:#32101A;font:inherit;font-size:12px}.wd-composer>div{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #E5E0D5;padding-top:8px}.wd-composer span{font-size:9px;color:#8C8274}.wd-message-error{color:#6B1E2D!important;font-size:10px!important;margin-top:6px!important}
 .wd-program,.wd-materials{margin-bottom:14px}.wd-days{display:flex;gap:0;overflow:auto;padding:12px 0}.wd-day{position:relative;min-width:155px;border-top:3px solid #4C6B3C;background:#F3F0E8;padding:13px}.wd-day:not(:last-child):after{content:'';position:absolute;top:20px;inset-inline-end:-10px;width:20px;height:2px;background:#B8A082}.wd-day.rest{border-color:#8B8178;background:#ECE9E5}.wd-day b{display:grid;place-items:center;width:24px;height:24px;background:#32101A;color:#E8DCBC;border-radius:50%;font-size:11px}.wd-day span,.wd-day strong,.wd-day small{display:block;margin-top:5px;font-size:11px}.wd-day strong{font-size:12px}.wd-day small{color:#6C625A}.wd-content-actions,.wd-export{display:flex;gap:7px;flex-wrap:wrap}.wd-content-actions label,.wd-export button{display:inline-flex;align-items:center;gap:5px}.wd-link-form{display:grid;grid-template-columns:1fr 1.5fr auto;gap:8px;margin-bottom:12px}.wd-link-form input{border:1px solid #D7CBB9;background:#fff;padding:9px 11px;font:inherit;font-size:12px}.wd-material-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.wd-material{display:grid;grid-template-columns:28px 1fr 30px 30px;align-items:center;gap:8px;border:1px solid #E0D7C9;background:#fff;padding:11px}.wd-material>svg{color:#7A5C32}.wd-material strong,.wd-material small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-material strong{font-size:12px}.wd-material small{font-size:10px;color:#796F66}.wd-material a,.wd-material button{display:grid;place-items:center;border:0;background:none;color:#6B1E2D;cursor:pointer}.wd-notes{margin-top:12px;border-inline-start:3px solid #B8A082;background:#F5F0E7;padding:12px}.wd-notes b{font-size:12px}.wd-notes p{white-space:pre-wrap;margin-top:4px!important}
+.wd-material.pdf{align-items:start}.wd-pdf-insight{grid-column:1/-1;display:flex;flex-direction:column;gap:7px;margin:3px -2px -2px;padding:9px;border-radius:9px;background:#F7F3EB;border:1px solid #E5D9C8}.wd-pdf-insight>div:first-child{display:flex;align-items:center;gap:6px;color:#6B1E2D}.wd-pdf-insight>div:first-child strong{font-size:13px}.wd-pdf-insight>div:first-child span{font-size:9px;font-weight:800}.wd-pdf-insight>small{font-size:9px;color:#8C8274}.wd-pdf-viewers{display:flex;flex-direction:column;gap:4px;max-height:130px;overflow:auto}.wd-pdf-viewers>span{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #E5D9C8;padding-top:5px}.wd-pdf-viewers b{font-size:9.5px}.wd-pdf-viewers small{font-size:8px;color:#8C8274}
 .wd-empty{padding:40px 20px;text-align:center;border:1px dashed rgba(184,155,94,.34);border-radius:14px;color:#8C8274;font-weight:800;background:#FFFBF5}.wd-table-wrap{overflow:auto;border:1px solid rgba(26,26,26,.08);border-radius:13px}.wd-table{width:100%;border-collapse:collapse;min-width:860px;background:#fff}.wd-table th{background:#F6F0E6;color:#6B1E2D;font-size:11px;font-weight:900;padding:10px;border-bottom:1px solid rgba(184,155,94,.22);white-space:nowrap}.wd-table td{padding:10px;border-bottom:1px solid rgba(26,26,26,.06);text-align:center;font-size:12.5px;color:#4A0E1C}.wd-table tr:last-child td{border-bottom:0}.wd-teacher{text-align:start!important;font-weight:900;color:#32101A!important}.wd-total{font-weight:900;color:#32101A!important}.wd-table td.present{background:rgba(76,107,60,.14);color:#3E642E;font-weight:900}.wd-table td.unrecorded{background:#FFFBF5;color:#8C8274}
 @media(max-width:980px){.wd-qr-grid,.wd-stats{grid-template-columns:1fr}.wd-hero{padding:20px}.wd-link-form{grid-template-columns:1fr}}
 
@@ -970,6 +1005,7 @@ const styles = `
 @media(max-width:480px){.wd-people-panel>header p{display:none}.wd-people-list article{grid-template-columns:44px minmax(0,1fr)}.wd-person-avatar{width:44px;height:44px}.wd-people-list article>button,.wd-enrolled{grid-column:1/-1;min-height:44px}.wd-people-summary span{padding:0 8px;font-size:9.5px}}
 .wd-edit-overlay{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:18px;background:rgba(26,26,26,.58);backdrop-filter:blur(7px)}.wd-edit-dialog{width:min(650px,100%);border:1px solid rgba(217,201,176,.45);border-radius:22px;overflow:hidden;background:#FFFBF5;box-shadow:0 28px 90px rgba(26,26,26,.32)}.wd-edit-dialog>header{display:flex;justify-content:space-between;gap:16px;padding:22px 24px;background:linear-gradient(135deg,#250B12,#6B1E2D);color:#F7F3EB}.wd-edit-dialog>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-edit-dialog>header h2{margin:5px 0;font-size:23px}.wd-edit-dialog>header p{margin:0;color:rgba(247,243,235,.74);font-size:12px;line-height:1.7}.wd-edit-dialog>header button{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-edit-dialog>label{display:block;margin:18px 24px 0;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-dialog input,.wd-edit-dialog textarea{box-sizing:border-box;width:100%;margin-top:7px;border:1px solid #D9C9B0;border-radius:12px;background:#fff;padding:11px 12px;color:#32101A;font:inherit;font-size:13px;outline:none}.wd-edit-dialog textarea{resize:vertical;min-height:120px;line-height:1.75}.wd-edit-dialog input:focus,.wd-edit-dialog textarea:focus{border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}.wd-edit-actions{display:flex;justify-content:flex-end;gap:8px;padding:20px 24px}.wd-edit-actions button{display:flex;align-items:center;gap:6px;border:0;border-radius:11px;padding:10px 14px;background:#6B1E2D;color:#F7F3EB;font:800 12px 'Cairo',sans-serif;cursor:pointer}.wd-edit-actions button.ghost{border:1px solid #D9C9B0;background:#fff;color:#6B1E2D}.wd-edit-actions button:disabled{opacity:.55;cursor:progress}
 .wd-edit-dialog{width:min(760px,100%);max-height:92vh;overflow:auto}.wd-edit-date-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 24px 0}.wd-edit-date-row label{color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-program{margin:18px 24px 0;padding:12px;border:1px solid #D9C9B0;border-radius:12px}.wd-edit-program legend{padding:0 6px;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-days{display:grid;gap:7px}.wd-edit-day{display:grid;grid-template-columns:minmax(150px,1fr) 110px 105px 105px;align-items:center;gap:7px;padding:8px;background:#F7F3EB;border-inline-start:3px solid #4C6B3C}.wd-edit-day.rest{grid-template-columns:minmax(150px,1fr) 110px;border-inline-start-color:#8C8274;background:#EFEAE0}.wd-edit-day>span{font-size:11px;font-weight:900}.wd-edit-day>button{min-height:38px;border:1px solid #D9C9B0;border-radius:8px;background:#fff;color:#6B1E2D;font:800 11px 'Cairo',sans-serif;cursor:pointer}.wd-edit-day input{margin:0;padding:8px;font-size:11px}
+.wd-edit-delivery{margin:18px 24px 0;padding:12px;border:1px solid #D9C9B0;border-radius:12px}.wd-edit-delivery legend{padding:0 6px;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-delivery>div{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}.wd-edit-delivery>div button{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #D9C9B0;border-radius:9px;background:#FFF;color:#655B53;padding:9px;font:inherit;font-size:10px;font-weight:900;cursor:pointer}.wd-edit-delivery>div button.active{border-color:#6B1E2D;background:#F7F3EB;color:#6B1E2D}.wd-edit-delivery label{font-size:10px;font-weight:900;color:#655B53}
 @keyframes wd-panel-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}[dir='rtl'] .wd-people-panel{animation-name:wd-panel-in-rtl}@keyframes wd-panel-in-rtl{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
 @media(max-width:720px){.wd{padding-bottom:12px}.wd-hero{border-radius:20px}.wd-hero-actions{width:100%;flex-direction:row}.wd-hero-actions>*{flex:1}.wd-stats{grid-template-columns:repeat(2,1fr)}.wd-card-head,.wd-table-head{flex-direction:column}.wd-export{width:100%}.wd-export button{flex:1;justify-content:center}.wd-live-strip{flex-wrap:wrap}.wd-people-panel{width:100%}.wd-people-panel>header{padding:20px 16px}.wd-people-list article{grid-template-columns:40px minmax(0,1fr)}.wd-people-list article>button,.wd-enrolled{grid-column:1/-1;justify-content:center}.wd-person-avatar{width:40px;height:40px}.wd-edit-dialog>header{padding:20px 16px}.wd-edit-dialog>label{margin-inline:16px}.wd-edit-date-row{grid-template-columns:1fr;margin-inline:16px}.wd-edit-program{margin-inline:16px}.wd-edit-day,.wd-edit-day.rest{grid-template-columns:1fr 105px}.wd-edit-day input{grid-row:2}.wd-edit-actions{padding:18px 16px}.wd-edit-actions button{flex:1;justify-content:center}}
 `;

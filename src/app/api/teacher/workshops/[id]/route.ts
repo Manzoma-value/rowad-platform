@@ -21,6 +21,9 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
       end_date: true,
       schedule: true,
       notes: true,
+      delivery_mode: true,
+      venue: true,
+      meeting_url: true,
       materials: true,
       status: true,
       is_live: true,
@@ -62,6 +65,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
     workshop: {
       ...detail,
       schedule,
+      meeting_url: hasAccess ? detail.meeting_url : null,
       notes: hasAccess ? detail.notes : null,
       materials: hasAccess ? detail.materials : [],
       messages: hasAccess ? detail.messages : [],

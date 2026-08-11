@@ -18,6 +18,17 @@ export type WorkshopMaterial = {
 
 export const AUDIENCES = ["TEACHERS", "SUPERVISORS", "ADMINS", "PARENTS", "STUDENTS", "OTHER"] as const;
 
+export function cleanWorkshopUrl(value: unknown): string | null {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString().slice(0, 2000) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function cleanSchedule(value: unknown): WorkshopDay[] {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();

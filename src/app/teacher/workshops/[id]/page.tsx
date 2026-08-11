@@ -12,7 +12,9 @@ import {
   Image as ImageIcon,
   Link2,
   LockKeyhole,
+  MapPin,
   MessageSquareText,
+  MonitorPlay,
   Radio,
   RefreshCw,
   Send,
@@ -46,6 +48,9 @@ type Workshop = {
   end_date: string | null;
   schedule: WorkshopDay[];
   notes: string | null;
+  delivery_mode: "ONLINE" | "OFFLINE";
+  venue: string | null;
+  meeting_url: string | null;
   materials: WorkshopMaterial[];
   messages: WorkshopMessage[];
   status: "OPEN" | "CLOSED";
@@ -109,6 +114,10 @@ const text = {
     messageError: "تعذر نشر الملاحظة. حاول مرة أخرى.",
     loadError: "تعذر تحميل تفاصيل الورشة.",
     retry: "إعادة المحاولة",
+    online: "أونلاين",
+    offline: "حضورية",
+    joinMeeting: "دخول اللقاء",
+    archiveAccess: "هذه الورشة مغلقة، لكن جميع المواد ستبقى متاحة لك لأن حضورك مسجل.",
   },
   sq: {
     back: "Kthehu te forumet",
@@ -155,6 +164,10 @@ const text = {
     messageError: "Shënimi nuk u publikua. Provo përsëri.",
     loadError: "Detajet e forumit nuk u ngarkuan.",
     retry: "Provo përsëri",
+    online: "Online",
+    offline: "Fizikisht",
+    joinMeeting: "Hap takimin",
+    archiveAccess: "Forumi është mbyllur, por të gjitha materialet mbeten të hapura sepse prania jote është regjistruar.",
   },
 } as const;
 
@@ -202,6 +215,12 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
     const timer = window.setInterval(() => void load(true), 45_000);
     return () => window.clearInterval(timer);
   }, [data?.has_access, data?.workshop.is_live, load]);
+
+  useEffect(() => {
+    const refreshAttendance = () => void load(true);
+    window.addEventListener("workshop-attendance-recorded", refreshAttendance);
+    return () => window.removeEventListener("workshop-attendance-recorded", refreshAttendance);
+  }, [load]);
 
   const formatDate = (value: string) => new Date(value).toLocaleDateString(
     locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "sq-AL",
@@ -302,6 +321,12 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
             <span>{workshop.start_date ? formatDate(workshop.start_date) : "-"}</span>
             {workshop.end_date && workshop.end_date !== workshop.start_date && <span>— {formatDate(workshop.end_date)}</span>}
           </div>
+          <div className={`tw-delivery ${workshop.delivery_mode.toLowerCase()}`}>
+            {workshop.delivery_mode === "ONLINE" ? <MonitorPlay size={16}/> : <MapPin size={16}/>}
+            <strong>{workshop.delivery_mode === "ONLINE" ? T.online : T.offline}</strong>
+            {workshop.delivery_mode === "OFFLINE" && workshop.venue && <span>{workshop.venue}</span>}
+            {data.has_access && workshop.delivery_mode === "ONLINE" && workshop.meeting_url && workshop.status === "OPEN" && <a href={workshop.meeting_url} target="_blank" rel="noreferrer"><ExternalLink size={14}/>{T.joinMeeting}</a>}
+          </div>
           {workshop.is_live && workshop.live_started_at && (
             <div className="tw-live-strip"><Radio size={15}/><span>{O.liveSince}: {formatTime(workshop.live_started_at)}</span></div>
           )}
@@ -321,6 +346,10 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
             <p>{workshop.notes}</p>
           </div>
         </section>
+      )}
+
+      {data.has_access && workshop.status === "CLOSED" && (
+        <div className="tw-archive-access"><CheckCircle2 size={18}/><span>{T.archiveAccess}</span></div>
       )}
 
       <section className="tw-section">
@@ -370,7 +399,7 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
         ) : (
           <div className="tw-materials">
             {workshop.materials.map((material) => (
-              <MaterialCard key={material.id} material={material} openLabel={T.openMaterial} downloadLabel={T.download} />
+              <MaterialCard key={material.id} workshopId={id} material={material} openLabel={T.openMaterial} downloadLabel={T.download} />
             ))}
           </div>
         )}
@@ -436,8 +465,9 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
   );
 }
 
-function MaterialCard({ material, openLabel, downloadLabel }: { material: WorkshopMaterial; openLabel: string; downloadLabel: string }) {
+function MaterialCard({ workshopId, material, openLabel, downloadLabel }: { workshopId: string; material: WorkshopMaterial; openLabel: string; downloadLabel: string }) {
   const isDownload = material.type === "FILE";
+  const isPdf = material.mime?.toLowerCase() === "application/pdf" || material.title.toLowerCase().endsWith(".pdf") || material.url.toLowerCase().split(/[?#]/)[0].endsWith(".pdf");
   const icon = material.type === "IMAGE" ? <ImageIcon size={21} /> : material.type === "VIDEO" ? <Video size={21} /> : material.type === "LINK" ? <Link2 size={21} /> : <FileText size={21} />;
   const size = material.size ? `${(material.size / 1024 / 1024).toFixed(material.size > 1024 * 1024 ? 1 : 2)} MB` : material.mime || material.type;
   return (
@@ -449,7 +479,7 @@ function MaterialCard({ material, openLabel, downloadLabel }: { material: Worksh
         ) : icon}
       </div>
       <div className="tw-material-info"><strong>{material.title}</strong><small>{size}</small></div>
-      <a href={material.url} target="_blank" rel="noreferrer" className="tw-material-action">
+      <a href={material.url} target="_blank" rel="noreferrer" className="tw-material-action" onClick={() => { if (isPdf) void fetch(`/api/teacher/workshops/${workshopId}/materials/${encodeURIComponent(material.id)}/open`, { method: "POST", keepalive: true }); }}>
         {isDownload ? <Download size={16} /> : <ExternalLink size={16} />}
         <span>{isDownload ? downloadLabel : openLabel}</span>
       </a>
@@ -459,5 +489,6 @@ function MaterialCard({ material, openLabel, downloadLabel }: { material: Worksh
 
 const styles = `
 .tw-detail .tw-hero{position:relative;overflow:hidden;border-radius:20px;padding:30px;background:radial-gradient(circle at 85% 0,rgba(217,201,176,.13),transparent 35%),linear-gradient(145deg,#32101A,#6B1E2D)}.tw-detail .tw-badge{border-radius:999px}.tw-detail .tw-badge.live{background:#F7F3EB;color:#6B1E2D;border-color:#F7F3EB}.tw-badge.live svg,.tw-live-strip svg{animation:twLivePulse 1.4s infinite}.tw-live-strip{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:7px 10px;border-radius:999px;background:rgba(247,243,235,.12);color:#F7F3EB;font-size:10px;font-weight:800}.tw-detail .tw-summary{border-radius:14px;overflow:hidden;background:rgba(255,255,255,.035)}.tw-detail .tw-section{padding:20px;border:1px solid #E5E0D5;border-radius:16px;background:rgba(255,251,245,.78);box-shadow:0 9px 28px rgba(107,30,45,.045)}@keyframes twLivePulse{50%{opacity:.4;transform:scale(.86)}}
+.tw-delivery{display:flex;align-items:center;gap:7px;width:max-content;max-width:100%;margin-top:10px;padding:7px 9px;border:1px solid rgba(217,201,176,.22);border-radius:10px;background:rgba(255,255,255,.06);color:#F7F3EB;font-size:10px}.tw-delivery.online{border-color:rgba(217,201,176,.3);background:rgba(107,30,45,.13)}.tw-delivery span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#D9C9B0}.tw-delivery a{display:inline-flex;align-items:center;gap:5px;margin-inline-start:5px;border-radius:7px;background:#F7F3EB;padding:5px 8px;color:#6B1E2D;text-decoration:none;font-weight:900}.tw-archive-access{display:flex;align-items:center;gap:9px;margin-top:14px;border:1px solid rgba(27,94,32,.2);border-radius:12px;background:#F7F3EB;padding:11px 13px;color:#1B5E20;font-size:11px;font-weight:800}
 .tw-detail{max-width:1180px;margin:0 auto;padding:4px 0 40px;font-family:'Cairo','Tajawal',sans-serif;color:#32101A}.tw-back{display:inline-flex;color:#6B1E2D;font-size:12px;font-weight:800;text-decoration:none;margin-bottom:14px}.tw-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding:28px;border-radius:8px;background:#32101A;color:#F7F3EB;border:1px solid rgba(217,201,176,.26);box-shadow:0 18px 44px rgba(107,30,45,.16)}.tw-badges{display:flex;gap:8px;flex-wrap:wrap}.tw-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid rgba(217,201,176,.26);font-size:10px;font-weight:800;color:#D9C9B0;background:rgba(255,255,255,.05)}.tw-badge.attended{color:#F7F3EB;border-color:rgba(27,94,32,.62);background:rgba(27,94,32,.34)}.tw-badge.pending{color:#D9C9B0}.tw-badge.closed{color:#D9C9B0}.tw-hero h1{margin:13px 0 5px;font-size:32px;line-height:1.25;letter-spacing:0}.tw-hero-main>p{margin:0;max-width:760px;color:#D9C9B0;font-size:14px;line-height:1.8}.tw-date-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:15px;color:#D9C9B0;font-size:11px}.tw-summary{display:grid;grid-template-columns:repeat(3,88px);border:1px solid rgba(217,201,176,.18)}.tw-summary div{display:flex;min-height:84px;flex-direction:column;align-items:center;justify-content:center;padding:10px;border-inline-start:1px solid rgba(217,201,176,.18)}.tw-summary div:first-child{border-inline-start:0}.tw-summary strong{font-size:22px;color:#F7F3EB}.tw-summary span{font-size:9px;color:#D9C9B0;text-align:center}.tw-admin-note{display:grid;grid-template-columns:42px 1fr;gap:13px;padding:18px 20px;margin-top:14px;background:#F7F3EB;border:1px solid #D9C9B0;border-inline-start:4px solid #6B1E2D}.tw-admin-icon{width:38px;height:38px;display:grid;place-items:center;background:#6B1E2D;color:#F7F3EB}.tw-admin-label{font-size:11px;font-weight:900;color:#6B1E2D}.tw-admin-note p{margin:4px 0 0;white-space:pre-wrap;font-size:13px;line-height:1.8}.tw-section{margin-top:18px;padding-top:18px;border-top:1px solid #D9C9B0}.tw-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.tw-section h2{font-size:19px;margin:0}.tw-section-head p{font-size:11px;color:#796A62;margin:3px 0 0}.tw-count{display:grid;place-items:center;min-width:30px;height:30px;background:#32101A;color:#D9C9B0;font-size:11px;font-weight:900}.tw-timeline{display:flex;overflow-x:auto;padding:4px 0 12px}.tw-day{position:relative;display:grid;grid-template-columns:30px 1fr;gap:9px;min-width:215px;padding:14px;background:#FFFBF5;border-top:3px solid #1B5E20;border-inline-end:1px solid #E5E0D5}.tw-day.rest{border-top-color:#8C8274;background:#EFEAE0}.tw-day-number{width:26px;height:26px;display:grid;place-items:center;background:#32101A;color:#D9C9B0;font-size:10px;font-weight:900}.tw-day time,.tw-day strong,.tw-day small{display:block}.tw-day time{font-size:10px;color:#796A62}.tw-day strong{margin-top:4px;font-size:12px}.tw-day small{margin-top:4px;font-size:10px;color:#655B53}.tw-day p{margin:5px 0 0;font-size:10px}.tw-locked,.tw-empty{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;padding:24px;background:#F7F3EB;color:#796A62;border:1px dashed #D9C9B0}.tw-locked svg{color:#6B1E2D}.tw-locked strong{font-size:13px;color:#32101A}.tw-locked p{max-width:600px;margin:0;font-size:11px;line-height:1.8}.tw-locked-alt{color:#8C8274!important;font-size:10px!important}.tw-request-btn{display:inline-flex;align-items:center;gap:7px;border:0;background:#6B1E2D;color:#F7F3EB;padding:11px 18px;font:inherit;font-size:11px;font-weight:900;cursor:pointer;margin-top:4px}.tw-request-btn:hover{background:#4A0E1C}.tw-request-btn:disabled{opacity:.55;cursor:progress}.tw-request-err{color:#6B1E2D!important;font-size:10px!important}.tw-materials{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}.tw-material{display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-rows:auto auto;gap:0 12px;align-items:center;background:#FFFBF5;border:1px solid #E5E0D5;padding:10px;min-height:92px}.tw-material-preview{grid-row:1/3;width:64px;height:64px;display:grid;place-items:center;background:#EFEAE0;color:#6B1E2D;overflow:hidden}.tw-material-preview img{width:100%;height:100%;object-fit:cover}.tw-material-info{min-width:0}.tw-material-info strong,.tw-material-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tw-material-info strong{font-size:12px}.tw-material-info small{font-size:9px;color:#796A62;margin-top:2px}.tw-material-action{display:inline-flex;align-items:center;gap:5px;align-self:end;width:max-content;color:#6B1E2D;text-decoration:none;font-size:10px;font-weight:900}.tw-discussion{padding-bottom:10px}.tw-icon-button{width:32px;height:32px;display:grid;place-items:center;border:1px solid #D9C9B0;background:#FFFBF5;color:#6B1E2D;cursor:pointer}.tw-messages{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding:1px}.tw-message{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:12px;background:#FFFBF5;border:1px solid #E5E0D5}.tw-message.admin{background:#F7F3EB;border-color:#D9C9B0;border-inline-start:3px solid #6B1E2D}.tw-message-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.tw-message-meta strong{font-size:11px}.tw-message-meta span{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;font-size:8px;font-weight:900;background:#EFEAE0;color:#655B53}.tw-message-meta .admin-role{background:#6B1E2D;color:#F7F3EB}.tw-message-meta time{margin-inline-start:auto;font-size:9px;color:#8C8274}.tw-message-body p{margin:5px 0 0;white-space:pre-wrap;font-size:12px;line-height:1.75;color:#32101A}.tw-composer{margin-top:12px;border:1px solid #D9C9B0;background:#FFFBF5;padding:10px}.tw-composer textarea{display:block;width:100%;resize:vertical;min-height:86px;border:0;outline:0;background:transparent;color:#32101A;font:inherit;font-size:12px;line-height:1.7}.tw-composer>div{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #E5E0D5;padding-top:9px}.tw-composer span{font-size:9px;color:#8C8274}.tw-composer button,.tw-state button{display:inline-flex;align-items:center;gap:6px;border:0;background:#6B1E2D;color:#F7F3EB;padding:9px 13px;font:inherit;font-size:10px;font-weight:900;cursor:pointer}.tw-composer button:disabled{opacity:.45;cursor:not-allowed}.tw-error{margin:8px 0 0!important;color:#6B1E2D;font-size:10px!important}.tw-state{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}.tw-state p{color:#6B1E2D}.tw-state button{font-size:12px}@media(max-width:800px){.tw-detail{padding-inline:2px}.tw-hero{grid-template-columns:1fr;padding:22px;gap:20px}.tw-hero h1{font-size:25px}.tw-summary{grid-template-columns:repeat(3,1fr);width:100%}.tw-summary div{min-height:68px}.tw-admin-note{padding:15px}.tw-materials{grid-template-columns:1fr}}@media(max-width:440px){.tw-hero{padding:18px}.tw-summary span{font-size:8px}.tw-section h2{font-size:17px}.tw-message{grid-template-columns:34px 1fr;padding:10px}.tw-message-meta time{width:100%;margin-inline-start:0}.tw-material{grid-template-columns:54px minmax(0,1fr)}.tw-material-preview{width:54px;height:54px}}
 `;

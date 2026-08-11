@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { qrDataUri } from "@/lib/qr";
-import { AUDIENCES, cleanSchedule, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
+import { AUDIENCES, cleanSchedule, cleanWorkshopUrl, effectiveWorkshopSchedule, workshopDates } from "@/lib/workshops";
 import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +42,9 @@ export async function GET(
       schedule: true,
       notes: true,
       materials: true,
+      delivery_mode: true,
+      venue: true,
+      meeting_url: true,
       status: true,
       is_live: true,
       live_started_at: true,
@@ -57,6 +60,17 @@ export async function GET(
           body: true,
           created_at: true,
           author: { select: { id: true, full_name: true, role: true, avatar_url: true } },
+        },
+      },
+      material_views: {
+        orderBy: { last_opened_at: "desc" },
+        take: 500,
+        select: {
+          material_id: true,
+          first_opened_at: true,
+          last_opened_at: true,
+          open_count: true,
+          teacher: { select: { id: true, profile: { select: { full_name: true, email: true, avatar_url: true } } } },
         },
       },
     },
@@ -78,7 +92,7 @@ export async function PATCH(
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await context.params;
 
-  let body: { title?: string; description?: string | null; audience?: string[]; audience_other?: string | null; start_date?: string | null; end_date?: string | null; schedule?: unknown; notes?: string | null; status?: "OPEN" | "CLOSED"; is_live?: boolean };
+  let body: { title?: string; description?: string | null; audience?: string[]; audience_other?: string | null; start_date?: string | null; end_date?: string | null; schedule?: unknown; notes?: string | null; status?: "OPEN" | "CLOSED"; is_live?: boolean; delivery_mode?: "ONLINE" | "OFFLINE"; venue?: string | null; meeting_url?: string | null };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
 
   const existing = await prisma.workshop.findFirst({
@@ -109,6 +123,13 @@ export async function PATCH(
     data.end_date = dates.end ? new Date(`${dates.end}T00:00:00Z`) : null;
   }
   if (body.notes !== undefined) data.notes = body.notes?.trim().slice(0, 5000) || null;
+  if (body.delivery_mode === "ONLINE" || body.delivery_mode === "OFFLINE") data.delivery_mode = body.delivery_mode;
+  if (body.venue !== undefined) data.venue = body.venue?.trim().slice(0, 300) || null;
+  if (body.meeting_url !== undefined) {
+    const meetingUrl = cleanWorkshopUrl(body.meeting_url);
+    if (body.meeting_url?.trim() && !meetingUrl) return NextResponse.json({ error: "valid meeting_url required" }, { status: 400 });
+    data.meeting_url = meetingUrl;
+  }
   if (body.start_date !== undefined) data.start_date = body.start_date ? new Date(body.start_date) : null;
   if (body.end_date !== undefined)   data.end_date   = body.end_date   ? new Date(body.end_date)   : null;
   if (body.status === "OPEN" || body.status === "CLOSED") {
@@ -136,6 +157,9 @@ export async function PATCH(
       id: true,
       title: true,
       description: true,
+      delivery_mode: true,
+      venue: true,
+      meeting_url: true,
       start_date: true,
       end_date: true,
       schedule: true,

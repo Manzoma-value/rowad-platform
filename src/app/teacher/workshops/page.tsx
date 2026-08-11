@@ -1,13 +1,13 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, CheckCircle2, Clock3, LockKeyhole, Radio, Search } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock3, LockKeyhole, MapPin, MonitorPlay, Radio, Search } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import TeacherLoadError from "@/components/TeacherLoadError";
 import type { WorkshopDay } from "@/lib/workshops";
 
-type Row={id:string;title:string;description:string|null;start_date:string|null;end_date:string|null;schedule:WorkshopDay[];attended:boolean;has_access:boolean;request_status:"PENDING"|"APPROVED"|"REJECTED"|"WAITLISTED"|null;attendance_days:string[];status:string;is_live:boolean};
+type Row={id:string;title:string;description:string|null;start_date:string|null;end_date:string|null;schedule:WorkshopDay[];delivery_mode:"ONLINE"|"OFFLINE";venue:string|null;attended:boolean;has_access:boolean;request_status:"PENDING"|"APPROVED"|"REJECTED"|"WAITLISTED"|null;attendance_days:string[];status:string;is_live:boolean};
 const liveCopy={ar:{live:"مباشرة الآن",liveHint:"الورشة منعقدة الآن — ادخل لمتابعة التفاصيل"},sq:{live:"Drejtpërdrejt",liveHint:"Forumi po zhvillohet tani — hap detajet"}} as const;
 const text={ar:{title:"مسار الورش التدريبية",sub:"تابع الورش بالترتيب الزمني وافتح مواد الورش المرتبطة بحسابك.",search:"ابحث في الورش",all:"الكل",attended:"حضرتها",upcoming:"القادمة",empty:"لا توجد ورش مطابقة.",day:"يوم",training:"تدريب",rest:"راحة",contentOpen:"المحتوى متاح",contentLocked:"اطلب الانضمام للورشة",pendingBadge:"طلبك قيد المراجعة",waitlistedBadge:"على قائمة الانتظار",rejectedBadge:"لم تتم الموافقة",details:"عرض التفاصيل"},sq:{title:"Forumet",sub:"Ndiq forumet sipas radhës dhe hap materialet e lidhura me llogarinë tënde.",search:"Kërko",all:"Të gjitha",attended:"Pjesëmarrje",upcoming:"Të ardhshme",empty:"Nuk ka rezultate.",day:"ditë",training:"trajnim",rest:"pushim",contentOpen:"Materialet janë të hapura",contentLocked:"Kërko të bashkohesh",pendingBadge:"Në shqyrtim",waitlistedBadge:"Në listën e pritjes",rejectedBadge:"Nuk u miratua",details:"Shiko detajet"}} as const;
 export default function TeacherWorkshops() {
@@ -66,6 +66,7 @@ export default function TeacherWorkshops() {
               <div className="top-badges">{workshop.is_live&&<b className="live-badge"><Radio size={14}/>{O.live}</b>}{workshop.has_access ? <b className="open"><CheckCircle2 size={14}/>{T.contentOpen}</b> : workshop.request_status === "PENDING" ? <b className="pending"><Clock3 size={14}/>{T.pendingBadge}</b> : workshop.request_status === "WAITLISTED" ? <b className="pending"><Clock3 size={14}/>{T.waitlistedBadge}</b> : workshop.request_status === "REJECTED" ? <b><LockKeyhole size={14}/>{T.rejectedBadge}</b> : <b><LockKeyhole size={14}/>{T.contentLocked}</b>}</div>
             </div>
             <h2>{workshop.title}</h2>{workshop.description && <p>{workshop.description}</p>}
+            <div className={`delivery ${workshop.delivery_mode.toLowerCase()}`}>{workshop.delivery_mode==="ONLINE"?<MonitorPlay size={14}/>:<MapPin size={14}/>}<strong>{workshop.delivery_mode==="ONLINE"?(L==="ar"?"أونلاين":"Online"):(L==="ar"?"حضورية":"Fizikisht")}</strong>{workshop.delivery_mode==="OFFLINE"&&workshop.venue&&<span>{workshop.venue}</span>}</div>
             {workshop.is_live&&<div className="live-hint">{O.liveHint}</div>}
             <div className="meta"><Clock3 size={14}/>{workDays} {T.day} {T.training}{restDays ? ` · ${restDays} ${T.rest}` : ""}</div>
             <strong className="more">{T.details}</strong>
@@ -73,6 +74,7 @@ export default function TeacherWorkshops() {
         </div>;
       })}
     </div>}
+    <style>{`.delivery{display:flex;align-items:center;gap:6px;width:max-content;max-width:100%;margin-top:9px;border:1px solid #E5E0D5;border-radius:9px;background:#F7F3EB;padding:6px 8px;color:#6B1E2D;font-size:9px}.delivery.online{border-color:rgba(107,30,45,.2);background:#F7F3EB;color:#6B1E2D}.delivery span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#796A62}`}</style>
     <style>{css}</style>
   </div>;
 }

@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
 import { notifyProfiles, schoolAdminProfileIds } from "@/lib/notifications";
+import { markWorkshopActivityAttendance } from "@/lib/workshop-attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +28,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       workshop: {
         school_id: teacher.school_id,
         OR: [
-          { enrollments: { some: { teacher_id: teacher.id } } },
+          { enrollments: { some: { teacher_id: teacher.id, status: "APPROVED" } } },
           { signed_up_teachers: { some: { id: teacher.id } } },
           { attendance: { some: { teacher_id: teacher.id } } },
         ],
@@ -101,6 +102,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     },
     select: { score: true, total: true, completed_at: true },
   });
+  const attendance = await markWorkshopActivityAttendance(id, teacher.id);
 
   const adminIds = await schoolAdminProfileIds(video.workshop.school_id);
   await notifyProfiles(adminIds, {
@@ -124,5 +126,6 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     grading_status: persisted.grading_status,
     feedback: persisted.feedback,
     attempt: updated,
+    attendance,
   });
 }
