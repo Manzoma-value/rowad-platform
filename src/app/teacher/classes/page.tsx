@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import TeacherLoadError from "@/components/TeacherLoadError";
@@ -188,10 +189,18 @@ export default function TeacherClassesPage() {
                     <div className="tc-inner-empty">{T.noStudents}</div>
                   ) : (
                     selectedClass.students.map((s, i) => (
-                      <div key={s.id} className="tc-student-row" style={{ animationDelay: `${i * 33}ms` }}>
+                      <Link
+                        key={s.id}
+                        href={`/teacher/reports/students/${s.id}`}
+                        className="tc-student-row"
+                        style={{ animationDelay: `${i * 33}ms` }}
+                      >
                         <div className="tc-student-av">{s.profile.full_name.charAt(0)}</div>
                         <span className="tc-student-name">{s.profile.full_name}</span>
-                      </div>
+                        <svg className="tc-student-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </Link>
                     ))
                   )}
                 </div>
@@ -332,10 +341,14 @@ const styles = `
 
   /* Students list */
   .tc-students{padding:10px 12px;display:flex;flex-direction:column;gap:3px;max-height:400px;overflow-y:auto}
-  .tc-student-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;transition:background 0.14s;animation:fadeUp 0.25s ease both}
-  .tc-student-row:hover{background:rgba(184,160,130,0.06)}
+  .tc-student-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;transition:background 0.14s,transform 0.14s;animation:fadeUp 0.25s ease both;text-decoration:none;cursor:pointer}
+  .tc-student-row:hover{background:rgba(184,160,130,0.09);transform:translateX(-2px)}
+  [dir="rtl"] .tc-student-row:hover{transform:translateX(2px)}
   .tc-student-av{width:30px;height:30px;border-radius:50%;flex-shrink:0;background:rgba(184,160,130,0.1);border:1.5px solid rgba(184,160,130,0.18);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#8F765B}
-  .tc-student-name{font-size:13px;font-weight:600;color:#4A0E1C}
+  .tc-student-name{flex:1;font-size:13px;font-weight:600;color:#4A0E1C}
+  .tc-student-chev{flex-shrink:0;color:#B8A082;opacity:0.55;transition:opacity 0.14s}
+  [dir="rtl"] .tc-student-chev{transform:scaleX(-1)}
+  .tc-student-row:hover .tc-student-chev{opacity:1}
   .tc-inner-empty{text-align:center;color:#796A62;font-size:13px;padding:22px 0}
 
   /* Composer */
