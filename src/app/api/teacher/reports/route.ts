@@ -16,11 +16,12 @@ interface StudentAttempt {
   score: number;
   total: number;
   passed: boolean;
+  created_at: Date;
 }
 
 interface RawStudent {
   id: string;
-  profile: { full_name: string };
+  profile: { full_name: string; avatar_url: string | null };
   moduleAttempts: StudentAttempt[];
 }
 
@@ -45,13 +46,14 @@ export async function GET() {
       students: {
         select: {
           id: true,
-          profile: { select: { full_name: true } },
+          profile: { select: { full_name: true, avatar_url: true } },
           moduleAttempts: {
             select: {
               module_id: true,
               score: true,
               total: true,
               passed: true,
+              created_at: true,
             },
           },
         },
@@ -63,7 +65,7 @@ export async function GET() {
   const studentIds = classes.flatMap((cls) => cls.students.map((s) => s.id));
 
   const rawTraitAssessments = await prisma.traitAssessment.findMany({
-    where: { student_id: { in: studentIds } },
+    where: { student_id: { in: studentIds }, teacher_id: auth.teacher.id },
     select: { module_id: true, student_id: true },
   });
 
@@ -104,8 +106,8 @@ export async function GET() {
     const builtStudents = students.map((s) => {
       const attempts: StudentAttempt[] = s.moduleAttempts;
       const assessedIds: Set<string> = assessedMap.get(s.id) ?? new Set();
-     const allModuleIds: string[] = attempts.map((a) => a.module_id);
-const pendingCount = allModuleIds.filter((mid) => !assessedIds.has(mid)).length;
+      const allModuleIds: string[] = attempts.map((a) => a.module_id);
+      const pendingCount = allModuleIds.filter((mid) => !assessedIds.has(mid)).length;
 
       const studentAvg =
         attempts.length > 0
@@ -118,10 +120,15 @@ const pendingCount = allModuleIds.filter((mid) => !assessedIds.has(mid)).length;
       return {
         id: s.id,
         full_name: s.profile.full_name,
+        avatar_url: s.profile.avatar_url,
         attempts_count: attempts.length,
+        passed_count: attempts.filter((attempt) => attempt.passed).length,
         avg_score: studentAvg,
         trait_assessments_count: assessedIds.size,
         pending_trait_assessments: pendingCount,
+        latest_activity_at: attempts.length
+          ? new Date(Math.max(...attempts.map((attempt) => attempt.created_at.getTime())))
+          : null,
       };
     });
 
