@@ -235,7 +235,8 @@ export async function DELETE(
 
   const email = String(credentials.email ?? "").trim().toLowerCase();
   const password = String(credentials.password ?? "");
-  if (!email || !password || email !== auth.profile.email?.trim().toLowerCase()) {
+  const authenticatedEmail = auth.user.email?.trim().toLowerCase();
+  if (!email || !password || !authenticatedEmail || email !== authenticatedEmail) {
     return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
   }
 
@@ -251,7 +252,7 @@ export async function DELETE(
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   const { data: verification, error: verificationError } = await verifier.auth.signInWithPassword({ email, password });
-  if (verificationError || verification.user?.id !== auth.profile.id) {
+  if (verificationError || verification.user?.id !== auth.user.id) {
     return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
   }
 
@@ -260,6 +261,6 @@ export async function DELETE(
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.groupAssessment.delete({ where: { id: aid } }).catch(() => null);
+  await prisma.groupAssessment.delete({ where: { id: aid } });
   return NextResponse.json({ success: true });
 }

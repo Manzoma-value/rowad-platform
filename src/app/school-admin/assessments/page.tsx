@@ -202,6 +202,8 @@ const UI = {
     deleteVerify: "تحقق واحذف نهائياً",
     deleting: "جارٍ التحقق والحذف…",
     deleteError: "تعذر التحقق من بيانات الحساب أو حذف النموذج.",
+    deleteInvalidCredentials: "البريد أو كلمة المرور غير صحيحين. استخدم بيانات حساب تسجيل الدخول الحالي.",
+    deleteVerificationUnavailable: "خدمة التحقق غير متاحة حالياً. حاول مرة أخرى لاحقاً.",
     deleteIconHelp: "حذف النموذج — يتطلب تأكيد البريد وكلمة المرور",
     memberHelp: "افتح التفاصيل لمعرفة عدد التقييمات، أسماء المقيّمين، التوقيت، وتوزيع كل قراءة.",
     groupHelp: "هذه قراءة مجمعة. افتح التفاصيل لرؤية نسبة الاكتمال والمقيّمين وكل عمليات التقييم.",
@@ -335,6 +337,8 @@ const UI = {
     deleteVerify: "Verifiko dhe fshi përgjithmonë",
     deleting: "Po verifikohet dhe fshihet…",
     deleteError: "Nuk mund të verifikohej llogaria ose të fshihej modeli.",
+    deleteInvalidCredentials: "Emaili ose fjalëkalimi nuk është i saktë. Përdor të dhënat e llogarisë aktive.",
+    deleteVerificationUnavailable: "Shërbimi i verifikimit nuk është i disponueshëm tani. Provo përsëri më vonë.",
     deleteIconHelp: "Fshi modelin — kërkon emailin dhe fjalëkalimin",
     memberHelp: "Hap detajet për numrin e vlerësimeve, emrat e vlerësuesve, kohën dhe shpërndarjen e çdo leximi.",
     groupHelp: "Ky është lexim i përmbledhur. Hap detajet për progresin, vlerësuesit dhe çdo vlerësim.",
@@ -585,7 +589,14 @@ export default function AssessmentsHubPage() {
         body: JSON.stringify({ email: deleteForm.email.trim(), password: deleteForm.password }),
       });
       if (!response.ok) {
-        setDeleteError(T.deleteError);
+        const result = await response.json().catch(() => ({}));
+        setDeleteError(
+          result?.error === "invalid_credentials"
+            ? T.deleteInvalidCredentials
+            : result?.error === "verification_unavailable"
+              ? T.deleteVerificationUnavailable
+              : T.deleteError,
+        );
         return;
       }
       setDeleteDlg(false);
@@ -1609,7 +1620,7 @@ function RatingActivity({
 }
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@500;700&family=Cairo:wght@400;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@500;700&display=swap');
   @keyframes am-fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
   .am-page { --font-head:'Noto Kufi Arabic','Cairo',sans-serif; display:flex; flex-direction:column; gap:16px; font-family:'Cairo',sans-serif; color:#1A1A1A; }

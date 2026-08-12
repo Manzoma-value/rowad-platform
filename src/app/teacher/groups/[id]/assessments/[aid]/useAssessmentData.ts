@@ -14,10 +14,23 @@ export type Trait = {
   objective_ar: string | null; objective_sq: string | null;
 };
 export type Member = { teacher_id: string; profile: { full_name: string }; is_self: boolean };
-export type Given = { target_teacher_id: string; scores: ScoresTuple; updated_at: string };
+export type Given = {
+  target_teacher_id: string; scores: ScoresTuple; updated_at: string;
+  next_allowed_at: string;
+};
 export type Received = {
   rater_teacher_id: string; rater_name: string; is_self: boolean;
-  scores: ScoresTuple; updated_at: string;
+  scores: ScoresTuple; updated_at: string; next_allowed_at: string;
+};
+export type GroupRating = {
+  rater_teacher_id: string; rater_name: string;
+  target_teacher_id: string; target_name: string;
+  scores: ScoresTuple; updated_at: string; next_allowed_at: string;
+};
+export type RatingHistory = {
+  id: string; rater_teacher_id: string; rater_name: string;
+  target_teacher_id: string; target_name: string;
+  scores: ScoresTuple; recorded_at: string; archived_at: string;
 };
 export type SpectrumAggregate = {
   group_id: string | null; group_name: string; member_count: number;
@@ -31,6 +44,10 @@ export type AssessmentData = {
   members: Member[];
   my_ratings_given: Given[];
   my_ratings_received: Received[];
+  all_ratings: GroupRating[];
+  rating_history: RatingHistory[];
+  openVisibility: boolean;
+  is_member: boolean;
   group_spectra: SpectrumAggregate[];
   overall_spectrum: SpectrumAggregate;
 };

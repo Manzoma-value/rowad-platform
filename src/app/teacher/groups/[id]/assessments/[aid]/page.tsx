@@ -1,10 +1,10 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, CheckCircle2, ChevronDown, ChevronUp, Clock3 } from "lucide-react";
+import { Search, CheckCircle2, ChevronDown, ChevronUp, Clock3, History, UserCheck, Users } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
@@ -13,7 +13,7 @@ import { seedFromString } from "@/lib/trait-spectrum";
 import { ASSESS_UI, derive, averageTuples, pickAssessLang } from "@/lib/rowad-assessment";
 import {
   useAssessmentData, traitLabel, membersSelfFirst,
-  type Member, type Given,
+  type Member, type Given, type GroupRating, type RatingHistory,
 } from "./useAssessmentData";
 
 const UI = {
@@ -56,6 +56,23 @@ const UI = {
     loadError: "تعذّر تحميل التقييم.",
     showSpectrumDetails: "عرض تفاصيل الطيف",
     hideSpectrumDetails: "إخفاء التفاصيل",
+    availableNow: "متاح الآن",
+    cooldownRemaining: (hours: number, minutes: number) => `باقي ${hours} س ${minutes} د`,
+    nextRating: "موعد التقييم التالي",
+    viewBtn: "عرض التقييم",
+    groupInsightsTitle: "متابعة تقييمات المعلمين",
+    groupInsightsSub: "ملخص واضح لكل معلم: التقييمات التي حصل عليها، من قيّمه، ومتى سُجل كل تقييم.",
+    participatingRaters: "شاركوا في التقييم",
+    ratedTeachers: "تم تقييمهم",
+    ratingEntries: "تقييمات حالية",
+    teacherRatings: (n: number) => `${n} مقيّم`,
+    currentReading: "القراءة الحالية",
+    previousReading: "قراءة سابقة",
+    ratedBy: "قيّمه",
+    noTimeline: "لم يحصل على تقييم بعد.",
+    showTimeline: "عرض السجل الكامل",
+    hideTimeline: "إخفاء السجل",
+    timelineTitle: "الخط الزمني للتقييمات",
   },
   sq: {
     back: "← Kthehu te grupi",
@@ -96,6 +113,23 @@ const UI = {
     loadError: "Vlerësimi nuk u ngarkua.",
     showSpectrumDetails: "Shfaq detajet e spektrit",
     hideSpectrumDetails: "Fshih detajet",
+    availableNow: "E disponueshme tani",
+    cooldownRemaining: (hours: number, minutes: number) => `Edhe ${hours} o ${minutes} min`,
+    nextRating: "Vlerësimi i radhës",
+    viewBtn: "Shiko vlerësimin",
+    groupInsightsTitle: "Ndjekja e vlerësimeve të edukatorëve",
+    groupInsightsSub: "Një pasqyrë e qartë për secilin: vlerësimet, vlerësuesit dhe koha e çdo leximi.",
+    participatingRaters: "Kanë vlerësuar",
+    ratedTeachers: "Janë vlerësuar",
+    ratingEntries: "Vlerësime aktuale",
+    teacherRatings: (n: number) => `${n} vlerësues`,
+    currentReading: "Leximi aktual",
+    previousReading: "Lexim i mëparshëm",
+    ratedBy: "Vlerësuar nga",
+    noTimeline: "Ende nuk ka marrë vlerësim.",
+    showTimeline: "Shfaq historikun e plotë",
+    hideTimeline: "Fshih historikun",
+    timelineTitle: "Kronologjia e vlerësimeve",
   },
 } as const;
 
@@ -106,8 +140,23 @@ function formatDate(value: string, lang: "ar" | "sq") {
   );
 }
 
+function formatDateTime(value: string, lang: "ar" | "sq") {
+  return new Date(value).toLocaleString(
+    lang === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "sq-AL",
+    { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" },
+  );
+}
+
+function cooldownParts(nextAllowedAt: string | undefined, now: number) {
+  if (!nextAllowedAt) return { active: false, hours: 0, minutes: 0 };
+  const remaining = Math.max(0, new Date(nextAllowedAt).getTime() - now);
+  if (remaining <= 0) return { active: false, hours: 0, minutes: 0 };
+  const totalMinutes = Math.ceil(remaining / 60_000);
+  return { active: true, hours: Math.floor(totalMinutes / 60), minutes: totalMinutes % 60 };
+}
+
 function MemberCard({
-  member, given, traitMeta, lang, T, onOpen,
+  member, given, traitMeta, lang, T, now, assessmentLocked, onOpen,
 }: {
   member: Member;
   given: Given | undefined;
@@ -116,10 +165,20 @@ function MemberCard({
   T: {
     targetSelf: string; ratedBadge: string; pendingBadge: string;
     dominant: string; lastRated: string; editBtn: string; rateBtn: string; rateSelfBtn: string;
+    availableNow: string; cooldownRemaining: (hours: number, minutes: number) => string;
+    nextRating: string; viewBtn: string;
   };
+  now: number;
+  assessmentLocked: boolean;
   onOpen: () => void;
 }) {
   const rated = !!given;
+  const cooldown = cooldownParts(given?.next_allowed_at, now);
+  const availability = assessmentLocked
+    ? T.viewBtn
+    : cooldown.active
+      ? T.cooldownRemaining(cooldown.hours, cooldown.minutes)
+      : T.availableNow;
   const spectrumTraits = useMemo(
     () => traitMeta.map((t, i) => ({ label: t.label, color: t.color, pct: given?.scores[i] ?? 0 })),
     [traitMeta, given],
@@ -137,9 +196,9 @@ function MemberCard({
           <strong className="mc-name">{member.profile.full_name}</strong>
           {member.is_self && <span className="mc-self-tag">{T.targetSelf}</span>}
         </div>
-        <span className={`mc-status ${rated ? "rated" : "pending"}`}>
-          {rated ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
-          {rated ? T.ratedBadge : T.pendingBadge}
+        <span className={`mc-status ${cooldown.active ? "waiting" : rated ? "rated" : "pending"}`}>
+          {cooldown.active ? <Clock3 size={13} /> : rated ? <CheckCircle2 size={13} /> : <Clock3 size={13} />}
+          {cooldown.active ? availability : rated ? T.ratedBadge : T.pendingBadge}
         </span>
       </div>
 
@@ -156,18 +215,28 @@ function MemberCard({
           <>
             <span className="mc-dominant">{T.dominant}: <b>{dominantLabel}</b></span>
             <span className="mc-lastrated">{T.lastRated}: {formatDate(given!.updated_at, lang)}</span>
+            <span className={`mc-next ${cooldown.active ? "waiting" : "ready"}`}>{T.nextRating}: {availability}</span>
           </>
         ) : (
-          <span className="mc-nodata">{T.pendingBadge}</span>
+          <><span className="mc-nodata">{T.pendingBadge}</span><span className="mc-next ready">{T.nextRating}: {availability}</span></>
         )}
       </div>
 
       <button className="mc-btn" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
-        {rated ? T.editBtn : (member.is_self ? T.rateSelfBtn : T.rateBtn)}
+        {rated ? (cooldown.active || assessmentLocked ? T.viewBtn : T.editBtn) : (member.is_self ? T.rateSelfBtn : T.rateBtn)}
       </button>
     </article>
   );
 }
+
+type TeacherTimelineEntry = {
+  id: string;
+  rater_teacher_id: string;
+  rater_name: string;
+  scores: number[];
+  recorded_at: string;
+  is_current: boolean;
+};
 
 export default function AssessmentPage({ params }: { params: Promise<{ id: string; aid: string }> }) {
   const { id, aid } = use(params);
@@ -182,10 +251,25 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "rated" | "pending">("all");
   const [expandedSpectra, setExpandedSpectra] = useState<Set<string>>(() => new Set());
+  const [expandedHistories, setExpandedHistories] = useState<Set<string>>(() => new Set());
   const [showAverageDetails, setShowAverageDetails] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   function toggleSpectrum(key: string) {
     setExpandedSpectra((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
+
+  function toggleHistory(key: string) {
+    setExpandedHistories((current) => {
       const next = new Set(current);
       if (next.has(key)) next.delete(key); else next.add(key);
       return next;
@@ -208,6 +292,45 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
     () => data ? membersSelfFirst(data.members) : [],
     [data],
   );
+
+  const groupRatings: GroupRating[] = useMemo(() => data?.all_ratings ?? [], [data?.all_ratings]);
+  const ratingHistory: RatingHistory[] = useMemo(() => data?.rating_history ?? [], [data?.rating_history]);
+  const participatingRaterCount = useMemo(
+    () => new Set(groupRatings.map((rating) => rating.rater_teacher_id)).size,
+    [groupRatings],
+  );
+  const ratedTeacherCount = useMemo(
+    () => new Set(groupRatings.map((rating) => rating.target_teacher_id)).size,
+    [groupRatings],
+  );
+  const memberReports = useMemo(() => orderedMembers.map((member) => {
+    const currentRatings = groupRatings.filter((rating) => rating.target_teacher_id === member.teacher_id);
+    const revisions = ratingHistory.filter((rating) => rating.target_teacher_id === member.teacher_id);
+    const timeline: TeacherTimelineEntry[] = [
+      ...currentRatings.map((rating) => ({
+        id: `current:${rating.rater_teacher_id}`,
+        rater_teacher_id: rating.rater_teacher_id,
+        rater_name: rating.rater_name,
+        scores: rating.scores,
+        recorded_at: rating.updated_at,
+        is_current: true,
+      })),
+      ...revisions.map((rating) => ({
+        id: rating.id,
+        rater_teacher_id: rating.rater_teacher_id,
+        rater_name: rating.rater_name,
+        scores: rating.scores,
+        recorded_at: rating.recorded_at,
+        is_current: false,
+      })),
+    ].sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime());
+    return {
+      member,
+      currentRatings,
+      timeline,
+      average: averageTuples(currentRatings.map((rating) => rating.scores)),
+    };
+  }), [orderedMembers, groupRatings, ratingHistory]);
 
   const visibleMembers = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -361,11 +484,103 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                 traitMeta={traitMeta}
                 lang={L}
                 T={T}
+                now={now}
+                assessmentLocked={locked}
                 onOpen={() => router.push(`/teacher/groups/${id}/assessments/${aid}/rate/${member.teacher_id}`)}
               />
             ))}
           </div>
         )}
+      </section>
+
+      <section className="ap-section ap-insights">
+        <div className="ap-insights-head">
+          <div>
+            <span>{T.timelineTitle}</span>
+            <h2>{T.groupInsightsTitle}</h2>
+            <p>{T.groupInsightsSub}</p>
+          </div>
+          <History size={28} />
+        </div>
+
+        <div className="ap-insight-stats">
+          <div><Users size={18} /><span>{T.participatingRaters}</span><strong>{participatingRaterCount}<small>/ {memberCount}</small></strong></div>
+          <div><UserCheck size={18} /><span>{T.ratedTeachers}</span><strong>{ratedTeacherCount}<small>/ {memberCount}</small></strong></div>
+          <div><CheckCircle2 size={18} /><span>{T.ratingEntries}</span><strong>{groupRatings.length}</strong></div>
+        </div>
+
+        <div className="ap-report-grid">
+          {memberReports.map((report) => {
+            const expanded = expandedHistories.has(report.member.teacher_id);
+            const visibleTimeline = expanded ? report.timeline : report.timeline.slice(0, 2);
+            return (
+              <article className="ap-report-card" key={report.member.teacher_id}>
+                <header>
+                  <div className="ap-report-person">
+                    <span>{report.member.profile.full_name.trim().charAt(0).toUpperCase()}</span>
+                    <div>
+                      <strong>{report.member.profile.full_name}</strong>
+                      <small>{T.teacherRatings(report.currentRatings.length)}</small>
+                    </div>
+                  </div>
+                  <em>{report.currentRatings.length}</em>
+                </header>
+
+                {report.average && (
+                  <div className="ap-report-spectrum">
+                    <TraitSpectrumBlob
+                      traits={traitMeta.map((trait, index) => ({ ...trait, pct: report.average?.[index] ?? 0 }))}
+                      size={82}
+                      seed={seedFromString(`${aid}:${report.member.teacher_id}:report`)}
+                      mode="compact"
+                    />
+                    <div>
+                      <span>{T.average}</span>
+                      <strong>{traitMeta[derive(report.average).coreIdx ?? 0]?.label}</strong>
+                      {report.timeline[0] && <small>{formatDateTime(report.timeline[0].recorded_at, L)}</small>}
+                    </div>
+                  </div>
+                )}
+
+                <div className="ap-timeline">
+                  {visibleTimeline.length === 0 ? (
+                    <div className="ap-timeline-empty">{T.noTimeline}</div>
+                  ) : visibleTimeline.map((event) => {
+                    const reading = derive(event.scores);
+                    const dominantIndex = reading.coreIdx ?? reading.connectingIdx;
+                    return (
+                      <div className={`ap-timeline-event ${event.is_current ? "current" : "previous"}`} key={event.id}>
+                        <i />
+                        <div className="ap-timeline-content">
+                          <div className="ap-timeline-meta">
+                            <span>{event.is_current ? T.currentReading : T.previousReading}</span>
+                            <time>{formatDateTime(event.recorded_at, L)}</time>
+                          </div>
+                          <strong>{T.ratedBy}: {event.rater_teacher_id === report.member.teacher_id ? AT.selfBy(event.rater_name) : event.rater_name}</strong>
+                          <div className="ap-timeline-scores">
+                            {event.scores.map((score, index) => (
+                              <span className={index === dominantIndex ? "dominant" : ""} key={index}>
+                                <i style={{ background: traitMeta[index]?.color }} />
+                                {traitMeta[index]?.label}<b>{score}</b>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {report.timeline.length > 2 && (
+                  <button className="ap-history-toggle" onClick={() => toggleHistory(report.member.teacher_id)} aria-expanded={expanded}>
+                    {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    {expanded ? T.hideTimeline : T.showTimeline}
+                  </button>
+                )}
+              </article>
+            );
+          })}
+        </div>
       </section>
 
       {/* Per-rater breakdown — kept below the member grid for anyone who wants
@@ -426,7 +641,6 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
       )}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
         .ap { max-width: 1240px; margin: 0 auto; font-family: 'Cairo', sans-serif; padding: 8px 0 60px; }
         .ap-back { display: inline-block; color: #6B1E2D; font-weight: 800; font-size: 13px; text-decoration: none; margin-bottom: 14px; }
         .ap-back:hover { text-decoration: underline; }
@@ -506,12 +720,16 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .mc-status { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; font-size: 9.5px; font-weight: 900; }
         .mc-status.rated { background: rgba(27,94,32,.12); color: #1B5E20; }
         .mc-status.pending { background: rgba(184,160,130,.22); color: #8F765B; }
+        .mc-status.waiting { background:#EFEAE0; color:#6B1E2D; }
         .mc-visual { display: flex; justify-content: center; padding: 4px 0; }
         .mc-visual-empty { width: 104px; height: 104px; display: grid; place-items: center; border: 1.5px dashed rgba(184,160,130,.4); border-radius: 50%; color: #B8A082; font-size: 26px; font-weight: 900; background: #F7F3EB; }
         .mc-foot { display: flex; flex-direction: column; gap: 3px; min-height: 34px; text-align: center; }
         .mc-dominant { font-size: 11px; font-weight: 700; color: #655B53; }
         .mc-dominant b { color: #6B1E2D; font-weight: 900; }
         .mc-lastrated { font-size: 10px; color: #8C8274; font-weight: 700; }
+        .mc-next { font-size:10px; font-weight:900; }
+        .mc-next.ready { color:#1B5E20; }
+        .mc-next.waiting { color:#6B1E2D; }
         .mc-nodata { font-size: 11px; color: #8C8274; font-weight: 700; }
         .mc-btn { border: 0; border-radius: 11px; padding: 10px; background: #6B1E2D; color: #fff; font: 800 12px 'Cairo',sans-serif; cursor: pointer; transition: background .15s; }
         .mc-btn:hover { background: #4A0E1C; }
@@ -519,6 +737,53 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .mc-card.rated .mc-btn:hover { background: #1B5E20; }
 
         .ap-empty { padding: 40px; text-align: center; color: #8C8274; font-weight: 700; background: rgba(107,30,45,0.04); border: 1px dashed rgba(107,30,45,0.32); border-radius: 12px; }
+
+        .ap-insights { overflow:hidden; border:1px solid rgba(107,30,45,.2); border-radius:22px; background:linear-gradient(145deg,#32101A 0,#6B1E2D 165px,#F7F3EB 165px); padding:18px; box-shadow:0 18px 42px rgba(107,30,45,.12); }
+        .ap-insights-head { min-height:118px; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; color:#F7F3EB; }
+        .ap-insights-head>div>span { color:#D9C9B0; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+        .ap-insights-head h2 { margin:5px 0 4px; font-size:19px; font-weight:900; }
+        .ap-insights-head p { max-width:720px; margin:0; color:rgba(247,243,235,.72); font-size:11.5px; font-weight:700; line-height:1.75; }
+        .ap-insights-head>svg { flex:none; color:#D9C9B0; }
+        .ap-insight-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:-26px 0 14px; position:relative; }
+        .ap-insight-stats>div { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; min-height:72px; border:1px solid rgba(107,30,45,.12); border-radius:15px; background:#FFFBF5; padding:12px; box-shadow:0 10px 22px rgba(107,30,45,.08); }
+        .ap-insight-stats svg { color:#6B1E2D; }
+        .ap-insight-stats span { color:#655B53; font-size:10.5px; font-weight:900; }
+        .ap-insight-stats strong { color:#32101A; font-size:23px; font-weight:900; }
+        .ap-insight-stats small { color:#8F765B; font-size:9px; }
+        .ap-report-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr)); gap:12px; }
+        .ap-report-card { min-width:0; border:1px solid rgba(107,30,45,.15); border-radius:18px; background:#FFFBF5; padding:13px; }
+        .ap-report-card>header { display:flex; align-items:center; justify-content:space-between; gap:10px; padding-bottom:10px; border-bottom:1px solid rgba(107,30,45,.1); }
+        .ap-report-person { min-width:0; display:flex; align-items:center; gap:9px; }
+        .ap-report-person>span { flex:none; width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:linear-gradient(145deg,#32101A,#6B1E2D); color:#FFF; font-size:14px; font-weight:900; }
+        .ap-report-person>div { min-width:0; display:flex; flex-direction:column; }
+        .ap-report-person strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-size:12.5px; }
+        .ap-report-person small { color:#8F765B; font-size:9.5px; font-weight:800; }
+        .ap-report-card>header>em { width:31px; height:31px; display:grid; place-items:center; border-radius:10px; background:rgba(107,30,45,.1); color:#6B1E2D; font-size:12px; font-style:normal; font-weight:900; }
+        .ap-report-spectrum { display:flex; align-items:center; justify-content:center; gap:10px; padding:10px 0 4px; }
+        .ap-report-spectrum>div { display:flex; flex-direction:column; gap:2px; }
+        .ap-report-spectrum span { color:#8F765B; font-size:9px; font-weight:900; }
+        .ap-report-spectrum strong { color:#6B1E2D; font-size:12px; font-weight:900; }
+        .ap-report-spectrum small { color:#796A62; font-size:9px; font-weight:700; }
+        .ap-timeline { position:relative; display:flex; flex-direction:column; gap:0; margin-top:8px; }
+        .ap-timeline-event { position:relative; display:grid; grid-template-columns:14px 1fr; gap:8px; padding-bottom:13px; }
+        .ap-timeline-event:last-child { padding-bottom:2px; }
+        .ap-timeline-event>i { position:relative; z-index:1; width:10px; height:10px; margin-top:5px; border:2px solid #FFFBF5; border-radius:50%; background:#B8A082; box-shadow:0 0 0 1px #B8A082; }
+        .ap-timeline-event.current>i { background:#1B5E20; box-shadow:0 0 0 1px #1B5E20; }
+        .ap-timeline-event:not(:last-child)::after { content:""; position:absolute; inset-inline-start:4px; top:16px; bottom:1px; width:2px; background:#D9C9B0; }
+        .ap-timeline-content { min-width:0; border-radius:12px; background:#F7F3EB; padding:9px 10px; }
+        .ap-timeline-event.current .ap-timeline-content { background:rgba(27,94,32,.055); }
+        .ap-timeline-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+        .ap-timeline-meta span { color:#6B1E2D; font-size:9px; font-weight:900; }
+        .ap-timeline-meta time { color:#8C8274; font-size:8.5px; font-weight:800; }
+        .ap-timeline-content>strong { display:block; margin:3px 0 7px; color:#32101A; font-size:10.5px; font-weight:900; }
+        .ap-timeline-scores { display:flex; flex-wrap:wrap; gap:4px; }
+        .ap-timeline-scores>span { display:inline-flex; align-items:center; gap:4px; border:1px solid rgba(107,30,45,.09); border-radius:999px; background:#FFFBF5; padding:3px 6px; color:#655B53; font-size:8.5px; font-weight:800; }
+        .ap-timeline-scores>span>i { width:6px; height:6px; border-radius:50%; }
+        .ap-timeline-scores b { color:#32101A; font-size:9px; }
+        .ap-timeline-scores>span.dominant { border-color:rgba(107,30,45,.3); color:#6B1E2D; }
+        .ap-timeline-empty { padding:22px; border:1px dashed rgba(107,30,45,.2); border-radius:12px; color:#8C8274; text-align:center; font-size:10.5px; font-weight:800; }
+        .ap-history-toggle { width:100%; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:10px; border:1px solid rgba(107,30,45,.16); border-radius:10px; background:#F7F3EB; padding:8px; color:#6B1E2D; font:900 10px 'Cairo',sans-serif; cursor:pointer; }
+        @media(max-width:680px){.ap-insights{padding:13px}.ap-insight-stats{grid-template-columns:1fr;margin:-18px 0 12px}.ap-insights-head{min-height:132px}}
 
         .ap-avg-card { background: linear-gradient(165deg,#FFFBF5,#F7F3EB); border: 1.5px solid rgba(107,30,45,0.40); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
         .ap-avg-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }

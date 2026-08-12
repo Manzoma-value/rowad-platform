@@ -44,7 +44,7 @@ export async function requireSchoolAdmin() {
     return null;
   }
 
-  return { profile, school: membership.school };
+  return { profile, school: membership.school, user };
 }
 
 /**

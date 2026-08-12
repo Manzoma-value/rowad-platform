@@ -11,6 +11,7 @@ import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
 import { buildAssessmentSpectra } from "@/lib/assessment-aggregates";
+import { nextRatingAllowedAt } from "@/lib/rowad-assessment";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,7 @@ export async function GET(
     teacher_id: member.teacher.id,
     profile: member.teacher.profile,
   }));
+  const memberIds = members.map((member) => member.teacher_id);
 
   const scoresSelect = { target_teacher_id: true, scores: true, updated_at: true } as const;
 
@@ -128,14 +130,47 @@ export async function GET(
     assessment.traits.length,
   );
 
-  const allRatings = openVisibility
+  // Group members can inspect the group's current readings and their history.
+  // The assessment may target multiple cohorts, so both sides of every row
+  // are explicitly bounded to the group in the URL.
+  const canSeeGroupDetails = !!membership || openVisibility;
+  const allRatings = canSeeGroupDetails
     ? await prisma.assessmentRating.findMany({
-        where: { assessment_id: aid },
+        where: {
+          assessment_id: aid,
+          rater_teacher_id: { in: memberIds },
+          target_teacher_id: { in: memberIds },
+        },
         orderBy: { updated_at: "desc" },
         select: {
           rater_teacher_id: true, target_teacher_id: true, scores: true, updated_at: true,
           rater: { select: { profile: { select: { full_name: true } } } },
           target: { select: { profile: { select: { full_name: true } } } },
+        },
+      })
+    : [];
+
+  const ratingHistory = canSeeGroupDetails
+    ? await prisma.assessmentRatingRevision.findMany({
+        where: {
+          assessment_id: aid,
+          rater_teacher_id: { in: memberIds },
+          target_teacher_id: { in: memberIds },
+        },
+        orderBy: { original_updated_at: "desc" },
+        select: {
+          id: true,
+          rater_teacher_id: true,
+          target_teacher_id: true,
+          scores: true,
+          original_updated_at: true,
+          archived_at: true,
+          rating: {
+            select: {
+              rater: { select: { profile: { select: { full_name: true } } } },
+              target: { select: { profile: { select: { full_name: true } } } },
+            },
+          },
         },
       })
     : [];
@@ -154,6 +189,7 @@ export async function GET(
         target_teacher_id: r.target_teacher_id,
         scores: r.scores as ScoresArray,
         updated_at: r.updated_at,
+        next_allowed_at: nextRatingAllowedAt(r.updated_at),
       })),
       my_ratings_received: myReceived.map((r) => ({
         rater_teacher_id: r.rater_teacher_id,
@@ -161,6 +197,7 @@ export async function GET(
         is_self: r.rater_teacher_id === auth.teacher.id,
         scores: r.scores as ScoresArray,
         updated_at: r.updated_at,
+        next_allowed_at: nextRatingAllowedAt(r.updated_at),
       })),
       all_ratings: allRatings.map((r) => ({
         rater_teacher_id: r.rater_teacher_id,
@@ -169,6 +206,17 @@ export async function GET(
         target_name: r.target.profile.full_name,
         scores: r.scores as ScoresArray,
         updated_at: r.updated_at,
+        next_allowed_at: nextRatingAllowedAt(r.updated_at),
+      })),
+      rating_history: ratingHistory.map((revision) => ({
+        id: revision.id,
+        rater_teacher_id: revision.rater_teacher_id,
+        rater_name: revision.rating.rater.profile.full_name,
+        target_teacher_id: revision.target_teacher_id,
+        target_name: revision.rating.target.profile.full_name,
+        scores: revision.scores as ScoresArray,
+        recorded_at: revision.original_updated_at,
+        archived_at: revision.archived_at,
       })),
       openVisibility,
       is_member: !!membership,

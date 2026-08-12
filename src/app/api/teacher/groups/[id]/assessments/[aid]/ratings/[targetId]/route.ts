@@ -2,13 +2,19 @@
 //   Body: { scores: number[] } — one int per this model's trait, each in
 //   [0,100], summing to exactly 100 (Rowad rule of 100). Array length must
 //   match the assessment's trait count.
-//   Idempotent upsert: keyed on (assessment, rater, target).
-//   Rejected if the assessment is CLOSED.
+//   First submission creates the current reading. A replacement is accepted
+//   only after the current reading has been locked for a full 24 hours, and
+//   archives the prior reading for the timeline. Rejected when CLOSED.
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
-import { isValid100, shouldArchiveRating, type ScoresTuple } from "@/lib/rowad-assessment";
-import type { Prisma } from "@prisma/client";
+import {
+  canReplaceRating,
+  isValid100,
+  nextRatingAllowedAt,
+  type ScoresTuple,
+} from "@/lib/rowad-assessment";
+import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -65,21 +71,29 @@ export async function PUT(
     rater_teacher_id: auth.teacher.id,
     target_teacher_id: targetId,
   };
-  let historyArchived = false;
-
-  const rating = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const existing = await tx.assessmentRating.findUnique({
       where: { assessment_id_rater_teacher_id_target_teacher_id: key },
       select: { scores: true, updated_at: true },
     });
+    const now = new Date();
 
-    if (existing && shouldArchiveRating(existing.updated_at)) {
+    if (existing && !canReplaceRating(existing.updated_at, now)) {
+      return {
+        blocked: true as const,
+        nextAllowedAt: nextRatingAllowedAt(existing.updated_at),
+      };
+    }
+
+    let historyArchived = false;
+    if (existing) {
       const archived = await tx.assessmentRatingRevision.createMany({
         data: [{
           ...key,
           scores: existing.scores as Prisma.InputJsonValue,
           replacement_scores: scores,
           original_updated_at: existing.updated_at,
+          archived_at: now,
         }],
         skipDuplicates: true,
       });
@@ -87,14 +101,15 @@ export async function PUT(
     }
 
     if (existing) {
-      return tx.assessmentRating.update({
+      const rating = await tx.assessmentRating.update({
         where: { assessment_id_rater_teacher_id_target_teacher_id: key },
-        data: { scores },
+        data: { scores, updated_at: now },
         select: { target_teacher_id: true, scores: true, updated_at: true },
       });
+      return { blocked: false as const, rating, historyArchived };
     }
 
-    return tx.assessmentRating.create({
+    const rating = await tx.assessmentRating.create({
       data: {
         ...key,
         scores,
@@ -108,12 +123,28 @@ export async function PUT(
       },
       select: { target_teacher_id: true, scores: true, updated_at: true },
     });
-  });
+    return { blocked: false as const, rating, historyArchived };
+  }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+
+  if (result.blocked) {
+    const remainingMs = Math.max(0, result.nextAllowedAt.getTime() - Date.now());
+    return NextResponse.json({
+      error: "rating_cooldown",
+      next_allowed_at: result.nextAllowedAt,
+      remaining_ms: remainingMs,
+    }, { status: 429 });
+  }
 
   // Bump the assessment's updated_at so admin lists reorder when ratings stream in.
   await prisma.groupAssessment.update({
     where: { id: aid }, data: { updated_at: new Date() },
   });
 
-  return NextResponse.json({ rating, history_archived: historyArchived });
+  return NextResponse.json({
+    rating: {
+      ...result.rating,
+      next_allowed_at: nextRatingAllowedAt(result.rating.updated_at),
+    },
+    history_archived: result.historyArchived,
+  });
 }

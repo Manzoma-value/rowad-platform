@@ -193,8 +193,16 @@ export function isValid100(scores: ScoresTuple, expectedLength?: number): boolea
 
 export const RATING_HISTORY_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+export function nextRatingAllowedAt(previousUpdatedAt: Date): Date {
+  return new Date(previousUpdatedAt.getTime() + RATING_HISTORY_WINDOW_MS);
+}
+
+export function canReplaceRating(previousUpdatedAt: Date, now = new Date()): boolean {
+  return now.getTime() >= nextRatingAllowedAt(previousUpdatedAt).getTime();
+}
+
 export function shouldArchiveRating(previousUpdatedAt: Date, now = new Date()): boolean {
-  return now.getTime() - previousUpdatedAt.getTime() >= RATING_HISTORY_WINDOW_MS;
+  return canReplaceRating(previousUpdatedAt, now);
 }
 
 // UI string bundle — separated from the components so the API can also

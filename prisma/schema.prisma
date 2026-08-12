@@ -773,10 +773,9 @@ model AssessmentRating {
   @@map("assessment_ratings")
 }
 
-// An immutable snapshot of the score array that was replaced after the
-// current rating had remained unchanged for at least 24 hours. Changes made
-// inside the first 24 hours refine the same working reading and do not create
-// audit noise; later changes preserve the prior reading for administrators.
+// An immutable snapshot of the score array replaced after the current rating
+// completed its mandatory 24-hour lock. Writes inside that window are rejected;
+// every accepted replacement preserves the prior reading for the timeline.
 model AssessmentRatingRevision {
   id                  String   @id @default(uuid()) @db.Uuid
   assessment_id       String   @db.Uuid
