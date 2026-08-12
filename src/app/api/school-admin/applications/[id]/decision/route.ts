@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdminWriter } from '@/lib/school-admin-auth';
 import { prisma } from "@/lib/prisma";
+import { ensureTeacherPersonalClass } from "@/lib/personal-class";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,13 @@ export async function POST(
 
   const teacher = await prisma.teacher.findFirst({
     where: { id, school_id: auth.school.id },
-    select: { id: true, onboarding_status: true, application: { select: { id: true } } },
+    select: {
+      id: true,
+      school_id: true,
+      onboarding_status: true,
+      profile: { select: { full_name: true } },
+      application: { select: { id: true } },
+    },
   });
   if (!teacher) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (!teacher.application) {
@@ -60,6 +67,14 @@ export async function POST(
       // approvals working while optional teacher-draft columns roll out.
       select: { id: true },
     });
+
+    if (approve) {
+      await ensureTeacherPersonalClass(tx, {
+        teacherId: teacher.id,
+        schoolId: teacher.school_id,
+        fullName: teacher.profile.full_name,
+      });
+    }
 
     // On approve: attach the teacher to any pre-selected groups. We re-check
     // the IDs are real groups in THIS school to enforce tenant isolation.

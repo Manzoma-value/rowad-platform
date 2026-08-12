@@ -8,10 +8,12 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ groupInvite?: string | string[] }>;
 }
 
-export default async function SchoolSignupPage({ params }: Props) {
-  const { slug } = await params;
+export default async function SchoolSignupPage({ params, searchParams }: Props) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
+  const groupInviteToken = typeof query.groupInvite === "string" ? query.groupInvite : undefined;
 
   const school = await prisma.school.findUnique({
     where: { slug },
@@ -34,6 +36,7 @@ export default async function SchoolSignupPage({ params }: Props) {
     <SchoolSignupClient
       school={school}
       landingFlow={resolveLandingFlow(school.features)}
+      groupInviteToken={groupInviteToken}
     />
   );
 }

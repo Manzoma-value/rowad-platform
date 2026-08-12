@@ -22,11 +22,12 @@ export async function GET() {
         },
       },
       _count: { select: { students: true } },
+      invite: { select: { token: true, is_active: true, use_count: true, updated_at: true } },
     },
     orderBy: { created_at: "asc" },
   });
 
-  return NextResponse.json({ classes });
+  return NextResponse.json({ classes, school: { slug: auth.school.slug } });
 }
 
 export async function POST(req: Request) {
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
       id: true, name: true, created_at: true,
       teacher: { select: { id: true, profile: { select: { full_name: true } } } },
       _count: { select: { students: true } },
+      invite: { select: { token: true, is_active: true, use_count: true, updated_at: true } },
     },
   });
 

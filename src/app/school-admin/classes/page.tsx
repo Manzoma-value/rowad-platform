@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -13,8 +12,9 @@ import { useViewOnly } from "@/lib/view-only-context";
 interface ClassItem {
   id: string;
   name: string;
-  teacher: { profile: { full_name: string } } | null;
+  teacher: { id: string; profile: { full_name: string } } | null;
   _count: { students: number };
+  invite: { token: string; is_active: boolean; use_count: number; updated_at: string } | null;
 }
 interface Teacher {
   id: string;
@@ -33,10 +33,16 @@ export default function SchoolAdminClassesPage() {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [schoolSlug, setSchoolSlug] = useState("");
+  const [inviteBusyId, setInviteBusyId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function load() {
     const [cData, tData] = await Promise.all([
-      cachedFetch<{ classes: ClassItem[] }>(
+      cachedFetch<{ classes: ClassItem[]; school: { slug: string } }>(
         "/api/school-admin/classes",
         60_000,
       ),
@@ -46,6 +52,7 @@ export default function SchoolAdminClassesPage() {
       ),
     ]);
     setClasses(cData.classes ?? []);
+    setSchoolSlug(cData.school?.slug ?? "");
     setTeachers(tData.teachers ?? []);
     setLoading(false);
   }
@@ -92,6 +99,60 @@ export default function SchoolAdminClassesPage() {
     });
     invalidateCache("/api/school-admin/classes");
     load();
+  }
+
+  async function handleRename(classId: string) {
+    if (!editingName.trim() || savingName) return;
+    setSavingName(true);
+    const response = await fetch(`/api/school-admin/classes/${classId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editingName.trim() }),
+    });
+    if (response.ok) {
+      invalidateCache("/api/school-admin/classes");
+      setEditingId(null);
+      await load();
+    } else {
+      const payload = await response.json().catch(() => ({}));
+      setError(payload.error ?? (lang === "ar" ? "تعذر تعديل اسم المجموعة" : "Emri i grupit nuk u ndryshua"));
+    }
+    setSavingName(false);
+  }
+
+  function inviteUrl(token: string) {
+    const path = window.location.pathname.startsWith("/schools/")
+      ? `/schools/${schoolSlug}/signup`
+      : "/signup";
+    return `${window.location.origin}${path}?groupInvite=${encodeURIComponent(token)}`;
+  }
+
+  async function manageInvite(cls: ClassItem, action: "create" | "revoke") {
+    if (inviteBusyId) return;
+    setInviteBusyId(cls.id);
+    setError("");
+    try {
+      const response = await fetch(`/api/school-admin/classes/${cls.id}/invite`, {
+        method: action === "create" ? "POST" : "DELETE",
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? "invite_failed");
+      invalidateCache("/api/school-admin/classes");
+      await load();
+    } catch (inviteFailure) {
+      setError(inviteFailure instanceof Error && inviteFailure.message === "Assign a supervisor first"
+        ? (lang === "ar" ? "عيّن مشرفًا للمجموعة أولًا" : "Cakto fillimisht një edukator")
+        : (lang === "ar" ? "تعذر تحديث رابط الانضمام" : "Lidhja e anëtarësimit nuk u përditësua"));
+    } finally {
+      setInviteBusyId(null);
+    }
+  }
+
+  async function copyAdminInvite(cls: ClassItem) {
+    if (!cls.invite?.token) return;
+    await navigator.clipboard.writeText(inviteUrl(cls.invite.token));
+    setCopiedId(cls.id);
+    window.setTimeout(() => setCopiedId(null), 1600);
   }
 
   if (loading) return <MandalaLoader label={tr.loading} />;
@@ -210,7 +271,12 @@ export default function SchoolAdminClassesPage() {
                   </svg>
                 </div>
                 <div className="cl-card-body">
-                  <div className="cl-name">{cls.name}</div>
+                  {editingId === cls.id ? (
+                    <div className="cl-rename-row">
+                      <input value={editingName} onChange={(event) => setEditingName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && void handleRename(cls.id)} autoFocus />
+                      <button onClick={() => void handleRename(cls.id)} disabled={savingName}>{lang === "ar" ? "حفظ" : "Ruaj"}</button>
+                    </div>
+                  ) : <div className="cl-name">{cls.name}</div>}
                   <div className="cl-count">
                     <svg
                       width="10"
@@ -226,6 +292,14 @@ export default function SchoolAdminClassesPage() {
                     {cls._count.students} {tr.studentCount}
                   </div>
                 </div>
+                {!viewOnly && <button
+                  data-write="true"
+                  className="edit-btn"
+                  onClick={() => { setEditingId(cls.id); setEditingName(cls.name); }}
+                  title={lang === "ar" ? "تعديل اسم المجموعة" : "Ndrysho emrin e grupit"}
+                >
+                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"/></svg>
+                </button>}
                 <button
                   data-write="true"
                   className="delete-btn"
@@ -276,6 +350,16 @@ export default function SchoolAdminClassesPage() {
                   </select>
                 )}
               </div>
+              <div className="cl-invite-row">
+                <span className={`cl-invite-status ${cls.invite?.is_active ? "active" : ""}`}><i />{cls.invite?.is_active ? (lang === "ar" ? "رابط الانضمام فعّال" : "Lidhja është aktive") : (lang === "ar" ? "لا يوجد رابط فعّال" : "Nuk ka lidhje aktive")}</span>
+                <strong>{cls.invite?.use_count ?? 0} {lang === "ar" ? "انضمام" : "anëtarësime"}</strong>
+              </div>
+              {!viewOnly && <div className="cl-invite-actions" data-write-area="true">
+                {cls.invite?.is_active ? <>
+                  <button data-write="true" onClick={() => void copyAdminInvite(cls)}>{copiedId === cls.id ? (lang === "ar" ? "تم النسخ" : "U kopjua") : (lang === "ar" ? "نسخ الرابط" : "Kopjo lidhjen")}</button>
+                  <button data-write="true" className="muted" onClick={() => void manageInvite(cls, "revoke")} disabled={inviteBusyId === cls.id}>{lang === "ar" ? "إيقاف" : "Çaktivizo"}</button>
+                </> : <button data-write="true" onClick={() => void manageInvite(cls, "create")} disabled={inviteBusyId === cls.id || !cls.teacher}>{lang === "ar" ? "إنشاء رابط انضمام" : "Krijo lidhje anëtarësimi"}</button>}
+              </div>}
             </div>
           ))}
         </div>
@@ -314,8 +398,10 @@ export default function SchoolAdminClassesPage() {
         .cl-card-icon{width:38px;height:38px;border-radius:8px;background:var(--black);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
         .cl-card-body{flex:1}
         .cl-name{font-size:14px;font-weight:800;color:var(--text)}
+        .cl-rename-row{display:flex;gap:5px}.cl-rename-row input{min-width:0;width:100%;border:1px solid var(--gold);border-radius:6px;padding:5px 7px;font:700 12px var(--font)}.cl-rename-row button{border:0;border-radius:6px;background:var(--black);color:var(--gold);padding:5px 8px;font:800 10px var(--font);cursor:pointer}
         .cl-count{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3);margin-top:2px;font-weight:500}
-        .delete-btn{background:none;border:1px solid var(--border);color:var(--text3);width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+        .delete-btn,.edit-btn{background:none;border:1px solid var(--border);color:var(--text3);width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;flex-shrink:0}
+        .edit-btn:hover{border-color:var(--gold);color:#8F765B;background:var(--gold-pale)}
         .delete-btn:hover{border-color:#6B1E2D;color:#6B1E2D;background:rgba(192,57,43,0.05)}
         .cl-divider{height:1px;background:var(--border)}
         .cl-teacher-row{display:flex;align-items:center;gap:10px}
@@ -323,6 +409,10 @@ export default function SchoolAdminClassesPage() {
         .cl-select{flex:1;background:var(--off-white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-family:var(--font);outline:none;cursor:pointer;transition:border-color 0.15s}
         .cl-select:focus{border-color:var(--gold)}
         .cl-teacher-read{flex:1;background:var(--off-white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-weight:700}
+        .cl-invite-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border);font-size:10.5px;color:var(--text3)}
+        .cl-invite-status{display:flex;align-items:center;gap:5px}.cl-invite-status i{width:7px;height:7px;border-radius:50%;background:#9A9186}.cl-invite-status.active{color:#1B5E20;font-weight:800}.cl-invite-status.active i{background:#2E7D32;box-shadow:0 0 0 3px rgba(46,125,50,.1)}
+        .cl-invite-row strong{font-size:10px;color:#8F765B}
+        .cl-invite-actions{display:flex;gap:6px}.cl-invite-actions button{flex:1;border:0;border-radius:7px;background:var(--black);color:var(--gold);padding:8px;font:800 10px var(--font);cursor:pointer}.cl-invite-actions button.muted{background:var(--off-white);border:1px solid var(--border);color:var(--text3)}.cl-invite-actions button:disabled{opacity:.42;cursor:not-allowed}
         @media(max-width:700px){
           .cl-grid{grid-template-columns:1fr; gap:10px}
           .create-row{flex-direction:column; gap:10px}

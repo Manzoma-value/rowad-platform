@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { ensureTeacherPersonalClass } from "@/lib/personal-class";
 import {
   APP_GENDERS,
   APP_CURRENT_ROLES,
@@ -299,6 +300,14 @@ export async function POST(req: Request) {
       // application submission during a rolling database migration.
       select: { id: true },
     });
+
+    if (autoApproved) {
+      await ensureTeacherPersonalClass(tx, {
+        teacherId: teacher.id,
+        schoolId: teacher.school_id,
+        fullName: auth.profile.full_name,
+      });
+    }
   }, { timeout: 30000, maxWait: 10000 });
 
   return NextResponse.json({

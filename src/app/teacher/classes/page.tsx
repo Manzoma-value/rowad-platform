@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import TeacherLoadError from "@/components/TeacherLoadError";
+import { Check, Copy, Link2, RefreshCw, Send, ShieldCheck, UserPlus } from "lucide-react";
 
 const S = {
   ar: {
@@ -25,6 +26,24 @@ const S = {
     noAnnouncements: "لا توجد إعلانات بعد",
     delete: "حذف",
     dateLocale: "ar-SA-u-nu-latn",
+    inviteEyebrow: "دعوات المستفيدين",
+    inviteTitle: "انضمام مباشر إلى مجموعتك",
+    inviteSub: "أنشئ الرابط مرة واحدة، ثم أرسله في مجموعة واتساب. كل مستفيد يسجّل من الرابط يُضاف تلقائيًا إلى هذه المجموعة.",
+    inviteStep1: "أنشئ الرابط",
+    inviteStep2: "شاركه مع المستفيدين",
+    inviteStep3: "يتأكد البريد ثم يتم الانضمام",
+    createInvite: "إنشاء رابط الانضمام",
+    copyInvite: "نسخ الرابط",
+    copied: "تم النسخ",
+    whatsapp: "مشاركة عبر واتساب",
+    rotateInvite: "إنشاء رابط جديد",
+    revokeInvite: "إيقاف الرابط",
+    inviteUses: "مستفيد انضم عبر الرابط",
+    inviteSafe: "الرابط خاص بهذه المجموعة ويمكن استخدامه أكثر من مرة.",
+    inviteError: "تعذر تحديث الرابط الآن. حاول مرة أخرى.",
+    rotateConfirm: "سيتم إيقاف الرابط السابق فورًا وإنشاء رابط جديد. هل تريد المتابعة؟",
+    revokeConfirm: "سيتم إيقاف الرابط ولن يستطيع أي مستفيد جديد استخدامه. هل تريد المتابعة؟",
+    shareText: (name: string, url: string) => `مرحبًا، هذا رابط الانضمام إلى مجموعة «${name}» في منصة الرواد:\n${url}`,
   },
   sq: {
     loading: "Duke ngarkuar...",
@@ -42,12 +61,31 @@ const S = {
     noAnnouncements: "Nuk ka njoftime ende",
     delete: "Fshij",
     dateLocale: "sq-AL",
+    inviteEyebrow: "Ftesat e pjesëmarrësve",
+    inviteTitle: "Anëtarësim i drejtpërdrejtë në grupin tënd",
+    inviteSub: "Krijoje lidhjen një herë dhe dërgoje në WhatsApp. Çdo pjesëmarrës që regjistrohet prej saj shtohet automatikisht në këtë grup.",
+    inviteStep1: "Krijo lidhjen",
+    inviteStep2: "Ndaje me pjesëmarrësit",
+    inviteStep3: "Konfirmohet emaili dhe kryhet anëtarësimi",
+    createInvite: "Krijo lidhjen e anëtarësimit",
+    copyInvite: "Kopjo lidhjen",
+    copied: "U kopjua",
+    whatsapp: "Ndaje në WhatsApp",
+    rotateInvite: "Krijo lidhje të re",
+    revokeInvite: "Çaktivizo lidhjen",
+    inviteUses: "pjesëmarrës u bashkuan nga lidhja",
+    inviteSafe: "Lidhja vlen vetëm për këtë grup dhe mund të përdoret disa herë.",
+    inviteError: "Lidhja nuk u përditësua. Provo përsëri.",
+    rotateConfirm: "Lidhja e mëparshme do të çaktivizohet menjëherë. Të krijojmë një të re?",
+    revokeConfirm: "Pjesëmarrës të rinj nuk do të mund ta përdorin këtë lidhje. Të vazhdojmë?",
+    shareText: (name: string, url: string) => `Përshëndetje, kjo është lidhja për t'u bashkuar me grupin “${name}” në Platformën Rowad:\n${url}`,
   },
 } as const;
 
 type Student = { id: string; profile: { full_name: string } };
-type ClassItem = { id: string; name: string; students: Student[] };
-type TeacherData = { classes: ClassItem[] };
+type GroupInvite = { token: string; is_active: boolean; use_count: number; updated_at: string };
+type ClassItem = { id: string; name: string; students: Student[]; invite: GroupInvite | null };
+type TeacherData = { classes: ClassItem[]; school: { slug: string } };
 type Announcement = {
   id: string;
   content: string;
@@ -70,6 +108,10 @@ export default function TeacherClassesPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [annLoading, setAnnLoading] = useState(false);
+  const [invite, setInvite] = useState<GroupInvite | null>(null);
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const loadAnnouncements = useCallback(async (classId: string) => {
     setAnnLoading(true);
@@ -80,8 +122,60 @@ export default function TeacherClassesPage() {
 
   const selectClass = useCallback(async (cls: ClassItem) => {
     setSelectedClass(cls);
+    setInvite(cls.invite);
+    setInviteError("");
+    setCopied(false);
     await loadAnnouncements(cls.id);
   }, [loadAnnouncements]);
+
+  const inviteUrl = invite?.token && data
+    ? `${typeof window === "undefined" ? "" : window.location.origin}${typeof window !== "undefined" && window.location.pathname.startsWith("/schools/") ? `/schools/${data.school.slug}/signup` : "/signup"}?groupInvite=${encodeURIComponent(invite.token)}`
+    : "";
+
+  async function createInvite() {
+    if (!selectedClass || inviteBusy) return;
+    if (invite?.is_active) {
+      const ok = await confirm({ message: T.rotateConfirm });
+      if (!ok) return;
+    }
+    setInviteBusy(true);
+    setInviteError("");
+    try {
+      const response = await fetch(`/api/teacher/classes/${selectedClass.id}/invite`, { method: "POST" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error();
+      setInvite(payload.invite);
+      setCopied(false);
+    } catch {
+      setInviteError(T.inviteError);
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
+  async function revokeInvite() {
+    if (!selectedClass || !invite?.is_active || inviteBusy) return;
+    const ok = await confirm({ message: T.revokeConfirm });
+    if (!ok) return;
+    setInviteBusy(true);
+    setInviteError("");
+    try {
+      const response = await fetch(`/api/teacher/classes/${selectedClass.id}/invite`, { method: "DELETE" });
+      if (!response.ok) throw new Error();
+      setInvite((current) => current ? { ...current, is_active: false } : current);
+    } catch {
+      setInviteError(T.inviteError);
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
+  async function copyInvite() {
+    if (!inviteUrl) return;
+    await navigator.clipboard.writeText(inviteUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
 
   useEffect(() => {
     cachedFetch<TeacherData>("/api/teacher", 300_000).then((d) => {
@@ -169,6 +263,39 @@ export default function TeacherClassesPage() {
           </div>
 
           {selectedClass && (
+            <>
+            <section className="tc-invite-card">
+              <div className="tc-invite-main">
+                <div className="tc-invite-heading">
+                  <span className="tc-invite-symbol"><UserPlus size={21} /></span>
+                  <div><p>{T.inviteEyebrow}</p><h2>{T.inviteTitle}</h2><span>{T.inviteSub}</span></div>
+                </div>
+                <div className="tc-invite-steps">
+                  {[T.inviteStep1, T.inviteStep2, T.inviteStep3].map((label, index) => (
+                    <div key={label}><b>{index + 1}</b><span>{label}</span>{index < 2 && <i />}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="tc-invite-action">
+                {invite?.is_active ? (
+                  <>
+                    <div className="tc-link-box" dir="ltr"><Link2 size={15} /><span>{inviteUrl}</span></div>
+                    <div className="tc-invite-buttons">
+                      <button className="primary" onClick={() => void copyInvite()}><Copy size={15} />{copied ? T.copied : T.copyInvite}</button>
+                      <a href={`https://wa.me/?text=${encodeURIComponent(T.shareText(selectedClass.name, inviteUrl))}`} target="_blank" rel="noreferrer"><Send size={15} />{T.whatsapp}</a>
+                    </div>
+                    <div className="tc-invite-meta"><span><Check size={13} />{invite.use_count} {T.inviteUses}</span><span><ShieldCheck size={13} />{T.inviteSafe}</span></div>
+                    <div className="tc-invite-quiet-actions">
+                      <button onClick={() => void createInvite()} disabled={inviteBusy}><RefreshCw size={13} />{T.rotateInvite}</button>
+                      <button onClick={() => void revokeInvite()} disabled={inviteBusy}>{T.revokeInvite}</button>
+                    </div>
+                  </>
+                ) : (
+                  <button className="tc-create-invite" onClick={() => void createInvite()} disabled={inviteBusy}><Link2 size={17} />{T.createInvite}</button>
+                )}
+                {inviteError && <p className="tc-invite-error" role="alert">{inviteError}</p>}
+              </div>
+            </section>
             <div className="tc-grid">
 
               {/* ── Students card ── */}
@@ -281,6 +408,7 @@ export default function TeacherClassesPage() {
                 </div>
               </div>
             </div>
+            </>
           )}
         </>
       )}
@@ -328,9 +456,39 @@ const styles = `
   .tc-tab-count{font-size:11px;font-weight:800;padding:1px 7px;border-radius:99px;background:rgba(184,160,130,0.12);color:#8F765B}
   .tc-tab.active .tc-tab-count{background:rgba(184,160,130,0.14);color:#B8A082}
 
+  /* Beneficiary invitation */
+  .tc-invite-card{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(330px,.85fr);gap:20px;padding:22px;border-radius:20px;background:linear-gradient(135deg,#4A0E1C 0%,#32101A 68%,#1A1A1A 100%);color:#fff;box-shadow:0 16px 36px rgba(107,30,45,.15);overflow:hidden;position:relative}
+  .tc-invite-card:after{content:'';position:absolute;width:210px;height:210px;border:1px solid rgba(184,160,130,.15);border-radius:50%;inset-inline-start:-95px;bottom:-145px;box-shadow:0 0 0 26px rgba(184,160,130,.04),0 0 0 54px rgba(184,160,130,.025);pointer-events:none}
+  .tc-invite-main,.tc-invite-action{position:relative;z-index:1}
+  .tc-invite-heading{display:flex;align-items:flex-start;gap:12px}
+  .tc-invite-symbol{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none;border-radius:13px;background:rgba(184,160,130,.14);border:1px solid rgba(184,160,130,.22);color:#D9C9B0}
+  .tc-invite-heading p{margin:0 0 3px;color:#B8A082;font-size:9px;font-weight:900;letter-spacing:1.2px;text-transform:uppercase}
+  .tc-invite-heading h2{margin:0;color:#fff;font-size:18px;font-weight:900}
+  .tc-invite-heading span{display:block;margin-top:5px;color:rgba(255,255,255,.63);font-size:11.5px;line-height:1.75;max-width:570px}
+  .tc-invite-steps{display:flex;align-items:flex-start;margin-top:22px;gap:0}
+  .tc-invite-steps>div{display:flex;align-items:center;gap:7px;flex:1;min-width:0;color:rgba(255,255,255,.75);font-size:9.5px;font-weight:800}
+  .tc-invite-steps b{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;background:#B8A082;color:#32101A;font-size:10px}
+  .tc-invite-steps span{line-height:1.45}
+  .tc-invite-steps i{height:1px;flex:1;min-width:8px;margin:0 7px;background:rgba(184,160,130,.28)}
+  .tc-invite-action{display:flex;flex-direction:column;justify-content:center;gap:9px;padding:15px;border-radius:15px;background:rgba(255,255,255,.07);border:1px solid rgba(184,160,130,.16);backdrop-filter:blur(8px)}
+  .tc-link-box{display:flex;align-items:center;gap:8px;padding:10px;border-radius:9px;background:rgba(26,26,26,.28);color:#D9C9B0;font-size:10px;overflow:hidden}
+  .tc-link-box span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tc-invite-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .tc-invite-buttons button,.tc-invite-buttons a,.tc-create-invite{display:flex;align-items:center;justify-content:center;gap:7px;border-radius:9px;padding:10px;border:1px solid rgba(184,160,130,.25);font:800 10.5px 'Cairo',sans-serif;cursor:pointer;text-decoration:none}
+  .tc-invite-buttons .primary,.tc-create-invite{background:#B8A082;color:#32101A}
+  .tc-invite-buttons a{background:rgba(255,255,255,.07);color:#fff}
+  .tc-invite-meta{display:flex;flex-wrap:wrap;gap:7px 14px;color:rgba(255,255,255,.58);font-size:9px;font-weight:700}
+  .tc-invite-meta span{display:flex;align-items:center;gap:4px}
+  .tc-invite-quiet-actions{display:flex;gap:12px;border-top:1px solid rgba(184,160,130,.12);padding-top:8px}
+  .tc-invite-quiet-actions button{display:flex;align-items:center;gap:4px;background:none;border:0;color:rgba(255,255,255,.55);font:700 9px 'Cairo',sans-serif;cursor:pointer}
+  .tc-invite-quiet-actions button:hover{color:#D9C9B0}
+  .tc-create-invite{width:100%;min-height:46px}
+  .tc-invite-error{color:#D9C9B0;font-size:10px;font-weight:800}
+
   /* Grid */
   .tc-grid{display:grid;grid-template-columns:290px 1fr;gap:16px;align-items:start}
   @media(max-width:768px){.tc-grid{grid-template-columns:1fr}}
+  @media(max-width:900px){.tc-invite-card{grid-template-columns:1fr}.tc-invite-steps{margin-top:16px}}
 
   /* Card */
   .tc-card{background:#FFFBF5;border:1px solid rgba(184,160,130,0.14);border-radius:18px;overflow:hidden;animation:fadeUp 0.35s ease both}
@@ -391,6 +549,12 @@ const styles = `
     .tc-textarea{font-size:16px}
     .tc-empty{padding:36px 20px}
     .tc-tab{padding:7px 13px;font-size:13px}
+    .tc-invite-card{padding:16px;gap:15px;border-radius:17px}
+    .tc-invite-heading h2{font-size:16px}
+    .tc-invite-steps{flex-direction:column;gap:7px}
+    .tc-invite-steps i{display:none}
+    .tc-invite-buttons{grid-template-columns:1fr}
+    .tc-invite-action{padding:12px}
   }
   @media(max-width:400px){
     .tc-shell{padding:14px 11px}

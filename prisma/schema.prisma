@@ -493,6 +493,7 @@ model Profile {
   avatar_path                  String?
   created_invites              Invite[]                   @relation("InvitesCreatedBy")
   used_invites                 Invite[]                   @relation("InviteUsedBy")
+  created_class_invites        ClassInvite[]              @relation("ClassInvitesCreatedBy")
   notifications                Notification[]             @relation("NotificationRecipient")
   acted_notifications          Notification[]             @relation("NotificationActor")
 
@@ -534,6 +535,7 @@ model School {
   teacher_applications        TeacherApplication[]
   posts                       Post[]
   invites                     Invite[]
+  class_invites               ClassInvite[]
   rowadGameSubmissions        RowadGameSubmission[]
   miniGameSubmissions         MiniGameSubmission[]
   rowadGameDrafts             RowadGameDraft[]
@@ -594,6 +596,7 @@ model Teacher {
   ratings_given                    AssessmentRating[]              @relation("AssessmentRater")
   ratings_received                 AssessmentRating[]              @relation("AssessmentTarget")
   future_qualification_vote        FutureQualificationVote?
+  class_invites                    ClassInvite[]
 
   @@index([school_id])
   @@map("teachers")
@@ -850,10 +853,36 @@ model Class {
   quizzes            Quiz[]
   lessons            Lesson[]
   students           Student[]
+  invite             ClassInvite?
 
   @@unique([school_id, name])
   @@index([teacher_id])
   @@map("classes")
+}
+
+/// A reusable link created by a supervisor for beneficiary registration.
+/// One group owns one current link; regenerating rotates its token.
+model ClassInvite {
+  id         String   @id @default(uuid()) @db.Uuid
+  token      String   @unique
+  class_id   String   @unique @db.Uuid
+  school_id  String   @db.Uuid
+  teacher_id String   @db.Uuid
+  created_by String   @db.Uuid
+  is_active  Boolean  @default(true)
+  use_count  Int      @default(0)
+  expires_at DateTime?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  class   Class   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  creator Profile @relation("ClassInvitesCreatedBy", fields: [created_by], references: [id], onDelete: Cascade)
+
+  @@index([school_id, is_active])
+  @@index([teacher_id])
+  @@map("class_invites")
 }
 
 model Announcement {

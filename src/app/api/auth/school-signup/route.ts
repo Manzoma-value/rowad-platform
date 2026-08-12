@@ -4,6 +4,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
 import { requestOrigin } from "@/lib/request-origin";
 import { resolveLandingFlow } from "@/lib/landing-flow";
+import { findValidClassInvite } from "@/lib/class-invites";
 import { z } from "zod";
 
 const SchoolSignupSchema = z.object({
@@ -17,6 +18,7 @@ const SchoolSignupSchema = z.object({
                  .min(5, "العمر غير صالح")
                  .max(120, "العمر غير صالح")
                  .optional(),
+  class_invite_token: z.string().trim().min(16).max(200).optional(),
 });
 
 function adminSupabase() {
@@ -39,7 +41,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: result.error.issues[0].message }, { status: 400 });
     }
 
-    const { school_slug, full_name, password, city, age } = result.data;
+    const { school_slug, full_name, password, city, age, class_invite_token } = result.data;
     const email = result.data.email.toLowerCase();
 
     // Verify school exists
@@ -52,15 +54,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "المنصة غير موجودة" }, { status: 404 });
     }
 
+    const classInvite = class_invite_token
+      ? await findValidClassInvite(class_invite_token, school_slug)
+      : null;
+    if (class_invite_token && !classInvite) {
+      return NextResponse.json({ error: "رابط الدعوة غير متاح أو تم استبداله" }, { status: 410 });
+    }
+
     const landingFlow = resolveLandingFlow(school.features);
-    const role = landingFlow === "teacher" ? "TEACHER" : "STUDENT";
+    const role = classInvite ? "STUDENT" : landingFlow === "teacher" ? "TEACHER" : "STUDENT";
 
     if (role === "STUDENT" && (!city || age === undefined)) {
       return NextResponse.json({ error: "المدينة والعمر مطلوبان" }, { status: 400 });
     }
 
     let userId: string;
-    let createdByAdmin = false;
 
     if (role === "TEACHER") {
       // Teacher rollout days can produce dozens of signups at once. Creating
@@ -80,7 +88,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: message }, { status: 500 });
       }
       userId = created.data.user.id;
-      createdByAdmin = true;
     } else {
       // Student mode keeps email confirmation enabled.
       const supabase = await createClient();
@@ -113,6 +120,21 @@ export async function POST(req: Request) {
 
     try {
       await prisma.$transaction(async (tx) => {
+        if (classInvite) {
+          const accepted = await tx.classInvite.updateMany({
+            where: {
+              id: classInvite.id,
+              token: class_invite_token,
+              is_active: true,
+              teacher_id: classInvite.teacher_id,
+              class: { teacher_id: classInvite.teacher_id, school_id: school.id },
+              OR: [{ expires_at: null }, { expires_at: { gt: new Date() } }],
+            },
+            data: { use_count: { increment: 1 } },
+          });
+          if (accepted.count !== 1) throw new Error("class_invite_unavailable");
+        }
+
         await tx.profile.upsert({
           where: { id: userId },
           update: { email, full_name, role, is_active: true },
@@ -132,19 +154,26 @@ export async function POST(req: Request) {
         } else {
           await tx.student.upsert({
             where: { profile_id: userId },
-            update: {},
+            update: classInvite ? {
+              school_id: school.id,
+              class_id: classInvite.class_id,
+              city: city!,
+              age: age!,
+              onboarding_status: "CLASS_ASSIGNED",
+            } : {},
             create: {
               profile_id: userId,
               school_id: school.id,
+              class_id: classInvite?.class_id,
               city: city!,
               age: age!,
-              onboarding_status: "SCHOOL_ASSIGNED",
+              onboarding_status: classInvite ? "CLASS_ASSIGNED" : "SCHOOL_ASSIGNED",
             },
           });
         }
       });
     } catch (error) {
-      if (createdByAdmin) await adminSupabase().auth.admin.deleteUser(userId).catch(() => null);
+      await adminSupabase().auth.admin.deleteUser(userId).catch(() => null);
       throw error;
     }
 

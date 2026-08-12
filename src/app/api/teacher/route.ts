@@ -2,12 +2,21 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { ensureTeacherPersonalClass } from "@/lib/personal-class";
 
 export const revalidate = 60;
 
 export async function GET() {
   const auth = await requireTeacher();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (auth.teacher.onboarding_status === "ACTIVE") {
+    await prisma.$transaction((tx) => ensureTeacherPersonalClass(tx, {
+      teacherId: auth.teacher.id,
+      schoolId: auth.teacher.school_id,
+      fullName: auth.profile.full_name,
+    }));
+  }
 
   const teacher = await prisma.teacher.findUnique({
     where: { id: auth.teacher.id },
@@ -27,6 +36,7 @@ export async function GET() {
         select: {
           id: true,
           name: true,
+          invite: { select: { token: true, is_active: true, use_count: true, updated_at: true } },
           students: {
             orderBy: { profile: { full_name: "asc" } },
             select: { id: true, profile: { select: { full_name: true } } },

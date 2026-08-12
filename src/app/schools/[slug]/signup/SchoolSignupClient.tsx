@@ -119,6 +119,11 @@ const STRINGS = {
     poweredBy: "مدعومة من",
     backTo: "العودة إلى الصفحة الرئيسية",
     or: "أو",
+    inviteChecking: "جارٍ التحقق من رابط الانضمام...",
+    inviteTitle: "دعوة للانضمام إلى مجموعة",
+    inviteReady: "أنشئ حساب مستفيدك، وسيتم ضمك تلقائيًا بعد تأكيد البريد الإلكتروني.",
+    inviteSupervisor: "المشرف",
+    inviteInvalid: "هذا الرابط غير متاح الآن. اطلب رابطًا جديدًا من مشرفك.",
   },
   sq: {
     dir: "ltr" as const,
@@ -153,6 +158,11 @@ const STRINGS = {
     poweredBy: "E mundësuar nga",
     backTo: "Kthehu te faqja kryesore",
     or: "ose",
+    inviteChecking: "Po verifikojmë lidhjen e anëtarësimit...",
+    inviteTitle: "Ftesë për t'u bashkuar me grupin",
+    inviteReady: "Krijo llogarinë e pjesëmarrësit dhe do të shtohesh automatikisht pas konfirmimit të emailit.",
+    inviteSupervisor: "Edukatori",
+    inviteInvalid: "Kjo lidhje nuk është më e disponueshme. Kërko një lidhje të re nga edukatori.",
   },
 } as const;
 
@@ -177,9 +187,11 @@ function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
 export default function SchoolSignupClient({
   school,
   landingFlow = "student",
+  groupInviteToken,
 }: {
   school: School;
   landingFlow?: LandingFlow;
+  groupInviteToken?: string;
 }) {
   const router = useRouter();
   // Albanian is the default for this Albania-focused platform, regardless of
@@ -198,11 +210,34 @@ export default function SchoolSignupClient({
   const [error, setError] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [inviteState, setInviteState] = useState<"idle" | "checking" | "ready" | "invalid">(
+    groupInviteToken ? "checking" : "idle",
+  );
+  const [inviteInfo, setInviteInfo] = useState<{ group_name: string; supervisor_name: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const L = STRINGS[lang];
   const dir = L.dir;
-  const isTeacherFlow = landingFlow === "teacher";
+  const isTeacherFlow = landingFlow === "teacher" && !groupInviteToken;
+
+  useEffect(() => {
+    if (!groupInviteToken) return;
+    let active = true;
+    fetch(`/api/class-invites/${encodeURIComponent(groupInviteToken)}`, { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("invite_unavailable");
+        return response.json();
+      })
+      .then((payload) => {
+        if (!active) return;
+        setInviteInfo(payload.invite);
+        setInviteState("ready");
+      })
+      .catch(() => {
+        if (active) setInviteState("invalid");
+      });
+    return () => { active = false; };
+  }, [groupInviteToken]);
 
   // Latin-script name in non-Arabic UIs when available; else the Arabic name.
   const displayName =
@@ -232,6 +267,10 @@ export default function SchoolSignupClient({
   const handleSignup = async () => {
     setError("");
     setEmailTouched(true);
+    if (groupInviteToken && inviteState !== "ready") {
+      setError(L.inviteInvalid);
+      return;
+    }
     if (!fullName.trim() || !email.trim() || !password || (!isTeacherFlow && (!city.trim() || !age.trim()))) {
       setError(L.errEmpty);
       return;
@@ -264,12 +303,13 @@ export default function SchoolSignupClient({
           password,
           city: isTeacherFlow ? undefined : city.trim(),
           age: ageNum,
+          class_invite_token: groupInviteToken,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? L.errServer);
+        setError(res.status === 410 ? L.inviteInvalid : (data.error ?? L.errServer));
         return;
       }
 
@@ -408,6 +448,28 @@ export default function SchoolSignupClient({
             <div className="sp-lang-toggle-mobile">
               <LangToggle lang={lang} onChange={(l) => { setLang(l); setError(""); }} />
             </div>
+
+            {groupInviteToken && (
+              <section className={`sp-invite-card sp-invite-card--${inviteState}`} aria-live="polite">
+                <div className="sp-invite-icon">
+                  {inviteState === "checking" ? <span className="sp-spin" /> : inviteState === "ready" ? "✓" : "!"}
+                </div>
+                <div className="sp-invite-copy">
+                  {inviteState === "checking" ? (
+                    <strong>{L.inviteChecking}</strong>
+                  ) : inviteState === "ready" && inviteInfo ? (
+                    <>
+                      <span>{L.inviteTitle}</span>
+                      <strong>{inviteInfo.group_name}</strong>
+                      <p>{L.inviteReady}</p>
+                      <small>{L.inviteSupervisor}: {inviteInfo.supervisor_name}</small>
+                    </>
+                  ) : (
+                    <><strong>{L.inviteInvalid}</strong><Link href={landingPath}>{L.backTo}</Link></>
+                  )}
+                </div>
+              </section>
+            )}
 
             <div className="sp-form-ornament"><Rule dim /></div>
 
@@ -573,7 +635,7 @@ export default function SchoolSignupClient({
                 </div>
               )}
 
-              <button className="sp-btn" onClick={handleSignup} disabled={loading}>
+              <button className="sp-btn" onClick={handleSignup} disabled={loading || inviteState === "checking" || inviteState === "invalid"}>
                 {loading ? <><span className="sp-spin" />{btnLabel}</> : L.btn}
               </button>
             </div>
@@ -673,6 +735,16 @@ const css = `
   .sp-form-wrap { width: 100%; max-width: 440px; animation: scaleIn 0.45s cubic-bezier(0.4,0,0.2,1) both; position: relative; z-index: 1; }
   .sp-form-ornament { margin-bottom: 24px; }
   .sp-form-header { margin-bottom: 28px; text-align: start; }
+  .sp-invite-card { display:flex; align-items:flex-start; gap:13px; margin:0 0 20px; padding:15px; border:1px solid rgba(184,160,130,.32); border-radius:14px; background:linear-gradient(135deg,#fff,#F4EEE5); box-shadow:0 8px 24px rgba(74,14,28,.06); }
+  .sp-invite-card--invalid { border-color:rgba(107,30,45,.28); background:#FFF8F8; }
+  .sp-invite-icon { width:36px; height:36px; flex:none; display:flex; align-items:center; justify-content:center; border-radius:11px; background:#4A0E1C; color:#D9C9B0; font-weight:900; }
+  .sp-invite-card--invalid .sp-invite-icon { background:#6B1E2D; color:#fff; }
+  .sp-invite-copy { min-width:0; display:flex; flex-direction:column; gap:3px; color:#4A0E1C; }
+  .sp-invite-copy>span { color:#8F765B; font-size:10px; font-weight:800; letter-spacing:.5px; }
+  .sp-invite-copy>strong { font-size:14px; font-weight:900; }
+  .sp-invite-copy>p { color:#655B53; font-size:11.5px; line-height:1.65; }
+  .sp-invite-copy>small { color:#8F765B; font-size:10.5px; font-weight:700; }
+  .sp-invite-copy>a { color:#4A0E1C; font-size:11px; font-weight:800; }
   .sp-form-title { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -0.4px; }
   .sp-form-title::after {
     content: ''; display: block; width: 40px; height: 3px;
