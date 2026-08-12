@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  Bell, BookOpenCheck, ChevronLeft, ChevronRight, Eye, EyeOff,
+  Bell, BookOpenCheck, ChevronLeft, ChevronRight, Crown, Eye, EyeOff,
   MapPin, Megaphone, PencilLine, Plus, Search, Trash2, UserMinus,
   UserPlus, Users, X,
 } from "lucide-react";
@@ -20,6 +20,9 @@ type GroupRow = {
   updated_at: string;
   created_at?: string;
   _count: { members: number };
+  max_members: number;
+  leader_teacher_id: string | null;
+  leader: { profile: { full_name: string } } | null;
 };
 
 type Member = {
@@ -42,6 +45,9 @@ type GroupDetail = {
   id: string;
   name: string;
   description: string | null;
+  max_members: number;
+  leader_teacher_id: string | null;
+  leader: { id: string; profile: { full_name: string; avatar_url: string | null } } | null;
   members: Member[];
 };
 
@@ -99,6 +105,10 @@ const UI = {
     namePh: "مثال: مجموعة مشرفي القرآن",
     descPh: "وصف اختياري للمجموعة وأهدافها…",
     creating: "جارٍ الإنشاء…",
+    capacity: "الحد الأقصى للأعضاء",
+    leader: "قائد المجموعة",
+    noLeader: "بدون قائد حالياً",
+    capacityHelp: "يتوقف الانضمام الذاتي تلقائياً عند اكتمال العدد.",
   },
   sq: {
     title: "Grupet e edukatorëve",
@@ -134,6 +144,10 @@ const UI = {
     namePh: "Shembull: Edukatorët e Kuranit",
     descPh: "Përshkrim opsional…",
     creating: "Po krijohet…",
+    capacity: "Numri maksimal i anëtarëve",
+    leader: "Drejtuesi i grupit",
+    noLeader: "Pa drejtues për momentin",
+    capacityHelp: "Bashkimi automatik ndalet kur grupi mbushet.",
   },
 } as const;
 
@@ -174,7 +188,7 @@ export default function TeacherGroupsPage() {
 
   // create dialog
   const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ name: "", description: "" });
+  const [createForm, setCreateForm] = useState({ name: "", description: "", max_members: 30 });
   const [creating, setCreating] = useState(false);
 
   // add-members dialog
@@ -185,7 +199,7 @@ export default function TeacherGroupsPage() {
   const [picked, setPicked] = useState<Set<string>>(new Set());
 
   // edit-meta state
-  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [editForm, setEditForm] = useState({ name: "", description: "", max_members: 30, leader_teacher_id: "" });
   const [savingMeta, setSavingMeta] = useState(false);
   const [memberQuery, setMemberQuery] = useState("");
 
@@ -228,7 +242,12 @@ export default function TeacherGroupsPage() {
       if (!r.ok) { setDetail(null); return; }
       const d = await r.json();
       setDetail(d?.group ?? null);
-      setEditForm({ name: d?.group?.name ?? "", description: d?.group?.description ?? "" });
+      setEditForm({
+        name: d?.group?.name ?? "",
+        description: d?.group?.description ?? "",
+        max_members: d?.group?.max_members ?? 30,
+        leader_teacher_id: d?.group?.leader_teacher_id ?? "",
+      });
     } finally { setLoadingDetail(false); }
   }, []);
 
@@ -279,7 +298,7 @@ export default function TeacherGroupsPage() {
       if (!r.ok) return;
       const d = await r.json();
       setCreateOpen(false);
-      setCreateForm({ name: "", description: "" });
+      setCreateForm({ name: "", description: "", max_members: 30 });
       await loadList();
       setSelectedId(d?.group?.id ?? null);
     } finally { setCreating(false); }
@@ -292,12 +311,22 @@ export default function TeacherGroupsPage() {
       const r = await fetch(`/api/school-admin/teacher-groups/${selectedId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editForm.name, description: editForm.description }),
+        body: JSON.stringify(editForm),
       });
       if (r.ok) {
         await Promise.all([loadList(), loadDetail(selectedId)]);
       }
     } finally { setSavingMeta(false); }
+  }
+
+  async function setLeader(teacherId: string | null) {
+    if (!selectedId) return;
+    const response = await fetch(`/api/school-admin/teacher-groups/${selectedId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leader_teacher_id: teacherId }),
+    });
+    if (response.ok) await Promise.all([loadList(), loadDetail(selectedId)]);
   }
 
   async function deleteGroup() {
@@ -440,7 +469,7 @@ export default function TeacherGroupsPage() {
                     onClick={() => setSelectedId(g.id)}
                   >
                     <span className="tg-group-mark">{g.name.trim().slice(0, 1).toUpperCase()}</span>
-                    <span className="tg-list-copy"><span className="tg-list-name">{g.name}</span><span className="tg-list-meta">{g._count.members} {T.members}</span></span>
+                    <span className="tg-list-copy"><span className="tg-list-name">{g.name}</span><span className="tg-list-meta">{g._count.members} / {g.max_members} {T.members}</span></span>
                     <IconChevron className="tg-list-arrow" size={16}/>
                   </button>
                 </li>
@@ -461,7 +490,13 @@ export default function TeacherGroupsPage() {
                   <div className="tg-detail-mark"><Users size={25}/></div>
                   <div><span className="tg-detail-kicker">{L === "ar" ? "مجموعة مشرفين" : "Grup edukatorësh"}</span><h2>{detail.name}</h2><p>{detail.description || (L === "ar" ? "لا يوجد وصف لهذه المجموعة بعد." : "Nuk ka përshkrim për këtë grup.")}</p></div>
                 </div>
-                {!viewOnly && <details className="tg-edit-panel"><summary><PencilLine size={14}/>{T.rename}</summary><div className="tg-edit-fields"><label>{T.name}<input className="tg-meta-name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}/></label><label>{T.desc}<textarea className="tg-meta-desc" placeholder={T.descPh} rows={2} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}/></label><button className="tg-btn tg-btn-primary" onClick={saveMeta} disabled={savingMeta || !editForm.name.trim()}>{savingMeta ? T.saving : T.save}</button></div></details>}
+                {!viewOnly && <details className="tg-edit-panel"><summary><PencilLine size={14}/>{T.rename}</summary><div className="tg-edit-fields">
+                  <label>{T.name}<input className="tg-meta-name" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}/></label>
+                  <label>{T.desc}<textarea className="tg-meta-desc" placeholder={T.descPh} rows={2} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}/></label>
+                  <label>{T.capacity}<input type="number" min={Math.max(1, detail.members.length)} max={500} value={editForm.max_members} onChange={(e) => setEditForm({ ...editForm, max_members: Number(e.target.value) })}/><small>{T.capacityHelp}</small></label>
+                  <label>{T.leader}<select value={editForm.leader_teacher_id} onChange={(e) => setEditForm({ ...editForm, leader_teacher_id: e.target.value })}><option value="">{T.noLeader}</option>{detail.members.map((member) => <option value={member.teacher.id} key={member.teacher.id}>{member.teacher.profile.full_name}</option>)}</select></label>
+                  <button className="tg-btn tg-btn-primary" onClick={saveMeta} disabled={savingMeta || !editForm.name.trim()}>{savingMeta ? T.saving : T.save}</button>
+                </div></details>}
                 <div className="tg-meta-actions">
                   <Link className="tg-btn" href={`/school-admin/assessments?group=${detail.id}`}>
                     <BookOpenCheck size={15}/>{T.assessments}
@@ -477,8 +512,9 @@ export default function TeacherGroupsPage() {
               </div>
 
               <div className="tg-overview-strip">
-                <div><span className="tg-overview-icon"><Users size={18}/></span><strong>{detail.members.length}</strong><small>{T.members}</small></div>
+                <div><span className="tg-overview-icon"><Users size={18}/></span><strong>{detail.members.length} / {detail.max_members}</strong><small>{T.members}</small></div>
                 <div><span className="tg-overview-icon"><Megaphone size={18}/></span><strong>{announcements.length}</strong><small>{A.announcements}</small></div>
+                <div><span className="tg-overview-icon"><Crown size={18}/></span><strong>{detail.leader?.profile.full_name || T.noLeader}</strong><small>{T.leader}</small></div>
                 <div><span className="tg-overview-icon"><Eye size={18}/></span><strong>{openVisibility ? (L === "ar" ? "مفتوحة" : "E hapur") : (L === "ar" ? "خاصة" : "Private")}</strong><small>{L === "ar" ? "خصوصية المجموعة" : "Privatësia e grupit"}</small></div>
               </div>
 
@@ -516,6 +552,7 @@ export default function TeacherGroupsPage() {
                         </div>
                       )}
                     </div>
+                    {!viewOnly && <button className={`tg-leader-btn${detail.leader_teacher_id === m.teacher.id ? " active" : ""}`} onClick={() => void setLeader(detail.leader_teacher_id === m.teacher.id ? null : m.teacher.id)} title={T.leader}><Crown size={15}/></button>}
                     {!viewOnly && (
                       <button className="tg-mini-x" onClick={() => removeMember(m.teacher.id)} data-write="true" title={T.remove}><UserMinus size={15}/></button>
                     )}
@@ -596,6 +633,9 @@ export default function TeacherGroupsPage() {
             <input className="tg-input" placeholder={T.namePh} value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} autoFocus />
             <label className="tg-lbl">{T.desc}</label>
             <textarea className="tg-input" rows={3} placeholder={T.descPh} value={createForm.description} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} />
+            <label className="tg-lbl">{T.capacity}</label>
+            <input className="tg-input" type="number" min={1} max={500} value={createForm.max_members} onChange={(e) => setCreateForm({ ...createForm, max_members: Number(e.target.value) })} />
+            <small className="tg-field-help">{T.capacityHelp}</small>
             <div className="tg-dlg-actions">
               <button className="tg-btn" onClick={() => setCreateOpen(false)} disabled={creating}>{T.cancel}</button>
               <button className="tg-btn tg-btn-primary" onClick={createGroup} disabled={creating || !createForm.name.trim()}>
@@ -709,6 +749,8 @@ export default function TeacherGroupsPage() {
         .tg-member-meta strong { font-weight: 800; color: #32101A; }
         .tg-mini-x { background: rgba(139,26,26,0.10); border: 1px solid rgba(139,26,26,0.32); color: #6B1E2D; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; font-weight: 800; flex-shrink: 0; }
         .tg-mini-x:hover { background: rgba(139,26,26,0.18); }
+        .tg-leader-btn { display:grid; place-items:center; width:31px; height:31px; flex:none; border:1px solid rgba(184,160,130,.3); border-radius:9px; background:#F7F3EB; color:#8F765B; cursor:pointer; }
+        .tg-leader-btn.active { border-color:#B8A082; background:#32101A; color:#D9C9B0; }
 
         .tg-ann-section { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(26,26,26,0.07); }
         .tg-ann-title { margin: 0 0 10px; font-size: 15px; font-weight: 900; color: #6B1E2D; }
@@ -738,6 +780,7 @@ export default function TeacherGroupsPage() {
         .tg-lbl { display: block; font-size: 12px; font-weight: 800; color: #6B1E2D; margin: 10px 0 4px; }
         .tg-input { width: 100%; padding: 10px 13px; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; font-family: inherit; font-size: 13.5px; background: #FFF; outline: none; resize: vertical; }
         .tg-input:focus { border-color: #B8A082; }
+        .tg-field-help { display:block; margin-top:5px; color:#8F765B; font-size:9px; font-weight:700; }
         .tg-dlg-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 
         .tg-eligible { margin-top: 10px; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
@@ -794,13 +837,15 @@ export default function TeacherGroupsPage() {
         .tg-edit-panel { border:1px solid #E5DCCD; border-radius:12px; background:#FFF; }
         .tg-edit-panel summary { display:flex; align-items:center; gap:7px; padding:9px 12px; cursor:pointer; color:#6B1E2D; font-size:11px; font-weight:900; list-style:none; }
         .tg-edit-panel summary::-webkit-details-marker { display:none; }
-        .tg-edit-fields { display:grid; grid-template-columns:minmax(170px,.7fr) minmax(250px,1.3fr) auto; align-items:end; gap:10px; padding:0 12px 12px; }
+        .tg-edit-fields { display:grid; grid-template-columns:repeat(2,minmax(180px,1fr)); align-items:end; gap:10px; padding:0 12px 12px; }
         .tg-edit-fields label { color:#7B6B52; font-size:10px; font-weight:900; }
-        .tg-edit-fields :is(input,textarea) { display:block; width:100%; min-height:40px; margin-top:4px; border:1px solid #DCCFBD; border-radius:9px; background:#FFFCF7; padding:8px 10px; font:inherit; font-size:12px; }
+        .tg-edit-fields :is(input,textarea,select) { display:block; width:100%; min-height:40px; margin-top:4px; border:1px solid #DCCFBD; border-radius:9px; background:#FFFCF7; padding:8px 10px; font:inherit; font-size:12px; }
+        .tg-edit-fields label small { display:block; margin-top:4px; color:#8F765B; font-size:8px; font-weight:700; }
+        .tg-edit-fields>.tg-btn { justify-self:end; min-width:130px; }
         .tg-meta-actions { margin:0; }
         .tg-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:36px; text-decoration:none; }
         .tg-icon-danger { width:36px; height:36px; display:grid; place-items:center; border-radius:9px; border:1px solid rgba(139,26,26,.18); color:#8B1A1A; background:#FFF4F1; cursor:pointer; }
-        .tg-overview-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:0 0 19px; }
+        .tg-overview-strip { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; margin:0 0 19px; }
         .tg-overview-strip>div { display:grid; grid-template-columns:38px 1fr; grid-template-rows:auto auto; gap:0 9px; padding:12px; border:1px solid #E8DFD2; border-radius:13px; background:linear-gradient(145deg,#FFF,#FBF6EF); }
         .tg-overview-icon { grid-row:1/3; width:38px; height:38px; display:grid; place-items:center; border-radius:11px; color:#6B1E2D; background:#F0E7D9; }
         .tg-overview-strip strong { align-self:end; font-size:16px; line-height:1.2; }

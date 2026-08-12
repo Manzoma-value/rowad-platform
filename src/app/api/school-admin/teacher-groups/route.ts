@@ -18,6 +18,9 @@ export async function GET() {
       id: true,
       name: true,
       description: true,
+      max_members: true,
+      leader_teacher_id: true,
+      leader: { select: { profile: { select: { full_name: true } } } },
       created_at: true,
       updated_at: true,
       _count: { select: { members: true } },
@@ -58,10 +61,14 @@ export async function POST(req: Request) {
   const auth = await requireSchoolAdminWriter();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  let body: { name?: string; description?: string };
+  let body: { name?: string; description?: string; max_members?: number };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
   const name = body.name?.trim();
   if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
+  const maxMembers = Number(body.max_members ?? 30);
+  if (!Number.isInteger(maxMembers) || maxMembers < 1 || maxMembers > 500) {
+    return NextResponse.json({ error: "max_members must be between 1 and 500" }, { status: 400 });
+  }
 
   const group = await prisma.teacherGroup.create({
     data: {
@@ -69,8 +76,9 @@ export async function POST(req: Request) {
       created_by: auth.profile.id,
       name: name.slice(0, 120),
       description: body.description?.toString().trim().slice(0, 1000) || null,
+      max_members: maxMembers,
     },
-    select: { id: true, name: true, description: true },
+    select: { id: true, name: true, description: true, max_members: true },
   });
   return NextResponse.json({ group }, { status: 201 });
 }

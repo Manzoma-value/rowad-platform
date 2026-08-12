@@ -261,12 +261,11 @@ export default function TeacherProfilePage({ params }: { params: Promise<{ id: s
         <div className="tp-orbit tp-orbit-one" /><div className="tp-orbit tp-orbit-two" />
         <div className="tp-mandala"><IdentityMandala size={360} stroke="#B8A082" opacity={0.12} /></div>
         <div className="tp-hero-main">
-          <div className="tp-avatar-wrap"><Avatar name={teacher.profile.full_name} src={teacher.profile.avatar_url} size={92} /><i className={teacher.profile.is_active ? "active" : ""} /></div>
+          <div className="tp-avatar-wrap"><Avatar name={teacher.profile.full_name} src={teacher.profile.avatar_url} size={92} /></div>
           <div className="tp-hero-copy">
             <span className="tp-eyebrow"><WandSparkles size={14} />{T.profile}</span>
             <h1>{teacher.profile.full_name}</h1>
             <div className="tp-hero-meta">
-              <span className={teacher.profile.is_active ? "is-active" : "is-inactive"}><i />{teacher.profile.is_active ? T.active : T.inactive}</span>
               {app && <span><GraduationCap size={13} />{codeLabel(app.current_role, lang, "role")}</span>}
               {app && <span><MapPin size={13} />{app.city}, {app.country}</span>}
             </div>

@@ -8,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowUpRight, Award, Clock3, ClipboardCheck, GraduationCap,
   Languages, Lock, MapPin, MessageSquare, Network, Search, Send, Sparkles,
-  Trash2, Unlock, UserRound, Users,
+  Crown, Trash2, Unlock, UserRound, Users,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
@@ -35,6 +35,9 @@ type GroupDetail = {
   id: string;
   name: string;
   description: string | null;
+  max_members: number;
+  leader_teacher_id: string | null;
+  leader: { id: string; profile: { full_name: string } } | null;
   updated_at: string;
   members: Member[];
 };
@@ -81,6 +84,8 @@ const UI = {
     browseAssessments: "عرض كل نماذج القياس",
     membersHint: "تعرّف على أعضاء مجموعتك",
     communityHint: "تابع الإعلانات والنقاشات",
+    leader: "قائد المجموعة",
+    capacity: "السعة",
   },
   sq: {
     back: "Kthehu te grupet",
@@ -116,6 +121,8 @@ const UI = {
     browseAssessments: "Shiko të gjitha modelet",
     membersHint: "Njih anëtarët e grupit",
     communityHint: "Ndiq njoftimet dhe diskutimet",
+    leader: "Udhëheqësi i grupit",
+    capacity: "Kapaciteti",
   },
 } as const;
 
@@ -296,10 +303,12 @@ export default function TeacherGroupDetailPage() {
             <span className="gd-eyebrow"><Sparkles size={12} />{T.groupHome}</span>
             <h1 className="gd-title">{group.name}</h1>
             <p className="gd-desc">{group.description || T.groupHomeSub}</p>
+            {group.leader && <span className="gd-leader"><Crown size={12}/>{T.leader}: {group.leader.profile.full_name}</span>}
           </div>
         </div>
         <div className="gd-hero-stats">
           <div className="gd-hero-stat"><strong>{memberCount}</strong><span>{T.members}</span></div>
+          <div className="gd-hero-stat"><strong>{memberCount}/{group.max_members}</strong><span>{T.capacity}</span></div>
           <div className="gd-hero-stat"><strong>{openAssessmentCount}</strong><span>{T.openAssessments}</span></div>
           <div className="gd-hero-stat"><strong>{announcements.length}</strong><span>{T.activities}</span></div>
         </div>
@@ -346,6 +355,7 @@ export default function TeacherGroupDetailPage() {
                     T={T}
                     L={L}
                     initial={initials.get(member.teacher.id) ?? null}
+                    isLeader={member.teacher.id === group.leader_teacher_id}
                   />
                 ))}
               </div>
@@ -449,12 +459,13 @@ export default function TeacherGroupDetailPage() {
 /** Group-member card. Shows name + location + specialization by default;
  *  the rest (qualification, experience, languages) is behind Show More. */
 function MemberCard({
-  member, T, L, initial,
+  member, T, L, initial, isLeader,
 }: {
   member: Member;
   T: typeof UI.ar | typeof UI.sq;
   L: "ar" | "sq";
   initial: string | null;
+  isLeader: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const app = member.teacher.application;
@@ -465,6 +476,7 @@ function MemberCard({
       <div className="gd-member-head">
         <div className="gd-avatar">{initial || <UserRound size={19} />}</div>
         <h3>{member.teacher.profile.full_name}</h3>
+        {isLeader && <span className="gd-member-leader"><Crown size={11}/>{T.leader}</span>}
       </div>
       <div className="gd-chips">
         <span className="gd-chip"><MapPin size={12} />{location}</span>
@@ -543,6 +555,7 @@ const styles = `
   .gd-eyebrow { display:inline-flex; align-items:center; gap:6px; margin-bottom:6px; color:#D9C9B0; font-size:10.5px; font-weight:900; letter-spacing:.08em; }
   .gd-title { margin: 0 0 6px; color: #FFFBF5; font-size: 27px; font-weight: 900; }
   .gd-desc { margin: 0; max-width: 620px; color: rgba(255,251,245,0.72); font-size: 12.5px; line-height: 1.8; font-weight: 600; }
+  .gd-leader { display:inline-flex; align-items:center; gap:6px; margin-top:9px; padding:5px 9px; border:1px solid rgba(217,201,176,.28); border-radius:999px; color:#E5E0D5; font-size:10px; font-weight:800; }
   .gd-hero-stats { position:relative; z-index:1; display:flex; gap:10px; flex-wrap:wrap; }
   .gd-hero-stat {
     display:flex; flex-direction:column; align-items:center; gap:2px; min-width:78px;
@@ -593,6 +606,7 @@ const styles = `
     width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
     background: linear-gradient(150deg,#6B1E2D,#32101A); color: #D9C9B0; box-shadow: 0 0 0 3px rgba(184,160,130,0.15); font-size: 12.5px; font-weight: 900;
   }
+  .gd-member-leader { display:inline-flex; align-items:center; gap:4px; margin-inline-start:auto; padding:4px 7px; border-radius:999px; background:#E5E0D5; color:#6B1E2D; font-size:9px; font-weight:900; white-space:nowrap; }
   .gd-member h3 { margin: 0; font-size: 14px; font-weight: 900; color: #32101A; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .gd-chips { display:flex; flex-wrap:wrap; gap:6px; }
   .gd-chip { display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border-radius:999px; background:#F7F3EB; color:#6B1E2D; font-size:10.5px; font-weight:800; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

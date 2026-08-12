@@ -6,7 +6,6 @@ import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-const GROUP_CAPACITY = 30;
 
 export async function POST(
   req: Request,
@@ -22,7 +21,7 @@ export async function POST(
   if (teacher_ids.length === 0) return NextResponse.json({ error: "teacher_ids required" }, { status: 400 });
 
   const group = await prisma.teacherGroup.findFirst({
-    where: { id, school_id: auth.school.id }, select: { id: true, _count: { select: { members: true } } },
+    where: { id, school_id: auth.school.id }, select: { id: true, max_members: true, _count: { select: { members: true } } },
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -41,10 +40,10 @@ export async function POST(
 
   if (valid.length === 0) return NextResponse.json({ added: 0 });
 
-  const available = Math.max(0, GROUP_CAPACITY - group._count.members);
+  const available = Math.max(0, group.max_members - group._count.members);
   if (valid.length > available) {
     return NextResponse.json(
-      { error: "Group capacity is 30 teachers", capacity: GROUP_CAPACITY, available },
+      { error: "Group capacity reached", capacity: group.max_members, available },
       { status: 409 },
     );
   }
@@ -55,7 +54,7 @@ export async function POST(
   });
   // bump updated_at on the group so admin list reorders correctly
   await prisma.teacherGroup.update({ where: { id }, data: { updated_at: new Date() } });
-  return NextResponse.json({ added: valid.length, capacity: GROUP_CAPACITY, remaining: available - valid.length });
+  return NextResponse.json({ added: valid.length, capacity: group.max_members, remaining: available - valid.length });
 }
 
 export async function DELETE(
@@ -74,7 +73,13 @@ export async function DELETE(
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  await prisma.teacherGroupMember.deleteMany({ where: { group_id: id, teacher_id } });
-  await prisma.teacherGroup.update({ where: { id }, data: { updated_at: new Date() } });
+  await prisma.$transaction([
+    prisma.teacherGroupMember.deleteMany({ where: { group_id: id, teacher_id } }),
+    prisma.teacherGroup.update({ where: { id }, data: { updated_at: new Date() } }),
+    prisma.teacherGroup.updateMany({
+      where: { id, leader_teacher_id: teacher_id },
+      data: { leader_teacher_id: null },
+    }),
+  ]);
   return NextResponse.json({ success: true });
 }

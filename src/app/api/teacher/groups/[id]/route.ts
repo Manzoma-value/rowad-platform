@@ -38,6 +38,9 @@ export async function GET(
       id: true,
       name: true,
       description: true,
+      max_members: true,
+      leader_teacher_id: true,
+      leader: { select: { id: true, profile: { select: { full_name: true } } } },
       updated_at: true,
       members: {
         orderBy: { joined_at: "asc" },

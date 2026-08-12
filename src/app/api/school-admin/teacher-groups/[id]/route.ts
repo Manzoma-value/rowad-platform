@@ -40,6 +40,9 @@ export async function GET(
       id: true,
       name: true,
       description: true,
+      max_members: true,
+      leader_teacher_id: true,
+      leader: { select: { id: true, profile: { select: { full_name: true, avatar_url: true } } } },
       created_at: true,
       updated_at: true,
       members: {
@@ -60,11 +63,11 @@ export async function PATCH(
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await context.params;
 
-  let body: { name?: string; description?: string | null };
+  let body: { name?: string; description?: string | null; max_members?: number; leader_teacher_id?: string | null };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid body" }, { status: 400 }); }
 
   const existing = await prisma.teacherGroup.findFirst({
-    where: { id, school_id: auth.school.id }, select: { id: true },
+    where: { id, school_id: auth.school.id }, select: { id: true, _count: { select: { members: true } } },
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -77,11 +80,37 @@ export async function PATCH(
   if (body.description !== undefined) {
     data.description = body.description?.toString().trim().slice(0, 1000) || null;
   }
+  if (body.max_members !== undefined) {
+    const maxMembers = Number(body.max_members);
+    if (!Number.isInteger(maxMembers) || maxMembers < 1 || maxMembers > 500) {
+      return NextResponse.json({ error: "max_members must be between 1 and 500" }, { status: 400 });
+    }
+    if (maxMembers < existing._count.members) {
+      return NextResponse.json({ error: "capacity_below_member_count", member_count: existing._count.members }, { status: 409 });
+    }
+    data.max_members = maxMembers;
+  }
+  if (body.leader_teacher_id !== undefined) {
+    if (body.leader_teacher_id === null || body.leader_teacher_id === "") {
+      data.leader_teacher_id = null;
+    } else {
+      const leaderMembership = await prisma.teacherGroupMember.findUnique({
+        where: { group_id_teacher_id: { group_id: id, teacher_id: body.leader_teacher_id } },
+        select: { teacher_id: true },
+      });
+      if (!leaderMembership) return NextResponse.json({ error: "leader_must_be_group_member" }, { status: 400 });
+      data.leader_teacher_id = body.leader_teacher_id;
+    }
+  }
 
   const group = await prisma.teacherGroup.update({
     where: { id },
     data,
-    select: { id: true, name: true, description: true, updated_at: true },
+    select: {
+      id: true, name: true, description: true, max_members: true,
+      leader_teacher_id: true, updated_at: true,
+      leader: { select: { id: true, profile: { select: { full_name: true, avatar_url: true } } } },
+    },
   });
   return NextResponse.json({ group });
 }

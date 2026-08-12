@@ -593,6 +593,7 @@ model Teacher {
   traitAssessments                 TraitAssessment[]
   application                      TeacherApplication?
   group_memberships                TeacherGroupMember[]
+  groups_led                       TeacherGroup[]                   @relation("TeacherGroupLeader")
   ratings_given                    AssessmentRating[]              @relation("AssessmentRater")
   ratings_received                 AssessmentRating[]              @relation("AssessmentTarget")
   future_qualification_vote        FutureQualificationVote?
@@ -635,12 +636,15 @@ model TeacherGroup {
   school_id   String   @db.Uuid
   name        String
   description String?
+  max_members Int      @default(30)
+  leader_teacher_id String? @db.Uuid
   created_by  String   @db.Uuid
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
   school           School                     @relation(fields: [school_id], references: [id], onDelete: Cascade)
   author           Profile                    @relation("TeacherGroupAuthor", fields: [created_by], references: [id])
+  leader           Teacher?                   @relation("TeacherGroupLeader", fields: [leader_teacher_id], references: [id], onDelete: SetNull)
   members          TeacherGroupMember[]
   assessments      GroupAssessment[]
   announcements    TeacherGroupAnnouncement[]
@@ -649,6 +653,7 @@ model TeacherGroup {
   assessment_links GroupAssessmentGroup[]
 
   @@index([school_id, updated_at(sort: Desc)])
+  @@index([leader_teacher_id])
   @@map("teacher_groups")
 }
 

@@ -1,828 +1,113 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
+import {
+  Award, BookOpen, BriefcaseBusiness, Camera, CheckCircle2, ChevronRight,
+  CircleUserRound, Clock3, Crown, GraduationCap, Languages, Mail, MapPin,
+  Network, Phone, Radar, Search, Sparkles, Target, Trash2, Upload, Users,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/language-context";
+import MandalaLoader from "@/components/MandalaLoader";
+import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
+import { averageTuples, canonicalizeDefaultTraits } from "@/lib/rowad-assessment";
+import { seedFromString } from "@/lib/trait-spectrum";
 
-interface ProfileData {
-  id: string;
-  full_name: string;
-  role: string;
-  avatar_url: string | null;
-  avatar_path: string | null;
-  created_at: string;
-  email?: string;
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("");
-}
-
-function formatDate(d: string, lang: string) {
-  return new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-const c = {
-  ar: {
-    section: "الحساب الشخصي",
-    title: "ملفي الشخصي",
-    role: "المشرف",
-    basicInfo: "المعلومات الأساسية",
-    fullName: "الاسم الكامل",
-    email: "البريد الإلكتروني",
-    permission: "الصلاحية",
-    joinDate: "تاريخ الانضمام",
-    security: "الأمان",
-    password: "كلمة المرور",
-    change: "تغيير",
-    accountType: "نوع الحساب",
-    profileComp: "اكتمال الملف الشخصي",
-    addPhoto: "أضف صورة شخصية لإكمال ملفك",
-    upload: "رفع صورة",
-    changePhoto: "تغيير الصورة",
-    remove: "إزالة الصورة",
-    uploading: "جارٍ الرفع",
-    view: "عرض",
-    drag: "أو اسحب الصورة وأفلتها هنا",
-    fileRules: "PNG · JPG · WEBP · حتى 5 ميغابايت",
-    complete: "مكتمل",
-    toastOk: "تم تحديث الصورة بنجاح",
-    toastRemove: "تمت إزالة الصورة",
-    toastErr: "فشل رفع الصورة، حاول مجدداً",
-    toastRemErr: "فشلت الإزالة",
-    toastType: "يُسمح فقط برفع صور",
-    toastSize: "حجم الصورة يتجاوز 5 ميغابايت",
-  },
-  sq: {
-    section: "Llogaria ime",
-    title: "Profili im",
-    role: "Mbikëqyrësi",
-    basicInfo: "Të dhënat bazë",
-    fullName: "Emri i plotë",
-    email: "Email",
-    permission: "Roli",
-    joinDate: "Data e regjistrimit",
-    security: "Siguria",
-    password: "Fjalëkalimi",
-    change: "Ndrysho",
-    accountType: "Lloji i llogarisë",
-    profileComp: "Plotësia e profilit",
-    addPhoto: "Shto foto profili për ta plotësuar",
-    upload: "Ngarko foto",
-    changePhoto: "Ndrysho foton",
-    remove: "Hiq foton",
-    uploading: "Duke ngarkuar",
-    view: "Shiko",
-    drag: "ose tërhiq dhe lësho foton këtu",
-    fileRules: "PNG · JPG · WEBP · Maks 5MB",
-    complete: "Plotë",
-    toastOk: "Foto u përditësua me sukses",
-    toastRemove: "Foto u hoq",
-    toastErr: "Ngarkimi dështoi, provo përsëri",
-    toastRemErr: "Heqja dështoi",
-    toastType: "Lejohen vetëm imazhe",
-    toastSize: "Imazhi tejkalon 5MB",
-  },
+type Lang = "ar" | "sq";
+type TeacherData = {
+  id: string; created_at: string; onboarding_status: string;
+  profile: { id: string; created_at: string; full_name: string; email: string | null; avatar_url: string | null; avatar_path: string | null };
+  application: Record<string, unknown> | null;
+  classes: Array<{ id: string; name: string; created_at: string; students: Array<{ id: string; city: string | null; age: number | null; onboarding_status: string; profile: { id: string; full_name: string; email: string | null; avatar_url: string | null } }>; _count: { students: number; lessons: number; quizzes: number; announcements: number } }>;
+  lessons: Array<{ id: string; title: string; review_status: string; is_published: boolean; updated_at: string; class: { id: string; name: string }; _count: { contents: number; questions: number; attempts: number } }>;
+  quizzes: Array<{ id: string; name: string; review_status: string; created_at: string; class: { id: string; name: string }; _count: { questions: number; attempts: number } }>;
+  group_memberships: Array<{ joined_at: string; group: { id: string; name: string; description: string | null; max_members: number; leader_teacher_id: string | null; leader: { profile: { full_name: string } } | null; _count: { members: number; assessments: number; announcements: number } } }>;
+  ratings_received: Array<{ assessment_id: string; rater_teacher_id: string; scores: number[]; updated_at: string; rater: { profile: { full_name: string; avatar_url: string | null } }; assessment: { id: string; title: string; status: string; traits: Array<{ position: number; label_ar: string; label_sq: string; statement_ar: string; statement_sq: string; color: string; kind: "TARGET" | "EARLY_OBSERVATION"; objective_ar: string | null; objective_sq: string | null }> } }>;
+  ratings_given: Array<{ assessment_id: string; target_teacher_id: string; updated_at: string; target: { profile: { full_name: string; avatar_url: string | null } }; assessment: { title: string } }>;
+  traitAssessments: Array<{ id: string; updated_at: string; general_note: string | null; student: { profile: { full_name: string; avatar_url: string | null } }; module: { title: string; stage: { title: string } }; trait_scores: Array<{ score: number; trait: { name: string; name_sq: string | null } }> }>;
+  workshop_enrollments: Array<{ id: string; status: string; enrolled_at: string; workshop: { id: string; title: string; status: string } }>;
+  workshop_attendance: Array<{ id: string; workshop_id: string }>;
+  workshop_completions: Array<{ id: string; workshop_id: string }>;
 };
 
+const COPY = {
+  ar: {
+    eyebrow: "الملف المهني الشامل", title: "ملفي المهني", role: "مشرف تربوي", joined: "منذ", editPhoto: "تغيير الصورة", removePhoto: "إزالة الصورة", uploadHint: "PNG أو JPG أو WEBP حتى 5MB",
+    overview: "نظرة عامة", learning: "طلابي وتعليمي", readings: "تقييماتي", profile: "بياناتي المهنية", students: "الطلاب", classes: "الفصول", lessons: "الدروس", quizzes: "الاختبارات", ratings: "تقييمات وصلتني", groups: "المجموعات", workshops: "ورش العمل",
+    snapshot: "الملخص المهني", snapshotSub: "بياناتك المهنية كما تظهر لإدارة المنصة.", qualification: "المؤهل", specialization: "التخصص", institution: "جهة التخرج", experience: "سنوات الخبرة", location: "الموقع", languages: "اللغات", currentRole: "الدور الحالي", age: "العمر", phone: "الهاتف", email: "البريد الإلكتروني",
+    myClasses: "فصولي وطلابي", classSub: "تفاصيل الفصول والطلاب المسندين إليك.", allStudents: "كل الطلاب", searchStudents: "ابحث عن طالب…", authored: "المحتوى الذي أنشأته", content: "محتوى", questions: "أسئلة", attempts: "محاولات", evaluations: "تقييمات سمات الطلاب", noData: "لا توجد بيانات بعد.",
+    spectrum: "الطيف التربوي", spectrumSub: "القراءة المجمعة من التقييمات التي وصلتك.", receivedFrom: (n: number) => `${n} تقييم`, raters: "من قيّمني", ratedOthers: "من قيّمتهم", latest: "آخر تحديث", groupLeader: "قائد المجموعة", youLead: "أنت قائد هذه المجموعة", members: "عضواً", assessments: "نماذج قياس", attendance: "أيام حضور", completed: "مكتملة", enrolled: "مسجل",
+    uploading: "جارٍ الرفع…", uploadOk: "تم تحديث الصورة.", uploadError: "تعذر تحديث الصورة.", removeOk: "تمت إزالة الصورة.", status: "حالة الاعتماد", published: "منشور", pending: "قيد المراجعة",
+  },
+  sq: {
+    eyebrow: "Profili i plotë profesional", title: "Profili im profesional", role: "Edukator", joined: "Që nga", editPhoto: "Ndrysho foton", removePhoto: "Hiq foton", uploadHint: "PNG, JPG ose WEBP deri në 5MB",
+    overview: "Përmbledhje", learning: "Pjesëmarrësit dhe mësimi", readings: "Vlerësimet e mia", profile: "Të dhënat profesionale", students: "Pjesëmarrës", classes: "Grupe mësimore", lessons: "Mësime", quizzes: "Kuize", ratings: "Vlerësime të marra", groups: "Grupe", workshops: "Punëtori",
+    snapshot: "Përmbledhja profesionale", snapshotSub: "Të dhënat profesionale siç i shikon administrata.", qualification: "Kualifikimi", specialization: "Specializimi", institution: "Institucioni", experience: "Përvoja", location: "Vendndodhja", languages: "Gjuhët", currentRole: "Roli aktual", age: "Mosha", phone: "Telefoni", email: "Email",
+    myClasses: "Grupet dhe pjesëmarrësit", classSub: "Detajet e grupeve mësimore dhe pjesëmarrësve të tu.", allStudents: "Të gjithë pjesëmarrësit", searchStudents: "Kërko pjesëmarrës…", authored: "Përmbajtja e krijuar", content: "Përmbajtje", questions: "Pyetje", attempts: "Përpjekje", evaluations: "Vlerësimet e tipareve", noData: "Ende nuk ka të dhëna.",
+    spectrum: "Spektri edukativ", spectrumSub: "Leximi i përmbledhur nga vlerësimet që ke marrë.", receivedFrom: (n: number) => `${n} vlerësime`, raters: "Kush më vlerësoi", ratedOthers: "Kë kam vlerësuar", latest: "Përditësimi i fundit", groupLeader: "Drejtuesi i grupit", youLead: "Ti drejton këtë grup", members: "anëtarë", assessments: "modele", attendance: "ditë pjesëmarrjeje", completed: "Përfunduar", enrolled: "Regjistruar",
+    uploading: "Po ngarkohet…", uploadOk: "Fotoja u përditësua.", uploadError: "Fotoja nuk u përditësua.", removeOk: "Fotoja u hoq.", status: "Statusi", published: "Publikuar", pending: "Në shqyrtim",
+  },
+} as const;
+
+function date(value: string, lang: Lang) { return new Date(value).toLocaleDateString(lang === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "sq-AL", { day: "numeric", month: "short", year: "numeric" }); }
+function textValue(value: unknown) { if (Array.isArray(value)) return value.map((item) => typeof item === "object" ? Object.values(item as Record<string, unknown>).filter(Boolean).join(" · ") : String(item)).join("، "); return value === null || value === undefined || value === "" ? "—" : String(value).replaceAll("_", " "); }
+function initials(name: string) { return name.split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase(); }
+
 export default function TeacherProfilePage() {
-  const { lang } = useLang();
-  const tr = c[lang === "sq" ? "sq" : "ar"];
-  const isRtl = lang !== "sq";
+  const { lang: rawLang } = useLang(); const lang: Lang = rawLang === "sq" ? "sq" : "ar"; const T = COPY[lang];
+  const [teacher, setTeacher] = useState<TeacherData | null>(null); const [loading, setLoading] = useState(true); const [tab, setTab] = useState("overview"); const [query, setQuery] = useState("");
+  const [uploading, setUploading] = useState(false); const [toast, setToast] = useState(""); const fileRef = useRef<HTMLInputElement>(null); const supabase = createClient();
+  const load = () => fetch("/api/teacher/profile", { cache: "no-store" }).then((r) => { if (!r.ok) throw new Error(); return r.json(); }).then((payload) => setTeacher(payload.teacher)).finally(() => setLoading(false));
+  useEffect(() => { void load(); }, []);
 
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const [lightbox, setLightbox] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.profile) setProfile({ ...d.profile, email: d.email });
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  function showToast(msg: string, ok: boolean) {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3500);
-  }
-
-  async function handleUpload(file: File) {
-    if (!profile) return;
-    if (!file.type.startsWith("image/")) {
-      showToast(tr.toastType, false);
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast(tr.toastSize, false);
-      return;
-    }
-
-    setUploading(true);
+  async function upload(file: File) {
+    if (!teacher || !file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) return setToast(T.uploadError);
+    setUploading(true); setToast("");
     try {
-      if (profile.avatar_path) {
-        await supabase.storage.from("avatars").remove([profile.avatar_path]);
-      }
-      const ext = file.name.split(".").pop();
-      const path = `profiles/${profile.id}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(path, file, { upsert: true });
-      if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(path);
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          avatar_url: urlData.publicUrl,
-          avatar_path: path,
-        }),
-      });
-      if (!res.ok) throw new Error();
-      setProfile((p) =>
-        p ? { ...p, avatar_url: urlData.publicUrl, avatar_path: path } : p,
-      );
-      showToast(tr.toastOk, true);
-    } catch {
-      showToast(tr.toastErr, false);
-    } finally {
-      setUploading(false);
-    }
+      if (teacher.profile.avatar_path) await supabase.storage.from("avatars").remove([teacher.profile.avatar_path]);
+      const ext = file.name.split(".").pop() || "jpg"; const path = `profiles/${teacher.profile.id}/avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true }); if (error) throw error;
+      const publicUrl = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+      const response = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ avatar_url: publicUrl, avatar_path: path }) }); if (!response.ok) throw new Error();
+      setTeacher((current) => current ? { ...current, profile: { ...current.profile, avatar_url: publicUrl, avatar_path: path } } : current); setToast(T.uploadOk);
+    } catch { setToast(T.uploadError); } finally { setUploading(false); }
   }
+  async function removePhoto() { const response = await fetch("/api/profile", { method: "DELETE" }); if (response.ok) { setTeacher((current) => current ? { ...current, profile: { ...current.profile, avatar_url: null, avatar_path: null } } : current); setToast(T.removeOk); } }
 
-  async function handleRemove() {
-    if (!profile) return;
-    setRemoving(true);
-    try {
-      const res = await fetch("/api/profile", { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      setProfile((p) =>
-        p ? { ...p, avatar_url: null, avatar_path: null } : p,
-      );
-      showToast(tr.toastRemove, true);
-    } catch {
-      showToast(tr.toastRemErr, false);
-    } finally {
-      setRemoving(false);
-    }
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) void handleUpload(file);
-  };
-
-  if (loading)
-    return (
-      <div className="pf-loading">
-        <div className="pf-spin" />
-        <style>{`@keyframes sp{to{transform:rotate(360deg)}}.pf-loading{display:flex;align-items:center;justify-content:center;min-height:60vh}.pf-spin{width:32px;height:32px;border:2.5px solid rgba(184,160,130,0.2);border-top-color:#B8A082;border-radius:50%;animation:sp 0.75s linear infinite}`}</style>
-      </div>
-    );
-
-  if (!profile) return null;
-
-  const initials = getInitials(profile.full_name);
-  const pct = profile.avatar_url ? "100%" : "80%";
-
-  return (
-    <div className="pf-root" dir={isRtl ? "rtl" : "ltr"}>
-      {/* Toast */}
-      {toast && (
-        <div className={`pf-toast ${toast.ok ? "pf-ok" : "pf-err"}`}>
-          <span className="pf-toast-dot" />
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Lightbox */}
-      {lightbox && profile.avatar_url && (
-        <div className="pf-lb-back" onClick={() => setLightbox(false)}>
-          <div className="pf-lb-box" onClick={(e) => e.stopPropagation()}>
-            <button className="pf-lb-close" onClick={() => setLightbox(false)}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-            <div className="pf-lb-img">
-              <Image
-                src={profile.avatar_url}
-                alt={profile.full_name}
-                width={420}
-                height={420}
-                style={{
-                  objectFit: "cover",
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: 20,
-                }}
-              />
-            </div>
-            <p className="pf-lb-name">{profile.full_name}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Page head */}
-      <div className="pf-head">
-        <span className="pf-head-label">{tr.section}</span>
-        <h1 className="pf-head-title">{tr.title}</h1>
-        <div className="pf-head-rule">
-          <div className="pf-rule-line" />
-          <div className="pf-rule-diamond" />
-          <div className="pf-rule-line pf-rule-fade" />
-        </div>
-      </div>
-
-      <div className="pf-layout">
-        {/* LEFT */}
-        <div className="pf-left">
-          <div className="pf-av-card">
-            <div className="pf-card-topline" />
-            <div className="pf-wmark" aria-hidden="true">
-              <svg viewBox="0 0 200 200" fill="none" width="100%" height="100%">
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="95"
-                  stroke="#B8A082"
-                  strokeWidth="0.5"
-                  opacity="0.1"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="78"
-                  stroke="#B8A082"
-                  strokeWidth="0.4"
-                  strokeDasharray="4 7"
-                  opacity="0.08"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="58"
-                  stroke="#B8A082"
-                  strokeWidth="0.3"
-                  opacity="0.07"
-                />
-                {Array.from({ length: 8 }, (_, i) => {
-                  const a = (i * 45 * Math.PI) / 180;
-                  return (
-                    <circle
-                      key={i}
-                      cx={Math.round((100 + 52 * Math.sin(a)) * 100) / 100}
-                      cy={Math.round((100 - 52 * Math.cos(a)) * 100) / 100}
-                      r="50"
-                      stroke="#B8A082"
-                      strokeWidth="0.3"
-                      opacity="0.055"
-                      fill="none"
-                    />
-                  );
-                })}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="28"
-                  stroke="#B8A082"
-                  strokeWidth="0.3"
-                  opacity="0.1"
-                />
-              </svg>
-            </div>
-
-            {/* Avatar */}
-            <div
-              className={`pf-av-zone${dragOver ? " drag-on" : ""}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-            >
-              <div className="pf-av-ring">
-                {uploading ? (
-                  <div className="pf-av-load">
-                    <div className="pf-av-spin" />
-                    <span>{tr.uploading}</span>
-                  </div>
-                ) : profile.avatar_url ? (
-                  <button
-                    className="pf-av-btn"
-                    onClick={() => setLightbox(true)}
-                  >
-                    <Image
-                      src={profile.avatar_url}
-                      alt={profile.full_name}
-                      width={148}
-                      height={148}
-                      style={{
-                        objectFit: "cover",
-                        width: "100%",
-                        height: "100%",
-                      }}
-                    />
-                    <div className="pf-av-hover">
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      >
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m21 21-4.35-4.35" />
-                      </svg>
-                      <span>{tr.view}</span>
-                    </div>
-                  </button>
-                ) : (
-                  <div className="pf-av-initials">{initials}</div>
-                )}
-              </div>
-              {dragOver && <div className="pf-drag-ring" />}
-            </div>
-
-            <h2 className="pf-av-name">{profile.full_name}</h2>
-            <div className="pf-av-badge">{tr.role}</div>
-
-            <div className="pf-sep">
-              <div className="pf-sep-line" />
-              <div className="pf-sep-dot" />
-              <div className="pf-sep-line" />
-            </div>
-
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleUpload(f);
-                e.target.value = "";
-              }}
-            />
-
-            <div className="pf-actions">
-              <button
-                className="pf-btn-primary"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <div className="pf-spin-w" />
-                ) : (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  >
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                )}
-                {profile.avatar_url ? tr.changePhoto : tr.upload}
-              </button>
-              {profile.avatar_url && (
-                <button
-                  className="pf-btn-danger"
-                  onClick={handleRemove}
-                  disabled={removing}
-                >
-                  {removing ? (
-                    <div className="pf-spin-r" />
-                  ) : (
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    >
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
-                    </svg>
-                  )}
-                  {tr.remove}
-                </button>
-              )}
-            </div>
-
-            <div className="pf-file-hint">{tr.fileRules}</div>
-            <p className="pf-drag-label">{tr.drag}</p>
-          </div>
-
-          {/* Completeness */}
-          <div className="pf-comp-card">
-            <div className="pf-comp-row">
-              <span className="pf-comp-label">{tr.profileComp}</span>
-              <span className="pf-comp-pct">{pct}</span>
-            </div>
-            <div className="pf-bar-bg">
-              <div className="pf-bar-fill" style={{ width: pct }} />
-            </div>
-            {!profile.avatar_url && (
-              <p className="pf-comp-hint">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 8v4m0 4h.01" />
-                </svg>
-                {tr.addPhoto}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="pf-right">
-          {/* Basic info */}
-          <div className="pf-card">
-            <div className="pf-card-topline" />
-            <div className="pf-card-hd">
-              <div className="pf-card-ico">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                >
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-              <span className="pf-card-title">{tr.basicInfo}</span>
-            </div>
-            <div className="pf-rows">
-              <div className="pf-row">
-                <div className="pf-row-ico">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-                <div className="pf-row-body">
-                  <span className="pf-row-lbl">{tr.fullName}</span>
-                  <span className="pf-row-val">{profile.full_name}</span>
-                </div>
-              </div>
-
-              {profile.email && (
-                <div className="pf-row">
-                  <div className="pf-row-ico">
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                    >
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                      <polyline points="22,6 12,13 2,6" />
-                    </svg>
-                  </div>
-                  <div className="pf-row-body">
-                    <span className="pf-row-lbl">{tr.email}</span>
-                    <span className="pf-row-val">{profile.email}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="pf-row">
-                <div className="pf-row-ico">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  >
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                  </svg>
-                </div>
-                <div className="pf-row-body">
-                  <span className="pf-row-lbl">{tr.permission}</span>
-                  <span className="pf-row-val">
-                    <span className="pf-role-pill">{tr.role}</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="pf-row pf-row-last">
-                <div className="pf-row-ico">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  >
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </div>
-                <div className="pf-row-body">
-                  <span className="pf-row-lbl">{tr.joinDate}</span>
-                  <span className="pf-row-val">
-                    {formatDate(profile.created_at, lang)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="pf-card">
-            <div className="pf-card-topline" />
-            <div className="pf-stats">
-              <div className="pf-stat">
-                <div className="pf-stat-ico">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  >
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-                <span className="pf-stat-val">{tr.role}</span>
-                <span className="pf-stat-lbl">{tr.accountType}</span>
-              </div>
-              <div className="pf-stat-div" />
-              <div className="pf-stat">
-                <div className="pf-stat-ico">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                </div>
-                <span className="pf-stat-val">
-                  {formatDate(profile.created_at, lang)}
-                </span>
-                <span className="pf-stat-lbl">{tr.joinDate}</span>
-              </div>
-              <div className="pf-stat-div" />
-              <div className="pf-stat">
-                <div
-                  className="pf-stat-ico"
-                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#6B1E2D" }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-                <span
-                  className="pf-stat-val"
-                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#6B1E2D" }}
-                >
-                  {profile.avatar_url ? tr.complete : pct}
-                </span>
-                <span className="pf-stat-lbl">{tr.profileComp}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <style>{styles}</style>
-    </div>
-  );
+  const students = useMemo(() => teacher?.classes.flatMap((klass) => klass.students.map((student) => ({ ...student, className: klass.name }))) ?? [], [teacher]);
+  const models = useMemo(() => { if (!teacher) return []; const map = new Map<string, TeacherData["ratings_received"]>(); for (const rating of teacher.ratings_received) map.set(rating.assessment_id, [...(map.get(rating.assessment_id) ?? []), rating]); return Array.from(map.entries()).map(([id, ratings]) => ({ id, assessment: ratings[0].assessment, ratings, average: averageTuples(ratings.map((rating) => rating.scores)) })); }, [teacher]);
+  if (loading) return <MandalaLoader />; if (!teacher) return null;
+  const app = teacher.application ?? {}; const activeModel = models[0];
+  const tabs = [{ id: "overview", label: T.overview, icon: <Sparkles /> }, { id: "learning", label: T.learning, icon: <Users /> }, { id: "readings", label: T.readings, icon: <Radar /> }, { id: "profile", label: T.profile, icon: <CircleUserRound /> }];
+  return <main className="sp" dir={lang === "ar" ? "rtl" : "ltr"}>
+    {toast && <div className="sp-toast">{toast}</div>}
+    <header className="sp-hero"><div className="sp-orbit"/><div className="sp-hero-main">
+      <div className="sp-avatar">{teacher.profile.avatar_url ? <Image src={teacher.profile.avatar_url} alt={teacher.profile.full_name} width={108} height={108}/> : <span>{initials(teacher.profile.full_name)}</span>}<button onClick={() => fileRef.current?.click()} title={T.editPhoto}><Camera size={16}/></button><input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void upload(file); }}/></div>
+      <div className="sp-hero-copy"><span className="sp-eyebrow"><Sparkles size={14}/>{T.eyebrow}</span><h1>{teacher.profile.full_name}</h1><div className="sp-meta"><span><GraduationCap size={13}/>{textValue(app.current_role) || T.role}</span>{Boolean(app.city) && <span><MapPin size={13}/>{textValue(app.city)}, {textValue(app.country)}</span>}</div><div className="sp-contact">{teacher.profile.email && <a href={`mailto:${teacher.profile.email}`}><Mail size={14}/>{teacher.profile.email}</a>}{Boolean(app.phone) && <a href={`tel:${textValue(app.phone)}`}><Phone size={14}/>{textValue(app.phone)}</a>}</div></div>
+    </div><div className="sp-photo-actions"><strong>{uploading ? T.uploading : T.editPhoto}</strong><small>{T.uploadHint}</small><div><button onClick={() => fileRef.current?.click()}><Upload size={14}/>{T.editPhoto}</button>{teacher.profile.avatar_url && <button className="danger" onClick={() => void removePhoto()}><Trash2 size={14}/>{T.removePhoto}</button>}</div><time>{T.joined} {date(teacher.created_at, lang)}</time></div></header>
+    <section className="sp-metrics"><Metric icon={<Users/>} value={students.length} label={T.students}/><Metric icon={<Network/>} value={teacher.classes.length} label={T.classes}/><Metric icon={<BookOpen/>} value={teacher.lessons.length} label={T.lessons}/><Metric icon={<Target/>} value={teacher.quizzes.length} label={T.quizzes}/><Metric icon={<Radar/>} value={teacher.ratings_received.length} label={T.ratings}/><Metric icon={<Sparkles/>} value={teacher.group_memberships.length} label={T.groups}/></section>
+    <nav className="sp-tabs">{tabs.map((item) => <button key={item.id} className={tab === item.id ? "active" : ""} onClick={() => setTab(item.id)}>{item.icon}<span>{item.label}</span></button>)}</nav>
+    <div className="sp-view">
+      {tab === "overview" && <><div className="sp-two"><Panel title={T.snapshot} subtitle={T.snapshotSub} icon={<BriefcaseBusiness/>}><InfoGrid app={app} T={T}/></Panel><Panel title={T.groups} icon={<Network/>}><Groups teacher={teacher} T={T}/></Panel></div><Panel title={T.spectrum} subtitle={T.spectrumSub} icon={<Radar/>}>{activeModel?.average ? <div className="sp-spectrum"><div><span>{activeModel.assessment.title}</span><strong>{T.receivedFrom(activeModel.ratings.length)}</strong><button onClick={() => setTab("readings")}>{T.readings}<ChevronRight size={14}/></button></div><TraitSpectrumPanel traits={canonicalizeDefaultTraits(activeModel.assessment.traits).map((trait, index) => ({ label: lang === "ar" ? trait.label_ar : trait.label_sq, color: trait.color, pct: activeModel.average?.[index] ?? 0 }))} seed={seedFromString(`${teacher.id}:${activeModel.id}`)} lang={lang} summary/></div> : <Empty text={T.noData}/>}</Panel></>}
+      {tab === "learning" && <Learning teacher={teacher} students={students} query={query} setQuery={setQuery} T={T} lang={lang}/>}
+      {tab === "readings" && <Readings teacher={teacher} models={models} T={T} lang={lang}/>}
+      {tab === "profile" && <div className="sp-two"><Panel title={T.profile} icon={<CircleUserRound/>}><InfoGrid app={app} T={T} full/></Panel><Panel title={T.workshops} icon={<Sparkles/>}>{teacher.workshop_enrollments.length ? <div className="sp-workshops">{teacher.workshop_enrollments.map((entry) => <article key={entry.id}><div><strong>{entry.workshop.title}</strong><small>{teacher.workshop_attendance.filter((item) => item.workshop_id === entry.workshop.id).length} {T.attendance}</small></div><span>{teacher.workshop_completions.some((item) => item.workshop_id === entry.workshop.id) ? T.completed : T.enrolled}</span></article>)}</div> : <Empty text={T.noData}/>}</Panel></div>}
+    </div><style>{styles}</style>
+  </main>;
 }
+
+function Metric({ icon, value, label }: { icon: ReactNode; value: number; label: string }) { return <article><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></article>; }
+function Panel({ title, subtitle, icon, children }: { title: string; subtitle?: string; icon: ReactNode; children: ReactNode }) { return <section className="sp-panel"><header><span>{icon}</span><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div></header>{children}</section>; }
+function Empty({ text }: { text: string }) { return <div className="sp-empty">{text}</div>; }
+function InfoGrid({ app, T, full = false }: { app: Record<string, unknown>; T: typeof COPY[Lang]; full?: boolean }) { const rows = [[T.qualification, app.qualification, <Award key="a"/>],[T.specialization, app.specialization, <Target key="t"/>],[T.institution, app.graduation_institution, <GraduationCap key="g"/>],[T.experience, app.years_of_experience, <Clock3 key="c"/>],[T.location, [app.city, app.country].filter(Boolean).join(", "), <MapPin key="m"/>],[T.languages, app.languages, <Languages key="l"/>],...(full ? [[T.currentRole, app.current_role, <BriefcaseBusiness key="b"/>],[T.age, app.age, <CircleUserRound key="u"/>],[T.phone, app.phone, <Phone key="p"/>],[T.email, app.email, <Mail key="e"/>]] : [])] as Array<[string, unknown, ReactNode]>; return <div className="sp-info-grid">{rows.map(([label,value,icon]) => <div className="sp-info" key={label}><span>{icon}</span><div><small>{label}</small><strong>{textValue(value)}</strong></div></div>)}</div>; }
+function Groups({ teacher, T }: { teacher: TeacherData; T: typeof COPY[Lang] }) { return teacher.group_memberships.length ? <div className="sp-groups">{teacher.group_memberships.map(({ group }) => <article key={group.id}><span>{group.leader_teacher_id === teacher.id ? <Crown/> : <Users/>}</span><div><strong>{group.name}</strong><p>{group.description || "—"}</p><small>{group.leader_teacher_id === teacher.id ? T.youLead : `${T.groupLeader}: ${group.leader?.profile.full_name || "—"}`} · {group._count.members}/{group.max_members} {T.members}</small></div></article>)}</div> : <Empty text={T.noData}/>; }
+function Learning({ teacher, students, query, setQuery, T, lang }: { teacher: TeacherData; students: Array<TeacherData["classes"][number]["students"][number] & { className: string }>; query: string; setQuery: (value: string) => void; T: typeof COPY[Lang]; lang: Lang }) { const visible = students.filter((student) => student.profile.full_name.toLowerCase().includes(query.toLowerCase())); return <div className="sp-stack"><Panel title={T.myClasses} subtitle={T.classSub} icon={<Network/>}><div className="sp-class-grid">{teacher.classes.map((klass) => <article key={klass.id}><header><span><Network/></span><div><strong>{klass.name}</strong><small>{klass._count.students} {T.students}</small></div></header><div className="sp-class-facts"><span>{klass._count.lessons} {T.lessons}</span><span>{klass._count.quizzes} {T.quizzes}</span><span>{klass._count.announcements}</span></div><div className="sp-avatars">{klass.students.slice(0,7).map((student) => <Avatar key={student.id} name={student.profile.full_name} src={student.profile.avatar_url}/>)}</div></article>)}</div></Panel><Panel title={T.allStudents} icon={<Users/>}><label className="sp-search"><Search/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={T.searchStudents}/></label>{visible.length ? <div className="sp-people">{visible.map((student) => <article key={`${student.className}:${student.id}`}><Avatar name={student.profile.full_name} src={student.profile.avatar_url}/><div><strong>{student.profile.full_name}</strong><span>{student.className}</span><small>{student.profile.email || student.city || "—"}</small></div></article>)}</div> : <Empty text={T.noData}/>}</Panel><Panel title={T.authored} icon={<BookOpen/>}><div className="sp-content-cols"><Content title={T.lessons} items={teacher.lessons.map((item) => ({ id:item.id,title:item.title,className:item.class.name,status:item.is_published?T.published:T.pending,date:item.updated_at,facts:[`${item._count.contents} ${T.content}`,`${item._count.questions} ${T.questions}`,`${item._count.attempts} ${T.attempts}`] }))} lang={lang}/><Content title={T.quizzes} items={teacher.quizzes.map((item) => ({ id:item.id,title:item.name,className:item.class.name,status:item.review_status,date:item.created_at,facts:[`${item._count.questions} ${T.questions}`,`${item._count.attempts} ${T.attempts}`] }))} lang={lang}/></div></Panel><Panel title={T.evaluations} icon={<CheckCircle2/>}>{teacher.traitAssessments.length ? <div className="sp-evals">{teacher.traitAssessments.map((item) => <article key={item.id}><Avatar name={item.student.profile.full_name} src={item.student.profile.avatar_url}/><div><strong>{item.student.profile.full_name}</strong><span>{item.module.title} · {item.module.stage.title}</span><small>{item.trait_scores.map((score) => `${lang === "sq" ? score.trait.name_sq || score.trait.name : score.trait.name}: ${score.score}`).join(" · ")}</small></div><time>{date(item.updated_at,lang)}</time></article>)}</div> : <Empty text={T.noData}/>}</Panel></div>; }
+function Readings({ teacher, models, T, lang }: { teacher: TeacherData; models: Array<{ id:string; assessment:TeacherData["ratings_received"][number]["assessment"]; ratings:TeacherData["ratings_received"]; average:number[] | null }>; T: typeof COPY[Lang]; lang: Lang }) { return <div className="sp-stack">{models.map((model) => <Panel key={model.id} title={model.assessment.title} subtitle={T.receivedFrom(model.ratings.length)} icon={<Radar/>}>{model.average && <TraitSpectrumPanel traits={canonicalizeDefaultTraits(model.assessment.traits).map((trait,index)=>({label:lang==="ar"?trait.label_ar:trait.label_sq,color:trait.color,pct:model.average?.[index]??0}))} seed={seedFromString(`${teacher.id}:${model.id}:profile`)} lang={lang}/>}<div className="sp-raters">{model.ratings.map((rating)=><article key={rating.rater_teacher_id}><Avatar name={rating.rater.profile.full_name} src={rating.rater.profile.avatar_url}/><div><strong>{rating.rater.profile.full_name}</strong><small>{T.latest}: {date(rating.updated_at,lang)}</small></div></article>)}</div></Panel>)}{!models.length&&<Empty text={T.noData}/>}<Panel title={T.ratedOthers} icon={<Target/>}>{teacher.ratings_given.length?<div className="sp-raters">{teacher.ratings_given.map((rating)=><article key={`${rating.assessment_id}:${rating.target_teacher_id}`}><Avatar name={rating.target.profile.full_name} src={rating.target.profile.avatar_url}/><div><strong>{rating.target.profile.full_name}</strong><small>{rating.assessment.title} · {date(rating.updated_at,lang)}</small></div></article>)}</div>:<Empty text={T.noData}/>}</Panel></div>; }
+function Avatar({ name, src }: { name:string; src:string|null }) { return src ? <Image className="sp-mini-avatar" src={src} alt={name} width={42} height={42}/> : <span className="sp-mini-avatar fallback">{initials(name)}</span>; }
+function Content({ title,items,lang }: { title:string;items:Array<{id:string;title:string;className:string;status:string;date:string;facts:string[]}>;lang:Lang }) { return <section className="sp-content"><h3>{title}<b>{items.length}</b></h3>{items.map((item)=><article key={item.id}><div><strong>{item.title}</strong><span>{item.className}</span></div><em>{item.status}</em><div>{item.facts.map((fact)=><small key={fact}>{fact}</small>)}</div><time>{date(item.date,lang)}</time></article>)}</section>; }
 
 const styles = `
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-@keyframes fadeUp {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes toastIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes lbIn  {from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}
-@keyframes sp    {to{transform:rotate(360deg)}}
-@keyframes pulse {0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
-
-:root{
-  --gold:#B8A082;--gold2:#B8A082;
-  --gold-border:rgba(184,160,130,0.2);
-  --bg-card:#FFFBF5;
-  --text:#1A1A1A;--text2:#655B53;--text3:#8C8274;
-  --border:rgba(26,26,26,0.08);--border-med:rgba(26,26,26,0.13);
-  --font:'Cairo',sans-serif;
-  --r-lg:22px;--r-xl:28px;
-}
-
-.pf-root{min-height:100vh;padding:36px 40px 80px;font-family:var(--font);animation:fadeUp 0.35s cubic-bezier(0.22,1,0.36,1)}
-
-/* Head */
-.pf-head{margin-bottom:36px}
-.pf-head-label{display:block;font-size:10.5px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
-.pf-head-title{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-0.4px;margin-bottom:16px}
-.pf-head-rule{display:flex;align-items:center;gap:10px;max-width:260px}
-.pf-rule-line{width:80px;height:1px;background:linear-gradient(270deg,var(--gold),transparent)}
-.pf-rule-fade{flex:1;background:transparent}
-.pf-rule-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;opacity:0.7}
-
-/* Layout */
-.pf-layout{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:start}
-
-/* Avatar card */
-.pf-av-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:32px 24px 24px;text-align:center;position:relative;overflow:hidden;box-shadow:0 20px 50px rgba(26,26,26,0.05)}
-.pf-card-topline{position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.pf-wmark{position:absolute;top:-30px;left:-30px;width:210px;height:210px;pointer-events:none}
-
-.pf-av-zone{position:relative;width:fit-content;margin:0 auto 22px}
-.pf-av-ring{width:148px;height:148px;border-radius:50%;border:2px solid var(--gold-border);background:rgba(184,160,130,0.06);overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;z-index:1;transition:border-color 0.2s,box-shadow 0.2s}
-.pf-av-zone.drag-on .pf-av-ring{border-color:var(--gold);box-shadow:0 0 0 4px rgba(184,160,130,0.12)}
-.pf-drag-ring{position:absolute;inset:-8px;border-radius:50%;border:2px dashed rgba(184,160,130,0.45);animation:pulse 1.2s ease infinite;pointer-events:none;z-index:0}
-.pf-av-initials{font-size:44px;font-weight:900;color:var(--gold);user-select:none;line-height:1}
-.pf-av-btn{width:100%;height:100%;background:none;border:none;cursor:pointer;padding:0;position:relative;overflow:hidden}
-.pf-av-hover{position:absolute;inset:0;background:rgba(26,26,26,0.52);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#fff;font-size:12px;font-weight:700;font-family:var(--font);opacity:0;transition:opacity 0.2s}
-.pf-av-btn:hover .pf-av-hover{opacity:1}
-.pf-av-load{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--gold);font-size:11px;font-weight:600;font-family:var(--font)}
-.pf-av-spin{width:36px;height:36px;border:2.5px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:sp 0.75s linear infinite}
-
-.pf-av-name{font-size:18px;font-weight:900;color:var(--text);margin-bottom:9px;letter-spacing:-0.2px;position:relative;z-index:1}
-.pf-av-badge{display:inline-block;font-size:11px;font-weight:700;color:#6B1E2D;background:rgba(184,160,130,0.13);border:1px solid rgba(184,160,130,0.24);border-radius:999px;padding:4px 14px;letter-spacing:0.5px;margin-bottom:22px;position:relative;z-index:1}
-.pf-sep{display:flex;align-items:center;gap:8px;margin:0 0 22px}
-.pf-sep-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.15),transparent)}
-.pf-sep-dot{width:4px;height:4px;background:rgba(184,160,130,0.3);transform:rotate(45deg);flex-shrink:0}
-
-.pf-actions{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
-.pf-btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:999px;background:var(--text);color:#FFFBF5;border:none;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;box-shadow:0 8px 24px rgba(26,26,26,0.14)}
-.pf-btn-primary:hover:not(:disabled){background:#1A1A1A;transform:translateY(-1px);box-shadow:0 12px 30px rgba(26,26,26,0.2)}
-.pf-btn-primary:disabled{opacity:0.5;cursor:not-allowed}
-.pf-btn-danger{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 22px;border-radius:999px;background:transparent;color:rgba(107,30,45,0.65);border:1px solid rgba(107,30,45,0.16);font-size:12.5px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.18s}
-.pf-btn-danger:hover:not(:disabled){background:rgba(107,30,45,0.05);color:#6B1E2D;border-color:rgba(107,30,45,0.28)}
-.pf-btn-danger:disabled{opacity:0.5;cursor:not-allowed}
-.pf-spin-w{width:13px;height:13px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:sp 0.7s linear infinite}
-.pf-spin-r{width:12px;height:12px;border:2px solid rgba(107,30,45,0.15);border-top-color:#6B1E2D;border-radius:50%;animation:sp 0.7s linear infinite}
-.pf-file-hint{margin-top:14px;font-size:11px;color:var(--text3);position:relative;z-index:1}
-.pf-drag-label{margin-top:5px;font-size:11px;color:var(--text3);position:relative;z-index:1}
-
-/* Completeness */
-.pf-comp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-top:16px;box-shadow:0 10px 28px rgba(26,26,26,0.04)}
-.pf-comp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.pf-comp-label{font-size:11px;font-weight:700;color:var(--text3)}
-.pf-comp-pct{font-size:17px;font-weight:900;color:var(--gold)}
-.pf-bar-bg{height:4px;border-radius:99px;background:rgba(184,160,130,0.1);overflow:hidden;margin-bottom:10px}
-.pf-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width 1s cubic-bezier(0.22,1,0.36,1)}
-.pf-comp-hint{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text3)}
-.pf-comp-hint svg{flex-shrink:0;color:var(--gold)}
-
-/* Right */
-.pf-right{display:flex;flex-direction:column;gap:20px}
-.pf-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:28px;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(26,26,26,0.04)}
-.pf-card-hd{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-.pf-card-ico{width:36px;height:36px;border-radius:10px;background:rgba(184,160,130,0.08);border:1px solid rgba(184,160,130,0.15);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
-.pf-card-title{font-size:13px;font-weight:800;color:var(--text);letter-spacing:0.2px}
-.pf-rows{display:flex;flex-direction:column}
-.pf-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
-.pf-row-last{border-bottom:none;padding-bottom:0}
-.pf-row-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:rgba(26,26,26,0.03);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2)}
-.pf-row-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
-.pf-row-lbl{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:0.3px}
-.pf-row-val{font-size:14px;font-weight:700;color:var(--text)}
-.pf-role-pill{display:inline-block;font-size:12px;font-weight:700;color:#6B1E2D;background:rgba(184,160,130,0.12);border-radius:6px;padding:3px 10px}
-.pf-sec-row{display:flex;align-items:center;gap:14px}
-.pf-sec-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;background:rgba(26,26,26,0.03);border:1px solid var(--border-med);display:flex;align-items:center;justify-content:center;color:var(--text2)}
-.pf-sec-body{flex:1;display:flex;flex-direction:column;gap:3px}
-.pf-sec-title{font-size:14px;font-weight:700;color:var(--text)}
-.pf-sec-dots{font-size:12px;color:var(--text3);letter-spacing:3px}
-.pf-btn-sm{padding:8px 18px;border-radius:999px;border:1px solid var(--border-med);background:none;color:var(--text2);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.15s;flex-shrink:0}
-.pf-btn-sm:hover{background:rgba(184,160,130,0.06);border-color:var(--gold-border);color:var(--text)}
-
-/* Stats */
-.pf-stats{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center}
-.pf-stat{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 12px;text-align:center}
-.pf-stat-ico{width:38px;height:38px;border-radius:12px;background:rgba(184,160,130,0.07);border:1px solid rgba(184,160,130,0.13);display:flex;align-items:center;justify-content:center;color:var(--gold);margin-bottom:2px}
-.pf-stat-val{font-size:13px;font-weight:800;color:var(--text)}
-.pf-stat-lbl{font-size:10.5px;font-weight:600;color:var(--text3)}
-.pf-stat-div{width:1px;height:60px;background:linear-gradient(180deg,transparent,rgba(184,160,130,0.2),transparent)}
-
-/* Toast */
-.pf-toast{position:fixed;top:24px;left:28px;z-index:9999;display:flex;align-items:center;gap:10px;padding:13px 20px;border-radius:12px;font-size:13.5px;font-weight:700;font-family:var(--font);box-shadow:0 16px 44px rgba(26,26,26,0.14);animation:toastIn 0.28s cubic-bezier(0.22,1,0.36,1)}
-.pf-ok{background:#FFFBF5;border:1px solid rgba(27,94,32,0.22);color:#6B1E2D}
-.pf-err{background:#FFFBF5;border:1px solid rgba(107,30,45,0.22);color:#6B1E2D}
-.pf-toast-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.pf-ok .pf-toast-dot{background:#6B1E2D}
-.pf-err .pf-toast-dot{background:#6B1E2D}
-
-/* Lightbox */
-.pf-lb-back{position:fixed;inset:0;z-index:9999;background:rgba(26,26,26,0.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:fadeUp 0.2s ease;cursor:pointer}
-.pf-lb-box{position:relative;cursor:default;animation:lbIn 0.25s cubic-bezier(0.22,1,0.36,1);text-align:center}
-.pf-lb-close{position:absolute;top:-14px;left:-14px;width:36px;height:36px;border-radius:50%;background:rgba(184,160,130,0.12);border:1px solid rgba(184,160,130,0.28);color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;z-index:1}
-.pf-lb-close:hover{background:rgba(184,160,130,0.26)}
-.pf-lb-img{width:420px;height:420px;border-radius:20px;overflow:hidden}
-.pf-lb-name{margin-top:16px;font-size:15px;font-weight:700;color:rgba(255,255,255,0.88);font-family:var(--font)}
-
-@media(max-width:900px){.pf-layout{grid-template-columns:1fr}.pf-root{padding:24px 18px 60px}}
-@media(max-width:600px){
-  .pf-root{padding:20px 14px 48px}
-  .pf-head{margin-bottom:24px}
-  .pf-head-title{font-size:23px}
-  .pf-layout{gap:16px}
-  .pf-av-card{padding:26px 18px 20px}
-  .pf-av-ring{width:120px;height:120px}
-  .pf-av-initials{font-size:36px}
-  .pf-card{padding:20px 18px}
-  .pf-card-hd{margin-bottom:16px}
-  .pf-stats{grid-template-columns:1fr;gap:12px}
-  .pf-stat-div{display:none}
-  .pf-lb-img{width:min(82vw,290px);height:min(82vw,290px)}
-  .pf-toast{left:14px;right:14px;top:14px}
-  .pf-sec-row{flex-wrap:wrap}
-  .pf-btn-sm{margin-inline-start:auto}
-}
-@media(max-width:400px){
-  .pf-head-title{font-size:20px}
-  .pf-av-name{font-size:16px}
-  .pf-row{gap:11px;padding:12px 0}
-  .pf-row-val{font-size:13px}
-  .pf-actions .pf-btn-primary,.pf-actions .pf-btn-danger{font-size:12px}
-}
+.sp{max-width:1360px;margin:0 auto;padding:10px 0 70px;color:#32101A;font-family:'Cairo',sans-serif}.sp-toast{position:fixed;inset-inline-end:22px;top:22px;z-index:100;border-radius:12px;background:#32101A;padding:10px 14px;color:#FFF;font-size:11px;font-weight:900;box-shadow:0 12px 30px rgba(107,30,45,.2)}.sp-hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:25px;min-height:250px;border-radius:30px;background:radial-gradient(circle at 10% 0,rgba(217,201,176,.19),transparent 34%),linear-gradient(135deg,#32101A,#6B1E2D 68%,#4A0E1C);padding:34px;box-shadow:0 28px 62px rgba(107,30,45,.22)}.sp-hero:after{content:"";position:absolute;inset:10px;z-index:-1;border:1px solid rgba(217,201,176,.16);border-radius:23px}.sp-orbit{position:absolute;inset-inline-end:-80px;bottom:-135px;width:250px;height:250px;border:34px solid rgba(217,201,176,.07);border-radius:50%;z-index:-1}.sp-hero-main{display:flex;align-items:center;gap:21px;min-width:0}.sp-avatar{position:relative;width:116px;height:116px;flex:none;display:grid;place-items:center;border:1px solid rgba(217,201,176,.27);border-radius:31px;background:rgba(255,251,245,.08);padding:8px}.sp-avatar img,.sp-avatar>span{width:100%;height:100%;display:grid;place-items:center;border-radius:23px;object-fit:cover;background:linear-gradient(145deg,#4A0E1C,#1A1A1A);color:#D9C9B0;font-size:28px;font-weight:900}.sp-avatar button{position:absolute;inset-inline-end:-5px;bottom:-5px;width:36px;height:36px;display:grid;place-items:center;border:3px solid #6B1E2D;border-radius:12px;background:#D9C9B0;color:#32101A;cursor:pointer}.sp-eyebrow{display:flex;align-items:center;gap:7px;color:#D9C9B0;font-size:11px;font-weight:900}.sp-hero-copy h1{margin:6px 0;color:#FFFBF5;font-size:34px}.sp-meta,.sp-contact{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:9px}.sp-meta span,.sp-contact a{display:inline-flex;align-items:center;gap:6px;color:rgba(255,251,245,.74);font-size:11px;font-weight:800;text-decoration:none}.sp-contact a{padding:7px 10px;border-radius:10px;background:rgba(255,251,245,.06)}.sp-photo-actions{min-width:250px;border:1px solid rgba(217,201,176,.17);border-radius:18px;background:rgba(26,26,26,.16);padding:17px;color:#FFF}.sp-photo-actions strong,.sp-photo-actions small,.sp-photo-actions time{display:block}.sp-photo-actions small,.sp-photo-actions time{color:#D9C9B0;font-size:9px;font-weight:700}.sp-photo-actions>div{display:flex;gap:6px;margin:12px 0}.sp-photo-actions button{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(217,201,176,.2);border-radius:9px;background:rgba(255,255,255,.08);padding:7px 9px;color:#FFF;font:800 9px 'Cairo';cursor:pointer}.sp-photo-actions button.danger{color:#E5E0D5}.sp-metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:14px 0}.sp-metrics article{display:flex;align-items:center;gap:10px;min-height:80px;border:1px solid rgba(107,30,45,.12);border-radius:17px;background:#FFFBF5;padding:13px;box-shadow:0 10px 26px rgba(107,30,45,.045)}.sp-metrics article>span{width:36px;height:36px;display:grid;place-items:center;border-radius:12px;background:#F7F3EB;color:#6B1E2D}.sp-metrics strong,.sp-metrics small{display:block}.sp-metrics strong{font-size:20px}.sp-metrics small{margin-top:4px;color:#796A62;font-size:9px;font-weight:800}.sp-tabs{position:sticky;top:8px;z-index:20;display:flex;gap:6px;overflow:auto;margin-bottom:16px;border:1px solid rgba(107,30,45,.12);border-radius:17px;background:rgba(255,251,245,.92);padding:7px;box-shadow:0 12px 30px rgba(107,30,45,.08);backdrop-filter:blur(14px)}.sp-tabs button{flex:1;min-height:43px;display:flex;align-items:center;justify-content:center;gap:7px;border:0;border-radius:12px;background:transparent;color:#655B53;font:800 10.5px 'Cairo';cursor:pointer}.sp-tabs button.active{background:#6B1E2D;color:#FFF}.sp-view,.sp-stack{display:grid;gap:14px}.sp-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.sp-panel{overflow:hidden;border:1px solid rgba(107,30,45,.12);border-radius:23px;background:#FFFBF5;padding:20px;box-shadow:0 14px 34px rgba(107,30,45,.055)}.sp-panel>header{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}.sp-panel>header>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#F7F3EB;color:#6B1E2D}.sp-panel h2{margin:0;font-size:16px}.sp-panel header p{margin:3px 0 0;color:#796A62;font-size:10px;font-weight:700}.sp-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sp-info{display:flex;align-items:center;gap:9px;border-radius:13px;background:#F7F3EB;padding:10px}.sp-info>span{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#FFFBF5;color:#8F765B}.sp-info small,.sp-info strong{display:block}.sp-info small{color:#8F765B;font-size:8px;font-weight:900}.sp-info strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px}.sp-empty{min-height:130px;display:grid;place-items:center;border:1px dashed rgba(107,30,45,.22);border-radius:16px;background:#F7F3EB;color:#8F765B;font-size:11px;font-weight:800}.sp-groups,.sp-workshops{display:grid;gap:7px}.sp-groups article,.sp-workshops article{display:flex;align-items:center;gap:10px;border-radius:14px;background:#F7F3EB;padding:11px}.sp-groups article>span{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#6B1E2D;color:#D9C9B0}.sp-groups article>div,.sp-workshops article>div{min-width:0;flex:1}.sp-groups strong,.sp-groups p,.sp-groups small,.sp-workshops strong,.sp-workshops small{display:block}.sp-groups p{margin:2px 0;color:#796A62;font-size:8.5px}.sp-groups small,.sp-workshops small{color:#8F765B;font-size:8px}.sp-workshops>article>span{border-radius:999px;background:#D9C9B0;padding:4px 7px;color:#655B53;font-size:8px;font-weight:900}.sp-spectrum{display:grid;grid-template-columns:minmax(210px,.55fr) minmax(420px,1.45fr);align-items:center;gap:18px}.sp-spectrum>div:first-child{display:flex;flex-direction:column;gap:5px;padding:14px}.sp-spectrum>div:first-child>span{font-size:20px;font-weight:900}.sp-spectrum>div:first-child>strong{color:#8F765B;font-size:10px}.sp-spectrum button{align-self:flex-start;display:flex;align-items:center;gap:5px;border:0;background:transparent;color:#6B1E2D;font:900 10px 'Cairo';cursor:pointer}.sp-class-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:9px}.sp-class-grid>article{border:1px solid rgba(107,30,45,.11);border-radius:17px;background:linear-gradient(145deg,#FFFBF5,#F7F3EB);padding:14px}.sp-class-grid header{display:flex;align-items:center;gap:9px}.sp-class-grid header>span{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#6B1E2D;color:#FFF}.sp-class-grid strong,.sp-class-grid small{display:block}.sp-class-grid small{color:#8F765B;font-size:8px}.sp-class-facts{display:flex;gap:5px;flex-wrap:wrap;margin:11px 0}.sp-class-facts span{border-radius:999px;background:#FFF;padding:4px 7px;color:#796A62;font-size:8px;font-weight:800}.sp-avatars{display:flex}.sp-mini-avatar{width:42px;height:42px;flex:none;border:2px solid #FFFBF5;border-radius:50%;object-fit:cover}.sp-mini-avatar.fallback{display:grid;place-items:center;background:#32101A;color:#D9C9B0;font-size:8px;font-weight:900}.sp-avatars .sp-mini-avatar{margin-inline-end:-8px}.sp-search{display:flex;align-items:center;gap:7px;max-width:360px;margin-bottom:12px;border:1px solid rgba(107,30,45,.14);border-radius:11px;background:#F7F3EB;padding:0 11px;color:#6B1E2D}.sp-search input{width:100%;height:39px;border:0;outline:0;background:transparent;font:inherit;font-size:10px}.sp-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}.sp-people article,.sp-evals article,.sp-raters article{display:flex;align-items:center;gap:10px;border-radius:14px;background:#F7F3EB;padding:10px}.sp-people article>div,.sp-evals article>div,.sp-raters article>div{min-width:0;flex:1}.sp-people strong,.sp-people span,.sp-people small,.sp-evals strong,.sp-evals span,.sp-evals small,.sp-raters strong,.sp-raters small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-people strong,.sp-evals strong,.sp-raters strong{font-size:10px}.sp-people span,.sp-evals span{color:#6B1E2D;font-size:9px;font-weight:800}.sp-people small,.sp-evals small,.sp-raters small{color:#8F765B;font-size:8px}.sp-evals,.sp-raters{display:grid;gap:7px}.sp-evals time{color:#8F765B;font-size:8px}.sp-content-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}.sp-content h3{display:flex;justify-content:space-between;margin:0 0 9px;font-size:12px}.sp-content h3 b{display:grid;place-items:center;min-width:25px;height:25px;border-radius:8px;background:#F7F3EB;color:#6B1E2D;font-size:9px}.sp-content>article{display:grid;grid-template-columns:1fr auto;gap:5px 8px;border:1px solid rgba(107,30,45,.1);border-radius:13px;background:#F7F3EB;padding:11px}.sp-content>article+article{margin-top:7px}.sp-content strong,.sp-content span{display:block}.sp-content strong{font-size:10px}.sp-content span,.sp-content time{color:#8F765B;font-size:8px}.sp-content em{border-radius:999px;background:#D9C9B0;padding:4px 7px;color:#655B53;font-size:7px;font-style:normal;font-weight:900}.sp-content>article>div:nth-of-type(2),.sp-content time{grid-column:1/-1}.sp-content>article>div:nth-of-type(2){display:flex;gap:5px;flex-wrap:wrap}.sp-content small{border-radius:999px;background:#FFF;padding:3px 6px;color:#796A62;font-size:7px;font-weight:800}.sp-raters{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));margin-top:12px}
+@media(max-width:1050px){.sp-metrics{grid-template-columns:repeat(3,1fr)}.sp-spectrum{grid-template-columns:1fr}}@media(max-width:760px){.sp-hero{align-items:flex-start;flex-direction:column}.sp-photo-actions{width:100%}.sp-two,.sp-content-cols{grid-template-columns:1fr}.sp-tabs button{flex:none;width:45px}.sp-tabs button span{display:none}.sp-tabs button.active{width:auto;padding:0 13px}.sp-tabs button.active span{display:inline}}@media(max-width:540px){.sp-hero{padding:22px 17px;border-radius:23px}.sp-hero-main{align-items:flex-start;flex-direction:column}.sp-avatar{width:86px;height:86px}.sp-hero-copy h1{font-size:25px}.sp-metrics{grid-template-columns:repeat(2,1fr)}.sp-panel{padding:14px;border-radius:18px}.sp-info-grid{grid-template-columns:1fr}}
 `;
