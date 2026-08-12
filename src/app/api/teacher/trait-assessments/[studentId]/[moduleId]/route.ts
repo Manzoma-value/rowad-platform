@@ -60,7 +60,11 @@ export async function GET(
   const [student, attempt, existing, educatorReadings] = await Promise.all([
     prisma.student.findFirst({
       where: { id: studentId, class: { teacher_id: auth.teacher.id } },
-      select: { id: true },
+      select: {
+        id: true,
+        profile: { select: { full_name: true, avatar_url: true } },
+        class: { select: { id: true, name: true } },
+      },
     }),
     prisma.moduleAttempt.findUnique({
       where: {
@@ -118,6 +122,12 @@ export async function GET(
     );
 
   return NextResponse.json({
+    student: {
+      id: student.id,
+      full_name: student.profile.full_name,
+      avatar_url: student.profile.avatar_url,
+      class_name: student.class?.name ?? null,
+    },
     module: {
       id: mod.id,
       title: mod.title,

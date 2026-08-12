@@ -209,6 +209,7 @@ export async function GET(
     const total = a.trait_scores.reduce((sum, ts) => sum + ts.score, 0);
     return {
       id: a.id,
+      is_mine: a.teacher_id === auth.teacher.id,
       module_id: a.module_id,
       module_title: moduleAttempt?.module.title ?? "",
       stage_title: moduleAttempt?.module.stage.title ?? "",
