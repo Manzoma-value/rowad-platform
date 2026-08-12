@@ -141,9 +141,11 @@ export const pickAssessLang = (l: string): AssessLang => (l === "sq" ? "sq" : "a
 export type ScoresTuple = number[];
 
 // ── The Rowad derivation rule, generalized to N traits:
-//    - Core (السمة الجوهرية)  = the index of the top score IF that score >= 50
-//    - Connecting (الرابطة)   = the index of the next-highest score
-//                              (if no Core exists, this is simply the top)
+//    - Core (السمة الجوهرية)  = the highest positive score in a completed distribution.
+//      With eight traits sharing 100 points, an absolute 50-point threshold hid
+//      the core reading in almost every real result. The spectrum is relative,
+//      so its leading trait is the meaningful core signal.
+//    - Connecting (الرابطة)   = the index of the next-highest score.
 //    - Supporting (المساندة) = everything else, in descending score order
 export type Derivation = {
   hasCore: boolean;
@@ -153,8 +155,6 @@ export type Derivation = {
   sortedIdxs: number[];
 };
 
-const CORE_THRESHOLD = 50;
-
 export function derive(scores: ScoresTuple): Derivation {
   const ranked = scores
     .map((s, idx) => ({ idx, s }))
@@ -162,9 +162,9 @@ export function derive(scores: ScoresTuple): Derivation {
   const sortedIdxs = ranked.map((r) => r.idx);
 
   const top = ranked[0];
-  const hasCore = !!top && top.s >= CORE_THRESHOLD;
+  const hasCore = !!top && top.s > 0;
   const coreIdx = hasCore ? top.idx : null;
-  const connectingIdx = hasCore && ranked[1] ? ranked[1].idx : ranked[0]?.idx ?? 0;
+  const connectingIdx = ranked[1]?.idx ?? ranked[0]?.idx ?? 0;
   const supportingIdxs = sortedIdxs.filter(
     (i) => i !== coreIdx && i !== connectingIdx,
   );
@@ -204,7 +204,7 @@ export const ASSESS_UI = {
     coreLabel:        "السمة الجوهرية",
     connectingLabel:  "السمة الرابطة",
     supportingLabel:  "السمات المساندة",
-    noCore:           "تحت العتبة — لا توجد سمة جوهرية بعد",
+    noCore:           "لا توجد قراءة مكتملة بعد",
     statementCol:     "العبارة",
     totalRow:         "المجموع",
     statusOk:         "✓ مكتمل (100)",
@@ -217,7 +217,7 @@ export const ASSESS_UI = {
     coreLabel:        "Tipari Thelbësor",
     connectingLabel:  "Tipari ndërlidhës",
     supportingLabel:  "Tiparet Mbështetëse",
-    noCore:           "Nën prag — ende pa tipar thelbësor",
+    noCore:           "Ende nuk ka lexim të plotë",
     statementCol:     "Pohimi",
     totalRow:         "Shuma",
     statusOk:         "✓ E plotë (100)",

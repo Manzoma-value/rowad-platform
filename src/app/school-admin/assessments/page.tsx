@@ -16,7 +16,7 @@ import {
 } from "@/lib/rowad-assessment";
 import {
   SlidersHorizontal, X, Search, Plus, Pencil, Download, Lock, Unlock,
-  Trash2, Users2, ClipboardList, Target, GripVertical, Layers3, Sparkles, CheckSquare,
+  Trash2, Users2, ClipboardList, Target, Layers3, Sparkles, CheckSquare,
   Globe2, History, ChevronLeft, ChevronRight, Activity, ChevronDown, Eye,
   ShieldCheck, Mail, KeyRound, CalendarClock, BarChart3, UserCheck,
 } from "lucide-react";
@@ -124,6 +124,8 @@ const UI = {
     traitStatementSq: "عبارة التقييم (ألباني)",
     addTrait: "+ إضافة سمة",
     removeTrait: "حذف السمة",
+    traitDetails: "تحرير العبارة والمقصد",
+    hideTraitDetails: "إغلاق التفاصيل",
     minTraitsWarn: "يلزم سمة واحدة على الأقل.",
     lockedEditNote: "بدأ المشرفون بالتقييم على هذا النموذج، لذا لا يمكن تعديل السمات أو المجموعات المستهدفة بعد الآن — يمكنك تغيير العنوان فقط. أنشئ نموذجاً جديداً لتخصيص مختلف.",
     cancel: "إلغاء",
@@ -255,6 +257,8 @@ const UI = {
     traitStatementSq: "Pohimi (shqip)",
     addTrait: "+ Shto tipar",
     removeTrait: "Fshi tiparin",
+    traitDetails: "Ndrysho pohimin dhe qëllimin",
+    hideTraitDetails: "Mbyll detajet",
     minTraitsWarn: "Duhet të paktën një tipar.",
     lockedEditNote: "Edukatorët kanë filluar të vlerësojnë në këtë model, kështu që tiparet ose grupet e synuara nuk mund të ndryshohen më — mund të ndryshosh vetëm titullin. Krijo një model të ri për personalizim tjetër.",
     cancel: "Anulo",
@@ -376,6 +380,7 @@ export default function AssessmentsHubPage() {
   const [dlg, setDlg] = useState<{ mode: "create" | "edit" } | null>(null);
   const [form, setForm] = useState<{ title: string; groupIds: string[]; traits: TraitDraft[] }>({ title: "", groupIds: [], traits: [] });
   const [saving, setSaving] = useState(false);
+  const [expandedTraitIndex, setExpandedTraitIndex] = useState<number | null>(0);
   const [dlgError, setDlgError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [deleteDlg, setDeleteDlg] = useState(false);
@@ -452,6 +457,7 @@ export default function AssessmentsHubPage() {
 
   function openCreateDialog() {
     setForm({ title: "", groupIds: groups.map((g) => g.id), traits: defaultTraitDrafts() });
+    setExpandedTraitIndex(0);
     setDlgError("");
     setDlg({ mode: "create" });
   }
@@ -469,6 +475,7 @@ export default function AssessmentsHubPage() {
       })),
     });
     setDlgError("");
+    setExpandedTraitIndex(0);
     setDlg({ mode: "edit" });
   }
 
@@ -484,6 +491,7 @@ export default function AssessmentsHubPage() {
     setForm((f) => ({ ...f, traits: f.traits.map((t, i) => (i === idx ? { ...t, ...patch } : t)) }));
   }
   function addTrait() {
+    setExpandedTraitIndex(form.traits.length);
     setForm((f) => ({
       ...f,
       traits: [...f.traits, {
@@ -1284,6 +1292,16 @@ export default function AssessmentsHubPage() {
               <button type="button" onClick={() => !saving && setDlg(null)} aria-label={T.cancel}><X size={18} /></button>
             </header>
 
+            {!editLocked && (
+              <div className="am-dlg-steps" aria-label={T.setupTitle}>
+                <span className={form.title.trim() ? "done" : "active"}><b>1</b>{T.titleLbl}</span>
+                <i />
+                <span className={form.groupIds.length ? "done" : "active"}><b>2</b>{T.groupsPickLbl}</span>
+                <i />
+                <span className={form.traits.length ? "done" : "active"}><b>3</b>{T.traitsLbl}</span>
+              </div>
+            )}
+
             <div className="am-dlg-body">
               <section className="am-form-section">
                 <div className="am-form-number">1</div>
@@ -1351,9 +1369,9 @@ export default function AssessmentsHubPage() {
                       </div>
                       <div className="am-trait-editor">
                         {form.traits.map((t, i) => (
-                          <div key={i} className="am-trait-row">
+                          <div key={i} className={`am-trait-row ${expandedTraitIndex === i ? "expanded" : ""}`}>
                             <div className="am-trait-row-head">
-                              <GripVertical size={14} strokeWidth={2} className="am-trait-grip" />
+                              <span className="am-trait-index">{i + 1}</span>
                               <input
                                 type="color"
                                 className="am-trait-color"
@@ -1373,25 +1391,35 @@ export default function AssessmentsHubPage() {
                                 value={t.label_sq}
                                 onChange={(e) => updateTrait(i, { label_sq: e.target.value })}
                               />
+                              <button
+                                type="button"
+                                className="am-trait-expand"
+                                onClick={() => setExpandedTraitIndex((current) => current === i ? null : i)}
+                                aria-expanded={expandedTraitIndex === i}
+                                title={expandedTraitIndex === i ? T.hideTraitDetails : T.traitDetails}
+                              >
+                                <ChevronDown size={15} />
+                                <span>{expandedTraitIndex === i ? T.hideTraitDetails : T.traitDetails}</span>
+                              </button>
                               <button type="button" className="am-trait-remove" onClick={() => removeTrait(i)} title={T.removeTrait}>
                                 <Trash2 size={13} strokeWidth={2} />
                               </button>
                             </div>
-                            <div className="am-trait-statements">
+                            {expandedTraitIndex === i && <div className="am-trait-details"><div className="am-trait-statements">
                               <textarea
                                 className="am-trait-input am-trait-statement"
                                 placeholder={T.traitStatementAr}
                                 value={t.statement_ar}
                                 onChange={(e) => updateTrait(i, { statement_ar: e.target.value })}
                                 dir="rtl"
-                                rows={2}
+                                rows={3}
                               />
                               <textarea
                                 className="am-trait-input am-trait-statement"
                                 placeholder={T.traitStatementSq}
                                 value={t.statement_sq}
                                 onChange={(e) => updateTrait(i, { statement_sq: e.target.value })}
-                                rows={2}
+                                rows={3}
                               />
                             </div>
                             <div className="am-trait-meta">
@@ -1415,7 +1443,7 @@ export default function AssessmentsHubPage() {
                                 value={t.objective_sq ?? ""}
                                 onChange={(event) => updateTrait(i, { objective_sq: event.target.value })}
                               />
-                            </div>
+                            </div></div>}
                           </div>
                         ))}
                         <button type="button" className="am-add-trait" onClick={addTrait}>
@@ -1784,12 +1812,17 @@ const styles = `
   .am-score-coll { background:rgba(184,160,130,.28); color:#8F765B; }
 
   .am-overlay { position:fixed; inset:0; background:rgba(26,17,14,.68); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; backdrop-filter:blur(9px); }
-  .am-dlg { display:flex; flex-direction:column; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:24px; max-width:920px; width:100%; max-height:calc(100dvh - 32px); overflow:hidden; box-shadow:0 32px 90px rgba(50,16,26,.38); }
+  .am-dlg { display:flex; flex-direction:column; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:24px; max-width:1080px; width:100%; max-height:calc(100dvh - 32px); overflow:hidden; box-shadow:0 32px 90px rgba(50,16,26,.38); }
   .am-dlg-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:20px 24px; color:#FFFBF5; background:radial-gradient(circle at 85% 0%,rgba(184,160,130,.2),transparent 34%),linear-gradient(130deg,#250B12,#5B1526); }
   .am-dlg-head>div>span { display:flex; align-items:center; gap:7px; color:#D9C9B0; font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
   .am-dlg-head p { margin:5px 0 0; color:rgba(255,251,245,.66); font-size:10.5px; font-weight:700; }
   .am-dlg-head>button { width:38px; height:38px; display:grid; place-items:center; flex:none; border:1px solid rgba(255,255,255,.16); border-radius:12px; background:rgba(255,255,255,.07); color:#fff; cursor:pointer; }
-  .am-dlg-body { min-height:0; overflow-y:auto; padding:20px 24px; }
+  .am-dlg-steps { display:grid; grid-template-columns:auto minmax(28px,1fr) auto minmax(28px,1fr) auto; align-items:center; gap:10px; padding:12px 24px; border-bottom:1px solid rgba(107,30,45,.10); background:#FFFDF9; }
+  .am-dlg-steps span { display:inline-flex; align-items:center; gap:7px; color:#8F765B; font-size:10.5px; font-weight:900; white-space:nowrap; }
+  .am-dlg-steps span b { width:24px; height:24px; display:grid; place-items:center; border-radius:8px; background:#EFEAE0; color:#6B1E2D; font:900 10px ui-monospace,monospace; }
+  .am-dlg-steps span.done { color:#32101A; }.am-dlg-steps span.done b { background:#6B1E2D; color:#FFFBF5; }
+  .am-dlg-steps i { height:1px; background:linear-gradient(90deg,rgba(107,30,45,.08),rgba(107,30,45,.28),rgba(107,30,45,.08)); }
+  .am-dlg-body { min-height:0; overflow-y:auto; padding:20px 24px 28px; scroll-behavior:smooth; }
   .am-dlg-title { font-family:var(--font-head); font-size:18px; font-weight:700; color:#FFFBF5; margin:5px 0 0; }
   .am-form-section { display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:start; padding:16px; border:1px solid rgba(184,160,130,.22); border-radius:17px; background:rgba(255,255,255,.64); }
   .am-form-section+.am-form-section { margin-top:12px; }
@@ -1805,7 +1838,10 @@ const styles = `
   .am-dlg-linkbtn:hover { background:rgba(184,160,130,.10); }
   .am-dlg-err { margin:12px 0 0; padding:10px 13px; border-radius:11px; background:rgba(107,30,45,.08); border:1px solid rgba(107,30,45,.24); color:#6B1E2D; font-size:12.5px; font-weight:700; }
   .am-dlg-warn { margin:8px 0 0; font-size:12px; font-weight:700; color:#8F765B; }
-  .am-dlg-actions { display:flex; gap:9px; justify-content:flex-end; padding:14px 24px; border-top:1px solid rgba(184,160,130,.22); background:#FFFBF5; }
+  .am-dlg-actions { position:relative; z-index:3; display:flex; gap:9px; justify-content:flex-end; padding:14px 24px; border-top:1px solid rgba(184,160,130,.22); background:rgba(255,251,245,.96); box-shadow:0 -12px 30px rgba(50,16,26,.08); backdrop-filter:blur(14px); }
+  .am-dlg-actions .am-btn { min-width:112px; min-height:42px; justify-content:center; }
+  .am-dlg-actions .am-btn.am-btn-primary { background:linear-gradient(180deg,#6B1E2D,#32101A); border-color:#32101A; color:#FFF8EA; box-shadow:0 9px 20px rgba(50,16,26,.20); }
+  .am-dlg-actions .am-btn.am-btn-primary:disabled { background:#D9C9B0; border-color:#D9C9B0; color:#655B53; box-shadow:none; opacity:1; }
   .am-scope-label { display:block; margin:14px 0 7px; color:#6B1E2D; font-size:10px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
   .am-scope-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
   .am-scope-grid>button { display:flex; align-items:flex-start; gap:10px; border:1.5px solid rgba(184,160,130,.26); border-radius:14px; background:#FFF; padding:12px; color:#796A62; text-align:start; font-family:inherit; cursor:pointer; transition:.16s ease; }
@@ -1825,9 +1861,10 @@ const styles = `
   .am-group-chk em { font-style:normal; font-size:10.5px; color:#8F765B; font-weight:700; }
 
   .am-trait-editor { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
-  .am-trait-row { border:1.5px solid rgba(184,160,130,.26); border-radius:14px; padding:11px; background:#FFF; display:flex; flex-direction:column; gap:8px; box-shadow:0 5px 15px rgba(50,16,26,.03); }
+  .am-trait-row { border:1.5px solid rgba(184,160,130,.26); border-radius:15px; padding:11px; background:#FFF; display:flex; flex-direction:column; gap:8px; box-shadow:0 5px 15px rgba(50,16,26,.03); transition:border-color .18s ease,box-shadow .18s ease; }
+  .am-trait-row.expanded { border-color:rgba(107,30,45,.34); box-shadow:0 10px 24px rgba(50,16,26,.07); }
   .am-trait-row-head { display:flex; align-items:center; gap:8px; }
-  .am-trait-grip { color:#C9BFAF; flex-shrink:0; }
+  .am-trait-index { width:27px; height:27px; display:grid; place-items:center; flex:none; border-radius:8px; background:#32101A; color:#D9C9B0; font:900 10px ui-monospace,monospace; }
   .am-trait-color { width:30px; height:30px; border-radius:8px; border:1.5px solid rgba(184,160,130,.3); padding:2px; cursor:pointer; flex-shrink:0; }
   .am-trait-input { border:1.5px solid rgba(184,160,130,.26); border-radius:9px; padding:7px 10px; font-family:'Cairo',sans-serif; font-size:12.5px; background:#FBF8F1; outline:none; transition:border-color .16s ease; }
   .am-trait-input:focus { border-color:#B8A082; background:#FFF; }
@@ -1836,6 +1873,9 @@ const styles = `
   .am-trait-statements { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   .am-trait-meta { display:grid; grid-template-columns:minmax(160px,.8fr) repeat(2,minmax(0,1fr)); gap:8px; }
   .am-trait-meta select { border:1.5px solid rgba(184,160,130,.26); border-radius:9px; background:#FBF8F1; padding:7px 10px; color:#4A0E1C; font:700 11.5px 'Cairo',sans-serif; outline:none; }
+  .am-trait-details { display:grid; gap:8px; padding:10px; border-radius:12px; background:#F7F3EB; animation:am-rise .2s ease both; }
+  .am-trait-expand { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:30px; flex:none; border:1px solid rgba(107,30,45,.16); border-radius:9px; background:#F7F3EB; padding:0 9px; color:#6B1E2D; font:800 9.5px 'Cairo',sans-serif; cursor:pointer; }
+  .am-trait-expand svg { transition:transform .18s ease; }.am-trait-expand[aria-expanded="true"] svg { transform:rotate(180deg); }
   .am-trait-remove { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; background:rgba(107,30,45,.06); border:1px solid rgba(107,30,45,.20); color:#6B1E2D; cursor:pointer; flex-shrink:0; transition:background .16s ease; }
   .am-trait-remove:hover { background:rgba(107,30,45,.14); }
   .am-add-trait { align-self:flex-start; display:inline-flex; align-items:center; gap:6px; background:rgba(184,160,130,.10); border:1px dashed rgba(184,160,130,.4); border-radius:11px; padding:8px 16px; color:#6B1E2D; font:700 12px 'Cairo',sans-serif; cursor:pointer; transition:background .16s ease; }
@@ -1879,12 +1919,14 @@ const styles = `
     .am-group-grid { grid-template-columns:1fr; }
     .am-overlay { padding:0; }
     .am-dlg { max-height:100dvh; height:100dvh; border:0; border-radius:0; }
-    .am-dlg-head,.am-dlg-body,.am-dlg-actions { padding-inline:15px; }
+    .am-dlg-head,.am-dlg-body,.am-dlg-actions,.am-dlg-steps { padding-inline:15px; }
+    .am-dlg-steps span { font-size:0; gap:0; }.am-dlg-steps span b { font-size:10px; }
     .am-form-section { grid-template-columns:1fr; padding:13px; }
     .am-scope-grid,.am-trait-statements,.am-trait-meta { grid-template-columns:1fr; }
     .am-history-head { flex-direction:column; }
     .am-trait-row-head { flex-wrap:wrap; }
-    .am-trait-label { flex-basis:calc(50% - 38px); }
+    .am-trait-label { flex-basis:calc(50% - 48px); }
+    .am-trait-expand { order:5; flex:1; }
   }
 
   /* Assessment workspace polish: stronger contrast and clearer hierarchy. */

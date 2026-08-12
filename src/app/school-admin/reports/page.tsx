@@ -1,7 +1,11 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import {
+  Activity, BarChart3, BookOpenCheck, ChevronDown, CircleGauge,
+  Search, Sparkles, TrendingUp, UserRoundCheck, UsersRound,
+} from "lucide-react";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
@@ -426,7 +430,7 @@ function Heatmap({
             </tr>
           </thead>
           <tbody>
-            {data.map((row, ri) => (
+            {data.map((row) => (
               <tr key={row.student_id}>
                 <td
                   style={{
@@ -682,6 +686,8 @@ export default function SchoolAdminReportsPage() {
   const [activeTab, setActiveTab] = useState<"performance" | "traits">(
     "performance",
   );
+  const [classQuery, setClassQuery] = useState("");
+  const [performanceFilter, setPerformanceFilter] = useState<"all" | "strong" | "developing" | "attention">("all");
 
   useEffect(() => {
     fetch("/api/school-admin/reports/classes")
@@ -750,6 +756,27 @@ export default function SchoolAdminReportsPage() {
             validAvgs.length,
         )
       : null;
+  const totalPassed = classes.reduce((sum, cls) => sum + cls.passed_attempts, 0);
+  const passRate = totalAttempts > 0 ? Math.round((totalPassed / totalAttempts) * 100) : null;
+  const bestClass = useMemo(
+    () => classes.filter((cls) => cls.avg_score !== null).sort((a, b) => (b.avg_score ?? 0) - (a.avg_score ?? 0))[0] ?? null,
+    [classes],
+  );
+  const attentionClass = useMemo(
+    () => classes.filter((cls) => cls.avg_score !== null).sort((a, b) => (a.avg_score ?? 0) - (b.avg_score ?? 0))[0] ?? null,
+    [classes],
+  );
+  const filteredClasses = useMemo(() => {
+    const needle = classQuery.trim().toLowerCase();
+    return classes.filter((cls) => {
+      if (needle && !`${cls.name} ${cls.teacher_name ?? ""}`.toLowerCase().includes(needle)) return false;
+      const score = cls.avg_score;
+      if (performanceFilter === "strong") return score !== null && score >= 75;
+      if (performanceFilter === "developing") return score !== null && score >= 50 && score < 75;
+      if (performanceFilter === "attention") return score === null || score < 50;
+      return true;
+    });
+  }, [classes, classQuery, performanceFilter]);
   const currentStudent =
     detail?.students?.find((s) => s.id === selectedStudent) ?? null;
 
@@ -768,31 +795,19 @@ export default function SchoolAdminReportsPage() {
     <div className="rp-page" dir="rtl">
       {/* ── MASTHEAD ── */}
       <div className="rp-masthead">
+        <div className="rp-masthead-orbit" aria-hidden="true" />
         <div className="rp-masthead-left">
-          <div className="rp-eyebrow">
-            <span className="rp-eyebrow-dot" />
-            لوحة التحليلات
-          </div>
-          <h1 className="rp-headline">تقارير الأداء</h1>
+          <div className="rp-eyebrow"><Sparkles size={13} /> مركز الرؤية والتحليل</div>
+          <h1 className="rp-headline">صورة واضحة لأداء المنصة</h1>
           <p className="rp-subline">
-            مراقبة شاملة لأداء المجموعات والمستفيدون والسمات
+            ابدأ بالملخص، اختر المجموعة، ثم انتقل إلى أداء كل مستفيد وسماته دون ازدحام.
           </p>
+          <div className="rp-hero-pills">
+            <span><Activity size={13} /> بيانات محدثة مباشرة</span>
+            <span><UsersRound size={13} /> {classes.length} مجموعات تعليمية</span>
+          </div>
         </div>
-        <div className="rp-masthead-badge">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          >
-            <line x1="18" y1="20" x2="18" y2="10" />
-            <line x1="12" y1="20" x2="12" y2="4" />
-            <line x1="6" y1="20" x2="6" y2="14" />
-          </svg>
-        </div>
+        <div className="rp-masthead-badge"><BarChart3 size={31} /></div>
       </div>
 
       {/* ── KPIs ── */}
@@ -802,29 +817,29 @@ export default function SchoolAdminReportsPage() {
             label: "المجموعات",
             value: classes.length,
             suffix: "",
-            accent: "#B8A082",
-            icon: "🏛",
+            accent: "#6B1E2D",
+            icon: <UsersRound size={19} />,
           },
           {
             label: "المستفيدون",
             value: totalStudents,
             suffix: "",
             accent: "#B8A082",
-            icon: "👤",
+            icon: <UserRoundCheck size={19} />,
           },
           {
             label: "المحاولات",
             value: totalAttempts,
             suffix: "",
-            accent: "#A78BFA",
-            icon: "📝",
+            accent: "#5C6670",
+            icon: <BookOpenCheck size={19} />,
           },
           {
             label: "متوسط المنصة",
             value: schoolAvg ?? 0,
             suffix: "%",
             accent: "#1B5E20",
-            icon: "◎",
+            icon: <CircleGauge size={19} />,
           },
         ].map((k, i) => (
           <div
@@ -853,19 +868,40 @@ export default function SchoolAdminReportsPage() {
         ))}
       </div>
 
-      {/* ── CLASSES ── */}
-      <div className="rp-section-head">
-        <div className="rp-sh-line" />
-        <span className="rp-sh-label">المجموعات الدراسية</span>
-        <div className="rp-sh-count">{classes.length}</div>
-        <div className="rp-sh-line" />
+      <div className="rp-insights" aria-label="ملخص القراءة">
+        <article>
+          <span className="good"><TrendingUp size={17} /></span>
+          <div><small>أعلى متوسط</small><strong>{bestClass?.name ?? "لا توجد بيانات"}</strong></div>
+          <b>{bestClass?.avg_score != null ? `${bestClass.avg_score}%` : "—"}</b>
+        </article>
+        <article>
+          <span><Activity size={17} /></span>
+          <div><small>يحتاج متابعة</small><strong>{attentionClass?.name ?? "لا توجد بيانات"}</strong></div>
+          <b>{attentionClass?.avg_score != null ? `${attentionClass.avg_score}%` : "—"}</b>
+        </article>
+        <article>
+          <span className="gold"><UserRoundCheck size={17} /></span>
+          <div><small>نسبة النجاح</small><strong>{totalPassed} محاولة ناجحة</strong></div>
+          <b>{passRate !== null ? `${passRate}%` : "—"}</b>
+        </article>
       </div>
 
-      {classes.length === 0 ? (
-        <div className="rp-empty">لا توجد مجموعات بعد</div>
+      {/* ── CLASSES ── */}
+      <div className="rp-section-head">
+        <div><span className="rp-sh-label">المجموعات التعليمية</span><p>اختر مجموعة لفتح تقريرها التفصيلي</p></div>
+        <div className="rp-sh-count">{filteredClasses.length}</div>
+      </div>
+
+      <div className="rp-toolbar">
+        <label className="rp-search"><Search size={17} /><input value={classQuery} onChange={(event) => setClassQuery(event.target.value)} placeholder="ابحث عن مجموعة أو مشرف…" /></label>
+        <label className="rp-select"><CircleGauge size={16} /><select value={performanceFilter} onChange={(event) => setPerformanceFilter(event.target.value as typeof performanceFilter)}><option value="all">كل مستويات الأداء</option><option value="strong">قوي — 75% فأكثر</option><option value="developing">متنامٍ — 50–74%</option><option value="attention">يحتاج متابعة</option></select><ChevronDown size={15} /></label>
+      </div>
+
+      {filteredClasses.length === 0 ? (
+        <div className="rp-empty">لا توجد مجموعات مطابقة لهذه التصفية.</div>
       ) : (
         <div className="rp-classes-grid">
-          {classes.map((cls, i) => {
+          {filteredClasses.map((cls, i) => {
             const active = selectedClass?.id === cls.id;
             return (
               <button
@@ -877,10 +913,10 @@ export default function SchoolAdminReportsPage() {
                 <div className="rp-cc-header">
                   <div className="rp-cc-name">{cls.name}</div>
                   {cls.teacher_name && (
-                    <div className="rp-cc-teacher">{cls.teacher_name}</div>
+                    <div className="rp-cc-teacher"><UserRoundCheck size={12} />{cls.teacher_name}</div>
                   )}
                   <div className={`rp-cc-status ${active ? "open" : ""}`}>
-                    {active ? "▲" : "▼"}
+                    {active ? "إغلاق التقرير" : "فتح التقرير"}<ChevronDown size={14} />
                   </div>
                 </div>
                 <div className="rp-cc-stats">
@@ -1355,9 +1391,6 @@ export default function SchoolAdminReportsPage() {
                             {s.assessments_count > 0 && (
                               <div className="rp-trait-student-bars">
                                 {s.trait_averages.map((t) => {
-                                  const cfg =
-                                    MAQSAD_COLORS[t.name] ??
-                                    Object.values(MAQSAD_COLORS)[0];
                                   const classAvg =
                                     traitData.class_radar.find(
                                       (r) => r.trait_id === t.trait_id,
@@ -1460,14 +1493,14 @@ export default function SchoolAdminReportsPage() {
 
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+.rp-page,.rp-page *,.rp-page *::before,.rp-page *::after{box-sizing:border-box}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes kbFill{from{width:0}}
 @keyframes glow{0%,100%{opacity:0.4}50%{opacity:0.8}}
 
-:root{
+.rp-page{
   --bg:#F7F3EB;--surface:#FFFFFF;--surface2:#FAF8F4;
   --border:rgba(184,160,130,0.18);--border2:rgba(0,0,0,0.07);
   --text:#16120C;--text2:#42392A;--text3:#8A7A5A;--dim:#8A7A5A;
@@ -1475,49 +1508,53 @@ const css = `
   --font:'Cairo',sans-serif;
 }
 
-.rp-page{display:flex;flex-direction:column;gap:28px;font-family:var(--font);color:var(--text);background:var(--bg);min-height:100vh;padding:32px 36px 60px;animation:fadeIn 0.4s ease}
+.rp-page{display:flex;flex-direction:column;gap:20px;font-family:var(--font);color:var(--text);background:transparent;min-height:100vh;padding:4px 0 60px;animation:fadeIn 0.4s ease}
 
 .rp-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:200px;color:var(--dim);font-size:14px}
 .rp-spinner{width:24px;height:24px;border:2.5px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
 .rp-empty{text-align:center;color:var(--dim);font-size:14px;padding:48px;border:1px dashed var(--border);border-radius:12px}
 
 /* Masthead */
-.rp-masthead{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:24px;border-bottom:1px solid var(--border);animation:fadeUp 0.5s ease}
+.rp-masthead{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:space-between;min-height:230px;padding:34px 38px;border:1px solid rgba(217,201,176,.24);border-radius:30px;background:radial-gradient(circle at 12% 18%,rgba(217,201,176,.18),transparent 28%),linear-gradient(135deg,#32101A,#6B1E2D 68%,#4A0E1C);box-shadow:0 24px 54px rgba(50,16,26,.18);animation:fadeUp 0.5s ease;color:#FFFBF5}
+.rp-masthead::after{content:'';position:absolute;inset:0;z-index:-1;opacity:.22;background:repeating-radial-gradient(circle at 84% 50%,transparent 0 28px,rgba(217,201,176,.22) 29px 30px,transparent 31px 52px)}
+.rp-masthead-orbit{position:absolute;inset-inline-end:-100px;top:-120px;width:370px;height:370px;border:1px solid rgba(217,201,176,.24);border-radius:50%;box-shadow:0 0 0 36px rgba(217,201,176,.035),0 0 0 78px rgba(217,201,176,.025)}
 .rp-masthead-left{display:flex;flex-direction:column;gap:6px}
-.rp-eyebrow{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold)}
+.rp-eyebrow{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:900;letter-spacing:1.4px;text-transform:uppercase;color:#D9C9B0}
 .rp-eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:glow 2s ease-in-out infinite}
-.rp-headline{font-size:32px;font-weight:900;color:var(--text);letter-spacing:-1px;line-height:1.1}
-.rp-subline{font-size:13px;color:var(--dim);font-weight:500}
-.rp-masthead-badge{width:52px;height:52px;border-radius:14px;color:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rp-headline{margin:0;font-size:34px;font-weight:900;color:#FFFBF5;letter-spacing:-1px;line-height:1.25}
+.rp-subline{max-width:680px;margin:0;font-size:13px;line-height:1.9;color:rgba(255,251,245,.76);font-weight:700}
+.rp-hero-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.rp-hero-pills span{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid rgba(217,201,176,.20);border-radius:999px;background:rgba(255,251,245,.07);color:#F2EFE6;font-size:10px;font-weight:800}
+.rp-masthead-badge{position:relative;z-index:1;width:82px;height:82px;border:1px solid rgba(217,201,176,.30);border-radius:24px;color:#D9C9B0;background:rgba(255,251,245,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 1px rgba(255,255,255,.12),0 18px 30px rgba(26,26,26,.14);backdrop-filter:blur(12px)}
 
 /* KPIs */
-.rp-kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.rp-kpi{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px 16px 14px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;animation:fadeUp 0.5s ease backwards;transition:border-color 0.2s,transform 0.2s}
+.rp-kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:-42px;padding:0 24px;position:relative;z-index:2}
+.rp-kpi{background:rgba(255,251,245,.97);border:1px solid rgba(107,30,45,.13);border-radius:19px;padding:17px 18px 15px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;animation:fadeUp 0.5s ease backwards;transition:border-color 0.2s,transform 0.2s;box-shadow:0 14px 32px rgba(50,16,26,.10);backdrop-filter:blur(14px)}
 .rp-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.35}
 .rp-kpi:hover{border-color:var(--border);transform:translateY(-2px)}
 .rp-kpi-top{display:flex;align-items:center;gap:8px}
-.rp-kpi-icon{font-size:14px;opacity:0.7}
+.rp-kpi-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#F7F3EB;color:#6B1E2D}
 .rp-kpi-label{font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
-.rp-kpi-value{font-size:36px;font-weight:900;line-height:1;letter-spacing:-1.5px}
+.rp-kpi-value{font-size:31px;font-weight:900;line-height:1;letter-spacing:-1px}
 .rp-kpi-bar{height:3px;border-radius:99px;overflow:hidden}
 .rp-kpi-bar-fill{height:100%;width:70%;border-radius:99px;animation:kbFill 1.2s cubic-bezier(0.34,1.56,0.64,1) both}
 
 /* Section head */
-.rp-section-head{display:flex;align-items:center;gap:14px}
-.rp-sh-line{flex:1;height:1px;background:var(--border)}
-.rp-sh-label{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--dim);white-space:nowrap}
-.rp-sh-count{width:22px;height:22px;border-radius:6px;background:var(--gold);color:#1A1A1A;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rp-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rp-insights article{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;padding:13px 15px;border:1px solid rgba(107,30,45,.11);border-radius:17px;background:#FFFBF5;box-shadow:0 10px 24px rgba(50,16,26,.045)}.rp-insights article>span{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:rgba(107,30,45,.08);color:#6B1E2D}.rp-insights article>span.good{background:rgba(27,94,32,.08);color:#1B5E20}.rp-insights article>span.gold{background:rgba(242,183,5,.12);color:#D97706}.rp-insights small,.rp-insights strong{display:block}.rp-insights small{color:#8F765B;font-size:9px;font-weight:900}.rp-insights strong{margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#32101A;font-size:11.5px}.rp-insights article>b{color:#6B1E2D;font:900 16px ui-monospace,monospace}
+.rp-section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:8px}.rp-section-head>div:first-child{min-width:0}.rp-section-head p{margin:3px 0 0;color:#796A62;font-size:11px;font-weight:700}
+.rp-sh-label{font-size:16px;font-weight:900;color:#32101A;white-space:nowrap}
+.rp-sh-count{min-width:34px;height:30px;padding:0 9px;border-radius:10px;background:#6B1E2D;color:#FFFBF5;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rp-toolbar{display:grid;grid-template-columns:minmax(240px,1fr) minmax(220px,320px);gap:10px;padding:10px;border:1px solid rgba(107,30,45,.12);border-radius:18px;background:#F7F3EB}.rp-search,.rp-select{height:44px;display:flex;align-items:center;gap:8px;padding:0 13px;border:1px solid rgba(107,30,45,.13);border-radius:13px;background:#FFFBF5;color:#8F765B}.rp-search:focus-within,.rp-select:focus-within{border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.06)}.rp-search input,.rp-select select{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#32101A;font:800 11.5px var(--font)}.rp-select select{appearance:none;cursor:pointer}.rp-select>svg:last-child{pointer-events:none}
 
 /* Class cards */
-.rp-classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.rp-class-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;cursor:pointer;text-align:right;display:flex;flex-direction:column;gap:14px;font-family:var(--font);transition:all 0.2s cubic-bezier(0.4,0,0.2,1);animation:fadeUp 0.5s ease backwards;position:relative;overflow:hidden}
+.rp-classes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:12px}
+.rp-class-card{background:#FFFBF5;border:1px solid rgba(107,30,45,.12);border-radius:20px;padding:18px;cursor:pointer;text-align:right;display:flex;flex-direction:column;gap:14px;font-family:var(--font);transition:all 0.2s cubic-bezier(0.4,0,0.2,1);animation:fadeUp 0.5s ease backwards;position:relative;overflow:hidden;box-shadow:0 10px 24px rgba(50,16,26,.045)}
 .rp-class-card:hover{border-color:var(--border);transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,0.08)}
-.rp-class-card.active{border-color:rgba(184,160,130,0.4);box-shadow:0 0 0 1px rgba(184,160,130,0.2),0 12px 40px rgba(0,0,0,0.08)}
+.rp-class-card.active{border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.07),0 15px 36px rgba(50,16,26,.10)}
 .rp-cc-header{display:flex;flex-direction:column;gap:3px;position:relative}
 .rp-cc-name{font-size:16px;font-weight:800;color:var(--text)}
-.rp-cc-teacher{font-size:12px;color:var(--dim);font-weight:500}
-.rp-cc-status{position:absolute;top:0;left:0;font-size:9px;color:var(--dim);transition:color 0.2s}
-.rp-cc-status.open{color:var(--gold)}
+.rp-cc-teacher{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--dim);font-weight:700}
+.rp-cc-status{position:absolute;top:0;left:0;display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:9px;background:#F7F3EB;color:#6B1E2D;font-size:8.5px;font-weight:900;transition:color 0.2s}.rp-cc-status svg{transition:transform .18s ease}
+.rp-cc-status.open{background:#6B1E2D;color:#FFFBF5}.rp-cc-status.open svg{transform:rotate(180deg)}
 .rp-cc-stats{display:flex;align-items:center;gap:0}
 .rp-cc-stat{flex:1;display:flex;flex-direction:column;gap:2px;align-items:flex-end}
 .rp-cc-stat:last-child{flex:none}
@@ -1528,7 +1565,7 @@ const css = `
 .rp-cc-spark-labels span{font-size:8px;color:var(--dim);font-weight:600}
 
 /* Detail panel */
-.rp-detail-panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:20px;animation:fadeUp 0.35s ease;position:relative;overflow:hidden}
+.rp-detail-panel{background:#FFFBF5;border:1px solid rgba(107,30,45,.16);border-radius:26px;padding:24px;display:flex;flex-direction:column;gap:20px;animation:fadeUp 0.35s ease;position:relative;overflow:hidden;box-shadow:0 20px 44px rgba(50,16,26,.08)}
 .rp-detail-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0.5}
 .rp-dp-header{display:flex;align-items:flex-start;justify-content:space-between}
 .rp-dp-title{font-size:22px;font-weight:900;color:var(--text);margin-top:4px}
@@ -1536,17 +1573,17 @@ const css = `
 .rp-close-btn:hover{border-color:rgba(239,68,68,0.4);color:#6B1E2D}
 
 /* Tabs */
-.rp-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border2);padding-bottom:0}
-.rp-tab{padding:9px 18px;border:none;border-bottom:2px solid transparent;background:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;color:var(--dim);transition:all 0.15s;display:flex;align-items:center;gap:7px;margin-bottom:-1px}
+.rp-tabs{display:flex;gap:6px;padding:6px;border:1px solid rgba(107,30,45,.10);border-radius:15px;background:#F7F3EB}
+.rp-tab{min-height:40px;flex:1;justify-content:center;padding:9px 18px;border:none;border-radius:11px;background:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:700;color:var(--dim);transition:all 0.15s;display:flex;align-items:center;gap:7px}
 .rp-tab:hover{color:var(--text)}
-.rp-tab.active{color:var(--text);border-bottom-color:var(--gold);font-weight:800}
+.rp-tab.active{background:#6B1E2D;color:#FFFBF5;font-weight:900;box-shadow:0 7px 16px rgba(107,30,45,.16)}
 .rp-tab-badge{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:rgba(184,160,130,0.15);color:#78590A;border:1px solid rgba(184,160,130,0.25)}
 
 /* Charts row */
 .rp-charts-row{display:grid;grid-template-columns:1fr 2fr;gap:14px;align-items:start}
 
 /* Panels */
-.rp-panel{background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.rp-panel{background:#F7F3EB;border:1px solid rgba(107,30,45,.10);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px}
 .rp-panel-label{font-size:9.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
 
 /* Table */
@@ -1581,24 +1618,27 @@ const css = `
 .rp-trait-student-bars{display:flex;flex-direction:column;gap:7px;padding-right:38px}
 .rp-trait-mini-row{display:flex;align-items:center;gap:8px}
 
-@media(max-width:1024px){.rp-charts-row{grid-template-columns:1fr}}
+@media(max-width:1024px){.rp-charts-row{grid-template-columns:1fr}.rp-insights{grid-template-columns:1fr}.rp-kpi-strip{grid-template-columns:repeat(2,1fr);margin-top:-34px}}
 @media(max-width:768px){
-  .rp-page{padding:20px 16px 48px}
+  .rp-page{padding:2px 0 48px}
+  .rp-masthead{min-height:0;padding:26px 22px;border-radius:24px}.rp-masthead-badge{width:62px;height:62px;border-radius:19px}.rp-masthead-orbit{display:none}
   .rp-kpi-strip{grid-template-columns:repeat(2,1fr)}
   .rp-headline{font-size:24px}
+  .rp-toolbar{grid-template-columns:1fr}
   .rp-table-head,.rp-table-row{grid-template-columns:2fr 1fr 1fr 1fr}
   .rp-table-head span:last-child,.rp-table-row>span:last-child{display:none}
 }
 @media(max-width:480px){
   .rp-kpi-strip{grid-template-columns:1fr 1fr; gap:8px}
   .rp-classes-grid{grid-template-columns:1fr}
-  .rp-page{padding:16px 12px 48px}
+  .rp-page{padding:2px 0 48px}
+  .rp-masthead{padding:24px 18px}.rp-masthead-badge{display:none}.rp-hero-pills{align-items:stretch;flex-direction:column}.rp-kpi-strip{margin-top:-24px;padding:0 10px}.rp-kpi{padding:14px}.rp-kpi-label{letter-spacing:.5px}.rp-insights article{grid-template-columns:38px minmax(0,1fr) auto;padding:11px}.rp-section-head{align-items:flex-end}.rp-sh-label{font-size:14px}.rp-detail-panel{padding:14px;border-radius:20px}.rp-tabs{align-items:stretch;flex-direction:column}.rp-tab{width:100%}
   .rp-headline{font-size:21px}
   .rp-table-head,.rp-table-row{grid-template-columns:1.6fr 1fr 1fr; font-size:11.5px}
   .rp-table-head span:nth-child(3),.rp-table-row>span:nth-child(3){display:none}
 }
 @media(max-width:380px){
-  .rp-page{padding:14px 10px 44px}
+  .rp-page{padding:2px 0 44px}
   .rp-headline{font-size:19px}
 }
 `;
