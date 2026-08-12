@@ -496,6 +496,7 @@ model Profile {
   created_class_invites        ClassInvite[]              @relation("ClassInvitesCreatedBy")
   notifications                Notification[]             @relation("NotificationRecipient")
   acted_notifications          Notification[]             @relation("NotificationActor")
+  reviewed_teacher_group_requests TeacherGroupJoinRequest[] @relation("TeacherGroupJoinRequestReviewer")
 
   @@map("profiles")
 }
@@ -545,6 +546,7 @@ model School {
   teacher_group_announcements TeacherGroupAnnouncement[]
   future_qualification_votes  FutureQualificationVote[]
   group_assessments           GroupAssessment[]
+  teacher_group_join_requests TeacherGroupJoinRequest[]
 
   @@map("schools")
 }
@@ -598,6 +600,7 @@ model Teacher {
   ratings_received                 AssessmentRating[]              @relation("AssessmentTarget")
   future_qualification_vote        FutureQualificationVote?
   class_invites                    ClassInvite[]
+  group_join_request               TeacherGroupJoinRequest?
 
   @@index([school_id])
   @@map("teachers")
@@ -651,6 +654,7 @@ model TeacherGroup {
   // Additional groups an assessment targets, beyond its legacy `group_id`
   // primary group — lets one measurement model span several groups at once.
   assessment_links GroupAssessmentGroup[]
+  join_requests    TeacherGroupJoinRequest[]
 
   @@index([school_id, updated_at(sort: Desc)])
   @@index([leader_teacher_id])
@@ -668,6 +672,35 @@ model TeacherGroupMember {
   @@id([group_id, teacher_id])
   @@index([teacher_id])
   @@map("teacher_group_members")
+}
+
+enum TeacherGroupJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// A supervisor can have one current group request. Rejected requests are
+/// reused when they choose again, keeping the workflow duplicate-safe.
+model TeacherGroupJoinRequest {
+  id           String                        @id @default(uuid()) @db.Uuid
+  group_id     String                        @db.Uuid
+  teacher_id   String                        @unique @db.Uuid
+  school_id    String                        @db.Uuid
+  status       TeacherGroupJoinRequestStatus @default(PENDING)
+  reviewed_by  String?                       @db.Uuid
+  requested_at DateTime                      @default(now())
+  reviewed_at  DateTime?
+  updated_at   DateTime                      @updatedAt
+
+  group    TeacherGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  teacher  Teacher      @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  school   School       @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  reviewer Profile?     @relation("TeacherGroupJoinRequestReviewer", fields: [reviewed_by], references: [id], onDelete: SetNull)
+
+  @@index([group_id, status, requested_at])
+  @@index([school_id, status])
+  @@map("teacher_group_join_requests")
 }
 
 // ─── Measurement models — peer scoring inside one or more teacher groups.

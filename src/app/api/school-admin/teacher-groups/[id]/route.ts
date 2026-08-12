@@ -49,6 +49,30 @@ export async function GET(
         orderBy: { joined_at: "desc" },
         select: MEMBER_SELECT,
       },
+      join_requests: {
+        where: { status: "PENDING" },
+        orderBy: { requested_at: "asc" },
+        select: {
+          id: true,
+          requested_at: true,
+          teacher: {
+            select: {
+              id: true,
+              profile: { select: { id: true, full_name: true, email: true } },
+              application: {
+                select: {
+                  country: true,
+                  city: true,
+                  qualification: true,
+                  specialization: true,
+                  years_of_experience: true,
+                  languages: true,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });

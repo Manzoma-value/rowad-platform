@@ -48,12 +48,22 @@ export async function POST(
     );
   }
 
-  await prisma.teacherGroupMember.createMany({
-    data: valid.map((t) => ({ group_id: id, teacher_id: t.id })),
-    skipDuplicates: true,
+  await prisma.$transaction(async (tx) => {
+    await tx.teacherGroupMember.createMany({
+      data: valid.map((t) => ({ group_id: id, teacher_id: t.id })),
+      skipDuplicates: true,
+    });
+    await tx.teacherGroupJoinRequest.updateMany({
+      where: { group_id: id, teacher_id: { in: valid.map((t) => t.id) }, status: "PENDING" },
+      data: { status: "APPROVED", reviewed_by: auth.profile.id, reviewed_at: new Date() },
+    });
+    await tx.teacherGroupJoinRequest.updateMany({
+      where: { group_id: { not: id }, teacher_id: { in: valid.map((t) => t.id) }, status: "PENDING" },
+      data: { status: "REJECTED", reviewed_by: auth.profile.id, reviewed_at: new Date() },
+    });
+    // bump updated_at on the group so admin list reorders correctly
+    await tx.teacherGroup.update({ where: { id }, data: { updated_at: new Date() } });
   });
-  // bump updated_at on the group so admin list reorders correctly
-  await prisma.teacherGroup.update({ where: { id }, data: { updated_at: new Date() } });
   return NextResponse.json({ added: valid.length, capacity: group.max_members, remaining: available - valid.length });
 }
 

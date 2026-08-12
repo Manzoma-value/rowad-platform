@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Bell, BookOpenCheck, ChevronLeft, ChevronRight, Crown, Eye, EyeOff,
-  MapPin, Megaphone, PencilLine, Plus, Search, Trash2, UserMinus,
+  CheckCircle2, Clock3, MapPin, Megaphone, PencilLine, Plus, Search, Trash2, UserMinus,
   UserPlus, Users, X,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
@@ -19,7 +19,7 @@ type GroupRow = {
   description: string | null;
   updated_at: string;
   created_at?: string;
-  _count: { members: number };
+  _count: { members: number; join_requests: number };
   max_members: number;
   leader_teacher_id: string | null;
   leader: { profile: { full_name: string } } | null;
@@ -49,6 +49,13 @@ type GroupDetail = {
   leader_teacher_id: string | null;
   leader: { id: string; profile: { full_name: string; avatar_url: string | null } } | null;
   members: Member[];
+  join_requests: JoinRequest[];
+};
+
+type JoinRequest = {
+  id: string;
+  requested_at: string;
+  teacher: Member["teacher"];
 };
 
 type GroupAnnouncement = {
@@ -109,6 +116,18 @@ const UI = {
     leader: "قائد المجموعة",
     noLeader: "بدون قائد حالياً",
     capacityHelp: "يتوقف الانضمام الذاتي تلقائياً عند اكتمال العدد.",
+    requests: "طلبات الانضمام",
+    requestsSub: "راجع طلبات المشرفين قبل إضافتهم إلى المجموعة.",
+    noRequests: "لا توجد طلبات انضمام معلّقة لهذه المجموعة.",
+    selectAll: "تحديد الكل",
+    clearSelection: "إلغاء التحديد",
+    approveSelected: "قبول المحدد",
+    rejectSelected: "رفض المحدد",
+    requestPending: "بانتظار المراجعة",
+    requestError: "تعذر تحديث الطلبات. حدّث الصفحة وحاول مرة أخرى.",
+    capacityError: (available: number) => `لا توجد مقاعد كافية. المقاعد المتاحة الآن: ${available}.`,
+    confirmApprove: (count: number) => `قبول ${count} من طلبات الانضمام وإضافة أصحابها إلى المجموعة؟`,
+    confirmReject: (count: number) => `رفض ${count} من طلبات الانضمام؟`,
   },
   sq: {
     title: "Grupet e edukatorëve",
@@ -148,6 +167,18 @@ const UI = {
     leader: "Drejtuesi i grupit",
     noLeader: "Pa drejtues për momentin",
     capacityHelp: "Bashkimi automatik ndalet kur grupi mbushet.",
+    requests: "Kërkesat për anëtarësim",
+    requestsSub: "Shqyrto kërkesat e edukatorëve para se t'i shtosh në grup.",
+    noRequests: "Nuk ka kërkesa në pritje për këtë grup.",
+    selectAll: "Zgjidhi të gjitha",
+    clearSelection: "Hiq përzgjedhjen",
+    approveSelected: "Mirato të zgjedhurat",
+    rejectSelected: "Refuzo të zgjedhurat",
+    requestPending: "Në pritje të shqyrtimit",
+    requestError: "Kërkesat nuk u përditësuan. Rifresko dhe provo përsëri.",
+    capacityError: (available: number) => `Nuk ka vende të mjaftueshme. Vende të lira: ${available}.`,
+    confirmApprove: (count: number) => `Të miratohen ${count} kërkesa dhe edukatorët të shtohen në grup?`,
+    confirmReject: (count: number) => `Të refuzohen ${count} kërkesa?`,
   },
 } as const;
 
@@ -202,6 +233,9 @@ export default function TeacherGroupsPage() {
   const [editForm, setEditForm] = useState({ name: "", description: "", max_members: 30, leader_teacher_id: "" });
   const [savingMeta, setSavingMeta] = useState(false);
   const [memberQuery, setMemberQuery] = useState("");
+  const [pickedRequests, setPickedRequests] = useState<Set<string>>(new Set());
+  const [requestAction, setRequestAction] = useState<"approve" | "reject" | null>(null);
+  const [requestError, setRequestError] = useState("");
 
   const loadList = useCallback(async () => {
     setLoadingList(true);
@@ -242,6 +276,8 @@ export default function TeacherGroupsPage() {
       if (!r.ok) { setDetail(null); return; }
       const d = await r.json();
       setDetail(d?.group ?? null);
+      setPickedRequests(new Set());
+      setRequestError("");
       setEditForm({
         name: d?.group?.name ?? "",
         description: d?.group?.description ?? "",
@@ -365,6 +401,38 @@ export default function TeacherGroupsPage() {
     }
   }
 
+  async function reviewRequests(action: "approve" | "reject") {
+    if (!selectedId || pickedRequests.size === 0 || requestAction) return;
+    const count = pickedRequests.size;
+    const approved = await confirm({
+      title: action === "approve" ? T.approveSelected : T.rejectSelected,
+      message: action === "approve" ? T.confirmApprove(count) : T.confirmReject(count),
+      confirmText: action === "approve" ? T.approveSelected : T.rejectSelected,
+      cancelText: T.cancel,
+      variant: action === "approve" ? "normal" : "danger",
+    });
+    if (!approved) return;
+    setRequestAction(action);
+    setRequestError("");
+    try {
+      const response = await fetch(`/api/school-admin/teacher-groups/${selectedId}/requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, request_ids: Array.from(pickedRequests) }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setRequestError(result?.error === "capacity_insufficient" ? T.capacityError(Number(result.available ?? 0)) : T.requestError);
+        return;
+      }
+      await Promise.all([loadDetail(selectedId), loadList()]);
+    } catch {
+      setRequestError(T.requestError);
+    } finally {
+      setRequestAction(null);
+    }
+  }
+
   async function postAnnouncement() {
     if (!selectedId || !newAnnouncement.trim()) return;
     setPostingAnnouncement(true);
@@ -469,7 +537,7 @@ export default function TeacherGroupsPage() {
                     onClick={() => setSelectedId(g.id)}
                   >
                     <span className="tg-group-mark">{g.name.trim().slice(0, 1).toUpperCase()}</span>
-                    <span className="tg-list-copy"><span className="tg-list-name">{g.name}</span><span className="tg-list-meta">{g._count.members} / {g.max_members} {T.members}</span></span>
+                    <span className="tg-list-copy"><span className="tg-list-name">{g.name}</span><span className="tg-list-meta">{g._count.members} / {g.max_members} {T.members}{g._count.join_requests > 0 && <b>{g._count.join_requests} {T.requests}</b>}</span></span>
                     <IconChevron className="tg-list-arrow" size={16}/>
                   </button>
                 </li>
@@ -513,10 +581,49 @@ export default function TeacherGroupsPage() {
 
               <div className="tg-overview-strip">
                 <div><span className="tg-overview-icon"><Users size={18}/></span><strong>{detail.members.length} / {detail.max_members}</strong><small>{T.members}</small></div>
+                <div><span className="tg-overview-icon"><Clock3 size={18}/></span><strong>{detail.join_requests.length}</strong><small>{T.requests}</small></div>
                 <div><span className="tg-overview-icon"><Megaphone size={18}/></span><strong>{announcements.length}</strong><small>{A.announcements}</small></div>
                 <div><span className="tg-overview-icon"><Crown size={18}/></span><strong>{detail.leader?.profile.full_name || T.noLeader}</strong><small>{T.leader}</small></div>
                 <div><span className="tg-overview-icon"><Eye size={18}/></span><strong>{openVisibility ? (L === "ar" ? "مفتوحة" : "E hapur") : (L === "ar" ? "خاصة" : "Private")}</strong><small>{L === "ar" ? "خصوصية المجموعة" : "Privatësia e grupit"}</small></div>
               </div>
+
+              <section className="tg-requests-section">
+                <div className="tg-section-heading tg-request-heading">
+                  <div><Clock3 size={18}/><span><strong>{T.requests}</strong><small>{T.requestsSub}</small></span></div>
+                  <b>{detail.join_requests.length}</b>
+                </div>
+                {detail.join_requests.length === 0 ? (
+                  <div className="tg-request-empty"><CheckCircle2 size={22}/><span>{T.noRequests}</span></div>
+                ) : (
+                  <>
+                    {!viewOnly && <div className="tg-request-toolbar" data-write-area="true">
+                      <button className="tg-request-select" onClick={() => setPickedRequests(pickedRequests.size === detail.join_requests.length ? new Set() : new Set(detail.join_requests.map((item) => item.id)))}>
+                        {pickedRequests.size === detail.join_requests.length ? T.clearSelection : T.selectAll}
+                      </button>
+                      <span>{pickedRequests.size} / {detail.join_requests.length}</span>
+                      <div />
+                      <button className="tg-request-approve" onClick={() => void reviewRequests("approve")} disabled={pickedRequests.size === 0 || requestAction !== null}><CheckCircle2 size={14}/>{T.approveSelected}</button>
+                      <button className="tg-request-reject" onClick={() => void reviewRequests("reject")} disabled={pickedRequests.size === 0 || requestAction !== null}><X size={14}/>{T.rejectSelected}</button>
+                    </div>}
+                    {requestError && <div className="tg-request-error" role="alert">{requestError}</div>}
+                    <div className="tg-request-list">
+                      {detail.join_requests.map((request) => {
+                        const selected = pickedRequests.has(request.id);
+                        return (
+                          <label key={request.id} className={`tg-request${selected ? " selected" : ""}`}>
+                            {!viewOnly && (
+                              <input type="checkbox" checked={selected} onChange={() => { const next = new Set(pickedRequests); if (selected) next.delete(request.id); else next.add(request.id); setPickedRequests(next); }}/>
+                            )}
+                            <span className="tg-request-avatar">{request.teacher.profile.full_name.split(" ").map((part) => part[0]).slice(0,2).join("").toUpperCase()}</span>
+                            <span className="tg-request-main"><strong>{request.teacher.profile.full_name}</strong>{request.teacher.profile.email && <small>{request.teacher.profile.email}</small>}<em><Clock3 size={11}/>{T.requestPending} · {new Date(request.requested_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { month: "short", day: "numeric" })}</em></span>
+                            {request.teacher.application && <span className="tg-request-context">{request.teacher.application.specialization || "—"}<small>{[request.teacher.application.country, request.teacher.application.city].filter(Boolean).join(" · ")}</small></span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </section>
 
               <div className="tg-section-heading"><div><Users size={18}/><span><strong>{L === "ar" ? "أعضاء المجموعة" : "Anëtarët e grupit"}</strong><small>{L === "ar" ? "ملفات المشرفين ومعلوماتهم الأساسية" : "Profilet dhe të dhënat kryesore"}</small></span></div></div>
 
@@ -722,6 +829,7 @@ export default function TeacherGroupsPage() {
         .tg-list-item.active { background: linear-gradient(165deg,#FFFBF5,#F7F3EB); border-color: #B8A082; }
         .tg-list-name { font-size: 13.5px; font-weight: 800; color: #32101A; }
         .tg-list-meta { font-size: 11.5px; color: #8F765B; font-weight: 700; }
+        .tg-list-meta b { display:inline-flex; margin-inline-start:6px; border-radius:999px; padding:2px 6px; color:#6B1E2D; background:rgba(184,160,130,.16); font-size:8px; }
 
         .tg-detail { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 14px; padding: 18px; min-height: 320px; }
         .tg-detail-empty { padding: 60px 20px; text-align: center; color: #8C8274; font-weight: 700; }
@@ -737,6 +845,21 @@ export default function TeacherGroupsPage() {
         .tg-btn-danger  { background: linear-gradient(180deg,#6B1E2D,#6B1E2D); color: #FFF; border-color: transparent; }
 
         .tg-members { display: flex; flex-direction: column; gap: 8px; }
+        .tg-requests-section { margin:4px 0 20px; padding:14px; border:1px solid #E5E0D5; border-radius:15px; background:#F7F3EB; }
+        .tg-request-heading { margin:0 0 11px; }.tg-request-heading>b { display:grid; place-items:center; min-width:29px; height:29px; border-radius:9px; color:#D9C9B0; background:#32101A; font-size:11px; }
+        .tg-request-empty { display:flex; align-items:center; justify-content:center; gap:8px; min-height:82px; border:1px dashed rgba(184,160,130,.34); border-radius:12px; color:#796A62; background:#FFFBF5; font-size:11.5px; font-weight:800; }
+        .tg-request-toolbar { display:grid; grid-template-columns:auto auto 1fr auto auto; align-items:center; gap:7px; margin-bottom:9px; }
+        .tg-request-toolbar button { display:flex; align-items:center; justify-content:center; gap:5px; min-height:34px; border-radius:9px; padding:7px 10px; font:800 10px 'Cairo',sans-serif; cursor:pointer; }
+        .tg-request-select { border:1px solid #E5E0D5; color:#655B53; background:#FFFFFF; }.tg-request-toolbar>span { color:#8F765B; font-size:10px; font-weight:900; }
+        .tg-request-approve { border:0; color:#FFFFFF; background:#1B5E20; }.tg-request-reject { border:1px solid rgba(107,30,45,.18); color:#6B1E2D; background:#FFFFFF; }
+        .tg-request-toolbar button:disabled { opacity:.45; cursor:not-allowed; }
+        .tg-request-error { margin-bottom:9px; border:1px solid rgba(107,30,45,.22); border-radius:9px; padding:8px 10px; color:#6B1E2D; background:rgba(107,30,45,.06); font-size:10px; font-weight:800; }
+        .tg-request-list { display:flex; flex-direction:column; gap:7px; }
+        .tg-request { display:grid; grid-template-columns:auto 38px minmax(0,1fr) minmax(110px,.35fr); align-items:center; gap:10px; padding:10px 11px; border:1px solid #E5E0D5; border-radius:12px; background:#FFFFFF; cursor:pointer; transition:border-color .15s,box-shadow .15s; }
+        .tg-request.selected { border-color:#B8A082; box-shadow:0 0 0 3px rgba(184,160,130,.1); }.tg-request input { width:16px; height:16px; accent-color:#6B1E2D; }
+        .tg-request-avatar { width:38px; height:38px; display:grid; place-items:center; border-radius:11px; color:#D9C9B0; background:#32101A; font-size:9px; font-weight:900; }
+        .tg-request-main { min-width:0; display:flex; flex-direction:column; }.tg-request-main strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-size:12px; }.tg-request-main small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#8F765B; font-size:9px; }.tg-request-main em { display:flex; align-items:center; gap:4px; margin-top:3px; color:#6B1E2D; font-size:8.5px; font-style:normal; font-weight:800; }
+        .tg-request-context { display:flex; flex-direction:column; color:#655B53; font-size:9.5px; font-weight:800; }.tg-request-context small { color:#8F765B; font-size:8.5px; font-weight:700; }
         .tg-member-filter { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .tg-member-filter input { flex: 1; min-width: 0; }
         .tg-member-filter span { color: #8F765B; font-size: 12px; font-weight: 900; white-space: nowrap; }
@@ -845,7 +968,7 @@ export default function TeacherGroupsPage() {
         .tg-meta-actions { margin:0; }
         .tg-btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:36px; text-decoration:none; }
         .tg-icon-danger { width:36px; height:36px; display:grid; place-items:center; border-radius:9px; border:1px solid rgba(139,26,26,.18); color:#8B1A1A; background:#FFF4F1; cursor:pointer; }
-        .tg-overview-strip { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; margin:0 0 19px; }
+        .tg-overview-strip { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; margin:0 0 19px; }
         .tg-overview-strip>div { display:grid; grid-template-columns:38px 1fr; grid-template-rows:auto auto; gap:0 9px; padding:12px; border:1px solid #E8DFD2; border-radius:13px; background:linear-gradient(145deg,#FFF,#FBF6EF); }
         .tg-overview-icon { grid-row:1/3; width:38px; height:38px; display:grid; place-items:center; border-radius:11px; color:#6B1E2D; background:#F0E7D9; }
         .tg-overview-strip strong { align-self:end; font-size:16px; line-height:1.2; }
@@ -867,7 +990,7 @@ export default function TeacherGroupsPage() {
         .tg-ann { border-radius:13px; }
         .tg-dialog { border:1px solid #E1D5C5; border-radius:20px; box-shadow:0 26px 80px rgba(26,12,13,.32); }
         @media(max-width:980px){.tg-layout{grid-template-columns:280px minmax(0,1fr)}.tg-overview-strip{grid-template-columns:1fr}.tg-edit-fields{grid-template-columns:1fr}}
-        @media(max-width:760px){.tg-hero{padding:21px}.tg-hero-actions,.tg-visibility{width:100%}.tg-new{flex:1}.tg-layout{grid-template-columns:1fr}.tg-side{position:static;max-height:none}.tg-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.tg-detail{padding:16px}.tg-detail-title-row{grid-template-columns:44px 1fr}.tg-detail-mark{width:44px;height:44px}.tg-overview-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.tg-overview-strip>div{grid-template-columns:1fr;text-align:center}.tg-overview-icon{grid-row:auto;margin:auto}.tg-meta-actions{align-items:stretch}.tg-spacer{display:none}}
+        @media(max-width:760px){.tg-hero{padding:21px}.tg-hero-actions,.tg-visibility{width:100%}.tg-new{flex:1}.tg-layout{grid-template-columns:1fr}.tg-side{position:static;max-height:none}.tg-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.tg-detail{padding:16px}.tg-detail-title-row{grid-template-columns:44px 1fr}.tg-detail-mark{width:44px;height:44px}.tg-overview-strip{grid-template-columns:repeat(3,minmax(0,1fr))}.tg-overview-strip>div{grid-template-columns:1fr;text-align:center}.tg-overview-icon{grid-row:auto;margin:auto}.tg-meta-actions{align-items:stretch}.tg-spacer{display:none}.tg-request-toolbar{grid-template-columns:1fr auto}.tg-request-toolbar>div{display:none}.tg-request-toolbar :is(.tg-request-approve,.tg-request-reject){grid-column:auto}.tg-request{grid-template-columns:auto 38px minmax(0,1fr)}.tg-request-context{grid-column:3}}
         @media(max-width:500px){.tg-title{font-size:24px}.tg-list{grid-template-columns:1fr}.tg-overview-strip{grid-template-columns:1fr}.tg-overview-strip>div{grid-template-columns:38px 1fr;text-align:start}.tg-overview-icon{grid-row:1/3;margin:0}.tg-member{align-items:flex-start}.tg-member-meta{gap:6px;flex-direction:column}.tg-meta-actions .tg-btn{flex:1}}
       `}</style>
     </div>

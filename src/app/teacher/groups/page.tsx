@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Network, Users, ArrowUpRight, Crown, DoorOpen, LockKeyhole, Sparkles } from "lucide-react";
+import { Network, Users, ArrowUpRight, Crown, DoorOpen, LockKeyhole, Sparkles, Clock3, X } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
@@ -21,8 +21,11 @@ type TeacherGroup = {
   available_seats: number;
   is_full: boolean;
   is_member: boolean;
+  request_status: "PENDING" | null;
   leader: { id: string | null; name: string } | null;
 };
+
+type PendingRequest = { id: string; group_id: string; group_name: string; requested_at: string };
 
 const UI = {
   ar: {
@@ -37,17 +40,24 @@ const UI = {
     emptySub: "عندما يضيفك مدير المنصة إلى مجموعة، ستظهر هنا.",
     opening: "جارٍ فتح مجموعتك…",
     chooseTitle: "اختر مجموعتك",
-    chooseSub: "أنت غير منضم إلى مجموعة بعد. اختر المجموعة الأنسب لك، وسيتم تثبيت عضويتك فوراً.",
-    chooseNote: "يمكن الانضمام إلى مجموعة واحدة فقط. يستطيع مدير المنصة تعديل عضويتك لاحقاً عند الحاجة.",
-    join: "الانضمام إلى المجموعة",
-    joining: "جارٍ تثبيت عضويتك…",
+    chooseSub: "اختر المجموعة الأنسب ثم أرسل طلبك. ستدخل المجموعة فقط بعد موافقة مدير المنصة.",
+    chooseNote: "يمكن إرسال طلب واحد في كل مرة. سيظهر لك الطلب هنا حتى يراجعه مدير المنصة.",
+    join: "إرسال طلب الانضمام",
+    joining: "جارٍ إرسال الطلب…",
     seats: (available: number, total: number) => `${available} مقعد متاح من ${total}`,
     full: "اكتملت المقاعد",
     leader: "قائد المجموعة",
     noLeader: "سيُحدد القائد لاحقاً",
-    confirmJoin: (name: string) => `هل تريد الانضمام إلى «${name}»؟ ستصبح هذه مجموعتك الأساسية.`,
-    joinError: "تعذر الانضمام الآن. حدّث الصفحة وحاول مرة أخرى.",
+    confirmJoin: (name: string) => `إرسال طلب الانضمام إلى «${name}»؟ سيقوم مدير المنصة بمراجعته قبل إضافتك.`,
+    joinError: "تعذر إرسال الطلب الآن. حدّث الصفحة وحاول مرة أخرى.",
     seatChanged: "تم حجز آخر مقعد للتو. اختر مجموعة أخرى.",
+    pendingTitle: "طلبك قيد المراجعة",
+    pendingSub: (name: string) => `أرسلت طلباً إلى «${name}». لن تتمكن من دخول المجموعة حتى يوافق مدير المنصة.`,
+    pendingLabel: "بانتظار الموافقة",
+    requestSent: "تم إرسال طلبك بنجاح إلى مدير المنصة.",
+    cancelRequest: "سحب الطلب",
+    cancelConfirm: "هل تريد سحب طلب الانضمام؟ يمكنك اختيار مجموعة أخرى بعد ذلك.",
+    pendingOther: "لديك طلب آخر قيد المراجعة. اسحبه أولاً إذا أردت اختيار مجموعة مختلفة.",
   },
   sq: {
     title: "Grupet e mia",
@@ -61,17 +71,24 @@ const UI = {
     emptySub: "Kur administratori ju shton në një grup, ai do të shfaqet këtu.",
     opening: "Po hapim grupin tënd…",
     chooseTitle: "Zgjidh grupin tënd",
-    chooseSub: "Ende nuk je pjesë e një grupi. Zgjidh grupin që të përshtatet dhe anëtarësimi do të konfirmohet menjëherë.",
-    chooseNote: "Mund të bashkohesh vetëm me një grup. Administratori mund ta ndryshojë anëtarësimin më vonë.",
-    join: "Bashkohu me grupin",
-    joining: "Po konfirmojmë anëtarësimin…",
+    chooseSub: "Zgjidh grupin e duhur dhe dërgo kërkesën. Do të hysh vetëm pasi administratori ta miratojë.",
+    chooseNote: "Mund të kesh vetëm një kërkesë aktive. Ajo do të qëndrojë këtu derisa administratori ta shqyrtojë.",
+    join: "Dërgo kërkesën",
+    joining: "Po dërgojmë kërkesën…",
     seats: (available: number, total: number) => `${available} vende të lira nga ${total}`,
     full: "Grupi është plot",
     leader: "Drejtuesi i grupit",
     noLeader: "Drejtuesi caktohet më vonë",
-    confirmJoin: (name: string) => `Të bashkohesh me “${name}”? Ky do të bëhet grupi yt kryesor.`,
-    joinError: "Nuk u bashkove dot tani. Rifresko dhe provo përsëri.",
+    confirmJoin: (name: string) => `Të dërgojmë kërkesën për “${name}”? Administratori do ta shqyrtojë para se të të shtojë.`,
+    joinError: "Kërkesa nuk u dërgua. Rifresko dhe provo përsëri.",
     seatChanged: "Vendi i fundit sapo u rezervua. Zgjidh një grup tjetër.",
+    pendingTitle: "Kërkesa po shqyrtohet",
+    pendingSub: (name: string) => `Ke kërkuar t'i bashkohesh “${name}”. Grupi hapet pasi administratori ta miratojë.`,
+    pendingLabel: "Në pritje të miratimit",
+    requestSent: "Kërkesa iu dërgua administratorit me sukses.",
+    cancelRequest: "Tërhiq kërkesën",
+    cancelConfirm: "Ta tërheqim kërkesën? Më pas mund të zgjedhësh një grup tjetër.",
+    pendingOther: "Ke një kërkesë tjetër aktive. Tërhiqe para se të zgjedhësh një grup tjetër.",
   },
 } as const;
 
@@ -90,6 +107,8 @@ export default function TeacherGroupsPage() {
   const [needsSelection, setNeedsSelection] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState("");
+  const [requestNotice, setRequestNotice] = useState("");
+  const [pendingRequest, setPendingRequest] = useState<PendingRequest | null>(null);
 
   const loadGroups = useCallback(() => {
     setLoading(true);
@@ -99,6 +118,7 @@ export default function TeacherGroupsPage() {
       .then((d) => {
         setGroups(Array.isArray(d?.groups) ? d.groups : []);
         setNeedsSelection(d?.needs_group_selection === true);
+        setPendingRequest(d?.pending_request ?? null);
       })
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
@@ -127,15 +147,41 @@ export default function TeacherGroupsPage() {
     if (!approved) return;
     setJoiningId(group.id);
     setJoinError("");
+    setRequestNotice("");
     try {
       const response = await fetch(`/api/teacher/groups/${group.id}/join`, { method: "POST" });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setJoinError(result?.error === "group_full" || result?.error === "seat_changed_retry" ? T.seatChanged : T.joinError);
+        setJoinError(result?.error === "group_full" ? T.seatChanged : result?.error === "pending_other_group" ? T.pendingOther : T.joinError);
         await loadGroups();
         return;
       }
-      router.replace(`/teacher/groups/${group.id}`);
+      setRequestNotice(T.requestSent);
+      await loadGroups();
+    } catch {
+      setJoinError(T.joinError);
+    } finally {
+      setJoiningId(null);
+    }
+  }
+
+  async function cancelRequest() {
+    if (!pendingRequest || joiningId) return;
+    const approved = await confirm({
+      title: T.pendingTitle,
+      message: T.cancelConfirm,
+      confirmText: T.cancelRequest,
+      cancelText: L === "ar" ? "إلغاء" : "Anulo",
+      variant: "danger",
+    });
+    if (!approved) return;
+    setJoiningId(pendingRequest.group_id);
+    setJoinError("");
+    setRequestNotice("");
+    try {
+      const response = await fetch(`/api/teacher/groups/${pendingRequest.group_id}/join`, { method: "DELETE" });
+      if (!response.ok) throw new Error();
+      await loadGroups();
     } catch {
       setJoinError(T.joinError);
     } finally {
@@ -188,6 +234,14 @@ export default function TeacherGroupsPage() {
       {needsSelection && (
         <div className="tg-choice-note"><Sparkles size={16} /><span>{T.chooseNote}</span></div>
       )}
+      {pendingRequest && (
+        <section className="tg-pending-panel">
+          <span className="tg-pending-icon"><Clock3 size={21} /></span>
+          <div><strong>{T.pendingTitle}</strong><p>{T.pendingSub(pendingRequest.group_name)}</p></div>
+          <button onClick={() => void cancelRequest()} disabled={joiningId !== null}><X size={14}/>{T.cancelRequest}</button>
+        </section>
+      )}
+      {requestNotice && <div className="tg-success" role="status">{requestNotice}</div>}
       {joinError && <div className="tg-error" role="alert">{joinError}</div>}
 
       {groups.length > 0 && (
@@ -210,7 +264,7 @@ export default function TeacherGroupsPage() {
       ) : (
         <section className="tg-grid">
           {visibleGroups.map((group) => needsSelection ? (
-            <article key={group.id} className={`tg-card tg-choice-card${group.is_full ? " full" : ""}`}>
+            <article key={group.id} className={`tg-card tg-choice-card${group.is_full ? " full" : ""}${group.request_status === "PENDING" ? " pending" : ""}`}>
               <div className="tg-card-top">
                 <span className="tg-card-icon"><Users size={17} strokeWidth={1.7} /></span>
                 <span className={`tg-seat-badge${group.is_full ? " full" : ""}`}>
@@ -225,9 +279,9 @@ export default function TeacherGroupsPage() {
                 <span>{group.member_count} {T.members}</span>
                 <span>{group.max_members}</span>
               </div>
-              <button className="tg-join" onClick={() => void joinGroup(group)} disabled={group.is_full || joiningId !== null}>
-                {joiningId === group.id ? T.joining : group.is_full ? T.full : T.join}
-                {!group.is_full && joiningId !== group.id && <ArrowUpRight size={16} />}
+              <button className="tg-join" onClick={() => void joinGroup(group)} disabled={group.is_full || joiningId !== null || pendingRequest !== null}>
+                {joiningId === group.id ? T.joining : group.request_status === "PENDING" ? T.pendingLabel : group.is_full ? T.full : T.join}
+                {!group.is_full && joiningId !== group.id && group.request_status !== "PENDING" && <ArrowUpRight size={16} />}
               </button>
             </article>
           ) : (
@@ -270,10 +324,16 @@ const styles = `
   .tg-count strong { font-size: 25px; line-height: 1; color: #B8A082; }
   .tg-count span { font-size: 11.5px; font-weight: 700; color: rgba(255,251,245,0.64); }
   .tg-filter { margin: 0 0 16px; }
-  .tg-choice-note,.tg-error { display:flex; align-items:center; gap:9px; margin:0 0 14px; border-radius:13px; padding:11px 13px; font-size:12px; font-weight:800; }
+  .tg-choice-note,.tg-error,.tg-success { display:flex; align-items:center; gap:9px; margin:0 0 14px; border-radius:13px; padding:11px 13px; font-size:12px; font-weight:800; }
   .tg-choice-note { border:1px solid rgba(107,30,45,.14); background:#FFFBF5; color:#655B53; }
   .tg-choice-note svg { color:#6B1E2D; flex:none; }
   .tg-error { border:1px solid rgba(107,30,45,.25); background:rgba(107,30,45,.07); color:#6B1E2D; }
+  .tg-success { border:1px solid rgba(27,94,32,.2); background:rgba(27,94,32,.07); color:#1B5E20; }
+  .tg-pending-panel { display:grid; grid-template-columns:46px minmax(0,1fr) auto; align-items:center; gap:13px; margin:0 0 15px; padding:15px; border:1px solid rgba(184,160,130,.28); border-radius:16px; background:linear-gradient(135deg,#32101A,#5B1526); color:#FFFFFF; box-shadow:0 12px 28px rgba(26,26,26,.1); }
+  .tg-pending-icon { width:46px; height:46px; display:grid; place-items:center; border-radius:13px; color:#D9C9B0; background:rgba(184,160,130,.13); }
+  .tg-pending-panel strong { color:#D9C9B0; font-size:14px; font-weight:900; }
+  .tg-pending-panel p { margin:3px 0 0; color:rgba(255,255,255,.68); font-size:11.5px; line-height:1.65; }
+  .tg-pending-panel button { display:flex; align-items:center; gap:6px; border:1px solid rgba(217,201,176,.22); border-radius:10px; background:rgba(255,255,255,.08); color:#FFFFFF; padding:9px 11px; font:800 10px 'Cairo',sans-serif; cursor:pointer; }
   .tg-filter input {
     width: min(520px, 100%); border: 1.5px solid rgba(107,30,45,0.24); border-radius: 14px;
     background: #FFFBF5; padding: 12px 15px; font: inherit; font-size: 14px; outline: none;
@@ -295,6 +355,7 @@ const styles = `
   .tg-card-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; color: #8F765B; font-size: 12px; font-weight: 800; }
   .tg-choice-card { min-height:260px; }
   .tg-choice-card.full { opacity:.72; }
+  .tg-choice-card.pending { border-color:#B8A082; box-shadow:0 0 0 3px rgba(184,160,130,.12); }
   .tg-seat-badge { display:inline-flex; align-items:center; gap:5px; border-radius:999px; background:rgba(27,94,32,.09); padding:5px 8px; color:#1B5E20; font-size:9.5px; font-weight:900; }
   .tg-seat-badge.full { background:rgba(107,30,45,.09); color:#6B1E2D; }
   .tg-leader { display:flex; align-items:center; gap:8px; margin-top:12px; border-radius:11px; background:#F7F3EB; padding:9px 10px; color:#6B1E2D; }
@@ -313,5 +374,7 @@ const styles = `
     .tg-page { padding: 16px; }
     .tg-head { padding: 18px; }
     .tg-title { font-size: 20px; }
+    .tg-pending-panel { grid-template-columns:42px 1fr; }
+    .tg-pending-panel button { grid-column:1 / -1; justify-content:center; }
   }
 `;

@@ -40,6 +40,18 @@ export async function GET() {
     },
   });
 
+  const pendingRequest = myMemberships.length === 0
+    ? await prisma.teacherGroupJoinRequest.findFirst({
+        where: { teacher_id: auth.teacher.id, school_id: auth.teacher.school_id, status: "PENDING" },
+        select: {
+          id: true,
+          group_id: true,
+          requested_at: true,
+          group: { select: { name: true } },
+        },
+      })
+    : null;
+
   // Ungrouped teachers always receive the school's catalogue so they can
   // choose their own cohort, even when cross-group browsing is otherwise off.
   if (myMemberships.length === 0) {
@@ -60,6 +72,12 @@ export async function GET() {
     return NextResponse.json({
       openVisibility,
       needs_group_selection: true,
+      pending_request: pendingRequest ? {
+        id: pendingRequest.id,
+        group_id: pendingRequest.group_id,
+        group_name: pendingRequest.group.name,
+        requested_at: pendingRequest.requested_at,
+      } : null,
       groups: availableGroups.map((group) => ({
         id: group.id,
         name: group.name,
@@ -71,6 +89,7 @@ export async function GET() {
         available_seats: Math.max(0, group.max_members - group._count.members),
         is_full: group._count.members >= group.max_members,
         is_member: false,
+        request_status: pendingRequest?.group_id === group.id ? "PENDING" : null,
         leader: group.leader ? { id: group.leader_teacher_id, name: group.leader.profile.full_name } : null,
       })),
     });
@@ -99,6 +118,7 @@ export async function GET() {
     return NextResponse.json({
       openVisibility,
       needs_group_selection: false,
+      pending_request: null,
       groups: groups.map((g) => ({
         id: g.id,
         name: g.name,
@@ -110,6 +130,7 @@ export async function GET() {
         available_seats: Math.max(0, g.max_members - g._count.members),
         is_full: g._count.members >= g.max_members,
         is_member: g.members.length > 0,
+        request_status: null,
         leader: g.leader ? { id: g.leader_teacher_id, name: g.leader.profile.full_name } : null,
       })),
     });
@@ -117,6 +138,7 @@ export async function GET() {
   return NextResponse.json({
     openVisibility,
     needs_group_selection: false,
+    pending_request: null,
     groups: myMemberships.map((m) => ({
       ...m.group,
       joined_at: m.joined_at,
@@ -124,6 +146,7 @@ export async function GET() {
       available_seats: Math.max(0, m.group.max_members - m.group._count.members),
       is_full: m.group._count.members >= m.group.max_members,
       is_member: true,
+      request_status: null,
       leader: m.group.leader ? { id: m.group.leader_teacher_id, name: m.group.leader.profile.full_name } : null,
     })),
   });

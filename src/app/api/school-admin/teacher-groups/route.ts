@@ -23,7 +23,7 @@ export async function GET() {
       leader: { select: { profile: { select: { full_name: true } } } },
       created_at: true,
       updated_at: true,
-      _count: { select: { members: true } },
+      _count: { select: { members: true, join_requests: { where: { status: "PENDING" } } } },
     },
   });
   const features = auth.school.features;
