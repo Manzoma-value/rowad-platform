@@ -41,7 +41,7 @@ export async function POST(
           teacher: {
             select: {
               onboarding_status: true,
-              group_memberships: { select: { group_id: true }, take: 1 },
+              group_memberships: { where: { group_id: id }, select: { group_id: true }, take: 1 },
             },
           },
         },

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Bell, BookOpenCheck, ChevronLeft, ChevronRight, Crown, Eye, EyeOff,
-  CheckCircle2, Clock3, MapPin, Megaphone, PencilLine, Plus, Search, Trash2, UserMinus,
+  CheckCircle2, Clock3, History, LogOut, MapPin, Megaphone, PencilLine, Plus, Search, Trash2, UserMinus,
   UserPlus, Users, X,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
@@ -50,12 +50,23 @@ type GroupDetail = {
   leader: { id: string; profile: { full_name: string; avatar_url: string | null } } | null;
   members: Member[];
   join_requests: JoinRequest[];
+  leave_events: LeaveEvent[];
 };
 
 type JoinRequest = {
   id: string;
   requested_at: string;
   teacher: Member["teacher"];
+};
+
+type LeaveEvent = {
+  id: string;
+  reason: string;
+  left_at: string;
+  teacher: {
+    id: string;
+    profile: { full_name: string; email: string | null };
+  };
 };
 
 type GroupAnnouncement = {
@@ -198,6 +209,14 @@ export default function TeacherGroupsPage() {
       ? "لم تتم إضافة إعلانات لهذه المجموعة بعد."
       : "Nuk ka njoftime për këtë grup ende.",
     delete: L === "ar" ? "حذف" : "Fshi",
+    departures: L === "ar" ? "سجل المغادرات" : "Historiku i largimeve",
+    departuresSub: L === "ar"
+      ? "أسباب المغادرة التي كتبها المشرفون، مرتبة من الأحدث."
+      : "Arsyet e shkruara nga edukatorët, nga më e reja.",
+    noDepartures: L === "ar"
+      ? "لا توجد مغادرات مسجلة لهذه المجموعة."
+      : "Nuk ka largime të regjistruara për këtë grup.",
+    leaveReason: L === "ar" ? "سبب المغادرة" : "Arsyeja e largimit",
   };
   const viewOnly = useViewOnly();
   const confirm = useConfirm();
@@ -625,6 +644,29 @@ export default function TeacherGroupsPage() {
                 )}
               </section>
 
+              <details className="tg-departures">
+                <summary>
+                  <span className="tg-departure-title"><History size={18}/><span><strong>{A.departures}</strong><small>{A.departuresSub}</small></span></span>
+                  <b>{detail.leave_events.length}</b>
+                </summary>
+                {detail.leave_events.length === 0 ? (
+                  <div className="tg-departure-empty"><CheckCircle2 size={20}/>{A.noDepartures}</div>
+                ) : (
+                  <div className="tg-departure-list">
+                    {detail.leave_events.map((event) => (
+                      <article className="tg-departure" key={event.id}>
+                        <span className="tg-departure-icon"><LogOut size={17}/></span>
+                        <div className="tg-departure-main">
+                          <div><strong>{event.teacher.profile.full_name}</strong><time>{new Date(event.left_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { year: "numeric", month: "short", day: "numeric" })}</time></div>
+                          {event.teacher.profile.email && <small>{event.teacher.profile.email}</small>}
+                          <p><b>{A.leaveReason}:</b> {event.reason}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </details>
+
               <div className="tg-section-heading"><div><Users size={18}/><span><strong>{L === "ar" ? "أعضاء المجموعة" : "Anëtarët e grupit"}</strong><small>{L === "ar" ? "ملفات المشرفين ومعلوماتهم الأساسية" : "Profilet dhe të dhënat kryesore"}</small></span></div></div>
 
               {detail.members.length > 0 && (
@@ -860,6 +902,24 @@ export default function TeacherGroupsPage() {
         .tg-request-avatar { width:38px; height:38px; display:grid; place-items:center; border-radius:11px; color:#D9C9B0; background:#32101A; font-size:9px; font-weight:900; }
         .tg-request-main { min-width:0; display:flex; flex-direction:column; }.tg-request-main strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-size:12px; }.tg-request-main small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#8F765B; font-size:9px; }.tg-request-main em { display:flex; align-items:center; gap:4px; margin-top:3px; color:#6B1E2D; font-size:8.5px; font-style:normal; font-weight:800; }
         .tg-request-context { display:flex; flex-direction:column; color:#655B53; font-size:9.5px; font-weight:800; }.tg-request-context small { color:#8F765B; font-size:8.5px; font-weight:700; }
+        .tg-departures { margin:0 0 20px; border:1px solid #E5E0D5; border-radius:15px; background:#FFFBF5; overflow:hidden; }
+        .tg-departures summary { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px; cursor:pointer; list-style:none; }
+        .tg-departures summary::-webkit-details-marker { display:none; }
+        .tg-departure-title { display:flex; align-items:center; gap:9px; color:#6B1E2D; }
+        .tg-departure-title>span { display:flex; flex-direction:column; }
+        .tg-departure-title strong { color:#32101A; font-size:12.5px; font-weight:900; }
+        .tg-departure-title small { color:#8F765B; font-size:9.5px; font-weight:700; }
+        .tg-departures summary>b { display:grid; place-items:center; min-width:29px; height:29px; border-radius:9px; color:#6B1E2D; background:#F3E3E6; font-size:11px; }
+        .tg-departure-list { display:flex; flex-direction:column; gap:7px; padding:0 14px 14px; }
+        .tg-departure { display:flex; align-items:flex-start; gap:10px; padding:11px; border:1px solid #E9E1D6; border-radius:12px; background:#F8F4ED; }
+        .tg-departure-icon { display:grid; width:36px; height:36px; flex:none; place-items:center; border-radius:10px; color:#6B1E2D; background:#F3E3E6; }
+        .tg-departure-main { flex:1; min-width:0; }
+        .tg-departure-main>div { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+        .tg-departure-main strong { color:#32101A; font-size:11.5px; font-weight:900; }
+        .tg-departure-main time,.tg-departure-main small { color:#8F765B; font-size:9px; font-weight:700; }
+        .tg-departure-main p { margin:7px 0 0; padding-top:7px; border-top:1px solid #E5DDD2; color:#655B53; font-size:10.5px; line-height:1.75; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .tg-departure-main p b { color:#6B1E2D; }
+        .tg-departure-empty { display:flex; align-items:center; justify-content:center; gap:8px; margin:0 14px 14px; min-height:72px; border:1px dashed rgba(184,160,130,.34); border-radius:11px; color:#796A62; background:#F7F3EB; font-size:10.5px; font-weight:800; }
         .tg-member-filter { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
         .tg-member-filter input { flex: 1; min-width: 0; }
         .tg-member-filter span { color: #8F765B; font-size: 12px; font-weight: 900; white-space: nowrap; }

@@ -1,4 +1,5 @@
-// GET /api/teacher/groups — list groups the calling teacher belongs to.
+// GET /api/teacher/groups — the full platform group catalogue with the
+// calling supervisor's membership and request state on every card.
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
@@ -9,96 +10,14 @@ export async function GET() {
   const auth = await requireTeacher();
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const school = await prisma.school.findUnique({
-    where: { id: auth.teacher.school_id },
-    select: { features: true },
-  });
-  const openVisibility = !!(
-    school?.features &&
-    typeof school.features === "object" &&
-    !Array.isArray(school.features) &&
-    (school.features as Record<string, unknown>).teacher_groups_open_visibility === true
-  );
-
-  const myMemberships = await prisma.teacherGroupMember.findMany({
-    where: { teacher_id: auth.teacher.id },
-    orderBy: { joined_at: "desc" },
-    select: {
-      joined_at: true,
-      group: {
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          max_members: true,
-          updated_at: true,
-          leader_teacher_id: true,
-          leader: { select: { profile: { select: { full_name: true } } } },
-          _count: { select: { members: true } },
-        },
-      },
-    },
-  });
-
-  const pendingRequest = myMemberships.length === 0
-    ? await prisma.teacherGroupJoinRequest.findFirst({
-        where: { teacher_id: auth.teacher.id, school_id: auth.teacher.school_id, status: "PENDING" },
-        select: {
-          id: true,
-          group_id: true,
-          requested_at: true,
-          group: { select: { name: true } },
-        },
-      })
-    : null;
-
-  // Ungrouped teachers always receive the school's catalogue so they can
-  // choose their own cohort, even when cross-group browsing is otherwise off.
-  if (myMemberships.length === 0) {
-    const availableGroups = await prisma.teacherGroup.findMany({
+  const [school, groups, pendingRequest] = await Promise.all([
+    prisma.school.findUnique({
+      where: { id: auth.teacher.school_id },
+      select: { features: true },
+    }),
+    prisma.teacherGroup.findMany({
       where: { school_id: auth.teacher.school_id },
       orderBy: [{ updated_at: "desc" }, { name: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        max_members: true,
-        updated_at: true,
-        leader_teacher_id: true,
-        leader: { select: { profile: { select: { full_name: true } } } },
-        _count: { select: { members: true } },
-      },
-    });
-    return NextResponse.json({
-      openVisibility,
-      needs_group_selection: true,
-      pending_request: pendingRequest ? {
-        id: pendingRequest.id,
-        group_id: pendingRequest.group_id,
-        group_name: pendingRequest.group.name,
-        requested_at: pendingRequest.requested_at,
-      } : null,
-      groups: availableGroups.map((group) => ({
-        id: group.id,
-        name: group.name,
-        description: group.description,
-        updated_at: group.updated_at,
-        joined_at: null,
-        member_count: group._count.members,
-        max_members: group.max_members,
-        available_seats: Math.max(0, group.max_members - group._count.members),
-        is_full: group._count.members >= group.max_members,
-        is_member: false,
-        request_status: pendingRequest?.group_id === group.id ? "PENDING" : null,
-        leader: group.leader ? { id: group.leader_teacher_id, name: group.leader.profile.full_name } : null,
-      })),
-    });
-  }
-
-  if (openVisibility) {
-    const groups = await prisma.teacherGroup.findMany({
-      where: { school_id: auth.teacher.school_id },
-      orderBy: { updated_at: "desc" },
       select: {
         id: true,
         name: true,
@@ -114,40 +33,50 @@ export async function GET() {
         },
         _count: { select: { members: true } },
       },
-    });
-    return NextResponse.json({
-      openVisibility,
-      needs_group_selection: false,
-      pending_request: null,
-      groups: groups.map((g) => ({
-        id: g.id,
-        name: g.name,
-        description: g.description,
-        updated_at: g.updated_at,
-        joined_at: g.members[0]?.joined_at ?? null,
-        member_count: g._count.members,
-        max_members: g.max_members,
-        available_seats: Math.max(0, g.max_members - g._count.members),
-        is_full: g._count.members >= g.max_members,
-        is_member: g.members.length > 0,
-        request_status: null,
-        leader: g.leader ? { id: g.leader_teacher_id, name: g.leader.profile.full_name } : null,
-      })),
-    });
-  }
+    }),
+    prisma.teacherGroupJoinRequest.findFirst({
+      where: { teacher_id: auth.teacher.id, school_id: auth.teacher.school_id, status: "PENDING" },
+      select: {
+        id: true,
+        group_id: true,
+        requested_at: true,
+        group: { select: { name: true } },
+      },
+    }),
+  ]);
+
+  const openVisibility = !!(
+    school?.features &&
+    typeof school.features === "object" &&
+    !Array.isArray(school.features) &&
+    (school.features as Record<string, unknown>).teacher_groups_open_visibility === true
+  );
+  const membershipCount = groups.filter((group) => group.members.length > 0).length;
+
   return NextResponse.json({
     openVisibility,
-    needs_group_selection: false,
-    pending_request: null,
-    groups: myMemberships.map((m) => ({
-      ...m.group,
-      joined_at: m.joined_at,
-      member_count: m.group._count.members,
-      available_seats: Math.max(0, m.group.max_members - m.group._count.members),
-      is_full: m.group._count.members >= m.group.max_members,
-      is_member: true,
-      request_status: null,
-      leader: m.group.leader ? { id: m.group.leader_teacher_id, name: m.group.leader.profile.full_name } : null,
+    viewer_teacher_id: auth.teacher.id,
+    needs_group_selection: membershipCount === 0,
+    membership_count: membershipCount,
+    pending_request: pendingRequest ? {
+      id: pendingRequest.id,
+      group_id: pendingRequest.group_id,
+      group_name: pendingRequest.group.name,
+      requested_at: pendingRequest.requested_at,
+    } : null,
+    groups: groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      updated_at: group.updated_at,
+      joined_at: group.members[0]?.joined_at ?? null,
+      member_count: group._count.members,
+      max_members: group.max_members,
+      available_seats: Math.max(0, group.max_members - group._count.members),
+      is_full: group._count.members >= group.max_members,
+      is_member: group.members.length > 0,
+      request_status: pendingRequest?.group_id === group.id ? "PENDING" : null,
+      leader: group.leader ? { id: group.leader_teacher_id, name: group.leader.profile.full_name } : null,
     })),
   });
 }

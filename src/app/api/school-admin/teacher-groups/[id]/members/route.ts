@@ -25,15 +25,14 @@ export async function POST(
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // The first-stage deployment uses two distinct cohorts of 30. A teacher
-  // belongs to one cohort only, keeping peer scoring and its denominator
-  // unambiguous.
+  // Supervisors can participate in several groups; only duplicate membership
+  // in this specific group is excluded.
   const valid = await prisma.teacher.findMany({
     where: {
       id: { in: teacher_ids },
       school_id: auth.school.id,
       onboarding_status: "ACTIVE",
-      group_memberships: { none: {} },
+      group_memberships: { none: { group_id: id } },
     },
     select: { id: true },
   });
@@ -56,10 +55,6 @@ export async function POST(
     await tx.teacherGroupJoinRequest.updateMany({
       where: { group_id: id, teacher_id: { in: valid.map((t) => t.id) }, status: "PENDING" },
       data: { status: "APPROVED", reviewed_by: auth.profile.id, reviewed_at: new Date() },
-    });
-    await tx.teacherGroupJoinRequest.updateMany({
-      where: { group_id: { not: id }, teacher_id: { in: valid.map((t) => t.id) }, status: "PENDING" },
-      data: { status: "REJECTED", reviewed_by: auth.profile.id, reviewed_at: new Date() },
     });
     // bump updated_at on the group so admin list reorders correctly
     await tx.teacherGroup.update({ where: { id }, data: { updated_at: new Date() } });

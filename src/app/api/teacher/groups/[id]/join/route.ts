@@ -15,8 +15,8 @@ export async function POST(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const membership = await tx.teacherGroupMember.findFirst({
-        where: { teacher_id: auth.teacher.id },
+      const membership = await tx.teacherGroupMember.findUnique({
+        where: { group_id_teacher_id: { group_id: id, teacher_id: auth.teacher.id } },
         select: { group_id: true },
       });
       if (membership) return { error: "already_in_group" as const, group_id: membership.group_id };

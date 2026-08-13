@@ -73,6 +73,21 @@ export async function GET(
           },
         },
       },
+      leave_events: {
+        orderBy: { left_at: "desc" },
+        take: 20,
+        select: {
+          id: true,
+          reason: true,
+          left_at: true,
+          teacher: {
+            select: {
+              id: true,
+              profile: { select: { full_name: true, email: true } },
+            },
+          },
+        },
+      },
     },
   });
   if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });

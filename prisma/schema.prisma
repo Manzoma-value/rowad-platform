@@ -547,6 +547,7 @@ model School {
   future_qualification_votes  FutureQualificationVote[]
   group_assessments           GroupAssessment[]
   teacher_group_join_requests TeacherGroupJoinRequest[]
+  teacher_group_leave_events  TeacherGroupLeaveEvent[]
 
   @@map("schools")
 }
@@ -601,6 +602,7 @@ model Teacher {
   future_qualification_vote        FutureQualificationVote?
   class_invites                    ClassInvite[]
   group_join_request               TeacherGroupJoinRequest?
+  group_leave_events               TeacherGroupLeaveEvent[]
 
   @@index([school_id])
   @@map("teachers")
@@ -655,6 +657,7 @@ model TeacherGroup {
   // primary group — lets one measurement model span several groups at once.
   assessment_links GroupAssessmentGroup[]
   join_requests    TeacherGroupJoinRequest[]
+  leave_events     TeacherGroupLeaveEvent[]
 
   @@index([school_id, updated_at(sort: Desc)])
   @@index([leader_teacher_id])
@@ -701,6 +704,26 @@ model TeacherGroupJoinRequest {
   @@index([group_id, status, requested_at])
   @@index([school_id, status])
   @@map("teacher_group_join_requests")
+}
+
+/// Auditable history for voluntary departures. Leaving is immediate, but the
+/// supervisor must provide a meaningful reason that administrators can review.
+model TeacherGroupLeaveEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  group_id   String   @db.Uuid
+  teacher_id String   @db.Uuid
+  school_id  String   @db.Uuid
+  reason     String
+  left_at    DateTime @default(now())
+
+  group   TeacherGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  teacher Teacher      @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  school  School       @relation(fields: [school_id], references: [id], onDelete: Cascade)
+
+  @@index([group_id, left_at(sort: Desc)])
+  @@index([teacher_id, left_at(sort: Desc)])
+  @@index([school_id, left_at(sort: Desc)])
+  @@map("teacher_group_leave_events")
 }
 
 // ─── Measurement models — peer scoring inside one or more teacher groups.
