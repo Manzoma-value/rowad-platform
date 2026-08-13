@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client";
-export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useRef } from "react";
 import { useLang, type Lang } from "@/lib/language-context";
@@ -22,11 +21,16 @@ interface Question {
   options: Option[]; matching_pairs: MatchingPair[]; order: number;
 }
 interface ModuleAttempt { score: number; total: number; }
+interface ModuleSummary {
+  id: string; title: string; description?: string | null; order: number;
+  content_count: number; question_count: number; content_types: ContentType[];
+  attempt: ModuleAttempt | null;
+}
 interface ModuleData {
   id: string; title: string; description?: string | null; order: number;
   contents: ModuleContent[]; questions: Question[]; attempt: ModuleAttempt | null;
 }
-interface Stage { id: string; title: string; order: number; modules: ModuleData[]; }
+interface Stage { id: string; title: string; order: number; modules: ModuleSummary[]; }
 interface Roadmap { id: string; title: string; stages: Stage[]; }
 interface QuizResult { score: number; total: number; }
 
@@ -35,6 +39,8 @@ interface QuizResult { score: number; total: number; }
 const TR: Record<string, Record<string, string>> = {
   ar: {
     loading: "جارٍ تحميل خريطتك...",
+    moduleLoading: "جارٍ فتح الوحدة...",
+    moduleLoadError: "تعذر فتح الوحدة. حاول مرة أخرى.",
     noRoadmap: "لا توجد خريطة بعد",
     noRoadmapDesc: "لا يوجد بنك أسئلة لمنصتك حتى الآن",
     learningMap: "خريطة التعلم",
@@ -77,6 +83,8 @@ const TR: Record<string, Record<string, string>> = {
   },
   sq: {
     loading: "Duke ngarkuar hartën tuaj...",
+    moduleLoading: "Duke hapur modulin...",
+    moduleLoadError: "Moduli nuk mund të hapej. Provoni përsëri.",
     noRoadmap: "Ende nuk ka hartë",
     noRoadmapDesc: "Ende nuk ka bankë pyetjesh për platformën tuaj",
     learningMap: "Harta e Mësimit",
@@ -118,7 +126,8 @@ const TR: Record<string, Record<string, string>> = {
     correctOf: "nga", correctLabel: "përgjigje të sakta",
   },
   en: {
-    loading: "Loading your map...", noRoadmap: "No roadmap yet",
+    loading: "Loading your map...", moduleLoading: "Opening module...",
+    moduleLoadError: "The module could not be opened. Please try again.", noRoadmap: "No roadmap yet",
     noRoadmapDesc: "No question bank for your platform yet",
     learningMap: "Learning Map", overallProgress: "Overall Progress",
     startJourney: "Start your journey",
@@ -612,17 +621,17 @@ function ResultScreen({ result, onBack, lang }: {
 
 // ─── MODULES LIST ─────────────────────────────────────────────────────────────
 
-function ModulesList({ stage, onSelect, onBack, lang }: {
-  stage: Stage; onSelect: (m: ModuleData, readOnly: boolean) => void;
-  onBack: () => void; lang: Lang;
+function ModulesList({ stage, onSelect, onBack, lang, loadingModuleId, loadError }: {
+  stage: Stage; onSelect: (m: ModuleSummary, readOnly: boolean) => void;
+  onBack: () => void; lang: Lang; loadingModuleId: string | null; loadError: string | null;
 }) {
   const tr = getTR(lang);
   const dir = lang === "ar" ? "rtl" : "ltr";
   const doneCount = stage.modules.filter((m) => m.attempt !== null).length;
   const backPath = dir === "rtl" ? "M19 12H5M12 19l-7-7 7-7" : "M5 12h14M12 5l7 7-7 7";
 
-  const contentTypePills = (mod: ModuleData) => {
-    const types = new Set(mod.contents.map((c) => c.type));
+  const contentTypePills = (mod: ModuleSummary) => {
+    const types = new Set(mod.content_types);
     return (
       <div className="content-type-pills">
         {types.has("TEXT")  && <span className="type-pill text-pill">{tr.textType}</span>}
@@ -648,6 +657,8 @@ function ModulesList({ stage, onSelect, onBack, lang }: {
           {doneCount} {tr.modulesOf} {stage.modules.length} {tr.modulesCompletedLabel}
         </p>
       </div>
+
+      {loadError && <div className="module-load-error" role="alert">{loadError}</div>}
 
       <div className="modules-grid">
         {stage.modules.map((mod, idx) => {
@@ -678,20 +689,23 @@ function ModulesList({ stage, onSelect, onBack, lang }: {
               </div>
               <div className="module-content">
                 <h3 className="module-title" dir="auto">{mod.title}</h3>
-                {mod.contents.length > 0 && contentTypePills(mod)}
+                {mod.content_count > 0 && contentTypePills(mod)}
                 <div className="module-meta">
                   <span className="meta-item">
                     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                    {mod.contents.length > 0
-                      ? `${mod.contents.length} ${tr.contentCount} · ${mod.questions.length} ${tr.questionCount}`
-                      : `${mod.questions.length} ${tr.questionCount}`}
+                    {mod.content_count > 0
+                      ? `${mod.content_count} ${tr.contentCount} · ${mod.question_count} ${tr.questionCount}`
+                      : `${mod.question_count} ${tr.questionCount}`}
                   </span>
                 </div>
               </div>
               {!locked && (
                 <button className={`module-action ${attempted ? "view" : "start"}`}
+                  disabled={loadingModuleId !== null}
                   onClick={() => onSelect(mod, attempted)}>
-                  {attempted ? (
+                  {loadingModuleId === mod.id ? (
+                    <><span className="module-action-spinner" /><span>{tr.moduleLoading}</span></>
+                  ) : attempted ? (
                     <><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>{tr.view}</span></>
                   ) : (
                     <><svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg><span>{tr.start}</span></>
@@ -908,8 +922,11 @@ export default function StudentRoadmapPage() {
   const [screen, setScreen] = useState<Screen>("map");
   const [selectedStage, setSelectedStage] = useState<Stage | null>(null);
   const [selectedModule, setSelectedModule] = useState<ModuleData | null>(null);
+  const [loadingModuleId, setLoadingModuleId] = useState<string | null>(null);
+  const [moduleLoadError, setModuleLoadError] = useState<string | null>(null);
   const [lessonReadOnly, setLessonReadOnly] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+  const moduleCache = useRef(new Map<string, ModuleData>());
 
   const load = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -930,12 +947,37 @@ export default function StudentRoadmapPage() {
   useEffect(() => { void load(true); }, []);
 
   const handleStageSelect = (stage: Stage) => { setSelectedStage(stage); setScreen("modules"); };
-  const handleModuleSelect = (mod: ModuleData, readOnly: boolean) => {
-    setSelectedModule(mod); setLessonReadOnly(readOnly); setQuizResult(null);
-    setScreen(mod.contents.length > 0 ? "lesson" : "quiz");
+  const handleModuleSelect = async (mod: ModuleSummary, readOnly: boolean) => {
+    if (loadingModuleId) return;
+    setLoadingModuleId(mod.id);
+    setModuleLoadError(null);
+    try {
+      let detail = moduleCache.current.get(mod.id);
+      if (!detail) {
+        const res = await fetch(`/api/student/roadmap/modules/${mod.id}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Module request failed: ${res.status}`);
+        const data = await res.json();
+        if (!data?.module) throw new Error("Module response was empty");
+        detail = data.module as ModuleData;
+        moduleCache.current.set(mod.id, detail);
+      }
+      setSelectedModule(detail);
+      setLessonReadOnly(readOnly);
+      setQuizResult(null);
+      setScreen(detail.contents.length > 0 ? "lesson" : "quiz");
+    } catch {
+      setModuleLoadError(tr.moduleLoadError);
+    } finally {
+      setLoadingModuleId(null);
+    }
   };
   const handleLessonComplete = () => setScreen("quiz");
   const handleQuizDone = async (result: QuizResult) => {
+    if (selectedModule) {
+      const completedModule = { ...selectedModule, attempt: result };
+      moduleCache.current.set(selectedModule.id, completedModule);
+      setSelectedModule(completedModule);
+    }
     setQuizResult(result); setScreen("result"); await load();
   };
   const handleBackToModules = () => {
@@ -985,7 +1027,8 @@ export default function StudentRoadmapPage() {
       )}
       {screen === "modules" && selectedStage && (
         <ModulesList stage={selectedStage} onSelect={handleModuleSelect}
-          onBack={() => setScreen("map")} lang={lang} />
+          onBack={() => setScreen("map")} lang={lang}
+          loadingModuleId={loadingModuleId} loadError={moduleLoadError} />
       )}
       {screen === "lesson" && selectedModule && (
         <LessonViewer module={selectedModule} onComplete={handleLessonComplete}
@@ -1187,6 +1230,7 @@ const css = `
   .stage-badge .badge-text { font-size:12px; font-weight:800; color:#B8A082; letter-spacing:.5px; text-transform:uppercase; }
   .modules-title { font-size:28px; font-weight:900; color:#1A1A1A; margin-bottom:6px; }
   .modules-subtitle { font-size:14px; color:#796A62; font-weight:600; }
+  .module-load-error { margin:-12px 0 18px; padding:11px 14px; border:1px solid rgba(107,30,45,.2); border-radius:12px; background:rgba(107,30,45,.07); color:#6B1E2D; text-align:center; font-size:13px; font-weight:700; }
   .modules-grid { display:flex; flex-direction:column; gap:14px; }
 
   /* ── MODULE CARD ── */
@@ -1217,6 +1261,8 @@ const css = `
   .module-action.start:hover { transform:scale(1.04); box-shadow:0 6px 18px rgba(184,160,130,.38); }
   .module-action.view { background:#FFFBF5; border:1.5px solid rgba(184,160,130,.25); color:#4A0E1C; }
   .module-action.view:hover { background:#FFFBF5; border-color:rgba(184,160,130,.4); }
+  .module-action:disabled { cursor:wait; opacity:.65; transform:none!important; box-shadow:none!important; }
+  .module-action-spinner { width:14px; height:14px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin .7s linear infinite; }
   .module-action svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
   .module-action.start svg { fill:currentColor; stroke:none; }
 

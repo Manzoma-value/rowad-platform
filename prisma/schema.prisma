@@ -413,6 +413,8 @@ model TraitAssessment {
 
   @@unique([module_id, student_id, teacher_id])
   @@index([module_id, student_id])
+  @@index([teacher_id, student_id])
+  @@index([student_id, submitted_at])
   @@map("trait_assessments")
 }
 
@@ -1273,6 +1275,7 @@ model ModuleAttempt {
   answers    ModuleAnswer[]
 
   @@unique([module_id, student_id])
+  @@index([student_id])
   @@map("module_attempts")
 }
 
@@ -1285,6 +1288,7 @@ model ModuleAnswer {
   attempt     ModuleAttempt   @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
   question    RoadmapQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
+  @@index([attempt_id])
   @@map("module_answers")
 }
 
@@ -1304,6 +1308,9 @@ model Post {
   replies   Post[]         @relation("PostReplies")
   reactions PostReaction[]
 
+  @@index([school_id, reply_to_id, created_at(sort: Desc)])
+  @@index([reply_to_id, created_at])
+  @@index([author_id])
   @@map("posts")
 }
 

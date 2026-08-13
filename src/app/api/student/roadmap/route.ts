@@ -1,9 +1,6 @@
-// src/app/api/student/roadmap/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-
-export const revalidate = 30;
 
 export async function GET() {
   const supabase = await createClient();
@@ -15,7 +12,9 @@ export async function GET() {
     select: { id: true, school_id: true },
   });
   if (!student) return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
-  if (!student.school_id) return NextResponse.json({ roadmap: null });
+  if (!student.school_id) {
+    return NextResponse.json({ roadmap: null });
+  }
 
   const roadmap = await prisma.roadmap.findUnique({
     where: { school_id: student.school_id },
@@ -25,40 +24,20 @@ export async function GET() {
       stages: {
         orderBy: { order: "asc" },
         select: {
-          id: true, title: true, order: true,
+          id: true,
+          title: true,
+          order: true,
           modules: {
             orderBy: { order: "asc" },
             select: {
-              id: true, title: true, description: true, order: true,
-
-              // ── Lesson content blocks ──────────────────────────────
-              contents: {
-                orderBy: { order: "asc" },
-                select: {
-                  id: true, type: true, order: true,
-                  body: true,
-                  image_url: true, alt_text: true,
-                  video_url: true, video_title: true,
-                },
-              },
-
-              // ── Questions (correct_answer intentionally excluded) ──
-              questions: {
-                orderBy: { order: "asc" },
-                select: {
-                  id: true, type: true, text: true, order: true,
-                  options: {
-                    orderBy: { order: "asc" },
-                    select: { id: true, text: true, order: true },
-                  },
-                  matching_pairs: {
-                    orderBy: { order: "asc" },
-                    select: { id: true, left: true, right: true, order: true },
-                  },
-                },
-              },
-
-              // ── Student's attempt for this module (if any) ────────
+              id: true,
+              title: true,
+              description: true,
+              order: true,
+              // The map only needs content kinds/counts. Full lesson and
+              // question data is loaded for one module when it is opened.
+              contents: { select: { type: true } },
+              _count: { select: { contents: true, questions: true } },
               attempts: {
                 where: { student_id: student.id },
                 select: { score: true, total: true, passed: true },
@@ -71,19 +50,23 @@ export async function GET() {
     },
   });
 
-  if (!roadmap) return NextResponse.json({ roadmap: null });
+  if (!roadmap) {
+    return NextResponse.json({ roadmap: null });
+  }
 
-  // Flatten attempts array → single attempt object or null
-  const shaped = {
-    ...roadmap,
-    stages: roadmap.stages.map((stage) => ({
-      ...stage,
-      modules: stage.modules.map(({ attempts, ...mod }) => ({
-        ...mod,
-        attempt: attempts[0] ?? null,
+  return NextResponse.json({
+    roadmap: {
+      ...roadmap,
+      stages: roadmap.stages.map((stage) => ({
+        ...stage,
+        modules: stage.modules.map(({ attempts, _count, contents, ...module }) => ({
+          ...module,
+          content_count: _count.contents,
+          question_count: _count.questions,
+          content_types: [...new Set(contents.map((content) => content.type))],
+          attempt: attempts[0] ?? null,
+        })),
       })),
-    })),
-  };
-
-  return NextResponse.json({ roadmap: shaped });
+    },
+  });
 }
