@@ -57,7 +57,12 @@ export async function GET() {
           },
           students: {
             orderBy: { profile: { full_name: "asc" } },
-            select: { id: true, profile: { select: { full_name: true } } },
+            select: {
+              id: true,
+              city: true,
+              age: true,
+              profile: { select: { full_name: true, avatar_url: true } },
+            },
           },
         },
       },
