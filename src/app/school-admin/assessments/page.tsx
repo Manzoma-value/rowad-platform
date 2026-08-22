@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
@@ -418,6 +419,12 @@ export default function AssessmentsHubPage() {
   }, []);
 
   useEffect(() => { loadList(); }, [loadList]);
+  useEffect(() => {
+    if (!dlg && !deleteDlg) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [deleteDlg, dlg]);
   useEffect(() => {
     if (selectedId) loadDetail(selectedId);
     setTeacherSearch("");
@@ -1235,7 +1242,7 @@ export default function AssessmentsHubPage() {
         </section>
       </div>
 
-      {deleteDlg && !viewOnly && (
+      {deleteDlg && !viewOnly && typeof document !== "undefined" && createPortal((
         <div className="am-overlay" onClick={() => !deleting && setDeleteDlg(false)}>
           <form
             className="am-delete-dlg"
@@ -1289,9 +1296,9 @@ export default function AssessmentsHubPage() {
             </footer>
           </form>
         </div>
-      )}
+      ), document.body)}
 
-      {dlg && !viewOnly && (
+      {dlg && !viewOnly && typeof document !== "undefined" && createPortal((
         <div className="am-overlay" onClick={() => !saving && setDlg(null)}>
           <div className="am-dlg" onClick={(e) => e.stopPropagation()}>
             <header className="am-dlg-head">
@@ -1434,13 +1441,6 @@ export default function AssessmentsHubPage() {
                               />
                             </div>
                             <div className="am-trait-meta">
-                              <select
-                                value={t.kind ?? "TARGET"}
-                                onChange={(event) => updateTrait(i, { kind: event.target.value as "TARGET" | "EARLY_OBSERVATION" })}
-                              >
-                                <option value="TARGET">{T.targetTrait}</option>
-                                <option value="EARLY_OBSERVATION">{T.earlyTrait}</option>
-                              </select>
                               <input
                                 className="am-trait-input"
                                 placeholder={`${T.objective} (عربي)`}
@@ -1483,7 +1483,7 @@ export default function AssessmentsHubPage() {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
 
       {/* ── Hidden export sheet — captured via html2canvas, not the on-screen UI ── */}
       {detail && (
@@ -1822,8 +1822,8 @@ const styles = `
   .am-score-core { background:rgba(107,30,45,.18); color:#6B1E2D; }
   .am-score-coll { background:rgba(184,160,130,.28); color:#8F765B; }
 
-  .am-overlay { position:fixed; inset:0; background:rgba(26,17,14,.68); display:flex; align-items:center; justify-content:center; z-index:9999; padding:20px; backdrop-filter:blur(9px); }
-  .am-dlg { display:flex; flex-direction:column; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:24px; max-width:1080px; width:100%; max-height:calc(100dvh - 32px); overflow:hidden; box-shadow:0 32px 90px rgba(50,16,26,.38); }
+  .am-overlay { position:fixed; inset:0; isolation:isolate; background:rgba(26,17,14,.72); display:flex; align-items:center; justify-content:center; z-index:2147483000; padding:clamp(16px,2.4vw,32px); backdrop-filter:blur(12px); overscroll-behavior:contain; }
+  .am-dlg { display:flex; flex-direction:column; background:linear-gradient(165deg,#FFFBF5,#F7F3EB); border:1.5px solid rgba(184,160,130,.4); border-radius:24px; width:min(1120px,100%); max-height:calc(100dvh - clamp(32px,4.8vw,64px)); overflow:hidden; box-shadow:0 32px 90px rgba(18,5,9,.46); }
   .am-dlg-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:20px 24px; color:#FFFBF5; background:radial-gradient(circle at 85% 0%,rgba(184,160,130,.2),transparent 34%),linear-gradient(130deg,#250B12,#5B1526); }
   .am-dlg-head>div>span { display:flex; align-items:center; gap:7px; color:#D9C9B0; font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
   .am-dlg-head p { margin:5px 0 0; color:rgba(255,251,245,.66); font-size:10.5px; font-weight:700; }
@@ -1833,7 +1833,8 @@ const styles = `
   .am-dlg-steps span b { width:24px; height:24px; display:grid; place-items:center; border-radius:8px; background:#EFEAE0; color:#6B1E2D; font:900 10px ui-monospace,monospace; }
   .am-dlg-steps span.done { color:#32101A; }.am-dlg-steps span.done b { background:#6B1E2D; color:#FFFBF5; }
   .am-dlg-steps i { height:1px; background:linear-gradient(90deg,rgba(107,30,45,.08),rgba(107,30,45,.28),rgba(107,30,45,.08)); }
-  .am-dlg-body { min-height:0; overflow-y:auto; padding:20px 24px 28px; scroll-behavior:smooth; }
+  .am-dlg-body { min-height:0; overflow-y:auto; padding:20px 24px 28px; scroll-behavior:smooth; overscroll-behavior:contain; scrollbar-gutter:stable; }
+  .am-dlg-body::-webkit-scrollbar { width:9px; }.am-dlg-body::-webkit-scrollbar-track { background:#EFEAE0; }.am-dlg-body::-webkit-scrollbar-thumb { border:2px solid #EFEAE0; border-radius:999px; background:#8F765B; }
   .am-dlg-title { font-family:var(--font-head); font-size:18px; font-weight:700; color:#FFFBF5; margin:5px 0 0; }
   .am-form-section { display:grid; grid-template-columns:34px minmax(0,1fr); gap:12px; align-items:start; padding:16px; border:1px solid rgba(184,160,130,.22); border-radius:17px; background:rgba(255,255,255,.64); }
   .am-form-section+.am-form-section { margin-top:12px; }
@@ -1882,8 +1883,7 @@ const styles = `
   .am-trait-label { flex:1; min-width:0; }
   .am-trait-statement { resize:vertical; min-height:44px; line-height:1.5; }
   .am-trait-statements { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-  .am-trait-meta { display:grid; grid-template-columns:minmax(160px,.8fr) repeat(2,minmax(0,1fr)); gap:8px; }
-  .am-trait-meta select { border:1.5px solid rgba(184,160,130,.26); border-radius:9px; background:#FBF8F1; padding:7px 10px; color:#4A0E1C; font:700 11.5px 'Cairo',sans-serif; outline:none; }
+  .am-trait-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
   .am-trait-details { display:grid; gap:8px; padding:10px; border-radius:12px; background:#F7F3EB; animation:am-rise .2s ease both; }
   .am-trait-expand { display:inline-flex; align-items:center; justify-content:center; gap:5px; min-height:30px; flex:none; border:1px solid rgba(107,30,45,.16); border-radius:9px; background:#F7F3EB; padding:0 9px; color:#6B1E2D; font:800 9.5px 'Cairo',sans-serif; cursor:pointer; }
   .am-trait-expand svg { transition:transform .18s ease; }.am-trait-expand[aria-expanded="true"] svg { transform:rotate(180deg); }

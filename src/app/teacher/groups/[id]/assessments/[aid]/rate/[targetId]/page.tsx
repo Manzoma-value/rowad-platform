@@ -11,7 +11,7 @@ import RowadDistributor, { type DistributorTrait } from "@/components/RowadDistr
 import { seedFromString } from "@/lib/trait-spectrum";
 import { pickAssessLang, isValid100, type ScoresTuple } from "@/lib/rowad-assessment";
 import {
-  useAssessmentData, traitLabel, traitStatement, membersSelfFirst, evenSplit,
+  useAssessmentData, traitLabel, traitStatement, membersSelfFirst,
 } from "../../useAssessmentData";
 
 const UI = {
@@ -223,7 +223,7 @@ export default function RateMemberPage({ params }: { params: Promise<{ id: strin
   const existingRating = givenByTarget[targetId];
   const existing = existingRating?.scores;
   const initialScores = useMemo(
-    () => existing ?? evenSplit(traits.length),
+    () => existing ?? new Array<number>(traits.length).fill(0),
     [existing, traits.length],
   );
 

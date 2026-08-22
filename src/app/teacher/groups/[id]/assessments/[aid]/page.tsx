@@ -429,7 +429,6 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
                   }))}
                   seed={seedFromString(`${aid}:${spectrum.group_id ?? "overall"}:${index}`)}
                   lang={L}
-                  compact
                   summary={!expanded}
                 />
               ) : <div className="ap-collective-empty">{T.noCollective}</div>}
@@ -678,7 +677,7 @@ export default function AssessmentPage({ params }: { params: Promise<{ id: strin
         .ap-collective-head p { max-width: 720px; margin: 0; color: #655B53; font-size: 12px; font-weight: 700; line-height: 1.75; }
         .ap-collective-head>strong { flex: none; min-width: 70px; border-radius: 15px; background: #32101A; padding: 10px 12px; color: #D9C9B0; text-align: center; font-size: 18px; }
         .ap-collective-note { margin: 12px 0; border-inline-start: 3px solid #8F765B; border-radius: 9px; background: rgba(184,160,130,.12); padding: 9px 11px; color: #655B53; font-size: 11px; font-weight: 800; }
-        .ap-collective-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,340px),1fr)); gap: 12px; }
+        .ap-collective-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 14px; }
         .ap-collective-card { min-width: 0; overflow: hidden; border: 1px solid rgba(184,160,130,.32); border-radius: 18px; background: #FFFBF5; padding: 13px; }
         .ap-collective-card.mine { border-color: rgba(107,30,45,.42); box-shadow: inset 0 3px 0 #6B1E2D; }
         .ap-collective-card.overall { background: linear-gradient(155deg,#FFFBF5,#EFEAE0); }

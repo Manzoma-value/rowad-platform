@@ -55,14 +55,6 @@ export type AssessmentData = {
 export function traitLabel(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.label_ar : t.label_sq; }
 export function traitStatement(t: Trait, lang: "ar" | "sq") { return lang === "ar" ? t.statement_ar : t.statement_sq; }
 
-export function evenSplit(n: number): ScoresTuple {
-  if (n <= 0) return [];
-  const base = Math.floor(100 / n);
-  const arr = new Array(n).fill(base);
-  arr[0] += 100 - base * n;
-  return arr;
-}
-
 /** Reorder members so the "self" entry is always first (matches the
  *  methodology: the supervisor rates themselves before their colleagues). */
 export function membersSelfFirst<T extends { is_self: boolean }>(list: T[]): T[] {
