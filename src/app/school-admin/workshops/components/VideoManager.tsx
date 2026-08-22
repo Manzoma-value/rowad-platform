@@ -31,6 +31,9 @@ const T = {
     deleteVideo: "حذف الفيديو",
     results: "من شاهد وأجاب",
     mcq: "اختيار",
+    singleAnswer: "إجابة واحدة",
+    multipleAnswers: "إجابات متعددة",
+    noCorrectAnswer: "دون إجابة محددة",
     tf: "صح/خطأ",
     textType: "كتابي",
     confirmDeleteVideo: "سيتم حذف هذا الفيديو وكل أسئلته ونتائج المشرفين المرتبطة به. المتابعة؟",
@@ -57,6 +60,9 @@ const T = {
     deleteVideo: "Fshi videon",
     results: "Kush e pa dhe u përgjigj",
     mcq: "Opsione",
+    singleAnswer: "Një përgjigje",
+    multipleAnswers: "Disa përgjigje",
+    noCorrectAnswer: "Pa përgjigje të përcaktuar",
     tf: "Saktë/Gabim",
     textType: "Me shkrim",
     confirmDeleteVideo: "Kjo do të fshijë videon, pyetjet dhe rezultatet e edukatorëve. Vazhdo?",
@@ -345,7 +351,11 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
                   {video.questions.map((question) => (
                     <li key={question.id} className="vm-question">
                       <span className="vm-q-time"><Clock3 size={11} />{formatVideoTime(question.timestamp_seconds)}</span>
-                      <span className="vm-q-type">{question.type === "MCQ" ? t.mcq : question.type === "TF" ? t.tf : t.textType}</span>
+                      <span className="vm-q-type">
+                        {question.type === "MCQ"
+                          ? `${t.mcq} · ${question.answer_mode === "MULTIPLE" ? t.multipleAnswers : question.answer_mode === "NONE" ? t.noCorrectAnswer : t.singleAnswer}`
+                          : question.type === "TF" ? t.tf : t.textType}
+                      </span>
                       <p title={question.text}>{question.text}</p>
                       {!viewOnly && (
                         <span className="vm-q-actions">

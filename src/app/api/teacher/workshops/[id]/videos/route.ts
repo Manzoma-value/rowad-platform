@@ -44,6 +44,7 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
           id: true,
           type: true,
           text: true,
+          answer_mode: true,
           timestamp_seconds: true,
           order: true,
           options: { orderBy: { order: "asc" }, select: { id: true, text: true, order: true } },

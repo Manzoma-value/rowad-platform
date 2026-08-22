@@ -2,8 +2,13 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { Check, Clock3, Crosshair, Plus, Trash2, X } from "lucide-react";
-import { formatVideoTime, type WorkshopVideoQuestion, type WorkshopVideoQuestionType } from "@/lib/workshop-videos";
+import { Check, CheckCircle2, Clock3, Crosshair, ListChecks, MinusCircle, Plus, Trash2, X } from "lucide-react";
+import {
+  formatVideoTime,
+  type WorkshopVideoAnswerMode,
+  type WorkshopVideoQuestion,
+  type WorkshopVideoQuestionType,
+} from "@/lib/workshop-videos";
 
 const T = {
   ar: {
@@ -11,7 +16,7 @@ const T = {
     titleEdit: "تعديل السؤال",
     step1: "حدد لحظة ظهور السؤال",
     step2: "نوع السؤال ونصه",
-    step3: "الإجابة الصحيحة",
+    step3: "طريقة احتساب الإجابة",
     scrubHelp: "شغّل الفيديو وأوقفه عند اللحظة المناسبة، ثم التقط اللحظة الحالية.",
     capture: "التقاط اللحظة الحالية",
     timestamp: "لحظة الظهور",
@@ -25,7 +30,15 @@ const T = {
     typeText: "إجابة كتابية",
     writtenStep: "التقييم اليدوي",
     writtenHint: "يكتب المشرف إجابته بحرية، ثم تظهر في شاشة النتائج لتقييمها وإضافة ملاحظاتك.",
-    optionsHint: "اكتب الخيارات، ثم اضغط علامة الصح بجانب الإجابة الصحيحة.",
+    optionsHintSingle: "اكتب الخيارات وحدد إجابة صحيحة واحدة.",
+    optionsHintMultiple: "اكتب الخيارات وحدد جميع الإجابات الصحيحة. يجب اختيار إجابتين صحيحتين على الأقل.",
+    optionsHintNone: "اكتب الخيارات فقط. سيتم تسجيل اختيار المعلّم دون تصنيفه كصحيح أو خاطئ.",
+    modeSingle: "إجابة واحدة صحيحة",
+    modeSingleHelp: "يختار المعلّم خياراً واحداً وله إجابة صحيحة محددة.",
+    modeMultiple: "أكثر من إجابة صحيحة",
+    modeMultipleHelp: "يختار المعلّم كل الإجابات الصحيحة ويجب أن تطابقها بالكامل.",
+    modeNone: "لا توجد إجابة محددة",
+    modeNoneHelp: "سؤال رأي أو انعكاس؛ كل اختيار يُسجّل دون حكم بالصواب.",
     optionN: (i: number) => `الخيار ${i + 1}`,
     addOption: "إضافة خيار",
     markCorrect: "تحديد كإجابة صحيحة",
@@ -41,6 +54,7 @@ const T = {
     errPastEnd: "اللحظة بعد نهاية الفيديو",
     errMcqMin: "أدخل خيارين على الأقل",
     errMcqAnswer: "حدد الإجابة الصحيحة",
+    errMcqMultiple: "حدد إجابتين صحيحتين على الأقل",
     errTfAnswer: "حدد الإجابة الصحيحة",
   },
   sq: {
@@ -48,7 +62,7 @@ const T = {
     titleEdit: "Modifiko pyetjen",
     step1: "Zgjidh momentin e pyetjes",
     step2: "Lloji dhe teksti i pyetjes",
-    step3: "Përgjigjja e saktë",
+    step3: "Mënyra e vlerësimit",
     scrubHelp: "Luaj videon, ndaloje në momentin e duhur dhe kap momentin aktual.",
     capture: "Kap momentin aktual",
     timestamp: "Momenti",
@@ -62,7 +76,15 @@ const T = {
     typeText: "Përgjigje me shkrim",
     writtenStep: "Vlerësim manual",
     writtenHint: "Edukatori shkruan lirshëm; përgjigjja shfaqet te rezultatet për vlerësim dhe komente.",
-    optionsHint: "Shkruaj opsionet, pastaj kliko ✓ te përgjigjja e saktë.",
+    optionsHintSingle: "Shkruaj opsionet dhe zgjidh një përgjigje të saktë.",
+    optionsHintMultiple: "Shkruaj opsionet dhe zgjidh të gjitha përgjigjet e sakta. Duhen të paktën dy.",
+    optionsHintNone: "Shkruaj vetëm opsionet. Zgjedhja e edukatorit regjistrohet pa u vlerësuar si e saktë apo e gabuar.",
+    modeSingle: "Një përgjigje e saktë",
+    modeSingleHelp: "Edukatori zgjedh një opsion me një përgjigje të saktë të përcaktuar.",
+    modeMultiple: "Disa përgjigje të sakta",
+    modeMultipleHelp: "Edukatori duhet të zgjedhë të gjitha përgjigjet e sakta.",
+    modeNone: "Pa përgjigje të përcaktuar",
+    modeNoneHelp: "Pyetje reflektimi; zgjedhja regjistrohet pa gjykim saktësie.",
     optionN: (i: number) => `Opsioni ${i + 1}`,
     addOption: "Shto opsion",
     markCorrect: "Shëno si të saktë",
@@ -78,6 +100,7 @@ const T = {
     errPastEnd: "Momenti është pas fundit të videos",
     errMcqMin: "Duhen të paktën 2 opsione",
     errMcqAnswer: "Zgjidh përgjigjen e saktë",
+    errMcqMultiple: "Zgjidh të paktën dy përgjigje të sakta",
     errTfAnswer: "Zgjidh përgjigjen e saktë",
   },
 } as const;
@@ -114,9 +137,17 @@ export function VideoQuestionModal({
     while (seeded.length < 2) seeded.push("");
     return seeded;
   });
-  const [correctIndex, setCorrectIndex] = useState<number>(() => {
-    if (!question || question.type !== "MCQ") return -1;
-    return question.options.findIndex((option) => option.text === question.correct_answer);
+  const [answerMode, setAnswerMode] = useState<WorkshopVideoAnswerMode>(question?.answer_mode ?? "SINGLE");
+  const [correctIndexes, setCorrectIndexes] = useState<Set<number>>(() => {
+    if (!question || question.type !== "MCQ") return new Set();
+    const correctAnswers = question.correct_answers?.length
+      ? question.correct_answers
+      : question.correct_answer ? [question.correct_answer] : [];
+    return new Set(
+      question.options
+        .map((option, index) => correctAnswers.includes(option.text) ? index : -1)
+        .filter((index) => index >= 0),
+    );
   });
   const [tfAnswer, setTfAnswer] = useState<string>(question?.type === "TF" ? question.correct_answer : "");
   const mounted = useSyncExternalStore(
@@ -160,7 +191,35 @@ export function VideoQuestionModal({
 
   function removeOption(index: number) {
     setOptions((current) => current.length <= 2 ? current : current.filter((_, optionIndex) => optionIndex !== index));
-    setCorrectIndex((current) => current === index ? -1 : current > index ? current - 1 : current);
+    setCorrectIndexes((current) => new Set(
+      [...current]
+        .filter((optionIndex) => optionIndex !== index)
+        .map((optionIndex) => optionIndex > index ? optionIndex - 1 : optionIndex),
+    ));
+  }
+
+  function chooseAnswerMode(mode: WorkshopVideoAnswerMode) {
+    setAnswerMode(mode);
+    setCorrectIndexes((current) => {
+      if (mode === "NONE") return new Set();
+      if (mode === "SINGLE") {
+        const first = [...current][0];
+        return first === undefined ? new Set() : new Set([first]);
+      }
+      return new Set(current);
+    });
+    setError("");
+  }
+
+  function toggleCorrectOption(index: number) {
+    if (answerMode === "NONE") return;
+    setCorrectIndexes((current) => {
+      if (answerMode === "SINGLE") return new Set([index]);
+      const next = new Set(current);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   }
 
   function validate(): string {
@@ -170,8 +229,11 @@ export function VideoQuestionModal({
     if (!Number.isFinite(parsedMinutes) || !Number.isFinite(parsedSeconds) || parsedMinutes < 0 || parsedSeconds < 0 || parsedSeconds > 59) return t.errTime;
     if (videoDuration && timestampSeconds > videoDuration) return t.errPastEnd;
     if (type === "MCQ") {
-      if (options.filter((option) => option.trim()).length < 2) return t.errMcqMin;
-      if (correctIndex < 0 || !options[correctIndex]?.trim()) return t.errMcqAnswer;
+      const uniqueOptions = new Set(options.map((option) => option.trim().toLocaleLowerCase()).filter(Boolean));
+      if (uniqueOptions.size < 2) return t.errMcqMin;
+      const validCorrectAnswers = [...correctIndexes].filter((index) => options[index]?.trim());
+      if (answerMode === "SINGLE" && validCorrectAnswers.length !== 1) return t.errMcqAnswer;
+      if (answerMode === "MULTIPLE" && validCorrectAnswers.length < 2) return t.errMcqMultiple;
     }
     if (type === "TF" && !tfAnswer) return t.errTfAnswer;
     return "";
@@ -189,7 +251,10 @@ export function VideoQuestionModal({
       const body: Record<string, unknown> = { type, text: text.trim(), timestamp_seconds: timestampSeconds };
       if (type === "MCQ") {
         body.options = options.map((option) => option.trim()).filter(Boolean);
-        body.correct_answer = options[correctIndex]?.trim() ?? "";
+        body.answer_mode = answerMode;
+        body.correct_answers = answerMode === "NONE"
+          ? []
+          : [...correctIndexes].map((index) => options[index]?.trim()).filter(Boolean);
       } else if (type === "TF") {
         body.correct_answer = tfAnswer;
       }
@@ -275,12 +340,25 @@ export function VideoQuestionModal({
               <div className="vqm-step-heading"><b>3</b><span>{type === "TEXT" ? t.writtenStep : t.step3}</span></div>
               {type === "MCQ" ? (
                 <>
-                  <p className="vqm-hint">{t.optionsHint}</p>
+                  <div className="vqm-mode-grid" role="radiogroup" aria-label={t.step3}>
+                    <button type="button" role="radio" aria-checked={answerMode === "SINGLE"} className={`vqm-mode-card${answerMode === "SINGLE" ? " active" : ""}`} onClick={() => chooseAnswerMode("SINGLE")}>
+                      <CheckCircle2 size={19} /><span><b>{t.modeSingle}</b><small>{t.modeSingleHelp}</small></span>
+                    </button>
+                    <button type="button" role="radio" aria-checked={answerMode === "MULTIPLE"} className={`vqm-mode-card${answerMode === "MULTIPLE" ? " active" : ""}`} onClick={() => chooseAnswerMode("MULTIPLE")}>
+                      <ListChecks size={19} /><span><b>{t.modeMultiple}</b><small>{t.modeMultipleHelp}</small></span>
+                    </button>
+                    <button type="button" role="radio" aria-checked={answerMode === "NONE"} className={`vqm-mode-card${answerMode === "NONE" ? " active" : ""}`} onClick={() => chooseAnswerMode("NONE")}>
+                      <MinusCircle size={19} /><span><b>{t.modeNone}</b><small>{t.modeNoneHelp}</small></span>
+                    </button>
+                  </div>
+                  <p className={`vqm-hint vqm-mode-hint ${answerMode.toLowerCase()}`}>
+                    {answerMode === "SINGLE" ? t.optionsHintSingle : answerMode === "MULTIPLE" ? t.optionsHintMultiple : t.optionsHintNone}
+                  </p>
                   <div className="vqm-opts">
                     {options.map((option, index) => (
-                      <div key={index} className={`vqm-opt-row${correctIndex === index ? " sel" : ""}`}>
-                        <button type="button" className="vqm-opt-mark" onClick={() => setCorrectIndex(index)} aria-label={t.markCorrect} title={t.markCorrect}>
-                          <Check size={17} />
+                      <div key={index} className={`vqm-opt-row${correctIndexes.has(index) ? " sel" : ""}${answerMode === "NONE" ? " neutral" : ""}`}>
+                        <button type="button" disabled={answerMode === "NONE"} className="vqm-opt-mark" onClick={() => toggleCorrectOption(index)} aria-label={t.markCorrect} title={answerMode === "NONE" ? t.modeNone : t.markCorrect}>
+                          {answerMode === "NONE" ? <MinusCircle size={17} /> : <Check size={17} />}
                         </button>
                         <input dir="auto" value={option} onChange={(event) => updateOption(index, event.target.value)} placeholder={t.optionN(index)} />
                         {options.length > 2 && (
@@ -350,6 +428,12 @@ const styles = `
 .vqm-question-field{display:flex;flex-direction:column;gap:6px;color:#655B53;font-size:10.5px;font-weight:900}
 .vqm-body textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:108px;border:1px solid #D9C9B0;border-radius:12px;background:#FFFFFF;padding:12px 14px;font:inherit;font-size:14px;line-height:1.8;color:#32101A}
 .vqm-body textarea:focus,.vqm-time-row input:focus,.vqm-opt-row input:focus{outline:none;border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}
+.vqm-mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vqm-mode-card{min-width:0;min-height:100px;display:flex;align-items:flex-start;gap:9px;padding:13px;text-align:start;border:1.5px solid #D9C9B0;border-radius:13px;background:#FFFBF5;color:#655B53;font-family:'Cairo',sans-serif;cursor:pointer;transition:border-color .15s,background .15s,transform .15s,box-shadow .15s}
+.vqm-mode-card:hover{transform:translateY(-1px);border-color:rgba(107,30,45,.45);box-shadow:0 8px 18px rgba(50,16,26,.07)}
+.vqm-mode-card>svg{flex:none;margin-top:2px;color:#8C8274}.vqm-mode-card>span{display:flex;flex-direction:column;gap:4px}.vqm-mode-card b{color:#32101A;font-size:11px;line-height:1.55}.vqm-mode-card small{font-size:9.5px;font-weight:700;line-height:1.6}
+.vqm-mode-card.active{border-color:#6B1E2D;background:rgba(107,30,45,.055);box-shadow:0 0 0 3px rgba(107,30,45,.07)}.vqm-mode-card.active>svg,.vqm-mode-card.active b{color:#6B1E2D}
+.vqm-mode-hint{padding:9px 11px;border-radius:10px;background:#F6F2EA}.vqm-mode-hint.multiple{background:rgba(217,119,6,.08);color:#7C4400}.vqm-mode-hint.none{background:rgba(92,102,112,.09);color:#4C5660}
 .vqm-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .vqm-opt-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:7px}
 .vqm-opt-row input{box-sizing:border-box;width:100%;min-width:0;min-height:48px;border:1.5px solid #D9C9B0;border-radius:12px;background:#FFFFFF;padding:0 12px;font:inherit;font-size:13.5px;color:#32101A}
@@ -357,6 +441,7 @@ const styles = `
 .vqm-opt-mark:hover{border-color:#1B5E20;color:#1B5E20}
 .vqm-opt-row.sel .vqm-opt-mark{background:#1B5E20;border-color:#1B5E20;color:#FFFFFF}
 .vqm-opt-row.sel input{border-color:#1B5E20;background:rgba(27,94,32,.05)}
+.vqm-opt-row.neutral .vqm-opt-mark{cursor:not-allowed;background:#F2EFE6;color:#9AA3AC;border-color:#D9C9B0}
 .vqm-opt-remove{width:38px;height:48px;display:grid;place-items:center;border:1px solid #E5E0D5;border-radius:11px;background:#FFFFFF;color:#6B1E2D;cursor:pointer}
 .vqm-add-opt{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;min-height:42px;border:1px dashed rgba(107,30,45,.38);border-radius:11px;background:#FFFBF5;color:#6B1E2D;padding:0 14px;font:800 11.5px 'Cairo',sans-serif;cursor:pointer}
 .vqm-tf-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
@@ -381,6 +466,8 @@ const styles = `
 }
 @media(max-width:600px){
   .vqm-type-row{grid-template-columns:1fr}
+  .vqm-mode-grid{grid-template-columns:1fr}
+  .vqm-mode-card{min-height:auto}
   .vqm-overlay{padding:0;align-items:stretch}
   .vqm-modal{width:100%;height:100dvh;max-height:none;border-radius:0;border:0}
   .vqm-modal>header{padding:14px 15px}

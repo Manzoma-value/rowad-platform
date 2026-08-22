@@ -26,6 +26,8 @@ const questionSelect = {
   type: true,
   text: true,
   correct_answer: true,
+  answer_mode: true,
+  correct_answers: true,
   timestamp_seconds: true,
   order: true,
   options: { orderBy: { order: "asc" as const }, select: { id: true, text: true, order: true } },

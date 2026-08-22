@@ -1891,6 +1891,12 @@ enum WorkshopVideoQuestionType {
   TEXT
 }
 
+enum WorkshopVideoAnswerMode {
+  SINGLE
+  MULTIPLE
+  NONE
+}
+
 enum WorkshopVideoAnswerStatus {
   AUTO_GRADED
   PENDING_REVIEW
@@ -1937,8 +1943,11 @@ model WorkshopVideoQuestion {
   video_id          String                    @db.Uuid
   type              WorkshopVideoQuestionType
   text              String
-  // TF: "true"/"false". MCQ: the exact text of the correct option.
+  // TF remains in correct_answer. MCQ uses answer_mode + correct_answers;
+  // correct_answer is retained for backward compatibility and old records.
   correct_answer    String
+  answer_mode       WorkshopVideoAnswerMode   @default(SINGLE)
+  correct_answers   String[]                  @default([])
   timestamp_seconds Int
   order             Int                       @default(0)
   created_at        DateTime                  @default(now())

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CheckCircle2,
   HelpCircle,
+  ListChecks,
   Maximize2,
   Minimize2,
   Pause,
@@ -27,6 +28,9 @@ const T = {
     continue: "متابعة الفيديو",
     correct: "إجابة صحيحة",
     wrong: "إجابة غير صحيحة",
+    recorded: "تم تسجيل اختيارك",
+    chooseMultiple: "يمكنك اختيار أكثر من إجابة. حدّد كل الإجابات التي تراها صحيحة.",
+    chooseWithoutCorrect: "لا توجد إجابة صحيحة أو خاطئة لهذا السؤال؛ اختر الإجابة التي تمثّلك.",
     writtenPlaceholder: "اكتب إجابتك بوضوح...",
     pendingReview: "تم إرسال إجابتك وستظهر نتيجتها بعد مراجعة الإدارة.",
     trueLbl: "صح",
@@ -55,6 +59,9 @@ const T = {
     continue: "Vazhdo videon",
     correct: "Përgjigje e saktë",
     wrong: "Përgjigje jo e saktë",
+    recorded: "Zgjedhja jote u regjistrua",
+    chooseMultiple: "Mund të zgjedhësh disa përgjigje. Zgjidh të gjitha ato që mendon se janë të sakta.",
+    chooseWithoutCorrect: "Kjo pyetje nuk ka përgjigje të saktë ose të gabuar; zgjidh atë që të përfaqëson.",
     writtenPlaceholder: "Shkruaj përgjigjen tënde qartë...",
     pendingReview: "Përgjigjja u dërgua dhe rezultati shfaqet pas vlerësimit nga administrata.",
     trueLbl: "E saktë",
@@ -101,7 +108,8 @@ export function VideoQuizPlayer({
   );
   const [score, setScore] = useState(video.attempt?.score ?? 0);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
+  const [writtenAnswer, setWrittenAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [revealed, setRevealed] = useState<WorkshopVideoAnswerRecord | null>(null);
@@ -133,7 +141,8 @@ export function VideoQuizPlayer({
     const element = videoRef.current;
     if (element && !element.paused) element.pause();
     setActiveQuestionId(questionId);
-    setSelected(null);
+    setSelectedAnswers([]);
+    setWrittenAnswer("");
     setRevealed(null);
     setSubmitError("");
   }, []);
@@ -241,14 +250,20 @@ export function VideoQuizPlayer({
   }
 
   async function submitAnswer() {
-    if (!activeQuestion || !selected?.trim() || submitting) return;
+    if (!activeQuestion || submitting) return;
+    const submittedAnswer = activeQuestion.type === "TEXT"
+      ? writtenAnswer.trim()
+      : activeQuestion.answer_mode === "MULTIPLE"
+        ? selectedAnswers
+        : selectedAnswers[0] ?? "";
+    if ((typeof submittedAnswer === "string" && !submittedAnswer) || (Array.isArray(submittedAnswer) && submittedAnswer.length < 2)) return;
     setSubmitting(true);
     setSubmitError("");
     try {
       const response = await fetch(`/api/teacher/workshops/${workshopId}/videos/${video.id}/answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question_id: activeQuestion.id, answer: selected }),
+        body: JSON.stringify({ question_id: activeQuestion.id, answer: submittedAnswer }),
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error ?? "failed");
@@ -275,7 +290,8 @@ export function VideoQuizPlayer({
   function continuePlayback() {
     setActiveQuestionId(null);
     activeRef.current = null;
-    setSelected(null);
+    setSelectedAnswers([]);
+    setWrittenAnswer("");
     setRevealed(null);
     const element = videoRef.current;
     if (!element) return;
@@ -339,6 +355,12 @@ export function VideoQuizPlayer({
 
               {!revealed ? (
                 <>
+                  {activeQuestion.type === "MCQ" && activeQuestion.answer_mode !== "SINGLE" && (
+                    <p className={`vqp-mode-hint ${activeQuestion.answer_mode.toLowerCase()}`}>
+                      {activeQuestion.answer_mode === "MULTIPLE" ? <ListChecks size={16} /> : <HelpCircle size={16} />}
+                      <span>{activeQuestion.answer_mode === "MULTIPLE" ? t.chooseMultiple : t.chooseWithoutCorrect}</span>
+                    </p>
+                  )}
                   <div className={`vqp-options${activeQuestion.type === "TEXT" ? " written" : ""}`}>
                     {activeQuestion.type === "TEXT" ? (
                       <textarea
@@ -346,18 +368,22 @@ export function VideoQuizPlayer({
                         dir="auto"
                         rows={5}
                         maxLength={4000}
-                        value={selected ?? ""}
-                        onChange={(event) => setSelected(event.target.value)}
+                        value={writtenAnswer}
+                        onChange={(event) => setWrittenAnswer(event.target.value)}
                         placeholder={t.writtenPlaceholder}
                         autoFocus
                       />
                     ) : activeQuestion.type === "TF" ? (
                       <>
-                        <button type="button" className={`vqp-opt${selected === "true" ? " sel" : ""}`} onClick={() => setSelected("true")}>
-                          <span className="vqp-opt-index">✓</span><span>{t.trueLbl}</span>{selected === "true" && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
+                        <button type="button" className={`vqp-opt${selectedAnswers[0] === "true" ? " sel" : ""}`} onClick={() => setSelectedAnswers(["true"])}>
+                          <span className="vqp-opt-index">✓</span>
+                          <span>{t.trueLbl}</span>
+                          {selectedAnswers[0] === "true" && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
                         </button>
-                        <button type="button" className={`vqp-opt${selected === "false" ? " sel" : ""}`} onClick={() => setSelected("false")}>
-                          <span className="vqp-opt-index">×</span><span>{t.falseLbl}</span>{selected === "false" && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
+                        <button type="button" className={`vqp-opt${selectedAnswers[0] === "false" ? " sel" : ""}`} onClick={() => setSelectedAnswers(["false"])}>
+                          <span className="vqp-opt-index">×</span>
+                          <span>{t.falseLbl}</span>
+                          {selectedAnswers[0] === "false" && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
                         </button>
                       </>
                     ) : (
@@ -365,26 +391,36 @@ export function VideoQuizPlayer({
                         <button
                           type="button"
                           key={option.id}
-                          className={`vqp-opt${selected === option.text ? " sel" : ""}`}
-                          onClick={() => setSelected(option.text)}
+                          className={`vqp-opt${selectedAnswers.includes(option.text) ? " sel" : ""}`}
+                          aria-pressed={selectedAnswers.includes(option.text)}
+                          onClick={() => setSelectedAnswers((current) => {
+                            if (activeQuestion.answer_mode !== "MULTIPLE") return [option.text];
+                            return current.includes(option.text)
+                              ? current.filter((answer) => answer !== option.text)
+                              : [...current, option.text];
+                          })}
                         >
                           <span className="vqp-opt-index">{String.fromCharCode(65 + index)}</span>
                           <span>{option.text}</span>
-                          {selected === option.text && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
+                          {selectedAnswers.includes(option.text) && <CheckCircle2 className="vqp-selected-icon" size={18}/>}
                         </button>
                       ))
                     )}
                   </div>
                   {submitError && <p className="vqp-error" role="alert">{submitError}</p>}
-                  <button className="vqp-cta" onClick={() => void submitAnswer()} disabled={!selected?.trim() || submitting}>
+                  <button
+                    className="vqp-cta"
+                    onClick={() => void submitAnswer()}
+                    disabled={submitting || (activeQuestion.type === "TEXT" ? !writtenAnswer.trim() : activeQuestion.answer_mode === "MULTIPLE" ? selectedAnswers.length < 2 : selectedAnswers.length !== 1)}
+                  >
                     {submitting ? t.submitting : t.submit}
                   </button>
                 </>
               ) : (
                 <>
-                  <div className={`vqp-result${revealed.grading_status === "PENDING_REVIEW" ? " pending" : revealed.is_correct ? "" : " wrong"}`}>
-                    {revealed.grading_status === "PENDING_REVIEW" ? <HelpCircle size={17} /> : revealed.is_correct ? <CheckCircle2 size={17} /> : <XCircle size={17} />}
-                    <span>{revealed.grading_status === "PENDING_REVIEW" ? t.pendingReview : revealed.is_correct ? t.correct : t.wrong}</span>
+                  <div className={`vqp-result${revealed.grading_status === "PENDING_REVIEW" ? " pending" : activeQuestion.answer_mode === "NONE" ? " recorded" : revealed.is_correct ? "" : " wrong"}`}>
+                    {revealed.grading_status === "PENDING_REVIEW" ? <HelpCircle size={17} /> : activeQuestion.answer_mode === "NONE" ? <CheckCircle2 size={17} /> : revealed.is_correct ? <CheckCircle2 size={17} /> : <XCircle size={17} />}
+                    <span>{revealed.grading_status === "PENDING_REVIEW" ? t.pendingReview : activeQuestion.answer_mode === "NONE" ? t.recorded : revealed.is_correct ? t.correct : t.wrong}</span>
                   </div>
                   <button className="vqp-cta" onClick={continuePlayback}>{t.continue}</button>
                 </>
@@ -471,6 +507,7 @@ const styles = `
 .vqp-card-head>span{display:flex;align-items:center;gap:7px}.vqp-card-head small{color:#796A62;font-size:9px;font-weight:800}
 .vqp-question-progress{display:flex;gap:5px;margin-bottom:14px}.vqp-question-progress i{height:4px;flex:1;border-radius:999px;background:#E5E0D5}.vqp-question-progress i.active{background:#6B1E2D}
 .vqp-card-text{margin:0 0 16px;font-size:clamp(15px,2vw,18px);font-weight:900;line-height:1.75;color:#32101A}
+.vqp-mode-hint{display:flex;align-items:flex-start;gap:8px;margin:-5px 0 13px;padding:10px 12px;border-radius:11px;background:rgba(184,160,130,.18);color:#6B1E2D;font-size:11px;font-weight:800;line-height:1.75}.vqp-mode-hint svg{flex:none;margin-top:2px}.vqp-mode-hint.none{background:rgba(101,91,83,.1);color:#655B53}
 .vqp-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:14px}
 .vqp-options.written{display:block}
 .vqp-written{box-sizing:border-box;width:100%;min-height:132px;resize:vertical;border:1.5px solid #D9C9B0;border-radius:13px;background:#FFFFFF;padding:13px 14px;font:700 13px 'Cairo',sans-serif;line-height:1.9;color:#32101A}
@@ -484,6 +521,7 @@ const styles = `
 .vqp-result{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:11px 13px;border-radius:11px;background:rgba(27,94,32,.13);color:#1B5E20;font-weight:900;font-size:13px}
 .vqp-result.wrong{background:rgba(107,30,45,.1);color:#6B1E2D}
 .vqp-result.pending{background:rgba(184,160,130,.2);color:#6B1E2D}
+.vqp-result.recorded{background:rgba(101,91,83,.1);color:#655B53}
 .vqp-error{margin:0 0 10px;padding:9px 11px;border-radius:9px;background:rgba(107,30,45,.09);color:#6B1E2D;font-size:11.5px;font-weight:800}
 
 /* ── Custom controls (native controls are intentionally NOT used: they would

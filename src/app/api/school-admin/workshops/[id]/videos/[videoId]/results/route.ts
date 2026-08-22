@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdmin } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
+import { parseWorkshopVideoAnswer } from "@/lib/workshop-videos";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string;
       title: true,
       questions: {
         orderBy: { timestamp_seconds: "asc" },
-        select: { id: true, text: true, type: true, timestamp_seconds: true, order: true },
+        select: { id: true, text: true, type: true, answer_mode: true, timestamp_seconds: true, order: true },
       },
     },
   });
@@ -99,7 +100,9 @@ export async function GET(req: Request, context: { params: Promise<{ id: string;
           question_id: a.question_id,
           question_text: questionById.get(a.question_id)?.text ?? "",
           question_type: questionById.get(a.question_id)?.type ?? "MCQ",
+          answer_mode: questionById.get(a.question_id)?.answer_mode ?? "SINGLE",
           answer: a.answer,
+          answer_values: parseWorkshopVideoAnswer(a.answer),
           is_correct: a.is_correct,
           grading_status: a.grading_status,
           feedback: a.feedback,
@@ -140,7 +143,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string;
           row.total,
           answer?.question_type ?? "",
           answer?.question_text ?? "",
-          answer?.answer ?? "",
+          answer?.answer_values.join(" | ") ?? "",
           answer?.grading_status ?? "",
           answer ? (answer.is_correct ? "Yes" : "No") : "",
           answer?.feedback ?? "",

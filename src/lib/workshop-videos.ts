@@ -1,4 +1,5 @@
 export type WorkshopVideoQuestionType = "MCQ" | "TF" | "TEXT";
+export type WorkshopVideoAnswerMode = "SINGLE" | "MULTIPLE" | "NONE";
 export type WorkshopVideoAnswerStatus = "AUTO_GRADED" | "PENDING_REVIEW" | "GRADED";
 
 export type WorkshopVideoOption = {
@@ -13,13 +14,15 @@ export type WorkshopVideoQuestion = {
   type: WorkshopVideoQuestionType;
   text: string;
   correct_answer: string;
+  answer_mode: WorkshopVideoAnswerMode;
+  correct_answers: string[];
   timestamp_seconds: number;
   order: number;
   options: WorkshopVideoOption[];
 };
 
 // Teacher-facing shape — never leaks the correct answer to the player.
-export type WorkshopVideoQuestionPublic = Omit<WorkshopVideoQuestion, "correct_answer">;
+export type WorkshopVideoQuestionPublic = Omit<WorkshopVideoQuestion, "correct_answer" | "correct_answers">;
 
 export type WorkshopVideo = {
   id: string;
@@ -90,10 +93,35 @@ export function videoExtension(filename: string, mime: string): string {
 
 export function cleanQuestionOptions(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => String(item ?? "").trim().slice(0, 200))
-    .filter(Boolean)
-    .slice(0, 8);
+  const seen = new Set<string>();
+  const options: string[] = [];
+  for (const item of value) {
+    const option = String(item ?? "").trim().slice(0, 200);
+    const key = option.toLocaleLowerCase();
+    if (!option || seen.has(key)) continue;
+    seen.add(key);
+    options.push(option);
+    if (options.length === 8) break;
+  }
+  return options;
+}
+
+export function cleanCorrectAnswers(value: unknown, options: string[]): string[] {
+  if (!Array.isArray(value)) return [];
+  const optionByValue = new Map(options.map((option) => [option.toLocaleLowerCase(), option]));
+  return [...new Set(value
+    .map((item) => optionByValue.get(String(item ?? "").trim().toLocaleLowerCase()))
+    .filter((item): item is string => Boolean(item)))];
+}
+
+export function parseWorkshopVideoAnswer(value: string): string[] {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (Array.isArray(parsed)) return parsed.map((item) => String(item ?? "").trim()).filter(Boolean);
+  } catch {
+    // Single-answer and legacy records are stored as plain text.
+  }
+  return value.trim() ? [value.trim()] : [];
 }
 
 /** mm:ss for timestamps and durations shown throughout the video UI. */

@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
-import { cleanQuestionOptions, MAX_QUESTIONS_PER_VIDEO } from "@/lib/workshop-videos";
+import { cleanCorrectAnswers, cleanQuestionOptions, MAX_QUESTIONS_PER_VIDEO, type WorkshopVideoAnswerMode } from "@/lib/workshop-videos";
 import { notifyProfiles, workshopTeacherProfileIds } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +12,8 @@ const questionSelect = {
   type: true,
   text: true,
   correct_answer: true,
+  answer_mode: true,
+  correct_answers: true,
   timestamp_seconds: true,
   order: true,
   options: { orderBy: { order: "asc" as const }, select: { id: true, text: true, order: true } },
@@ -41,6 +43,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
     type?: "MCQ" | "TF" | "TEXT";
     text?: string;
     correct_answer?: string;
+    answer_mode?: WorkshopVideoAnswerMode;
+    correct_answers?: string[];
     timestamp_seconds?: number;
     options?: string[];
   };
@@ -60,6 +64,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   }
 
   let correctAnswer = "";
+  let answerMode: WorkshopVideoAnswerMode = "SINGLE";
+  let correctAnswers: string[] = [];
   let options: string[] = [];
   if (type === "TEXT") {
     correctAnswer = "";
@@ -71,10 +77,12 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   } else {
     options = cleanQuestionOptions(body.options);
     if (options.length < 2) return NextResponse.json({ error: "at least 2 options required" }, { status: 400 });
-    correctAnswer = body.correct_answer?.trim() ?? "";
-    if (!correctAnswer || !options.includes(correctAnswer)) {
-      return NextResponse.json({ error: "correct_answer must match one of the options" }, { status: 400 });
-    }
+    answerMode = body.answer_mode === "MULTIPLE" || body.answer_mode === "NONE" ? body.answer_mode : "SINGLE";
+    correctAnswers = cleanCorrectAnswers(body.correct_answers ?? (body.correct_answer ? [body.correct_answer] : []), options);
+    if (answerMode === "SINGLE" && correctAnswers.length !== 1) return NextResponse.json({ error: "choose exactly one correct answer" }, { status: 400 });
+    if (answerMode === "MULTIPLE" && correctAnswers.length < 2) return NextResponse.json({ error: "choose at least two correct answers" }, { status: 400 });
+    if (answerMode === "NONE") correctAnswers = [];
+    correctAnswer = correctAnswers[0] ?? "";
   }
 
   const order = video._count.questions;
@@ -84,6 +92,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       type,
       text: text.slice(0, 500),
       correct_answer: correctAnswer,
+      answer_mode: answerMode,
+      correct_answers: correctAnswers,
       timestamp_seconds: Math.round(timestampSeconds),
       order,
       options: options.length ? { create: options.map((text, index) => ({ text, order: index })) } : undefined,
