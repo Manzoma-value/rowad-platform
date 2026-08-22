@@ -10,6 +10,8 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  Eye,
+  EyeOff,
   Circle,
   FileQuestion,
   Flag,
@@ -105,6 +107,8 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [quizIndex, setQuizIndex] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [panelHidden, setPanelHidden] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const copy = isAr ? {
     eyebrow: "رحلة إتمام الورشة",
@@ -136,6 +140,13 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
     saving: "جارٍ حفظ الإنجاز...",
     showDetails: "عرض التفاصيل",
     hideDetails: "إخفاء التفاصيل",
+    hideJourney: "إخفاء لوحة الرحلة",
+    showJourney: "إظهار لوحة الرحلة",
+    hiddenTitle: "رحلة الورشة مخفية",
+    hiddenSub: "يمكنك مواصلة محتوى الورشة أو إظهار الخريطة في أي وقت.",
+    nextUp: "الخطوة التالية",
+    showGuide: "شرح أنواع المتطلبات",
+    hideGuide: "إخفاء الشرح",
     quizTitle: "اختبار الورشة",
     quizIntro: "أجب عن سؤال واحد في كل مرة. يمكنك متابعة تقدمك من المؤشر أدناه.",
     question: "السؤال",
@@ -162,16 +173,62 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
       QUIZ: "أجب وحقق درجة النجاح المطلوبة",
     },
   } : {
-    eyebrow: "Workshop completion journey",
-    title: "Your path to workshop completion",
-    sub: "Complete the steps in order. Every card explains the action and its completion rule.",
-    completeTitle: "Well done! You completed the workshop", completeSub: "Every required step is complete and the workshop is now recorded in your journey.",
-    progress: "Overall progress", doneSteps: "Steps completed", currentStep: "Current step", refresh: "Refresh progress", guideTitle: "How does each requirement work?", guideSub: "Learn the four symbols before you begin.", required: "Required", optional: "Optional", completed: "Completed", active: "Start now", locked: "Complete the previous step first", step: "Step", whatToDo: "What to do", completionRule: "When is it complete?",
-    videoRule: "After watching every video to the end and answering all embedded questions.", readingRule: "After reading the assigned content and selecting “Mark as read”.", messageRule: (min: number) => `After posting a learning reflection of at least ${min} characters in the workshop discussion.`, quizRule: (score: number) => `After answering every question and scoring at least ${score}%. Written answers require admin review.`,
-    openVideos: "Go to workshop videos", openDiscussion: "Share what you learned", markRead: "I finished the reading", saving: "Saving progress...", showDetails: "Show details", hideDetails: "Hide details",
-    quizTitle: "Workshop quiz", quizIntro: "Answer one question at a time and follow your progress below.", question: "Question", of: "of", true: "True", false: "False", writtenPlaceholder: "Write a clear response and explain what you learned...", submit: "Save answer and continue", submitted: "Answer saved", pendingReview: "Submitted — awaiting admin review", accepted: "Correct answer", needsReview: "Answer saved", previous: "Previous", next: "Next question", quizPassed: "Quiz passed", quizScore: "Current score", noQuestions: "The admin has not added quiz questions yet.", loadError: "The workshop journey could not be loaded. Refresh the page.",
-    typeNames: { VIDEO: "Watch videos", READING: "Read content", MESSAGE: "Share your learning", QUIZ: "Workshop quiz" },
-    typeShort: { VIDEO: "Watch to the end and answer in-video questions", READING: "Read the material and confirm completion", MESSAGE: "Post your reflection in the workshop discussion", QUIZ: "Answer all questions and reach the passing score" },
+    eyebrow: "Rrugëtimi i përfundimit të forumit",
+    title: "Hapat e tu drejt përfundimit",
+    sub: "Përfundoji hapat me radhë. Çdo kartë tregon qartë detyrën dhe mënyrën si llogaritet e përfunduar.",
+    completeTitle: "Shkëlqyeshëm! E përfundove forumin",
+    completeSub: "Të gjitha kërkesat e detyrueshme janë plotësuar dhe përfundimi është regjistruar.",
+    progress: "Përparimi",
+    doneSteps: "Hapa të përfunduar",
+    currentStep: "Hapi aktual",
+    refresh: "Rifresko përparimin",
+    guideTitle: "Si funksionon çdo kërkesë?",
+    guideSub: "Njihu me katër llojet para se të fillosh.",
+    required: "E detyrueshme",
+    optional: "Opsionale",
+    completed: "Përfunduar",
+    active: "Fillo tani",
+    locked: "Përfundo fillimisht hapin e mëparshëm",
+    step: "Hapi",
+    whatToDo: "Çfarë duhet të bësh",
+    completionRule: "Kur llogaritet i përfunduar?",
+    videoRule: "Pasi t'i shikosh të gjitha videot deri në fund dhe t'u përgjigjesh pyetjeve brenda tyre.",
+    readingRule: "Pasi ta lexosh materialin dhe të zgjedhësh “E përfundova leximin”.",
+    messageRule: (min: number) => `Pasi të publikosh në diskutim një reflektim me të paktën ${min} karaktere.`,
+    quizRule: (score: number) => `Pasi t'u përgjigjesh të gjitha pyetjeve dhe të arrish të paktën ${score}%. Përgjigjet me shkrim shqyrtohen nga administrata.`,
+    openVideos: "Shko te videot",
+    openDiscussion: "Ndaj çfarë mësove",
+    markRead: "E lexova dhe e përfundova",
+    saving: "Duke ruajtur...",
+    showDetails: "Shfaq hollësitë",
+    hideDetails: "Fshih hollësitë",
+    hideJourney: "Fshih panelin e rrugëtimit",
+    showJourney: "Shfaq panelin e rrugëtimit",
+    hiddenTitle: "Rrugëtimi është fshehur",
+    hiddenSub: "Vazhdo me përmbajtjen ose rihape hartën kur të duash.",
+    nextUp: "Hapi i ardhshëm",
+    showGuide: "Shpjego llojet e kërkesave",
+    hideGuide: "Fshih shpjegimin",
+    quizTitle: "Testi i forumit",
+    quizIntro: "Përgjigju një pyetjeje në çdo hap dhe ndiq përparimin më poshtë.",
+    question: "Pyetja",
+    of: "nga",
+    true: "E vërtetë",
+    false: "E gabuar",
+    writtenPlaceholder: "Shkruaj një përgjigje të qartë dhe shpjego çfarë mësove...",
+    submit: "Ruaj dhe vazhdo",
+    submitted: "Përgjigje të ruajtura",
+    pendingReview: "U dërgua — në pritje të shqyrtimit",
+    accepted: "Përgjigje e saktë",
+    needsReview: "Përgjigjja u ruajt",
+    previous: "E mëparshmja",
+    next: "Pyetja tjetër",
+    quizPassed: "Testi u kalua",
+    quizScore: "Rezultati aktual",
+    noQuestions: "Administrata nuk ka shtuar ende pyetje.",
+    loadError: "Rrugëtimi nuk u ngarkua. Rifresko faqen.",
+    typeNames: { VIDEO: "Shiko videot", READING: "Lexo përmbajtjen", MESSAGE: "Ndaj reflektimin", QUIZ: "Testi i forumit" },
+    typeShort: { VIDEO: "Shiko deri në fund dhe përgjigju", READING: "Lexo dhe konfirmo përfundimin", MESSAGE: "Shkruaj reflektimin në diskutim", QUIZ: "Përgjigju dhe arrij rezultatin kalues" },
   };
 
   const load = useCallback(async () => {
@@ -211,9 +268,18 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
     return () => window.removeEventListener("workshop-journey-refresh", refresh);
   }, [load]);
 
+  useEffect(() => {
+    try {
+      setPanelHidden(window.localStorage.getItem(`workshop-journey-hidden:${workshopId}`) === "true");
+    } catch {
+      setPanelHidden(false);
+    }
+  }, [workshopId]);
+
   const required = journey?.requirements.filter((requirement) => requirement.is_required) ?? [];
   const doneCount = required.filter((requirement) => requirement.completed).length;
   const currentIndex = journey?.requirements.findIndex((requirement) => requirement.is_required && !requirement.completed) ?? -1;
+  const nextRequirement = currentIndex >= 0 ? journey?.requirements[currentIndex] : null;
 
   const typeGuide = useMemo(() => (Object.keys(icons) as RequirementType[]), []);
 
@@ -267,15 +333,49 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
     }
   }
 
+  function togglePanel() {
+    setPanelHidden((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem(`workshop-journey-hidden:${workshopId}`, String(next));
+      } catch {
+        // The control still works for this visit when storage is unavailable.
+      }
+      return next;
+    });
+  }
+
   if (!hasAccess) return null;
   if (loading && !journey) return <section className="supervisor-journey supervisor-journey--loading"><RefreshCw className="spin" size={22}/><span>{copy.title}</span><style>{styles}</style></section>;
   if (!journey) return null;
 
+  if (panelHidden) {
+    return (
+      <section id="workshop-journey" className="supervisor-journey supervisor-journey--collapsed" dir={isAr ? "rtl" : "ltr"}>
+        <span className="supervisor-journey__collapsed-icon"><Sparkles size={20}/></span>
+        <div className="supervisor-journey__collapsed-copy">
+          <span>{copy.hiddenTitle}</span>
+          <strong>{nextRequirement ? `${copy.nextUp}: ${nextRequirement.title}` : copy.completeTitle}</strong>
+          <small>{copy.hiddenSub}</small>
+        </div>
+        <div className="supervisor-journey__collapsed-progress" aria-label={`${copy.progress} ${journey.percent}%`}>
+          <span><b>{journey.percent}%</b><small>{copy.progress}</small></span>
+          <i><b style={{ width: `${journey.percent}%` }}/></i>
+        </div>
+        <button type="button" onClick={togglePanel}><Eye size={16}/>{copy.showJourney}</button>
+        <style>{styles}</style>
+      </section>
+    );
+  }
+
   return (
-    <section className={`supervisor-journey${journey.completed ? " is-complete" : ""}`} dir={isAr ? "rtl" : "ltr"}>
+    <section id="workshop-journey" className={`supervisor-journey${journey.completed ? " is-complete" : ""}`} dir={isAr ? "rtl" : "ltr"}>
+      <div className="supervisor-journey__topline">
+        <span><Sparkles size={15}/>{copy.eyebrow}</span>
+        <button type="button" onClick={togglePanel}><EyeOff size={15}/>{copy.hideJourney}</button>
+      </div>
       <header className="supervisor-journey__hero">
         <div className="supervisor-journey__intro">
-          <span className="supervisor-journey__eyebrow"><Sparkles size={15}/>{copy.eyebrow}</span>
           <h2>{journey.completed ? copy.completeTitle : copy.title}</h2>
           <p>{journey.completed ? copy.completeSub : copy.sub}</p>
         </div>
@@ -292,10 +392,23 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
 
       <div className="supervisor-journey__progress"><span style={{ width: `${journey.percent}%` }}/></div>
 
-      <div className="requirement-guide">
+      <button type="button" className="requirement-guide-toggle" onClick={() => setGuideOpen((current) => !current)} aria-expanded={guideOpen}><ListChecks size={16}/><span>{guideOpen ? copy.hideGuide : copy.showGuide}</span><ChevronDown size={15}/></button>
+      {guideOpen && <div className="requirement-guide">
         <header><div><ListChecks size={19}/></div><span><strong>{copy.guideTitle}</strong><small>{copy.guideSub}</small></span></header>
         <div>{typeGuide.map((type) => { const Icon = icons[type]; return <article key={type}><span><Icon size={19}/></span><div><strong>{copy.typeNames[type]}</strong><small>{copy.typeShort[type]}</small></div></article>; })}</div>
-      </div>
+      </div>}
+
+      <nav className="supervisor-journey__stepper" aria-label={copy.title}>
+        {journey.requirements.map((requirement, index) => {
+          const Icon = icons[requirement.type];
+          const locked = currentIndex >= 0 && index > currentIndex && requirement.is_required;
+          return <button type="button" key={requirement.id} className={`${requirement.completed ? "completed" : ""}${index === currentIndex ? " current" : ""}${locked ? " locked" : ""}`} onClick={() => setExpandedId(requirement.id)}>
+            <span>{requirement.completed ? <Check size={15}/> : locked ? <LockKeyhole size={14}/> : <Icon size={15}/>}</span>
+            <small>{copy.step} {index + 1}</small>
+            <strong>{copy.typeNames[requirement.type]}</strong>
+          </button>;
+        })}
+      </nav>
 
       <div className="supervisor-roadmap">
         {journey.requirements.map((requirement, index) => {
@@ -304,10 +417,10 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
           const active = !requirement.completed && !locked && index === currentIndex;
           const expanded = expandedId === requirement.id;
           const rule = requirement.type === "VIDEO" ? copy.videoRule : requirement.type === "READING" ? copy.readingRule : requirement.type === "MESSAGE" ? copy.messageRule(requirement.min_length) : copy.quizRule(requirement.quiz?.passing_score ?? quiz?.passing_score ?? 70);
-          return <article key={requirement.id} className={`supervisor-step supervisor-step--${requirement.type.toLowerCase()}${requirement.completed ? " completed" : ""}${active ? " active" : ""}${locked ? " locked" : ""}`}>
-            <div className="supervisor-step__rail"><span>{requirement.completed ? <Check size={19}/> : locked ? <LockKeyhole size={16}/> : <Icon size={19}/>}</span>{index < journey.requirements.length - 1 && <i/>}</div>
+          return <article id={`journey-step-${requirement.id}`} key={requirement.id} className={`supervisor-step supervisor-step--${requirement.type.toLowerCase()}${requirement.completed ? " completed" : ""}${active ? " active" : ""}${locked ? " locked" : ""}${expanded ? " expanded" : ""}`}>
             <div className="supervisor-step__card">
               <header>
+                <span className="supervisor-step__number">{requirement.completed ? <Check size={17}/> : <Icon size={17}/>}</span>
                 <div className="supervisor-step__heading"><span>{copy.step} {index + 1} · {copy.typeNames[requirement.type]}</span><h3>{requirement.title}</h3></div>
                 <div className="supervisor-step__status"><span className={requirement.completed ? "done" : active ? "active" : locked ? "locked" : "optional"}>{requirement.completed ? copy.completed : active ? copy.active : locked ? copy.locked : copy.optional}</span><strong>{requirement.progress}%</strong></div>
               </header>
@@ -378,7 +491,8 @@ const styles = `
 .supervisor-roadmap{margin-top:22px}.supervisor-step{display:grid;grid-template-columns:42px minmax(0,1fr);gap:13px;min-height:130px}.supervisor-step__rail{display:flex;flex-direction:column;align-items:center}.supervisor-step__rail>span{width:42px;height:42px;display:grid;place-items:center;flex:none;border:2px solid #D9C9B0;border-radius:50%;background:#FFFBF5;color:#6B1E2D;box-shadow:0 5px 14px rgba(107,30,45,.08)}.supervisor-step.active .supervisor-step__rail>span{border-color:#6B1E2D;background:#6B1E2D;color:#fff;box-shadow:0 0 0 6px rgba(107,30,45,.08)}.supervisor-step.completed .supervisor-step__rail>span{border-color:#1B5E20;background:#1B5E20;color:#fff}.supervisor-step.locked .supervisor-step__rail>span{color:#8C8274;background:#EFEAE0}.supervisor-step__rail i{width:2px;flex:1;margin:6px 0;background:#D9C9B0}.supervisor-step.completed .supervisor-step__rail i{background:#1B5E20}.supervisor-step__card{min-width:0;margin-bottom:12px;padding:16px;border:1px solid #E5E0D5;border-radius:18px;background:#fff}.supervisor-step.active .supervisor-step__card{border-color:rgba(107,30,45,.35);box-shadow:0 14px 36px rgba(107,30,45,.09)}.supervisor-step.completed .supervisor-step__card{border-color:rgba(27,94,32,.18);background:rgba(255,255,255,.82)}.supervisor-step.locked .supervisor-step__card{opacity:.72;background:#F7F3EB}.supervisor-step__card>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.supervisor-step__heading>span{display:block;color:#6B1E2D;font-size:8.5px;font-weight:900}.supervisor-step__heading h3{margin:4px 0 0;font-size:15px}.supervisor-step__status{display:flex;align-items:center;gap:7px}.supervisor-step__status>span{padding:4px 8px;border-radius:999px;background:#EFEAE0;color:#796A62;font-size:8px;font-weight:900;white-space:nowrap}.supervisor-step__status>span.done{background:rgba(27,94,32,.1);color:#1B5E20}.supervisor-step__status>span.active{background:rgba(107,30,45,.08);color:#6B1E2D}.supervisor-step__status strong{min-width:38px;color:#6B1E2D;font-size:13px;text-align:end}.supervisor-step__mini-progress{height:5px;margin:10px 0;border-radius:999px;background:#EFEAE0;overflow:hidden}.supervisor-step__mini-progress span{display:block;height:100%;border-radius:999px;background:#6B1E2D}.supervisor-step.completed .supervisor-step__mini-progress span{background:#1B5E20}.supervisor-step__description{margin:0;color:#655B53;font-size:10.5px;line-height:1.8}.supervisor-step__details-toggle{display:flex;align-items:center;gap:5px;margin-top:9px;padding:0;border:0;background:none;color:#6B1E2D;font-size:9px;font-weight:900;cursor:pointer}.supervisor-step__details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px;padding-top:11px;border-top:1px solid #EFEAE0}.supervisor-step__details>div:not(.supervisor-step__action):not(.supervisor-step__locked):not(.supervisor-quiz){padding:10px;border-radius:11px;background:#FFFBF5}.supervisor-step__details>div>span{display:flex;align-items:center;gap:5px;color:#6B1E2D;font-size:8.5px;font-weight:900}.supervisor-step__details>div>p{margin:4px 0 0;color:#655B53;font-size:9.5px;line-height:1.75}.supervisor-step__action,.supervisor-step__locked{grid-column:1/-1}.supervisor-step__action a,.supervisor-step__action button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;border:0;border-radius:11px;background:linear-gradient(135deg,#4A0E1C,#6B1E2D);color:#fff;padding:0 15px;font-size:10px;font-weight:900;text-decoration:none;cursor:pointer;box-shadow:0 8px 18px rgba(107,30,45,.14)}.supervisor-step__locked{display:flex;align-items:center;gap:7px;padding:10px 12px;border-radius:10px;background:#EFEAE0;color:#796A62;font-size:9px;font-weight:900}
 .supervisor-quiz{grid-column:1/-1;margin-top:2px;border:1px solid #D9C9B0;border-radius:16px;overflow:hidden;background:#F7F3EB}.supervisor-quiz--empty{display:flex;align-items:center;justify-content:center;gap:8px;min-height:100px;color:#796A62;font-size:10px}.supervisor-quiz>header{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding:15px;background:linear-gradient(135deg,#32101A,#4A0E1C);color:#fff}.supervisor-quiz>header>div:first-child{max-width:650px}.supervisor-quiz>header>div:first-child>span{display:flex;align-items:center;gap:5px;color:#D9C9B0;font-size:8.5px;font-weight:900}.supervisor-quiz>header h4{margin:4px 0 2px;font-size:15px}.supervisor-quiz>header p{margin:0;color:rgba(255,255,255,.7);font-size:9px;line-height:1.7}.supervisor-quiz>header>div:last-child{display:grid;place-items:center;min-width:74px;padding:8px;border:1px solid rgba(255,255,255,.17);border-radius:12px;background:rgba(255,255,255,.08)}.supervisor-quiz>header>div:last-child.passed{background:rgba(27,94,32,.3)}.supervisor-quiz>header>div:last-child strong{font-size:16px}.supervisor-quiz>header>div:last-child span{font-size:7.5px;color:#D9C9B0}.supervisor-quiz__timeline{display:flex;gap:5px;padding:12px 14px 6px;overflow-x:auto}.supervisor-quiz__timeline button{width:28px;height:28px;display:grid;place-items:center;flex:none;border:1px solid #D9C9B0;border-radius:9px;background:#fff;color:#796A62;font-size:8.5px;font-weight:900;cursor:pointer}.supervisor-quiz__timeline button.answered{border-color:rgba(27,94,32,.28);background:rgba(27,94,32,.08);color:#1B5E20}.supervisor-quiz__timeline button.current{border-color:#6B1E2D;background:#6B1E2D;color:#fff;box-shadow:0 0 0 3px rgba(107,30,45,.08)}.supervisor-quiz__question{margin:6px 14px 12px;padding:14px;border:1px solid #E5E0D5;border-radius:13px;background:#fff}.supervisor-quiz__question-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#6B1E2D;font-size:8.5px;font-weight:900}.supervisor-quiz__question-meta small{color:#796A62;font-size:8px}.supervisor-quiz__question h5{margin:9px 0 12px;font-size:13px;line-height:1.75}.supervisor-quiz__question>textarea{width:100%;min-height:130px;resize:vertical;border:1px solid #D9C9B0;border-radius:11px;background:#FFFBF5;padding:11px;color:#32101A;font-size:10.5px;line-height:1.8}.supervisor-quiz__options{display:grid;grid-template-columns:1fr 1fr;gap:7px}.supervisor-quiz__options button{min-height:48px;display:grid;grid-template-columns:30px minmax(0,1fr) 18px;align-items:center;gap:7px;border:1px solid #D9C9B0;border-radius:11px;background:#FFFBF5;color:#32101A;padding:8px;text-align:start;cursor:pointer}.supervisor-quiz__options button>span{width:29px;height:29px;display:grid;place-items:center;border-radius:8px;background:#EFEAE0;color:#6B1E2D;font-size:9px;font-weight:900}.supervisor-quiz__options button>strong{font-size:10px}.supervisor-quiz__options button.selected{border-color:#6B1E2D;background:rgba(107,30,45,.055);box-shadow:0 0 0 2px rgba(107,30,45,.06)}.supervisor-quiz__options button.selected>span{background:#6B1E2D;color:#fff}.supervisor-quiz__options button>svg{color:#6B1E2D}.supervisor-quiz__result{display:flex;align-items:center;gap:6px;margin-top:9px;padding:9px 10px;border-radius:9px;background:#EFEAE0;color:#6B1E2D;font-size:9px;font-weight:900}.supervisor-quiz__result.correct{background:rgba(27,94,32,.09);color:#1B5E20}.supervisor-quiz__submit{display:flex;align-items:center;justify-content:center;gap:6px;min-height:42px;margin-top:10px;border:0;border-radius:10px;background:#6B1E2D;color:#fff;padding:0 14px;font-size:9.5px;font-weight:900;cursor:pointer}.supervisor-quiz__submit:disabled{opacity:.42;cursor:not-allowed}.supervisor-quiz>footer{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px 12px}.supervisor-quiz>footer button{display:flex;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:9px;background:#fff;color:#6B1E2D;padding:7px 10px;font-size:8.5px;font-weight:900;cursor:pointer}.supervisor-quiz>footer button:disabled{opacity:.35;cursor:not-allowed}.supervisor-quiz>footer span{color:#796A62;font-size:8.5px;font-weight:900}
 .supervisor-journey__celebration{display:grid;grid-template-columns:48px minmax(0,1fr) 42px;align-items:center;gap:12px;margin-top:18px;padding:15px;border:1px solid rgba(27,94,32,.2);border-radius:16px;background:rgba(27,94,32,.07);color:#1B5E20}.supervisor-journey__celebration>span{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#1B5E20;color:#fff}.supervisor-journey__celebration strong{font-size:12px}.supervisor-journey__celebration p{margin:3px 0 0;font-size:9.5px;line-height:1.7}.supervisor-journey__error{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:rgba(107,30,45,.08);color:#6B1E2D;font-size:9.5px;font-weight:900}
+.supervisor-journey{scroll-margin-top:18px}.supervisor-journey__topline{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(184,160,130,.24)}.supervisor-journey__topline>span{display:flex;align-items:center;gap:7px;color:#6B1E2D;font-size:10px;font-weight:900}.supervisor-journey__topline>button,.supervisor-journey--collapsed>button{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid #D9C9B0;border-radius:10px;background:#fff;padding:8px 10px;color:#6B1E2D;font-size:9px;font-weight:900;cursor:pointer}.supervisor-journey__hero{align-items:center}.supervisor-journey__hero h2{margin-top:0;font-size:clamp(22px,2.6vw,30px)}.supervisor-journey__progress-ring{width:92px;height:92px}.supervisor-journey__progress-ring:before{width:72px;height:72px}.supervisor-journey__progress-ring strong{font-size:19px}.supervisor-journey__summary{margin-top:14px}.supervisor-journey__summary>div{min-height:52px}.supervisor-journey__progress{height:7px}.requirement-guide-toggle{display:flex;align-items:center;gap:7px;margin-top:14px;border:0;background:transparent;padding:5px 0;color:#6B1E2D;font-size:9.5px;font-weight:900;cursor:pointer}.requirement-guide-toggle svg:last-child{margin-inline-start:auto;transition:transform .18s}.requirement-guide-toggle[aria-expanded=true] svg:last-child{transform:rotate(180deg)}.requirement-guide{margin-top:8px}.supervisor-journey__stepper{position:relative;display:grid;grid-template-columns:repeat(4,minmax(125px,1fr));gap:8px;margin-top:16px;overflow-x:auto;padding:2px}.supervisor-journey__stepper button{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr);grid-template-rows:auto auto;gap:1px 8px;align-items:center;min-width:125px;border:1px solid #E5E0D5;border-radius:13px;background:#fff;padding:9px;text-align:start;color:#32101A;cursor:pointer}.supervisor-journey__stepper button>span{grid-row:1/3;width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#EFEAE0;color:#6B1E2D}.supervisor-journey__stepper button small{color:#8C8274;font-size:7.5px;font-weight:900}.supervisor-journey__stepper button strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.supervisor-journey__stepper button.current{border-color:#6B1E2D;background:#F7F3EB;box-shadow:0 0 0 3px rgba(107,30,45,.07)}.supervisor-journey__stepper button.current>span{background:#6B1E2D;color:#fff}.supervisor-journey__stepper button.completed{border-color:rgba(27,94,32,.2)}.supervisor-journey__stepper button.completed>span{background:#1B5E20;color:#fff}.supervisor-journey__stepper button.locked{opacity:.58}.supervisor-roadmap{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.supervisor-step{display:block;min-height:0}.supervisor-step.expanded{grid-column:1/-1}.supervisor-step__card{height:100%;margin:0;padding:14px;border-radius:15px}.supervisor-step__card>header{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center}.supervisor-step__number{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#EFEAE0;color:#6B1E2D}.supervisor-step.active .supervisor-step__number{background:#6B1E2D;color:#fff}.supervisor-step.completed .supervisor-step__number{background:#1B5E20;color:#fff}.supervisor-step__description{display:-webkit-box;overflow:hidden;-webkit-line-clamp:2;-webkit-box-orient:vertical}.supervisor-step.expanded .supervisor-step__description{display:block}.supervisor-journey--collapsed{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(150px,220px) auto;align-items:center;gap:13px;margin:18px 0;padding:13px 15px;border-radius:16px}.supervisor-journey__collapsed-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:12px;background:#32101A;color:#D9C9B0}.supervisor-journey__collapsed-copy{min-width:0;display:flex;flex-direction:column}.supervisor-journey__collapsed-copy>span{color:#6B1E2D;font-size:8px;font-weight:900}.supervisor-journey__collapsed-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.supervisor-journey__collapsed-copy small{color:#796A62;font-size:8px}.supervisor-journey__collapsed-progress>span{display:flex;align-items:center;justify-content:space-between;gap:8px}.supervisor-journey__collapsed-progress b{font-size:11px}.supervisor-journey__collapsed-progress small{color:#796A62;font-size:8px;font-weight:800}.supervisor-journey__collapsed-progress>i{display:block;height:5px;margin-top:5px;overflow:hidden;border-radius:999px;background:#E5E0D5}.supervisor-journey__collapsed-progress>i>b{display:block;height:100%;border-radius:inherit;background:#6B1E2D}
 @media(max-width:950px){.requirement-guide>div{grid-template-columns:1fr 1fr}}
-@media(max-width:680px){.supervisor-journey{padding:15px;border-radius:20px}.supervisor-journey__hero{align-items:flex-start}.supervisor-journey__progress-ring{width:88px;height:88px}.supervisor-journey__progress-ring:before{width:68px;height:68px}.supervisor-journey__progress-ring strong{font-size:18px}.supervisor-journey__summary{grid-template-columns:1fr 1fr}.supervisor-journey__summary>button{grid-column:1/-1;min-height:42px}.requirement-guide>div{grid-template-columns:1fr}.supervisor-step{grid-template-columns:32px minmax(0,1fr);gap:8px}.supervisor-step__rail>span{width:32px;height:32px}.supervisor-step__card{padding:12px;border-radius:15px}.supervisor-step__card>header{align-items:flex-start;flex-direction:column}.supervisor-step__status{width:100%;justify-content:space-between}.supervisor-step__details{grid-template-columns:1fr}.supervisor-step__action a,.supervisor-step__action button{width:100%}.supervisor-quiz>header{flex-direction:column}.supervisor-quiz>header>div:last-child{width:100%;display:flex;justify-content:space-between}.supervisor-quiz__options{grid-template-columns:1fr}.supervisor-quiz__question{margin-inline:9px;padding:11px}.supervisor-quiz__timeline{padding-inline:9px}.supervisor-quiz>footer{padding-inline:9px}}
-@media(max-width:430px){.supervisor-journey__hero{display:grid;grid-template-columns:minmax(0,1fr) 74px;gap:10px}.supervisor-journey__progress-ring{width:74px;height:74px}.supervisor-journey__progress-ring:before{width:58px;height:58px}.supervisor-journey__progress-ring strong{font-size:15px}.supervisor-journey__progress-ring span{display:none}.supervisor-journey__hero h2{font-size:20px}.supervisor-journey__hero p{font-size:10px}.supervisor-journey__summary{grid-template-columns:1fr}.supervisor-step__heading h3{font-size:13px}.supervisor-step__details{margin-inline:-2px}.supervisor-quiz{margin-inline:-3px}.supervisor-quiz>footer button{padding:7px}.supervisor-journey__celebration{grid-template-columns:42px minmax(0,1fr)}.supervisor-journey__celebration>svg{display:none}}
+@media(max-width:680px){.supervisor-journey{padding:15px;border-radius:20px}.supervisor-journey__hero{align-items:flex-start}.supervisor-journey__progress-ring{width:78px;height:78px}.supervisor-journey__progress-ring:before{width:60px;height:60px}.supervisor-journey__progress-ring strong{font-size:16px}.supervisor-journey__summary{grid-template-columns:1fr 1fr}.supervisor-journey__summary>button{grid-column:1/-1;min-height:40px}.requirement-guide>div{grid-template-columns:1fr}.supervisor-journey__stepper{grid-template-columns:repeat(4,145px)}.supervisor-roadmap{grid-template-columns:1fr}.supervisor-step.expanded{grid-column:auto}.supervisor-step__card{padding:12px}.supervisor-step__card>header{grid-template-columns:36px minmax(0,1fr);align-items:start}.supervisor-step__status{grid-column:1/-1;width:100%;justify-content:space-between;margin-top:7px}.supervisor-step__details{grid-template-columns:1fr}.supervisor-step__action a,.supervisor-step__action button{width:100%}.supervisor-quiz>header{flex-direction:column}.supervisor-quiz>header>div:last-child{width:100%;display:flex;justify-content:space-between}.supervisor-quiz__options{grid-template-columns:1fr}.supervisor-quiz__question{margin-inline:9px;padding:11px}.supervisor-quiz__timeline{padding-inline:9px}.supervisor-quiz>footer{padding-inline:9px}.supervisor-journey--collapsed{grid-template-columns:42px minmax(0,1fr) auto}.supervisor-journey__collapsed-progress{grid-column:2/4}.supervisor-journey--collapsed>button{grid-column:1/-1}}
+@media(max-width:430px){.supervisor-journey__topline{align-items:flex-start}.supervisor-journey__topline>button{font-size:0}.supervisor-journey__topline>button svg{width:17px;height:17px}.supervisor-journey__hero{display:grid;grid-template-columns:minmax(0,1fr) 68px;gap:10px}.supervisor-journey__progress-ring{width:68px;height:68px}.supervisor-journey__progress-ring:before{width:52px;height:52px}.supervisor-journey__progress-ring strong{font-size:14px}.supervisor-journey__progress-ring span{display:none}.supervisor-journey__hero h2{font-size:19px}.supervisor-journey__hero p{font-size:9.5px}.supervisor-journey__summary{grid-template-columns:1fr}.supervisor-step__heading h3{font-size:13px}.supervisor-step__details{margin-inline:-2px}.supervisor-quiz{margin-inline:-3px}.supervisor-quiz>footer button{padding:7px}.supervisor-journey__celebration{grid-template-columns:42px minmax(0,1fr)}.supervisor-journey__celebration>svg{display:none}.supervisor-journey--collapsed{grid-template-columns:38px minmax(0,1fr);padding:12px}.supervisor-journey__collapsed-icon{width:38px;height:38px}.supervisor-journey__collapsed-progress{grid-column:1/-1}.supervisor-journey--collapsed>button{grid-column:1/-1;width:100%}}
 `;
