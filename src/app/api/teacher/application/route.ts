@@ -7,6 +7,10 @@ import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
 import { ensureTeacherPersonalClass } from "@/lib/personal-class";
 import {
+  notifyProfiles,
+  schoolAdminProfileIds,
+} from "@/lib/notifications";
+import {
   APP_GENDERS,
   APP_CURRENT_ROLES,
   APP_QUALIFICATIONS,
@@ -309,6 +313,28 @@ export async function POST(req: Request) {
       });
     }
   }, { timeout: 30000, maxWait: 10000 });
+
+  const adminIds = await schoolAdminProfileIds(teacher.school_id);
+  await notifyProfiles(adminIds, {
+    type: "SYSTEM",
+    title_ar: autoApproved ? "طلب مشرف جديد معتمد تلقائياً" : "طلب انضمام مشرف جديد",
+    title_sq: autoApproved ? "Aplikim i ri i miratuar automatikisht" : "Aplikim i ri nga një edukator",
+    title_en: autoApproved ? "New supervisor application auto-approved" : "New supervisor application",
+    body_ar: autoApproved
+      ? `قدّم ${full_name} طلبه وتم اعتماده تلقائياً عبر ورشة ${qrEnrollment!.workshop.title}.`
+      : `أكمل ${full_name} طلب الانضمام وهو بانتظار المراجعة.`,
+    body_sq: autoApproved
+      ? `${full_name} dorëzoi aplikimin dhe u miratua automatikisht përmes trajnimit ${qrEnrollment!.workshop.title}.`
+      : `${full_name} përfundoi aplikimin dhe është në pritje të shqyrtimit.`,
+    body_en: autoApproved
+      ? `${full_name} submitted an application and was auto-approved through ${qrEnrollment!.workshop.title}.`
+      : `${full_name} completed an application and is awaiting review.`,
+    href: autoApproved ? `/school-admin/teachers/${teacher.id}` : "/school-admin/applications",
+    actor_id: auth.profile.id,
+    event_key: `teacher-application-submitted:${teacher.id}`,
+  }).catch((error) => {
+    console.error("[teacher-application] admin notification failed", error);
+  });
 
   return NextResponse.json({
     success: true,

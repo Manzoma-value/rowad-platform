@@ -5,12 +5,14 @@ import Link from "next/link";
 import {
   Bell,
   BookOpen,
+  Check,
   CheckCheck,
   ChevronDown,
   ChevronUp,
   FileText,
   MessageCircle,
   Radio,
+  Trash2,
   Users,
 } from "lucide-react";
 import { useLang, type Lang } from "@/lib/language-context";
@@ -40,6 +42,10 @@ const words = {
     title: "الإشعارات",
     subtitle: "آخر ما يحدث في منصتك",
     markAll: "تحديد الكل كمقروء",
+    markRead: "تحديد كمقروء",
+    delete: "حذف الإشعار",
+    deleteAll: "حذف الكل",
+    deleteAllConfirm: "هل تريد حذف جميع الإشعارات نهائياً؟",
     empty: "لا توجد إشعارات بعد",
     emptyBody: "ستظهر هنا التحديثات الجديدة في المجتمع والورش والمنصة.",
     latest: "أحدث الإشعارات",
@@ -51,6 +57,10 @@ const words = {
     title: "Njoftimet",
     subtitle: "Çfarë ka të re në platformë",
     markAll: "Shënoji të gjitha si të lexuara",
+    markRead: "Shëno si të lexuar",
+    delete: "Fshi njoftimin",
+    deleteAll: "Fshiji të gjitha",
+    deleteAllConfirm: "Të fshihen përgjithmonë të gjitha njoftimet?",
     empty: "Ende nuk ka njoftime",
     emptyBody: "Përditësimet nga komuniteti, trajnimet dhe platforma do të shfaqen këtu.",
     latest: "Njoftimet më të reja",
@@ -62,6 +72,10 @@ const words = {
     title: "Notifications",
     subtitle: "What’s new across your platform",
     markAll: "Mark all as read",
+    markRead: "Mark as read",
+    delete: "Delete notification",
+    deleteAll: "Delete all",
+    deleteAllConfirm: "Permanently delete all notifications?",
     empty: "No notifications yet",
     emptyBody: "New community, workshop, and platform updates will appear here.",
     latest: "Latest notifications",
@@ -107,12 +121,14 @@ function NotificationList({
   basePath,
   lang,
   onRead,
+  onDelete,
   compact = false,
 }: {
   items: NotificationItem[];
   basePath: string;
   lang: Lang;
   onRead: (id: string) => void;
+  onDelete: (id: string) => void;
   compact?: boolean;
 }) {
   const copy = words[lang];
@@ -130,20 +146,31 @@ function NotificationList({
       {items.map((item) => {
         const text = localized(item, lang);
         return (
-          <Link
-            href={resolveHref(item.href, basePath)}
-            className={`nc-item${item.read_at ? "" : " unread"}`}
-            key={item.id}
-            onClick={() => onRead(item.id)}
-          >
-            <span className="nc-icon">{iconFor(item.type)}</span>
-            <span className="nc-copy">
-              <strong>{text.title}</strong>
-              {text.body && <span>{text.body}</span>}
-              <time>{relativeTime(item.created_at, lang)}</time>
+          <article className={`nc-item${item.read_at ? "" : " unread"}`} key={item.id}>
+            <Link
+              href={resolveHref(item.href, basePath)}
+              className="nc-item-link"
+              onClick={() => onRead(item.id)}
+            >
+              <span className="nc-icon">{iconFor(item.type)}</span>
+              <span className="nc-copy">
+                <strong>{text.title}</strong>
+                {text.body && <span>{text.body}</span>}
+                <time>{relativeTime(item.created_at, lang)}</time>
+              </span>
+              {!item.read_at && <i aria-label="Unread" />}
+            </Link>
+            <span className="nc-actions">
+              {!item.read_at && (
+                <button type="button" onClick={() => onRead(item.id)} title={copy.markRead} aria-label={copy.markRead}>
+                  <Check size={14} />
+                </button>
+              )}
+              <button type="button" className="danger" onClick={() => onDelete(item.id)} title={copy.delete} aria-label={copy.delete}>
+                <Trash2 size={14} />
+              </button>
             </span>
-            {!item.read_at && <i aria-label="Unread" />}
-          </Link>
+          </article>
         );
       })}
     </div>
@@ -199,7 +226,8 @@ export function NotificationCenter({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: [id] }),
-    });
+      keepalive: true,
+    }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
   }
 
   function markAll() {
@@ -211,7 +239,32 @@ export function NotificationCenter({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ all: true }),
+    }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
+  }
+
+  function deleteOne(id: string) {
+    setData((current) => {
+      const removed = current.notifications.find((item) => item.id === id);
+      return {
+        unread_count: Math.max(0, current.unread_count - (removed && !removed.read_at ? 1 : 0)),
+        notifications: current.notifications.filter((item) => item.id !== id),
+      };
     });
+    void fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] }),
+    }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
+  }
+
+  function deleteAll() {
+    if (!window.confirm(copy.deleteAllConfirm)) return;
+    setData({ notifications: [], unread_count: 0 });
+    void fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true }),
+    }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
   }
 
   return (
@@ -233,9 +286,12 @@ export function NotificationCenter({
         <div className="nc-panel" role="dialog" aria-label={copy.title}>
           <header>
             <div><strong>{copy.title}</strong><span>{copy.subtitle}</span></div>
-            {data.unread_count > 0 && <button onClick={markAll}><CheckCheck size={14} />{copy.markAll}</button>}
+            <span className="nc-head-actions">
+              {data.unread_count > 0 && <button onClick={markAll}><CheckCheck size={14} />{copy.markAll}</button>}
+              {data.notifications.length > 0 && <button className="danger" onClick={deleteAll}><Trash2 size={14} />{copy.deleteAll}</button>}
+            </span>
           </header>
-          <NotificationList items={data.notifications} basePath={basePath} lang={lang} onRead={markRead} />
+          <NotificationList items={data.notifications} basePath={basePath} lang={lang} onRead={markRead} onDelete={deleteOne} />
         </div>
       )}
       <style>{sharedStyles}</style>
@@ -258,19 +314,28 @@ export function NotificationFeed({
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const refresh = useCallback(async () => {
+    const response = await fetch("/api/notifications?limit=8", { cache: "no-store" }).catch(() => null);
+    if (!response?.ok) return;
+    const data = await response.json() as NotificationResponse;
+    setItems(data.notifications ?? []);
+    setUnreadCount(data.unread_count ?? 0);
+  }, []);
+
   useEffect(() => {
     const initial = window.setTimeout(() => {
       setManuallyHidden(localStorage.getItem(storageKey) === "hidden");
-      fetch("/api/notifications?limit=8", { cache: "no-store" })
-        .then((response) => response.ok ? response.json() : null)
-        .then((data: NotificationResponse | null) => {
-          setItems(data?.notifications ?? []);
-          setUnreadCount(data?.unread_count ?? 0);
-        })
-        .catch(() => undefined);
+      void refresh();
     }, 0);
-    return () => window.clearTimeout(initial);
-  }, [storageKey]);
+    const timer = window.setInterval(() => void refresh(), 15_000);
+    const onVisible = () => document.visibilityState === "visible" && void refresh();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refresh, storageKey]);
 
   const hasUnread = unreadCount > 0;
   const visible = hasUnread || !manuallyHidden;
@@ -284,13 +349,28 @@ export function NotificationFeed({
   }
 
   function markRead(id: string) {
-    setItems((current) => current.map((item) => item.id === id ? { ...item, read_at: item.read_at ?? new Date().toISOString() } : item));
-    setUnreadCount((current) => Math.max(0, current - 1));
+    const wasUnread = items.some((item) => item.id === id && !item.read_at);
+    setItems((current) => current.map((item) => item.id === id
+      ? { ...item, read_at: item.read_at ?? new Date().toISOString() }
+      : item));
+    if (wasUnread) setUnreadCount((current) => Math.max(0, current - 1));
     void fetch("/api/notifications", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: [id] }),
-    });
+      keepalive: true,
+    }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
+  }
+
+  function deleteOne(id: string) {
+    const wasUnread = items.some((item) => item.id === id && !item.read_at);
+    setItems((current) => current.filter((item) => item.id !== id));
+    if (wasUnread) setUnreadCount((current) => Math.max(0, current - 1));
+    void fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: [id] }),
+    }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
   }
 
   return (
@@ -306,14 +386,14 @@ export function NotificationFeed({
           <button onClick={toggle}>{visible ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{visible ? copy.hide : copy.show}</button>
         )}
       </header>
-      {visible && <NotificationList compact items={items} basePath={basePath} lang={lang} onRead={markRead} />}
+      {visible && <NotificationList compact items={items} basePath={basePath} lang={lang} onRead={markRead} onDelete={deleteOne} />}
       <style>{sharedStyles + feedStyles}</style>
     </section>
   );
 }
 
 const sharedStyles = `
-.nc-wrap{position:relative;display:inline-flex}.nc-bell{position:relative;width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(217,201,176,.32);border-radius:50%;background:rgba(255,251,245,.08);color:#F7F3EB;cursor:pointer}.nc-count{position:absolute;inset-block-start:-5px;inset-inline-start:-5px;min-width:18px;height:18px;display:grid;place-items:center;border:2px solid #4A0E1C;border-radius:999px;background:#D9C9B0;padding:0 4px;color:#4A0E1C;font:900 8px 'Cairo',sans-serif}.nc-panel{position:absolute;z-index:4000;inset-block-start:calc(100% + 10px);inset-inline-end:0;width:min(390px,calc(100vw - 24px));overflow:hidden;border:1px solid rgba(217,201,176,.55);border-radius:16px;background:#FFFBF5;box-shadow:0 22px 58px rgba(26,26,26,.28);color:#32101A}.nc-panel>header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;background:linear-gradient(120deg,#32101A,#6B1E2D);color:#fff}.nc-panel>header>div{display:flex;flex-direction:column}.nc-panel>header strong{font-size:13px}.nc-panel>header span{color:#D9C9B0;font-size:8.5px}.nc-panel>header button{display:flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);padding:6px 8px;color:#fff;font:800 8.5px 'Cairo',sans-serif;cursor:pointer}.nc-list{display:flex;max-height:min(480px,calc(100dvh - 160px));flex-direction:column;gap:6px;overflow-y:auto;padding:8px}.nc-item{position:relative;display:grid;grid-template-columns:38px minmax(0,1fr) 7px;gap:9px;align-items:start;border:1px solid #E5E0D5;border-radius:11px;background:#fff;padding:10px;color:#32101A;text-decoration:none;transition:.15s}.nc-item:hover{border-color:#B8A082;background:#F7F3EB;transform:translateY(-1px)}.nc-item.unread{border-inline-start:3px solid #6B1E2D;background:linear-gradient(120deg,rgba(107,30,45,.045),#fff)}.nc-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:#EFEAE0;color:#6B1E2D}.nc-copy{min-width:0;display:flex;flex-direction:column}.nc-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px}.nc-copy>span{display:-webkit-box;overflow:hidden;margin-top:2px;color:#655B53;font-size:9.5px;line-height:1.55;-webkit-line-clamp:2;-webkit-box-orient:vertical}.nc-copy time{margin-top:4px;color:#8C8274;font-size:8px}.nc-item>i{width:7px;height:7px;margin-top:5px;border-radius:50%;background:#6B1E2D}.nc-empty{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;text-align:center;color:#8C8274}.nc-empty svg{color:#6B1E2D}.nc-empty strong{color:#32101A;font-size:11px}.nc-empty span{max-width:260px;font-size:9.5px;line-height:1.7}
+.nc-wrap{position:relative;display:inline-flex}.nc-bell{position:relative;width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(217,201,176,.32);border-radius:50%;background:rgba(255,251,245,.08);color:#F7F3EB;cursor:pointer}.nc-count{position:absolute;inset-block-start:-5px;inset-inline-start:-5px;min-width:18px;height:18px;display:grid;place-items:center;border:2px solid #4A0E1C;border-radius:999px;background:#D9C9B0;padding:0 4px;color:#4A0E1C;font:900 8px 'Cairo',sans-serif}.nc-panel{position:absolute;z-index:4000;inset-block-start:calc(100% + 10px);inset-inline-end:0;width:min(420px,calc(100vw - 24px));overflow:hidden;border:1px solid rgba(217,201,176,.55);border-radius:16px;background:#FFFBF5;box-shadow:0 22px 58px rgba(26,26,26,.28);color:#32101A}.nc-panel>header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;background:linear-gradient(120deg,#32101A,#6B1E2D);color:#fff}.nc-panel>header>div{display:flex;flex-direction:column}.nc-panel>header strong{font-size:13px}.nc-panel>header span{color:#D9C9B0;font-size:8.5px}.nc-head-actions{display:flex!important;flex-direction:row!important;align-items:center;justify-content:flex-end;gap:5px}.nc-panel>header button{display:flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.08);padding:6px 8px;color:#fff;font:800 8.5px 'Cairo',sans-serif;cursor:pointer}.nc-panel>header button.danger{color:#FFDED9;border-color:rgba(255,222,217,.26)}.nc-list{display:flex;max-height:min(480px,calc(100dvh - 160px));flex-direction:column;gap:6px;overflow-y:auto;padding:8px}.nc-item{position:relative;display:flex;align-items:center;gap:6px;border:1px solid #E5E0D5;border-radius:11px;background:#fff;padding:5px;color:#32101A;transition:.15s}.nc-item:hover{border-color:#B8A082;background:#F7F3EB;transform:translateY(-1px)}.nc-item.unread{border-inline-start:3px solid #6B1E2D;background:linear-gradient(120deg,rgba(107,30,45,.045),#fff)}.nc-item-link{display:grid;grid-template-columns:38px minmax(0,1fr) 7px;flex:1;gap:9px;align-items:start;min-width:0;padding:5px;color:inherit;text-decoration:none}.nc-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:#EFEAE0;color:#6B1E2D}.nc-copy{min-width:0;display:flex;flex-direction:column}.nc-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px}.nc-copy>span{display:-webkit-box;overflow:hidden;margin-top:2px;color:#655B53;font-size:9.5px;line-height:1.55;-webkit-line-clamp:2;-webkit-box-orient:vertical}.nc-copy time{margin-top:4px;color:#8C8274;font-size:8px}.nc-item-link>i{width:7px;height:7px;margin-top:5px;border-radius:50%;background:#6B1E2D}.nc-actions{display:flex;flex-direction:column;gap:4px;flex:0 0 auto}.nc-actions button{width:28px;height:28px;display:grid;place-items:center;border:1px solid #D9C9B0;border-radius:8px;background:#FFFBF5;color:#6B1E2D;cursor:pointer}.nc-actions button:hover{background:#EFEAE0;border-color:#B8A082}.nc-actions button.danger:hover{background:#FCEAE8;border-color:#B86A65;color:#8F211D}.nc-empty{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;text-align:center;color:#8C8274}.nc-empty svg{color:#6B1E2D}.nc-empty strong{color:#32101A;font-size:11px}.nc-empty span{max-width:260px;font-size:9.5px;line-height:1.7}@media(max-width:460px){.nc-panel>header{align-items:flex-start}.nc-head-actions{flex-direction:column!important;align-items:stretch}.nc-panel>header button{justify-content:center;padding:5px 7px}.nc-actions{flex-direction:row}}
 `;
 
 const feedStyles = `

@@ -123,7 +123,15 @@ export async function proxy(request: NextRequest) {
         return NextResponse.json({ error: "View-only access expired" }, { status: 403 });
       }
 
-      if (apiProfile && isViewOnlySchoolAdminWrite(apiProfile, request.method)) {
+      // Notification read/delete state belongs to the signed-in profile and
+      // does not mutate school/platform content, so view-only admins may
+      // manage their own inbox just like every other role.
+      const isPersonalNotificationMutation = pathname === "/api/notifications";
+      if (
+        apiProfile &&
+        !isPersonalNotificationMutation &&
+        isViewOnlySchoolAdminWrite(apiProfile, request.method)
+      ) {
         return NextResponse.json(
           { error: "View-only accounts cannot change platform data" },
           { status: 403 },

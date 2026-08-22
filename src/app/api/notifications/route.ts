@@ -68,6 +68,13 @@ const ReadSchema = z.object({
   message: "ids or all required",
 });
 
+const DeleteSchema = z.object({
+  ids: z.array(z.string().uuid()).max(50).optional(),
+  all: z.boolean().optional(),
+}).refine((value) => value.all === true || Boolean(value.ids?.length), {
+  message: "ids or all required",
+});
+
 export async function PATCH(request: Request) {
   const profileId = await currentProfileId();
   if (!profileId) {
@@ -89,4 +96,25 @@ export async function PATCH(request: Request) {
   });
 
   return NextResponse.json({ success: true });
+}
+
+export async function DELETE(request: Request) {
+  const profileId = await currentProfileId();
+  if (!profileId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const parsed = DeleteSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 });
+  }
+
+  const result = await prisma.notification.deleteMany({
+    where: {
+      recipient_id: profileId,
+      ...(parsed.data.all ? {} : { id: { in: parsed.data.ids } }),
+    },
+  });
+
+  return NextResponse.json({ success: true, deleted_count: result.count });
 }
