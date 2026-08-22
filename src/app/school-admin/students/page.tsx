@@ -1,875 +1,115 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  Activity, Ban, BookOpenCheck, CheckCircle2, ChevronDown, CircleUserRound,
+  Download, Layers3, MapPin, Radar, Search, SlidersHorizontal, Target, Users, X,
+} from "lucide-react";
+import { useLang } from "@/lib/language-context";
 import { useConfirm } from "@/lib/confirm-dialog";
+import MandalaLoader from "@/components/MandalaLoader";
+import IdentityMandala from "@/components/IdentityMandala";
+import IdentityStar from "@/components/IdentityStar";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface StageProgress {
-  title: string;
-  passed: number;
-  total: number;
-}
-interface RecentAttempt {
-  module_title: string;
-  stage_title: string;
-  score_pct: number;
-  passed: boolean;
-  date: string;
-}
-
+type Lang = "ar" | "sq" | "en";
+type JourneyFilter = "" | "started" | "not_started" | "completed";
+interface StageProgress { title: string; passed: number; total: number }
+interface RecentAttempt { module_title: string; stage_title: string; score_pct: number; passed: boolean; date: string }
 interface Student {
-  id: string;
-  onboarding_status: string;
-  created_at: string;
-  profile: { full_name: string; avatar_url: string | null; is_active: boolean };
+  id: string; onboarding_status: string; created_at: string; city: string | null; age: number | null;
+  profile: { full_name: string; email: string | null; avatar_url: string | null; is_active: boolean };
   class: { id: string; name: string } | null;
-  attempts_count: number;
-  passed_count: number;
-  total_modules: number;
-  avg_score: number | null;
-  progress_pct: number;
+  attempts_count: number; passed_count: number; total_modules: number; avg_score: number | null; progress_pct: number;
   current_stage: { id: string; title: string; order: number } | null;
   current_module: { id: string; title: string } | null;
-  stage_progress: StageProgress[];
-  recent_attempts: RecentAttempt[];
+  stage_progress: StageProgress[]; recent_attempts: RecentAttempt[];
 }
+interface ClassItem { id: string; name: string }
 
-interface ClassItem {
-  id: string;
-  name: string;
+const COPY = {
+  ar: {
+    eyebrow: "إدارة رحلة المستفيدين", title: "المستفيدون", subtitle: "ملف واضح لكل مستفيد: موقعه في الرحلة، تقدمه، مجموعته وآخر محاولاته.", beneficiaries: "مستفيد", activeAccounts: "حساب نشط", assigned: "داخل مجموعة", started: "بدأوا الرحلة",
+    search: "ابحث بالاسم، البريد، المجموعة، المرحلة أو المفهوم...", export: "تصدير المستفيدين Excel", exporting: "جارٍ التصدير...", classes: "إدارة المجموعات", filters: "تصفية النتائج", results: "نتيجة", clear: "مسح التصفية",
+    class: "المجموعة", allClasses: "كل المجموعات", unassigned: "بدون مجموعة", journey: "حالة الرحلة", allJourneys: "كل الحالات", inProgress: "قيد التقدم", notStarted: "لم يبدأ", completed: "أكمل الرحلة", account: "حالة الحساب", allAccounts: "كل الحسابات", active: "نشط", inactive: "معطّل",
+    noResults: "لا يوجد مستفيدون مطابقون للتصفية الحالية.", openProfile: "فتح الملف الشامل", showDetails: "عرض التقدم السريع", hideDetails: "إخفاء التفاصيل", currentPosition: "الموقع الحالي", noPosition: "لم يبدأ رحلة التعلم بعد", attempts: "محاولات", concepts: "مفاهيم مكتملة", average: "متوسط الأداء", stageProgress: "تقدم المراحل", recentAttempts: "آخر المحاولات",
+    assignClass: "تعيين المجموعة", noClass: "بدون مجموعة", deactivate: "تعطيل المستفيد", activate: "تفعيل المستفيد", loading: "جارٍ تحميل المستفيدين...", loadError: "تعذر تحميل المستفيدين.", toggleError: "تعذر تحديث البيانات.", noActivity: "لا توجد محاولات مسجلة بعد.", joined: "انضم",
+  },
+  sq: {
+    eyebrow: "Menaxhimi i rrugëtimit", title: "Pjesëmarrësit", subtitle: "Pamje e qartë për çdo pjesëmarrës: pozicioni, përparimi, grupi dhe përpjekjet e fundit.", beneficiaries: "pjesëmarrës", activeAccounts: "llogari aktive", assigned: "në grup", started: "kanë filluar",
+    search: "Kërko sipas emrit, emailit, grupit, fazës ose konceptit...", export: "Eksporto pjesëmarrësit në Excel", exporting: "Duke eksportuar...", classes: "Menaxho grupet", filters: "Filtrimi", results: "rezultate", clear: "Pastro filtrat",
+    class: "Grupi", allClasses: "Të gjitha grupet", unassigned: "Pa grup", journey: "Gjendja e rrugëtimit", allJourneys: "Të gjitha gjendjet", inProgress: "Në vazhdim", notStarted: "Pa filluar", completed: "Rrugëtimi i përfunduar", account: "Gjendja e llogarisë", allAccounts: "Të gjitha llogaritë", active: "Aktive", inactive: "Jo aktive",
+    noResults: "Asnjë pjesëmarrës nuk përputhet me filtrat.", openProfile: "Hap profilin e plotë", showDetails: "Shfaq përparimin", hideDetails: "Fshih detajet", currentPosition: "Pozicioni aktual", noPosition: "Ende nuk e ka filluar rrugëtimin", attempts: "Përpjekje", concepts: "Koncepte të përfunduara", average: "Mesatarja", stageProgress: "Përparimi sipas fazave", recentAttempts: "Përpjekjet e fundit",
+    assignClass: "Cakto grupin", noClass: "Pa grup", deactivate: "Çaktivizo pjesëmarrësin", activate: "Aktivizo pjesëmarrësin", loading: "Duke ngarkuar pjesëmarrësit...", loadError: "Pjesëmarrësit nuk u ngarkuan.", toggleError: "Të dhënat nuk u përditësuan.", noActivity: "Ende nuk ka përpjekje.", joined: "Regjistruar",
+  },
+  en: {
+    eyebrow: "Beneficiary journey management", title: "Beneficiaries", subtitle: "A clear profile for every beneficiary: journey position, progress, group and recent attempts.", beneficiaries: "beneficiaries", activeAccounts: "active accounts", assigned: "assigned", started: "started journey",
+    search: "Search by name, email, group, stage or concept...", export: "Export beneficiaries to Excel", exporting: "Exporting...", classes: "Manage groups", filters: "Filters", results: "results", clear: "Clear filters",
+    class: "Group", allClasses: "All groups", unassigned: "Unassigned", journey: "Journey status", allJourneys: "All journey states", inProgress: "In progress", notStarted: "Not started", completed: "Journey completed", account: "Account status", allAccounts: "All accounts", active: "Active", inactive: "Inactive",
+    noResults: "No beneficiaries match the current filters.", openProfile: "Open complete profile", showDetails: "Show quick progress", hideDetails: "Hide details", currentPosition: "Current position", noPosition: "Learning journey not started yet", attempts: "Attempts", concepts: "Concepts completed", average: "Average score", stageProgress: "Stage progress", recentAttempts: "Recent attempts",
+    assignClass: "Assign group", noClass: "No group", deactivate: "Deactivate beneficiary", activate: "Activate beneficiary", loading: "Loading beneficiaries...", loadError: "Beneficiaries could not be loaded.", toggleError: "Data could not be updated.", noActivity: "No attempts recorded yet.", joined: "Joined",
+  },
+} as const;
+
+function initials(name: string) { return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase(); }
+function date(value: string, lang: Lang) { return new Intl.DateTimeFormat(lang === "ar" ? "ar-SA-u-nu-latn" : lang === "sq" ? "sq-AL" : "en-GB", { dateStyle: "medium" }).format(new Date(value)); }
+function journeyOf(student: Student): JourneyFilter { return student.total_modules > 0 && student.passed_count >= student.total_modules ? "completed" : student.attempts_count > 0 ? "started" : "not_started"; }
+function statusLabel(status: string, lang: Lang) {
+  const labels: Record<string, [string, string, string]> = { PENDING_INTAKE: ["في انتظار القبول", "Në pritje të pranimit", "Pending intake"], INTAKE_SUBMITTED: ["بانتظار المراجعة", "Në pritje të shqyrtimit", "Awaiting review"], SCHOOL_ASSIGNED: ["تم تعيين المنصة", "Platforma e caktuar", "Platform assigned"], SCHOOL_PLACEMENT_SUBMITTED: ["اختبار التصنيف", "Vlerësimi i dorëzuar", "Placement submitted"], CLASS_ASSIGNED: ["في المجموعة", "Në grup", "In group"] };
+  const value = labels[status] ?? [status, status, status]; return value[lang === "ar" ? 0 : lang === "sq" ? 1 : 2];
 }
+function Metric({ icon, value, label }: { icon: ReactNode; value: number | string; label: string }) { return <div className="sd-metric"><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></div>; }
+function ProgressRing({ value }: { value: number }) { return <div className="sd-ring" style={{ "--progress": `${Math.max(0, Math.min(100, value)) * 3.6}deg` } as CSSProperties}><span>{value}%</span></div>; }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const STATUS_META: Record<
-  string,
-  { label: string; color: string; bg: string; border: string }
-> = {
-  PENDING_INTAKE: {
-    label: "في انتظار القبول",
-    color: "#796A62",
-    bg: "rgba(138,123,96,0.08)",
-    border: "rgba(138,123,96,0.18)",
-  },
-  INTAKE_SUBMITTED: {
-    label: "بانتظار المراجعة",
-    color: "#6B4E18",
-    bg: "rgba(184,160,130,0.10)",
-    border: "rgba(184,160,130,0.22)",
-  },
-  SCHOOL_ASSIGNED: {
-    label: "تم تعيين المنصة",
-    color: "#1A4A7A",
-    bg: "rgba(26,74,122,0.08)",
-    border: "rgba(26,74,122,0.18)",
-  },
-  SCHOOL_PLACEMENT_SUBMITTED: {
-    label: "اختبار التصنيف",
-    color: "#4A2080",
-    bg: "rgba(74,32,128,0.08)",
-    border: "rgba(74,32,128,0.18)",
-  },
-  CLASS_ASSIGNED: {
-    label: "في المجموعة",
-    color: "#1B5E20",
-    bg: "rgba(26,107,60,0.07)",
-    border: "rgba(26,107,60,0.18)",
-  },
-};
-
-// ─── Small components ─────────────────────────────────────────────────────────
-
-function ProgressRing({ pct, size = 56 }: { pct: number; size?: number }) {
-  const r = (size - 6) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-  const color =
-    pct >= 75
-      ? "#1B5E20"
-      : pct >= 40
-        ? "#B8A082"
-        : pct > 0
-          ? "#B8A082"
-          : "#E5E0D5";
-  return (
-    <div
-      style={{ position: "relative", width: size, height: size, flexShrink: 0 }}
-    >
-      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="#F0EBE2"
-          strokeWidth="5"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="5"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 0.8s ease" }}
-        />
-      </svg>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <span style={{ fontSize: 11, fontWeight: 900, color }}>{pct}%</span>
-      </div>
-    </div>
-  );
+function StudentCard({ student, classes, lang, onAssign, onToggle, toggling }: { student: Student; classes: ClassItem[]; lang: Lang; onAssign: (id: string, classId: string) => void; onToggle: (id: string, active: boolean) => void; toggling: boolean }) {
+  const T = COPY[lang]; const [expanded, setExpanded] = useState(false); const journey = journeyOf(student); const journeyLabel = journey === "completed" ? T.completed : journey === "started" ? T.inProgress : T.notStarted;
+  return <article className={`sd-card ${student.profile.is_active ? "" : "is-inactive"}`}>
+    <div className="sd-watermark" aria-hidden="true"><IdentityMandala size={160} stroke="#4A0E1C" opacity={0.045} /></div>
+    <header className="sd-card-head">
+      <div className="sd-avatar">{student.profile.avatar_url ? <Image src={student.profile.avatar_url} alt={student.profile.full_name} fill sizes="58px" /> : <span>{initials(student.profile.full_name)}</span>}</div>
+      <div className="sd-identity"><div className="sd-name-row"><h2>{student.profile.full_name}</h2><span className={`sd-pill ${journey}`}>{journeyLabel}</span>{!student.profile.is_active && <span className="sd-pill inactive">{T.inactive}</span>}</div><div className="sd-contact">{student.profile.email && <span><CircleUserRound size={12} />{student.profile.email}</span>}<span><Layers3 size={12} />{student.class?.name ?? T.noClass}</span>{student.city && <span><MapPin size={12} />{student.city}</span>}</div></div>
+      <button data-write="true" className={`sd-toggle ${student.profile.is_active ? "off" : "on"}`} onClick={() => onToggle(student.id, student.profile.is_active)} disabled={toggling} title={student.profile.is_active ? T.deactivate : T.activate} aria-label={student.profile.is_active ? T.deactivate : T.activate}>{toggling ? "…" : student.profile.is_active ? <Ban size={14} /> : <CheckCircle2 size={14} />}</button>
+    </header>
+    <div className="sd-card-summary"><div className="sd-position"><span><Target size={15} /></span><div><small>{T.currentPosition}</small><strong>{student.current_stage ? `${student.current_stage.title} · ${student.current_module?.title ?? "—"}` : T.noPosition}</strong></div></div><ProgressRing value={student.progress_pct} /></div>
+    <div className="sd-card-metrics"><span><b>{student.attempts_count}</b>{T.attempts}</span><span><b>{student.passed_count}/{student.total_modules}</b>{T.concepts}</span><span><b>{student.avg_score === null ? "—" : `${student.avg_score}%`}</b>{T.average}</span></div>
+    <div className="sd-card-actions"><Link href={`/school-admin/students/${student.id}`}>{T.openProfile}</Link><button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>{expanded ? T.hideDetails : T.showDetails}<ChevronDown size={14} className={expanded ? "rotated" : ""} /></button></div>
+    {expanded && <div className="sd-expanded">
+      <section><h3><Activity size={14} />{T.stageProgress}</h3>{student.stage_progress.length ? <div className="sd-stages">{student.stage_progress.map((stage) => { const pct = stage.total ? Math.round(stage.passed / stage.total * 100) : 0; return <div key={stage.title}><div><strong>{stage.title}</strong><span>{stage.passed}/{stage.total}</span></div><i><b style={{ width: `${pct}%` }} /></i></div>; })}</div> : <p className="sd-muted">{T.noActivity}</p>}</section>
+      <section><h3><BookOpenCheck size={14} />{T.recentAttempts}</h3>{student.recent_attempts.length ? <div className="sd-attempts">{student.recent_attempts.slice(0, 3).map((attempt) => <article key={`${attempt.module_title}-${attempt.date}`}><span className={attempt.passed ? "passed" : ""} /><div><strong>{attempt.module_title}</strong><small>{attempt.stage_title} · {date(attempt.date, lang)}</small></div><b>{attempt.score_pct}%</b></article>)}</div> : <p className="sd-muted">{T.noActivity}</p>}</section>
+      <label className="sd-assign"><span>{T.assignClass}</span><select data-write="true" value={student.class?.id ?? ""} onChange={(event) => onAssign(student.id, event.target.value)}><option value="">{T.noClass}</option>{classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+    </div>}
+  </article>;
 }
-
-function ScoreChip({ pct }: { pct: number }) {
-  const color = pct >= 75 ? "#1B5E20" : pct >= 50 ? "#6B4E18" : "#6B1E2D";
-  const bg =
-    pct >= 75
-      ? "rgba(26,107,60,0.09)"
-      : pct >= 50
-        ? "rgba(184,160,130,0.12)"
-        : "rgba(107,30,45,0.08)";
-  return (
-    <span
-      style={{
-        fontSize: 10,
-        fontWeight: 800,
-        padding: "2px 7px",
-        borderRadius: 5,
-        background: bg,
-        color,
-      }}
-    >
-      {pct}%
-    </span>
-  );
-}
-
-// ─── Student Card ─────────────────────────────────────────────────────────────
-
-function StudentCard({
-  student,
-  classes,
-  onAssign,
-  onToggle,
-  toggling,
-}: {
-  student: Student;
-  classes: ClassItem[];
-  onAssign: (studentId: string, classId: string) => void;
-  onToggle: (studentId: string, currentActive: boolean) => void;
-  toggling: boolean;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const meta =
-    STATUS_META[student.onboarding_status] ?? STATUS_META.PENDING_INTAKE;
-  const initials = student.profile.full_name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("");
-
-  return (
-    <div className={`sc-card${expanded ? " sc-card--open" : ""}`}>
-      {/* ── Card top ── */}
-      <div className="sc-top" onClick={() => setExpanded((v) => !v)}>
-        {/* Avatar */}
-        <div className="sc-av">
-          {student.profile.avatar_url ? (
-            <img
-              src={student.profile.avatar_url}
-              alt={student.profile.full_name}
-              className="sc-av-img"
-            />
-          ) : (
-            <span className="sc-av-initials">{initials}</span>
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="sc-info">
-          <div className="sc-name">{student.profile.full_name}</div>
-          <div className="sc-meta-row">
-            <span
-              className="sc-status"
-              style={{
-                color: meta.color,
-                background: meta.bg,
-                borderColor: meta.border,
-              }}
-            >
-              {meta.label}
-            </span>
-            {student.class && (
-              <span className="sc-class-chip">
-                <svg
-                  width="10"
-                  height="10"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-                </svg>
-                {student.class.name}
-              </span>
-            )}
-          </div>
-
-          {/* Inactive badge */}
-          {!student.profile.is_active && (
-            <div className="sc-inactive-badge">معطّل</div>
-          )}
-
-          {/* Current position */}
-          {student.current_stage ? (
-            <div className="sc-current">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              <span>
-                {student.current_stage.title} ·{" "}
-                {student.current_module?.title ?? "—"}
-              </span>
-            </div>
-          ) : student.attempts_count > 0 ? (
-            <div className="sc-current sc-current--done">
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              <span>أكمل جميع المستويات</span>
-            </div>
-          ) : (
-            <div className="sc-current sc-current--none">لم يبدأ بعد</div>
-          )}
-        </div>
-
-        {/* Stats + ring */}
-        <div className="sc-right">
-          <ProgressRing pct={student.progress_pct} />
-          <div className="sc-stat-row">
-            <div className="sc-stat">
-              <span className="sc-stat-n">{student.passed_count}</span>
-              <span className="sc-stat-l">مكتمل</span>
-            </div>
-            <div className="sc-stat-div" />
-            <div className="sc-stat">
-              <span className="sc-stat-n">{student.total_modules}</span>
-              <span className="sc-stat-l">إجمالي</span>
-            </div>
-          </div>
-          {student.avg_score !== null && (
-            <div style={{ textAlign: "center" }}>
-              <ScoreChip pct={student.avg_score} />
-            </div>
-          )}
-        </div>
-
-        <Link
-          href={`/school-admin/students/${student.id}`}
-          className="sc-profile-link"
-          onClick={(event) => event.stopPropagation()}
-          title="عرض الملف والطيف"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
-          <span>الملف والطيف</span>
-        </Link>
-
-        {/* Activate / Deactivate toggle */}
-        <button
-          data-write="true"
-          className={`sc-toggle-btn ${student.profile.is_active ? "sc-toggle-btn--off" : "sc-toggle-btn--on"}`}
-          onClick={(e) => { e.stopPropagation(); onToggle(student.id, student.profile.is_active); }}
-          disabled={toggling}
-          title={student.profile.is_active ? "تعطيل المستفيد" : "تفعيل المستفيد"}
-        >
-          {toggling ? (
-            <span className="sc-spin" />
-          ) : student.profile.is_active ? (
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="10" /><path d="M8 12h8" />
-            </svg>
-          ) : (
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <circle cx="12" cy="12" r="10" /><path d="M12 8v8m-4-4h8" />
-            </svg>
-          )}
-        </button>
-
-        {/* Chevron */}
-        <div
-          className="sc-chevron"
-          style={{ transform: expanded ? "rotate(180deg)" : "none" }}
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </div>
-      </div>
-
-      {/* ── Overall progress bar ── */}
-      <div className="sc-progress-bar">
-        <div
-          className="sc-progress-fill"
-          style={{ width: `${student.progress_pct}%` }}
-        />
-      </div>
-
-      {/* ── Expanded detail ── */}
-      {expanded && (
-        <div className="sc-detail">
-          {/* Stage breakdown */}
-          {student.stage_progress.length > 0 && (
-            <div className="sc-section">
-              <div className="sc-section-title">تقدم المراحل</div>
-              <div className="sc-stages">
-                {student.stage_progress.map((stage, i) => {
-                  const stagePct =
-                    stage.total > 0
-                      ? Math.round((stage.passed / stage.total) * 100)
-                      : 0;
-                  const isDone =
-                    stage.passed === stage.total && stage.total > 0;
-                  const isActive =
-                    !isDone &&
-                    (i === 0 ||
-                      student.stage_progress
-                        .slice(0, i)
-                        .every((s) => s.passed === s.total));
-                  return (
-                    <div key={i} className="sc-stage-row">
-                      <div
-                        className={`sc-stage-dot${isDone ? " done" : isActive ? " active" : ""}`}
-                      />
-                      <div className="sc-stage-body">
-                        <div className="sc-stage-head">
-                          <span className="sc-stage-title">{stage.title}</span>
-                          <span className="sc-stage-count">
-                            {stage.passed}/{stage.total}
-                          </span>
-                        </div>
-                        <div className="sc-stage-track">
-                          <div
-                            className="sc-stage-fill"
-                            style={{
-                              width: `${stagePct}%`,
-                              background: isDone
-                                ? "#1B5E20"
-                                : isActive
-                                  ? "#B8A082"
-                                  : "#E5E0D5",
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Recent attempts */}
-          {student.recent_attempts.length > 0 && (
-            <div className="sc-section">
-              <div className="sc-section-title">آخر المحاولات</div>
-              <div className="sc-attempts">
-                {student.recent_attempts.map((a, i) => (
-                  <div key={i} className="sc-attempt-row">
-                    <div
-                      className={`sc-att-dot${a.passed ? " passed" : " failed"}`}
-                    />
-                    <div className="sc-att-info">
-                      <span className="sc-att-stage">{a.stage_title}</span>
-                      <span className="sc-att-mod">{a.module_title}</span>
-                    </div>
-                    <div className="sc-att-right">
-                      <ScoreChip pct={a.score_pct} />
-                      <span className="sc-att-date">
-                        {new Date(a.date).toLocaleDateString("ar-SA-u-nu-latn", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {student.attempts_count === 0 && (
-            <div className="sc-no-attempts">لم يبدأ أي مستوى بعد</div>
-          )}
-
-          {/* Assign class */}
-          <div className="sc-section">
-            <div className="sc-section-title">تعيين المجموعة</div>
-            <select
-              className="sc-select"
-              value={student.class?.id ?? ""}
-              onChange={(e) => onAssign(student.id, e.target.value)}
-              dir="rtl"
-            >
-              <option value="">— بدون مجموعة —</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function SchoolAdminStudentsPage() {
-  const confirm = useConfirm();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [classes, setClasses] = useState<ClassItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "active" | "none">("all");
-  const [toggling, setToggling] = useState<string | null>(null);
-  const [toggleError, setToggleError] = useState("");
-
-  async function load() {
-    const [sRes, cRes] = await Promise.all([
-      fetch("/api/school-admin/students"),
-      fetch("/api/school-admin/classes"),
-    ]);
-    const [sData, cData] = await Promise.all([sRes.json(), cRes.json()]);
-    setStudents(sData.students ?? []);
-    setClasses(cData.classes ?? []);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    load();
-  }, []);
-
-  async function handleToggle(studentId: string, currentActive: boolean) {
-    if (currentActive) {
-      const ok = await confirm({
-        title: "تعطيل حساب المستفيد",
-        message: "سيتم تعطيل وصول هذا المستفيد فوراً. لن يتمكن من الدخول حتى تعيد تفعيله.",
-        variant: "warning",
-        confirmText: "تعطيل",
-        irreversible: false,
-      });
-      if (!ok) return;
-    }
-    setToggling(studentId);
-    setToggleError("");
-    try {
-      const r = await fetch(`/api/school-admin/students/${studentId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_active: !currentActive }),
-      });
-      const d = await r.json();
-      if (!r.ok) { setToggleError(d.error ?? "حدث خطأ"); return; }
-      setStudents((prev) =>
-        prev.map((s) =>
-          s.id === studentId
-            ? { ...s, profile: { ...s.profile, is_active: !currentActive } }
-            : s,
-        ),
-      );
-    } catch {
-      setToggleError("تعذر الاتصال بالخادم");
-    } finally {
-      setToggling(null);
-    }
-  }
-
-  async function handleAssign(studentId: string, classId: string) {
-    await fetch(`/api/school-admin/students/${studentId}/assign-class`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ class_id: classId || null }),
-    });
-    load();
-  }
-
-  const filtered = students.filter((s) => {
-    const matchSearch = s.profile.full_name
-      .toLowerCase()
-      .includes(search.toLowerCase());
-    const matchFilter =
-      filter === "all"
-        ? true
-        : filter === "active"
-          ? s.attempts_count > 0
-          : s.attempts_count === 0;
-    return matchSearch && matchFilter;
-  });
-
-  const totalActive = students.filter((s) => s.attempts_count > 0).length;
-  const avgProgress =
-    students.length > 0
-      ? Math.round(
-          students.reduce((sum, s) => sum + s.progress_pct, 0) /
-            students.length,
-        )
-      : 0;
-
-  return (
-    <div className="sp-page" dir="rtl">
-      <style>{css}</style>
-
-      {/* ── Header ── */}
-      <div className="sp-header">
-        <div>
-          <p className="sp-eyebrow">سجل المستفيدين</p>
-          <h1 className="sp-title">المستفيدون</h1>
-          <p className="sp-sub">{students.length} مستفيد مسجل</p>
-        </div>
-        <div className="sp-header-stats">
-          <div className="sp-hstat">
-            <span className="sp-hstat-n">{totalActive}</span>
-            <span className="sp-hstat-l">نشط</span>
-          </div>
-          <div className="sp-hstat">
-            <span className="sp-hstat-n">{avgProgress}%</span>
-            <span className="sp-hstat-l">متوسط التقدم</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="sp-rule">
-        <div className="sp-rule-line" />
-        <div className="sp-rule-diamond" />
-        <div className="sp-rule-line" />
-      </div>
-
-      {/* ── Toolbar ── */}
-      <div className="sp-toolbar">
-        {/* Search */}
-        <div className="sp-search-wrap">
-          <svg
-            width="13"
-            height="13"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="sp-search-icon"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="M21 21l-4.35-4.35" />
-          </svg>
-          <input
-            className="sp-search"
-            placeholder="بحث عن مستفيد..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            dir="rtl"
-          />
-          {search && (
-            <button className="sp-search-clear" onClick={() => setSearch("")}>
-              ✕
-            </button>
-          )}
-        </div>
-
-        {/* Filter tabs */}
-        <div className="sp-filters">
-          {(
-            [
-              ["all", "الكل"],
-              ["active", "النشطون"],
-              ["none", "لم يبدأ"],
-            ] as const
-          ).map(([v, l]) => (
-            <button
-              key={v}
-              className={`sp-filter-btn${filter === v ? " active" : ""}`}
-              onClick={() => setFilter(v)}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {toggleError && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8,
-          background: "rgba(139,26,26,0.06)", border: "1px solid rgba(139,26,26,0.18)",
-          color: "#6B1E2D", fontSize: 13, padding: "10px 14px", borderRadius: 9, fontWeight: 600,
-        }}>
-          {toggleError}
-        </div>
-      )}
-
-      {/* ── Content ── */}
-      {loading ? (
-        <div className="sp-loading">
-          <div className="sp-spinner" />
-          <span>جارٍ تحميل المستفيدين...</span>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="sp-empty">
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-          >
-            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 00-3-3.87" />
-            <path d="M16 3.13a4 4 0 010 7.75" />
-          </svg>
-          <p>لا يوجد مستفيدون</p>
-        </div>
-      ) : (
-        <div className="sp-grid">
-          {filtered.map((s, i) => (
-            <div key={s.id} style={{ animationDelay: `${i * 35}ms` }}>
-              <StudentCard
-                student={s}
-                classes={classes}
-                onAssign={handleAssign}
-                onToggle={handleToggle}
-                toggling={toggling === s.id}
-              />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  const { lang: rawLang } = useLang(); const lang = (rawLang === "sq" ? "sq" : rawLang === "en" ? "en" : "ar") as Lang; const T = COPY[lang]; const dir = lang === "ar" ? "rtl" : "ltr"; const confirm = useConfirm();
+  const [students, setStudents] = useState<Student[]>([]); const [classes, setClasses] = useState<ClassItem[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [query, setQuery] = useState(""); const [classFilter, setClassFilter] = useState(""); const [journeyFilter, setJourneyFilter] = useState<JourneyFilter>(""); const [accountFilter, setAccountFilter] = useState(""); const [toggling, setToggling] = useState<string | null>(null); const [exporting, setExporting] = useState(false);
+  useEffect(() => { let active = true; Promise.all([fetch("/api/school-admin/students", { cache: "no-store" }), fetch("/api/school-admin/classes", { cache: "no-store" })]).then(async ([studentResponse, classResponse]) => { if (!studentResponse.ok || !classResponse.ok) throw new Error(); const [studentData, classData] = await Promise.all([studentResponse.json(), classResponse.json()]); if (active) { setStudents(studentData.students ?? []); setClasses(classData.classes ?? []); } }).catch(() => { if (active) setError(T.loadError); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [T.loadError]);
+  const visible = useMemo(() => { const needle = query.trim().toLowerCase(); return students.filter((student) => { if (classFilter === "unassigned" && student.class) return false; if (classFilter && classFilter !== "unassigned" && student.class?.id !== classFilter) return false; if (journeyFilter && journeyOf(student) !== journeyFilter) return false; if (accountFilter === "active" && !student.profile.is_active) return false; if (accountFilter === "inactive" && student.profile.is_active) return false; return !needle || [student.profile.full_name, student.profile.email, student.class?.name, student.city, student.current_stage?.title, student.current_module?.title].filter(Boolean).join(" ").toLowerCase().includes(needle); }); }, [accountFilter, classFilter, journeyFilter, query, students]);
+  const totals = useMemo(() => ({ active: students.filter((item) => item.profile.is_active).length, assigned: students.filter((item) => item.class).length, started: students.filter((item) => item.attempts_count > 0).length }), [students]); const hasFilters = Boolean(query.trim() || classFilter || journeyFilter || accountFilter); const resetFilters = () => { setQuery(""); setClassFilter(""); setJourneyFilter(""); setAccountFilter(""); };
+  async function toggleStudent(id: string, active: boolean) { if (active) { const ok = await confirm({ title: T.deactivate, message: T.deactivate, confirmText: T.deactivate, variant: "warning", irreversible: false }); if (!ok) return; } setToggling(id); setError(""); try { const response = await fetch(`/api/school-admin/students/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ is_active: !active }) }); if (!response.ok) throw new Error(); setStudents((items) => items.map((item) => item.id === id ? { ...item, profile: { ...item.profile, is_active: !active } } : item)); } catch { setError(T.toggleError); } finally { setToggling(null); } }
+  async function assignClass(id: string, classId: string) { setError(""); try { const response = await fetch(`/api/school-admin/students/${id}/assign-class`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ class_id: classId || null }) }); if (!response.ok) throw new Error(); const selected = classes.find((item) => item.id === classId) ?? null; setStudents((items) => items.map((item) => item.id === id ? { ...item, class: selected } : item)); } catch { setError(T.toggleError); } }
+  async function exportExcel() { setExporting(true); try { const XLSX = await import("xlsx"); const rows = students.map((student) => ({ Name: student.profile.full_name, Email: student.profile.email ?? "", Group: student.class?.name ?? "", Status: statusLabel(student.onboarding_status, lang), Progress: `${student.progress_pct}%`, Attempts: student.attempts_count, Completed: student.passed_count, Average: student.avg_score ?? "", Joined: date(student.created_at, lang) })); const sheet = XLSX.utils.json_to_sheet(rows); sheet["!cols"] = [{ wch: 28 }, { wch: 30 }, { wch: 24 }, { wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 18 }]; const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, sheet, "Beneficiaries"); XLSX.writeFile(workbook, `beneficiaries-${new Date().toISOString().slice(0, 10)}.xlsx`); } finally { setExporting(false); } }
+  if (loading) return <MandalaLoader label={T.loading} />;
+  return <main className="sd-page" dir={dir}>
+    <section className="sd-hero"><div className="sd-hero-art" aria-hidden="true"><IdentityMandala size={290} stroke="#D9C9B0" opacity={0.12} spin spinDuration={140} /></div><div><p className="sd-eyebrow"><IdentityStar size={11} strokeWidth={5} color="#D9C9B0" />{T.eyebrow}</p><h1>{T.title}</h1><p>{T.subtitle}</p></div><div className="sd-hero-metrics"><Metric icon={<Users />} value={students.length} label={T.beneficiaries} /><Metric icon={<CheckCircle2 />} value={totals.active} label={T.activeAccounts} /><Metric icon={<Layers3 />} value={totals.assigned} label={T.assigned} /><Metric icon={<Activity />} value={totals.started} label={T.started} /></div></section>
+    <section className="sd-toolbar"><label><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={T.search} /></label><button onClick={() => void exportExcel()} disabled={exporting}><Download size={15} />{exporting ? T.exporting : T.export}</button><Link href="/school-admin/classes"><Layers3 size={15} />{T.classes}</Link></section>
+    <section className="sd-filters"><header><SlidersHorizontal size={15} /><span>{T.filters}</span><em>{visible.length} {T.results}</em>{hasFilters && <button onClick={resetFilters}><X size={13} />{T.clear}</button>}</header><div><label><span>{T.class}</span><select value={classFilter} onChange={(event) => setClassFilter(event.target.value)}><option value="">{T.allClasses}</option><option value="unassigned">{T.unassigned}</option>{classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>{T.journey}</span><select value={journeyFilter} onChange={(event) => setJourneyFilter(event.target.value as JourneyFilter)}><option value="">{T.allJourneys}</option><option value="started">{T.inProgress}</option><option value="not_started">{T.notStarted}</option><option value="completed">{T.completed}</option></select></label><label><span>{T.account}</span><select value={accountFilter} onChange={(event) => setAccountFilter(event.target.value)}><option value="">{T.allAccounts}</option><option value="active">{T.active}</option><option value="inactive">{T.inactive}</option></select></label></div></section>
+    {error && <div className="sd-error">{error}</div>}
+    {visible.length ? <section className="sd-grid">{visible.map((student) => <StudentCard key={student.id} student={student} classes={classes} lang={lang} onAssign={assignClass} onToggle={toggleStudent} toggling={toggling === student.id} />)}</section> : <section className="sd-empty"><Radar size={30} /><p>{T.noResults}</p>{hasFilters && <button onClick={resetFilters}>{T.clear}</button>}</section>}
+    <style>{styles}</style>
+  </main>;
 }
 
-// ─── CSS ──────────────────────────────────────────────────────────────────────
-
-const css = `
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-:root{
-  --gold:#B8A082;--gold2:#B8A082;
-  --black:#1A1A1A;--off-white:#F7F3EB;
-  --text:#1A1A1A;--text2:#3D3526;--text3:#796A62;
-  --surface:#FFFFFF;--surface2:#FAFAF8;
-  --border:rgba(26,26,26,0.09);--border2:#E5E0D5;
-  --font:'Cairo',sans-serif;
-}
-
-/* Page */
-.sp-page{display:flex;flex-direction:column;gap:20px;font-family:var(--font);color:var(--text);animation:fadeUp 0.3s ease}
-
-/* Header */
-.sp-header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.sp-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
-.sp-title{font-size:26px;font-weight:900;color:var(--black);letter-spacing:-0.4px}
-.sp-sub{font-size:12px;color:var(--text3);margin-top:3px;font-weight:500}
-.sp-header-stats{display:flex;gap:20px;align-items:center}
-.sp-hstat{display:flex;flex-direction:column;align-items:center;gap:2px}
-.sp-hstat-n{font-size:22px;font-weight:900;color:var(--gold);line-height:1}
-.sp-hstat-l{font-size:10px;color:var(--text3);font-weight:600}
-
-.sp-rule{display:flex;align-items:center;gap:10px}
-.sp-rule-line{flex:1;height:1px;background:var(--border2)}
-.sp-rule-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);opacity:0.45;flex-shrink:0}
-
-/* Toolbar */
-.sp-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.sp-search-wrap{position:relative;display:flex;align-items:center}
-.sp-search-icon{position:absolute;right:12px;color:var(--text3);pointer-events:none}
-.sp-search{padding:9px 34px 9px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:8px;font-size:13px;font-family:var(--font);color:var(--text);outline:none;width:220px;transition:border-color 0.15s,box-shadow 0.15s}
-.sp-search:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,160,130,0.1)}
-.sp-search-clear{position:absolute;left:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:2px 5px;border-radius:4px;transition:color 0.15s}
-.sp-search-clear:hover{color:var(--text)}
-.sp-filters{display:flex;gap:4px}
-.sp-filter-btn{padding:7px 14px;border-radius:7px;border:1px solid var(--border2);background:var(--surface);font-family:var(--font);font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;transition:all 0.15s}
-.sp-filter-btn:hover{border-color:rgba(184,160,130,0.35)}
-.sp-filter-btn.active{background:var(--black);border-color:var(--black);color:var(--gold)}
-
-/* Loading / empty */
-.sp-loading{display:flex;align-items:center;justify-content:center;gap:12px;height:200px;color:var(--text3);font-size:14px}
-.sp-spinner{width:24px;height:24px;border:3px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
-.sp-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:60px;color:var(--text3);font-size:14px;font-weight:600;text-align:center}
-.sp-empty svg{color:rgba(184,160,130,0.35)}
-
-/* Grid */
-.sp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:12px;align-items:start}
-
-/* ── Student Card ── */
-.sc-card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:16px;
-  overflow:hidden;
-  transition:border-color 0.2s,box-shadow 0.2s;
-  animation:fadeUp 0.35s ease both;
-}
-.sc-card:hover{border-color:rgba(184,160,130,0.3);box-shadow:0 4px 20px rgba(26,26,26,0.06)}
-.sc-card--open{border-color:rgba(184,160,130,0.35);box-shadow:0 6px 28px rgba(26,26,26,0.08)}
-.sc-profile-link{display:flex;align-items:center;gap:5px;flex:none;border:1px solid rgba(184,160,130,.28);border-radius:9px;background:#F7F3EB;padding:7px 9px;color:#6B1E2D;font-size:10px;font-weight:800;text-decoration:none}.sc-profile-link:hover{border-color:#B8A082;background:#EFEAE0}
-
-.sc-top{
-  display:flex;align-items:flex-start;gap:14px;
-  padding:18px 18px 14px;cursor:pointer;
-  position:relative;
-}
-.sc-top::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.2s}
-.sc-card--open .sc-top::before{opacity:1}
-
-/* Avatar */
-.sc-av{
-  width:52px;height:52px;border-radius:14px;
-  background:var(--black);flex-shrink:0;overflow:hidden;
-  display:flex;align-items:center;justify-content:center;
-}
-.sc-av-img{width:100%;height:100%;object-fit:cover}
-.sc-av-initials{font-size:18px;font-weight:900;color:var(--gold)}
-
-/* Info */
-.sc-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
-.sc-name{font-size:15px;font-weight:900;color:var(--black);letter-spacing:-0.2px}
-.sc-meta-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.sc-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;border:1px solid;white-space:nowrap}
-.sc-class-chip{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--text3)}
-.sc-current{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text3);font-weight:600}
-.sc-current svg{color:var(--gold);flex-shrink:0}
-.sc-current--done{color:#1B5E20}
-.sc-current--done svg{color:#1B5E20}
-.sc-current--none{color:rgba(26,26,26,0.25);font-style:italic}
-
-/* Right stats */
-.sc-right{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
-.sc-stat-row{display:flex;align-items:center;gap:6px}
-.sc-stat{display:flex;flex-direction:column;align-items:center;gap:1px}
-.sc-stat-n{font-size:14px;font-weight:900;color:var(--black);line-height:1}
-.sc-stat-l{font-size:9px;color:var(--text3);font-weight:600}
-.sc-stat-div{width:1px;height:18px;background:var(--border)}
-
-/* Chevron */
-.sc-chevron{color:var(--text3);flex-shrink:0;margin-top:4px;transition:transform 0.2s;display:flex}
-
-/* Progress bar */
-.sc-progress-bar{height:3px;background:#F0EBE2;overflow:hidden}
-.sc-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width 0.8s ease}
-
-/* Detail */
-.sc-detail{padding:18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:18px;background:var(--surface2)}
-
-.sc-section{display:flex;flex-direction:column;gap:10px}
-.sc-section-title{font-size:9.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)}
-
-/* Stage progress */
-.sc-stages{display:flex;flex-direction:column;gap:10px}
-.sc-stage-row{display:flex;align-items:flex-start;gap:10px}
-.sc-stage-dot{width:10px;height:10px;border-radius:50%;background:#E5E0D5;flex-shrink:0;margin-top:4px;border:2px solid #E5E0D5;transition:all 0.2s}
-.sc-stage-dot.done{background:#1B5E20;border-color:#1B5E20}
-.sc-stage-dot.active{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,160,130,0.2)}
-.sc-stage-body{flex:1;display:flex;flex-direction:column;gap:5px}
-.sc-stage-head{display:flex;justify-content:space-between;align-items:center}
-.sc-stage-title{font-size:13px;font-weight:700;color:var(--text)}
-.sc-stage-count{font-size:11px;font-weight:700;color:var(--text3)}
-.sc-stage-track{height:5px;background:#F0EBE2;border-radius:99px;overflow:hidden}
-.sc-stage-fill{height:100%;border-radius:99px;transition:width 0.8s ease}
-
-/* Attempts */
-.sc-attempts{display:flex;flex-direction:column;gap:7px}
-.sc-attempt-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
-.sc-att-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.sc-att-dot.passed{background:#1B5E20}
-.sc-att-dot.failed{background:#B8A082}
-.sc-att-info{flex:1;display:flex;flex-direction:column;gap:1px}
-.sc-att-stage{font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
-.sc-att-mod{font-size:13px;font-weight:700;color:var(--black)}
-.sc-att-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.sc-att-date{font-size:10px;color:var(--text3)}
-
-/* No attempts */
-.sc-no-attempts{text-align:center;color:rgba(26,26,26,0.25);font-size:12px;font-style:italic;padding:12px 0}
-
-/* Class select */
-.sc-select{width:100%;max-width:280px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-size:13px;font-family:var(--font);outline:none;cursor:pointer;transition:border-color 0.15s}
-.sc-select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,160,130,0.1)}
-
-/* Inactive badge */
-.sc-inactive-badge{font-size:10px;font-weight:800;color:#6B1E2D;background:rgba(139,26,26,0.08);border:1px solid rgba(139,26,26,0.18);border-radius:5px;padding:2px 7px;display:inline-block;width:fit-content}
-
-/* Activate / deactivate toggle */
-.sc-toggle-btn{flex-shrink:0;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid;transition:all 0.18s;background:none;margin-top:2px}
-.sc-toggle-btn:disabled{opacity:0.4;cursor:not-allowed}
-.sc-toggle-btn--off{background:rgba(139,26,26,0.07);border-color:rgba(139,26,26,0.22);color:#6B1E2D}
-.sc-toggle-btn--off:hover:not(:disabled){background:rgba(139,26,26,0.14)}
-.sc-toggle-btn--on{background:rgba(45,138,74,0.08);border-color:rgba(45,138,74,0.22);color:#1B5E20}
-.sc-toggle-btn--on:hover:not(:disabled){background:rgba(45,138,74,0.15)}
-.sc-spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(184,160,130,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
-
-@media(max-width:700px){
-  .sp-grid{grid-template-columns:1fr}
-  .sc-top{flex-wrap:wrap; gap:10px}
-  .sc-right{flex-direction:row; align-items:center; flex-wrap:wrap}
-  .sc-name{font-size:14px}
-  .sc-stat-n{font-size:13px}
-  .sc-stat-l{font-size:8.5px}
-  .sc-card{padding:14px}
-  .sc-status{font-size:9.5px}
-  .sc-select{font-size:12.5px; max-width:100%}
-  .sc-profile-link span{display:none}
-}
-@media(max-width:420px){
-  .sc-card{padding:12px}
-  .sc-stat-row{gap:4px}
-  .sc-stat-div{height:14px}
-}
+const styles = `
+@import url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@500;700&family=Cairo:wght@400;600;700;800&display=swap');@keyframes sd-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.sd-page{--head:'Noto Kufi Arabic','Cairo',sans-serif;display:flex;flex-direction:column;gap:18px;color:#1A1A1A;font-family:'Cairo',sans-serif}.sd-hero{position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:24px;padding:29px 31px;border:1px solid rgba(184,160,130,.36);border-radius:26px;background:radial-gradient(circle at 8% 120%,rgba(107,30,45,.58),transparent 44%),linear-gradient(140deg,#32101A,#4A0E1C 58%,#5B1526);color:#FFFBF5;box-shadow:0 24px 56px rgba(50,16,26,.24)}.sd-hero:before{content:"";position:absolute;top:0;inset-inline:28px;height:2px;background:linear-gradient(90deg,transparent,#D9C9B0,transparent);opacity:.55}.sd-hero-art{position:absolute;inset-inline-end:-68px;top:50%;z-index:-1;transform:translateY(-50%)}.sd-eyebrow{display:flex!important;align-items:center;gap:8px!important;margin:0 0 6px!important;color:#D9C9B0!important;font-size:10.5px!important;font-weight:800!important;letter-spacing:.15em}.sd-hero h1{margin:0;font-family:var(--head);font-size:29px;line-height:1.4}.sd-hero>div>p:last-child{max-width:630px;margin:7px 0 0;color:rgba(255,251,245,.7);font-size:13px;line-height:1.85}.sd-hero-metrics{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(82px,1fr));gap:9px}.sd-metric{display:flex;align-items:center;gap:10px;min-width:0;padding:12px;border:1px solid rgba(107,30,45,.11);border-radius:16px;background:#FFFBF5}.sd-metric>span{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:11px;background:#F7F3EB;color:#6B1E2D}.sd-metric svg{width:16px}.sd-metric div{min-width:0}.sd-metric strong{display:block;font-size:20px;line-height:1}.sd-metric small{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#796A62;font-size:9px;font-weight:800}.sd-hero .sd-metric{min-height:78px;background:rgba(26,10,16,.34);border-color:rgba(217,201,176,.24)}.sd-hero .sd-metric>span{background:rgba(255,251,245,.08);color:#D9C9B0}.sd-hero .sd-metric strong{color:#D9C9B0}.sd-hero .sd-metric small{color:rgba(255,251,245,.62)}
+.sd-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.sd-toolbar>label{flex:1;min-width:280px;height:48px;display:flex;align-items:center;gap:9px;padding:0 15px;border:1px solid rgba(184,160,130,.24);border-radius:16px;background:#FFFBF5;color:#8F765B}.sd-toolbar input{width:100%;height:100%;border:0;outline:0;background:transparent;color:#1A1A1A;font:700 12.5px 'Cairo',sans-serif}.sd-toolbar button,.sd-toolbar a{height:48px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 17px;border:1px solid rgba(184,160,130,.34);border-radius:16px;background:linear-gradient(180deg,#5B1526,#32101A);color:#D9C9B0;font:700 11.5px 'Cairo',sans-serif;text-decoration:none;cursor:pointer;transition:.18s}.sd-toolbar button:hover,.sd-toolbar a:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(50,16,26,.18)}.sd-toolbar button:disabled{opacity:.55}
+.sd-filters{position:relative;overflow:hidden;padding:16px 18px;border:1px solid rgba(184,160,130,.24);border-radius:20px;background:linear-gradient(180deg,#FFFBF5,#F7F3EB);box-shadow:0 10px 26px rgba(50,16,26,.045)}.sd-filters:before{content:"";position:absolute;top:0;inset-inline:18px;height:2px;background:linear-gradient(90deg,transparent,#B8A082,transparent)}.sd-filters>header{display:flex;align-items:center;gap:8px;margin-bottom:13px;color:#655B53}.sd-filters>header svg{color:#B8A082}.sd-filters>header>span{font-family:var(--head);font-size:12px;font-weight:700}.sd-filters>header em{padding:2px 9px;border:1px solid rgba(184,160,130,.24);border-radius:999px;background:rgba(184,160,130,.13);color:#6B1E2D;font-size:10px;font-style:normal;font-weight:800}.sd-filters>header button{margin-inline-start:auto;display:flex;align-items:center;gap:5px;padding:4px 11px;border:1px solid rgba(107,30,45,.2);border-radius:999px;background:transparent;color:#6B1E2D;font:700 10px 'Cairo',sans-serif;cursor:pointer}.sd-filters>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.sd-filters label{display:grid;gap:6px}.sd-filters label>span{color:#8F765B;font-size:10px;font-weight:800}.sd-filters select{height:42px;padding:0 12px;border:1px solid rgba(184,160,130,.28);border-radius:13px;background:#FFF;color:#1A1A1A;outline:0;font:700 12px 'Cairo',sans-serif}.sd-error{padding:11px 14px;border:1px solid rgba(107,30,45,.2);border-radius:13px;background:rgba(107,30,45,.07);color:#6B1E2D;font-size:12px;font-weight:800}
+.sd-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.sd-card{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:12px;padding:17px 18px;border:1px solid rgba(184,160,130,.24);border-radius:24px;background:linear-gradient(180deg,#FFFBF5,#FBF8F1 70%,#F7F3EB);box-shadow:0 14px 34px rgba(50,16,26,.06),inset 0 1px rgba(255,255,255,.8);animation:sd-in .35s ease both;transition:.2s}.sd-card:hover{transform:translateY(-3px);border-color:rgba(184,160,130,.48);box-shadow:0 22px 46px rgba(50,16,26,.11)}.sd-card:before{content:"";position:absolute;top:0;inset-inline:22px;height:2px;background:linear-gradient(90deg,transparent,#B8A082,transparent)}.sd-card.is-inactive{filter:saturate(.72)}.sd-watermark{position:absolute;inset-inline-end:-35px;bottom:-40px;pointer-events:none}.sd-card-head{position:relative;z-index:1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:13px;align-items:start}.sd-avatar{position:relative;width:58px;height:58px;overflow:hidden;display:grid;place-items:center;border:1px solid rgba(184,160,130,.34);border-radius:17px;background:linear-gradient(145deg,#4A0E1C,#1A1A1A);color:#D9C9B0;font-family:var(--head);font-size:16px;font-weight:700;box-shadow:0 8px 18px rgba(50,16,26,.16)}.sd-avatar img{object-fit:cover}.sd-identity{min-width:0}.sd-name-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.sd-name-row h2{margin:0;font-family:var(--head);font-size:16px;line-height:1.5}.sd-pill{padding:3px 8px;border:1px solid rgba(184,160,130,.2);border-radius:999px;background:rgba(184,160,130,.11);color:#8F765B;font-size:9px;font-weight:900}.sd-pill.completed{background:rgba(27,94,32,.08);border-color:rgba(27,94,32,.18);color:#1B5E20}.sd-pill.inactive{background:rgba(107,30,45,.07);border-color:rgba(107,30,45,.18);color:#6B1E2D}.sd-contact{display:flex;gap:10px;flex-wrap:wrap;margin-top:7px}.sd-contact span{display:inline-flex;align-items:center;gap:5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#796A62;font-size:10.5px;font-weight:700}.sd-contact svg{flex:none;color:#B8A082}.sd-toggle{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;cursor:pointer}.sd-toggle.off{border:1px solid rgba(107,30,45,.18);background:rgba(107,30,45,.05);color:#6B1E2D}.sd-toggle.on{border:1px solid rgba(27,94,32,.2);background:rgba(27,94,32,.07);color:#1B5E20}.sd-toggle:disabled{opacity:.45}
+.sd-card-summary{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px;border:1px solid rgba(184,160,130,.15);border-radius:17px;background:rgba(255,255,255,.58)}.sd-position{display:flex;align-items:center;gap:10px;min-width:0}.sd-position>span{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:11px;background:#F7F3EB;color:#6B1E2D}.sd-position small,.sd-position strong{display:block}.sd-position small{color:#8F765B;font-size:8.5px;font-weight:900}.sd-position strong{margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#32101A;font-size:10.5px}.sd-ring{--progress:0deg;width:57px;height:57px;display:grid;place-items:center;flex:none;border-radius:50%;background:conic-gradient(#8F765B var(--progress),#E5E0D5 0);position:relative}.sd-ring:after{content:"";position:absolute;inset:6px;border-radius:50%;background:#FFFBF5}.sd-ring span{position:relative;z-index:1;color:#6B1E2D;font-size:10px;font-weight:900}.sd-card-metrics{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.sd-card-metrics span{display:flex;flex-direction:column;padding:8px 9px;border-radius:12px;background:rgba(184,160,130,.08);color:#796A62;font-size:8.5px;font-weight:800}.sd-card-metrics b{color:#32101A;font-size:13px}.sd-card-actions{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:8px}.sd-card-actions a,.sd-card-actions button{min-height:38px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:11px;font:800 10px 'Cairo',sans-serif;text-decoration:none;cursor:pointer}.sd-card-actions a{border:1px solid rgba(184,160,130,.34);background:linear-gradient(180deg,#5B1526,#32101A);color:#F7F3EB}.sd-card-actions button{border:1px solid rgba(107,30,45,.15);background:#F7F3EB;color:#6B1E2D}.sd-card-actions svg{transition:.18s}.sd-card-actions svg.rotated{transform:rotate(180deg)}
+.sd-expanded{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:13px;border-top:1px dashed rgba(184,160,130,.25);animation:sd-in .22s ease}.sd-expanded>section{padding:12px;border:1px solid rgba(184,160,130,.15);border-radius:15px;background:rgba(255,255,255,.55)}.sd-expanded h3{display:flex;align-items:center;gap:6px;margin:0 0 10px;color:#655B53;font-size:10.5px}.sd-expanded h3 svg{color:#8F765B}.sd-stages{display:grid;gap:8px}.sd-stages>div>div{display:flex;justify-content:space-between;gap:8px}.sd-stages strong{font-size:9.5px}.sd-stages span{color:#8F765B;font-size:8.5px}.sd-stages i{height:5px;display:block;overflow:hidden;margin-top:4px;border-radius:999px;background:#E5E0D5}.sd-stages b{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#6B1E2D,#B8A082)}.sd-attempts{display:grid;gap:6px}.sd-attempts article{display:grid;grid-template-columns:7px minmax(0,1fr) auto;align-items:center;gap:7px}.sd-attempts article>span{width:7px;height:7px;border-radius:50%;background:#B8A082}.sd-attempts article>span.passed{background:#1B5E20}.sd-attempts strong,.sd-attempts small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sd-attempts strong{font-size:9px}.sd-attempts small{color:#8F765B;font-size:7.5px}.sd-attempts b{color:#6B1E2D;font-size:10px}.sd-muted{margin:0;color:#8F765B;font-size:9px;font-weight:700}.sd-assign{grid-column:1/-1;display:flex;align-items:center;gap:10px}.sd-assign>span{color:#655B53;font-size:10px;font-weight:900}.sd-assign select{flex:1;height:38px;padding:0 10px;border:1px solid rgba(184,160,130,.28);border-radius:11px;background:#FFFBF5;color:#32101A;font:700 10px 'Cairo',sans-serif;outline:0}.sd-empty{min-height:260px;display:grid;place-items:center;align-content:center;gap:10px;border:1px dashed rgba(107,30,45,.22);border-radius:22px;background:#FFFBF5;color:#8F765B;text-align:center}.sd-empty p{margin:0;font-size:12px;font-weight:800}.sd-empty button{padding:8px 18px;border:0;border-radius:10px;background:#6B1E2D;color:#FFF;font:800 10px 'Cairo',sans-serif;cursor:pointer}
+@media(max-width:1120px){.sd-hero{grid-template-columns:1fr}.sd-hero-metrics{grid-template-columns:repeat(4,1fr)}.sd-grid{grid-template-columns:1fr}}@media(max-width:720px){.sd-hero{padding:21px;border-radius:21px}.sd-hero h1{font-size:24px}.sd-hero-metrics{grid-template-columns:repeat(2,1fr)}.sd-toolbar>label{min-width:100%}.sd-toolbar button,.sd-toolbar a{flex:1}.sd-filters>div{grid-template-columns:1fr}.sd-card{padding:14px;border-radius:20px}.sd-expanded{grid-template-columns:1fr}}@media(max-width:480px){.sd-contact span:first-child{max-width:210px}.sd-card-summary{grid-template-columns:1fr}.sd-ring{position:absolute;inset-inline-end:10px;top:8px;width:50px;height:50px}.sd-position{padding-inline-end:55px}.sd-card-actions{grid-template-columns:1fr}.sd-card-metrics{gap:4px}.sd-name-row h2{font-size:14px}}@media(prefers-reduced-motion:reduce){.sd-card,.sd-expanded,.sd-hero-art{animation:none!important;transition:none!important}}
 `;

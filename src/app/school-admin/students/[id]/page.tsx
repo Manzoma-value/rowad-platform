@@ -1,133 +1,104 @@
 "use client";
+export const dynamic = "force-dynamic";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, BookOpenCheck, CalendarDays, GraduationCap, Mail, MapPin, Target, UserRound } from "lucide-react";
+import {
+  Activity, ArrowLeft, BookOpenCheck, CalendarDays, CheckCircle2, CircleUserRound,
+  Clock3, GraduationCap, Layers3, Mail, MapPin, Radar, Route, Sparkles, Target, Trophy,
+} from "lucide-react";
 import StudentSpectrumCard from "@/components/StudentSpectrumCard";
+import IdentityMandala from "@/components/IdentityMandala";
+import MandalaLoader from "@/components/MandalaLoader";
 import { useLang } from "@/lib/language-context";
 
+type Lang = "ar" | "sq" | "en";
+type Tab = "overview" | "journey" | "spectrum" | "profile";
 type Student = {
-  id: string;
-  onboarding_status: string;
-  created_at: string;
-  city: string | null;
-  age: number | null;
+  id: string; onboarding_status: string; created_at: string; city: string | null; age: number | null;
   profile: { full_name: string; email: string | null; avatar_url: string | null; is_active: boolean };
   class: { id: string; name: string } | null;
-  attempts_count: number;
-  passed_count: number;
-  total_modules: number;
-  avg_score: number | null;
-  progress_pct: number;
-  current_stage: { title: string } | null;
-  current_module: { title: string } | null;
+  attempts_count: number; passed_count: number; total_modules: number; avg_score: number | null; progress_pct: number;
+  current_stage: { id: string; title: string; order: number } | null; current_module: { id: string; title: string } | null;
+  stage_progress: Array<{ title: string; passed: number; total: number }>;
+  recent_attempts: Array<{ module_title: string; stage_title: string; score_pct: number; passed: boolean; date: string }>;
 };
 
 const COPY = {
   ar: {
-    back: "العودة إلى المستفيدين",
-    eyebrow: "الملف التربوي الشامل",
-    active: "حساب نشط",
-    inactive: "حساب معطّل",
-    class: "المجموعة",
-    city: "المدينة",
-    age: "العمر",
-    email: "البريد الإلكتروني",
-    joined: "تاريخ الانضمام",
-    attempts: "المحاولات",
-    completed: "المفاهيم المكتملة",
-    average: "متوسط الأداء",
-    progress: "التقدم العام",
-    position: "الموقع الحالي",
-    notAssigned: "لم تُعيّن مجموعة بعد",
-    noActivity: "لم يبدأ رحلة التعلم بعد",
-    loadError: "تعذر تحميل ملف المستفيد.",
+    back: "العودة إلى المستفيدين", eyebrow: "الملف التربوي الشامل", joined: "انضم إلى المنصة", overview: "نظرة عامة", journey: "رحلة التعلم", spectrum: "طيف السمات", profile: "البيانات الشخصية",
+    attempts: "المحاولات", completed: "المفاهيم المكتملة", average: "متوسط الأداء", progress: "التقدم العام", currentPosition: "الموقع الحالي", nextConcept: "المفهوم التالي", noPosition: "لم يبدأ رحلة التعلم بعد",
+    journeyTitle: "خريطة الرحلة", journeySub: "تقدم المستفيد في كل مرحلة والموقع الذي وصل إليه الآن.", recent: "آخر النشاطات", recentSub: "أحدث المحاولات المسجلة ونتيجة كل محاولة.", stage: "مرحلة", concepts: "مفاهيم", complete: "مكتملة", inProgress: "قيد التقدم", locked: "لم تبدأ",
+    learningSnapshot: "ملخص الرحلة", learningSnapshotSub: "قراءة سريعة للموقع الحالي والأداء العام.", spectrumPreview: "البصمة السلوكية", spectrumPreviewSub: "القراءات التراكمية للسمات التي وثّقها المشرفون.", openSpectrum: "عرض الطيف كاملاً",
+    personalTitle: "بيانات المستفيد", personalSub: "بيانات التسجيل الأساسية والارتباط بالمجموعة التعليمية.", email: "البريد الإلكتروني", city: "المدينة", age: "العمر", group: "المجموعة", status: "مرحلة التسجيل", account: "حالة الحساب", active: "نشط", inactive: "معطّل", notAssigned: "لم تُعيّن مجموعة", joinedDate: "تاريخ الانضمام", noData: "لا توجد بيانات مسجلة بعد", loadError: "تعذر تحميل ملف المستفيد.", passed: "اجتاز", needsReview: "يحتاج متابعة",
   },
   sq: {
-    back: "Kthehu te pjesëmarrësit",
-    eyebrow: "Profili i plotë edukativ",
-    active: "Llogari aktive",
-    inactive: "Llogari e çaktivizuar",
-    class: "Grupi",
-    city: "Qyteti",
-    age: "Mosha",
-    email: "Email",
-    joined: "Data e regjistrimit",
-    attempts: "Përpjekje",
-    completed: "Koncepte të përfunduara",
-    average: "Mesatarja",
-    progress: "Përparimi i përgjithshëm",
-    position: "Pozicioni aktual",
-    notAssigned: "Ende pa grup",
-    noActivity: "Ende nuk e ka filluar rrugëtimin",
-    loadError: "Profili nuk u ngarkua.",
+    back: "Kthehu te pjesëmarrësit", eyebrow: "Profili i plotë edukativ", joined: "U regjistrua", overview: "Përmbledhje", journey: "Rrugëtimi", spectrum: "Spektri i tipareve", profile: "Të dhënat personale",
+    attempts: "Përpjekje", completed: "Koncepte të përfunduara", average: "Mesatarja", progress: "Përparimi", currentPosition: "Pozicioni aktual", nextConcept: "Koncepti i radhës", noPosition: "Ende nuk e ka filluar rrugëtimin",
+    journeyTitle: "Harta e rrugëtimit", journeySub: "Përparimi në çdo fazë dhe pozicioni aktual.", recent: "Aktiviteti i fundit", recentSub: "Përpjekjet më të fundit dhe rezultati i secilës.", stage: "Faza", concepts: "koncepte", complete: "Përfunduar", inProgress: "Në vazhdim", locked: "Pa filluar",
+    learningSnapshot: "Pamja e rrugëtimit", learningSnapshotSub: "Pozicioni dhe performanca e përgjithshme me një shikim.", spectrumPreview: "Gjurmët e tipareve", spectrumPreviewSub: "Leximet e grumbulluara të dokumentuara nga edukatorët.", openSpectrum: "Shfaq spektrin e plotë",
+    personalTitle: "Të dhënat e pjesëmarrësit", personalSub: "Të dhënat bazë dhe lidhja me grupin mësimor.", email: "Email", city: "Qyteti", age: "Mosha", group: "Grupi", status: "Faza e regjistrimit", account: "Gjendja e llogarisë", active: "Aktive", inactive: "Jo aktive", notAssigned: "Ende pa grup", joinedDate: "Data e regjistrimit", noData: "Ende nuk ka të dhëna", loadError: "Profili nuk u ngarkua.", passed: "Kaluar", needsReview: "Kërkon vëmendje",
+  },
+  en: {
+    back: "Back to beneficiaries", eyebrow: "Complete educational profile", joined: "Joined the platform", overview: "Overview", journey: "Learning journey", spectrum: "Trait spectrum", profile: "Personal details",
+    attempts: "Attempts", completed: "Concepts completed", average: "Average score", progress: "Overall progress", currentPosition: "Current position", nextConcept: "Next concept", noPosition: "Learning journey not started yet",
+    journeyTitle: "Journey map", journeySub: "Progress across each stage and the current position.", recent: "Recent activity", recentSub: "Latest recorded attempts and their results.", stage: "Stage", concepts: "concepts", complete: "Completed", inProgress: "In progress", locked: "Not started",
+    learningSnapshot: "Journey snapshot", learningSnapshotSub: "Current position and overall performance at a glance.", spectrumPreview: "Behavioral footprint", spectrumPreviewSub: "Accumulated trait readings documented by supervisors.", openSpectrum: "View full spectrum",
+    personalTitle: "Beneficiary details", personalSub: "Core registration information and educational-group assignment.", email: "Email", city: "City", age: "Age", group: "Group", status: "Registration stage", account: "Account status", active: "Active", inactive: "Inactive", notAssigned: "No group assigned", joinedDate: "Joined", noData: "No data recorded yet", loadError: "Beneficiary profile could not be loaded.", passed: "Passed", needsReview: "Needs attention",
   },
 } as const;
 
+function initials(name: string) { return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase(); }
+function formatDate(value: string, lang: Lang) { return new Intl.DateTimeFormat(lang === "ar" ? "ar-SA-u-nu-latn" : lang === "sq" ? "sq-AL" : "en-GB", { dateStyle: "medium" }).format(new Date(value)); }
+function statusLabel(status: string, lang: Lang) {
+  const labels: Record<string, [string, string, string]> = { PENDING_INTAKE: ["في انتظار القبول", "Në pritje të pranimit", "Pending intake"], INTAKE_SUBMITTED: ["بانتظار المراجعة", "Në pritje të shqyrtimit", "Awaiting review"], SCHOOL_ASSIGNED: ["تم تعيين المنصة", "Platforma e caktuar", "Platform assigned"], SCHOOL_PLACEMENT_SUBMITTED: ["اختبار التصنيف", "Vlerësimi i dorëzuar", "Placement submitted"], CLASS_ASSIGNED: ["في المجموعة", "Në grup", "In group"] };
+  const value = labels[status] ?? [status, status, status]; return value[lang === "ar" ? 0 : lang === "sq" ? 1 : 2];
+}
+function Metric({ icon, value, label }: { icon: ReactNode; value: string | number; label: string }) { return <article className="stp-metric"><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></article>; }
+function PanelHead({ icon, title, subtitle }: { icon: ReactNode; title: string; subtitle?: string }) { return <header className="stp-panel-head"><span>{icon}</span><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div></header>; }
+function Info({ icon, label, value, ltr = false }: { icon: ReactNode; label: string; value: ReactNode; ltr?: boolean }) { return <div className="stp-info"><span>{icon}</span><div><small>{label}</small><strong dir={ltr ? "ltr" : undefined}>{value || "—"}</strong></div></div>; }
+function ProgressRing({ value }: { value: number }) { return <div className="stp-ring" style={{ "--progress": `${Math.max(0, Math.min(100, value)) * 3.6}deg` } as CSSProperties}><span><strong>{value}%</strong></span></div>; }
+function Empty({ children }: { children: ReactNode }) { return <div className="stp-empty"><Sparkles size={20} />{children}</div>; }
+
 export default function AdminStudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const { lang } = useLang();
-  const L = lang === "sq" ? "sq" : "ar";
-  const T = COPY[L];
-  const [student, setStudent] = useState<Student | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch(`/api/school-admin/students?id=${encodeURIComponent(id)}`, { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((payload) => setStudent((payload.students ?? []).find((item: Student) => item.id === id) ?? null))
-      .catch(() => setStudent(null))
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  if (loading) return <div className="asp-loading"><span /></div>;
-  if (!student) return <div className="asp-error">{T.loadError}</div>;
-
-  const initials = student.profile.full_name.split(" ").map((part) => part[0]).slice(0, 2).join("");
-  const date = new Date(student.created_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { year: "numeric", month: "long", day: "numeric" });
-
-  return (
-    <main className="asp" dir={L === "ar" ? "rtl" : "ltr"}>
-      <Link href="/school-admin/students" className="asp-back">{L === "ar" ? <ArrowRight size={15} /> : <ArrowLeft size={15} />}{T.back}</Link>
-      <header className="asp-hero">
-        <i className="asp-orbit one" /><i className="asp-orbit two" />
-        <div className="asp-person">
-          <div className="asp-avatar">{student.profile.avatar_url ? <Image src={student.profile.avatar_url} alt={student.profile.full_name} width={82} height={82} /> : initials}</div>
-          <div><span>{T.eyebrow}</span><h1>{student.profile.full_name}</h1><p className={student.profile.is_active ? "active" : "inactive"}>{student.profile.is_active ? T.active : T.inactive}</p></div>
-        </div>
-        <div className="asp-progress"><small>{T.progress}</small><strong>{student.progress_pct}%</strong><div><span style={{ width: `${student.progress_pct}%` }} /></div></div>
-      </header>
-
-      <section className="asp-metrics">
-        <Metric icon={<BookOpenCheck />} value={student.attempts_count} label={T.attempts} />
-        <Metric icon={<Target />} value={student.passed_count} label={T.completed} />
-        <Metric icon={<GraduationCap />} value={student.avg_score === null ? "—" : `${student.avg_score}%`} label={T.average} />
-      </section>
-
-      <section className="asp-info">
-        <Info icon={<GraduationCap />} label={T.class} value={student.class?.name ?? T.notAssigned} />
-        <Info icon={<MapPin />} label={T.city} value={student.city ?? "—"} />
-        <Info icon={<UserRound />} label={T.age} value={student.age?.toString() ?? "—"} />
-        <Info icon={<Mail />} label={T.email} value={student.profile.email ?? "—"} ltr />
-        <Info icon={<CalendarDays />} label={T.joined} value={date} />
-        <Info icon={<Target />} label={T.position} value={student.current_module ? `${student.current_stage?.title ?? ""} · ${student.current_module.title}` : T.noActivity} />
-      </section>
-
-      <StudentSpectrumCard endpoint={`/api/school-admin/reports/classes/students/${id}/traits`} />
-      <style>{styles}</style>
-    </main>
-  );
-}
-
-function Metric({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
-  return <article><span>{icon}</span><div><strong>{value}</strong><small>{label}</small></div></article>;
-}
-
-function Info({ icon, label, value, ltr = false }: { icon: React.ReactNode; label: string; value: string; ltr?: boolean }) {
-  return <article><span>{icon}</span><div><small>{label}</small><strong dir={ltr ? "ltr" : undefined}>{value}</strong></div></article>;
+  const { id } = use(params); const { lang: rawLang } = useLang(); const lang = (rawLang === "sq" ? "sq" : rawLang === "en" ? "en" : "ar") as Lang; const T = COPY[lang]; const dir = lang === "ar" ? "rtl" : "ltr";
+  const [student, setStudent] = useState<Student | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(false); const [tab, setTab] = useState<Tab>("overview");
+  useEffect(() => { let active = true; fetch(`/api/school-admin/students?id=${encodeURIComponent(id)}`, { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject()).then((payload) => { if (active) setStudent((payload.students ?? [])[0] ?? null); }).catch(() => { if (active) setError(true); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [id]);
+  if (loading) return <div className="stp-loading"><MandalaLoader /><style>{styles}</style></div>;
+  if (error || !student) return <main className="stp-shell" dir={dir}><Link href="/school-admin/students" className="stp-back"><ArrowLeft size={16} />{T.back}</Link><div className="stp-error">{T.loadError}</div><style>{styles}</style></main>;
+  const tabs: Array<{ id: Tab; label: string; icon: ReactNode }> = [{ id: "overview", label: T.overview, icon: <Activity /> }, { id: "journey", label: T.journey, icon: <Route /> }, { id: "spectrum", label: T.spectrum, icon: <Radar /> }, { id: "profile", label: T.profile, icon: <CircleUserRound /> }];
+  const completedJourney = student.total_modules > 0 && student.passed_count >= student.total_modules;
+  return <main className="stp-shell" dir={dir}>
+    <Link href="/school-admin/students" className="stp-back"><ArrowLeft size={16} />{T.back}</Link>
+    <header className="stp-hero">
+      <div className="stp-orbit one" /><div className="stp-orbit two" /><div className="stp-mandala"><IdentityMandala size={360} stroke="#B8A082" opacity={0.12} /></div>
+      <div className="stp-hero-main"><div className="stp-avatar-wrap"><div className="stp-avatar">{student.profile.avatar_url ? <Image src={student.profile.avatar_url} alt={student.profile.full_name} fill sizes="92px" /> : <span>{initials(student.profile.full_name)}</span>}</div></div><div className="stp-hero-copy"><span className="stp-eyebrow"><Sparkles size={14} />{T.eyebrow}</span><h1>{student.profile.full_name}</h1><div className="stp-hero-meta"><span><GraduationCap size={13} />{student.class?.name ?? T.notAssigned}</span>{student.city && <span><MapPin size={13} />{student.city}</span>}</div>{student.profile.email && <a href={`mailto:${student.profile.email}`}><Mail size={14} />{student.profile.email}</a>}</div></div>
+      <div className="stp-hero-side"><span>{T.joined}</span><strong>{formatDate(student.created_at, lang)}</strong><div><Target size={16} /><b>{statusLabel(student.onboarding_status, lang)}</b></div></div>
+    </header>
+    <section className="stp-metrics"><Metric icon={<BookOpenCheck />} value={student.attempts_count} label={T.attempts} /><Metric icon={<CheckCircle2 />} value={`${student.passed_count}/${student.total_modules}`} label={T.completed} /><Metric icon={<Trophy />} value={student.avg_score === null ? "—" : `${student.avg_score}%`} label={T.average} /><Metric icon={<Activity />} value={`${student.progress_pct}%`} label={T.progress} /></section>
+    <nav className="stp-tabs">{tabs.map((item) => <button key={item.id} className={tab === item.id ? "active" : ""} onClick={() => setTab(item.id)}>{item.icon}<span>{item.label}</span></button>)}</nav>
+    <div className="stp-view" key={tab}>
+      {tab === "overview" && <div className="stp-stack"><div className="stp-overview-grid">
+        <section className="stp-panel"><PanelHead icon={<Route />} title={T.learningSnapshot} subtitle={T.learningSnapshotSub} /><div className="stp-snapshot"><ProgressRing value={student.progress_pct} /><div><small>{T.currentPosition}</small><h3>{student.current_stage?.title ?? T.noPosition}</h3><p>{student.current_module ? `${T.nextConcept}: ${student.current_module.title}` : T.noPosition}</p><span className={completedJourney ? "done" : ""}>{completedJourney ? T.complete : student.attempts_count ? T.inProgress : T.locked}</span></div></div></section>
+        <section className="stp-panel"><PanelHead icon={<Clock3 />} title={T.recent} subtitle={T.recentSub} />{student.recent_attempts.length ? <div className="stp-timeline">{student.recent_attempts.map((attempt) => <article key={`${attempt.module_title}-${attempt.date}`}><span className={attempt.passed ? "passed" : ""}><BookOpenCheck size={15} /></span><div><strong>{attempt.module_title}</strong><small>{attempt.stage_title} · {attempt.passed ? T.passed : T.needsReview}</small></div><b>{attempt.score_pct}%</b><time>{formatDate(attempt.date, lang)}</time></article>)}</div> : <Empty>{T.noData}</Empty>}</section>
+      </div><section className="stp-panel stp-spectrum-preview"><StudentSpectrumCard endpoint={`/api/school-admin/reports/classes/students/${student.id}/traits`} showHistory={false} /><button onClick={() => setTab("spectrum")}>{T.openSpectrum}</button></section></div>}
+      {tab === "journey" && <div className="stp-stack"><section className="stp-panel"><PanelHead icon={<Route />} title={T.journeyTitle} subtitle={T.journeySub} />{student.stage_progress.length ? <div className="stp-stage-grid">{student.stage_progress.map((stage, index) => { const pct = stage.total ? Math.round(stage.passed / stage.total * 100) : 0; const done = stage.total > 0 && stage.passed >= stage.total; const active = !done && student.stage_progress.slice(0, index).every((item) => item.total > 0 && item.passed >= item.total); return <article className={`${done ? "done" : active ? "active" : ""}`} key={stage.title}><header><span>{index + 1}</span><div><small>{T.stage}</small><h3>{stage.title}</h3></div><b>{pct}%</b></header><div className="stp-stage-track"><i style={{ width: `${pct}%` }} /></div><footer><span>{stage.passed}/{stage.total} {T.concepts}</span><strong>{done ? T.complete : active ? T.inProgress : T.locked}</strong></footer></article>; })}</div> : <Empty>{T.noData}</Empty>}</section><section className="stp-panel"><PanelHead icon={<Clock3 />} title={T.recent} subtitle={T.recentSub} />{student.recent_attempts.length ? <div className="stp-attempt-grid">{student.recent_attempts.map((attempt) => <article key={`${attempt.module_title}-${attempt.date}`}><span className={attempt.passed ? "passed" : ""}><BookOpenCheck /></span><div><small>{attempt.stage_title}</small><h3>{attempt.module_title}</h3><time>{formatDate(attempt.date, lang)}</time></div><b>{attempt.score_pct}<small>/100</small></b></article>)}</div> : <Empty>{T.noData}</Empty>}</section></div>}
+      {tab === "spectrum" && <section className="stp-panel stp-spectrum-full"><StudentSpectrumCard endpoint={`/api/school-admin/reports/classes/students/${student.id}/traits`} /></section>}
+      {tab === "profile" && <div className="stp-profile-grid"><section className="stp-panel"><PanelHead icon={<CircleUserRound />} title={T.personalTitle} subtitle={T.personalSub} /><div className="stp-info-grid"><Info icon={<Mail />} label={T.email} value={student.profile.email} ltr /><Info icon={<MapPin />} label={T.city} value={student.city} /><Info icon={<CalendarDays />} label={T.age} value={student.age} /><Info icon={<Layers3 />} label={T.group} value={student.class ? <Link href="/school-admin/classes">{student.class.name}</Link> : T.notAssigned} /><Info icon={<Target />} label={T.status} value={statusLabel(student.onboarding_status, lang)} /><Info icon={<CheckCircle2 />} label={T.account} value={student.profile.is_active ? T.active : T.inactive} /><Info icon={<CalendarDays />} label={T.joinedDate} value={formatDate(student.created_at, lang)} /></div></section></div>}
+    </div>
+    <style>{styles}</style>
+  </main>;
 }
 
 const styles = `
-.asp{display:flex;flex-direction:column;gap:16px;padding:22px 22px 55px;font-family:'Cairo',sans-serif;color:#32101A}.asp-back{display:inline-flex;align-items:center;gap:6px;width:max-content;color:#6B1E2D;font-size:11px;font-weight:900;text-decoration:none}.asp-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:22px;overflow:hidden;border-radius:25px;background:radial-gradient(circle at 8% 12%,rgba(217,201,176,.17),transparent 28%),linear-gradient(135deg,#32101A,#6B1E2D 70%,#4A0E1C);padding:25px 28px;color:#FFFBF5;box-shadow:0 20px 48px rgba(107,30,45,.18)}.asp-orbit{position:absolute;border:1px solid rgba(217,201,176,.13);border-radius:50%}.asp-orbit.one{width:230px;height:230px;inset-inline-end:-70px;top:-130px}.asp-orbit.two{width:140px;height:140px;inset-inline-end:55px;bottom:-105px}.asp-person{position:relative;z-index:1;display:flex;align-items:center;gap:16px;min-width:0}.asp-avatar{display:grid;width:82px;height:82px;flex:none;place-items:center;overflow:hidden;border:1px solid rgba(217,201,176,.3);border-radius:23px;background:rgba(217,201,176,.13);font-size:26px;font-weight:900}.asp-avatar img{width:100%;height:100%;object-fit:cover}.asp-person>div>span{color:#D9C9B0;font-size:9.5px;font-weight:900;letter-spacing:.1em}.asp-person h1{margin:4px 0;font-size:26px;font-weight:900}.asp-person p{display:inline-flex;border-radius:999px;padding:4px 9px;font-size:8.5px;font-weight:900}.asp-person p.active{background:rgba(27,94,32,.22);color:#D9C9B0}.asp-person p.inactive{background:rgba(217,201,176,.12);color:#D9C9B0}.asp-progress{position:relative;z-index:1;display:flex;width:180px;flex-direction:column;gap:5px;border:1px solid rgba(217,201,176,.2);border-radius:17px;background:rgba(50,16,26,.34);padding:12px 15px}.asp-progress small{color:#D9C9B0;font-size:9px;font-weight:800}.asp-progress strong{font-size:25px}.asp-progress>div{height:6px;overflow:hidden;border-radius:999px;background:rgba(217,201,176,.15)}.asp-progress>div span{display:block;height:100%;border-radius:inherit;background:#D9C9B0}.asp-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.asp-metrics article{display:flex;align-items:center;gap:10px;border:1px solid #E5E0D5;border-radius:15px;background:#FFFBF5;padding:13px}.asp-metrics article>span{display:grid;width:38px;height:38px;place-items:center;border-radius:11px;background:#EFEAE0;color:#6B1E2D}.asp-metrics article>span svg{width:17px}.asp-metrics article>div{display:flex;flex-direction:column}.asp-metrics strong{font-size:17px}.asp-metrics small{color:#796A62;font-size:9px;font-weight:800}.asp-info{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border:1px solid #E5E0D5;border-radius:18px;background:#FFFBF5;padding:12px}.asp-info article{display:flex;align-items:center;gap:9px;border-radius:12px;background:#F7F3EB;padding:10px}.asp-info article>span{color:#8F765B}.asp-info article>span svg{width:15px}.asp-info article>div{display:flex;min-width:0;flex-direction:column}.asp-info small{color:#796A62;font-size:8.5px}.asp-info strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.asp-loading,.asp-error{display:grid;min-height:60vh;place-items:center;color:#796A62;font:800 12px 'Cairo',sans-serif}.asp-loading span{width:28px;height:28px;border:3px solid #D9C9B0;border-top-color:#6B1E2D;border-radius:50%;animation:asp-spin .7s linear infinite}@keyframes asp-spin{to{transform:rotate(360deg)}}@media(max-width:760px){.asp{padding:14px 14px 45px}.asp-hero{align-items:flex-start;flex-direction:column;padding:20px}.asp-progress{width:100%}.asp-metrics,.asp-info{grid-template-columns:1fr 1fr}.asp-person h1{font-size:21px}}@media(max-width:480px){.asp-metrics,.asp-info{grid-template-columns:1fr}.asp-avatar{width:66px;height:66px;border-radius:18px}}
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');@keyframes stp-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@keyframes stp-spin{to{transform:rotate(360deg)}}
+.stp-shell,.stp-loading{font-family:'Cairo',sans-serif}.stp-shell{max-width:1360px;margin:0 auto;padding:10px 0 70px;color:#32101A}.stp-loading{min-height:60vh;display:grid;place-items:center}.stp-back{display:inline-flex;align-items:center;gap:7px;margin-bottom:14px;color:#6B1E2D;font-size:12px;font-weight:900;text-decoration:none}.stp-shell[dir="rtl"] .stp-back svg{transform:scaleX(-1)}.stp-error{min-height:280px;display:grid;place-items:center;border:1px dashed rgba(107,30,45,.3);border-radius:24px;background:#FFFBF5;color:#6B1E2D;font-weight:900}
+.stp-hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:28px;min-height:248px;padding:34px;border-radius:32px;background:radial-gradient(circle at 10% 0,rgba(217,201,176,.19),transparent 33%),linear-gradient(135deg,#32101A,#6B1E2D 68%,#4A0E1C);box-shadow:0 28px 62px rgba(74,14,28,.22)}.stp-hero:after{content:"";position:absolute;inset:10px;z-index:-1;border:1px solid rgba(217,201,176,.16);border-radius:24px}.stp-mandala{position:absolute;inset-inline-end:-70px;inset-block-end:-120px;z-index:-1;animation:stp-spin 42s linear infinite}.stp-orbit{position:absolute;border:1px solid rgba(217,201,176,.12);border-radius:50%}.stp-orbit.one{width:230px;height:230px;inset-inline-start:-100px;top:-90px}.stp-orbit.two{width:140px;height:140px;inset-inline-start:-38px;top:-45px}.stp-hero-main{display:flex;align-items:center;gap:22px;min-width:0}.stp-avatar-wrap{width:108px;height:108px;display:grid;place-items:center;flex:none;border:1px solid rgba(217,201,176,.26);border-radius:30px;background:rgba(255,251,245,.08)}.stp-avatar{position:relative;width:92px;height:92px;overflow:hidden;display:grid;place-items:center;border-radius:24px;background:linear-gradient(145deg,#4A0E1C,#1A1A1A);color:#D9C9B0;font-size:24px;font-weight:900}.stp-avatar img{object-fit:cover}.stp-hero-copy{min-width:0}.stp-eyebrow{display:flex;align-items:center;gap:7px;margin-bottom:7px;color:#D9C9B0;font-size:11px;font-weight:900}.stp-hero-copy h1{margin:0;color:#FFFBF5;font-size:34px;line-height:1.25}.stp-hero-meta{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:10px}.stp-hero-meta span,.stp-hero-copy>a{display:inline-flex;align-items:center;gap:6px;color:rgba(255,251,245,.74);font-size:11px;font-weight:800;text-decoration:none}.stp-hero-meta span:first-child,.stp-hero-copy>a{padding:6px 9px;border:1px solid rgba(217,201,176,.15);border-radius:10px;background:rgba(255,251,245,.07)}.stp-hero-copy>a{margin-top:9px}.stp-hero-side{position:relative;z-index:1;min-width:190px;padding:17px;border:1px solid rgba(217,201,176,.17);border-radius:18px;background:rgba(26,26,26,.16);backdrop-filter:blur(9px)}.stp-hero-side>span{display:block;color:rgba(255,251,245,.58);font-size:10px;font-weight:800}.stp-hero-side>strong{display:block;margin-top:3px;color:#FFFBF5;font-size:13px}.stp-hero-side>div{display:flex;align-items:center;gap:7px;margin-top:12px;padding-top:11px;border-top:1px solid rgba(217,201,176,.14);color:#D9C9B0}.stp-hero-side b{font-size:9px}
+.stp-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.stp-metric{display:flex;align-items:center;gap:10px;min-height:82px;padding:13px;border:1px solid rgba(107,30,45,.12);border-radius:17px;background:#FFFBF5;box-shadow:0 10px 26px rgba(107,30,45,.045);transition:.18s}.stp-metric:hover{transform:translateY(-2px);border-color:rgba(107,30,45,.3)}.stp-metric>span{width:36px;height:36px;flex:none;display:grid;place-items:center;border-radius:12px;background:#F7F3EB;color:#6B1E2D}.stp-metric svg{width:17px}.stp-metric strong{display:block;font-size:20px;line-height:1}.stp-metric small{display:block;margin-top:5px;color:#796A62;font-size:9px;font-weight:800}
+.stp-tabs{position:sticky;top:8px;z-index:20;display:flex;gap:6px;overflow-x:auto;margin-bottom:16px;padding:7px;border:1px solid rgba(107,30,45,.12);border-radius:17px;background:rgba(255,251,245,.92);box-shadow:0 12px 30px rgba(107,30,45,.08);backdrop-filter:blur(14px);scrollbar-width:none}.stp-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:43px;flex:1;padding:0 13px;border:0;border-radius:12px;background:transparent;color:#655B53;font:800 10.5px 'Cairo',sans-serif;white-space:nowrap;cursor:pointer}.stp-tabs button svg{width:16px}.stp-tabs button.active{background:#6B1E2D;color:#FFFBF5;box-shadow:0 8px 18px rgba(107,30,45,.18)}.stp-view{animation:stp-in .3s ease}.stp-stack{display:grid;gap:14px}.stp-overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.stp-panel{overflow:hidden;border:1px solid rgba(107,30,45,.12);border-radius:24px;background:#FFFBF5;padding:20px;box-shadow:0 14px 34px rgba(107,30,45,.055)}.stp-panel-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}.stp-panel-head>span{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:12px;background:#F7F3EB;color:#6B1E2D}.stp-panel-head svg{width:18px}.stp-panel-head h2{margin:0;font-size:16px}.stp-panel-head p{margin:3px 0 0;color:#796A62;font-size:10.5px;line-height:1.65;font-weight:700}.stp-empty{min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1px dashed rgba(107,30,45,.22);border-radius:16px;background:#F7F3EB;color:#8F765B;text-align:center;font-size:11px;font-weight:800}
+.stp-snapshot{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:20px;padding:15px;border-radius:18px;background:linear-gradient(145deg,#F7F3EB,#EFEAE0)}.stp-ring{--progress:0deg;width:124px;height:124px;display:grid;place-items:center;border-radius:50%;background:conic-gradient(#6B1E2D var(--progress),#D9C9B0 0);position:relative}.stp-ring:after{content:"";position:absolute;inset:10px;border-radius:50%;background:#FFFBF5}.stp-ring span{position:relative;z-index:1}.stp-ring strong{font-size:22px}.stp-snapshot small{color:#8F765B;font-size:9px;font-weight:900}.stp-snapshot h3{margin:4px 0;font-size:17px}.stp-snapshot p{margin:0;color:#796A62;font-size:10px}.stp-snapshot>div>span{display:inline-block;margin-top:10px;padding:4px 9px;border-radius:999px;background:#D9C9B0;color:#655B53;font-size:8px;font-weight:900}.stp-snapshot>div>span.done{background:rgba(27,94,32,.1);color:#1B5E20}.stp-timeline{display:grid}.stp-timeline article{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 0}.stp-timeline article:not(:last-child):after{content:"";position:absolute;inset-inline-start:16px;top:39px;bottom:-5px;width:1px;background:rgba(107,30,45,.12)}.stp-timeline article>span{width:34px;height:34px;z-index:1;display:grid;place-items:center;border-radius:11px;background:#F7F3EB;color:#8F765B}.stp-timeline article>span.passed{color:#1B5E20}.stp-timeline strong,.stp-timeline small,.stp-timeline time{display:block}.stp-timeline strong{font-size:10.5px}.stp-timeline small,.stp-timeline time{color:#8F765B;font-size:8px;font-weight:700}.stp-timeline b{color:#6B1E2D;font-size:12px}.stp-timeline time{grid-column:2/-1}.stp-spectrum-preview>button{display:flex;justify-content:center;width:100%;margin-top:12px;padding:10px;border:1px solid rgba(107,30,45,.2);border-radius:12px;background:#6B1E2D;color:#FFF;font:800 10px 'Cairo',sans-serif;cursor:pointer}
+.stp-stage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.stp-stage-grid>article{padding:14px;border:1px solid rgba(107,30,45,.1);border-radius:17px;background:linear-gradient(145deg,#FFFBF5,#F7F3EB)}.stp-stage-grid>article.active{border-color:rgba(184,160,130,.5);box-shadow:inset 0 3px #B8A082}.stp-stage-grid>article.done{border-color:rgba(27,94,32,.2)}.stp-stage-grid header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px}.stp-stage-grid header>span{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:#6B1E2D;color:#D9C9B0;font-size:10px;font-weight:900}.stp-stage-grid small{color:#8F765B;font-size:8px}.stp-stage-grid h3{margin:1px 0 0;font-size:11px}.stp-stage-grid header>b{font-size:16px}.stp-stage-track{height:7px;overflow:hidden;margin:13px 0 9px;border-radius:999px;background:#E5E0D5}.stp-stage-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#6B1E2D,#B8A082)}.stp-stage-grid footer{display:flex;justify-content:space-between;color:#796A62;font-size:8.5px;font-weight:800}.stp-stage-grid footer strong{color:#6B1E2D}.stp-attempt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stp-attempt-grid article{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:10px;padding:12px;border:1px solid rgba(107,30,45,.1);border-radius:15px;background:#F7F3EB}.stp-attempt-grid article>span{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#D9C9B0;color:#655B53}.stp-attempt-grid article>span.passed{background:rgba(27,94,32,.1);color:#1B5E20}.stp-attempt-grid h3{margin:2px 0;font-size:10px}.stp-attempt-grid time{color:#8F765B;font-size:8px}.stp-attempt-grid article>b{color:#6B1E2D;font-size:18px}.stp-attempt-grid article>b small{font-size:8px}.stp-spectrum-full{padding:22px}
+.stp-profile-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}.stp-info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stp-info{display:flex;align-items:center;gap:10px;min-width:0;padding:11px;border-radius:14px;background:#F7F3EB}.stp-info>span{width:31px;height:31px;flex:none;display:grid;place-items:center;border-radius:9px;background:#FFFBF5;color:#8F765B}.stp-info svg{width:14px}.stp-info small,.stp-info strong{display:block}.stp-info small{color:#8F765B;font-size:8.5px;font-weight:900}.stp-info strong{margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.stp-info a{color:#6B1E2D;text-decoration:none}
+@media(max-width:900px){.stp-hero{align-items:flex-start;flex-direction:column}.stp-hero-side{width:100%}.stp-overview-grid{grid-template-columns:1fr}.stp-attempt-grid{grid-template-columns:1fr}}@media(max-width:620px){.stp-shell{padding-inline:2px}.stp-hero{min-height:auto;padding:24px 18px;border-radius:24px}.stp-hero-main{align-items:flex-start;flex-direction:column}.stp-avatar-wrap{width:82px;height:82px}.stp-avatar{width:70px;height:70px}.stp-hero-copy h1{font-size:25px}.stp-metrics{grid-template-columns:repeat(2,1fr)}.stp-tabs button{flex:none;width:44px;padding:0}.stp-tabs button span{display:none}.stp-tabs button.active{width:auto;padding:0 14px}.stp-tabs button.active span{display:inline}.stp-panel{padding:14px;border-radius:19px}.stp-snapshot{grid-template-columns:1fr}.stp-ring{width:100px;height:100px}.stp-info-grid{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){.stp-view,.stp-mandala{animation:none!important}.stp-metric{transition:none}}
 `;
