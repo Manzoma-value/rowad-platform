@@ -10,7 +10,7 @@ import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
-import { CheckCircle2, Download, ExternalLink, Eye, FileText, Image as ImageIcon, Link2, MapPin, MessageSquareText, MonitorPlay, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronsDown, ChevronsUp, Download, ExternalLink, Eye, FileText, Image as ImageIcon, LayoutPanelTop, Link2, MapPin, MessageSquareText, MonitorPlay, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import { makeWorkshopDays, type WorkshopDay, type WorkshopMaterial } from "@/lib/workshops";
 import { VideoManager } from "../components/VideoManager";
 import { WorkshopJourneyManager } from "../components/WorkshopJourneyManager";
@@ -98,6 +98,17 @@ type AttendanceCode = {
   url?: string;
   qrPng?: string;
   created_at?: string;
+};
+
+type WorkshopPanelKey = "materials" | "videos" | "journey" | "discussion" | "codes" | "attendance";
+
+const DEFAULT_PANEL_VISIBILITY: Record<WorkshopPanelKey, boolean> = {
+  materials: true,
+  videos: false,
+  journey: false,
+  discussion: false,
+  codes: false,
+  attendance: true,
 };
 
 function isPdfMaterial(material: WorkshopMaterial) {
@@ -291,6 +302,57 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const O = OPS[L];
   const E = EDIT[L];
   const dir = L === "ar" ? "rtl" : "ltr";
+  const P = L === "ar" ? {
+    eyebrow: "مساحة عمل الورشة",
+    title: "أقسام الورشة",
+    helper: "افتح القسم الذي تعمل عليه فقط. سيحفظ النظام اختيارك لهذه الورشة في زيارتك القادمة.",
+    openAll: "إظهار جميع الأقسام",
+    closeAll: "إخفاء جميع الأقسام",
+    openCount: "أقسام ظاهرة",
+    show: "إظهار القسم",
+    hide: "إخفاء القسم",
+    materials: "المواد والمحتوى",
+    materialsHelp: "الملفات والروابط ورسالة الإدارة المثبتة.",
+    videos: "الفيديوهات والأسئلة",
+    videosHelp: "مقاطع الورشة والأسئلة المرتبطة بكل فيديو.",
+    journey: "متطلبات إتمام الورشة",
+    journeyHelp: "مسار الإنجاز والاختبارات ومتابعة تقدم المشاركين.",
+    discussion: "الملاحظات المشتركة",
+    discussionHelp: "رسائل الإدارة ونقاش المشاركين داخل الورشة.",
+    codes: "رموز التسجيل والحضور",
+    codesHelp: "روابط وQR التسجيل وتسجيل الحضور اليومي.",
+    attendance: "الحضور والمشاركون",
+    attendanceHelp: "إدارة المشاركين وسجل الحضور والتصدير.",
+    items: "عناصر",
+    messages: "رسائل",
+    people: "مشاركون",
+    twoCodes: "رمزان",
+  } : {
+    eyebrow: "Hapësira e punës së forumit",
+    title: "Seksionet e forumit",
+    helper: "Hap vetëm seksionin ku po punon. Zgjedhja ruhet për vizitën e ardhshme në këtë forum.",
+    openAll: "Shfaq të gjitha",
+    closeAll: "Fshih të gjitha",
+    openCount: "seksione të hapura",
+    show: "Shfaq seksionin",
+    hide: "Fshih seksionin",
+    materials: "Materialet dhe përmbajtja",
+    materialsHelp: "Skedarët, lidhjet dhe mesazhi i fiksuar i administratës.",
+    videos: "Videot dhe pyetjet",
+    videosHelp: "Videot e forumit dhe pyetjet e lidhura me to.",
+    journey: "Kërkesat e përfundimit",
+    journeyHelp: "Rruga e plotësimit, kuizet dhe ecuria e pjesëmarrësve.",
+    discussion: "Shënimet e përbashkëta",
+    discussionHelp: "Mesazhet e administratës dhe diskutimi i pjesëmarrësve.",
+    codes: "Kodet e regjistrimit dhe pranisë",
+    codesHelp: "Lidhjet dhe kodet QR për regjistrim dhe prani.",
+    attendance: "Prania dhe pjesëmarrësit",
+    attendanceHelp: "Menaxhimi i pjesëmarrësve, prania dhe eksporti.",
+    items: "elemente",
+    messages: "mesazhe",
+    people: "pjesëmarrës",
+    twoCodes: "2 kode",
+  };
   const viewOnly = useViewOnly();
   const confirm = useConfirm();
 
@@ -323,6 +385,8 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const [operationError, setOperationError] = useState("");
   const [editingBasics, setEditingBasics] = useState(false);
   const [savingBasics, setSavingBasics] = useState(false);
+  const [panelVisibility, setPanelVisibility] = useState<Record<WorkshopPanelKey, boolean>>(DEFAULT_PANEL_VISIBILITY);
+  const [panelPreferencesReady, setPanelPreferencesReady] = useState(false);
   const [basicsForm, setBasicsForm] = useState({
     title: "",
     description: "",
@@ -355,12 +419,55 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
 
   useEffect(() => { void loadAll(); }, [loadAll]);
 
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(`rowad-workshop-panels:${id}`);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Partial<Record<WorkshopPanelKey, boolean>>;
+        setPanelVisibility((current) => ({ ...current, ...parsed }));
+      }
+    } catch {
+      // A blocked storage API should not prevent the workshop from loading.
+    } finally {
+      setPanelPreferencesReady(true);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (!panelPreferencesReady) return;
+    try {
+      window.localStorage.setItem(`rowad-workshop-panels:${id}`, JSON.stringify(panelVisibility));
+    } catch {
+      // Panel controls still work for the current visit when storage is unavailable.
+    }
+  }, [id, panelPreferencesReady, panelVisibility]);
+
   const summary = useMemo(() => {
     const teachers = attendance?.teachers ?? [];
     const days = attendance?.days ?? [];
     const presentCells = teachers.reduce((sum, t) => sum + t.total_present, 0);
     return { teachers: teachers.length, days: days.length, presentCells };
   }, [attendance]);
+
+  const openPanelCount = useMemo(
+    () => Object.values(panelVisibility).filter(Boolean).length,
+    [panelVisibility],
+  );
+
+  function togglePanel(panel: WorkshopPanelKey) {
+    setPanelVisibility((current) => ({ ...current, [panel]: !current[panel] }));
+  }
+
+  function setAllPanels(open: boolean) {
+    setPanelVisibility({
+      materials: open,
+      videos: open,
+      journey: open,
+      discussion: open,
+      codes: open,
+      attendance: open,
+    });
+  }
 
   const visibleRoster = useMemo(() => {
     const query = rosterQuery.trim().toLowerCase();
@@ -751,7 +858,24 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         <div><span>{T.present}</span><strong>{summary.presentCells}</strong></div>
       </section>
 
-      <section className="wd-card wd-materials">
+      <section className="wd-workspace-head">
+        <div className="wd-workspace-icon"><LayoutPanelTop size={22}/></div>
+        <div>
+          <span>{P.eyebrow}</span>
+          <h2>{P.title}</h2>
+          <p>{P.helper}</p>
+        </div>
+        <strong>{openPanelCount} / 6 {P.openCount}</strong>
+        <div className="wd-workspace-actions">
+          <button type="button" onClick={() => setAllPanels(true)}><ChevronsDown size={15}/>{P.openAll}</button>
+          <button type="button" onClick={() => setAllPanels(false)}><ChevronsUp size={15}/>{P.closeAll}</button>
+        </div>
+      </section>
+
+      <WorkshopPanel index="01" title={P.materials} description={P.materialsHelp}
+        meta={`${detail.workshop.materials.length} ${P.items}`} icon={<FileText size={20}/>} open={panelVisibility.materials}
+        onToggle={() => togglePanel("materials")} showLabel={P.show} hideLabel={P.hide}>
+      <section className="wd-panel-content wd-materials">
         <style>{`.wd-materials .wd-link-form{grid-template-columns:110px 1fr 1.5fr auto}@media(max-width:720px){.wd-materials .wd-link-form{grid-template-columns:1fr}}`}</style>
         <div className="wd-table-head"><div><h2>{T.content}</h2><p>{T.contentHelp}</p></div>{!viewOnly&&<div className="wd-content-actions"><label className="wd-small-btn"><Upload size={14}/>{uploading?T.saving:T.addFile}<input hidden type="file" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx" onChange={e=>e.target.files?.[0]&&void uploadMaterial(e.target.files[0])}/></label><button className="wd-small-btn ghost" onClick={()=>setShowLink(v=>!v)}><Plus size={14}/>{T.addLink}</button></div>}</div>
         {showLink&&<div className="wd-link-form"><select value={linkType} onChange={e=>setLinkType(e.target.value as typeof linkType)}><option value="LINK">Link</option><option value="VIDEO">Video link</option><option value="READING">Reading</option></select><input placeholder={T.linkTitle} value={linkForm.title} onChange={e=>setLinkForm({...linkForm,title:e.target.value})}/><input dir="ltr" placeholder={T.linkUrl} value={linkForm.url} onChange={e=>setLinkForm({...linkForm,url:e.target.value})}/><button className="wd-small-btn" onClick={addLink} disabled={uploading}>{T.add}</button></div>}
@@ -759,11 +883,22 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=>{const viewers=detail.workshop.material_views.filter(view=>view.material_id===m.id);return <div className={`wd-material${isPdfMaterial(m)?" pdf":""}`} key={m.id}>{m.type==="IMAGE"?<ImageIcon/>:m.type==="VIDEO"?<Video/>:m.type==="LINK"?<Link2/>:<FileText/>}<div><strong>{m.title}</strong><small>{m.mime || m.type}</small></div><a href={m.url} target="_blank" rel="noreferrer" aria-label={m.title}><ExternalLink size={17}/></a>{!viewOnly&&<button onClick={()=>void removeMaterial(m.id)} aria-label={T.remove}><Trash2 size={16}/></button>}{isPdfMaterial(m)&&<div className="wd-pdf-insight"><div><Eye size={15}/><strong>{viewers.length}</strong><span>{L==="ar"?"مشرفون فتحوا الملف":"edukatorë e hapën"}</span></div>{viewers.length===0?<small>{L==="ar"?"لم يفتح هذا الملف أحد بعد":"Askush nuk e ka hapur ende"}</small>:<div className="wd-pdf-viewers">{viewers.map(view=><span key={view.teacher.id} title={`${view.open_count} × · ${fmtTime(view.last_opened_at)}`}><b>{view.teacher.profile.full_name}</b><small>{view.open_count}× · {fmtDate(view.last_opened_at)}</small></span>)}</div>}</div>}</div>})}</div>}
         {detail.workshop.notes&&<div className="wd-notes"><b>{T.notes}</b><p>{detail.workshop.notes}</p></div>}
       </section>
+      </WorkshopPanel>
 
-      <VideoManager workshopId={id} viewOnly={viewOnly} lang={L} />
-      <WorkshopJourneyManager workshopId={id} viewOnly={viewOnly} lang={L} />
+      <WorkshopPanel index="02" title={P.videos} description={P.videosHelp} icon={<Video size={20}/>} open={panelVisibility.videos}
+        onToggle={() => togglePanel("videos")} showLabel={P.show} hideLabel={P.hide}>
+        <VideoManager workshopId={id} viewOnly={viewOnly} lang={L} />
+      </WorkshopPanel>
 
-      <section className="wd-card wd-discussion">
+      <WorkshopPanel index="03" title={P.journey} description={P.journeyHelp} icon={<CheckCircle2 size={20}/>} open={panelVisibility.journey}
+        onToggle={() => togglePanel("journey")} showLabel={P.show} hideLabel={P.hide}>
+        <WorkshopJourneyManager workshopId={id} viewOnly={viewOnly} lang={L} />
+      </WorkshopPanel>
+
+      <WorkshopPanel index="04" title={P.discussion} description={P.discussionHelp}
+        meta={`${detail.workshop.messages.length} ${P.messages}`} icon={<MessageSquareText size={20}/>} open={panelVisibility.discussion}
+        onToggle={() => togglePanel("discussion")} showLabel={P.show} hideLabel={P.hide}>
+      <section className="wd-panel-content wd-discussion">
         <div className="wd-table-head"><div><h2>{T.discussion}</h2><p>{T.discussionHelp}</p></div><MessageSquareText size={20}/></div>
         <div className="wd-messages">
           {detail.workshop.messages.length === 0 ? <div className="wd-empty">{T.noMessages}</div> : detail.workshop.messages.map(message => {
@@ -773,8 +908,11 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         </div>
         {!viewOnly&&<div className="wd-composer"><textarea rows={3} maxLength={1500} placeholder={T.messagePlaceholder} value={messageDraft} onChange={e=>setMessageDraft(e.target.value)}/><div><span>{messageDraft.length}/1500</span><button className="wd-small-btn" onClick={()=>void publishMessage()} disabled={!messageDraft.trim()||sendingMessage}><Send size={14}/>{sendingMessage?T.publishing:T.publish}</button></div>{messageError&&<p className="wd-message-error">{messageError}</p>}</div>}
       </section>
+      </WorkshopPanel>
 
-      <section className="wd-qr-grid">
+      <WorkshopPanel index="05" title={P.codes} description={P.codesHelp} meta={P.twoCodes} icon={<Link2 size={20}/>} open={panelVisibility.codes}
+        onToggle={() => togglePanel("codes")} showLabel={P.show} hideLabel={P.hide}>
+      <section className="wd-qr-grid wd-panel-content">
         <QrPanel
           title={T.signupQr}
           sub={T.signupSub}
@@ -809,8 +947,12 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           )}
         </div>
       </section>
+      </WorkshopPanel>
 
-      <section className="wd-card wd-attendance-card">
+      <WorkshopPanel index="06" title={P.attendance} description={P.attendanceHelp}
+        meta={`${summary.teachers} ${P.people}`} icon={<UserCheck size={20}/>} open={panelVisibility.attendance}
+        onToggle={() => togglePanel("attendance")} showLabel={P.show} hideLabel={P.hide}>
+      <section className="wd-panel-content wd-attendance-card">
         <div className="wd-table-head">
           <div>
             <h2>{T.attendance}</h2>
@@ -874,6 +1016,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           </div>
         )}
       </section>
+      </WorkshopPanel>
 
       {participantsOpen && (
         <ParticipantManagerModal
@@ -912,6 +1055,55 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
 
       <style>{styles}</style>
     </div>
+  );
+}
+
+function WorkshopPanel({
+  index,
+  title,
+  description,
+  meta,
+  icon,
+  open,
+  onToggle,
+  showLabel,
+  hideLabel,
+  children,
+}: {
+  index: string;
+  title: string;
+  description: string;
+  meta?: string;
+  icon: React.ReactNode;
+  open: boolean;
+  onToggle: () => void;
+  showLabel: string;
+  hideLabel: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={`wd-fold-panel${open ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="wd-fold-trigger"
+        onClick={onToggle}
+        aria-expanded={open}
+        title={open ? hideLabel : showLabel}
+      >
+        <span className="wd-fold-index">{index}</span>
+        <span className="wd-fold-icon">{icon}</span>
+        <span className="wd-fold-copy">
+          <strong>{title}</strong>
+          <small>{description}</small>
+        </span>
+        {meta && <span className="wd-fold-meta">{meta}</span>}
+        <span className="wd-fold-action">
+          <b>{open ? hideLabel : showLabel}</b>
+          <ChevronDown size={18}/>
+        </span>
+      </button>
+      <div className="wd-fold-body" hidden={!open}>{children}</div>
+    </section>
   );
 }
 
@@ -1006,6 +1198,25 @@ const styles = `
 .wd-edit-overlay{position:fixed;inset:0;z-index:1100;display:grid;place-items:center;padding:18px;background:rgba(26,26,26,.58);backdrop-filter:blur(7px)}.wd-edit-dialog{width:min(650px,100%);border:1px solid rgba(217,201,176,.45);border-radius:22px;overflow:hidden;background:#FFFBF5;box-shadow:0 28px 90px rgba(26,26,26,.32)}.wd-edit-dialog>header{display:flex;justify-content:space-between;gap:16px;padding:22px 24px;background:linear-gradient(135deg,#250B12,#6B1E2D);color:#F7F3EB}.wd-edit-dialog>header span{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:10px;font-weight:900}.wd-edit-dialog>header h2{margin:5px 0;font-size:23px}.wd-edit-dialog>header p{margin:0;color:rgba(247,243,235,.74);font-size:12px;line-height:1.7}.wd-edit-dialog>header button{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.wd-edit-dialog>label{display:block;margin:18px 24px 0;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-dialog input,.wd-edit-dialog textarea{box-sizing:border-box;width:100%;margin-top:7px;border:1px solid #D9C9B0;border-radius:12px;background:#fff;padding:11px 12px;color:#32101A;font:inherit;font-size:13px;outline:none}.wd-edit-dialog textarea{resize:vertical;min-height:120px;line-height:1.75}.wd-edit-dialog input:focus,.wd-edit-dialog textarea:focus{border-color:#6B1E2D;box-shadow:0 0 0 3px rgba(107,30,45,.1)}.wd-edit-actions{display:flex;justify-content:flex-end;gap:8px;padding:20px 24px}.wd-edit-actions button{display:flex;align-items:center;gap:6px;border:0;border-radius:11px;padding:10px 14px;background:#6B1E2D;color:#F7F3EB;font:800 12px 'Cairo',sans-serif;cursor:pointer}.wd-edit-actions button.ghost{border:1px solid #D9C9B0;background:#fff;color:#6B1E2D}.wd-edit-actions button:disabled{opacity:.55;cursor:progress}
 .wd-edit-dialog{width:min(760px,100%);max-height:92vh;overflow:auto}.wd-edit-date-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 24px 0}.wd-edit-date-row label{color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-program{margin:18px 24px 0;padding:12px;border:1px solid #D9C9B0;border-radius:12px}.wd-edit-program legend{padding:0 6px;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-days{display:grid;gap:7px}.wd-edit-day{display:grid;grid-template-columns:minmax(150px,1fr) 110px 105px 105px;align-items:center;gap:7px;padding:8px;background:#F7F3EB;border-inline-start:3px solid #4C6B3C}.wd-edit-day.rest{grid-template-columns:minmax(150px,1fr) 110px;border-inline-start-color:#8C8274;background:#EFEAE0}.wd-edit-day>span{font-size:11px;font-weight:900}.wd-edit-day>button{min-height:38px;border:1px solid #D9C9B0;border-radius:8px;background:#fff;color:#6B1E2D;font:800 11px 'Cairo',sans-serif;cursor:pointer}.wd-edit-day input{margin:0;padding:8px;font-size:11px}
 .wd-edit-delivery{margin:18px 24px 0;padding:12px;border:1px solid #D9C9B0;border-radius:12px}.wd-edit-delivery legend{padding:0 6px;color:#4A0E1C;font-size:12px;font-weight:900}.wd-edit-delivery>div{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px}.wd-edit-delivery>div button{display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid #D9C9B0;border-radius:9px;background:#FFF;color:#655B53;padding:9px;font:inherit;font-size:10px;font-weight:900;cursor:pointer}.wd-edit-delivery>div button.active{border-color:#6B1E2D;background:#F7F3EB;color:#6B1E2D}.wd-edit-delivery label{font-size:10px;font-weight:900;color:#655B53}
+
+/* Focused workshop workspace */
+.wd-back{align-items:center;width:max-content;margin:0 0 2px;padding:7px 11px;border:1px solid rgba(107,30,45,.12);border-radius:999px;background:rgba(255,251,245,.72);transition:background .18s,border-color .18s}.wd-back:hover{border-color:rgba(107,30,45,.28);background:#FFFBF5;text-decoration:none}
+.wd-hero{margin-bottom:2px}.wd-stats{margin:0 0 4px}.wd-stats div{position:relative;overflow:hidden;padding:17px 18px;border-radius:18px;border-color:rgba(107,30,45,.1);box-shadow:0 12px 30px rgba(50,16,26,.055)}.wd-stats div:after{content:'';position:absolute;inset-inline-end:-18px;bottom:-22px;width:70px;height:70px;border:1px solid rgba(184,160,130,.14);border-radius:50%}.wd-stats span{color:#796A62;font-size:10px}.wd-stats strong{margin-top:5px;color:#6B1E2D;font-size:28px}
+.wd-workspace-head{display:grid;grid-template-columns:54px minmax(0,1fr) auto auto;align-items:center;gap:14px;margin-top:4px;padding:18px;border:1px solid rgba(107,30,45,.12);border-radius:22px;background:linear-gradient(135deg,#FFFBF5,#F4ECE0);box-shadow:0 14px 34px rgba(50,16,26,.06)}
+.wd-workspace-icon{width:52px;height:52px;display:grid;place-items:center;border-radius:16px;background:linear-gradient(145deg,#4A0E1C,#6B1E2D);color:#F7F3EB;box-shadow:0 9px 20px rgba(107,30,45,.2)}
+.wd-workspace-head>div:nth-child(2)>span{display:block;color:#8F765B;font-size:9px;font-weight:900;letter-spacing:.08em}.wd-workspace-head h2{margin:3px 0 1px;color:#32101A;font-size:19px;font-weight:900}.wd-workspace-head p{max-width:670px;margin:0;color:#796A62;font-size:10.5px;font-weight:650;line-height:1.7}
+.wd-workspace-head>strong{padding:7px 10px;border:1px solid rgba(107,30,45,.1);border-radius:999px;background:#FFF;color:#6B1E2D;font-size:9.5px;white-space:nowrap}
+.wd-workspace-actions{display:flex;gap:6px}.wd-workspace-actions button{min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border:1px solid rgba(107,30,45,.13);border-radius:11px;background:#FFF;color:#6B1E2D;font:800 9.5px 'Cairo',sans-serif;cursor:pointer}.wd-workspace-actions button:hover{border-color:#6B1E2D;background:#F7F3EB}
+.wd-fold-panel{overflow:hidden;border:1px solid rgba(107,30,45,.12);border-radius:21px;background:rgba(255,251,245,.86);box-shadow:0 12px 32px rgba(50,16,26,.05);transition:border-color .2s,box-shadow .2s}.wd-fold-panel.is-open{border-color:rgba(107,30,45,.2);box-shadow:0 18px 44px rgba(50,16,26,.08)}
+.wd-fold-trigger{width:100%;min-height:82px;display:grid;grid-template-columns:34px 48px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:14px 17px;border:0;background:linear-gradient(135deg,rgba(255,251,245,.96),rgba(247,243,235,.9));color:#32101A;text-align:start;font-family:'Cairo',sans-serif;cursor:pointer}.wd-fold-trigger:hover{background:linear-gradient(135deg,#FFFBF5,#F1E8DC)}
+.wd-fold-index{align-self:start;padding-top:2px;color:#B8A082;font:900 10px ui-monospace,Consolas,monospace}.wd-fold-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:rgba(107,30,45,.08);color:#6B1E2D;transition:background .2s,color .2s}.wd-fold-panel.is-open .wd-fold-icon{background:linear-gradient(145deg,#4A0E1C,#6B1E2D);color:#F7F3EB;box-shadow:0 8px 18px rgba(107,30,45,.18)}
+.wd-fold-copy{min-width:0}.wd-fold-copy strong,.wd-fold-copy small{display:block}.wd-fold-copy strong{font-size:14px;font-weight:900}.wd-fold-copy small{margin-top:3px;overflow:hidden;color:#796A62;font-size:9.5px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}
+.wd-fold-meta{padding:5px 9px;border:1px solid rgba(184,160,130,.22);border-radius:999px;background:#FFF;color:#8F765B;font-size:8.5px;font-weight:900;white-space:nowrap}
+.wd-fold-action{display:flex;align-items:center;gap:7px;color:#6B1E2D}.wd-fold-action b{font-size:9px;font-weight:900}.wd-fold-action svg{transition:transform .22s}.wd-fold-panel.is-open .wd-fold-action svg{transform:rotate(180deg)}
+.wd-fold-body{border-top:1px solid rgba(107,30,45,.1);background:#FFFBF5;animation:wd-fold-in .22s ease}.wd-fold-body[hidden]{display:none!important}.wd-panel-content{margin:0!important;padding:clamp(16px,2.2vw,24px)}.wd-fold-body>.vm-card,.wd-fold-body>.journey-admin{margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important}.wd-fold-body .wd-qr-grid{margin:0}.wd-fold-body .wd-attendance-card{margin:0}.wd-fold-body .wd-card{box-shadow:0 8px 24px rgba(50,16,26,.055)}
+@keyframes wd-fold-in{from{opacity:.3;transform:translateY(-5px)}to{opacity:1;transform:none}}
 @keyframes wd-panel-in{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}[dir='rtl'] .wd-people-panel{animation-name:wd-panel-in-rtl}@keyframes wd-panel-in-rtl{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
 @media(max-width:720px){.wd{padding-bottom:12px}.wd-hero{border-radius:20px}.wd-hero-actions{width:100%;flex-direction:row}.wd-hero-actions>*{flex:1}.wd-stats{grid-template-columns:repeat(2,1fr)}.wd-card-head,.wd-table-head{flex-direction:column}.wd-export{width:100%}.wd-export button{flex:1;justify-content:center}.wd-live-strip{flex-wrap:wrap}.wd-people-panel{width:100%}.wd-people-panel>header{padding:20px 16px}.wd-people-list article{grid-template-columns:40px minmax(0,1fr)}.wd-people-list article>button,.wd-enrolled{grid-column:1/-1;justify-content:center}.wd-person-avatar{width:40px;height:40px}.wd-edit-dialog>header{padding:20px 16px}.wd-edit-dialog>label{margin-inline:16px}.wd-edit-date-row{grid-template-columns:1fr;margin-inline:16px}.wd-edit-program{margin-inline:16px}.wd-edit-day,.wd-edit-day.rest{grid-template-columns:1fr 105px}.wd-edit-day input{grid-row:2}.wd-edit-actions{padding:18px 16px}.wd-edit-actions button{flex:1;justify-content:center}}
+@media(max-width:850px){.wd-workspace-head{grid-template-columns:48px minmax(0,1fr) auto}.wd-workspace-actions{grid-column:1/-1}.wd-workspace-actions button{flex:1}.wd-fold-trigger{grid-template-columns:30px 43px minmax(0,1fr) auto}.wd-fold-meta{display:none}.wd-fold-icon{width:42px;height:42px}.wd-fold-action b{display:none}}
+@media(max-width:520px){.wd-stats div:last-child{grid-column:1/-1}.wd-workspace-head{grid-template-columns:44px minmax(0,1fr);padding:14px}.wd-workspace-icon{width:42px;height:42px;border-radius:13px}.wd-workspace-head>strong{grid-column:1/-1;width:max-content}.wd-fold-trigger{min-height:74px;grid-template-columns:38px minmax(0,1fr) auto;padding:12px;gap:10px}.wd-fold-index{display:none}.wd-fold-icon{width:38px;height:38px;border-radius:12px}.wd-fold-copy strong{font-size:12px}.wd-fold-copy small{font-size:8.5px}.wd-panel-content{padding:13px}.wd-workspace-actions{flex-direction:column}}
 `;
