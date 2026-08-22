@@ -97,7 +97,7 @@ const icons = {
   QUIZ: FileQuestion,
 } as const;
 
-export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }: { workshopId: string; hasAccess: boolean; lang: "ar" | "sq"; refreshKey?: number }) {
+export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0, embedded = false }: { workshopId: string; hasAccess: boolean; lang: "ar" | "sq"; refreshKey?: number; embedded?: boolean }) {
   const isAr = lang === "ar";
   const [journey, setJourney] = useState<Journey | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -269,12 +269,13 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
   }, [load]);
 
   useEffect(() => {
+    if (embedded) return;
     try {
       setPanelHidden(window.localStorage.getItem(`workshop-journey-hidden:${workshopId}`) === "true");
     } catch {
       setPanelHidden(false);
     }
-  }, [workshopId]);
+  }, [embedded, workshopId]);
 
   const required = journey?.requirements.filter((requirement) => requirement.is_required) ?? [];
   const doneCount = required.filter((requirement) => requirement.completed).length;
@@ -349,7 +350,7 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
   if (loading && !journey) return <section className="supervisor-journey supervisor-journey--loading"><RefreshCw className="spin" size={22}/><span>{copy.title}</span><style>{styles}</style></section>;
   if (!journey) return null;
 
-  if (panelHidden) {
+  if (panelHidden && !embedded) {
     return (
       <section id="workshop-journey" className="supervisor-journey supervisor-journey--collapsed" dir={isAr ? "rtl" : "ltr"}>
         <span className="supervisor-journey__collapsed-icon"><Sparkles size={20}/></span>
@@ -372,7 +373,7 @@ export function WorkshopJourney({ workshopId, hasAccess, lang, refreshKey = 0 }:
     <section id="workshop-journey" className={`supervisor-journey${journey.completed ? " is-complete" : ""}`} dir={isAr ? "rtl" : "ltr"}>
       <div className="supervisor-journey__topline">
         <span><Sparkles size={15}/>{copy.eyebrow}</span>
-        <button type="button" onClick={togglePanel}><EyeOff size={15}/>{copy.hideJourney}</button>
+        {!embedded && <button type="button" onClick={togglePanel}><EyeOff size={15}/>{copy.hideJourney}</button>}
       </div>
       <header className="supervisor-journey__hero">
         <div className="supervisor-journey__intro">

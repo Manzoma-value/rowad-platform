@@ -4,7 +4,6 @@ import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
-  BookOpenCheck,
   CheckCircle2,
   Clock3,
   Download,
@@ -17,7 +16,6 @@ import {
   MapPin,
   MessageSquareText,
   MonitorPlay,
-  PlayCircle,
   Radio,
   RefreshCw,
   Send,
@@ -27,6 +25,7 @@ import {
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
+import { WorkshopPanelWorkspace, type WorkshopWorkspacePanel } from "@/components/workshops/WorkshopPanelWorkspace";
 import type { WorkshopDay, WorkshopMaterial } from "@/lib/workshops";
 import { WorkshopVideoSection } from "../components/WorkshopVideoSection";
 import { WorkshopJourney } from "../components/WorkshopJourney";
@@ -70,6 +69,8 @@ type DetailPayload = {
   request_status: RequestStatus;
   attendance_days: string[];
 };
+
+type TeacherWorkshopPanelKey = "journey" | "videos" | "materials" | "discussion";
 
 const text = {
   ar: {
@@ -128,6 +129,22 @@ const text = {
     materialsNav: "المحتوى والملفات",
     discussionNav: "مشاركة ما تعلمت",
     startHere: "ابدأ من هنا",
+    workspaceEyebrow: "مساحة الورشة الشخصية",
+    workspaceTitle: "أقسام الورشة",
+    workspaceHelper: "افتح ما تحتاجه فقط ورتّب الأقسام بالطريقة الأنسب لك. سيُحفظ اختيارك لهذه الورشة.",
+    openAll: "إظهار جميع الأقسام",
+    closeAll: "إخفاء جميع الأقسام",
+    openCount: "أقسام ظاهرة",
+    showPanel: "إظهار القسم",
+    hidePanel: "إخفاء القسم",
+    dragHint: "اسحب أي قسم لترتيبه، أو استخدم أسهم النقل.",
+    dragLabel: "اسحب لتغيير ترتيب القسم",
+    moveUp: "نقل القسم إلى أعلى",
+    moveDown: "نقل القسم إلى أسفل",
+    journeyHelp: "تقدّمك ومتطلبات الإكمال والخطوات المتبقية.",
+    videosHelp: "مقاطع الورشة والأسئلة المرتبطة بكل فيديو.",
+    items: "عناصر",
+    messages: "رسائل",
   },
   sq: {
     back: "Kthehu te forumet",
@@ -185,6 +202,22 @@ const text = {
     materialsNav: "Materialet",
     discussionNav: "Ndaj çfarë mësove",
     startHere: "Fillo këtu",
+    workspaceEyebrow: "Hapësira jote e forumit",
+    workspaceTitle: "Seksionet e forumit",
+    workspaceHelper: "Hap vetëm atë që të duhet dhe renditi seksionet sipas mënyrës tënde. Zgjedhja ruhet për këtë forum.",
+    openAll: "Shfaq të gjitha",
+    closeAll: "Fshih të gjitha",
+    openCount: "seksione të hapura",
+    showPanel: "Shfaq seksionin",
+    hidePanel: "Fshih seksionin",
+    dragHint: "Tërhiq seksionet për t'i renditur, ose përdor shigjetat.",
+    dragLabel: "Tërhiq për të ndryshuar rendin",
+    moveUp: "Zhvendose seksionin lart",
+    moveDown: "Zhvendose seksionin poshtë",
+    journeyHelp: "Ecuria, kërkesat e përfundimit dhe hapat e mbetur.",
+    videosHelp: "Videot e forumit dhe pyetjet e lidhura me to.",
+    items: "elemente",
+    messages: "mesazhe",
   },
 } as const;
 
@@ -199,6 +232,20 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
   const locale = lang === "sq" ? "sq" : "ar";
   const T = text[locale];
   const O = liveCopy[locale];
+  const P = {
+    eyebrow: T.workspaceEyebrow,
+    title: T.workspaceTitle,
+    helper: T.workspaceHelper,
+    openAll: T.openAll,
+    closeAll: T.closeAll,
+    openCount: T.openCount,
+    show: T.showPanel,
+    hide: T.hidePanel,
+    dragHint: T.dragHint,
+    dragLabel: T.dragLabel,
+    moveUp: T.moveUp,
+    moveDown: T.moveDown,
+  };
   const [data, setData] = useState<DetailPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -369,21 +416,33 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
         <div className="tw-archive-access"><CheckCircle2 size={18}/><span>{T.archiveAccess}</span></div>
       )}
 
-      {data.has_access && (
-        <nav className="tw-workshop-nav" aria-label={T.navTitle}>
-          <header><span><ListChecks size={18}/></span><div><strong>{T.navTitle}</strong><small>{T.navSub}</small></div></header>
-          <div>
-            <a className="primary" href="#workshop-journey"><ListChecks size={18}/><span><strong>{T.journeyNav}</strong><small>{T.startHere}</small></span></a>
-            <a href="#workshop-videos"><PlayCircle size={18}/><span><strong>{T.videosNav}</strong></span></a>
-            <a href="#workshop-materials"><BookOpenCheck size={18}/><span><strong>{T.materialsNav}</strong></span></a>
-            <a href="#workshop-discussion"><MessageSquareText size={18}/><span><strong>{T.discussionNav}</strong></span></a>
-          </div>
-        </nav>
-      )}
-
-      <WorkshopJourney workshopId={id} hasAccess={data.has_access} lang={locale} refreshKey={messageVersion} />
-      <WorkshopVideoSection workshopId={id} hasAccess={data.has_access} lang={locale} />
-
+      <WorkshopPanelWorkspace
+        storageKey={`rowad-teacher-workshop-panels:${id}`}
+        copy={P}
+        panels={[
+          {
+            key: "journey" satisfies TeacherWorkshopPanelKey,
+            title: T.journeyNav,
+            description: T.journeyHelp,
+            icon: <ListChecks size={20}/>,
+            defaultOpen: true,
+            content: <WorkshopJourney workshopId={id} hasAccess={data.has_access} lang={locale} refreshKey={messageVersion} embedded />,
+          },
+          {
+            key: "videos" satisfies TeacherWorkshopPanelKey,
+            title: T.videosNav,
+            description: T.videosHelp,
+            icon: <Video size={20}/>,
+            content: <WorkshopVideoSection workshopId={id} hasAccess={data.has_access} lang={locale} />,
+          },
+          {
+            key: "materials" satisfies TeacherWorkshopPanelKey,
+            title: T.materials,
+            description: T.materialsSub,
+            meta: data.has_access ? `${workshop.materials.length} ${T.items}` : undefined,
+            icon: <FileText size={20}/>,
+            defaultOpen: true,
+            content: (
       <section id="workshop-materials" className="tw-section">
         <div className="tw-section-head">
           <div><h2>{T.materials}</h2><p>{T.materialsSub}</p></div>
@@ -436,8 +495,16 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
           </div>
         )}
       </section>
+            ),
+          },
 
-      {data.has_access && (
+          ...(data.has_access ? [{
+            key: "discussion" satisfies TeacherWorkshopPanelKey,
+            title: T.sharedNotes,
+            description: T.sharedNotesSub,
+            meta: `${workshop.messages.length} ${T.messages}`,
+            icon: <MessageSquareText size={20}/>,
+            content: (
         <section id="workshop-discussion" className="tw-section tw-discussion">
           <div className="tw-section-head">
             <div><h2>{T.sharedNotes}</h2><p>{T.sharedNotesSub}</p></div>
@@ -487,7 +554,10 @@ export default function TeacherWorkshopDetail({ params }: { params: Promise<{ id
             </div>
           )}
         </section>
-      )}
+            ),
+          }] : []),
+        ] satisfies WorkshopWorkspacePanel[]}
+      />
 
       <style>{styles}</style>
     </div>
@@ -521,4 +591,5 @@ const styles = `
 .tw-delivery{display:flex;align-items:center;gap:7px;width:max-content;max-width:100%;margin-top:10px;padding:7px 9px;border:1px solid rgba(217,201,176,.22);border-radius:10px;background:rgba(255,255,255,.06);color:#F7F3EB;font-size:10px}.tw-delivery.online{border-color:rgba(217,201,176,.3);background:rgba(107,30,45,.13)}.tw-delivery span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#D9C9B0}.tw-delivery a{display:inline-flex;align-items:center;gap:5px;margin-inline-start:5px;border-radius:7px;background:#F7F3EB;padding:5px 8px;color:#6B1E2D;text-decoration:none;font-weight:900}.tw-archive-access{display:flex;align-items:center;gap:9px;margin-top:14px;border:1px solid rgba(27,94,32,.2);border-radius:12px;background:#F7F3EB;padding:11px 13px;color:#1B5E20;font-size:11px;font-weight:800}
 .tw-workshop-nav{display:grid;grid-template-columns:minmax(190px,.7fr) minmax(0,2fr);align-items:center;gap:14px;margin-top:18px;padding:14px;border:1px solid rgba(107,30,45,.12);border-radius:18px;background:#FFFBF5;box-shadow:0 10px 30px rgba(107,30,45,.055)}.tw-workshop-nav>header{display:flex;align-items:center;gap:10px;padding-inline:3px}.tw-workshop-nav>header>span{width:40px;height:40px;display:grid;place-items:center;flex:none;border-radius:12px;background:#32101A;color:#D9C9B0}.tw-workshop-nav>header div{display:flex;min-width:0;flex-direction:column}.tw-workshop-nav>header strong{color:#32101A;font-size:12px;font-weight:900}.tw-workshop-nav>header small{color:#796A62;font-size:8.5px;line-height:1.65}.tw-workshop-nav>div{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.tw-workshop-nav a{display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:7px;min-height:50px;border:1px solid #E5E0D5;border-radius:12px;background:#F7F3EB;padding:8px;color:#6B1E2D;text-decoration:none;transition:transform .16s,border-color .16s,box-shadow .16s}.tw-workshop-nav a:hover{transform:translateY(-2px);border-color:#B8A082;box-shadow:0 7px 18px rgba(107,30,45,.07)}.tw-workshop-nav a.primary{border-color:rgba(107,30,45,.3);background:#6B1E2D;color:#fff}.tw-workshop-nav a>svg{justify-self:center}.tw-workshop-nav a>span{display:flex;min-width:0;flex-direction:column}.tw-workshop-nav a strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;font-weight:900}.tw-workshop-nav a small{color:#D9C9B0;font-size:7.5px;font-weight:800}.tw-section,.wvs-section,#workshop-discussion{scroll-margin-top:18px}
 .tw-detail{max-width:1240px;margin:0 auto;padding:8px 0 44px;font-family:'Cairo','Tajawal',sans-serif;color:#32101A}.tw-back{display:inline-flex;align-items:center;border:1px solid rgba(107,30,45,.12);border-radius:999px;background:#FFFBF5;color:#6B1E2D;padding:7px 12px;font-size:10px;font-weight:900;text-decoration:none;margin-bottom:12px}.tw-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding:28px;border-radius:8px;background:#32101A;color:#F7F3EB;border:1px solid rgba(217,201,176,.26);box-shadow:0 18px 44px rgba(107,30,45,.16)}.tw-badges{display:flex;gap:8px;flex-wrap:wrap}.tw-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid rgba(217,201,176,.26);font-size:10px;font-weight:800;color:#D9C9B0;background:rgba(255,255,255,.05)}.tw-badge.attended{color:#F7F3EB;border-color:rgba(27,94,32,.62);background:rgba(27,94,32,.34)}.tw-badge.pending{color:#D9C9B0}.tw-badge.closed{color:#D9C9B0}.tw-hero h1{margin:11px 0 5px;font-size:clamp(26px,3vw,34px);line-height:1.25;letter-spacing:0}.tw-hero-main>p{margin:0;max-width:760px;color:#D9C9B0;font-size:13px;line-height:1.8}.tw-date-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:13px;color:#D9C9B0;font-size:10px}.tw-summary{display:grid;grid-template-columns:repeat(3,84px);border:1px solid rgba(217,201,176,.18)}.tw-summary div{display:flex;min-height:78px;flex-direction:column;align-items:center;justify-content:center;padding:10px;border-inline-start:1px solid rgba(217,201,176,.18)}.tw-summary div:first-child{border-inline-start:0}.tw-summary strong{font-size:21px;color:#F7F3EB}.tw-summary span{font-size:8.5px;color:#D9C9B0;text-align:center}.tw-admin-note{display:grid;grid-template-columns:42px 1fr;gap:13px;padding:15px 17px;margin-top:14px;border-radius:14px;background:#F7F3EB;border:1px solid #D9C9B0;border-inline-start:4px solid #6B1E2D}.tw-admin-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:#6B1E2D;color:#F7F3EB}.tw-admin-label{font-size:10px;font-weight:900;color:#6B1E2D}.tw-admin-note p{margin:3px 0 0;white-space:pre-wrap;font-size:11.5px;line-height:1.75}.tw-section{margin-top:18px;padding-top:18px;border-top:1px solid #D9C9B0}.tw-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}.tw-section h2{font-size:19px;margin:0}.tw-section-head p{font-size:11px;color:#796A62;margin:3px 0 0}.tw-count{display:grid;place-items:center;min-width:30px;height:30px;border-radius:9px;background:#32101A;color:#D9C9B0;font-size:11px;font-weight:900}.tw-timeline{display:flex;overflow-x:auto;padding:4px 0 12px}.tw-day{position:relative;display:grid;grid-template-columns:30px 1fr;gap:9px;min-width:215px;padding:14px;background:#FFFBF5;border-top:3px solid #1B5E20;border-inline-end:1px solid #E5E0D5}.tw-day.rest{border-top-color:#8C8274;background:#EFEAE0}.tw-day-number{width:26px;height:26px;display:grid;place-items:center;background:#32101A;color:#D9C9B0;font-size:10px;font-weight:900}.tw-day time,.tw-day strong,.tw-day small{display:block}.tw-day time{font-size:10px;color:#796A62}.tw-day strong{margin-top:4px;font-size:12px}.tw-day small{margin-top:4px;font-size:10px;color:#655B53}.tw-day p{margin:5px 0 0;font-size:10px}.tw-locked,.tw-empty{min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;text-align:center;padding:24px;background:#F7F3EB;color:#796A62;border:1px dashed #D9C9B0}.tw-locked svg{color:#6B1E2D}.tw-locked strong{font-size:13px;color:#32101A}.tw-locked p{max-width:600px;margin:0;font-size:11px;line-height:1.8}.tw-locked-alt{color:#8C8274!important;font-size:10px!important}.tw-request-btn{display:inline-flex;align-items:center;gap:7px;border:0;background:#6B1E2D;color:#F7F3EB;padding:11px 18px;font:inherit;font-size:11px;font-weight:900;cursor:pointer;margin-top:4px}.tw-request-btn:hover{background:#4A0E1C}.tw-request-btn:disabled{opacity:.55;cursor:progress}.tw-request-err{color:#6B1E2D!important;font-size:10px!important}.tw-materials{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}.tw-material{display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-rows:auto auto;gap:0 12px;align-items:center;background:#FFFBF5;border:1px solid #E5E0D5;padding:10px;min-height:92px}.tw-material-preview{grid-row:1/3;width:64px;height:64px;display:grid;place-items:center;background:#EFEAE0;color:#6B1E2D;overflow:hidden}.tw-material-preview img{width:100%;height:100%;object-fit:cover}.tw-material-info{min-width:0}.tw-material-info strong,.tw-material-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tw-material-info strong{font-size:12px}.tw-material-info small{font-size:9px;color:#796A62;margin-top:2px}.tw-material-action{display:inline-flex;align-items:center;gap:5px;align-self:end;width:max-content;color:#6B1E2D;text-decoration:none;font-size:10px;font-weight:900}.tw-discussion{padding-bottom:10px}.tw-icon-button{width:32px;height:32px;display:grid;place-items:center;border:1px solid #D9C9B0;background:#FFFBF5;color:#6B1E2D;cursor:pointer}.tw-messages{display:flex;flex-direction:column;gap:8px;max-height:560px;overflow:auto;padding:1px}.tw-message{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:12px;background:#FFFBF5;border:1px solid #E5E0D5}.tw-message.admin{background:#F7F3EB;border-color:#D9C9B0;border-inline-start:3px solid #6B1E2D}.tw-message-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.tw-message-meta strong{font-size:11px}.tw-message-meta span{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;font-size:8px;font-weight:900;background:#EFEAE0;color:#655B53}.tw-message-meta .admin-role{background:#6B1E2D;color:#F7F3EB}.tw-message-meta time{margin-inline-start:auto;font-size:9px;color:#8C8274}.tw-message-body p{margin:5px 0 0;white-space:pre-wrap;font-size:12px;line-height:1.75;color:#32101A}.tw-composer{margin-top:12px;border:1px solid #D9C9B0;background:#FFFBF5;padding:10px}.tw-composer textarea{display:block;width:100%;resize:vertical;min-height:86px;border:0;outline:0;background:transparent;color:#32101A;font:inherit;font-size:12px;line-height:1.7}.tw-composer>div{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #E5E0D5;padding-top:9px}.tw-composer span{font-size:9px;color:#8C8274}.tw-composer button,.tw-state button{display:inline-flex;align-items:center;gap:6px;border:0;background:#6B1E2D;color:#F7F3EB;padding:9px 13px;font:inherit;font-size:10px;font-weight:900;cursor:pointer}.tw-composer button:disabled{opacity:.45;cursor:not-allowed}.tw-error{margin:8px 0 0!important;color:#6B1E2D;font-size:10px!important}.tw-state{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}.tw-state p{color:#6B1E2D}.tw-state button{font-size:12px}@media(max-width:900px){.tw-workshop-nav{grid-template-columns:1fr}.tw-workshop-nav>div{grid-template-columns:repeat(2,1fr)}}@media(max-width:800px){.tw-detail{padding-inline:2px}.tw-hero{grid-template-columns:1fr;padding:22px;gap:20px}.tw-hero h1{font-size:25px}.tw-summary{grid-template-columns:repeat(3,1fr);width:100%}.tw-summary div{min-height:68px}.tw-admin-note{padding:15px}.tw-materials{grid-template-columns:1fr}}@media(max-width:440px){.tw-hero{padding:18px}.tw-summary span{font-size:8px}.tw-section h2{font-size:17px}.tw-workshop-nav{padding:11px}.tw-workshop-nav>header small{font-size:8px}.tw-workshop-nav>div{grid-template-columns:1fr 1fr}.tw-workshop-nav a{grid-template-columns:28px minmax(0,1fr);min-height:46px;padding:7px}.tw-workshop-nav a strong{font-size:8px}.tw-message{grid-template-columns:34px 1fr;padding:10px}.tw-message-meta time{width:100%;margin-inline-start:0}.tw-material{grid-template-columns:54px minmax(0,1fr)}.tw-material-preview{width:54px;height:54px}}
+.tw-detail .wsp-workspace{margin-top:18px}.tw-detail .wsp-panel-body>.tw-section,.tw-detail .wsp-panel-body>.wvs-section{margin:0;padding:20px;border:0;border-radius:0;background:#FFFBF5;box-shadow:none}.tw-detail .wsp-panel-body>.supervisor-journey{margin:0;border:0;border-radius:0;box-shadow:none}
 `;

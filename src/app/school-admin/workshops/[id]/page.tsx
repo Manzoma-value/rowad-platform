@@ -10,7 +10,8 @@ import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
 import { ProfileAvatar } from "@/components/hub/ProfileAvatar";
-import { CheckCircle2, ChevronDown, ChevronsDown, ChevronsUp, Download, ExternalLink, Eye, FileText, Image as ImageIcon, LayoutPanelTop, Link2, MapPin, MessageSquareText, MonitorPlay, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
+import { WorkshopPanelWorkspace, type WorkshopWorkspacePanel } from "@/components/workshops/WorkshopPanelWorkspace";
+import { CheckCircle2, Download, ExternalLink, Eye, FileText, Image as ImageIcon, Link2, MapPin, MessageSquareText, MonitorPlay, Pencil, Plus, Radio, Save, Send, ShieldCheck, Trash2, Upload, UserCheck, UserPlus, Video, X } from "lucide-react";
 import { makeWorkshopDays, type WorkshopDay, type WorkshopMaterial } from "@/lib/workshops";
 import { VideoManager } from "../components/VideoManager";
 import { WorkshopJourneyManager } from "../components/WorkshopJourneyManager";
@@ -101,15 +102,6 @@ type AttendanceCode = {
 };
 
 type WorkshopPanelKey = "materials" | "videos" | "journey" | "discussion" | "codes" | "attendance";
-
-const DEFAULT_PANEL_VISIBILITY: Record<WorkshopPanelKey, boolean> = {
-  materials: true,
-  videos: false,
-  journey: false,
-  discussion: false,
-  codes: false,
-  attendance: true,
-};
 
 function isPdfMaterial(material: WorkshopMaterial) {
   return material.mime?.toLowerCase() === "application/pdf" || material.title.toLowerCase().endsWith(".pdf") || material.url.toLowerCase().split(/[?#]/)[0].endsWith(".pdf");
@@ -311,6 +303,10 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     openCount: "أقسام ظاهرة",
     show: "إظهار القسم",
     hide: "إخفاء القسم",
+    dragHint: "اسحب أي قسم لترتيبه، أو استخدم أسهم النقل.",
+    dragLabel: "اسحب لتغيير ترتيب القسم",
+    moveUp: "نقل القسم إلى أعلى",
+    moveDown: "نقل القسم إلى أسفل",
     materials: "المواد والمحتوى",
     materialsHelp: "الملفات والروابط ورسالة الإدارة المثبتة.",
     videos: "الفيديوهات والأسئلة",
@@ -336,6 +332,10 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     openCount: "seksione të hapura",
     show: "Shfaq seksionin",
     hide: "Fshih seksionin",
+    dragHint: "Tërhiq seksionet për t'i renditur, ose përdor shigjetat.",
+    dragLabel: "Tërhiq për të ndryshuar rendin",
+    moveUp: "Zhvendose seksionin lart",
+    moveDown: "Zhvendose seksionin poshtë",
     materials: "Materialet dhe përmbajtja",
     materialsHelp: "Skedarët, lidhjet dhe mesazhi i fiksuar i administratës.",
     videos: "Videot dhe pyetjet",
@@ -385,8 +385,6 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const [operationError, setOperationError] = useState("");
   const [editingBasics, setEditingBasics] = useState(false);
   const [savingBasics, setSavingBasics] = useState(false);
-  const [panelVisibility, setPanelVisibility] = useState<Record<WorkshopPanelKey, boolean>>(DEFAULT_PANEL_VISIBILITY);
-  const [panelPreferencesReady, setPanelPreferencesReady] = useState(false);
   const [basicsForm, setBasicsForm] = useState({
     title: "",
     description: "",
@@ -419,55 +417,12 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
 
   useEffect(() => { void loadAll(); }, [loadAll]);
 
-  useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(`rowad-workshop-panels:${id}`);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<Record<WorkshopPanelKey, boolean>>;
-        setPanelVisibility((current) => ({ ...current, ...parsed }));
-      }
-    } catch {
-      // A blocked storage API should not prevent the workshop from loading.
-    } finally {
-      setPanelPreferencesReady(true);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (!panelPreferencesReady) return;
-    try {
-      window.localStorage.setItem(`rowad-workshop-panels:${id}`, JSON.stringify(panelVisibility));
-    } catch {
-      // Panel controls still work for the current visit when storage is unavailable.
-    }
-  }, [id, panelPreferencesReady, panelVisibility]);
-
   const summary = useMemo(() => {
     const teachers = attendance?.teachers ?? [];
     const days = attendance?.days ?? [];
     const presentCells = teachers.reduce((sum, t) => sum + t.total_present, 0);
     return { teachers: teachers.length, days: days.length, presentCells };
   }, [attendance]);
-
-  const openPanelCount = useMemo(
-    () => Object.values(panelVisibility).filter(Boolean).length,
-    [panelVisibility],
-  );
-
-  function togglePanel(panel: WorkshopPanelKey) {
-    setPanelVisibility((current) => ({ ...current, [panel]: !current[panel] }));
-  }
-
-  function setAllPanels(open: boolean) {
-    setPanelVisibility({
-      materials: open,
-      videos: open,
-      journey: open,
-      discussion: open,
-      codes: open,
-      attendance: open,
-    });
-  }
 
   const visibleRoster = useMemo(() => {
     const query = rosterQuery.trim().toLowerCase();
@@ -858,23 +813,18 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         <div><span>{T.present}</span><strong>{summary.presentCells}</strong></div>
       </section>
 
-      <section className="wd-workspace-head">
-        <div className="wd-workspace-icon"><LayoutPanelTop size={22}/></div>
-        <div>
-          <span>{P.eyebrow}</span>
-          <h2>{P.title}</h2>
-          <p>{P.helper}</p>
-        </div>
-        <strong>{openPanelCount} / 6 {P.openCount}</strong>
-        <div className="wd-workspace-actions">
-          <button type="button" onClick={() => setAllPanels(true)}><ChevronsDown size={15}/>{P.openAll}</button>
-          <button type="button" onClick={() => setAllPanels(false)}><ChevronsUp size={15}/>{P.closeAll}</button>
-        </div>
-      </section>
-
-      <WorkshopPanel index="01" title={P.materials} description={P.materialsHelp}
-        meta={`${detail.workshop.materials.length} ${P.items}`} icon={<FileText size={20}/>} open={panelVisibility.materials}
-        onToggle={() => togglePanel("materials")} showLabel={P.show} hideLabel={P.hide}>
+      <WorkshopPanelWorkspace
+        storageKey={`rowad-workshop-panels:${id}`}
+        copy={P}
+        panels={[
+          {
+            key: "materials" satisfies WorkshopPanelKey,
+            title: P.materials,
+            description: P.materialsHelp,
+            meta: `${detail.workshop.materials.length} ${P.items}`,
+            icon: <FileText size={20}/>,
+            defaultOpen: true,
+            content: (
       <section className="wd-panel-content wd-materials">
         <style>{`.wd-materials .wd-link-form{grid-template-columns:110px 1fr 1.5fr auto}@media(max-width:720px){.wd-materials .wd-link-form{grid-template-columns:1fr}}`}</style>
         <div className="wd-table-head"><div><h2>{T.content}</h2><p>{T.contentHelp}</p></div>{!viewOnly&&<div className="wd-content-actions"><label className="wd-small-btn"><Upload size={14}/>{uploading?T.saving:T.addFile}<input hidden type="file" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx" onChange={e=>e.target.files?.[0]&&void uploadMaterial(e.target.files[0])}/></label><button className="wd-small-btn ghost" onClick={()=>setShowLink(v=>!v)}><Plus size={14}/>{T.addLink}</button></div>}</div>
@@ -883,21 +833,32 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=>{const viewers=detail.workshop.material_views.filter(view=>view.material_id===m.id);return <div className={`wd-material${isPdfMaterial(m)?" pdf":""}`} key={m.id}>{m.type==="IMAGE"?<ImageIcon/>:m.type==="VIDEO"?<Video/>:m.type==="LINK"?<Link2/>:<FileText/>}<div><strong>{m.title}</strong><small>{m.mime || m.type}</small></div><a href={m.url} target="_blank" rel="noreferrer" aria-label={m.title}><ExternalLink size={17}/></a>{!viewOnly&&<button onClick={()=>void removeMaterial(m.id)} aria-label={T.remove}><Trash2 size={16}/></button>}{isPdfMaterial(m)&&<div className="wd-pdf-insight"><div><Eye size={15}/><strong>{viewers.length}</strong><span>{L==="ar"?"مشرفون فتحوا الملف":"edukatorë e hapën"}</span></div>{viewers.length===0?<small>{L==="ar"?"لم يفتح هذا الملف أحد بعد":"Askush nuk e ka hapur ende"}</small>:<div className="wd-pdf-viewers">{viewers.map(view=><span key={view.teacher.id} title={`${view.open_count} × · ${fmtTime(view.last_opened_at)}`}><b>{view.teacher.profile.full_name}</b><small>{view.open_count}× · {fmtDate(view.last_opened_at)}</small></span>)}</div>}</div>}</div>})}</div>}
         {detail.workshop.notes&&<div className="wd-notes"><b>{T.notes}</b><p>{detail.workshop.notes}</p></div>}
       </section>
-      </WorkshopPanel>
+            ),
+          },
 
-      <WorkshopPanel index="02" title={P.videos} description={P.videosHelp} icon={<Video size={20}/>} open={panelVisibility.videos}
-        onToggle={() => togglePanel("videos")} showLabel={P.show} hideLabel={P.hide}>
-        <VideoManager workshopId={id} viewOnly={viewOnly} lang={L} />
-      </WorkshopPanel>
+          {
+            key: "videos" satisfies WorkshopPanelKey,
+            title: P.videos,
+            description: P.videosHelp,
+            icon: <Video size={20}/>,
+            content: <VideoManager workshopId={id} viewOnly={viewOnly} lang={L} />,
+          },
 
-      <WorkshopPanel index="03" title={P.journey} description={P.journeyHelp} icon={<CheckCircle2 size={20}/>} open={panelVisibility.journey}
-        onToggle={() => togglePanel("journey")} showLabel={P.show} hideLabel={P.hide}>
-        <WorkshopJourneyManager workshopId={id} viewOnly={viewOnly} lang={L} />
-      </WorkshopPanel>
+          {
+            key: "journey" satisfies WorkshopPanelKey,
+            title: P.journey,
+            description: P.journeyHelp,
+            icon: <CheckCircle2 size={20}/>,
+            content: <WorkshopJourneyManager workshopId={id} viewOnly={viewOnly} lang={L} />,
+          },
 
-      <WorkshopPanel index="04" title={P.discussion} description={P.discussionHelp}
-        meta={`${detail.workshop.messages.length} ${P.messages}`} icon={<MessageSquareText size={20}/>} open={panelVisibility.discussion}
-        onToggle={() => togglePanel("discussion")} showLabel={P.show} hideLabel={P.hide}>
+          {
+            key: "discussion" satisfies WorkshopPanelKey,
+            title: P.discussion,
+            description: P.discussionHelp,
+            meta: `${detail.workshop.messages.length} ${P.messages}`,
+            icon: <MessageSquareText size={20}/>,
+            content: (
       <section className="wd-panel-content wd-discussion">
         <div className="wd-table-head"><div><h2>{T.discussion}</h2><p>{T.discussionHelp}</p></div><MessageSquareText size={20}/></div>
         <div className="wd-messages">
@@ -908,10 +869,16 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         </div>
         {!viewOnly&&<div className="wd-composer"><textarea rows={3} maxLength={1500} placeholder={T.messagePlaceholder} value={messageDraft} onChange={e=>setMessageDraft(e.target.value)}/><div><span>{messageDraft.length}/1500</span><button className="wd-small-btn" onClick={()=>void publishMessage()} disabled={!messageDraft.trim()||sendingMessage}><Send size={14}/>{sendingMessage?T.publishing:T.publish}</button></div>{messageError&&<p className="wd-message-error">{messageError}</p>}</div>}
       </section>
-      </WorkshopPanel>
+            ),
+          },
 
-      <WorkshopPanel index="05" title={P.codes} description={P.codesHelp} meta={P.twoCodes} icon={<Link2 size={20}/>} open={panelVisibility.codes}
-        onToggle={() => togglePanel("codes")} showLabel={P.show} hideLabel={P.hide}>
+          {
+            key: "codes" satisfies WorkshopPanelKey,
+            title: P.codes,
+            description: P.codesHelp,
+            meta: P.twoCodes,
+            icon: <Link2 size={20}/>,
+            content: (
       <section className="wd-qr-grid wd-panel-content">
         <QrPanel
           title={T.signupQr}
@@ -947,11 +914,17 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           )}
         </div>
       </section>
-      </WorkshopPanel>
+            ),
+          },
 
-      <WorkshopPanel index="06" title={P.attendance} description={P.attendanceHelp}
-        meta={`${summary.teachers} ${P.people}`} icon={<UserCheck size={20}/>} open={panelVisibility.attendance}
-        onToggle={() => togglePanel("attendance")} showLabel={P.show} hideLabel={P.hide}>
+          {
+            key: "attendance" satisfies WorkshopPanelKey,
+            title: P.attendance,
+            description: P.attendanceHelp,
+            meta: `${summary.teachers} ${P.people}`,
+            icon: <UserCheck size={20}/>,
+            defaultOpen: true,
+            content: (
       <section className="wd-panel-content wd-attendance-card">
         <div className="wd-table-head">
           <div>
@@ -1016,7 +989,10 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
           </div>
         )}
       </section>
-      </WorkshopPanel>
+            ),
+          },
+        ] satisfies WorkshopWorkspacePanel[]}
+      />
 
       {participantsOpen && (
         <ParticipantManagerModal
@@ -1055,55 +1031,6 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
 
       <style>{styles}</style>
     </div>
-  );
-}
-
-function WorkshopPanel({
-  index,
-  title,
-  description,
-  meta,
-  icon,
-  open,
-  onToggle,
-  showLabel,
-  hideLabel,
-  children,
-}: {
-  index: string;
-  title: string;
-  description: string;
-  meta?: string;
-  icon: React.ReactNode;
-  open: boolean;
-  onToggle: () => void;
-  showLabel: string;
-  hideLabel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={`wd-fold-panel${open ? " is-open" : ""}`}>
-      <button
-        type="button"
-        className="wd-fold-trigger"
-        onClick={onToggle}
-        aria-expanded={open}
-        title={open ? hideLabel : showLabel}
-      >
-        <span className="wd-fold-index">{index}</span>
-        <span className="wd-fold-icon">{icon}</span>
-        <span className="wd-fold-copy">
-          <strong>{title}</strong>
-          <small>{description}</small>
-        </span>
-        {meta && <span className="wd-fold-meta">{meta}</span>}
-        <span className="wd-fold-action">
-          <b>{open ? hideLabel : showLabel}</b>
-          <ChevronDown size={18}/>
-        </span>
-      </button>
-      <div className="wd-fold-body" hidden={!open}>{children}</div>
-    </section>
   );
 }
 
