@@ -1,8 +1,8 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useConfirm } from "@/lib/confirm-dialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -298,6 +298,16 @@ function StudentCard({
             </div>
           )}
         </div>
+
+        <Link
+          href={`/school-admin/students/${student.id}`}
+          className="sc-profile-link"
+          onClick={(event) => event.stopPropagation()}
+          title="عرض الملف والطيف"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+          <span>الملف والطيف</span>
+        </Link>
 
         {/* Activate / Deactivate toggle */}
         <button
@@ -736,7 +746,7 @@ const css = `
 .sp-empty svg{color:rgba(184,160,130,0.35)}
 
 /* Grid */
-.sp-grid{display:flex;flex-direction:column;gap:10px}
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:12px;align-items:start}
 
 /* ── Student Card ── */
 .sc-card{
@@ -749,6 +759,7 @@ const css = `
 }
 .sc-card:hover{border-color:rgba(184,160,130,0.3);box-shadow:0 4px 20px rgba(26,26,26,0.06)}
 .sc-card--open{border-color:rgba(184,160,130,0.35);box-shadow:0 6px 28px rgba(26,26,26,0.08)}
+.sc-profile-link{display:flex;align-items:center;gap:5px;flex:none;border:1px solid rgba(184,160,130,.28);border-radius:9px;background:#F7F3EB;padding:7px 9px;color:#6B1E2D;font-size:10px;font-weight:800;text-decoration:none}.sc-profile-link:hover{border-color:#B8A082;background:#EFEAE0}
 
 .sc-top{
   display:flex;align-items:flex-start;gap:14px;
@@ -845,6 +856,7 @@ const css = `
 .sc-spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(184,160,130,0.2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite}
 
 @media(max-width:700px){
+  .sp-grid{grid-template-columns:1fr}
   .sc-top{flex-wrap:wrap; gap:10px}
   .sc-right{flex-direction:row; align-items:center; flex-wrap:wrap}
   .sc-name{font-size:14px}
@@ -853,6 +865,7 @@ const css = `
   .sc-card{padding:14px}
   .sc-status{font-size:9.5px}
   .sc-select{font-size:12.5px; max-width:100%}
+  .sc-profile-link span{display:none}
 }
 @media(max-width:420px){
   .sc-card{padding:12px}

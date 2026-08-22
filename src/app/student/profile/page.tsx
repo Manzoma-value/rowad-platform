@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/language-context";
+import StudentSpectrumCard from "@/components/StudentSpectrumCard";
 
 interface ProfileData {
   id: string;
@@ -676,6 +676,10 @@ export default function StudentProfilePage() {
         </div>
       </div>
 
+      <div className="pf-spectrum-section">
+        <StudentSpectrumCard endpoint="/api/student/traits" />
+      </div>
+
       <style>{styles}</style>
     </div>
   );
@@ -701,6 +705,7 @@ const styles = `
 }
 
 .pf-root{min-height:100vh;padding:36px 40px 80px;font-family:var(--font);animation:fadeUp 0.35s cubic-bezier(0.22,1,0.36,1)}
+.pf-spectrum-section{margin-top:24px}
 
 /* Head */
 .pf-head{margin-bottom:36px}

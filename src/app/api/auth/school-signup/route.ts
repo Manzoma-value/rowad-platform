@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requestOrigin } from "@/lib/request-origin";
 import { resolveLandingFlow } from "@/lib/landing-flow";
 import { findValidClassInvite } from "@/lib/class-invites";
+import { notifyProfiles } from "@/lib/notifications";
 import { z } from "zod";
 
 const SchoolSignupSchema = z.object({
@@ -70,15 +71,19 @@ export async function POST(req: Request) {
 
     let userId: string;
 
-    if (role === "TEACHER") {
-      // Teacher rollout days can produce dozens of signups at once. Creating
-      // confirmed accounts avoids SMTP confirmation throttles and lets each
-      // teacher continue directly to the application form.
+    if (role === "TEACHER" || classInvite) {
+      // Teacher rollouts and teacher-issued student links must work without an
+      // email-confirmation detour. The service account confirms only these
+      // tightly scoped flows; ordinary student registration is unchanged.
       const created = await adminSupabase().auth.admin.createUser({
         email,
         password,
         email_confirm: true,
-        user_metadata: { full_name, role, source: "teacher_landing" },
+        user_metadata: {
+          full_name,
+          role,
+          source: classInvite ? "class_invite" : "teacher_landing",
+        },
       });
       if (created.error || !created.data.user) {
         const message = created.error?.message ?? "signup_failed";
@@ -118,6 +123,7 @@ export async function POST(req: Request) {
       userId = authData.user.id;
     }
 
+    let classJoinRequestId: string | null = null;
     try {
       await prisma.$transaction(async (tx) => {
         if (classInvite) {
@@ -152,24 +158,38 @@ export async function POST(req: Request) {
             },
           });
         } else {
-          await tx.student.upsert({
+          const student = await tx.student.upsert({
             where: { profile_id: userId },
             update: classInvite ? {
               school_id: school.id,
-              class_id: classInvite.class_id,
+              class_id: null,
               city: city!,
               age: age!,
-              onboarding_status: "CLASS_ASSIGNED",
+              onboarding_status: "SCHOOL_PLACEMENT_SUBMITTED",
             } : {},
             create: {
               profile_id: userId,
               school_id: school.id,
-              class_id: classInvite?.class_id,
+              class_id: null,
               city: city!,
               age: age!,
-              onboarding_status: classInvite ? "CLASS_ASSIGNED" : "SCHOOL_ASSIGNED",
+              onboarding_status: classInvite ? "SCHOOL_PLACEMENT_SUBMITTED" : "SCHOOL_ASSIGNED",
             },
           });
+
+          if (classInvite) {
+            const request = await tx.classJoinRequest.create({
+              data: {
+                invite_id: classInvite.id,
+                class_id: classInvite.class_id,
+                school_id: school.id,
+                teacher_id: classInvite.teacher_id,
+                student_id: student.id,
+              },
+              select: { id: true },
+            });
+            classJoinRequestId = request.id;
+          }
         }
       });
     } catch (error) {
@@ -177,7 +197,27 @@ export async function POST(req: Request) {
       throw error;
     }
 
-    return NextResponse.json({ success: true, emailConfirmationRequired: role === "STUDENT", role });
+    if (classInvite && classJoinRequestId) {
+      await notifyProfiles([classInvite.teacher.profile.id], {
+        actor_id: userId,
+        type: "SYSTEM",
+        title_ar: "طلب انضمام جديد إلى المجموعة",
+        title_sq: "Kërkesë e re për t'u bashkuar me grupin",
+        title_en: "New class join request",
+        body_ar: `${full_name} أنشأ حسابه عبر رابط مجموعة «${classInvite.class.name}» وينتظر موافقتك.`,
+        body_sq: `${full_name} u regjistrua përmes lidhjes së grupit “${classInvite.class.name}” dhe pret miratimin tënd.`,
+        body_en: `${full_name} signed up through the “${classInvite.class.name}” class link and is waiting for your approval.`,
+        href: "/teacher/classes",
+        event_key: `class-join-request:${classJoinRequestId}`,
+      }).catch((error) => console.error("Class join notification failed:", error));
+    }
+
+    return NextResponse.json({
+      success: true,
+      emailConfirmationRequired: role === "STUDENT" && !classInvite,
+      role,
+      next: classInvite ? "/student/waiting-class" : role === "TEACHER" ? "/teacher/application" : undefined,
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Platform signup error:", message);

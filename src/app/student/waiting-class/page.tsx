@@ -20,6 +20,13 @@ const S = {
     step3Title: "تعيين المجموعة الدراسي",
     step3Sub: "قيد الانتظار...",
     note: "سيتم إخطارك فور تعيينك في مجموعةك الدراسي. لا حاجة لفعل أي شيء الآن.",
+    inviteLabel: "طلب الانضمام",
+    inviteTitle: "طلبك وصل إلى المشرف",
+    inviteDesc: (name: string, group: string, teacher: string) => `${name ? `مرحباً ${name}، ` : ""}تم إنشاء حسابك فوراً دون انتظار بريد تأكيد. طلب الانضمام إلى مجموعة «${group}» الآن لدى ${teacher} للمراجعة.`,
+    inviteStep1: "إنشاء الحساب",
+    inviteStep2: "إرسال طلب الانضمام",
+    inviteStep3: "موافقة المشرف",
+    inviteNote: "يمكنك إبقاء هذه الصفحة مفتوحة؛ ستنتقل تلقائياً بمجرد موافقة المشرف.",
   },
   sq: {
     headerLabel: "Caktimi i platformës",
@@ -32,6 +39,13 @@ const S = {
     step3Title: "Caktimi i grupit",
     step3Sub: "Duke pritur...",
     note: "Do të njoftoheni menjëherë sapo të caktoheni në grupin tuaj. Nuk keni nevojë të bëni asgjë tani.",
+    inviteLabel: "Kërkesa e anëtarësimit",
+    inviteTitle: "Kërkesa iu dërgua edukatorit",
+    inviteDesc: (name: string, group: string, teacher: string) => `${name ? `Mirë se erdhe ${name}, ` : ""}llogaria u krijua menjëherë pa konfirmim me email. Kërkesa për grupin “${group}” po shqyrtohet nga ${teacher}.`,
+    inviteStep1: "Llogaria u krijua",
+    inviteStep2: "Kërkesa u dërgua",
+    inviteStep3: "Miratimi i edukatorit",
+    inviteNote: "Mund ta lini këtë faqe hapur; do të vazhdojë automatikisht sapo edukatori ta miratojë.",
   },
 } as const;
 
@@ -43,6 +57,7 @@ export default function StudentWaitingClassPage() {
   const [studentName, setStudentName] = useState("");
   const [schoolName, setSchoolName] = useState("");
   const [schoolNameAlt, setSchoolNameAlt] = useState<string | null>(null);
+  const [joinRequest, setJoinRequest] = useState<{ status: string; class: { name: string }; teacher: { profile: { full_name: string } } } | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -57,6 +72,7 @@ export default function StudentWaitingClassPage() {
         if (d.profile?.full_name) setStudentName(d.profile.full_name);
         if (d.school?.name) setSchoolName(d.school.name);
         setSchoolNameAlt(d.school?.name_alt ?? null);
+        setJoinRequest(d.class_join_request ?? null);
         // 🔑 If the admin has approved + assigned a class, the student's
         // onboarding_status flips to CLASS_ASSIGNED — navigate them out.
         if (d.onboarding_status === TARGET_STATUS) {
@@ -92,6 +108,9 @@ export default function StudentWaitingClassPage() {
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
+  const waitingForTeacher = joinRequest?.status === "PENDING";
+  const groupName = joinRequest?.class.name ?? "";
+  const teacherName = joinRequest?.teacher.profile.full_name ?? "";
 
   return (
     <div className="shell" dir={dir}>
@@ -112,15 +131,15 @@ export default function StudentWaitingClassPage() {
             </svg>
           </div>
           <div>
-            <div className="header-label">{T.headerLabel}</div>
-            <div className="header-title">{T.headerTitle}</div>
+            <div className="header-label">{waitingForTeacher ? T.inviteLabel : T.headerLabel}</div>
+            <div className="header-title">{waitingForTeacher ? T.inviteTitle : T.headerTitle}</div>
             {schoolName && <div className="school-pill">{lang !== "ar" && schoolNameAlt && schoolNameAlt.trim() ? schoolNameAlt : schoolName}</div>}
           </div>
         </div>
 
         {/* Body */}
         <div className="card-body">
-          <p className="desc-text">{T.desc(studentName)}</p>
+          <p className="desc-text">{waitingForTeacher ? T.inviteDesc(studentName, groupName, teacherName) : T.desc(studentName)}</p>
 
           <div className="steps-box">
             <div className="step">
@@ -129,7 +148,7 @@ export default function StudentWaitingClassPage() {
                 <div className="step-line line-done" />
               </div>
               <div className="step-text">
-                <div className="step-title">{T.step1Title}</div>
+                <div className="step-title">{waitingForTeacher ? T.inviteStep1 : T.step1Title}</div>
                 <div className="step-sub sub-done">{T.step1Sub}</div>
               </div>
             </div>
@@ -139,7 +158,7 @@ export default function StudentWaitingClassPage() {
                 <div className="step-line line-done" />
               </div>
               <div className="step-text">
-                <div className="step-title">{T.step2Title}</div>
+                <div className="step-title">{waitingForTeacher ? T.inviteStep2 : T.step2Title}</div>
                 <div className="step-sub sub-done">{T.step2Sub}</div>
               </div>
             </div>
@@ -150,7 +169,7 @@ export default function StudentWaitingClassPage() {
                 </div>
               </div>
               <div className="step-text">
-                <div className="step-title">{T.step3Title}</div>
+                <div className="step-title">{waitingForTeacher ? T.inviteStep3 : T.step3Title}</div>
                 <div className="step-sub sub-active">{T.step3Sub}</div>
               </div>
             </div>
@@ -163,7 +182,7 @@ export default function StudentWaitingClassPage() {
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v4m0 4h.01" />
             </svg>
-            {T.note}
+            {waitingForTeacher ? T.inviteNote : T.note}
           </div>
         </div>
       </div>

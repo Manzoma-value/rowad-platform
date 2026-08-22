@@ -37,6 +37,24 @@ export async function GET() {
           id: true,
           name: true,
           invite: { select: { token: true, is_active: true, use_count: true, updated_at: true } },
+          join_requests: {
+            orderBy: { created_at: "desc" },
+            take: 100,
+            select: {
+              id: true,
+              status: true,
+              created_at: true,
+              decided_at: true,
+              student: {
+                select: {
+                  id: true,
+                  city: true,
+                  age: true,
+                  profile: { select: { full_name: true, avatar_url: true } },
+                },
+              },
+            },
+          },
           students: {
             orderBy: { profile: { full_name: "asc" } },
             select: { id: true, profile: { select: { full_name: true } } },

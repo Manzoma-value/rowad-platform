@@ -15,7 +15,7 @@ export async function findValidClassInvite(token: string, schoolSlug?: string) {
       expires_at: true,
       class: { select: { id: true, name: true, teacher_id: true } },
       school: { select: { id: true, name: true, name_alt: true, slug: true, language: true, is_active: true } },
-      teacher: { select: { id: true, profile: { select: { full_name: true } } } },
+      teacher: { select: { id: true, profile: { select: { id: true, full_name: true } } } },
     },
   });
 

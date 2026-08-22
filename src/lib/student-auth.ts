@@ -9,7 +9,7 @@ export async function requireStudent() {
 
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
-    select: { id: true, role: true, is_active: true },
+    select: { id: true, role: true, is_active: true, full_name: true, avatar_url: true },
   });
   if (!profile) return null;
   if (profile.role !== "STUDENT") return null;

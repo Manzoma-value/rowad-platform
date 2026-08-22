@@ -54,6 +54,8 @@ export interface LessonFull {
   description: string | null;
   is_published: boolean;
   is_graded: boolean;
+  review_status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+  reviewer_notes: string | null;
   linked_quiz_id: string | null;
   class_id: string;
   class: ClassRef;

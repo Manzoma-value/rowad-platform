@@ -28,6 +28,16 @@ export async function GET() {
           },
         },
       },
+      class_join_requests: {
+        orderBy: { created_at: "desc" },
+        take: 1,
+        select: {
+          status: true,
+          created_at: true,
+          class: { select: { id: true, name: true } },
+          teacher: { select: { profile: { select: { full_name: true } } } },
+        },
+      },
     },
   });
 
@@ -60,6 +70,7 @@ export async function GET() {
     profile: student.profile,
     school: student.school,
     class: student.class,
+    class_join_request: student.class_join_requests[0] ?? null,
     onboarding_status: status,
   });
 }

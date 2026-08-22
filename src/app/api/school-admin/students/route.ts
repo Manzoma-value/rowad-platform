@@ -11,20 +11,24 @@ function scoreToPct(score: number, total: number): number {
   return Math.round((score / total) * 100);
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const auth = await requireSchoolAdmin();
   if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const requestedStudentId = new URL(req.url).searchParams.get("id")?.trim() || undefined;
 
   // Fetch students + roadmap in parallel
   const [students, roadmap] = await Promise.all([
     prisma.student.findMany({
-      where: { school_id: auth.school.id },
+      where: { school_id: auth.school.id, ...(requestedStudentId ? { id: requestedStudentId } : {}) },
       orderBy: { created_at: "desc" },
       select: {
         id: true,
         onboarding_status: true,
         created_at: true,
-        profile: { select: { full_name: true, avatar_url: true, is_active: true } },
+        city: true,
+        age: true,
+        profile: { select: { full_name: true, email: true, avatar_url: true, is_active: true } },
         class: { select: { id: true, name: true } },
         moduleAttempts: {
           orderBy: { created_at: "desc" },
@@ -146,6 +150,8 @@ export async function GET() {
       id: s.id,
       onboarding_status: s.onboarding_status,
       created_at: s.created_at,
+      city: s.city,
+      age: s.age,
       profile: s.profile,
       class: s.class,
       attempts_count: uniqueAttempts.length,

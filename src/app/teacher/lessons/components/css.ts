@@ -171,7 +171,17 @@ export const css = `
 }
 .lb-status-pill.draft  { background: rgba(255,255,255,0.04); color: #B8A082; border-color: rgba(184,160,130,0.25); }
 .lb-status-pill.live   { background: rgba(27,94,32,0.18); color: #1B5E20; border-color: rgba(27,94,32,0.4); }
+.lb-status-pill.pending_review { background: rgba(184,160,130,.16); color: #D9C9B0; border-color: rgba(217,201,176,.32); }
+.lb-status-pill.approved { background: rgba(27,94,32,.16); color: #1B5E20; border-color: rgba(27,94,32,.35); }
+.lb-status-pill.rejected { background: rgba(107,30,45,.14); color: #D9C9B0; border-color: rgba(217,201,176,.28); }
 .lb-status-pill svg    { width: 9px; height: 9px; }
+
+/* Readiness path keeps the teacher oriented and makes review submission local. */
+.lb-readiness{display:grid;grid-template-columns:minmax(230px,.8fr) minmax(300px,1.2fr) auto;gap:14px;align-items:center;border:1px solid #D9C9B0;border-radius:18px;background:linear-gradient(135deg,#FFFBF5,#F7F3EB);padding:15px 17px;box-shadow:0 8px 24px rgba(107,30,45,.06)}
+.lb-readiness-copy{display:flex;align-items:center;gap:10px}.lb-readiness-copy>span{display:grid;width:39px;height:39px;flex:none;place-items:center;border-radius:11px;background:#32101A;color:#D9C9B0}.lb-readiness-copy h2{margin:0;color:#32101A;font-size:14px;font-weight:900}.lb-readiness-copy p{margin:3px 0 0;color:#655B53;font-size:9.5px;line-height:1.6}
+.lb-readiness-list{display:flex;flex-direction:column;gap:5px}.lb-readiness-list>div{display:grid;grid-template-columns:23px minmax(0,1fr) auto;align-items:center;gap:7px;border:1px solid #E5E0D5;border-radius:9px;background:#fff;padding:6px 8px}.lb-readiness-list b{display:grid;width:23px;height:23px;place-items:center;border-radius:7px;background:#EFEAE0;color:#655B53;font-size:9px}.lb-readiness-list span{color:#32101A;font-size:9.5px;font-weight:800}.lb-readiness-list em{font-size:8px;font-style:normal;font-weight:900}.lb-readiness-list .done em{color:#1B5E20}.lb-readiness-list .missing em{color:#6B1E2D}
+.lb-submit-review{min-height:43px;border:0;border-radius:11px;background:#6B1E2D;padding:10px 15px;color:#fff;font:800 11px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}.lb-submit-review:disabled{opacity:.42;cursor:not-allowed}.lb-review-note{grid-column:1/-1;display:flex;flex-direction:column;gap:3px;border:1px solid rgba(107,30,45,.16);border-radius:10px;background:rgba(107,30,45,.05);padding:9px 11px;color:#655B53;font-size:9.5px;line-height:1.6}.lb-review-note strong{color:#6B1E2D}
+@media(max-width:880px){.lb-readiness{grid-template-columns:1fr}.lb-submit-review{width:100%}}
 
 /* ─── SECTIONS (content + questions) ─── */
 .lb-section {

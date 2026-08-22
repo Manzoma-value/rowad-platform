@@ -51,6 +51,20 @@ const T = {
     qType: { MCQ: "اختيار متعدد", TF: "صح/خطأ", WRITTEN: "مكتوب", MATCHING: "مطابقة" },
     answerLabel: "الإجابة",
     statusDraft: "مسودة", statusLive: "منشور",
+    readiness: "جاهزية الدرس",
+    readinessSub: "أكمل الأساسيات بالترتيب، ثم أرسل الدرس للإدارة من هنا.",
+    readyMeta: "العنوان والمجموعة",
+    readyContent: "محتوى تعليمي واحد على الأقل",
+    readyQuestions: "سؤال واحد على الأقل للدرس المُقيَّم",
+    readyDone: "مكتمل",
+    readyMissing: "مطلوب",
+    submitReview: "إرسال للمراجعة",
+    submittingReview: "جارٍ الإرسال...",
+    statusPending: "قيد المراجعة",
+    statusApproved: "معتمد",
+    statusRejected: "يحتاج تعديل",
+    submitError: "تعذر إرسال الدرس للمراجعة.",
+    reviewNote: "ملاحظة الإدارة",
   },
   sq: {
     back: "Kthehu te mësimet",
@@ -86,6 +100,20 @@ const T = {
     qType: { MCQ: "Shumëzgjedhje", TF: "E saktë/E gabuar", WRITTEN: "E shkruar", MATCHING: "Përputhje" },
     answerLabel: "Përgjigja",
     statusDraft: "Draft", statusLive: "Live",
+    readiness: "Gatishmëria e mësimit",
+    readinessSub: "Plotëso bazat me radhë dhe dërgoje për shqyrtim nga këtu.",
+    readyMeta: "Titulli dhe grupi",
+    readyContent: "Të paktën një përmbajtje",
+    readyQuestions: "Të paktën një pyetje për mësimin me notë",
+    readyDone: "Gati",
+    readyMissing: "Kërkohet",
+    submitReview: "Dërgo për shqyrtim",
+    submittingReview: "Duke dërguar...",
+    statusPending: "Në shqyrtim",
+    statusApproved: "Miratuar",
+    statusRejected: "Kërkon ndryshim",
+    submitError: "Mësimi nuk u dërgua për shqyrtim.",
+    reviewNote: "Shënimi i administratës",
   },
 } as const;
 
@@ -108,16 +136,17 @@ export default function LessonEditorPage({
   const [quizzes, setQuizzes] = useState<QuizRef[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionError, setActionError] = useState("");
 
   // editable meta fields (local copy so we can debounce-save)
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [classId, setClassId] = useState("");
   const [linkedQuizId, setLinkedQuizId] = useState<string>("");
-  const [isPublished, setIsPublished] = useState(false);
   const [isGraded, setIsGraded] = useState(true);
   const [savingMeta, setSavingMeta] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   // content / question add-edit state
   const [addingContent, setAddingContent] = useState<AddingContent>(null);
@@ -143,7 +172,6 @@ export default function LessonEditorPage({
       setDescription(d.lesson.description ?? "");
       setClassId(d.lesson.class_id);
       setLinkedQuizId(d.lesson.linked_quiz_id ?? "");
-      setIsPublished(d.lesson.is_published);
       setIsGraded(d.lesson.is_graded);
     } catch {
       setError("Network error");
@@ -189,6 +217,22 @@ export default function LessonEditorPage({
     if (r.ok) {
       invalidateCache("/api/teacher/lessons");
       router.push("/teacher/lessons");
+    }
+  };
+
+  const submitForReview = async () => {
+    if (!lesson || submittingReview) return;
+    setSubmittingReview(true);
+    setActionError("");
+    try {
+      const response = await fetch(`/api/teacher/lessons/${id}/submit`, { method: "POST" });
+      if (!response.ok) throw new Error();
+      invalidateCache("/api/teacher/lessons");
+      await fetchLesson();
+    } catch {
+      setActionError(t.submitError);
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -263,6 +307,11 @@ export default function LessonEditorPage({
 
   const contents = lesson.contents;
   const questions = lesson.questions;
+  const readyMeta = Boolean(title.trim() && classId);
+  const readyContent = contents.length > 0;
+  const readyQuestions = !isGraded || questions.length > 0;
+  const readyToSubmit = readyMeta && readyContent && readyQuestions;
+  const reviewLabel = lesson.review_status === "PENDING_REVIEW" ? t.statusPending : lesson.review_status === "APPROVED" ? t.statusApproved : lesson.review_status === "REJECTED" ? t.statusRejected : t.statusDraft;
 
   const renderContentPreview = (block: LessonContent) => {
     if (block.type === "TEXT") {
@@ -325,9 +374,9 @@ export default function LessonEditorPage({
               <span className="lb-page-title" style={{ maxWidth: 380, overflow: "hidden", textOverflow: "ellipsis" }}>
                 {title || lesson.title}
               </span>
-              <span className={`lb-status-pill ${isPublished ? "live" : "draft"}`}>
-                {isPublished ? Icons.check : Icons.eyeOff}
-                {isPublished ? t.statusLive : t.statusDraft}
+              <span className={`lb-status-pill ${lesson.review_status.toLowerCase()}`}>
+                {lesson.review_status === "APPROVED" ? Icons.check : Icons.eyeOff}
+                {reviewLabel}
               </span>
               {savingMeta && <span className="lb-page-sub" style={{ marginTop: 0 }}>{t.saving}</span>}
               {savedFlash && <span style={{ fontSize: 11, color: "#1B5E20", fontWeight: 700 }}>{t.saved}</span>}
@@ -409,6 +458,21 @@ export default function LessonEditorPage({
           </div>
         </div>
       </div>
+
+      {/* ─── READINESS + REVIEW ─── */}
+      <section className="lb-readiness">
+        <div className="lb-readiness-copy"><span>{Icons.award}</span><div><h2>{t.readiness}</h2><p>{t.readinessSub}</p></div></div>
+        <div className="lb-readiness-list">
+          {([[t.readyMeta, readyMeta], [t.readyContent, readyContent], [t.readyQuestions, readyQuestions]] as Array<[string, boolean]>).map(([label, done], index) => (
+            <div className={done ? "done" : "missing"} key={String(label)}><b>{index + 1}</b><span>{label}</span><em>{done ? t.readyDone : t.readyMissing}</em></div>
+          ))}
+        </div>
+        {lesson.reviewer_notes && <p className="lb-review-note"><strong>{t.reviewNote}</strong>{lesson.reviewer_notes}</p>}
+        {actionError && <p className="lb-review-note"><strong>{actionError}</strong></p>}
+        <button type="button" className="lb-submit-review" onClick={() => void submitForReview()} disabled={!readyToSubmit || submittingReview || lesson.review_status === "PENDING_REVIEW" || lesson.review_status === "APPROVED"}>
+          {submittingReview ? t.submittingReview : lesson.review_status === "PENDING_REVIEW" ? t.statusPending : lesson.review_status === "APPROVED" ? t.statusApproved : t.submitReview}
+        </button>
+      </section>
 
       {/* ─── CONTENT SECTION ─── */}
       <div className="lb-section">

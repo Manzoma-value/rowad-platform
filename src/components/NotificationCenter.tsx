@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   FileText,
+  EyeOff,
   MessageCircle,
   Radio,
   Trash2,
@@ -44,8 +45,8 @@ const words = {
     markAll: "تحديد الكل كمقروء",
     markRead: "تحديد كمقروء",
     delete: "حذف الإشعار",
-    deleteAll: "حذف الكل",
-    deleteAllConfirm: "هل تريد حذف جميع الإشعارات نهائياً؟",
+    hideAll: "إخفاء الكل",
+    hideAllConfirm: "هل تريد إخفاء جميع الإشعارات من هذه اللوحة؟",
     empty: "لا توجد إشعارات بعد",
     emptyBody: "ستظهر هنا التحديثات الجديدة في المجتمع والورش والمنصة.",
     latest: "أحدث الإشعارات",
@@ -59,8 +60,8 @@ const words = {
     markAll: "Shënoji të gjitha si të lexuara",
     markRead: "Shëno si të lexuar",
     delete: "Fshi njoftimin",
-    deleteAll: "Fshiji të gjitha",
-    deleteAllConfirm: "Të fshihen përgjithmonë të gjitha njoftimet?",
+    hideAll: "Fshihi të gjitha",
+    hideAllConfirm: "Të fshihen të gjitha njoftimet nga ky panel?",
     empty: "Ende nuk ka njoftime",
     emptyBody: "Përditësimet nga komuniteti, trajnimet dhe platforma do të shfaqen këtu.",
     latest: "Njoftimet më të reja",
@@ -74,8 +75,8 @@ const words = {
     markAll: "Mark all as read",
     markRead: "Mark as read",
     delete: "Delete notification",
-    deleteAll: "Delete all",
-    deleteAllConfirm: "Permanently delete all notifications?",
+    hideAll: "Hide all",
+    hideAllConfirm: "Hide all notifications from this panel?",
     empty: "No notifications yet",
     emptyBody: "New community, workshop, and platform updates will appear here.",
     latest: "Latest notifications",
@@ -257,8 +258,8 @@ export function NotificationCenter({
     }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
   }
 
-  function deleteAll() {
-    if (!window.confirm(copy.deleteAllConfirm)) return;
+  function hideAll() {
+    if (!window.confirm(copy.hideAllConfirm)) return;
     setData({ notifications: [], unread_count: 0 });
     void fetch("/api/notifications", {
       method: "DELETE",
@@ -288,7 +289,7 @@ export function NotificationCenter({
             <div><strong>{copy.title}</strong><span>{copy.subtitle}</span></div>
             <span className="nc-head-actions">
               {data.unread_count > 0 && <button onClick={markAll}><CheckCheck size={14} />{copy.markAll}</button>}
-              {data.notifications.length > 0 && <button className="danger" onClick={deleteAll}><Trash2 size={14} />{copy.deleteAll}</button>}
+              {data.notifications.length > 0 && <button className="danger" onClick={hideAll}><EyeOff size={14} />{copy.hideAll}</button>}
             </span>
           </header>
           <NotificationList items={data.notifications} basePath={basePath} lang={lang} onRead={markRead} onDelete={deleteOne} />
@@ -373,6 +374,19 @@ export function NotificationFeed({
     }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
   }
 
+  function hideAll() {
+    if (!window.confirm(copy.hideAllConfirm)) return;
+    setItems([]);
+    setUnreadCount(0);
+    setManuallyHidden(true);
+    localStorage.setItem(storageKey, "hidden");
+    void fetch("/api/notifications", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true }),
+    }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
+  }
+
   return (
     <section className={`nf-card ${hasUnread ? "nf-unread" : ""}`} dir={lang === "ar" ? "rtl" : "ltr"}>
       <header>
@@ -381,10 +395,11 @@ export function NotificationFeed({
           <strong>{copy.latest}</strong>
           {hasUnread && <em className="nf-badge">{copy.newBadge(unreadCount)}</em>}
         </div>
-        {/* Toggle is only meaningful once there's nothing unread forcing it open. */}
-        {!hasUnread && (
-          <button onClick={toggle}>{visible ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{visible ? copy.hide : copy.show}</button>
-        )}
+        <span className="nf-actions">
+          {items.length > 0 && <button onClick={hideAll}><EyeOff size={15} />{copy.hideAll}</button>}
+          {/* Toggle is only meaningful once there's nothing unread forcing it open. */}
+          {!hasUnread && <button onClick={toggle}>{visible ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{visible ? copy.hide : copy.show}</button>}
+        </span>
       </header>
       {visible && <NotificationList compact items={items} basePath={basePath} lang={lang} onRead={markRead} onDelete={deleteOne} />}
       <style>{sharedStyles + feedStyles}</style>
@@ -397,7 +412,7 @@ const sharedStyles = `
 `;
 
 const feedStyles = `
-.nf-card{margin-bottom:24px;overflow:hidden;border:1px solid #E5E0D5;border-radius:18px;background:#FFFBF5;box-shadow:0 10px 32px rgba(107,30,45,.055);font-family:'Cairo',sans-serif}.nf-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E0D5;background:linear-gradient(120deg,#FFFBF5,#EFEAE0)}.nf-card>header>div{display:flex;align-items:center;gap:9px;color:#32101A}.nf-card>header>div>span{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#6B1E2D;color:#fff}.nf-card>header strong{font-size:13px}.nf-card>header button{display:flex;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:9px;background:#fff;padding:7px 10px;color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.nf-card .nc-list.compact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;padding:12px}.nf-card .nc-empty{min-height:130px}@media(max-width:680px){.nf-card .nc-list.compact{grid-template-columns:1fr}}
+.nf-card{margin-bottom:24px;overflow:hidden;border:1px solid #E5E0D5;border-radius:18px;background:#FFFBF5;box-shadow:0 10px 32px rgba(107,30,45,.055);font-family:'Cairo',sans-serif}.nf-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E0D5;background:linear-gradient(120deg,#FFFBF5,#EFEAE0)}.nf-card>header>div{display:flex;align-items:center;gap:9px;color:#32101A}.nf-card>header>div>span{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#6B1E2D;color:#fff}.nf-card>header strong{font-size:13px}.nf-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px}.nf-card>header button{display:flex;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:9px;background:#fff;padding:7px 10px;color:#6B1E2D;font:800 9px 'Cairo',sans-serif;cursor:pointer}.nf-card .nc-list.compact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-height:none;padding:12px}.nf-card .nc-empty{min-height:130px}@media(max-width:680px){.nf-card .nc-list.compact{grid-template-columns:1fr}.nf-card>header{align-items:flex-start}.nf-actions{align-items:stretch;flex-direction:column}}
 .nf-card.nf-unread{border-color:#6B1E2D;box-shadow:0 14px 40px rgba(107,30,45,.16),0 0 0 1px rgba(107,30,45,.08)}
 .nf-card.nf-unread>header{background:linear-gradient(120deg,#32101A,#6B1E2D)}
 .nf-card.nf-unread>header>div{color:#FFFBF5}

@@ -21,6 +21,8 @@ export async function GET(
       description: true,
       is_published: true,
       is_graded: true,
+      review_status: true,
+      reviewer_notes: true,
       linked_quiz_id: true,
       class_id: true,
       created_at: true,

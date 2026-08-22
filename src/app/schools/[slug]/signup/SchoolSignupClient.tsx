@@ -121,7 +121,7 @@ const STRINGS = {
     or: "أو",
     inviteChecking: "جارٍ التحقق من رابط الانضمام...",
     inviteTitle: "دعوة للانضمام إلى مجموعة",
-    inviteReady: "أنشئ حساب مستفيدك، وسيتم ضمك تلقائيًا بعد تأكيد البريد الإلكتروني.",
+    inviteReady: "أنشئ حسابك الآن دون انتظار بريد تأكيد. سيصل طلبك إلى المشرف، وتدخل المجموعة بعد موافقته.",
     inviteSupervisor: "المشرف",
     inviteInvalid: "هذا الرابط غير متاح الآن. اطلب رابطًا جديدًا من مشرفك.",
   },
@@ -160,7 +160,7 @@ const STRINGS = {
     or: "ose",
     inviteChecking: "Po verifikojmë lidhjen e anëtarësimit...",
     inviteTitle: "Ftesë për t'u bashkuar me grupin",
-    inviteReady: "Krijo llogarinë e pjesëmarrësit dhe do të shtohesh automatikisht pas konfirmimit të emailit.",
+    inviteReady: "Krijo llogarinë pa pritur konfirmim me email. Edukatori do ta miratojë kërkesën para hyrjes në grup.",
     inviteSupervisor: "Edukatori",
     inviteInvalid: "Kjo lidhje nuk është më e disponueshme. Kërko një lidhje të re nga edukatori.",
   },
@@ -322,7 +322,7 @@ export default function SchoolSignupClient({
           setError(L.errServer);
           return;
         }
-        router.replace("/teacher/application");
+        router.replace(data.next ?? (data.role === "TEACHER" ? "/teacher/application" : "/student/waiting-class"));
         return;
       }
 

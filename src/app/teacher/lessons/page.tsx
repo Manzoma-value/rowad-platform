@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   BookOpen,
@@ -10,8 +11,11 @@ import {
   ClipboardList,
   FileText,
   MapPin,
+  Plus,
   Search,
+  Sparkles,
   Users,
+  X,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import { cachedFetch } from "@/lib/api-cache";
@@ -21,6 +25,7 @@ import { HowItWorks } from "../components/HowItWorks";
 import { teacherUI, reviewChipClass, reviewLabel, type ReviewStatus } from "../components/teacher-ui";
 
 type ClassRef = { id: string; name: string };
+type RoadmapTree = { stages: Array<{ id: string; title: string; modules: Array<{ id: string; title: string }> }> };
 type LessonRow = {
   id: string;
   title: string;
@@ -42,6 +47,23 @@ const UI = {
     title: "كل دروسك في مكان واحد",
     sub: "هذه قائمة بكل ما أنشأته. الدروس الجديدة تُنشأ من داخل الخريطة التعليمية لأن كل درس يجب أن يرتبط بمفهوم.",
     openRoadmap: "إنشاء درس من الخريطة",
+    createLesson: "إنشاء درس جديد",
+    createTitle: "ابدأ درساً منظماً في دقيقة",
+    createSub: "اختر المفهوم والمجموعة أولاً، ثم انتقل مباشرة إلى محرر المحتوى والأسئلة.",
+    stepConcept: "1 · المفهوم التعليمي",
+    stepClass: "2 · المجموعة المستهدفة",
+    stepDetails: "3 · أساسيات الدرس",
+    chooseConcept: "اختر المفهوم",
+    chooseClass: "اختر المجموعة",
+    lessonTitle: "عنوان الدرس",
+    lessonTitlePh: "عنوان واضح يراه المستفيد",
+    lessonDescription: "وصف مختصر (اختياري)",
+    lessonDescriptionPh: "ما الذي سيتعلمه المستفيد؟",
+    continueBuilder: "إنشاء والانتقال إلى المحرر",
+    creating: "جارٍ إنشاء الدرس...",
+    createError: "تعذر إنشاء الدرس. راجع الحقول وحاول مجدداً.",
+    roadmapMissing: "لم تُنشأ خريطة تعليمية بعد.",
+    close: "إغلاق",
     statAll: "إجمالي الدروس",
     statDraft: "مسودات",
     statPending: "قيد المراجعة",
@@ -79,6 +101,23 @@ const UI = {
     title: "Të gjitha mësimet e tua në një vend",
     sub: "Kjo është lista e gjithçkaje që ke krijuar. Mësimet e reja krijohen brenda hartës, sepse çdo mësim lidhet me një koncept.",
     openRoadmap: "Krijo mësim nga harta",
+    createLesson: "Krijo mësim të ri",
+    createTitle: "Nis një mësim të strukturuar brenda një minute",
+    createSub: "Zgjidh konceptin dhe grupin, pastaj vazhdo direkt te përmbajtja dhe pyetjet.",
+    stepConcept: "1 · Koncepti",
+    stepClass: "2 · Grupi i synuar",
+    stepDetails: "3 · Bazat e mësimit",
+    chooseConcept: "Zgjidh konceptin",
+    chooseClass: "Zgjidh grupin",
+    lessonTitle: "Titulli i mësimit",
+    lessonTitlePh: "Titull i qartë për pjesëmarrësin",
+    lessonDescription: "Përshkrim i shkurtër (opsional)",
+    lessonDescriptionPh: "Çfarë do të mësojë pjesëmarrësi?",
+    continueBuilder: "Krijo dhe hap redaktuesin",
+    creating: "Duke krijuar mësimin...",
+    createError: "Mësimi nuk u krijua. Kontrollo fushat dhe provo përsëri.",
+    roadmapMissing: "Ende nuk ka hartë mësimore.",
+    close: "Mbyll",
     statAll: "Mësime gjithsej",
     statDraft: "Draft",
     statPending: "Në shqyrtim",
@@ -116,6 +155,7 @@ const UI = {
 type Filter = "all" | "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
 
 export default function TeacherLessonsPage() {
+  const router = useRouter();
   const { lang } = useLang();
   const L = lang === "sq" ? "sq" : "ar";
   const T = UI[L];
@@ -127,6 +167,12 @@ export default function TeacherLessonsPage() {
   const [loadError, setLoadError] = useState(false);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [roadmap, setRoadmap] = useState<RoadmapTree | null>(null);
+  const [roadmapLoaded, setRoadmapLoaded] = useState(false);
+  const [createForm, setCreateForm] = useState({ moduleId: "", classId: "", title: "", description: "" });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   const load = useCallback(async () => {
     setLoadError(false);
@@ -142,6 +188,50 @@ export default function TeacherLessonsPage() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  async function openCreate() {
+    setCreateOpen(true);
+    setCreateError("");
+    setCreateForm((current) => ({ ...current, classId: current.classId || classes[0]?.id || "" }));
+    if (roadmap) return;
+    try {
+      const response = await fetch("/api/teacher/roadmap", { cache: "no-store" });
+      if (!response.ok) throw new Error();
+      const payload = await response.json();
+      setRoadmap(payload.roadmap);
+      setRoadmapLoaded(true);
+    } catch {
+      setRoadmapLoaded(true);
+      setCreateError(T.createError);
+    }
+  }
+
+  async function createLesson() {
+    if (!createForm.moduleId || !createForm.classId || !createForm.title.trim() || creating) {
+      setCreateError(T.createError);
+      return;
+    }
+    setCreating(true);
+    setCreateError("");
+    try {
+      const response = await fetch("/api/teacher/lessons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          moduleId: createForm.moduleId,
+          classId: createForm.classId,
+          title: createForm.title.trim(),
+          description: createForm.description.trim() || undefined,
+        }),
+      });
+      if (!response.ok) throw new Error();
+      const payload = await response.json();
+      router.push(`/teacher/lessons/${payload.lesson.id}`);
+    } catch {
+      setCreateError(T.createError);
+      setCreating(false);
+    }
+  }
 
   const stats = useMemo(() => ({
     all: lessons.length,
@@ -173,7 +263,8 @@ export default function TeacherLessonsPage() {
             <p>{T.sub}</p>
           </div>
           <div className="tui-hero-side">
-            <Link href="/teacher/roadmap" className="tui-btn tui-btn-gold"><MapPin size={15} />{T.openRoadmap}</Link>
+            <button type="button" className="tui-btn tui-btn-gold" onClick={() => void openCreate()} disabled={classes.length === 0}><Plus size={15} />{T.createLesson}</button>
+            <Link href="/teacher/roadmap" className="tui-btn tui-btn-ghost"><MapPin size={15} />{T.openRoadmap}</Link>
           </div>
         </div>
         <div className="tui-stats">
@@ -264,6 +355,25 @@ export default function TeacherLessonsPage() {
         </>
       )}
 
+      {createOpen && (
+        <div className="tl-create-overlay" role="presentation" onMouseDown={() => !creating && setCreateOpen(false)}>
+          <section className="tl-create" role="dialog" aria-modal="true" aria-label={T.createLesson} onMouseDown={(event) => event.stopPropagation()}>
+            <header>
+              <span><Sparkles size={20} /></span>
+              <div><h2>{T.createTitle}</h2><p>{T.createSub}</p></div>
+              <button type="button" onClick={() => setCreateOpen(false)} disabled={creating} aria-label={T.close}><X size={18} /></button>
+            </header>
+            <div className="tl-create-body">
+              <label><b>{T.stepConcept}</b><select value={createForm.moduleId} onChange={(event) => setCreateForm((current) => ({ ...current, moduleId: event.target.value }))}><option value="">{T.chooseConcept}</option>{roadmap?.stages.map((stage) => <optgroup key={stage.id} label={stage.title}>{stage.modules.map((module) => <option key={module.id} value={module.id}>{module.title}</option>)}</optgroup>)}</select>{roadmapLoaded && roadmap === null && !createError && <small>{T.roadmapMissing}</small>}</label>
+              <label><b>{T.stepClass}</b><select value={createForm.classId} onChange={(event) => setCreateForm((current) => ({ ...current, classId: event.target.value }))}><option value="">{T.chooseClass}</option>{classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              <fieldset><legend>{T.stepDetails}</legend><label><span>{T.lessonTitle}</span><input value={createForm.title} onChange={(event) => setCreateForm((current) => ({ ...current, title: event.target.value }))} placeholder={T.lessonTitlePh} maxLength={160} autoFocus /></label><label><span>{T.lessonDescription}</span><textarea value={createForm.description} onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))} placeholder={T.lessonDescriptionPh} rows={3} maxLength={500} /></label></fieldset>
+              {createError && <p className="tl-create-error" role="alert">{createError}</p>}
+            </div>
+            <footer><button type="button" className="cancel" onClick={() => setCreateOpen(false)} disabled={creating}>{T.close}</button><button type="button" className="submit" onClick={() => void createLesson()} disabled={creating || !createForm.moduleId || !createForm.classId || !createForm.title.trim()}>{creating ? T.creating : T.continueBuilder}</button></footer>
+          </section>
+        </div>
+      )}
+
       <style>{teacherUI}</style>
       <style>{styles}</style>
     </div>
@@ -297,10 +407,17 @@ const styles = `
 .tl-card-fix{display:inline-flex;align-items:flex-start;gap:5px;border-radius:9px;padding:7px 9px;
   background:rgba(107,30,45,.07);color:#6B1E2D;font-size:10.5px;font-weight:800;line-height:1.6}
 
+.tl-create-overlay{position:fixed;z-index:5000;inset:0;display:grid;place-items:center;background:rgba(26,26,26,.64);padding:18px;backdrop-filter:blur(10px)}
+.tl-create{width:min(650px,100%);max-height:92dvh;overflow:hidden;border:1px solid rgba(217,201,176,.32);border-radius:24px;background:#F7F3EB;box-shadow:0 28px 80px rgba(26,26,26,.36)}
+.tl-create>header{display:flex;align-items:center;gap:12px;background:linear-gradient(130deg,#32101A,#6B1E2D);padding:18px 20px;color:#fff}.tl-create>header>span{display:grid;width:44px;height:44px;flex:none;place-items:center;border:1px solid rgba(217,201,176,.25);border-radius:13px;background:rgba(217,201,176,.1);color:#D9C9B0}.tl-create>header>div{min-width:0;flex:1}.tl-create>header h2{margin:0;font-size:17px;font-weight:900}.tl-create>header p{margin:3px 0 0;color:#D9C9B0;font-size:10.5px;line-height:1.65}.tl-create>header>button{display:grid;width:36px;height:36px;place-items:center;border:1px solid rgba(217,201,176,.22);border-radius:10px;background:rgba(217,201,176,.08);color:#fff;cursor:pointer}
+.tl-create-body{display:flex;max-height:calc(92dvh - 155px);flex-direction:column;gap:13px;overflow-y:auto;padding:18px}.tl-create-body>label,.tl-create fieldset label{display:flex;flex-direction:column;gap:6px}.tl-create-body label b,.tl-create fieldset legend{color:#6B1E2D;font-size:10px;font-weight:900;letter-spacing:.06em}.tl-create-body label span{color:#655B53;font-size:10px;font-weight:800}.tl-create select,.tl-create input,.tl-create textarea{width:100%;border:1px solid #D9C9B0;border-radius:11px;background:#fff;padding:11px 13px;color:#32101A;font:700 13px 'Cairo',sans-serif;outline:none}.tl-create select:focus,.tl-create input:focus,.tl-create textarea:focus{border-color:#B8A082;box-shadow:0 0 0 3px rgba(184,160,130,.14)}.tl-create textarea{resize:vertical;line-height:1.7}.tl-create-body label small{color:#6B1E2D;font-size:9.5px;font-weight:800}.tl-create fieldset{display:flex;flex-direction:column;gap:11px;border:1px solid #E5E0D5;border-radius:15px;background:#FFFBF5;padding:14px}.tl-create fieldset legend{padding:0 7px}.tl-create-error{border:1px solid rgba(107,30,45,.18);border-radius:10px;background:rgba(107,30,45,.06);padding:9px 11px;color:#6B1E2D;font-size:10.5px;font-weight:800}
+.tl-create>footer{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #E5E0D5;background:#FFFBF5;padding:13px 18px}.tl-create>footer button{border-radius:10px;padding:10px 15px;font:800 11px 'Cairo',sans-serif;cursor:pointer}.tl-create>footer .cancel{border:1px solid #D9C9B0;background:#fff;color:#655B53}.tl-create>footer .submit{border:0;background:#6B1E2D;color:#fff}.tl-create>footer button:disabled{opacity:.45;cursor:not-allowed}
+
 @media(max-width:560px){
   .tl-toolbar{flex-direction:column}
   .tl-toolbar>*{min-width:0;max-width:100%}
   .tl-filters{min-width:0;max-width:100%}
   .tl-grid{grid-template-columns:1fr}
+  .tl-create-overlay{padding:0}.tl-create{max-height:100dvh;border-radius:0}.tl-create-body{max-height:calc(100dvh - 155px);padding:14px}.tl-create>footer{display:grid;grid-template-columns:1fr 1fr}.tl-create>footer button{padding:11px 8px}
 }
 `;
