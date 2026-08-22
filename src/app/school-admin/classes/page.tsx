@@ -1,428 +1,343 @@
 "use client";
+
 export const dynamic = "force-dynamic";
 
-import { useEffect, useState } from "react";
-import { useLang } from "@/lib/language-context";
-import { t } from "@/lib/translations";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen, Check, CheckCircle2, Copy, ExternalLink, Filter, Link2, Link2Off,
+  Pencil, Plus, Search, ShieldCheck, Sparkles, Trash2, UserRound,
+  UserRoundCheck, UsersRound, X,
+} from "lucide-react";
 import MandalaLoader from "@/components/MandalaLoader";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
+import { useLang } from "@/lib/language-context";
+import { t } from "@/lib/translations";
 import { useViewOnly } from "@/lib/view-only-context";
+import styles from "./classes.module.css";
 
 interface ClassItem {
   id: string;
   name: string;
+  created_at: string;
   teacher: { id: string; profile: { full_name: string } } | null;
   _count: { students: number };
   invite: { token: string; is_active: boolean; use_count: number; updated_at: string } | null;
 }
-interface Teacher {
-  id: string;
-  profile: { full_name: string };
-}
+
+interface Teacher { id: string; profile: { full_name: string } }
+type GroupFilter = "all" | "assigned" | "unassigned" | "activeInvite";
 
 export default function SchoolAdminClassesPage() {
   const { lang } = useLang();
   const tr = t[lang];
   const confirm = useConfirm();
   const viewOnly = useViewOnly();
-
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [schoolSlug, setSchoolSlug] = useState("");
   const [inviteBusyId, setInviteBusyId] = useState<string | null>(null);
+  const [assigningId, setAssigningId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<GroupFilter>("all");
+
+  const copy = lang === "ar" ? {
+    eyebrow: "إدارة المجموعات التعليمية", title: "مساحة المجموعات",
+    subtitle: "نظّم المجموعات، عيّن المشرفين، وتابع روابط الانضمام من مساحة واحدة واضحة.",
+    addGroup: "إضافة مجموعة", close: "إغلاق", totalGroups: "إجمالي المجموعات",
+    beneficiaries: "المستفيدون", assigned: "بإشراف مشرف", activeLinks: "روابط فعّالة",
+    createTitle: "أنشئ مجموعة تعليمية جديدة", createHint: "اكتب اسمًا واضحًا يسهّل على المشرف والمستفيد معرفة المجموعة.",
+    nameLabel: "اسم المجموعة", searchPlaceholder: "ابحث باسم المجموعة أو المشرف…",
+    all: "كل المجموعات", assignedFilter: "بإشراف مشرف", unassigned: "بدون مشرف",
+    activeInvite: "رابط فعّال", results: "نتيجة ظاهرة", noResults: "لا توجد مجموعات مطابقة",
+    noResultsHint: "جرّب تغيير كلمة البحث أو عامل التصفية.", clearFilters: "مسح التصفية",
+    noGroupsHint: "ابدأ بإنشاء أول مجموعة ثم عيّن لها مشرفًا.", supervisor: "المشرف المسؤول",
+    withoutSupervisor: "تحتاج إلى مشرف", members: "مستفيدين", joined: "انضمام عبر الرابط",
+    inviteActive: "رابط الانضمام فعّال", inviteInactive: "رابط الانضمام غير مفعّل",
+    copyLink: "نسخ رابط الانضمام", copied: "تم النسخ", createLink: "إنشاء رابط انضمام",
+    stopLink: "إيقاف الرابط", profile: "ملف المشرف", rename: "تعديل اسم المجموعة",
+    remove: "حذف المجموعة", save: "حفظ", cancel: "إلغاء", created: "أُنشئت",
+    assignmentFailed: "تعذر تحديث مشرف المجموعة", deleteFailed: "تعذر حذف المجموعة",
+    loadFailed: "تعذر تحميل بيانات المجموعات", createFailed: "تعذر إنشاء المجموعة",
+    deleteTitle: "حذف المجموعة", deleteConfirm: "سيتم حذف المجموعة وما يرتبط بها من تعيينات. هل تريد المتابعة؟",
+    assignFirst: "عيّن مشرفًا أولًا لتفعيل رابط الانضمام",
+  } : {
+    eyebrow: "Menaxhimi i grupeve mësimore", title: "Hapësira e grupeve",
+    subtitle: "Organizo grupet, cakto edukatorët dhe menaxho lidhjet e anëtarësimit nga një hapësirë e qartë.",
+    addGroup: "Shto grup", close: "Mbyll", totalGroups: "Gjithsej grupe",
+    beneficiaries: "Pjesëmarrës", assigned: "Me edukator", activeLinks: "Lidhje aktive",
+    createTitle: "Krijo një grup të ri mësimor", createHint: "Përdor një emër të qartë që edukatori dhe pjesëmarrësi ta njohin lehtë.",
+    nameLabel: "Emri i grupit", searchPlaceholder: "Kërko grupin ose edukatorin…",
+    all: "Të gjitha grupet", assignedFilter: "Me edukator", unassigned: "Pa edukator",
+    activeInvite: "Lidhje aktive", results: "rezultate", noResults: "Nuk u gjet asnjë grup",
+    noResultsHint: "Provo një kërkim ose filtër tjetër.", clearFilters: "Pastro filtrat",
+    noGroupsHint: "Krijo grupin e parë dhe më pas cakto një edukator.", supervisor: "Edukatori përgjegjës",
+    withoutSupervisor: "Kërkon edukator", members: "pjesëmarrës", joined: "anëtarësime nga lidhja",
+    inviteActive: "Lidhja e anëtarësimit është aktive", inviteInactive: "Lidhja e anëtarësimit nuk është aktive",
+    copyLink: "Kopjo lidhjen", copied: "U kopjua", createLink: "Krijo lidhje anëtarësimi",
+    stopLink: "Çaktivizo lidhjen", profile: "Profili i edukatorit", rename: "Ndrysho emrin",
+    remove: "Fshi grupin", save: "Ruaj", cancel: "Anulo", created: "Krijuar",
+    assignmentFailed: "Edukatori i grupit nuk u përditësua", deleteFailed: "Grupi nuk u fshi",
+    loadFailed: "Të dhënat e grupeve nuk u ngarkuan", createFailed: "Grupi nuk u krijua",
+    deleteTitle: "Fshi grupin", deleteConfirm: "Grupi dhe caktimet e lidhura do të fshihen. Dëshiron të vazhdosh?",
+    assignFirst: "Cakto fillimisht një edukator për të aktivizuar lidhjen",
+  };
 
   async function load() {
-    const [cData, tData] = await Promise.all([
-      cachedFetch<{ classes: ClassItem[]; school: { slug: string } }>(
-        "/api/school-admin/classes",
-        60_000,
-      ),
-      cachedFetch<{ teachers: Teacher[] }>(
-        "/api/school-admin/teachers",
-        60_000,
-      ),
-    ]);
-    setClasses(cData.classes ?? []);
-    setSchoolSlug(cData.school?.slug ?? "");
-    setTeachers(tData.teachers ?? []);
-    setLoading(false);
+    try {
+      const [classData, teacherData] = await Promise.all([
+        cachedFetch<{ classes: ClassItem[]; school: { slug: string } }>("/api/school-admin/classes", 60_000),
+        cachedFetch<{ teachers: Teacher[] }>("/api/school-admin/teachers", 60_000),
+      ]);
+      const nextClasses = classData.classes ?? [];
+      setClasses(nextClasses);
+      setSchoolSlug(classData.school?.slug ?? "");
+      setTeachers(teacherData.teachers ?? []);
+      if (nextClasses.length === 0 && !viewOnly) setShowCreate(true);
+    } catch { setError(copy.loadFailed); }
+    finally { setLoading(false); }
   }
 
   useEffect(() => {
-    load();
+    void load();
+    // This page owns its initial data lifecycle; language changes only affect labels.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function handleCreate() {
-    if (!newName.trim()) {
-      setError(tr.enterClassName);
-      return;
-    }
-    setCreating(true);
-    setError("");
-    const r = await fetch("/api/school-admin/classes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newName.trim() }),
+  const metrics = useMemo(() => ({
+    students: classes.reduce((sum, cls) => sum + cls._count.students, 0),
+    assigned: classes.filter((cls) => cls.teacher).length,
+    activeInvites: classes.filter((cls) => cls.invite?.is_active).length,
+  }), [classes]);
+
+  const filteredClasses = useMemo(() => {
+    const locale = lang === "ar" ? "ar" : "sq";
+    const normalizedQuery = query.trim().toLocaleLowerCase(locale);
+    return classes.filter((cls) => {
+      const matchesQuery = !normalizedQuery || [cls.name, cls.teacher?.profile.full_name ?? ""]
+        .some((value) => value.toLocaleLowerCase(locale).includes(normalizedQuery));
+      const matchesFilter = filter === "all"
+        || (filter === "assigned" && Boolean(cls.teacher))
+        || (filter === "unassigned" && !cls.teacher)
+        || (filter === "activeInvite" && Boolean(cls.invite?.is_active));
+      return matchesQuery && matchesFilter;
     });
-    if (!r.ok) {
-      const d = await r.json();
-      setError(d.error ?? tr.failedCreate);
-    } else {
-      invalidateCache("/api/school-admin/classes");
-      setNewName("");
-      load();
-    }
-    setCreating(false);
+  }, [classes, filter, lang, query]);
+
+  async function handleCreate() {
+    if (!newName.trim()) { setError(tr.enterClassName); return; }
+    setCreating(true); setError("");
+    try {
+      const response = await fetch("/api/school-admin/classes", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newName.trim() }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error ?? copy.createFailed);
+      invalidateCache("/api/school-admin/classes"); setNewName(""); setShowCreate(false); await load();
+    } catch (createError) { setError(createError instanceof Error ? createError.message : copy.createFailed); }
+    finally { setCreating(false); }
   }
 
-  async function handleDelete(id: string) {
-    if (!(await confirm({ message: tr.deleteClassConfirm }))) return;
-    await fetch(`/api/school-admin/classes/${id}`, { method: "DELETE" });
-    invalidateCache("/api/school-admin/classes");
-    load();
+  async function handleDelete(cls: ClassItem) {
+    const accepted = await confirm({
+      title: copy.deleteTitle, message: `${copy.deleteConfirm} (${cls.name})`,
+      confirmText: copy.remove, variant: "danger",
+    });
+    if (!accepted) return;
+    setError("");
+    try {
+      const response = await fetch(`/api/school-admin/classes/${cls.id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error(copy.deleteFailed);
+      invalidateCache("/api/school-admin/classes"); await load();
+    } catch { setError(copy.deleteFailed); }
   }
 
   async function handleAssignTeacher(classId: string, teacherId: string) {
-    await fetch(`/api/school-admin/classes/${classId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teacher_id: teacherId || null }),
-    });
-    invalidateCache("/api/school-admin/classes");
-    load();
+    setAssigningId(classId); setError("");
+    try {
+      const response = await fetch(`/api/school-admin/classes/${classId}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacher_id: teacherId || null }),
+      });
+      if (!response.ok) throw new Error(copy.assignmentFailed);
+      invalidateCache("/api/school-admin/classes"); await load();
+    } catch { setError(copy.assignmentFailed); }
+    finally { setAssigningId(null); }
   }
 
   async function handleRename(classId: string) {
     if (!editingName.trim() || savingName) return;
-    setSavingName(true);
-    const response = await fetch(`/api/school-admin/classes/${classId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editingName.trim() }),
-    });
-    if (response.ok) {
-      invalidateCache("/api/school-admin/classes");
-      setEditingId(null);
-      await load();
-    } else {
+    setSavingName(true); setError("");
+    try {
+      const response = await fetch(`/api/school-admin/classes/${classId}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: editingName.trim() }),
+      });
       const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? (lang === "ar" ? "تعذر تعديل اسم المجموعة" : "Emri i grupit nuk u ndryshua"));
-    }
-    setSavingName(false);
+      if (!response.ok) throw new Error(payload.error ?? copy.createFailed);
+      invalidateCache("/api/school-admin/classes"); setEditingId(null); await load();
+    } catch (renameError) { setError(renameError instanceof Error ? renameError.message : copy.createFailed); }
+    finally { setSavingName(false); }
   }
 
   function inviteUrl(token: string) {
-    const path = window.location.pathname.startsWith("/schools/")
-      ? `/schools/${schoolSlug}/signup`
-      : "/signup";
+    const path = window.location.pathname.startsWith("/schools/") ? `/schools/${schoolSlug}/signup` : "/signup";
     return `${window.location.origin}${path}?groupInvite=${encodeURIComponent(token)}`;
   }
 
   async function manageInvite(cls: ClassItem, action: "create" | "revoke") {
     if (inviteBusyId) return;
-    setInviteBusyId(cls.id);
-    setError("");
+    setInviteBusyId(cls.id); setError("");
     try {
-      const response = await fetch(`/api/school-admin/classes/${cls.id}/invite`, {
-        method: action === "create" ? "POST" : "DELETE",
-      });
+      const response = await fetch(`/api/school-admin/classes/${cls.id}/invite`, { method: action === "create" ? "POST" : "DELETE" });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error ?? "invite_failed");
-      invalidateCache("/api/school-admin/classes");
-      await load();
+      invalidateCache("/api/school-admin/classes"); await load();
     } catch (inviteFailure) {
       setError(inviteFailure instanceof Error && inviteFailure.message === "Assign a supervisor first"
-        ? (lang === "ar" ? "عيّن مشرفًا للمجموعة أولًا" : "Cakto fillimisht një edukator")
-        : (lang === "ar" ? "تعذر تحديث رابط الانضمام" : "Lidhja e anëtarësimit nuk u përditësua"));
-    } finally {
-      setInviteBusyId(null);
-    }
+        ? copy.assignFirst : (lang === "ar" ? "تعذر تحديث رابط الانضمام" : "Lidhja e anëtarësimit nuk u përditësua"));
+    } finally { setInviteBusyId(null); }
   }
 
   async function copyAdminInvite(cls: ClassItem) {
     if (!cls.invite?.token) return;
     await navigator.clipboard.writeText(inviteUrl(cls.invite.token));
-    setCopiedId(cls.id);
-    window.setTimeout(() => setCopiedId(null), 1600);
+    setCopiedId(cls.id); window.setTimeout(() => setCopiedId(null), 1600);
+  }
+
+  function formatDate(value: string) {
+    return new Intl.DateTimeFormat(lang === "ar" ? "ar-SA" : "sq-AL", {
+      day: "numeric", month: "short", year: "numeric",
+    }).format(new Date(value));
   }
 
   if (loading) return <MandalaLoader label={tr.loading} />;
-
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   return (
-    <div className="cl-page" dir={dir}>
-      <div className="cl-header">
-        <div>
-          <p className="cl-eyebrow">{lang === "ar" ? "إدارة" : "Menaxhimi"}</p>
-          <h1 className="cl-title">{tr.classes}</h1>
-          <p className="cl-sub">
-            {classes.length} {tr.classesInYourSchool}
-          </p>
+    <main className={styles.page} dir={dir}>
+      <section className={styles.hero}>
+        <div className={styles.heroGlow} aria-hidden="true" />
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}><Sparkles size={14} /> {copy.eyebrow}</span>
+          <h1>{copy.title}</h1><p>{copy.subtitle}</p>
         </div>
-      </div>
+        {!viewOnly && <button type="button" className={`${styles.heroAction} ${showCreate ? styles.heroActionOpen : ""}`}
+          onClick={() => { setShowCreate((current) => !current); setError(""); }} aria-expanded={showCreate}>
+          {showCreate ? <X size={18} /> : <Plus size={18} />}{showCreate ? copy.close : copy.addGroup}
+        </button>}
+        <div className={styles.heroOrnament} aria-hidden="true"><span /><span /><span /></div>
+      </section>
 
-      <div className="cl-rule">
-        <div className="cl-rule-line" />
-        <div className="cl-rule-diamond" />
-        <div className="cl-rule-line" />
-      </div>
+      <section className={styles.metrics} aria-label={copy.eyebrow}>
+        <Metric icon={<BookOpen />} value={classes.length} label={copy.totalGroups} tone="wine" />
+        <Metric icon={<UsersRound />} value={metrics.students} label={copy.beneficiaries} tone="gold" />
+        <Metric icon={<UserRoundCheck />} value={metrics.assigned} label={copy.assigned} tone="stone" />
+        <Metric icon={<Link2 />} value={metrics.activeInvites} label={copy.activeLinks} tone="green" />
+      </section>
 
-      <div className="create-section" data-write-area="true">
-        <p className="create-label">
-          {lang === "ar" ? "إضافة مجموعة جديدة" : "Shto grup të ri"}
-        </p>
-        <div className="create-row" data-write-area="true">
-          <input
-            className="cl-input"
-            placeholder={tr.newClassName}
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            dir={dir}
-          />
-          <button data-write="true" className="cl-btn" onClick={handleCreate} disabled={creating}>
-            {creating ? (
-              <>
-                <div className="btn-spin" /> {tr.creating}
-              </>
-            ) : (
-              <>
-                <svg
-                  width="13"
-                  height="13"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                {tr.createClass}
-              </>
-            )}
-          </button>
-        </div>
-        {error && (
-          <div className="cl-error">
-            <svg
-              width="12"
-              height="12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4m0 4h.01" />
-            </svg>
-            {error}
+      {showCreate && !viewOnly && <section className={styles.createPanel} data-write-area="true">
+        <div className={styles.createIcon}><Plus size={22} /></div>
+        <div className={styles.createCopy}><h2>{copy.createTitle}</h2><p>{copy.createHint}</p></div>
+        <label className={styles.createField}><span>{copy.nameLabel}</span><input value={newName}
+          onChange={(event) => setNewName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && void handleCreate()}
+          placeholder={tr.newClassName} dir={dir} autoFocus /></label>
+        <button type="button" data-write="true" className={styles.createButton} onClick={() => void handleCreate()}
+          disabled={creating || !newName.trim()}>{creating ? <span className={styles.spinner} /> : <Plus size={17} />}
+          {creating ? tr.creating : tr.createClass}</button>
+      </section>}
+
+      {error && <div className={styles.error} role="alert"><ShieldCheck size={17} /><span>{error}</span>
+        <button type="button" onClick={() => setError("")} aria-label={copy.close}><X size={15} /></button></div>}
+
+      {classes.length > 0 && <section className={styles.toolbar}>
+        <label className={styles.search}><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)}
+          placeholder={copy.searchPlaceholder} aria-label={copy.searchPlaceholder} />
+          {query && <button type="button" onClick={() => setQuery("")} aria-label={copy.clearFilters}><X size={14} /></button>}</label>
+        <label className={styles.filter}><Filter size={16} /><select value={filter}
+          onChange={(event) => setFilter(event.target.value as GroupFilter)} aria-label={copy.all}>
+          <option value="all">{copy.all}</option><option value="assigned">{copy.assignedFilter}</option>
+          <option value="unassigned">{copy.unassigned}</option><option value="activeInvite">{copy.activeInvite}</option>
+        </select></label><span className={styles.resultCount}>{filteredClasses.length} {copy.results}</span>
+      </section>}
+
+      {classes.length === 0 ? <EmptyState icon={<BookOpen />} title={tr.noClassesYet} body={copy.noGroupsHint}
+        action={!viewOnly ? copy.addGroup : undefined} onAction={() => setShowCreate(true)} />
+      : filteredClasses.length === 0 ? <EmptyState icon={<Search />} title={copy.noResults} body={copy.noResultsHint}
+        action={copy.clearFilters} onAction={() => { setQuery(""); setFilter("all"); }} />
+      : <section className={styles.grid}>{filteredClasses.map((cls, index) => {
+        const teacherId = cls.teacher?.id ?? "";
+        const inviteActive = Boolean(cls.invite?.is_active);
+        return <article className={styles.card} key={cls.id} style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}>
+          <header className={styles.cardHeader}>
+            <div className={styles.groupMark} aria-hidden="true"><BookOpen size={20} /></div>
+            <div className={styles.cardTitle}>{editingId === cls.id ? <div className={styles.renameRow}>
+              <input value={editingName} onChange={(event) => setEditingName(event.target.value)}
+                onKeyDown={(event) => { if (event.key === "Enter") void handleRename(cls.id); if (event.key === "Escape") setEditingId(null); }}
+                aria-label={copy.rename} autoFocus />
+              <button type="button" onClick={() => void handleRename(cls.id)} disabled={savingName} title={copy.save}><Check size={15} /></button>
+              <button type="button" onClick={() => setEditingId(null)} title={copy.cancel}><X size={15} /></button>
+            </div> : <><h2>{cls.name}</h2><span>{copy.created} {formatDate(cls.created_at)}</span></>}</div>
+            {!viewOnly && editingId !== cls.id && <div className={styles.iconActions}>
+              <button type="button" data-write="true" onClick={() => { setEditingId(cls.id); setEditingName(cls.name); }}
+                title={copy.rename} aria-label={copy.rename}><Pencil size={15} /></button>
+              <button type="button" data-write="true" className={styles.deleteAction} onClick={() => void handleDelete(cls)}
+                title={copy.remove} aria-label={copy.remove}><Trash2 size={15} /></button>
+            </div>}
+          </header>
+
+          <div className={styles.memberStat}><span><UsersRound size={19} /></span>
+            <div><strong>{cls._count.students}</strong><small>{copy.members}</small></div><span className={styles.memberPulse} aria-hidden="true" />
           </div>
-        )}
-      </div>
 
-      {classes.length === 0 ? (
-        <div className="cl-empty">
-          <div className="cl-empty-icon">
-            <svg
-              width="32"
-              height="32"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
-            >
-              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-            </svg>
-          </div>
-          <p>{tr.noClassesYet}</p>
-        </div>
-      ) : (
-        <div className="cl-grid">
-          {classes.map((cls, i) => (
-            <div
-              key={cls.id}
-              className="cl-card"
-              style={{ animationDelay: `${i * 40}ms` }}
-            >
-              <div className="cl-card-accent" />
-              <div className="cl-card-head">
-                <div className="cl-card-icon">
-                  <svg
-                    width="16"
-                    height="16"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-                  </svg>
-                </div>
-                <div className="cl-card-body">
-                  {editingId === cls.id ? (
-                    <div className="cl-rename-row">
-                      <input value={editingName} onChange={(event) => setEditingName(event.target.value)} onKeyDown={(event) => event.key === "Enter" && void handleRename(cls.id)} autoFocus />
-                      <button onClick={() => void handleRename(cls.id)} disabled={savingName}>{lang === "ar" ? "حفظ" : "Ruaj"}</button>
-                    </div>
-                  ) : <div className="cl-name">{cls.name}</div>}
-                  <div className="cl-count">
-                    <svg
-                      width="10"
-                      height="10"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                    </svg>
-                    {cls._count.students} {tr.studentCount}
-                  </div>
-                </div>
-                {!viewOnly && <button
-                  data-write="true"
-                  className="edit-btn"
-                  onClick={() => { setEditingId(cls.id); setEditingName(cls.name); }}
-                  title={lang === "ar" ? "تعديل اسم المجموعة" : "Ndrysho emrin e grupit"}
-                >
-                  <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4z"/></svg>
-                </button>}
-                <button
-                  data-write="true"
-                  className="delete-btn"
-                  onClick={() => handleDelete(cls.id)}
-                  title={tr.deleteClassConfirm}
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
-                  </svg>
-                </button>
-              </div>
-              <div className="cl-divider" />
-              <div className="cl-teacher-row">
-                <span className="cl-teacher-label">{tr.teacherLabel}</span>
-                {viewOnly ? (
-                  <span className="cl-teacher-read">
-                    {cls.teacher?.profile.full_name ?? tr.withoutTeacher}
-                  </span>
-                ) : (
-                  <select
-                    className="cl-select"
-                    dir={dir}
-                    value={
-                      cls.teacher
-                        ? (teachers.find(
-                            (t) =>
-                              t.profile.full_name ===
-                              cls.teacher?.profile.full_name,
-                          )?.id ?? "")
-                        : ""
-                    }
-                    onChange={(e) => handleAssignTeacher(cls.id, e.target.value)}
-                  >
-                    <option value="">{tr.withoutTeacher}</option>
-                    {teachers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.profile.full_name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              <div className="cl-invite-row">
-                <span className={`cl-invite-status ${cls.invite?.is_active ? "active" : ""}`}><i />{cls.invite?.is_active ? (lang === "ar" ? "رابط الانضمام فعّال" : "Lidhja është aktive") : (lang === "ar" ? "لا يوجد رابط فعّال" : "Nuk ka lidhje aktive")}</span>
-                <strong>{cls.invite?.use_count ?? 0} {lang === "ar" ? "انضمام" : "anëtarësime"}</strong>
-              </div>
-              {!viewOnly && <div className="cl-invite-actions" data-write-area="true">
-                {cls.invite?.is_active ? <>
-                  <button data-write="true" onClick={() => void copyAdminInvite(cls)}>{copiedId === cls.id ? (lang === "ar" ? "تم النسخ" : "U kopjua") : (lang === "ar" ? "نسخ الرابط" : "Kopjo lidhjen")}</button>
-                  <button data-write="true" className="muted" onClick={() => void manageInvite(cls, "revoke")} disabled={inviteBusyId === cls.id}>{lang === "ar" ? "إيقاف" : "Çaktivizo"}</button>
-                </> : <button data-write="true" onClick={() => void manageInvite(cls, "create")} disabled={inviteBusyId === cls.id || !cls.teacher}>{lang === "ar" ? "إنشاء رابط انضمام" : "Krijo lidhje anëtarësimi"}</button>}
-              </div>}
-            </div>
-          ))}
-        </div>
-      )}
+          <section className={styles.supervisorBlock}><div className={styles.sectionLabel}>
+            <span><UserRound size={15} /> {copy.supervisor}</span>
+            {cls.teacher && <Link href={`/school-admin/teachers/${cls.teacher.id}`} title={copy.profile}>{copy.profile} <ExternalLink size={12} /></Link>}
+          </div>{viewOnly ? <div className={`${styles.teacherReadonly} ${!cls.teacher ? styles.needsAttention : ""}`}>
+            <span className={styles.avatar}>{cls.teacher ? cls.teacher.profile.full_name.trim().charAt(0) : "!"}</span>
+            <strong>{cls.teacher?.profile.full_name ?? copy.withoutSupervisor}</strong>
+          </div> : <div className={styles.selectWrap}>
+            <span className={styles.avatar}>{cls.teacher ? cls.teacher.profile.full_name.trim().charAt(0) : "!"}</span>
+            <select value={teacherId} onChange={(event) => void handleAssignTeacher(cls.id, event.target.value)}
+              disabled={assigningId === cls.id} aria-label={copy.supervisor} dir={dir}>
+              <option value="">{tr.withoutTeacher}</option>{teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.profile.full_name}</option>)}
+            </select>{assigningId === cls.id && <span className={styles.miniSpinner} />}
+          </div>}</section>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes sp{to{transform:rotate(360deg)}}
-        :root{--gold:#B8A082;--gold-pale:rgba(184,160,130,0.07);--gold-border:rgba(184,160,130,0.18);--black:#1A1A1A;--off-white:#F7F3EB;--text:#1A1A1A;--text2:#3D3526;--text3:#796A62;--surface:#FFFFFF;--border:#E5E0D5;--border2:#D4CAB8;--font:'Cairo',sans-serif}
-        .cl-page{display:flex;flex-direction:column;gap:20px;font-family:var(--font);animation:fadeUp 0.3s ease}
-        .cl-header{display:flex;align-items:flex-start;justify-content:space-between}
-        .cl-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
-        .cl-title{font-size:24px;font-weight:900;color:var(--black);letter-spacing:-0.4px}
-        .cl-sub{font-size:12.5px;color:var(--text3);margin-top:3px;font-weight:500}
-        .cl-rule{display:flex;align-items:center;gap:10px}
-        .cl-rule-line{flex:1;height:1px;background:var(--border)}
-        .cl-rule-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);opacity:0.45;flex-shrink:0}
-        .create-section{display:flex;flex-direction:column;gap:8px}
-        .create-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase}
-        .create-row{display:flex;gap:10px}
-        .cl-input{flex:1;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:var(--font);color:var(--text);outline:none;transition:border-color 0.15s}
-        .cl-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,160,130,0.1)}
-        .cl-btn{display:inline-flex;align-items:center;gap:7px;background:var(--black);color:var(--gold);padding:10px 20px;border:none;border-radius:7px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;transition:background 0.15s}
-        .cl-btn:hover:not(:disabled){background:#1A1A1A}
-        .cl-btn:disabled{opacity:0.5;cursor:not-allowed}
-        .btn-spin{width:12px;height:12px;border:2px solid rgba(184,160,130,0.2);border-top-color:var(--gold);border-radius:50%;animation:sp 0.7s linear infinite}
-        .cl-error{display:flex;align-items:center;gap:6px;font-size:12px;color:#8B2020;background:rgba(180,40,40,0.05);border:1px solid rgba(180,40,40,0.15);padding:8px 12px;border-radius:6px}
-        .cl-empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:64px 20px;color:var(--text3);font-size:13px;font-weight:500}
-        .cl-empty-icon{width:64px;height:64px;border-radius:14px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);opacity:0.6}
-        .cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
-        .cl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:13px;position:relative;overflow:hidden;transition:border-color 0.15s,box-shadow 0.15s;animation:fadeUp 0.4s ease both}
-        .cl-card:hover{border-color:rgba(184,160,130,0.35);box-shadow:0 4px 16px rgba(184,160,130,0.08)}
-        .cl-card-accent{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.3) 50%,transparent)}
-        .cl-card-head{display:flex;align-items:center;gap:11px}
-        .cl-card-icon{width:38px;height:38px;border-radius:8px;background:var(--black);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
-        .cl-card-body{flex:1}
-        .cl-name{font-size:14px;font-weight:800;color:var(--text)}
-        .cl-rename-row{display:flex;gap:5px}.cl-rename-row input{min-width:0;width:100%;border:1px solid var(--gold);border-radius:6px;padding:5px 7px;font:700 12px var(--font)}.cl-rename-row button{border:0;border-radius:6px;background:var(--black);color:var(--gold);padding:5px 8px;font:800 10px var(--font);cursor:pointer}
-        .cl-count{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text3);margin-top:2px;font-weight:500}
-        .delete-btn,.edit-btn{background:none;border:1px solid var(--border);color:var(--text3);width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;flex-shrink:0}
-        .edit-btn:hover{border-color:var(--gold);color:#8F765B;background:var(--gold-pale)}
-        .delete-btn:hover{border-color:#6B1E2D;color:#6B1E2D;background:rgba(192,57,43,0.05)}
-        .cl-divider{height:1px;background:var(--border)}
-        .cl-teacher-row{display:flex;align-items:center;gap:10px}
-        .cl-teacher-label{font-size:11px;color:var(--text3);font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:0.5px}
-        .cl-select{flex:1;background:var(--off-white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-family:var(--font);outline:none;cursor:pointer;transition:border-color 0.15s}
-        .cl-select:focus{border-color:var(--gold)}
-        .cl-teacher-read{flex:1;background:var(--off-white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:12px;font-weight:700}
-        .cl-invite-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:10px;border-top:1px solid var(--border);font-size:10.5px;color:var(--text3)}
-        .cl-invite-status{display:flex;align-items:center;gap:5px}.cl-invite-status i{width:7px;height:7px;border-radius:50%;background:#9A9186}.cl-invite-status.active{color:#1B5E20;font-weight:800}.cl-invite-status.active i{background:#2E7D32;box-shadow:0 0 0 3px rgba(46,125,50,.1)}
-        .cl-invite-row strong{font-size:10px;color:#8F765B}
-        .cl-invite-actions{display:flex;gap:6px}.cl-invite-actions button{flex:1;border:0;border-radius:7px;background:var(--black);color:var(--gold);padding:8px;font:800 10px var(--font);cursor:pointer}.cl-invite-actions button.muted{background:var(--off-white);border:1px solid var(--border);color:var(--text3)}.cl-invite-actions button:disabled{opacity:.42;cursor:not-allowed}
-        @media(max-width:700px){
-          .cl-grid{grid-template-columns:1fr; gap:10px}
-          .create-row{flex-direction:column; gap:10px}
-          .create-row input, .create-row button{width:100%}
-        }
-        @media(max-width:420px){
-          .cl-teacher-row{flex-wrap:wrap; gap:6px}
-          .cl-teacher-label{flex-basis:100%}
-        }
-      `}</style>
-    </div>
+          <section className={`${styles.inviteBlock} ${inviteActive ? styles.inviteBlockActive : ""}`}>
+            <div className={styles.inviteStatus}><span>{inviteActive ? <CheckCircle2 size={17} /> : <Link2Off size={17} />}</span>
+              <div><strong>{inviteActive ? copy.inviteActive : copy.inviteInactive}</strong>
+                <small>{cls.invite?.use_count ?? 0} {copy.joined}</small></div></div>
+            {!viewOnly && <div className={styles.inviteActions} data-write-area="true">{inviteActive ? <>
+              <button type="button" data-write="true" onClick={() => void copyAdminInvite(cls)}>
+                {copiedId === cls.id ? <Check size={15} /> : <Copy size={15} />}{copiedId === cls.id ? copy.copied : copy.copyLink}</button>
+              <button type="button" data-write="true" className={styles.secondaryButton} onClick={() => void manageInvite(cls, "revoke")}
+                disabled={inviteBusyId === cls.id}><Link2Off size={15} /> {copy.stopLink}</button>
+            </> : <button type="button" data-write="true" onClick={() => void manageInvite(cls, "create")}
+              disabled={inviteBusyId === cls.id || !cls.teacher} title={!cls.teacher ? copy.assignFirst : copy.createLink}>
+              <Link2 size={15} /> {copy.createLink}</button>}</div>}
+          </section>
+        </article>;
+      })}</section>}
+    </main>
   );
+}
+
+function Metric({ icon, value, label, tone }: { icon: React.ReactNode; value: number; label: string; tone: "wine" | "gold" | "stone" | "green" }) {
+  return <article className={`${styles.metric} ${styles[`metric_${tone}`]}`}><span className={styles.metricIcon}>{icon}</span>
+    <div><strong>{value.toLocaleString()}</strong><small>{label}</small></div></article>;
+}
+
+function EmptyState({ icon, title, body, action, onAction }: { icon: React.ReactNode; title: string; body: string; action?: string; onAction: () => void }) {
+  return <section className={styles.empty}><div className={styles.emptyIcon}>{icon}</div><h2>{title}</h2><p>{body}</p>
+    {action && <button type="button" onClick={onAction}><Plus size={16} /> {action}</button>}</section>;
 }
