@@ -71,11 +71,11 @@ type TeacherData = {
 const STR = {
   ar: {
     welcome: "مرحباً بك",
-    subtitle: "مركزك اليومي لإدارة المجموعات، المجتمع، المجموعات، والمحتوى.",
+    subtitle: "مركزك اليومي لإدارة مجموعات المستفيدين، مجموعات المشرفين، المجتمع، والمحتوى.",
     command: "لوحة قيادة المشرف",
-    classes: "المجموعات",
+    classes: "مجموعات المستفيدين",
     students: "المستفيدون",
-    groups: "المجموعات",
+    groups: "مجموعات المشرفين",
     content: "المحتوى",
     pending: "بانتظار المراجعة",
     announcements: "الإعلانات",
@@ -85,7 +85,7 @@ const STR = {
     createLesson: "إنشاء درس",
     createQuiz: "إنشاء اختبار",
     viewReports: "تقارير المستفيدون",
-    classCommand: "مركز المجموعات",
+    classCommand: "إدارة مجموعات المستفيدين",
     selectedClass: "المجموعة المحدد",
     classStudents: "مستفيدو المجموعة",
     noStudents: "لا يوجد مستفيدون في هذا المجموعة بعد",
@@ -98,7 +98,7 @@ const STR = {
     delete: "حذف",
     deleteConfirm: "حذف هذا الإعلان؟",
     noAnnouncements: "لا توجد إعلانات لهذا المجموعة بعد",
-    groupsPulse: "نبض المجموعات",
+    groupsPulse: "التقييم والتواصل بين المشرفين",
     noGroups: "لم تتم إضافتك إلى أي مجموعة بعد",
     latestGroupPosts: "آخر إعلانات المجموعات",
     noGroupUpdates: "لا توجد تحديثات جديدة في المجموعات",
@@ -118,11 +118,11 @@ const STR = {
   },
   sq: {
     welcome: "Mirësevini",
-    subtitle: "Qendra juaj ditore për grupet, komunitetin, grupet dhe përmbajtjen.",
+    subtitle: "Qendra juaj ditore për grupet e pjesëmarrësve, grupet e edukatorëve, komunitetin dhe përmbajtjen.",
     command: "Paneli i edukatorit",
-    classes: "Grupet",
+    classes: "Grupet e pjesëmarrësve",
     students: "Pjesëmarrësit",
-    groups: "Grupet",
+    groups: "Grupet e edukatorëve",
     content: "Përmbajtja",
     pending: "Në shqyrtim",
     announcements: "Njoftimet",
@@ -132,7 +132,7 @@ const STR = {
     createLesson: "Krijo mësim",
     createQuiz: "Krijo test",
     viewReports: "Raportet e pjesëmarrësve",
-    classCommand: "Qendra e grupeve",
+    classCommand: "Menaxhimi i grupeve të pjesëmarrësve",
     selectedClass: "Grupi e zgjedhur",
     classStudents: "Pjesëmarrësit e grupit",
     noStudents: "Nuk ka pjesëmarrës në këtë grup ende",
@@ -145,7 +145,7 @@ const STR = {
     delete: "Fshij",
     deleteConfirm: "Fshi këtë njoftim?",
     noAnnouncements: "Nuk ka njoftime për këtë grup ende",
-    groupsPulse: "Pulsi i grupeve",
+    groupsPulse: "Vlerësimi dhe komunikimi mes edukatorëve",
     noGroups: "Nuk jeni shtuar në asnjë grup ende",
     latestGroupPosts: "Njoftimet e fundit në grupe",
     noGroupUpdates: "Nuk ka përditësime të reja në grupe",
@@ -300,10 +300,10 @@ export default function TeacherPage() {
         </section>
 
         <section className="td-stats">
-          <StatCard label={tr.classes} value={data.classes.length} hint={tr.classCommand} />
-          <StatCard label={tr.students} value={totalStudents} hint={tr.classStudents} />
-          <StatCard label={tr.groups} value={totals?.groups ?? 0} hint={tr.groupsPulse} />
-          <StatCard label={tr.content} value={totalContent} hint={`${totals?.pending_review ?? 0} ${tr.pending}`} />
+          <StatCard href="/teacher/classes" label={tr.classes} value={data.classes.length} hint={tr.classCommand} />
+          <StatCard href="/teacher/reports" label={tr.students} value={totalStudents} hint={tr.classStudents} />
+          <StatCard href="/teacher/groups" label={tr.groups} value={totals?.groups ?? 0} hint={tr.groupsPulse} />
+          <StatCard href="/teacher/lessons" label={tr.content} value={totalContent} hint={`${totals?.pending_review ?? 0} ${tr.pending}`} />
         </section>
 
         {!data.classes.length ? (
@@ -494,13 +494,14 @@ export default function TeacherPage() {
   );
 }
 
-function StatCard({ label, value, hint }: { label: string; value: number; hint: string }) {
+function StatCard({ href, label, value, hint }: { href: string; label: string; value: number; hint: string }) {
   return (
-    <div className="td-stat-card">
+    <Link href={href} className="td-stat-card" aria-label={`${label}: ${value}`}>
       <span>{label}</span>
       <strong>{value}</strong>
       <small>{hint}</small>
-    </div>
+      <b className="td-stat-open" aria-hidden="true">↗</b>
+    </Link>
   );
 }
 
@@ -515,7 +516,7 @@ const styles = `
 .td-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.td-action,.td-mini-link,.td-quick a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:10px;font-weight:900;transition:.18s ease}.td-action{padding:10px 15px;color:#F7F3EB;border:1px solid rgba(239,234,224,.18);background:rgba(255,255,255,.06)}.td-action.primary{color:#32101A;background:linear-gradient(135deg,#D9C9B0,#B8A082);border-color:transparent}.td-action:hover,.td-mini-link:hover,.td-quick a:hover{transform:translateY(-1px)}
 .td-hero-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:13px;border:1px solid rgba(217,201,176,.2);border-radius:19px;background:rgba(107,30,45,.34);backdrop-filter:blur(10px)}.td-hero-summary-label{grid-column:1/-1;color:#D9C9B0;font-size:9px;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.td-hero-summary>div{min-width:0;border-radius:13px;background:rgba(255,255,255,.07);padding:11px 8px;text-align:center}.td-hero-summary strong,.td-hero-summary small{display:block}.td-hero-summary strong{color:#F7F3EB;font-size:23px;line-height:1}.td-hero-summary small{margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgba(247,243,235,.62);font-size:9px;font-weight:800}
 .td-orbit{position:relative;min-height:210px;display:grid;place-items:center}.td-orbit-ring{position:absolute;width:210px;height:210px;border-radius:50%;border:1px solid rgba(184,160,130,.20);box-shadow:inset 0 0 0 18px rgba(255,255,255,.03)}.td-orbit-core{width:104px;height:104px;border-radius:32px;background:linear-gradient(145deg,#F7F3EB,#B8A082);display:grid;place-items:center;font-size:32px;font-weight:900;color:#32101A;box-shadow:0 18px 36px rgba(26,26,26,.26)}.td-orbit-chip{position:absolute;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(239,234,224,.18);color:#F7F3EB;font-size:12px;font-weight:900;backdrop-filter:blur(10px)}.td-orbit-chip.c1{top:18px;inset-inline-start:18px}.td-orbit-chip.c2{bottom:22px;inset-inline-end:14px}.td-orbit-chip.c3{top:70px;inset-inline-end:0}
-.td-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.td-stat-card{position:relative;overflow:hidden;border-radius:14px;background:#FFFBF5;border:1px solid rgba(107,30,45,.20);padding:16px;box-shadow:0 10px 24px rgba(107,30,45,.06)}.td-stat-card::after{content:"";position:absolute;inset-inline-end:0;top:0;width:4px;height:100%;background:#B8A082}.td-stat-card span{font-size:12px;font-weight:900;color:#6B1E2D}.td-stat-card strong{display:block;margin-top:8px;font-size:32px;line-height:1;color:#32101A}.td-stat-card small{display:block;margin-top:8px;color:#796A62;font-weight:700}
+.td-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.td-stat-card{position:relative;overflow:hidden;display:block;border-radius:14px;background:#FFFBF5;border:1px solid rgba(107,30,45,.20);padding:16px;text-decoration:none;color:inherit;box-shadow:0 10px 24px rgba(107,30,45,.06);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.td-stat-card::after{content:"";position:absolute;inset-inline-end:0;top:0;width:4px;height:100%;background:#B8A082;transition:width .18s ease}.td-stat-card:hover,.td-stat-card:focus-visible{transform:translateY(-3px);border-color:rgba(107,30,45,.42);box-shadow:0 16px 30px rgba(107,30,45,.12);outline:none}.td-stat-card:hover::after,.td-stat-card:focus-visible::after{width:7px}.td-stat-card span{display:block;max-width:calc(100% - 34px);font-size:12px;font-weight:900;color:#6B1E2D}.td-stat-card strong{display:block;margin-top:8px;font-size:32px;line-height:1;color:#32101A}.td-stat-card small{display:block;margin-top:8px;color:#796A62;font-weight:700}.td-stat-open{position:absolute;inset-inline-end:16px;top:15px;width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:#F7F3EB;color:#6B1E2D;font-size:13px;line-height:1;transition:background .18s ease,color .18s ease}.td-stat-card:hover .td-stat-open,.td-stat-card:focus-visible .td-stat-open{background:#6B1E2D;color:#FFFBF5}
 .td-command-row{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr);gap:14px;align-items:stretch}
 .td-command-panel{display:block;text-decoration:none;color:#32101A;background:#FFFBF5;border:1px solid rgba(107,30,45,.20);border-radius:16px;padding:16px;box-shadow:0 12px 28px rgba(107,30,45,.07)}
 .td-command-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(107,30,45,.14)}
