@@ -881,6 +881,12 @@ model TeacherGroupAnnouncement {
   @@map("teacher_group_announcements")
 }
 
+enum StudentSupportRole {
+  GUARDIAN
+  RELIGIOUS_REFERENCE
+  SPONSOR
+}
+
 model Student {
   id                  String                  @id @default(uuid()) @db.Uuid
   class_id            String?                 @db.Uuid
@@ -899,11 +905,31 @@ model Student {
   school              School?                 @relation(fields: [school_id], references: [id])
   traitAssessments    TraitAssessment[]
   class_join_requests ClassJoinRequest[]
+  support_contacts    StudentSupportContact[]
 
   @@index([school_id])
   @@index([class_id])
   @@index([school_id, onboarding_status])
   @@map("students")
+}
+
+model StudentSupportContact {
+  id           String             @id @default(uuid()) @db.Uuid
+  student_id   String             @db.Uuid
+  role         StudentSupportRole
+  full_name    String
+  phone        String?
+  email        String?
+  relationship String?
+  notes        String?
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
+
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, role])
+  @@index([student_id])
+  @@map("student_support_contacts")
 }
 
 model Class {

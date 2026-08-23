@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { requireTeacher } from "@/lib/teacher-auth";
 import { prisma } from "@/lib/prisma";
+import { shapeStudentSupportCircle } from "@/lib/student-support-server";
 
 export const revalidate = 60;
 
@@ -24,7 +25,21 @@ export async function GET(
     select: {
       id: true,
       profile: { select: { full_name: true, avatar_url: true } },
-      class: { select: { id: true, name: true } },
+      class: {
+        select: {
+          id: true,
+          name: true,
+          teacher: {
+            select: {
+              profile: { select: { full_name: true, email: true } },
+              application: { select: { phone: true } },
+            },
+          },
+        },
+      },
+      support_contacts: {
+        select: { id: true, role: true, full_name: true, phone: true, email: true, relationship: true, notes: true },
+      },
       moduleAttempts: {
         orderBy: { created_at: "asc" },
         select: {
@@ -235,6 +250,7 @@ export async function GET(
       full_name: student.profile.full_name,
       avatar_url: student.profile.avatar_url,
       class_name: student.class?.name ?? null,
+      support_circle: shapeStudentSupportCircle(student),
       attempts_count: attempts.length,
       passed_count: attempts.filter((a) => a.passed).length,
       avg_score: avgScore,

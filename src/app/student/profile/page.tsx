@@ -1,12 +1,30 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import {
+  CalendarDays,
+  Camera,
+  CheckCircle2,
+  CircleUserRound,
+  KeyRound,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/lib/language-context";
 import StudentSpectrumCard from "@/components/StudentSpectrumCard";
+import StudentSupportCircle from "@/components/StudentSupportCircle";
+import IdentityMandala from "@/components/IdentityMandala";
+import MandalaLoader from "@/components/MandalaLoader";
+import type { StudentSupportCircle as StudentSupportCircleValue } from "@/lib/student-support";
 
-interface ProfileData {
+type Lang = "ar" | "sq";
+type ProfileData = {
   id: string;
   full_name: string;
   role: string;
@@ -14,824 +32,212 @@ interface ProfileData {
   avatar_path: string | null;
   created_at: string;
   email?: string;
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("");
-}
-
-function formatDate(d: string, lang: string) {
-  return new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-const c = {
-  ar: {
-    section: "الحساب الشخصي",
-    title: "ملفي الشخصي",
-    role: "المستفيد",
-    basicInfo: "المعلومات الأساسية",
-    fullName: "الاسم الكامل",
-    email: "البريد الإلكتروني",
-    permission: "الصلاحية",
-    joinDate: "تاريخ الانضمام",
-    security: "الأمان",
-    password: "كلمة المرور",
-    change: "تغيير",
-    accountType: "نوع الحساب",
-    profileComp: "اكتمال الملف الشخصي",
-    addPhoto: "أضف صورة شخصية لإكمال ملفك",
-    upload: "رفع صورة",
-    changePhoto: "تغيير الصورة",
-    remove: "إزالة الصورة",
-    uploading: "جارٍ الرفع",
-    view: "عرض",
-    drag: "أو اسحب الصورة وأفلتها هنا",
-    fileRules: "PNG · JPG · WEBP · حتى 5 ميغابايت",
-    complete: "مكتمل",
-    toastOk: "تم تحديث الصورة بنجاح",
-    toastRemove: "تمت إزالة الصورة",
-    toastErr: "فشل رفع الصورة، حاول مجدداً",
-    toastRemErr: "فشلت الإزالة",
-    toastType: "يُسمح فقط برفع صور",
-    toastSize: "حجم الصورة يتجاوز 5 ميغابايت",
-  },
-  sq: {
-    section: "Llogaria ime",
-    title: "Profili im",
-    role: "Pjesëmarrësi",
-    basicInfo: "Të dhënat bazë",
-    fullName: "Emri i plotë",
-    email: "Email",
-    permission: "Roli",
-    joinDate: "Data e regjistrimit",
-    security: "Siguria",
-    password: "Fjalëkalimi",
-    change: "Ndrysho",
-    accountType: "Lloji i llogarisë",
-    profileComp: "Plotësia e profilit",
-    addPhoto: "Shto foto profili për ta plotësuar",
-    upload: "Ngarko foto",
-    changePhoto: "Ndrysho foton",
-    remove: "Hiq foton",
-    uploading: "Duke ngarkuar",
-    view: "Shiko",
-    drag: "ose tërhiq dhe lësho foton këtu",
-    fileRules: "PNG · JPG · WEBP · Maks 5MB",
-    complete: "Plotë",
-    toastOk: "Foto u përditësua me sukses",
-    toastRemove: "Foto u hoq",
-    toastErr: "Ngarkimi dështoi, provo përsëri",
-    toastRemErr: "Heqja dështoi",
-    toastType: "Lejohen vetëm imazhe",
-    toastSize: "Imazhi tejkalon 5MB",
-  },
 };
 
-export default function StudentProfilePage() {
-  const { lang } = useLang();
-  const tr = c[lang === "sq" ? "sq" : "ar"];
-  const isRtl = lang !== "sq";
+const EMPTY_CIRCLE: StudentSupportCircleValue = {
+  supervisor: null,
+  guardian: null,
+  religious_reference: null,
+  sponsor: null,
+};
 
+const COPY = {
+  ar: {
+    eyebrow: "الهوية والرحلة",
+    title: "ملفي الشخصي",
+    subtitle: "بياناتك الأساسية، دائرة الرعاية المحيطة بك، وبصمتك السلوكية في مساحة واحدة واضحة.",
+    beneficiary: "المستفيد",
+    active: "حساب نشط",
+    joined: "عضو منذ",
+    identity: "البيانات الأساسية",
+    identitySub: "معلومات الحساب والتسجيل الخاصة بك.",
+    fullName: "الاسم الكامل",
+    email: "البريد الإلكتروني",
+    accountType: "نوع الحساب",
+    joinDate: "تاريخ الانضمام",
+    security: "أمان الحساب",
+    securitySub: "يمكنك استعادة كلمة المرور أو تغييرها بأمان من هنا.",
+    password: "إدارة كلمة المرور",
+    upload: "رفع صورة",
+    changePhoto: "تغيير الصورة",
+    removePhoto: "إزالة",
+    photoHint: "PNG أو JPG أو WEBP — حتى 5 ميجابايت",
+    uploading: "جارٍ الرفع...",
+    toastOk: "تم تحديث الصورة بنجاح",
+    toastRemove: "تمت إزالة الصورة",
+    toastErr: "تعذر تحديث الصورة. حاول مرة أخرى.",
+    invalidFile: "اختر صورة PNG أو JPG أو WEBP بحجم لا يتجاوز 5 ميجابايت.",
+    spectrum: "بصمتي السلوكية",
+    spectrumSub: "القراءة التراكمية للسمات الموثقة خلال رحلتك.",
+    loadError: "تعذر تحميل الملف الشخصي.",
+  },
+  sq: {
+    eyebrow: "Identiteti dhe rrugëtimi",
+    title: "Profili im",
+    subtitle: "Të dhënat bazë, rrethi yt i kujdesit dhe gjurmët e tipareve në një hapësirë të qartë.",
+    beneficiary: "Pjesëmarrës",
+    active: "Llogari aktive",
+    joined: "Anëtar që prej",
+    identity: "Të dhënat bazë",
+    identitySub: "Informacioni i llogarisë dhe regjistrimit.",
+    fullName: "Emri i plotë",
+    email: "Email",
+    accountType: "Lloji i llogarisë",
+    joinDate: "Data e regjistrimit",
+    security: "Siguria e llogarisë",
+    securitySub: "Rivendos ose ndrysho fjalëkalimin në mënyrë të sigurt.",
+    password: "Menaxho fjalëkalimin",
+    upload: "Ngarko foto",
+    changePhoto: "Ndrysho foton",
+    removePhoto: "Hiq",
+    photoHint: "PNG, JPG ose WEBP — deri në 5 MB",
+    uploading: "Duke ngarkuar...",
+    toastOk: "Fotoja u përditësua",
+    toastRemove: "Fotoja u hoq",
+    toastErr: "Fotoja nuk u përditësua. Provo përsëri.",
+    invalidFile: "Zgjidh një foto PNG, JPG ose WEBP deri në 5 MB.",
+    spectrum: "Gjurmët e mia të tipareve",
+    spectrumSub: "Leximi i grumbulluar i tipareve të dokumentuara gjatë rrugëtimit.",
+    loadError: "Profili nuk u ngarkua.",
+  },
+} as const;
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
+function formatDate(value: string, lang: Lang) {
+  return new Intl.DateTimeFormat(lang === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { dateStyle: "long" }).format(new Date(value));
+}
+
+export default function StudentProfilePage() {
+  const { lang: rawLang } = useLang();
+  const lang: Lang = rawLang === "sq" ? "sq" : "ar";
+  const t = COPY[lang];
+  const fileRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [supportCircle, setSupportCircle] = useState<StudentSupportCircleValue>(EMPTY_CIRCLE);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const [lightbox, setLightbox] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
+  const [toast, setToast] = useState<{ text: string; ok: boolean } | null>(null);
 
   useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d?.profile) setProfile({ ...d.profile, email: d.email });
-      })
-      .finally(() => setLoading(false));
+    let active = true;
+    Promise.all([
+      fetch("/api/profile", { cache: "no-store" }),
+      fetch("/api/student/support-circle", { cache: "no-store" }),
+    ]).then(async ([profileResponse, circleResponse]) => {
+      if (!profileResponse.ok) throw new Error();
+      const [profilePayload, circlePayload] = await Promise.all([
+        profileResponse.json(),
+        circleResponse.ok ? circleResponse.json() : Promise.resolve({}),
+      ]);
+      if (!active) return;
+      setProfile(profilePayload.profile ? { ...profilePayload.profile, email: profilePayload.email } : null);
+      setSupportCircle(circlePayload.support_circle ?? EMPTY_CIRCLE);
+    }).catch(() => {
+      if (active) setProfile(null);
+    }).finally(() => {
+      if (active) setLoading(false);
+    });
+    return () => { active = false; };
   }, []);
 
-  function showToast(msg: string, ok: boolean) {
-    setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3500);
-  }
+  const showToast = useCallback((text: string, ok: boolean) => {
+    setToast({ text, ok });
+    window.setTimeout(() => setToast(null), 3200);
+  }, []);
 
-  async function handleUpload(file: File) {
+  async function uploadAvatar(file: File) {
     if (!profile) return;
-    if (!file.type.startsWith("image/")) {
-      showToast(tr.toastType, false);
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+      showToast(t.invalidFile, false);
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast(tr.toastSize, false);
-      return;
-    }
-
     setUploading(true);
     try {
-      if (profile.avatar_path) {
-        await supabase.storage.from("avatars").remove([profile.avatar_path]);
-      }
-      const ext = file.name.split(".").pop();
-      const path = `profiles/${profile.id}/avatar-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(path, file, { upsert: true });
-      if (upErr) throw upErr;
-      const { data: urlData } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(path);
-      const res = await fetch("/api/profile", {
+      const supabase = createClient();
+      if (profile.avatar_path) await supabase.storage.from("avatars").remove([profile.avatar_path]);
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `profiles/${profile.id}/avatar-${Date.now()}.${extension}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      const response = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          avatar_url: urlData.publicUrl,
-          avatar_path: path,
-        }),
+        body: JSON.stringify({ avatar_url: data.publicUrl, avatar_path: path }),
       });
-      if (!res.ok) throw new Error();
-      setProfile((p) =>
-        p ? { ...p, avatar_url: urlData.publicUrl, avatar_path: path } : p,
-      );
-      showToast(tr.toastOk, true);
+      if (!response.ok) throw new Error();
+      setProfile((current) => current ? { ...current, avatar_url: data.publicUrl, avatar_path: path } : current);
+      showToast(t.toastOk, true);
     } catch {
-      showToast(tr.toastErr, false);
+      showToast(t.toastErr, false);
     } finally {
       setUploading(false);
     }
   }
 
-  async function handleRemove() {
-    if (!profile) return;
-    setRemoving(true);
+  async function removeAvatar() {
+    if (!profile || uploading) return;
+    setUploading(true);
     try {
-      const res = await fetch("/api/profile", { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      setProfile((p) =>
-        p ? { ...p, avatar_url: null, avatar_path: null } : p,
-      );
-      showToast(tr.toastRemove, true);
+      const response = await fetch("/api/profile", { method: "DELETE" });
+      if (!response.ok) throw new Error();
+      setProfile((current) => current ? { ...current, avatar_url: null, avatar_path: null } : current);
+      showToast(t.toastRemove, true);
     } catch {
-      showToast(tr.toastRemErr, false);
+      showToast(t.toastErr, false);
     } finally {
-      setRemoving(false);
+      setUploading(false);
     }
   }
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      const file = e.dataTransfer.files[0];
-      if (file) handleUpload(file);
-    },
-    [profile],
-  );
+  if (loading) return <MandalaLoader />;
+  if (!profile) return <main className="sp-error" dir={lang === "ar" ? "rtl" : "ltr"}>{t.loadError}<style>{styles}</style></main>;
 
-  if (loading)
-    return (
-      <div className="pf-loading">
-        <div className="pf-spin" />
-        <style>{`@keyframes sp{to{transform:rotate(360deg)}}.pf-loading{display:flex;align-items:center;justify-content:center;min-height:60vh}.pf-spin{width:32px;height:32px;border:2.5px solid rgba(184,160,130,0.2);border-top-color:#B8A082;border-radius:50%;animation:sp 0.75s linear infinite}`}</style>
+  return <main className="sp" dir={lang === "ar" ? "rtl" : "ltr"}>
+    {toast && <div className={`sp-toast ${toast.ok ? "ok" : "error"}`}><CheckCircle2 size={15}/>{toast.text}</div>}
+    <header className="sp-hero">
+      <div className="sp-art" aria-hidden="true"><IdentityMandala size={360} stroke="#D9C9B0" opacity={0.11} spin spinDuration={130}/></div>
+      <div className="sp-person">
+        <div className="sp-avatar">{profile.avatar_url ? <Image src={profile.avatar_url} alt={profile.full_name} fill sizes="104px" /> : <span>{initials(profile.full_name)}</span>}<button type="button" onClick={() => fileRef.current?.click()} aria-label={t.changePhoto} title={t.changePhoto}><Camera size={16}/></button></div>
+        <div><span className="sp-eyebrow"><Sparkles size={13}/>{t.eyebrow}</span><h1>{profile.full_name}</h1><p>{t.subtitle}</p><div className="sp-tags"><span><CircleUserRound size={13}/>{t.beneficiary}</span><span><ShieldCheck size={13}/>{t.active}</span></div></div>
       </div>
-    );
+      <div className="sp-joined"><small>{t.joined}</small><strong>{formatDate(profile.created_at, lang)}</strong><CalendarDays size={21}/></div>
+    </header>
 
-  if (!profile) return null;
+    <section className="sp-layout">
+      <aside className="sp-photo-card">
+        <div className="sp-photo-ring">{profile.avatar_url ? <Image src={profile.avatar_url} alt={profile.full_name} fill sizes="150px" /> : <span>{initials(profile.full_name)}</span>}</div>
+        <h2>{profile.full_name}</h2><p>{t.beneficiary}</p>
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadAvatar(file); event.target.value = ""; }}/>
+        <button type="button" className="sp-upload" onClick={() => fileRef.current?.click()} disabled={uploading}><Upload size={15}/>{uploading ? t.uploading : profile.avatar_url ? t.changePhoto : t.upload}</button>
+        {profile.avatar_url && <button type="button" className="sp-remove" onClick={() => void removeAvatar()} disabled={uploading}><Trash2 size={14}/>{t.removePhoto}</button>}
+        <small>{t.photoHint}</small>
+      </aside>
 
-  const initials = getInitials(profile.full_name);
-  const pct = profile.avatar_url ? "100%" : "80%";
-
-  return (
-    <div className="pf-root" dir={isRtl ? "rtl" : "ltr"}>
-      {/* Toast */}
-      {toast && (
-        <div className={`pf-toast ${toast.ok ? "pf-ok" : "pf-err"}`}>
-          <span className="pf-toast-dot" />
-          {toast.msg}
+      <div className="sp-main-card">
+        <header><span><CircleUserRound size={18}/></span><div><h2>{t.identity}</h2><p>{t.identitySub}</p></div></header>
+        <div className="sp-info-grid">
+          <article><span><CircleUserRound/></span><div><small>{t.fullName}</small><strong>{profile.full_name}</strong></div></article>
+          <article><span><Mail/></span><div><small>{t.email}</small><strong dir="ltr">{profile.email ?? "—"}</strong></div></article>
+          <article><span><ShieldCheck/></span><div><small>{t.accountType}</small><strong>{t.beneficiary}</strong></div></article>
+          <article><span><CalendarDays/></span><div><small>{t.joinDate}</small><strong>{formatDate(profile.created_at, lang)}</strong></div></article>
         </div>
-      )}
-
-      {/* Lightbox */}
-      {lightbox && profile.avatar_url && (
-        <div className="pf-lb-back" onClick={() => setLightbox(false)}>
-          <div className="pf-lb-box" onClick={(e) => e.stopPropagation()}>
-            <button className="pf-lb-close" onClick={() => setLightbox(false)}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              >
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-            <div className="pf-lb-img">
-              <Image
-                src={profile.avatar_url}
-                alt={profile.full_name}
-                width={420}
-                height={420}
-                style={{
-                  objectFit: "cover",
-                  width: "100%",
-                  height: "100%",
-                  borderRadius: 20,
-                }}
-              />
-            </div>
-            <p className="pf-lb-name">{profile.full_name}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Page head */}
-      <div className="pf-head">
-        <span className="pf-head-label">{tr.section}</span>
-        <h1 className="pf-head-title">{tr.title}</h1>
-        <div className="pf-head-rule">
-          <div className="pf-rule-line" />
-          <div className="pf-rule-diamond" />
-          <div className="pf-rule-line pf-rule-fade" />
-        </div>
+        <div className="sp-security"><span><KeyRound/></span><div><strong>{t.security}</strong><small>{t.securitySub}</small></div><Link href="/forgot-password">{t.password}</Link></div>
       </div>
+    </section>
 
-      <div className="pf-layout">
-        {/* LEFT */}
-        <div className="pf-left">
-          <div className="pf-av-card">
-            <div className="pf-card-topline" />
-            <div className="pf-wmark" aria-hidden="true">
-              <svg viewBox="0 0 200 200" fill="none" width="100%" height="100%">
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="95"
-                  stroke="#B8A082"
-                  strokeWidth="0.5"
-                  opacity="0.1"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="78"
-                  stroke="#B8A082"
-                  strokeWidth="0.4"
-                  strokeDasharray="4 7"
-                  opacity="0.08"
-                />
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="58"
-                  stroke="#B8A082"
-                  strokeWidth="0.3"
-                  opacity="0.07"
-                />
-                {Array.from({ length: 8 }, (_, i) => {
-                  const a = (i * 45 * Math.PI) / 180;
-                  return (
-                    <circle
-                      key={i}
-                      cx={Math.round((100 + 52 * Math.sin(a)) * 100) / 100}
-                      cy={Math.round((100 - 52 * Math.cos(a)) * 100) / 100}
-                      r="50"
-                      stroke="#B8A082"
-                      strokeWidth="0.3"
-                      opacity="0.055"
-                      fill="none"
-                    />
-                  );
-                })}
-                <circle
-                  cx="100"
-                  cy="100"
-                  r="28"
-                  stroke="#B8A082"
-                  strokeWidth="0.3"
-                  opacity="0.1"
-                />
-              </svg>
-            </div>
+    <StudentSupportCircle value={supportCircle} lang={lang} />
 
-            {/* Avatar */}
-            <div
-              className={`pf-av-zone${dragOver ? " drag-on" : ""}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-            >
-              <div className="pf-av-ring">
-                {uploading ? (
-                  <div className="pf-av-load">
-                    <div className="pf-av-spin" />
-                    <span>{tr.uploading}</span>
-                  </div>
-                ) : profile.avatar_url ? (
-                  <button
-                    className="pf-av-btn"
-                    onClick={() => setLightbox(true)}
-                  >
-                    <Image
-                      src={profile.avatar_url}
-                      alt={profile.full_name}
-                      width={148}
-                      height={148}
-                      style={{
-                        objectFit: "cover",
-                        width: "100%",
-                        height: "100%",
-                      }}
-                    />
-                    <div className="pf-av-hover">
-                      <svg
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      >
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m21 21-4.35-4.35" />
-                      </svg>
-                      <span>{tr.view}</span>
-                    </div>
-                  </button>
-                ) : (
-                  <div className="pf-av-initials">{initials}</div>
-                )}
-              </div>
-              {dragOver && <div className="pf-drag-ring" />}
-            </div>
-
-            <h2 className="pf-av-name">{profile.full_name}</h2>
-            <div className="pf-av-badge">{tr.role}</div>
-
-            <div className="pf-sep">
-              <div className="pf-sep-line" />
-              <div className="pf-sep-dot" />
-              <div className="pf-sep-line" />
-            </div>
-
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleUpload(f);
-                e.target.value = "";
-              }}
-            />
-
-            <div className="pf-actions">
-              <button
-                className="pf-btn-primary"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <div className="pf-spin-w" />
-                ) : (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  >
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                )}
-                {profile.avatar_url ? tr.changePhoto : tr.upload}
-              </button>
-              {profile.avatar_url && (
-                <button
-                  className="pf-btn-danger"
-                  onClick={handleRemove}
-                  disabled={removing}
-                >
-                  {removing ? (
-                    <div className="pf-spin-r" />
-                  ) : (
-                    <svg
-                      width="13"
-                      height="13"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    >
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2" />
-                    </svg>
-                  )}
-                  {tr.remove}
-                </button>
-              )}
-            </div>
-
-            <div className="pf-file-hint">{tr.fileRules}</div>
-            <p className="pf-drag-label">{tr.drag}</p>
-          </div>
-
-          {/* Completeness */}
-          <div className="pf-comp-card">
-            <div className="pf-comp-row">
-              <span className="pf-comp-label">{tr.profileComp}</span>
-              <span className="pf-comp-pct">{pct}</span>
-            </div>
-            <div className="pf-bar-bg">
-              <div className="pf-bar-fill" style={{ width: pct }} />
-            </div>
-            {!profile.avatar_url && (
-              <p className="pf-comp-hint">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 8v4m0 4h.01" />
-                </svg>
-                {tr.addPhoto}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div className="pf-right">
-          {/* Basic info */}
-          <div className="pf-card">
-            <div className="pf-card-topline" />
-            <div className="pf-card-hd">
-              <div className="pf-card-ico">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                >
-                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-              </div>
-              <span className="pf-card-title">{tr.basicInfo}</span>
-            </div>
-            <div className="pf-rows">
-              <div className="pf-row">
-                <div className="pf-row-ico">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-                <div className="pf-row-body">
-                  <span className="pf-row-lbl">{tr.fullName}</span>
-                  <span className="pf-row-val">{profile.full_name}</span>
-                </div>
-              </div>
-
-              {profile.email && (
-                <div className="pf-row">
-                  <div className="pf-row-ico">
-                    <svg
-                      width="15"
-                      height="15"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                    >
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                      <polyline points="22,6 12,13 2,6" />
-                    </svg>
-                  </div>
-                  <div className="pf-row-body">
-                    <span className="pf-row-lbl">{tr.email}</span>
-                    <span className="pf-row-val">{profile.email}</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="pf-row">
-                <div className="pf-row-ico">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  >
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                  </svg>
-                </div>
-                <div className="pf-row-body">
-                  <span className="pf-row-lbl">{tr.permission}</span>
-                  <span className="pf-row-val">
-                    <span className="pf-role-pill">{tr.role}</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="pf-row pf-row-last">
-                <div className="pf-row-ico">
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                  >
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                </div>
-                <div className="pf-row-body">
-                  <span className="pf-row-lbl">{tr.joinDate}</span>
-                  <span className="pf-row-val">
-                    {formatDate(profile.created_at, lang)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="pf-card">
-            <div className="pf-card-topline" />
-            <div className="pf-stats">
-              <div className="pf-stat">
-                <div className="pf-stat-ico">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  >
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                </div>
-                <span className="pf-stat-val">{tr.role}</span>
-                <span className="pf-stat-lbl">{tr.accountType}</span>
-              </div>
-              <div className="pf-stat-div" />
-              <div className="pf-stat">
-                <div className="pf-stat-ico">
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                </div>
-                <span className="pf-stat-val">
-                  {formatDate(profile.created_at, lang)}
-                </span>
-                <span className="pf-stat-lbl">{tr.joinDate}</span>
-              </div>
-              <div className="pf-stat-div" />
-              <div className="pf-stat">
-                <div
-                  className="pf-stat-ico"
-                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#6B1E2D" }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                </div>
-                <span
-                  className="pf-stat-val"
-                  style={{ color: profile.avatar_url ? "#6B1E2D" : "#6B1E2D" }}
-                >
-                  {profile.avatar_url ? tr.complete : pct}
-                </span>
-                <span className="pf-stat-lbl">{tr.profileComp}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="pf-spectrum-section">
-        <StudentSpectrumCard endpoint="/api/student/traits" />
-      </div>
-
-      <style>{styles}</style>
-    </div>
-  );
+    <section className="sp-spectrum"><header><span><Sparkles/></span><div><h2>{t.spectrum}</h2><p>{t.spectrumSub}</p></div></header><StudentSpectrumCard endpoint="/api/student/traits" /></section>
+    <style>{styles}</style>
+  </main>;
 }
 
 const styles = `
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-@keyframes fadeUp {from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes toastIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes lbIn  {from{opacity:0;transform:scale(0.93)}to{opacity:1;transform:scale(1)}}
-@keyframes sp    {to{transform:rotate(360deg)}}
-@keyframes pulse {0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
-
-:root{
-  --gold:#B8A082;--gold2:#B8A082;
-  --gold-border:rgba(184,160,130,0.2);
-  --bg-card:#FFFBF5;
-  --text:#1A1A1A;--text2:#655B53;--text3:#8C8274;
-  --border:rgba(26,26,26,0.08);--border-med:rgba(26,26,26,0.13);
-  --font:'Cairo',sans-serif;
-  --r-lg:22px;--r-xl:28px;
-}
-
-.pf-root{min-height:100vh;padding:36px 40px 80px;font-family:var(--font);animation:fadeUp 0.35s cubic-bezier(0.22,1,0.36,1)}
-.pf-spectrum-section{margin-top:24px}
-
-/* Head */
-.pf-head{margin-bottom:36px}
-.pf-head-label{display:block;font-size:10.5px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
-.pf-head-title{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-0.4px;margin-bottom:16px}
-.pf-head-rule{display:flex;align-items:center;gap:10px;max-width:260px}
-.pf-rule-line{width:80px;height:1px;background:linear-gradient(270deg,var(--gold),transparent)}
-.pf-rule-fade{flex:1;background:transparent}
-.pf-rule-diamond{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex-shrink:0;opacity:0.7}
-
-/* Layout */
-.pf-layout{display:grid;grid-template-columns:300px 1fr;gap:26px;align-items:start}
-
-/* Avatar card */
-.pf-av-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:32px 24px 24px;text-align:center;position:relative;overflow:hidden;box-shadow:0 20px 50px rgba(26,26,26,0.05)}
-.pf-card-topline{position:absolute;top:0;left:15%;right:15%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.pf-wmark{position:absolute;top:-30px;left:-30px;width:210px;height:210px;pointer-events:none}
-
-.pf-av-zone{position:relative;width:fit-content;margin:0 auto 22px}
-.pf-av-ring{width:148px;height:148px;border-radius:50%;border:2px solid var(--gold-border);background:rgba(184,160,130,0.06);overflow:hidden;display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;z-index:1;transition:border-color 0.2s,box-shadow 0.2s}
-.pf-av-zone.drag-on .pf-av-ring{border-color:var(--gold);box-shadow:0 0 0 4px rgba(184,160,130,0.12)}
-.pf-drag-ring{position:absolute;inset:-8px;border-radius:50%;border:2px dashed rgba(184,160,130,0.45);animation:pulse 1.2s ease infinite;pointer-events:none;z-index:0}
-.pf-av-initials{font-size:44px;font-weight:900;color:var(--gold);user-select:none;line-height:1}
-.pf-av-btn{width:100%;height:100%;background:none;border:none;cursor:pointer;padding:0;position:relative;overflow:hidden}
-.pf-av-hover{position:absolute;inset:0;background:rgba(26,26,26,0.52);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#fff;font-size:12px;font-weight:700;font-family:var(--font);opacity:0;transition:opacity 0.2s}
-.pf-av-btn:hover .pf-av-hover{opacity:1}
-.pf-av-load{display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--gold);font-size:11px;font-weight:600;font-family:var(--font)}
-.pf-av-spin{width:36px;height:36px;border:2.5px solid rgba(184,160,130,0.15);border-top-color:var(--gold);border-radius:50%;animation:sp 0.75s linear infinite}
-
-.pf-av-name{font-size:18px;font-weight:900;color:var(--text);margin-bottom:9px;letter-spacing:-0.2px;position:relative;z-index:1}
-.pf-av-badge{display:inline-block;font-size:11px;font-weight:700;color:#6B1E2D;background:rgba(184,160,130,0.13);border:1px solid rgba(184,160,130,0.24);border-radius:999px;padding:4px 14px;letter-spacing:0.5px;margin-bottom:22px;position:relative;z-index:1}
-.pf-sep{display:flex;align-items:center;gap:8px;margin:0 0 22px}
-.pf-sep-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(184,160,130,0.15),transparent)}
-.pf-sep-dot{width:4px;height:4px;background:rgba(184,160,130,0.3);transform:rotate(45deg);flex-shrink:0}
-
-.pf-actions{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
-.pf-btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border-radius:999px;background:var(--text);color:#FFFBF5;border:none;font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.18s;box-shadow:0 8px 24px rgba(26,26,26,0.14)}
-.pf-btn-primary:hover:not(:disabled){background:#1A1A1A;transform:translateY(-1px);box-shadow:0 12px 30px rgba(26,26,26,0.2)}
-.pf-btn-primary:disabled{opacity:0.5;cursor:not-allowed}
-.pf-btn-danger{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 22px;border-radius:999px;background:transparent;color:rgba(107,30,45,0.65);border:1px solid rgba(107,30,45,0.16);font-size:12.5px;font-weight:600;font-family:var(--font);cursor:pointer;transition:all 0.18s}
-.pf-btn-danger:hover:not(:disabled){background:rgba(107,30,45,0.05);color:#6B1E2D;border-color:rgba(107,30,45,0.28)}
-.pf-btn-danger:disabled{opacity:0.5;cursor:not-allowed}
-.pf-spin-w{width:13px;height:13px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:sp 0.7s linear infinite}
-.pf-spin-r{width:12px;height:12px;border:2px solid rgba(107,30,45,0.15);border-top-color:#6B1E2D;border-radius:50%;animation:sp 0.7s linear infinite}
-.pf-file-hint{margin-top:14px;font-size:11px;color:var(--text3);position:relative;z-index:1}
-.pf-drag-label{margin-top:5px;font-size:11px;color:var(--text3);position:relative;z-index:1}
-
-/* Completeness */
-.pf-comp-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-top:16px;box-shadow:0 10px 28px rgba(26,26,26,0.04)}
-.pf-comp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.pf-comp-label{font-size:11px;font-weight:700;color:var(--text3)}
-.pf-comp-pct{font-size:17px;font-weight:900;color:var(--gold)}
-.pf-bar-bg{height:4px;border-radius:99px;background:rgba(184,160,130,0.1);overflow:hidden;margin-bottom:10px}
-.pf-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width 1s cubic-bezier(0.22,1,0.36,1)}
-.pf-comp-hint{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text3)}
-.pf-comp-hint svg{flex-shrink:0;color:var(--gold)}
-
-/* Right */
-.pf-right{display:flex;flex-direction:column;gap:20px}
-.pf-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);padding:28px;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(26,26,26,0.04)}
-.pf-card-hd{display:flex;align-items:center;gap:12px;margin-bottom:22px}
-.pf-card-ico{width:36px;height:36px;border-radius:10px;background:rgba(184,160,130,0.08);border:1px solid rgba(184,160,130,0.15);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
-.pf-card-title{font-size:13px;font-weight:800;color:var(--text);letter-spacing:0.2px}
-.pf-rows{display:flex;flex-direction:column}
-.pf-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
-.pf-row-last{border-bottom:none;padding-bottom:0}
-.pf-row-ico{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:rgba(26,26,26,0.03);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text2)}
-.pf-row-body{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
-.pf-row-lbl{font-size:10.5px;font-weight:700;color:var(--text3);letter-spacing:0.3px}
-.pf-row-val{font-size:14px;font-weight:700;color:var(--text)}
-.pf-role-pill{display:inline-block;font-size:12px;font-weight:700;color:#6B1E2D;background:rgba(184,160,130,0.12);border-radius:6px;padding:3px 10px}
-.pf-sec-row{display:flex;align-items:center;gap:14px}
-.pf-sec-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;background:rgba(26,26,26,0.03);border:1px solid var(--border-med);display:flex;align-items:center;justify-content:center;color:var(--text2)}
-.pf-sec-body{flex:1;display:flex;flex-direction:column;gap:3px}
-.pf-sec-title{font-size:14px;font-weight:700;color:var(--text)}
-.pf-sec-dots{font-size:12px;color:var(--text3);letter-spacing:3px}
-.pf-btn-sm{padding:8px 18px;border-radius:999px;border:1px solid var(--border-med);background:none;color:var(--text2);font-size:12.5px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all 0.15s;flex-shrink:0}
-.pf-btn-sm:hover{background:rgba(184,160,130,0.06);border-color:var(--gold-border);color:var(--text)}
-
-/* Stats */
-.pf-stats{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:center}
-.pf-stat{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 12px;text-align:center}
-.pf-stat-ico{width:38px;height:38px;border-radius:12px;background:rgba(184,160,130,0.07);border:1px solid rgba(184,160,130,0.13);display:flex;align-items:center;justify-content:center;color:var(--gold);margin-bottom:2px}
-.pf-stat-val{font-size:13px;font-weight:800;color:var(--text)}
-.pf-stat-lbl{font-size:10.5px;font-weight:600;color:var(--text3)}
-.pf-stat-div{width:1px;height:60px;background:linear-gradient(180deg,transparent,rgba(184,160,130,0.2),transparent)}
-
-/* Toast */
-.pf-toast{position:fixed;top:24px;left:28px;z-index:9999;display:flex;align-items:center;gap:10px;padding:13px 20px;border-radius:12px;font-size:13.5px;font-weight:700;font-family:var(--font);box-shadow:0 16px 44px rgba(26,26,26,0.14);animation:toastIn 0.28s cubic-bezier(0.22,1,0.36,1)}
-.pf-ok{background:#FFFBF5;border:1px solid rgba(27,94,32,0.22);color:#6B1E2D}
-.pf-err{background:#FFFBF5;border:1px solid rgba(107,30,45,0.22);color:#6B1E2D}
-.pf-toast-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.pf-ok .pf-toast-dot{background:#6B1E2D}
-.pf-err .pf-toast-dot{background:#6B1E2D}
-
-/* Lightbox */ 
-.pf-lb-back{position:fixed;inset:0;z-index:9999;background:rgba(26,26,26,0.78);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:fadeUp 0.2s ease;cursor:pointer}
-.pf-lb-box{position:relative;cursor:default;animation:lbIn 0.25s cubic-bezier(0.22,1,0.36,1);text-align:center}
-.pf-lb-close{position:absolute;top:-14px;left:-14px;width:36px;height:36px;border-radius:50%;background:rgba(184,160,130,0.12);border:1px solid rgba(184,160,130,0.28);color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;z-index:1}
-.pf-lb-close:hover{background:rgba(184,160,130,0.26)}
-.pf-lb-img{width:420px;height:420px;border-radius:20px;overflow:hidden}
-.pf-lb-name{margin-top:16px;font-size:15px;font-weight:700;color:rgba(255,255,255,0.88);font-family:var(--font)}
-
-@media(max-width:900px){.pf-layout{grid-template-columns:1fr}.pf-root{padding:24px 18px 60px}}
-@media(max-width:600px){
-  .pf-root{padding:20px 14px 48px}
-  .pf-head{margin-bottom:24px}
-  .pf-head-title{font-size:23px}
-  .pf-layout{gap:16px}
-  .pf-av-card{padding:26px 18px 20px}
-  .pf-av-ring{width:120px;height:120px}
-  .pf-av-initials{font-size:36px}
-  .pf-card{padding:20px 18px}
-  .pf-card-hd{margin-bottom:16px}
-  .pf-stats{grid-template-columns:1fr;gap:12px}
-  .pf-stat-div{display:none}
-  .pf-lb-img{width:min(82vw,290px);height:min(82vw,290px)}
-  .pf-toast{left:14px;right:14px;top:14px}
-  .pf-sec-row{flex-wrap:wrap}
-  .pf-btn-sm{margin-inline-start:auto}
-}
-@media(max-width:400px){
-  .pf-head-title{font-size:20px}
-  .pf-av-name{font-size:16px}
-  .pf-row{gap:11px;padding:12px 0}
-  .pf-row-val{font-size:13px}
-  .pf-actions .pf-btn-primary,.pf-actions .pf-btn-danger{font-size:12px}
-}
+.sp,.sp *{box-sizing:border-box}.sp{max-width:1380px;margin:0 auto;padding:10px 0 70px;color:#32101A;font-family:'Cairo',sans-serif}.sp-error{min-height:60vh;display:grid;place-items:center;color:#6B1E2D;font-family:'Cairo',sans-serif;font-weight:900}.sp-toast{position:fixed;top:24px;inset-inline-end:24px;z-index:7000;display:flex;align-items:center;gap:7px;padding:11px 15px;border-radius:12px;background:#1B5E20;color:#fff;font-size:10px;font-weight:900;box-shadow:0 12px 30px rgba(26,26,26,.2)}.sp-toast.error{background:#6B1E2D}.sp-hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:26px;min-height:245px;padding:34px;border-radius:31px;background:radial-gradient(circle at 8% 110%,rgba(184,160,130,.27),transparent 34%),linear-gradient(135deg,#32101A,#4A0E1C 52%,#6B1E2D);color:#FFFBF5;box-shadow:0 25px 60px rgba(107,30,45,.22)}.sp-hero:after{content:'';position:absolute;inset:10px;z-index:-1;border:1px solid rgba(217,201,176,.15);border-radius:23px}.sp-art{position:absolute;inset-inline-end:-70px;bottom:-110px;z-index:-1}.sp-person{display:flex;align-items:center;gap:21px;min-width:0}.sp-avatar{position:relative;width:104px;height:104px;overflow:hidden;display:grid;place-items:center;flex:none;border:5px solid rgba(255,251,245,.1);border-radius:29px;background:#1A1A1A;color:#D9C9B0;font-size:25px;font-weight:900;box-shadow:0 12px 28px rgba(26,26,26,.25)}.sp-avatar img,.sp-photo-ring img{object-fit:cover}.sp-avatar button{position:absolute;inset-inline-end:5px;bottom:5px;width:31px;height:31px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:#6B1E2D;color:#fff;cursor:pointer}.sp-eyebrow{display:flex;align-items:center;gap:6px;color:#D9C9B0;font-size:9.5px;font-weight:900;letter-spacing:.08em}.sp-person h1{margin:5px 0 3px;font-size:clamp(25px,3vw,35px);line-height:1.3}.sp-person p{max-width:620px;margin:0;color:rgba(255,251,245,.67);font-size:11px;line-height:1.8}.sp-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.sp-tags span{display:flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid rgba(217,201,176,.17);border-radius:999px;background:rgba(255,251,245,.07);color:#D9C9B0;font-size:8.5px;font-weight:900}.sp-joined{position:relative;z-index:1;min-width:190px;padding:16px;border:1px solid rgba(217,201,176,.18);border-radius:18px;background:rgba(26,26,26,.17);backdrop-filter:blur(9px)}.sp-joined small,.sp-joined strong{display:block}.sp-joined small{color:#D9C9B0;font-size:9px;font-weight:800}.sp-joined strong{margin-top:4px;font-size:12px}.sp-joined svg{margin-top:14px;color:#D9C9B0}.sp-layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:14px;margin:15px 0}.sp-photo-card,.sp-main-card,.sp-spectrum{border:1px solid rgba(107,30,45,.12);border-radius:23px;background:#FFFBF5;box-shadow:0 12px 34px rgba(107,30,45,.055)}.sp-photo-card{display:flex;align-items:center;flex-direction:column;padding:20px;text-align:center}.sp-photo-ring{position:relative;width:132px;height:132px;overflow:hidden;display:grid;place-items:center;border:7px solid #F7F3EB;border-radius:36px;background:linear-gradient(145deg,#4A0E1C,#1A1A1A);color:#D9C9B0;font-size:29px;font-weight:900;box-shadow:0 10px 25px rgba(107,30,45,.17)}.sp-photo-card h2{margin:12px 0 0;font-size:15px}.sp-photo-card>p{margin:1px 0 12px;color:#8F765B;font-size:9px;font-weight:800}.sp-photo-card button{width:100%;min-height:39px;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:11px;font:900 9px 'Cairo',sans-serif;cursor:pointer}.sp-upload{border:0;background:#6B1E2D;color:#fff}.sp-remove{margin-top:6px;border:1px solid rgba(107,30,45,.18);background:#fff;color:#6B1E2D}.sp-photo-card button:disabled{opacity:.55;cursor:wait}.sp-photo-card>small{margin-top:9px;color:#8C8274;font-size:7.5px}.sp-main-card{padding:20px}.sp-main-card>header,.sp-spectrum>header{display:flex;align-items:flex-start;gap:10px;margin-bottom:15px}.sp-main-card>header>span,.sp-spectrum>header>span{width:39px;height:39px;display:grid;place-items:center;flex:none;border-radius:12px;background:#F7F3EB;color:#6B1E2D}.sp-main-card>header h2,.sp-spectrum>header h2{margin:0;font-size:15px}.sp-main-card>header p,.sp-spectrum>header p{margin:2px 0 0;color:#796A62;font-size:9.5px;line-height:1.7}.sp-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sp-info-grid article{display:flex;align-items:center;gap:10px;min-width:0;padding:12px;border:1px solid rgba(107,30,45,.09);border-radius:14px;background:#F7F3EB}.sp-info-grid article>span{width:34px;height:34px;display:grid;place-items:center;flex:none;border-radius:10px;background:#FFFBF5;color:#8F765B}.sp-info-grid svg{width:16px}.sp-info-grid div{min-width:0}.sp-info-grid small,.sp-info-grid strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-info-grid small{color:#796A62;font-size:8px;font-weight:800}.sp-info-grid strong{margin-top:2px;font-size:10.5px}.sp-security{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;margin-top:10px;padding:12px;border:1px solid rgba(27,94,32,.13);border-radius:14px;background:rgba(27,94,32,.045)}.sp-security>span{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:#1B5E20;color:#fff}.sp-security>span svg{width:16px}.sp-security strong,.sp-security small{display:block}.sp-security strong{font-size:10.5px}.sp-security small{color:#796A62;font-size:8px}.sp-security a{padding:7px 10px;border-radius:9px;background:#1B5E20;color:#fff;font-size:8px;font-weight:900;text-decoration:none}.sp-spectrum{margin-top:15px;padding:20px}.sp-spectrum>header>span svg{width:18px}
+@media(max-width:820px){.sp{padding:8px 12px 55px}.sp-hero{align-items:flex-start;flex-direction:column;padding:25px;border-radius:24px}.sp-person{align-items:flex-start}.sp-joined{width:100%}.sp-layout{grid-template-columns:1fr}.sp-photo-card{display:grid;grid-template-columns:auto minmax(0,1fr);text-align:start}.sp-photo-ring{grid-row:1/6;width:105px;height:105px;margin-inline-end:14px;border-radius:28px}.sp-photo-card button{grid-column:2}.sp-photo-card>small{grid-column:2}.sp-info-grid{grid-template-columns:1fr}}@media(max-width:520px){.sp-person{flex-direction:column}.sp-avatar{width:82px;height:82px;border-radius:23px}.sp-photo-card{display:flex;text-align:center}.sp-photo-ring{margin:0}.sp-photo-card button,.sp-photo-card>small{grid-column:auto}.sp-security{grid-template-columns:auto 1fr}.sp-security a{grid-column:1/-1;text-align:center}.sp-toast{top:12px;inset-inline:12px}}
+@media(prefers-reduced-motion:reduce){.sp-art{display:none}}
 `;

@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft, ArrowUpRight, BarChart3, BookOpenCheck, CalendarDays,
-  CheckCircle2, ClipboardCheck, Clock3, GraduationCap, Radar,
+  CheckCircle2, ClipboardCheck, Clock3, GraduationCap, HeartHandshake, Radar,
   Sparkles, Target, TrendingUp,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
@@ -16,10 +16,12 @@ import { cachedFetch } from "@/lib/api-cache";
 import MandalaLoader from "@/components/MandalaLoader";
 import TeacherLoadError from "@/components/TeacherLoadError";
 import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
+import StudentSupportCircle from "@/components/StudentSupportCircle";
 import { seedFromString } from "@/lib/trait-spectrum";
+import type { StudentSupportCircle as StudentSupportCircleValue } from "@/lib/student-support";
 
 type Lang = "ar" | "sq";
-type Tab = "journey" | "traits" | "performance";
+type Tab = "support" | "journey" | "traits" | "performance";
 interface TraitScore { trait_id:string; trait_name:string; maqsad:string; score:number; note:string|null; }
 interface TraitAssessment { id:string; is_mine:boolean; educator_name:string; observed_at:string; module_id:string; module_title:string; stage_title:string; total_score:number; general_note:string|null; submitted_at:string; updated_at:string; trait_scores:TraitScore[]; }
 interface PendingModule { module_id:string; module_title:string; stage_title:string; stage_order:number; completed_at:string; }
@@ -28,14 +30,14 @@ interface TypeAccuracy { type:string; correct:number; total:number; pct:number; 
 interface StageBreakdown { title:string; avg_score:number|null; modules_done:number; }
 interface RadarPoint { trait_id:string; name:string; maqsad:string; average:number; }
 interface StudentDetail {
-  student: { id:string; full_name:string; avatar_url:string|null; class_name:string|null; attempts_count:number; passed_count:number; avg_score:number|null; trait_assessments_count:number; pending_trait_assessments_count:number; };
+  student: { id:string; full_name:string; avatar_url:string|null; class_name:string|null; attempts_count:number; passed_count:number; avg_score:number|null; trait_assessments_count:number; pending_trait_assessments_count:number; support_circle:StudentSupportCircleValue; };
   timeline:TimelineItem[]; type_accuracy:TypeAccuracy[]; stage_breakdown:StageBreakdown[];
   pending_trait_assessments:PendingModule[]; trait_assessments:TraitAssessment[]; trait_radar:RadarPoint[];
 }
 
 const COPY = {
   ar: {
-    back:"العودة إلى تقارير المستفيدين", eyebrow:"ملف التطور التربوي", journey:"رحلة التعلم", traits:"قراءات السمات", performance:"الأداء",
+    back:"العودة إلى تقارير المستفيدين", eyebrow:"ملف التطور التربوي", support:"دائرة الرعاية", journey:"رحلة التعلم", traits:"قراءات السمات", performance:"الأداء",
     attempts:"محاولات التعلم", completed:"وحدات مكتملة", readings:"قراءات موثقة", average:"متوسط الأداء", pending:"قراءات جاهزة للتوثيق",
     pendingTitle:"جاهز لقراءة السمات", pendingSub:"أكمل المستفيد هذه المفاهيم. وثّق ملاحظتك التربوية الآن بخطوات واضحة وحفظ يدوي.", rateNow:"ابدأ التقييم", review:"مراجعة القراءة",
     timeline:"الخط الزمني للتعلم", timelineSub:"المفاهيم التي أكملها المستفيد ونتيجة كل محاولة وحالة قراءة السمات.", documented:"تم توثيق السمات", needsReading:"بانتظار قراءتك", noJourney:"لم يبدأ المستفيد أي وحدة بعد.",
@@ -44,7 +46,7 @@ const COPY = {
     score:"نتيجة المحاولة", date:"التاريخ", note:"الخلاصة", evidence:"ملاحظات السمات", addMine:"أضف قراءتي", passRate:"نسبة الاجتياز", allCaughtUp:"لا توجد قراءات معلّقة — كل شيء موثّق", actionHint:"نفس تجربة تقييم أعضاء المجموعة: وزّع 100 نقطة ثم اضغط حفظ.",
   },
   sq: {
-    back:"Kthehu te raportet e pjesëmarrësve", eyebrow:"Profili i zhvillimit edukativ", journey:"Rruga e të nxënit", traits:"Leximet e tipareve", performance:"Performanca",
+    back:"Kthehu te raportet e pjesëmarrësve", eyebrow:"Profili i zhvillimit edukativ", support:"Rrethi i kujdesit", journey:"Rruga e të nxënit", traits:"Leximet e tipareve", performance:"Performanca",
     attempts:"Përpjekje mësimore", completed:"Module të përfunduara", readings:"Lexime të dokumentuara", average:"Mesatarja", pending:"Lexime gati për dokumentim",
     pendingTitle:"Gati për leximin e tipareve", pendingSub:"Pjesëmarrësi i ka përfunduar këto koncepte. Dokumento tani vëzhgimin me hapa të qartë dhe ruajtje manuale.", rateNow:"Fillo vlerësimin", review:"Rishiko leximin",
     timeline:"Kronologjia e të nxënit", timelineSub:"Konceptet e përfunduara, rezultati i çdo përpjekjeje dhe statusi i leximit të tipareve.", documented:"Tiparet u dokumentuan", needsReading:"Pret leximin tënd", noJourney:"Pjesëmarrësi nuk ka filluar ende një modul.",
@@ -76,7 +78,7 @@ export default function StudentReportPage() {
   const [data,setData] = useState<StudentDetail|null>(null);
   const [loading,setLoading] = useState(true);
   const [failed,setFailed] = useState(false);
-  const [tab,setTab] = useState<Tab>("journey");
+  const [tab,setTab] = useState<Tab>("support");
 
   const load = useCallback(() => {
     setLoading(true); setFailed(false);
@@ -111,10 +113,13 @@ export default function StudentReportPage() {
     </section>
 
     <nav className="sr-tabs" aria-label={T.eyebrow}>
+      <button className={tab==="support"?"active":""} onClick={()=>setTab("support")}><HeartHandshake size={16}/>{T.support}</button>
       <button className={tab==="journey"?"active":""} onClick={()=>setTab("journey")}><TrendingUp size={16}/>{T.journey}</button>
       <button className={tab==="traits"?"active":""} onClick={()=>setTab("traits")}><Radar size={16}/>{T.traits}<b>{data.trait_assessments.length}</b></button>
       <button className={tab==="performance"?"active":""} onClick={()=>setTab("performance")}><BarChart3 size={16}/>{T.performance}</button>
     </nav>
+
+    {tab === "support" && <div className="sr-view"><StudentSupportCircle value={student.support_circle} lang={L} editable endpoint={`/api/teacher/reports/students/${id}/support-circle`} invalidateUrl={`/api/teacher/reports/students/${id}`} onChange={(supportCircle) => setData((current) => current ? { ...current, student: { ...current.student, support_circle: supportCircle } } : current)} /></div>}
 
     {tab === "journey" && <div className="sr-view">
       <section className={`sr-action ${data.pending_trait_assessments.length ? "has-items" : "done"}`}>

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdmin } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
+import { shapeStudentSupportCircle } from "@/lib/student-support-server";
 
 export const revalidate = 30;
 
@@ -29,7 +30,21 @@ export async function GET(req: Request) {
         city: true,
         age: true,
         profile: { select: { full_name: true, email: true, avatar_url: true, is_active: true } },
-        class: { select: { id: true, name: true } },
+        class: {
+          select: {
+            id: true,
+            name: true,
+            teacher: {
+              select: {
+                profile: { select: { full_name: true, email: true } },
+                application: { select: { phone: true } },
+              },
+            },
+          },
+        },
+        support_contacts: {
+          select: { id: true, role: true, full_name: true, phone: true, email: true, relationship: true, notes: true },
+        },
         moduleAttempts: {
           orderBy: { created_at: "desc" },
           select: {
@@ -153,7 +168,8 @@ export async function GET(req: Request) {
       city: s.city,
       age: s.age,
       profile: s.profile,
-      class: s.class,
+      class: s.class ? { id: s.class.id, name: s.class.name } : null,
+      support_circle: shapeStudentSupportCircle(s),
       attempts_count: uniqueAttempts.length,
       passed_count: completedModuleIds.size,
       total_modules: totalModules,
