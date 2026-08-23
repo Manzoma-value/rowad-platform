@@ -11,7 +11,7 @@ import { t } from "@/lib/translations";
 import Image from "next/image";
 import { cachedFetch, clearCache } from "@/lib/api-cache";
 import MandalaLoader from "@/components/MandalaLoader";
-import FutureQualificationVoteModal from "@/components/FutureQualificationVoteModal";
+import VotesModal from "@/components/VotesModal";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
@@ -742,7 +742,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
         )}
       </div>
 
-      {onboardingStatus === "ACTIVE" && <FutureQualificationVoteModal />}
+      {onboardingStatus === "ACTIVE" && <VotesModal />}
       <style>{styles}</style>
     </div>
   );

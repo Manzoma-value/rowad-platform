@@ -547,7 +547,7 @@ model School {
   teacher_groups              TeacherGroup[]
   workshops                   Workshop[]
   teacher_group_announcements TeacherGroupAnnouncement[]
-  future_qualification_votes  FutureQualificationVote[]
+  votes                       Vote[]
   group_assessments           GroupAssessment[]
   teacher_group_join_requests TeacherGroupJoinRequest[]
   teacher_group_leave_events  TeacherGroupLeaveEvent[]
@@ -602,7 +602,7 @@ model Teacher {
   groups_led                       TeacherGroup[]                  @relation("TeacherGroupLeader")
   ratings_given                    AssessmentRating[]              @relation("AssessmentRater")
   ratings_received                 AssessmentRating[]              @relation("AssessmentTarget")
-  future_qualification_vote        FutureQualificationVote?
+  vote_responses                   VoteResponse[]
   class_invites                    ClassInvite[]
   class_join_requests              ClassJoinRequest[]
   group_join_request               TeacherGroupJoinRequest?
@@ -612,32 +612,62 @@ model Teacher {
   @@map("teachers")
 }
 
-// ─── Teacher Groups — private teacher communities organized by admin.
-//     A teacher can belong to many groups; a group has many teachers. ───
-model FutureQualificationVote {
-  id                      String        @id @default(uuid()) @db.Uuid
-  teacher_id              String        @unique @db.Uuid
-  school_id               String        @db.Uuid
-  coaching_frequency      VoteFrequency
-  consultation_frequency  VoteFrequency
-  evaluation_frequency    VoteFrequency
-  field_support_frequency VoteFrequency
-  needs_group_leader      Boolean
-  // Optional free-text comment the teacher may add alongside their answers.
-  notes                   String?
-  submitted_at            DateTime      @default(now())
-
-  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
-
-  @@index([school_id, submitted_at(sort: Desc)])
-  @@map("future_qualification_votes")
+// ─── Votes — admin-authored polls. An admin creates a vote with one or
+//     more single-choice questions, opens it to supervisors, and can close
+//     (or reopen) it at any time. Each supervisor may respond once. ───
+enum VoteStatus {
+  OPEN
+  CLOSED
 }
 
-enum VoteFrequency {
-  WEEKLY
-  BIWEEKLY
-  MONTHLY
+model Vote {
+  id          String     @id @default(uuid()) @db.Uuid
+  school_id   String     @db.Uuid
+  title       String
+  description String?
+  status      VoteStatus @default(OPEN)
+  // Whether the response form ends with an optional free-text comment step.
+  allow_notes Boolean    @default(true)
+  created_at  DateTime   @default(now())
+  closed_at   DateTime?
+
+  school    School         @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  questions VoteQuestion[]
+  responses VoteResponse[]
+
+  @@index([school_id, status])
+  @@map("votes")
+}
+
+model VoteQuestion {
+  id       String @id @default(uuid()) @db.Uuid
+  vote_id  String @db.Uuid
+  position Int
+  prompt   String
+  /// Array of { value: string; label: string } — the selectable options.
+  options  Json
+
+  vote Vote @relation(fields: [vote_id], references: [id], onDelete: Cascade)
+
+  @@index([vote_id, position])
+  @@map("vote_questions")
+}
+
+model VoteResponse {
+  id           String   @id @default(uuid()) @db.Uuid
+  vote_id      String   @db.Uuid
+  teacher_id   String   @db.Uuid
+  /// Array of { question_id: string; value: string } — one entry per question.
+  answers      Json
+  notes        String?
+  submitted_at DateTime @default(now())
+
+  vote    Vote    @relation(fields: [vote_id], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@unique([vote_id, teacher_id])
+  @@index([vote_id])
+  @@map("vote_responses")
 }
 
 model TeacherGroup {

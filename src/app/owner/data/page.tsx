@@ -44,17 +44,17 @@ export default function OwnerDataRoomPage() {
     if (!rows.length) return;
     const headers: Record<Tab, string[]> = {
       schools: ["ID", "Name", "Slug", "Language", "Active", "Supervisors", "Beneficiaries", "Groups", "Admins"],
-      teachers: ["ID", "Name", "Email", "Platform", "Status", "Active", "Groups", "Ratings received", "Qualification vote"],
+      teachers: ["ID", "Name", "Email", "Platform", "Status", "Active", "Groups", "Ratings received", "Votes answered"],
       classes: ["ID", "Group", "Platform", "Supervisor", "Beneficiaries", "Assessments", "Quizzes", "Lessons"],
       admins: ["ID", "Name", "Email", "Platform", "Active", "Joined"],
-      performance: ["ID", "Platform", "Supervisor groups", "Group assessments", "Assessment attempts", "Qualification votes", "Average score"],
+      performance: ["ID", "Platform", "Supervisor groups", "Group assessments", "Assessment attempts", "Votes", "Average score"],
     };
     const values: Record<Tab, (row: Row) => unknown[]> = {
       schools: (x) => [x.id, x.name, x.slug, x.language, x.is_active, get(x, "_count.teachers"), get(x, "_count.students"), get(x, "_count.classes"), get(x, "_count.admins")],
-      teachers: (x) => [x.id, get(x, "profile.full_name"), get(x, "profile.email"), get(x, "school.name"), x.onboarding_status, get(x, "profile.is_active"), get(x, "_count.classes"), get(x, "_count.ratings_received"), get(x, "_count.future_qualification_vote")],
+      teachers: (x) => [x.id, get(x, "profile.full_name"), get(x, "profile.email"), get(x, "school.name"), x.onboarding_status, get(x, "profile.is_active"), get(x, "_count.classes"), get(x, "_count.ratings_received"), get(x, "_count.vote_responses")],
       classes: (x) => [x.id, x.name, get(x, "school.name"), get(x, "teacher.profile.full_name"), get(x, "_count.students"), get(x, "_count.assessmentAttempts"), get(x, "_count.quizzes"), get(x, "_count.lessons")],
       admins: (x) => [get(x, "profile.id"), get(x, "profile.full_name"), get(x, "profile.email"), get(x, "school.name"), get(x, "profile.is_active"), x.created_at],
-      performance: (x) => [x.id, x.name, x.teacher_groups, x.group_assessments, x.assessmentAttempts, x.future_qualification_votes, x.averageScore === null ? "" : `${x.averageScore}%`],
+      performance: (x) => [x.id, x.name, x.teacher_groups, x.group_assessments, x.assessmentAttempts, x.votes, x.averageScore === null ? "" : `${x.averageScore}%`],
     };
     const body = [headers[tab], ...rows.map(values[tab])].map((row) => row.map(csvCell).join(",")).join("\r\n");
     const url = URL.createObjectURL(new Blob(["\ufeff" + body], { type: "text/csv;charset=utf-8" }));

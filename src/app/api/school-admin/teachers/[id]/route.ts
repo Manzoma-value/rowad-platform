@@ -59,7 +59,10 @@ export async function GET(
         },
       },
       application: true,
-      future_qualification_vote: true,
+      vote_responses: {
+        orderBy: { submitted_at: "desc" },
+        select: { id: true, submitted_at: true, notes: true, answers: true, vote: { select: { id: true, title: true } } },
+      },
       classes: {
         orderBy: { created_at: "desc" },
         select: {

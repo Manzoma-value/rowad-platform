@@ -197,12 +197,6 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       group: "teachers",
     },
     {
-      href: "/school-admin/qualification-vote", sublabel: "Qualification Vote", exact: false, icon: ListChecks,
-      label: lang === "ar" ? "تصويت التأهيل المستقبلي" : lang === "sq" ? "Votimi i zhvillimit" : "Qualification Vote",
-      hideForViewOnly: true,
-      group: "teachers",
-    },
-    {
       href: "/school-admin/review-queue", sublabel: "Review queue", exact: false, icon: ClipboardCheck,
       label: lang === "ar" ? "قائمة المراجعة" : lang === "sq" ? "Lista e shqyrtimit" : "Review Queue",
       hideForViewOnly: true,
@@ -216,6 +210,12 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/assessments", sublabel: "Measurement Models", exact: false, icon: Target,
       label: lang === "ar" ? "نماذج القياس" : lang === "sq" ? "Modelet e Matjes" : "Measurement Models",
+      group: "models",
+    },
+    {
+      href: "/school-admin/votes", sublabel: "Votes", exact: false, icon: ListChecks,
+      label: lang === "ar" ? "التصويتات" : lang === "sq" ? "Votimet" : "Votes",
+      hideForViewOnly: true,
       group: "models",
     },
     {
