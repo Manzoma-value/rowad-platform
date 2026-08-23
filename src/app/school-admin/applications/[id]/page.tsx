@@ -22,6 +22,7 @@ import {
   type AppLanguageEntry,
 } from "@/lib/teacher-application";
 import MandalaLoader from "@/components/MandalaLoader";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 const UI = {
   ar: {
@@ -179,6 +180,7 @@ function ApplicationDetailPageInner({
   const router = useRouter();
   const { lang } = useLang();
   const viewOnly = useViewOnly();
+  const confirm = useConfirm();
   const L = pickLang(lang);
   const T = UI[L];
   const dir = L === "ar" ? "rtl" : "ltr";
@@ -257,7 +259,7 @@ function ApplicationDetailPageInner({
       : action === "reject"
         ? T.confirmReject
         : (L === "ar" ? "هل تريد وضع هذا الطلب في قائمة الانتظار؟" : "Ta vendosim këtë aplikim në listë pritjeje?");
-    if (!window.confirm(confirmMsg)) return;
+    if (!await confirm({ message: confirmMsg, variant: action === "approve" ? "normal" : "warning", irreversible: false })) return;
     setSaving(true);
     setError("");
     try {

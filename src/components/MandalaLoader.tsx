@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import MandalaLoaderMobile from "./MandalaLoaderMobile";
+import { useLang } from "@/lib/language-context";
 
 // ─────────────────────────────────────────────────────────────────────
 // MandalaLoader — pure-CSS animated loader (no rAF, no React re-renders)
@@ -63,11 +64,14 @@ interface Props {
 }
 
 export default function MandalaLoader({
-  label = "جارٍ التحميل",
+  label,
   sublabel,
   compact = false,
   bare = false,
 }: Props) {
+  const { lang } = useLang();
+  const resolvedLabel = label ?? (lang === "ar" ? "جارٍ التحميل" : lang === "sq" ? "Duke ngarkuar" : "Loading");
+  const dir = lang === "ar" ? "rtl" : "ltr";
   // ── Mobile branch ──
   // We detect viewport on mount (matchMedia is browser-only, so we start
   // pessimistically as `false` to avoid hydration mismatches and flip it
@@ -82,11 +86,11 @@ export default function MandalaLoader({
   }, []);
 
   if (isMobile) {
-    return <MandalaLoaderMobile label={label} />;
+    return <MandalaLoaderMobile label={resolvedLabel} />;
   }
 
   return (
-    <div className={`ml-root${compact ? " ml-root--compact" : ""}${bare ? " ml-root--bare" : ""}`}>
+    <div dir={dir} role="status" aria-live="polite" className={`ml-root${compact ? " ml-root--compact" : ""}${bare ? " ml-root--bare" : ""}`}>
       <div className="ml-glow-bg" aria-hidden="true" />
 
       <div className="ml-card">
@@ -221,9 +225,9 @@ export default function MandalaLoader({
           </div>
         )}
 
-        {(label || sublabel) && (
+        {(resolvedLabel || sublabel) && (
           <div className="ml-label-wrap">
-            {label && <span className="ml-label">{label}</span>}
+            {resolvedLabel && <span className="ml-label">{resolvedLabel}</span>}
             {sublabel && <span className="ml-sublabel">{sublabel}</span>}
           </div>
         )}
@@ -260,7 +264,7 @@ const css = `
     display: flex; align-items: center; justify-content: center;
     min-height: clamp(220px, 50vh, 480px);
     width: 100%; position: relative;
-    font-family: 'Cairo', sans-serif; direction: rtl;
+    font-family: 'Cairo', sans-serif;
     padding: 16px; box-sizing: border-box;
   }
   .ml-root--compact { min-height: 180px; padding: 8px; }

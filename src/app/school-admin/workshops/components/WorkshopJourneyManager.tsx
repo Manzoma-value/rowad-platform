@@ -24,6 +24,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 type RequirementType = "VIDEO" | "QUIZ" | "MESSAGE" | "READING";
 type QuestionType = "MCQ" | "TF" | "TEXT";
@@ -77,6 +78,7 @@ const requirementIcons = {
 } as const;
 
 export function WorkshopJourneyManager({ workshopId, viewOnly, lang }: { workshopId: string; viewOnly: boolean; lang: "ar" | "sq" }) {
+  const confirm = useConfirm();
   const isAr = lang === "ar";
   const [requirements, setRequirements] = useState<Requirement[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -291,7 +293,7 @@ export function WorkshopJourneyManager({ workshopId, viewOnly, lang }: { worksho
   }
 
   async function deleteRequirement(id: string) {
-    if (viewOnly || !window.confirm(copy.deleteConfirm)) return;
+    if (viewOnly || !await confirm({ message: copy.deleteConfirm, variant: "danger" })) return;
     setBusy(id);
     try {
       const response = await fetch(`/api/school-admin/workshops/${workshopId}/journey?requirement_id=${id}`, { method: "DELETE" });

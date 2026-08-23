@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { useLang, type Lang } from "@/lib/language-context";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 type NotificationItem = {
   id: string;
@@ -185,6 +186,7 @@ export function NotificationCenter({
   basePath: "/teacher" | "/school-admin" | "/student";
   buttonClassName?: string;
 }) {
+  const confirm = useConfirm();
   const { lang } = useLang();
   const copy = words[lang];
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -258,8 +260,8 @@ export function NotificationCenter({
     }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
   }
 
-  function hideAll() {
-    if (!window.confirm(copy.hideAllConfirm)) return;
+  async function hideAll() {
+    if (!await confirm({ message: copy.hideAllConfirm, variant: "warning", irreversible: false })) return;
     setData({ notifications: [], unread_count: 0 });
     void fetch("/api/notifications", {
       method: "DELETE",
@@ -289,7 +291,7 @@ export function NotificationCenter({
             <div><strong>{copy.title}</strong><span>{copy.subtitle}</span></div>
             <span className="nc-head-actions">
               {data.unread_count > 0 && <button onClick={markAll}><CheckCheck size={14} />{copy.markAll}</button>}
-              {data.notifications.length > 0 && <button className="danger" onClick={hideAll}><EyeOff size={14} />{copy.hideAll}</button>}
+              {data.notifications.length > 0 && <button className="danger" onClick={() => void hideAll()}><EyeOff size={14} />{copy.hideAll}</button>}
             </span>
           </header>
           <NotificationList items={data.notifications} basePath={basePath} lang={lang} onRead={markRead} onDelete={deleteOne} />
@@ -305,6 +307,7 @@ export function NotificationFeed({
 }: {
   basePath: "/teacher" | "/school-admin" | "/student";
 }) {
+  const confirm = useConfirm();
   const { lang } = useLang();
   const copy = words[lang];
   const storageKey = `rowad:notification-feed:${basePath}`;
@@ -374,8 +377,8 @@ export function NotificationFeed({
     }).then((response) => { if (!response.ok) void refresh(); }).catch(() => void refresh());
   }
 
-  function hideAll() {
-    if (!window.confirm(copy.hideAllConfirm)) return;
+  async function hideAll() {
+    if (!await confirm({ message: copy.hideAllConfirm, variant: "warning", irreversible: false })) return;
     setItems([]);
     setUnreadCount(0);
     setManuallyHidden(true);

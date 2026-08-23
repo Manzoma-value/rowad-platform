@@ -117,14 +117,14 @@ const navItems: NavItem2[] = [
   {
     href: "/teacher/classes",  key: "myClasses", sublabel: "Beneficiaries", exact: false, icon: Users,
     labelAr: "مجموعة المستفيدين",
-    labelSq: "Grupi i Përfituesve",
-    labelEn: "Beneficiaries Group",
+    labelSq: "Grupi i Pjesëmarrësve",
+    labelEn: "Participant Group",
   },
   {
     href: "/teacher/groups",   key: "groups",    sublabel: "Supervisors", exact: false, icon: Network,
     labelAr: "مجموعة المشرفين",
-    labelSq: "Grupi i Mbikëqyrësve",
-    labelEn: "Supervisors Group",
+    labelSq: "Rrethi i Edukatorëve",
+    labelEn: "Educator Circle",
   },
   { 
     href: "/teacher/workshops", key: "workshops", sublabel: "Workshops", exact: false, icon: CalendarRange,
@@ -421,7 +421,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           </button>
         </header>
         <main style={{ flex: 1 }}>{children}</main>
-        {onboardingStatus === "PENDING_APPLICATION" && <FutureQualificationVoteModal />}
         <style>{`
           .rg-games-btn {
             display: inline-flex; align-items: center; gap: 7px;
@@ -550,7 +549,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                 </span>
                 <span className="tl-nav-labels">
                   <span className="tl-nav-label-main">{navLabel(item)}</span>
-                  <span className="tl-nav-label-sub">{item.sublabel}</span>
                 </span>
                 {hasChildren && (
                   <ChevronDown
@@ -589,7 +587,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
                       <span className="tl-nav-label-main">
                         {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
                       </span>
-                      <span className="tl-nav-label-sub">Community</span>
                     </span>
                     {active && <span className="tl-nav-dot" />}
                   </Link>

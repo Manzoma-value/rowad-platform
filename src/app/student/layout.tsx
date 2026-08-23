@@ -135,7 +135,7 @@ const navItems: NavItem[] = [
   { key: "quizzes",   href: "/student/quizzes",  exact: false, sublabel: "Quizzes",   icon: ClipboardList, feature: "quizzes" },
   {
     key: "roadmap", href: "/student/roadmap", exact: false, sublabel: "Roadmap",
-    labelAr: "الخريطة", labelSq: "Banka e Pyetjeve", labelEn: "Question Bank",
+    labelAr: "الخريطة التعليمية", labelSq: "Harta Edukative", labelEn: "Learning Roadmap",
     icon: MapPin, feature: "roadmap",
   },
   {
@@ -365,7 +365,6 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
                 <span className="sl-nav-icon-wrap"><Icon size={17} strokeWidth={1.6} /></span>
                 <span className="sl-nav-labels">
                   <span className="sl-nav-label-main">{getNavLabel(item)}</span>
-                  <span className="sl-nav-label-sub">{item.sublabel}</span>
                 </span>
                 {active && <span className="sl-nav-dot" />}
               </Link>
@@ -390,7 +389,6 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
                       <span className="sl-nav-label-main">
                         {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
                       </span>
-                      <span className="sl-nav-label-sub">Community</span>
                     </span>
                     {active && <span className="sl-nav-dot" />}
                   </Link>

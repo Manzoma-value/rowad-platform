@@ -71,6 +71,13 @@ const EMPTY: Form = {
 };
 
 const DRAFT_KEY = "teacher-application-draft-v1";
+const TOTAL_STEPS = 5;
+const FIELD_STEP: Record<string, number> = {
+  age: 0, country: 0, city: 0, phone: 0, gender: 0,
+  current_role: 1, qualification: 1, specialization: 1, graduation_institution: 1,
+  years_of_experience: 2,
+  languages_other: 4,
+};
 
 function initialForm(): Form {
   if (typeof window === "undefined") return EMPTY;
@@ -99,6 +106,8 @@ export default function TeacherApplicationPage() {
   const [error, setError] = useState("");
   const [form, setForm] = useState<Form>(initialForm);
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
+  const [step, setStep] = useState(0);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "local">("idle");
 
   useEffect(() => {
     if (loading || submitting) return;
@@ -109,13 +118,14 @@ export default function TeacherApplicationPage() {
     }
     if (!hasDraftValues(form)) return;
     const timer = window.setTimeout(() => {
+      setSaveState("saving");
       void fetch("/api/teacher/application", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
-      }).catch(() => {
-        // Local storage remains a fallback if connectivity drops.
-      });
+      }).then((response) => {
+        setSaveState(response.ok ? "saved" : "local");
+      }).catch(() => setSaveState("local"));
     }, 900);
     return () => window.clearTimeout(timer);
   }, [form, loading, submitting]);
@@ -170,8 +180,7 @@ export default function TeacherApplicationPage() {
     });
   }
 
-  async function submit() {
-    setError("");
+  function getMissing(fields?: string[]) {
     const required: Record<string, unknown> = {
       age: form.age,
       country: form.country.trim(),
@@ -185,18 +194,51 @@ export default function TeacherApplicationPage() {
       years_of_experience: form.years_of_experience,
     };
     const missing = new Set<string>();
-    for (const [k, v] of Object.entries(required)) {
-      if (!v) missing.add(k);
+    for (const [key, value] of Object.entries(required)) {
+      if (!value) missing.add(key);
     }
     const ageNum = Number(form.age);
     if (!ageNum || ageNum < 16 || ageNum > 120) missing.add("age");
     if (form.languages.some((entry) => entry.lang === "other") && !form.languages_other.trim()) {
       missing.add("languages_other");
     }
+    return fields ? new Set([...missing].filter((field) => fields.includes(field))) : missing;
+  }
+
+  function focusFirstInvalid(missing: Set<string>) {
+    const first = [...missing][0];
+    if (!first) return;
+    const targetStep = FIELD_STEP[first] ?? 0;
+    setStep(targetStep);
+    window.requestAnimationFrame(() => {
+      const field = document.querySelector<HTMLElement>(`[data-field="${first}"]`);
+      field?.scrollIntoView({ behavior: "smooth", block: "center" });
+      field?.querySelector<HTMLElement>("input, textarea, button")?.focus({ preventScroll: true });
+    });
+  }
+
+  function nextStep() {
+    const fields = Object.entries(FIELD_STEP).filter(([, value]) => value === step).map(([key]) => key);
+    const missing = getMissing(fields);
+    if (missing.size > 0) {
+      setInvalidFields((current) => new Set([...current, ...missing]));
+      setError(T.incompleteTitle);
+      focusFirstInvalid(missing);
+      return;
+    }
+    setError("");
+    setStep((current) => Math.min(current + 1, TOTAL_STEPS - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function submit() {
+    setError("");
+    const ageNum = Number(form.age);
+    const missing = getMissing();
     if (missing.size > 0) {
       setInvalidFields(missing);
       setError(T.requiredFields);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      focusFirstInvalid(missing);
       return;
     }
     setSubmitting(true);
@@ -211,6 +253,11 @@ export default function TeacherApplicationPage() {
       });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) {
+        if (d?.error === "missing_field" && typeof d.field === "string") {
+          const serverMissing = new Set([d.field]);
+          setInvalidFields(serverMissing);
+          focusFirstInvalid(serverMissing);
+        }
         setError(d?.error === "missing_field"
           ? `${T.requiredFields} (${d.field})`
           : T.serverError);
@@ -232,6 +279,15 @@ export default function TeacherApplicationPage() {
   }
 
   const isInvalid = (f: string) => invalidFields.has(f);
+  const stepTitles = L === "ar"
+    ? ["البيانات الشخصية", "الدور والمؤهل", "الخبرة", "المساهمات", "المراجعة والإرسال"]
+    : ["Të dhënat personale", "Roli dhe kualifikimi", "Përvoja", "Kontributet", "Rishikimi dhe dërgimi"];
+  const fieldLabels: Record<string, string> = {
+    age: T.age, country: T.country, city: T.city, phone: T.phone, gender: T.gender,
+    current_role: T.currentRole, qualification: T.qualification, specialization: T.specialization,
+    graduation_institution: T.graduationInstitution, years_of_experience: T.yearsOfExperience,
+    languages_other: T.languagesOther,
+  };
 
   if (loading) {
     return (
@@ -248,27 +304,50 @@ export default function TeacherApplicationPage() {
           <span className="ta-hero-badge">{L === "ar" ? "تقديم" : "Aplikim"}</span>
           <h1 className="ta-hero-title">{T.pageTitle}</h1>
           <p className="ta-hero-sub">{T.pageSub}</p>
+          <div className="ta-save-state" role="status" aria-live="polite">
+            {saveState === "saving" ? T.saving : saveState === "local" ? T.savedLocally : T.saved}
+          </div>
         </header>
 
-        {error && <div className="ta-error">{error}</div>}
+        <nav className="ta-progress" aria-label={L === "ar" ? "تقدم الطلب" : "Progresi i aplikimit"}>
+          {stepTitles.map((title, index) => (
+            <button key={title} type="button" className={index === step ? "active" : index < step ? "done" : ""} onClick={() => index < step && setStep(index)} aria-current={index === step ? "step" : undefined}>
+              <span>{index + 1}</span><em>{title}</em>
+            </button>
+          ))}
+        </nav>
+
+        {error && (
+          <div className="ta-error" role="alert" tabIndex={-1}>
+            <strong>{error}</strong>
+            {invalidFields.size > 0 && (
+              <div className="ta-error-fields">
+                {[...invalidFields].map((field) => (
+                  <button type="button" key={field} onClick={() => focusFirstInvalid(new Set([field]))}>{fieldLabels[field] ?? field}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Personal */}
+        {step === 0 && <>
         <Section title={T.sectionPersonal}>
           <Grid>
-            <Field label={T.age} invalid={isInvalid("age")}>
+            <Field field="age" label={T.age} invalid={isInvalid("age")} errorText={T.fieldRequired}>
               <input type="number" min={16} max={120} value={form.age} onChange={(e) => set("age", e.target.value)} className="ta-input" />
             </Field>
-            <Field label={T.country} invalid={isInvalid("country")}>
+            <Field field="country" label={T.country} invalid={isInvalid("country")} errorText={T.fieldRequired}>
               <input value={form.country} onChange={(e) => set("country", e.target.value)} className="ta-input" />
             </Field>
-            <Field label={T.city} invalid={isInvalid("city")}>
+            <Field field="city" label={T.city} invalid={isInvalid("city")} errorText={T.fieldRequired}>
               <input value={form.city} onChange={(e) => set("city", e.target.value)} className="ta-input" />
             </Field>
-            <Field label={T.phone} invalid={isInvalid("phone")}>
+            <Field field="phone" label={T.phone} invalid={isInvalid("phone")} errorText={T.fieldRequired}>
               <input value={form.phone} onChange={(e) => set("phone", e.target.value)} className="ta-input" dir="ltr" />
             </Field>
           </Grid>
-          <Field label={T.gender} invalid={isInvalid("gender")}>
+          <Field field="gender" label={T.gender} invalid={isInvalid("gender")} errorText={T.fieldRequired}>
             <RadioRow
               value={form.gender}
               onChange={(v) => set("gender", v as Form["gender"])}
@@ -279,12 +358,14 @@ export default function TeacherApplicationPage() {
             />
           </Field>
         </Section>
+        </>}
 
         {/* (Nomination section removed — wasn't carrying its weight.) */}
 
         {/* Current role */}
+        {step === 1 && <>
         <Section title={T.sectionCurrentRole}>
-          <Field label={T.currentRole} invalid={isInvalid("current_role")}>
+          <Field field="current_role" label={T.currentRole} invalid={isInvalid("current_role")} errorText={T.fieldRequired}>
             <CheckboxGrid
               mode="single"
               value={form.current_role ? [form.current_role] : []}
@@ -301,7 +382,7 @@ export default function TeacherApplicationPage() {
 
         {/* Qualification */}
         <Section title={T.sectionQualification}>
-          <Field label={T.qualification} invalid={isInvalid("qualification")}>
+          <Field field="qualification" label={T.qualification} invalid={isInvalid("qualification")} errorText={T.fieldRequired}>
             <CheckboxGrid
               mode="single"
               value={form.qualification ? [form.qualification] : []}
@@ -310,16 +391,18 @@ export default function TeacherApplicationPage() {
             />
           </Field>
           <Grid>
-            <Field label={T.specialization} invalid={isInvalid("specialization")}>
+            <Field field="specialization" label={T.specialization} invalid={isInvalid("specialization")} errorText={T.fieldRequired}>
               <input value={form.specialization} onChange={(e) => set("specialization", e.target.value)} className="ta-input" />
             </Field>
-            <Field label={T.graduationInstitution} invalid={isInvalid("graduation_institution")}>
+            <Field field="graduation_institution" label={T.graduationInstitution} invalid={isInvalid("graduation_institution")} errorText={T.fieldRequired}>
               <input value={form.graduation_institution} onChange={(e) => set("graduation_institution", e.target.value)} className="ta-input" />
             </Field>
           </Grid>
         </Section>
+        </>}
 
         {/* Experience areas */}
+        {step === 2 && <>
         <Section title={T.sectionExperienceAreas}>
           <p className="ta-hint">{T.experienceAreas}</p>
           <CheckboxGrid
@@ -337,7 +420,7 @@ export default function TeacherApplicationPage() {
 
         {/* Years of experience */}
         <Section title={T.sectionYearsOfExperience}>
-          <Field label={T.yearsOfExperience} invalid={isInvalid("years_of_experience")}>
+          <Field field="years_of_experience" label={T.yearsOfExperience} invalid={isInvalid("years_of_experience")} errorText={T.fieldRequired}>
             <CheckboxGrid
               mode="single"
               value={form.years_of_experience ? [form.years_of_experience] : []}
@@ -346,8 +429,10 @@ export default function TeacherApplicationPage() {
             />
           </Field>
         </Section>
+        </>}
 
         {/* Target groups */}
+        {step === 3 && <>
         <Section title={T.sectionTargetGroups}>
           <p className="ta-hint">{T.targetGroups}</p>
           <CheckboxGrid
@@ -396,8 +481,10 @@ export default function TeacherApplicationPage() {
             </Field>
           )}
         </Section>
+        </>}
 
         {/* Languages */}
+        {step === 4 && <>
         <Section title={T.sectionLanguages}>
           <p className="ta-hint">{T.languages}</p>
           <div className="ta-lang-list">
@@ -433,7 +520,7 @@ export default function TeacherApplicationPage() {
             })}
           </div>
           {form.languages.some((l) => l.lang === "other") && (
-            <Field label={T.languagesOther} invalid={isInvalid("languages_other")}>
+            <Field field="languages_other" label={T.languagesOther} invalid={isInvalid("languages_other")} errorText={T.fieldRequired}>
               <input value={form.languages_other} onChange={(e) => set("languages_other", e.target.value)} className="ta-input" />
             </Field>
           )}
@@ -454,10 +541,21 @@ export default function TeacherApplicationPage() {
           </Field>
         </Section>
 
+        <section className="ta-review-note">
+          <strong>{T.reviewTitle}</strong>
+          <p>{T.reviewText}</p>
+        </section>
+        </>}
+
         <div className="ta-submit-row">
-          <button className="ta-submit-btn" onClick={submit} disabled={submitting}>
-            {submitting ? T.submitting : T.submitBtn}
-          </button>
+          {step > 0 && <button type="button" className="ta-back-btn" onClick={() => { setError(""); setStep((current) => current - 1); }} disabled={submitting}>{T.previousStep}</button>}
+          {step < TOTAL_STEPS - 1 ? (
+            <button type="button" className="ta-submit-btn" onClick={nextStep}>{T.nextStep}</button>
+          ) : (
+            <button type="button" className="ta-submit-btn" onClick={submit} disabled={submitting}>
+              {submitting ? T.submitting : T.submitBtn}
+            </button>
+          )}
         </div>
       </div>
 
@@ -485,19 +583,22 @@ function Grid({ children }: { children: React.ReactNode }) {
   return <div className="ta-grid">{children}</div>;
 }
 
-function Field({ label, children, optional, invalid }: {
+function Field({ field, label, children, optional, invalid, errorText }: {
+  field?: string;
   label: string;
   children: React.ReactNode;
   optional?: boolean;
   invalid?: boolean;
+  errorText?: string;
 }) {
   return (
-    <label className={`ta-field${invalid ? " invalid" : ""}`}>
+    <label className={`ta-field${invalid ? " invalid" : ""}`} data-field={field}>
       <span className="ta-label">
         {label}
         {!optional && <span className="ta-required">*</span>}
       </span>
       {children}
+      {invalid && <span className="ta-field-error">{errorText}</span>}
     </label>
   );
 }
@@ -592,6 +693,15 @@ const ta_styles = `
     font-size: 13.5px; color: #796A62; line-height: 1.9; margin: 0;
     max-width: 640px; margin-inline: auto;
   }
+  .ta-save-state { display:inline-flex; margin-top:12px; padding:5px 11px; border-radius:999px; background:rgba(184,160,130,.13); color:#6B1E2D; font-size:11px; font-weight:800; }
+
+  .ta-progress { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin:0 0 24px; }
+  .ta-progress button { min-width:0; display:flex; align-items:center; gap:8px; padding:9px; border:1px solid rgba(107,30,45,.18); border-radius:11px; background:rgba(255,251,245,.5); color:#796A62; font-family:inherit; text-align:start; cursor:default; }
+  .ta-progress button.done { cursor:pointer; color:#6B1E2D; }
+  .ta-progress button.active { border-color:#6B1E2D; background:#FFFBF5; color:#6B1E2D; box-shadow:0 0 0 3px rgba(107,30,45,.07); }
+  .ta-progress span { width:24px; height:24px; flex:none; display:grid; place-items:center; border-radius:50%; background:#E5E0D5; font-size:11px; font-weight:900; }
+  .ta-progress .active span,.ta-progress .done span { background:#6B1E2D; color:#fff; }
+  .ta-progress em { overflow:hidden; font-style:normal; font-size:10.5px; font-weight:800; line-height:1.3; text-overflow:ellipsis; }
 
   .ta-error {
     background: rgba(107,30,45,.10); color: #6B1E2D;
@@ -599,6 +709,9 @@ const ta_styles = `
     border-radius: 12px; padding: 11px 16px; text-align: center;
     font-weight: 700; font-size: 13.5px; margin-bottom: 18px;
   }
+  .ta-error strong { display:block; }
+  .ta-error-fields { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin-top:9px; }
+  .ta-error-fields button { padding:4px 9px; border:1px solid rgba(107,30,45,.24); border-radius:999px; background:#FFFBF5; color:#6B1E2D; font:700 11px inherit; cursor:pointer; }
 
   .ta-section { margin-bottom: 30px; }
   .ta-section-head {
@@ -628,6 +741,7 @@ const ta_styles = `
   .ta-field.invalid .ta-input { border-color: #6B1E2D; box-shadow: 0 0 0 3px rgba(107,30,45,0.10); }
   .ta-field.invalid .ta-chk-grid,
   .ta-field.invalid .ta-radio-row { border-radius: 12px; box-shadow: 0 0 0 3px rgba(107,30,45,0.08); }
+  .ta-field-error { color:#6B1E2D; font-size:11px; font-weight:800; }
 
   .ta-input {
     width: 100%; padding: 10px 13px; font-size: 14px;
@@ -713,7 +827,11 @@ const ta_styles = `
   .ta-lang-lvl:hover { border-color: #B8A082; color: #6B1E2D; }
   .ta-lang-lvl.on    { background: #B8A082; color: #F7F3EB; border-color: #B8A082; }
 
-  .ta-submit-row { display: flex; justify-content: center; margin-top: 14px; }
+  .ta-review-note { margin:0 0 22px; padding:17px 18px; border:1px solid rgba(184,160,130,.38); border-radius:14px; background:rgba(255,251,245,.62); }
+  .ta-review-note strong { display:block; color:#6B1E2D; font-size:14px; font-weight:900; }
+  .ta-review-note p { margin:6px 0 0; color:#655B53; font-size:12.5px; line-height:1.8; }
+  .ta-submit-row { display: flex; justify-content: space-between; gap:10px; margin-top: 14px; }
+  .ta-back-btn { padding:13px 28px; border:1px solid rgba(107,30,45,.32); border-radius:14px; background:#FFFBF5; color:#6B1E2D; font:800 14px inherit; cursor:pointer; }
   .ta-submit-btn {
     padding: 14px 44px; font-size: 15px; font-weight: 900;
     background: linear-gradient(180deg,#B8A082,#B8A082);
@@ -725,4 +843,5 @@ const ta_styles = `
   }
   .ta-submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(107,30,45,0.40); }
   .ta-submit-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  @media(max-width:760px){.ta-progress{grid-template-columns:repeat(5,1fr)}.ta-progress button{justify-content:center;padding:8px 4px}.ta-progress em{display:none}.ta-progress span{width:28px;height:28px}.ta-shell{padding-inline:16px}.ta-submit-row{position:sticky;bottom:0;z-index:3;margin-inline:-16px;margin-bottom:-20px;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:rgba(247,243,235,.96);border-top:1px solid rgba(184,160,130,.28);backdrop-filter:blur(10px)}}
 `;

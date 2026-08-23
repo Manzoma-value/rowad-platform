@@ -42,6 +42,7 @@ export default function SchoolAdminDashboard() {
     setupNeeded: lang === "ar" ? "يحتاج إعداد" : lang === "sq" ? "Kërkon konfigurim" : "Setup needed",
     pending: lang === "ar" ? "قيد المراجعة" : lang === "sq" ? "Në shqyrtim" : "Pending",
     noUrgent: lang === "ar" ? "لا توجد مهام عاجلة الآن." : lang === "sq" ? "Nuk ka detyra urgjente tani." : "No urgent work right now.",
+    activeTeachers: lang === "ar" ? "المشرفون النشطون" : lang === "sq" ? "Edukatorët aktivë" : "Active educators",
   };
 
   const [retryTick, setRetryTick] = useState(0);
@@ -68,8 +69,15 @@ export default function SchoolAdminDashboard() {
   const studentStatus = useMemo(() => {
     const rows = stats?.studentsByStatus ?? [];
     const total = Math.max(stats?.studentCount ?? 0, 1);
-    return rows.map((row) => ({ ...row, pct: Math.round((row.count / total) * 100) }));
-  }, [stats]);
+    const statusLabels: Record<string, string> = {
+      PENDING_INTAKE: lang === "ar" ? "بانتظار القبول" : lang === "sq" ? "Në pritje të pranimit" : "Awaiting intake",
+      INTAKE_SUBMITTED: lang === "ar" ? "بانتظار المراجعة" : lang === "sq" ? "Në pritje të shqyrtimit" : "Awaiting review",
+      SCHOOL_ASSIGNED: lang === "ar" ? "تم تعيين المنصة" : lang === "sq" ? "Platforma u caktua" : "Platform assigned",
+      SCHOOL_PLACEMENT_SUBMITTED: lang === "ar" ? "تم تسليم التصنيف" : lang === "sq" ? "Vlerësimi u dorëzua" : "Placement submitted",
+      CLASS_ASSIGNED: lang === "ar" ? "ضمن مجموعة" : lang === "sq" ? "Në grup mësimor" : "In a learning group",
+    };
+    return rows.map((row) => ({ ...row, label: statusLabels[row.status] ?? row.status, pct: Math.round((row.count / total) * 100) }));
+  }, [lang, stats]);
 
   if (loading) return <MandalaLoader label={tr.loading} />;
   if (error || !stats) {
@@ -92,7 +100,7 @@ export default function SchoolAdminDashboard() {
 
   const schoolName = lang === "ar" ? stats.school.name : stats.school.name_alt || stats.school.name;
   const kpis = [
-    { label: tr.teachers, value: stats.teacherCount, href: "/school-admin/teachers", tone: "formal" },
+    { label: labels.activeTeachers, value: stats.teacherCount, href: "/school-admin/teachers?status=active", tone: "formal" },
     { label: tr.students, value: stats.studentCount, href: "/school-admin/students", tone: "formal" },
     { label: tr.classes, value: stats.classCount, href: "/school-admin/classes", tone: "formal" },
     { label: tr.awaitingPlacement, value: stats.pendingPlacements, href: "/school-admin/submissions?status=PENDING", tone: stats.pendingPlacements > 0 ? "alert" : "formal", hidden: viewOnly },
@@ -107,34 +115,9 @@ export default function SchoolAdminDashboard() {
       : null,
   ].filter(Boolean) as { title: string; href: string; tone: string; action: string }[];
 
-  const modules = [
-    { title: lang === "ar" ? "المشرفون والتأهيل" : lang === "sq" ? "Edukatorët" : "Supervisors", desc: lang === "ar" ? "المشرفون، المجموعات، الطلبات والورش." : lang === "sq" ? "Edukatorët, grupet, aplikimet dhe forumet." : "Supervisors, groups, applications and workshops.", href: "/school-admin/teachers", links: [[tr.teachers, "/school-admin/teachers"], [lang === "ar" ? "المجموعات" : "Groups", "/school-admin/teacher-groups"], [lang === "ar" ? "الطلبات" : "Applications", "/school-admin/applications"], [lang === "ar" ? "الورش" : "Workshops", "/school-admin/workshops"]] },
-    { title: lang === "ar" ? "المستفيدون والمجموعات" : lang === "sq" ? "Pjesëmarrësit dhe grupet" : "Beneficiaries and groups", desc: lang === "ar" ? "المستفيدين، المجموعات، الفرز، والمراجعة التعليمية." : lang === "sq" ? "Pjesëmarrësit, grupet, vendosja dhe shqyrtimi." : "Beneficiaries, groups, placement and learning review.", href: "/school-admin/students", links: [[tr.students, "/school-admin/students"], [tr.classes, "/school-admin/classes"], [tr.submissions, "/school-admin/submissions"], [lang === "ar" ? "المراجعة" : "Review", "/school-admin/review-queue"]] },
-    { title: lang === "ar" ? "التقارير والقياس" : lang === "sq" ? "Raporte dhe matje" : "Reports and measurement", desc: lang === "ar" ? "تقارير المنصة، تقارير المالك، ونتائج النموذج." : lang === "sq" ? "Raportet, raportet e pronarit dhe modeli edukativ." : "Platform reports, owner reports and model scores.", href: "/school-admin/reports", links: [[tr.reports ?? "Reports", "/school-admin/reports"], [lang === "ar" ? "تقارير المالك" : "Owner Reports", "/school-admin/owner-reports"], [lang === "ar" ? "النموذج" : "Model", "/school-admin/game-scores"]] },
-    { title: lang === "ar" ? "المجتمع والتواصل" : lang === "sq" ? "Komuniteti" : "Community", desc: lang === "ar" ? "المجتمع، الإعلانات، الدعوات والتواصل." : lang === "sq" ? "Komuniteti, njoftimet, ftesat dhe komunikimi." : "Community, announcements, invites and communication.", href: "/school-admin/hub", links: [[lang === "ar" ? "المجتمع" : "Community", "/school-admin/hub"], [lang === "ar" ? "الدعوات" : "Invites", "/school-admin/invites"]] },
-  ];
-
   return (
     <div className="school-dashboard-page" dir={dir}>
       <NotificationFeed basePath="/school-admin" />
-
-      <section className="school-dashboard-hero">
-        <div className="school-dashboard-hero-star" aria-hidden="true">
-          <IdentityMandala size={340} stroke="#D9C9B0" opacity={0.9} spin spinDuration={140} />
-        </div>
-        <div className="school-dashboard-hero-copy">
-          <span>
-            <IdentityStar size={12} strokeWidth={5} color="#D9C9B0" />
-            {labels.eyebrow}
-          </span>
-          <h1>{schoolName}</h1>
-          <p>{labels.subtitle}</p>
-        </div>
-        <div className="school-dashboard-hero-side">
-          <strong>{labels.welcome}</strong>
-          <span>{stats.adminName ?? "Admin"}</span>
-        </div>
-      </section>
 
       <section className="school-dashboard-kpis">
         {kpis.map((card) => (
@@ -169,29 +152,23 @@ export default function SchoolAdminDashboard() {
           </div>
           {studentStatus.length > 0 ? studentStatus.map((row) => (
             <div key={row.status} className="school-dashboard-status-row">
-              <div><strong>{row.status.replaceAll("_", " ")}</strong><span>{row.count}</span></div>
+              <div><strong>{row.label}</strong><span>{row.count}</span></div>
               <div className="school-dashboard-track"><i style={{ width: `${row.pct}%` }} /></div>
             </div>
           )) : <p className="school-dashboard-calm">{lang === "ar" ? "لا توجد بيانات حالة بعد." : "No status data yet."}</p>}
         </div>
       </section>
 
-      <section className="school-dashboard-modules" data-testid="platform-map">
-        <div className="school-dashboard-section-title">
-          <IdentityStar size={16} strokeWidth={4} />
-          <h2>{labels.ecosystem}</h2>
+      <section className="school-dashboard-hero">
+        <div className="school-dashboard-hero-star" aria-hidden="true">
+          <IdentityMandala size={240} stroke="#D9C9B0" opacity={0.9} spin spinDuration={140} />
         </div>
-        <div className="school-dashboard-module-grid" data-testid="platform-map-grid">
-          {modules.map((module) => (
-            <article key={module.title} className="school-dashboard-module">
-              <h3>{module.title}</h3>
-              <p>{module.desc}</p>
-              <div>
-                {module.links.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}
-              </div>
-            </article>
-          ))}
+        <div className="school-dashboard-hero-copy">
+          <span><IdentityStar size={12} strokeWidth={5} color="#D9C9B0" />{labels.eyebrow}</span>
+          <h1>{schoolName}</h1>
+          <p>{labels.subtitle}</p>
         </div>
+        <div className="school-dashboard-hero-side"><strong>{labels.welcome}</strong><span>{stats.adminName ?? "Admin"}</span></div>
       </section>
 
       <style>{styles}</style>

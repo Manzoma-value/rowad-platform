@@ -207,7 +207,11 @@ export default function SchoolAdminTeachersPage() {
   const [fLocation, setFLocation] = useState("");
   const [fQualification, setFQualification] = useState("");
   const [fExperience, setFExperience] = useState("");
-  const [fStatus, setFStatus] = useState("");
+  const [fStatus, setFStatus] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const value = new URLSearchParams(window.location.search).get("status");
+    return value === "active" || value === "inactive" ? value : "";
+  });
 
   const [deleteTarget, setDeleteTarget] = useState<Teacher | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -221,8 +225,8 @@ export default function SchoolAdminTeachersPage() {
     active: lang === "ar" ? "نشط" : lang === "sq" ? "Aktiv" : "Active",
     inactive: lang === "ar" ? "معطل" : lang === "sq" ? "Jo aktiv" : "Inactive",
     teachers: lang === "ar" ? "مشرف" : lang === "sq" ? "edukator" : "supervisors",
-    classes: lang === "ar" ? "المجموعات" : lang === "sq" ? "Grupet" : "Groups",
-    groups: lang === "ar" ? "المجموعات" : lang === "sq" ? "Grupet" : "Groups",
+    classes: lang === "ar" ? "مجموعات المستفيدين" : lang === "sq" ? "Grupet mësimore" : "Learning groups",
+    groups: lang === "ar" ? "دوائر المشرفين" : lang === "sq" ? "Rrethet e edukatorëve" : "Educator circles",
     teacherInfo: lang === "ar" ? "بيانات المشرف" : lang === "sq" ? "Të dhënat e edukatorit" : "Supervisor info",
     noApplication: lang === "ar" ? "لم يقدّم بياناته بعد" : lang === "sq" ? "Nuk ka plotësuar aplikimin ende" : "No info on file yet",
     savedProgress: lang === "ar" ? "التقدم المحفوظ" : lang === "sq" ? "Progresi i ruajtur" : "Saved progress",

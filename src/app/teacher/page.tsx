@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowUpLeft, LayoutGrid, List, Search, Settings2, UsersRound, X } from "lucide-react";
+import { ArrowUpLeft, LayoutGrid, List, Search, X } from "lucide-react";
 import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import { useConfirm } from "@/lib/confirm-dialog";
 import { useLang } from "@/lib/language-context";
@@ -135,13 +135,13 @@ const STR = {
     command: "Paneli i edukatorit",
     classes: "Grupet e pjesëmarrësve",
     students: "Pjesëmarrësit",
-    groups: "Grupet e edukatorëve",
+    groups: "Rrethet e edukatorëve",
     content: "Përmbajtja",
     pending: "Në shqyrtim",
     announcements: "Njoftimet",
     quickActions: "Veprime të shpejta",
     openCommunity: "Hap komunitetin",
-    openGroups: "Grupet e edukatorëve",
+    openGroups: "Rrethet e edukatorëve",
     createLesson: "Krijo mësim",
     createQuiz: "Krijo test",
     viewReports: "Raportet e pjesëmarrësve",
@@ -158,7 +158,7 @@ const STR = {
     delete: "Fshij",
     deleteConfirm: "Fshi këtë njoftim?",
     noAnnouncements: "Nuk ka njoftime për këtë grup ende",
-    groupsPulse: "Vlerësimi dhe komunikimi mes edukatorëve",
+    groupsPulse: "Vlerësime në rrethet e edukatorëve",
     noGroups: "Nuk jeni shtuar në asnjë grup ende",
     latestGroupPosts: "Njoftimet e fundit në grupe",
     noGroupUpdates: "Nuk ka përditësime të reja në grupe",
@@ -333,6 +333,10 @@ export default function TeacherPage() {
               <Link href="/teacher/hub" className="td-action primary">{tr.openCommunity}</Link>
               <Link href="/teacher/groups" className="td-action">{tr.openGroups}</Link>
               <Link href="/teacher/lessons" className="td-action">{tr.createLesson}</Link>
+              <div className="td-density" role="group" aria-label={tr.dashboardControls}>
+                <button className={dashboardDensity === "comfortable" ? "active" : ""} onClick={() => setDensity("comfortable")} aria-pressed={dashboardDensity === "comfortable"}><LayoutGrid size={14} />{tr.comfortableView}</button>
+                <button className={dashboardDensity === "compact" ? "active" : ""} onClick={() => setDensity("compact")} aria-pressed={dashboardDensity === "compact"}><List size={14} />{tr.compactView}</button>
+              </div>
             </div>
           </div>
           <div className="td-hero-summary">
@@ -348,21 +352,6 @@ export default function TeacherPage() {
           <StatCard href="/teacher/reports" label={tr.students} value={totalStudents} hint={tr.classStudents} />
           <StatCard href="/teacher/groups" label={tr.groups} value={totals?.groups ?? 0} hint={tr.groupsPulse} />
           <StatCard href="/teacher/lessons" label={tr.content} value={totalContent} hint={`${totals?.pending_review ?? 0} ${tr.pending}`} />
-        </section>
-
-        <section className="td-controlbar" aria-label={tr.dashboardControls}>
-          <div className="td-controlbar-copy">
-            <span><Settings2 size={16} /></span>
-            <div><strong>{tr.dashboardControls}</strong><small>{tr.dashboardControlsHint}</small></div>
-          </div>
-          <div className="td-density" role="group" aria-label={tr.dashboardControls}>
-            <button className={dashboardDensity === "comfortable" ? "active" : ""} onClick={() => setDensity("comfortable")} aria-pressed={dashboardDensity === "comfortable"}><LayoutGrid size={14} />{tr.comfortableView}</button>
-            <button className={dashboardDensity === "compact" ? "active" : ""} onClick={() => setDensity("compact")} aria-pressed={dashboardDensity === "compact"}><List size={14} />{tr.compactView}</button>
-          </div>
-          <nav className="td-control-links">
-            <Link href="/teacher/classes"><UsersRound size={14} />{tr.manageClasses}<ArrowUpLeft size={13} /></Link>
-            <Link href="/teacher/reports">{tr.allReports}<ArrowUpLeft size={13} /></Link>
-          </nav>
         </section>
 
         {!data.classes.length ? (
@@ -482,7 +471,7 @@ export default function TeacherPage() {
               <section className="td-panel">
                 <div className="td-panel-head compact">
                   <div>
-                    <span className="td-section-label">{tr.groupsPulse}</span>
+                    <span className="td-section-label">{tr.groups}</span>
                     <h2>{tr.groups}</h2>
                   </div>
                   <Link href="/teacher/groups" className="td-mini-link">{tr.openGroups}</Link>
@@ -505,7 +494,7 @@ export default function TeacherPage() {
                 <div className="td-panel-head compact">
                   <div>
                     <span className="td-section-label">{tr.latestGroupPosts}</span>
-                    <h2>{tr.groupsPulse}</h2>
+                    <h2>{tr.groupUpdates}</h2>
                   </div>
                 </div>
                 {(data.dashboard?.group_announcements.length ?? 0) === 0 ? (

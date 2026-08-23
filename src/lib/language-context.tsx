@@ -27,6 +27,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (hasChosenLanguage && (saved === "ar" || saved === "sq" || saved === "en")) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setLangState(saved);
+      document.documentElement.dir = saved === "ar" ? "rtl" : "ltr";
+      document.documentElement.lang = saved;
     } else {
       localStorage.setItem("lang", "sq");
       localStorage.setItem("language_preference_v2", "1");

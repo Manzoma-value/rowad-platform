@@ -461,7 +461,6 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         </span>
         <span className="sa-nav-labels">
           <span className="sa-nav-label-main">{item.label}</span>
-          <span className="sa-nav-label-sub">{item.sublabel}</span>
         </span>
         {active && <span className="sa-nav-dot" />}
       </Link>
@@ -588,7 +587,6 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                 >
                   <span>
                     <span className="sa-nav-group-title">{group.label}</span>
-                    <span className="sa-nav-group-sub">{group.sublabel}</span>
                   </span>
                   <span className={`sa-nav-group-chev ${isOpen ? "open" : ""}`}>⌄</span>
                 </button>
@@ -622,7 +620,6 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
                       <span className="sa-nav-label-main">
                         {lang === "ar" ? "المجتمع" : lang === "sq" ? "Komuniteti" : "Community"}
                       </span>
-                      <span className="sa-nav-label-sub">Community</span>
                     </span>
                     {active && <span className="sa-nav-dot" />}
                   </Link>

@@ -13,6 +13,7 @@ import {
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityMandala from "@/components/IdentityMandala";
+import { useConfirm } from "@/lib/confirm-dialog";
 
 type LanguageEntry = { lang?: string; level?: string };
 type Member = {
@@ -60,6 +61,8 @@ const UI = {
     posting: "جاري النشر...",
     emptyActivities: "لم تتم إضافة إعلانات لهذه المجموعة بعد.",
     delete: "حذف",
+    deleteConfirm: "هل تريد حذف هذا الإعلان؟",
+    writeError: "تعذر حفظ التغيير. تحقق من الاتصال وحاول مرة أخرى.",
     noMembers: "لا يوجد أعضاء في هذه المجموعة بعد.",
     memberSearch: "ابحث بالاسم، الموقع، التخصص أو اللغة...",
     noMemberResults: "لا يوجد أعضاء مطابقون للبحث.",
@@ -97,6 +100,8 @@ const UI = {
     posting: "Duke postuar...",
     emptyActivities: "Nuk ka njoftime të shtuara për këtë grup ende.",
     delete: "Fshi",
+    deleteConfirm: "Ta fshijmë këtë njoftim?",
+    writeError: "Ndryshimi nuk u ruajt. Kontrollo lidhjen dhe provo përsëri.",
     noMembers: "Ky grup nuk ka anëtarë ende.",
     memberSearch: "Kërko sipas emrit, vendit, specializimit ose gjuhës...",
     noMemberResults: "Nuk ka anëtarë që përputhen me kërkimin.",
@@ -154,6 +159,7 @@ export default function TeacherGroupDetailPage() {
   const { lang } = useLang();
   const L = lang === "sq" ? "sq" : "ar";
   const T = UI[L];
+  const confirm = useConfirm();
   const dir = L === "ar" ? "rtl" : "ltr";
 
   const [group, setGroup] = useState<GroupDetail | null>(null);
@@ -165,6 +171,7 @@ export default function TeacherGroupDetailPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [error, setError] = useState(false);
+  const [writeError, setWriteError] = useState("");
   const [memberQuery, setMemberQuery] = useState("");
   type AssessmentRow = { id: string; title: string; status: "OPEN" | "CLOSED"; created_at: string; closed_at: string | null };
   const [assessments, setAssessments] = useState<AssessmentRow[]>([]);
@@ -207,17 +214,19 @@ export default function TeacherGroupDetailPage() {
     const id = params?.id;
     if (!id || !newAnnouncement.trim()) return;
     setPosting(true);
+    setWriteError("");
     try {
       const r = await fetch(`/api/teacher/groups/${id}/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: newAnnouncement }),
       });
-      if (r.ok) {
-        const d = await r.json();
-        setAnnouncements((current) => [d.announcement, ...current]);
-        setNewAnnouncement("");
-      }
+      if (!r.ok) throw new Error("post_failed");
+      const d = await r.json();
+      setAnnouncements((current) => [d.announcement, ...current]);
+      setNewAnnouncement("");
+    } catch {
+      setWriteError(T.writeError);
     } finally {
       setPosting(false);
     }
@@ -226,13 +235,18 @@ export default function TeacherGroupDetailPage() {
   async function deleteAnnouncement(announcementId: string) {
     const id = params?.id;
     if (!id) return;
+    if (!await confirm({ message: T.deleteConfirm, variant: "danger" })) return;
     setDeletingId(announcementId);
+    setWriteError("");
     try {
       const r = await fetch(
         `/api/teacher/groups/${id}/announcements?announcement_id=${encodeURIComponent(announcementId)}`,
         { method: "DELETE" },
       );
-      if (r.ok) setAnnouncements((current) => current.filter((a) => a.id !== announcementId));
+      if (!r.ok) throw new Error("delete_failed");
+      setAnnouncements((current) => current.filter((a) => a.id !== announcementId));
+    } catch {
+      setWriteError(T.writeError);
     } finally {
       setDeletingId(null);
     }
@@ -416,6 +430,7 @@ export default function TeacherGroupDetailPage() {
             {posting ? T.posting : T.post}
           </button>
         </div>
+        {writeError && <p className="gd-write-error" role="alert">{writeError}</p>}
 
         {annLoading ? (
           <div className="gd-activities-empty"><MandalaLoader /></div>
@@ -441,6 +456,7 @@ export default function TeacherGroupDetailPage() {
                     onClick={() => deleteAnnouncement(announcement.id)}
                     disabled={deletingId === announcement.id}
                     title={T.delete}
+                    aria-label={T.delete}
                   >
                     <Trash2 size={14} strokeWidth={1.8} />
                   </button>
@@ -663,6 +679,7 @@ const styles = `
   .gd-ann-delete { width: 30px; height: 30px; border-radius: 9px; border: 1px solid rgba(107,30,45,0.18); background: rgba(107,30,45,0.05); color: #6B1E2D; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition:.15s; }
   .gd-ann-delete:hover:not(:disabled) { background:rgba(107,30,45,.14); }
   .gd-ann-delete:disabled { opacity: 0.45; cursor: not-allowed; }
+  .gd-write-error { margin:10px 0 0; padding:9px 12px; border:1px solid rgba(107,30,45,.25); border-radius:10px; background:rgba(107,30,45,.07); color:#6B1E2D; font-size:12px; font-weight:800; }
 
   @media (max-width: 640px) {
     .gd-page { padding: 16px; }

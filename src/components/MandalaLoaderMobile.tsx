@@ -21,9 +21,9 @@ interface Props {
   label?: string;
 }
 
-export default function MandalaLoaderMobile({ label = "جارٍ التحميل" }: Props) {
+export default function MandalaLoaderMobile({ label }: Props) {
   return (
-    <div className="mlm-root">
+    <div className="mlm-root" role="status" aria-live="polite">
       <div className="mlm-mandala">
         <svg viewBox="0 0 100 100" fill="none" aria-hidden="true">
           <defs>
@@ -87,7 +87,6 @@ const css = `
     width: 100%;
     min-height: 160px;
     font-family: 'Cairo', sans-serif;
-    direction: rtl;
     animation: mlm-fade 0.3s cubic-bezier(0.22,1,0.36,1) both;
   }
 
