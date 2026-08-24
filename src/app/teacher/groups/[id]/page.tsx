@@ -1,19 +1,27 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, ArrowUpRight, Award, Clock3, ClipboardCheck, GraduationCap,
   Languages, Lock, MapPin, MessageSquare, Network, Search, Send, Sparkles,
-  Crown, Trash2, Unlock, UserRound, Users,
+  Crown, Paperclip, Trash2, Unlock, UserRound, Users, X,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityMandala from "@/components/IdentityMandala";
 import { useConfirm } from "@/lib/confirm-dialog";
+import GroupChatAttachments from "@/components/GroupChatAttachments";
+import type { TeacherGroupAttachment } from "@/lib/teacher-group-attachments";
+import { formatAttachmentSize } from "@/lib/teacher-group-attachments";
+import {
+  discardTeacherGroupAttachments,
+  uploadTeacherGroupAttachments,
+  validateGroupAttachmentFiles,
+} from "@/lib/upload-teacher-group-attachments";
 
 type LanguageEntry = { lang?: string; level?: string };
 type Member = {
@@ -48,6 +56,7 @@ type GroupAnnouncement = {
   created_at: string;
   author_id: string;
   author: { id: string; full_name: string; role: string };
+  attachments: TeacherGroupAttachment[];
 };
 
 const UI = {
@@ -89,6 +98,12 @@ const UI = {
     communityHint: "تابع الإعلانات والنقاشات",
     leader: "قائد المجموعة",
     capacity: "السعة",
+    attach: "إرفاق صور أو فيديو أو PDF",
+    openAttachment: "فتح المرفق",
+    tooManyFiles: "يمكنك إرفاق 4 ملفات كحد أقصى في الرسالة الواحدة.",
+    unsupportedFile: "الملف غير مدعوم. اختر صورة أو فيديو أو ملف PDF.",
+    fileTooLarge: "حجم الصورة أو PDF يجب ألا يتجاوز 40 MB، والفيديو 2 GB.",
+    uploading: (percent: number) => `جاري رفع المرفقات... ${percent}%`,
   },
   sq: {
     back: "Kthehu te grupet",
@@ -128,6 +143,12 @@ const UI = {
     communityHint: "Ndiq njoftimet dhe diskutimet",
     leader: "Udhëheqësi i grupit",
     capacity: "Kapaciteti",
+    attach: "Bashkëngjit foto, video ose PDF",
+    openAttachment: "Hap bashkëngjitjen",
+    tooManyFiles: "Mund të bashkëngjitësh deri në 4 skedarë për mesazh.",
+    unsupportedFile: "Skedari nuk mbështetet. Zgjidh foto, video ose PDF.",
+    fileTooLarge: "Fotoja ose PDF-ja duhet të jetë deri në 40 MB, ndërsa videoja deri në 2 GB.",
+    uploading: (percent: number) => `Po ngarkohen skedarët... ${percent}%`,
   },
 } as const;
 
@@ -165,6 +186,9 @@ export default function TeacherGroupDetailPage() {
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [announcements, setAnnouncements] = useState<GroupAnnouncement[]>([]);
   const [newAnnouncement, setNewAnnouncement] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(true);
   const [annLoading, setAnnLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -212,24 +236,51 @@ export default function TeacherGroupDetailPage() {
 
   async function postAnnouncement() {
     const id = params?.id;
-    if (!id || !newAnnouncement.trim()) return;
+    if (!id || (!newAnnouncement.trim() && selectedFiles.length === 0)) return;
     setPosting(true);
     setWriteError("");
+    setUploadProgress(selectedFiles.length ? 0 : null);
+    const uploadEndpoint = `/api/teacher/groups/${id}/attachments/upload-url`;
+    let attachmentTokens: string[] = [];
     try {
+      if (selectedFiles.length) {
+        attachmentTokens = await uploadTeacherGroupAttachments({
+          endpoint: uploadEndpoint,
+          files: selectedFiles,
+          onProgress: setUploadProgress,
+        });
+      }
       const r = await fetch(`/api/teacher/groups/${id}/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newAnnouncement }),
+        body: JSON.stringify({ content: newAnnouncement, attachment_tokens: attachmentTokens }),
       });
       if (!r.ok) throw new Error("post_failed");
       const d = await r.json();
       setAnnouncements((current) => [d.announcement, ...current]);
       setNewAnnouncement("");
-    } catch {
+      setSelectedFiles([]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (error) {
+      const partialTokens = (error as Error & { uploadedTokens?: string[] }).uploadedTokens ?? [];
+      await discardTeacherGroupAttachments(uploadEndpoint, attachmentTokens.length ? attachmentTokens : partialTokens);
       setWriteError(T.writeError);
     } finally {
       setPosting(false);
+      setUploadProgress(null);
     }
+  }
+
+  function selectAttachments(files: FileList | null) {
+    const next = Array.from(files ?? []).slice(0, 5);
+    const error = validateGroupAttachmentFiles(next);
+    if (error) {
+      setWriteError(error === "too_many_attachments" ? T.tooManyFiles : error === "file_too_large" ? T.fileTooLarge : T.unsupportedFile);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    setWriteError("");
+    setSelectedFiles(next);
   }
 
   async function deleteAnnouncement(announcementId: string) {
@@ -425,10 +476,25 @@ export default function TeacherGroupDetailPage() {
             placeholder={T.announcementPlaceholder}
             rows={3}
           />
-          <button onClick={postAnnouncement} disabled={posting || !newAnnouncement.trim()}>
-            <Send size={14} strokeWidth={2} />
-            {posting ? T.posting : T.post}
-          </button>
+          {selectedFiles.length > 0 && (
+            <div className="gd-selected-files">
+              {selectedFiles.map((file, index) => (
+                <span key={`${file.name}-${file.size}-${index}`}>
+                  <Paperclip size={12}/>{file.name}<small>{formatAttachmentSize(file.size)}</small>
+                  <button type="button" onClick={() => setSelectedFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))} disabled={posting} aria-label={T.delete}><X size={12}/></button>
+                </span>
+              ))}
+            </div>
+          )}
+          {uploadProgress !== null && <div className="gd-upload-progress" role="status"><span style={{ width: `${uploadProgress}%` }}/><small>{T.uploading(uploadProgress)}</small></div>}
+          <div className="gd-composer-actions">
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/*,application/pdf" multiple onChange={(event) => selectAttachments(event.target.files)} disabled={posting}/>
+            <button type="button" className="gd-attach-btn" onClick={() => fileInputRef.current?.click()} disabled={posting}><Paperclip size={14}/>{T.attach}</button>
+            <button type="button" onClick={postAnnouncement} disabled={posting || (!newAnnouncement.trim() && selectedFiles.length === 0)}>
+              <Send size={14} strokeWidth={2} />
+              {posting ? T.posting : T.post}
+            </button>
+          </div>
         </div>
         {writeError && <p className="gd-write-error" role="alert">{writeError}</p>}
 
@@ -448,7 +514,8 @@ export default function TeacherGroupDetailPage() {
                     <strong>{announcement.author.full_name}</strong>
                     <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { month: "short", day: "numeric" })}</span>
                   </div>
-                  <p>{announcement.content}</p>
+                  {announcement.content && <p>{announcement.content}</p>}
+                  <GroupChatAttachments attachments={announcement.attachments ?? []} openLabel={T.openAttachment}/>
                 </div>
                 {announcement.author_id === currentProfileId && (
                   <button
@@ -667,6 +734,28 @@ const styles = `
   .gd-composer button { align-self: flex-end; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 11px; padding: 10px 18px; background: linear-gradient(135deg,#4A0E1C,#6B1E2D); color: #F7F3EB; font-family: inherit; font-size: 13px; font-weight: 900; cursor: pointer; transition:.15s; }
   .gd-composer button:hover:not(:disabled) { box-shadow:0 8px 18px rgba(107,30,45,.25); }
   .gd-composer button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .gd-composer-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .gd-composer-actions>input { display:none; }
+  .gd-composer-actions>button:last-child { margin-inline-start:auto; }
+  .gd-composer .gd-attach-btn { align-self:auto; background:#FFF; color:#6B1E2D; border:1px solid rgba(107,30,45,.18); padding:9px 12px; }
+  .gd-selected-files { display:flex; flex-wrap:wrap; gap:7px; }
+  .gd-selected-files>span { display:flex; align-items:center; gap:5px; max-width:100%; padding:7px 9px; border-radius:9px; background:#FFF; border:1px solid rgba(107,30,45,.14); color:#4A0E1C; font-size:11px; font-weight:800; }
+  .gd-selected-files>span small { color:#8C8274; font-weight:600; }
+  .gd-selected-files>span button { padding:2px; margin-inline-start:3px; background:transparent; color:#6B1E2D; }
+  .gd-upload-progress { position:relative; height:24px; overflow:hidden; border-radius:8px; background:rgba(107,30,45,.08); }
+  .gd-upload-progress>span { position:absolute; inset-block:0; inset-inline-start:0; background:rgba(107,30,45,.18); transition:width .2s; }
+  .gd-upload-progress>small { position:relative; z-index:1; display:flex; height:100%; align-items:center; justify-content:center; font-size:10.5px; font-weight:800; color:#4A0E1C; }
+  .group-chat-attachments { display:grid; gap:8px; margin-top:9px; }
+  .group-chat-image { display:block; width:min(100%,420px); overflow:hidden; border-radius:12px; background:#F7F3EB; }
+  .group-chat-image img { display:block; width:100%; max-height:360px; object-fit:cover; }
+  .group-chat-video { width:min(100%,520px); overflow:hidden; border:1px solid rgba(107,30,45,.12); border-radius:12px; background:#1A1A1A; }
+  .group-chat-video video { display:block; width:100%; max-height:420px; background:#1A1A1A; }
+  .group-chat-video>span { display:block; padding:7px 9px; color:#F7F3EB; font-size:10.5px; overflow-wrap:anywhere; }
+  .group-chat-pdf { display:flex; align-items:center; gap:9px; width:min(100%,460px); padding:10px; border:1px solid rgba(107,30,45,.14); border-radius:11px; background:#FFF; color:#4A0E1C; text-decoration:none; }
+  .group-chat-pdf>span { display:flex; flex:1; min-width:0; flex-direction:column; }
+  .group-chat-pdf strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11.5px; }
+  .group-chat-pdf small { color:#8C8274; }
+  .group-chat-pdf em { font-size:10.5px; font-style:normal; font-weight:800; }
   .gd-ann-list { display: flex; flex-direction: column; gap: 9px; }
   .gd-ann { display: flex; gap: 11px; padding: 14px; border: 1px solid rgba(107,30,45,0.14); border-radius: 14px; background: #FFF; transition:.15s; }
   .gd-ann:hover { border-color:rgba(107,30,45,.28); }

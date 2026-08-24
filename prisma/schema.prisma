@@ -895,12 +895,16 @@ model AssessmentRatingRevision {
 // Private announcement feed inside a teacher group. Authors can be school
 // admins or teacher members; visibility is enforced by the API routes.
 model TeacherGroupAnnouncement {
-  id         String   @id @default(uuid()) @db.Uuid
-  group_id   String   @db.Uuid
-  school_id  String   @db.Uuid
-  author_id  String   @db.Uuid
-  content    String
-  created_at DateTime @default(now())
+  id          String   @id @default(uuid()) @db.Uuid
+  group_id    String   @db.Uuid
+  school_id   String   @db.Uuid
+  author_id   String   @db.Uuid
+  content     String
+  // Private images, PDFs, and Drive-backed videos attached to this message.
+  // URLs are generated only after group-access checks; storage identifiers
+  // are never returned directly to the browser.
+  attachments Json     @default("[]")
+  created_at  DateTime @default(now())
 
   group  TeacherGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
   school School       @relation(fields: [school_id], references: [id], onDelete: Cascade)

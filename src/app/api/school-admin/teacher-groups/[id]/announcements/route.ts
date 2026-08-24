@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { requireSchoolAdmin, requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { notifyProfiles, teacherGroupProfileIds } from "@/lib/notifications";
+import { publicTeacherGroupAttachments } from "@/lib/teacher-group-attachments";
+import {
+  cleanupTeacherGroupAttachments,
+  validateTeacherGroupAttachmentClaims,
+} from "@/lib/teacher-group-attachment-server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +16,7 @@ const ANNOUNCEMENT_SELECT = {
   content: true,
   created_at: true,
   author_id: true,
+  attachments: true,
   author: {
     select: {
       id: true,
@@ -18,6 +25,10 @@ const ANNOUNCEMENT_SELECT = {
     },
   },
 } as const;
+
+function publicAnnouncement<T extends { id: string; attachments: unknown }>(announcement: T) {
+  return { ...announcement, attachments: publicTeacherGroupAttachments(announcement.id, announcement.attachments) };
+}
 
 export async function GET(
   _req: Request,
@@ -40,7 +51,7 @@ export async function GET(
     take: 100,
   });
 
-  return NextResponse.json({ announcements });
+  return NextResponse.json({ announcements: announcements.map(publicAnnouncement) });
 }
 
 export async function POST(
@@ -59,7 +70,19 @@ export async function POST(
 
   const body = await req.json().catch(() => ({}));
   const content = typeof body.content === "string" ? body.content.trim() : "";
-  if (!content) return NextResponse.json({ error: "content required" }, { status: 400 });
+  let attachments;
+  try {
+    attachments = await validateTeacherGroupAttachmentClaims(body.attachment_tokens, {
+      groupId: id,
+      schoolId: auth.school.id,
+      profileId: auth.profile.id,
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "invalid_attachment" }, { status: 400 });
+  }
+  if (!content && attachments.length === 0) {
+    return NextResponse.json({ error: "content_or_attachment_required" }, { status: 400 });
+  }
 
   const announcement = await prisma.teacherGroupAnnouncement.create({
     data: {
@@ -67,6 +90,7 @@ export async function POST(
       school_id: auth.school.id,
       author_id: auth.profile.id,
       content: content.slice(0, 4000),
+      attachments: attachments as unknown as Prisma.InputJsonValue,
     },
     select: ANNOUNCEMENT_SELECT,
   });
@@ -76,15 +100,15 @@ export async function POST(
     title_ar: "إعلان جديد في المجموعة",
     title_sq: "Njoftim i ri në grup",
     title_en: "New group announcement",
-    body_ar: content.slice(0, 180),
-    body_sq: content.slice(0, 180),
-    body_en: content.slice(0, 180),
+    body_ar: content.slice(0, 180) || `مرفق جديد: ${attachments[0]?.name ?? "ملف"}`,
+    body_sq: content.slice(0, 180) || `Bashkëngjitje e re: ${attachments[0]?.name ?? "skedar"}`,
+    body_en: content.slice(0, 180) || `New attachment: ${attachments[0]?.name ?? "file"}`,
     href: `/teacher/groups/${id}`,
     actor_id: auth.profile.id,
     event_key: `teacher-group-announcement:${announcement.id}`,
   }).catch(() => undefined);
 
-  return NextResponse.json({ announcement }, { status: 201 });
+  return NextResponse.json({ announcement: publicAnnouncement(announcement) }, { status: 201 });
 }
 
 export async function DELETE(
@@ -100,14 +124,17 @@ export async function DELETE(
     return NextResponse.json({ error: "announcement_id required" }, { status: 400 });
   }
 
-  const deleted = await prisma.teacherGroupAnnouncement.deleteMany({
+  const announcement = await prisma.teacherGroupAnnouncement.findFirst({
     where: {
       id: announcementId,
       group_id: id,
       school_id: auth.school.id,
     },
+    select: { id: true, attachments: true },
   });
-
+  if (!announcement) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const deleted = await prisma.teacherGroupAnnouncement.deleteMany({ where: { id: announcement.id } });
   if (deleted.count === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await cleanupTeacherGroupAttachments(announcement.attachments);
   return NextResponse.json({ success: true });
 }

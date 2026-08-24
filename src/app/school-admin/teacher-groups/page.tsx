@@ -1,17 +1,24 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Bell, BookOpenCheck, ChevronLeft, ChevronRight, Crown, Eye, EyeOff,
   CheckCircle2, Clock3, History, LogOut, MapPin, Megaphone, PencilLine, Plus, Search, Trash2, UserMinus,
-  UserPlus, Users, X,
+  Paperclip, Send, UserPlus, Users, X,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
+import GroupChatAttachments from "@/components/GroupChatAttachments";
+import { formatAttachmentSize, type TeacherGroupAttachment } from "@/lib/teacher-group-attachments";
+import {
+  discardTeacherGroupAttachments,
+  uploadTeacherGroupAttachments,
+  validateGroupAttachmentFiles,
+} from "@/lib/upload-teacher-group-attachments";
 
 type GroupRow = {
   id: string;
@@ -75,6 +82,7 @@ type GroupAnnouncement = {
   created_at: string;
   author_id: string;
   author: { id: string; full_name: string; role: string };
+  attachments: TeacherGroupAttachment[];
 };
 
 type Eligible = {
@@ -217,6 +225,13 @@ export default function TeacherGroupsPage() {
       ? "لا توجد مغادرات مسجلة لهذه المجموعة."
       : "Nuk ka largime të regjistruara për këtë grup.",
     leaveReason: L === "ar" ? "سبب المغادرة" : "Arsyeja e largimit",
+    attach: L === "ar" ? "إرفاق صور أو فيديو أو PDF" : "Bashkëngjit foto, video ose PDF",
+    openAttachment: L === "ar" ? "فتح المرفق" : "Hap bashkëngjitjen",
+    tooManyFiles: L === "ar" ? "يمكنك إرفاق 4 ملفات كحد أقصى في الرسالة الواحدة." : "Mund të bashkëngjitësh deri në 4 skedarë për mesazh.",
+    unsupportedFile: L === "ar" ? "الملف غير مدعوم. اختر صورة أو فيديو أو ملف PDF." : "Skedari nuk mbështetet. Zgjidh foto, video ose PDF.",
+    fileTooLarge: L === "ar" ? "حجم الصورة أو PDF يجب ألا يتجاوز 40 MB، والفيديو 2 GB." : "Fotoja ose PDF-ja duhet të jetë deri në 40 MB, ndërsa videoja deri në 2 GB.",
+    uploadError: L === "ar" ? "تعذر رفع المرفق أو نشر الرسالة. حاول مرة أخرى." : "Skedari ose mesazhi nuk u dërgua. Provo përsëri.",
+    uploading: (percent: number) => L === "ar" ? `جاري رفع المرفقات... ${percent}%` : `Po ngarkohen skedarët... ${percent}%`,
   };
   const viewOnly = useViewOnly();
   const confirm = useConfirm();
@@ -235,6 +250,10 @@ export default function TeacherGroupsPage() {
   const [newAnnouncement, setNewAnnouncement] = useState("");
   const [postingAnnouncement, setPostingAnnouncement] = useState(false);
   const [deletingAnnouncementId, setDeletingAnnouncementId] = useState<string | null>(null);
+  const [selectedAnnouncementFiles, setSelectedAnnouncementFiles] = useState<File[]>([]);
+  const [announcementUploadProgress, setAnnouncementUploadProgress] = useState<number | null>(null);
+  const [announcementError, setAnnouncementError] = useState("");
+  const announcementFileInputRef = useRef<HTMLInputElement>(null);
 
   // create dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -317,6 +336,10 @@ export default function TeacherGroupsPage() {
 
   useEffect(() => { loadList(); }, [loadList]);
   useEffect(() => {
+    setSelectedAnnouncementFiles([]);
+    setAnnouncementError("");
+    setAnnouncementUploadProgress(null);
+    if (announcementFileInputRef.current) announcementFileInputRef.current.value = "";
     if (!selectedId) {
       setAnnouncements([]);
       return;
@@ -453,19 +476,51 @@ export default function TeacherGroupsPage() {
   }
 
   async function postAnnouncement() {
-    if (!selectedId || !newAnnouncement.trim()) return;
+    if (!selectedId || (!newAnnouncement.trim() && selectedAnnouncementFiles.length === 0)) return;
     setPostingAnnouncement(true);
+    setAnnouncementError("");
+    setAnnouncementUploadProgress(selectedAnnouncementFiles.length ? 0 : null);
+    const uploadEndpoint = `/api/school-admin/teacher-groups/${selectedId}/attachments/upload-url`;
+    let attachmentTokens: string[] = [];
     try {
+      if (selectedAnnouncementFiles.length) {
+        attachmentTokens = await uploadTeacherGroupAttachments({
+          endpoint: uploadEndpoint,
+          files: selectedAnnouncementFiles,
+          onProgress: setAnnouncementUploadProgress,
+        });
+      }
       const r = await fetch(`/api/school-admin/teacher-groups/${selectedId}/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newAnnouncement }),
+        body: JSON.stringify({ content: newAnnouncement, attachment_tokens: attachmentTokens }),
       });
-      if (!r.ok) return;
+      if (!r.ok) throw new Error("post_failed");
       const d = await r.json();
       setAnnouncements((current) => [d.announcement, ...current]);
       setNewAnnouncement("");
-    } finally { setPostingAnnouncement(false); }
+      setSelectedAnnouncementFiles([]);
+      if (announcementFileInputRef.current) announcementFileInputRef.current.value = "";
+    } catch (error) {
+      const partialTokens = (error as Error & { uploadedTokens?: string[] }).uploadedTokens ?? [];
+      await discardTeacherGroupAttachments(uploadEndpoint, attachmentTokens.length ? attachmentTokens : partialTokens);
+      setAnnouncementError(A.uploadError);
+    } finally {
+      setPostingAnnouncement(false);
+      setAnnouncementUploadProgress(null);
+    }
+  }
+
+  function selectAnnouncementAttachments(files: FileList | null) {
+    const next = Array.from(files ?? []).slice(0, 5);
+    const error = validateGroupAttachmentFiles(next);
+    if (error) {
+      setAnnouncementError(error === "too_many_attachments" ? A.tooManyFiles : error === "file_too_large" ? A.fileTooLarge : A.unsupportedFile);
+      if (announcementFileInputRef.current) announcementFileInputRef.current.value = "";
+      return;
+    }
+    setAnnouncementError("");
+    setSelectedAnnouncementFiles(next);
   }
 
   async function deleteAnnouncement(announcementId: string) {
@@ -725,15 +780,32 @@ export default function TeacherGroupsPage() {
                       placeholder={A.announcementPh}
                       rows={3}
                     />
-                    <button
-                      onClick={postAnnouncement}
-                      disabled={postingAnnouncement || !newAnnouncement.trim()}
-                      data-write="true"
-                    >
-                      {postingAnnouncement ? A.posting : A.post}
-                    </button>
+                    {selectedAnnouncementFiles.length > 0 && (
+                      <div className="tg-selected-files">
+                        {selectedAnnouncementFiles.map((file, index) => (
+                          <span key={`${file.name}-${file.size}-${index}`}>
+                            <Paperclip size={12}/>{file.name}<small>{formatAttachmentSize(file.size)}</small>
+                            <button type="button" onClick={() => setSelectedAnnouncementFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))} disabled={postingAnnouncement} aria-label={A.delete}><X size={12}/></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {announcementUploadProgress !== null && <div className="tg-upload-progress" role="status"><span style={{ width: `${announcementUploadProgress}%` }}/><small>{A.uploading(announcementUploadProgress)}</small></div>}
+                    <div className="tg-composer-actions">
+                      <input ref={announcementFileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,video/*,application/pdf" multiple onChange={(event) => selectAnnouncementAttachments(event.target.files)} disabled={postingAnnouncement}/>
+                      <button type="button" className="tg-attach-btn" onClick={() => announcementFileInputRef.current?.click()} disabled={postingAnnouncement} data-write="true"><Paperclip size={14}/>{A.attach}</button>
+                      <button
+                        type="button"
+                        onClick={postAnnouncement}
+                        disabled={postingAnnouncement || (!newAnnouncement.trim() && selectedAnnouncementFiles.length === 0)}
+                        data-write="true"
+                      >
+                        <Send size={13}/>{postingAnnouncement ? A.posting : A.post}
+                      </button>
+                    </div>
                   </div>
                 )}
+                {announcementError && <p className="tg-ann-error" role="alert">{announcementError}</p>}
                 {loadingAnnouncements ? (
                   <div className="tg-ann-empty"><MandalaLoader /></div>
                 ) : announcements.length === 0 ? (
@@ -750,7 +822,8 @@ export default function TeacherGroupsPage() {
                             <strong>{announcement.author.full_name}</strong>
                             <span>{new Date(announcement.created_at).toLocaleDateString(L === "ar" ? "ar-SA-u-nu-latn" : "sq-AL", { month: "short", day: "numeric" })}</span>
                           </div>
-                          <p>{announcement.content}</p>
+                          {announcement.content && <p>{announcement.content}</p>}
+                          <GroupChatAttachments attachments={announcement.attachments ?? []} openLabel={A.openAttachment}/>
                         </div>
                         {!viewOnly && (
                           <button
@@ -942,6 +1015,29 @@ export default function TeacherGroupsPage() {
         .tg-ann-composer textarea:focus { border-color: #B8A082; box-shadow: 0 0 0 3px rgba(194,160,89,0.08); }
         .tg-ann-composer button { align-self: flex-end; border: 0; border-radius: 10px; padding: 8px 16px; background: #1A1A1A; color: #B8A082; font-family: inherit; font-size: 12.5px; font-weight: 900; cursor: pointer; }
         .tg-ann-composer button:disabled { opacity: 0.45; cursor: not-allowed; }
+        .tg-composer-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .tg-composer-actions>input { display:none; }
+        .tg-composer-actions>button:last-child { margin-inline-start:auto; display:inline-flex; align-items:center; gap:5px; }
+        .tg-ann-composer .tg-attach-btn { align-self:auto; display:inline-flex; align-items:center; gap:6px; background:#FFF; color:#4A0E1C; border:1px solid rgba(194,160,89,.28); }
+        .tg-selected-files { display:flex; flex-wrap:wrap; gap:7px; }
+        .tg-selected-files>span { display:flex; align-items:center; gap:5px; max-width:100%; padding:7px 9px; border-radius:9px; background:#FFF; border:1px solid rgba(194,160,89,.22); color:#4A0E1C; font-size:10.5px; font-weight:800; }
+        .tg-selected-files>span small { color:#89766B; font-weight:600; }
+        .tg-selected-files>span button { padding:2px; background:transparent; color:#6B1E2D; }
+        .tg-upload-progress { position:relative; height:24px; overflow:hidden; border-radius:8px; background:rgba(194,160,89,.1); }
+        .tg-upload-progress>span { position:absolute; inset-block:0; inset-inline-start:0; background:rgba(194,160,89,.25); transition:width .2s; }
+        .tg-upload-progress>small { position:relative; z-index:1; display:flex; height:100%; align-items:center; justify-content:center; font-size:10.5px; font-weight:800; color:#4A0E1C; }
+        .tg-ann-error { margin:-4px 0 10px; color:#8B1A1A; font-size:11px; font-weight:800; }
+        .group-chat-attachments { display:grid; gap:8px; margin-top:9px; }
+        .group-chat-image { display:block; width:min(100%,420px); overflow:hidden; border-radius:11px; background:#F3EEE6; }
+        .group-chat-image img { display:block; width:100%; max-height:330px; object-fit:cover; }
+        .group-chat-video { width:min(100%,500px); overflow:hidden; border:1px solid rgba(194,160,89,.16); border-radius:11px; background:#1A1A1A; }
+        .group-chat-video video { display:block; width:100%; max-height:390px; background:#1A1A1A; }
+        .group-chat-video>span { display:block; padding:7px 9px; color:#F7F3EB; font-size:10.5px; overflow-wrap:anywhere; }
+        .group-chat-pdf { display:flex; align-items:center; gap:9px; width:min(100%,450px); padding:10px; border:1px solid rgba(194,160,89,.2); border-radius:10px; background:#FFF; color:#4A0E1C; text-decoration:none; }
+        .group-chat-pdf>span { display:flex; flex:1; min-width:0; flex-direction:column; }
+        .group-chat-pdf strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11.5px; }
+        .group-chat-pdf small { color:#89766B; }
+        .group-chat-pdf em { font-size:10.5px; font-style:normal; font-weight:800; }
         .tg-ann-empty { min-height: 110px; display: flex; align-items: center; justify-content: center; text-align: center; border: 1px dashed rgba(184,155,94,0.32); border-radius: 12px; color: #8C8274; font-size: 13px; font-weight: 800; padding: 22px; background: rgba(194,160,89,0.04); }
         .tg-ann-list { display: flex; flex-direction: column; gap: 8px; }
         .tg-ann { display: flex; gap: 10px; padding: 12px; border: 1px solid rgba(194,160,89,0.18); border-radius: 12px; background: #FFF; }
