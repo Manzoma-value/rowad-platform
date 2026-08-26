@@ -61,6 +61,7 @@ export async function GET() {
               id: true,
               city: true,
               age: true,
+              is_manually_added: true,
               profile: { select: { full_name: true, avatar_url: true } },
             },
           },

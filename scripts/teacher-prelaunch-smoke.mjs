@@ -104,6 +104,7 @@ await Promise.all([
   probe("/api/teacher/model/leaderboard"),
   schoolId ? probe(`/api/hub/posts?school_id=${encodeURIComponent(schoolId)}&limit=30`) : null,
   firstClass ? probe(`/api/teacher/announcements?classId=${encodeURIComponent(firstClass.id)}`) : null,
+  firstClass ? probe(`/api/teacher/classes/${encodeURIComponent(firstClass.id)}/students`, { method: "POST", body: JSON.stringify({}) }, [400]) : null,
 ]);
 
 const firstGroup = groupsResult?.payload?.groups?.[0];

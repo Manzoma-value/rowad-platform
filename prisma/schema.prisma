@@ -926,6 +926,9 @@ model Student {
   class_id            String?                 @db.Uuid
   created_at          DateTime                @default(now())
   onboarding_status   StudentOnboardingStatus @default(PENDING_INTAKE)
+  /// True when a teacher created this roster-only record for a participant
+  /// who does not have an online account.
+  is_manually_added   Boolean                 @default(false)
   profile_id          String                  @unique @db.Uuid
   school_id           String?                 @db.Uuid
   city                String?

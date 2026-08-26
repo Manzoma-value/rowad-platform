@@ -45,13 +45,19 @@ export async function DELETE(
   // Verify student belongs to this school
   const student = await prisma.student.findFirst({
     where: { id, school_id: auth.school.id },
-    select: { id: true, profile_id: true },
+    select: { id: true, profile_id: true, is_manually_added: true },
   });
   if (!student)
     return NextResponse.json({ error: "Beneficiary not found" }, { status: 404 });
 
-  const supabase = createAdminClient();
-  await supabase.auth.admin.deleteUser(student.profile_id);
+  if (student.is_manually_added) {
+    // Offline roster records have no Supabase auth user. Deleting the profile
+    // removes the related student through the existing cascade relation.
+    await prisma.profile.delete({ where: { id: student.profile_id } });
+  } else {
+    const supabase = createAdminClient();
+    await supabase.auth.admin.deleteUser(student.profile_id);
+  }
 
   return NextResponse.json({ success: true });
 }

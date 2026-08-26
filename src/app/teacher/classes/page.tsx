@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import TeacherLoadError from "@/components/TeacherLoadError";
+import ManualStudentDialog, { type ManualStudent } from "./ManualStudentDialog";
 import {
   ArrowUpRight,
   Check,
@@ -46,10 +47,12 @@ const S = {
     noClassTitle: "لم يتم تعيينك في أي مجموعة بعد",
     noClassSub: "تواصل مع مدير المنصة",
     students: "المستفيدون",
-    noStudents: "لا يوجد مستفيدون في هذا المجموعة",
+    noStudents: "لا يوجد مستفيدون في هذه المجموعة",
     searchStudents: "ابحث عن مستفيد...",
     noSearchResults: "لا توجد نتائج مطابقة للبحث.",
     exportRoster: "تصدير القائمة",
+    addStudent: "إضافة يدوية",
+    manuallyAdded: "أضيف يدوياً",
     openProfile: "عرض الملف",
     refreshData: "تحديث البيانات",
     announcements: "الإعلانات",
@@ -131,6 +134,8 @@ const S = {
     searchStudents: "Kërko pjesëmarrës...",
     noSearchResults: "Nuk u gjet asnjë rezultat.",
     exportRoster: "Eksporto listën",
+    addStudent: "Shto manualisht",
+    manuallyAdded: "Shtuar manualisht",
     openProfile: "Hap profilin",
     refreshData: "Përditëso të dhënat",
     announcements: "Njoftime",
@@ -196,7 +201,7 @@ const S = {
   },
 } as const;
 
-type Student = { id: string; city: string | null; age: number | null; profile: { full_name: string; avatar_url: string | null } };
+type Student = ManualStudent;
 type GroupInvite = { token: string; is_active: boolean; use_count: number; updated_at: string };
 type JoinRequest = {
   id: string;
@@ -244,6 +249,7 @@ export default function TeacherClassesPage() {
   const [studentQuery, setStudentQuery] = useState("");
   const [actionError, setActionError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [manualStudentOpen, setManualStudentOpen] = useState(false);
 
   const loadAnnouncements = useCallback(async (classId: string) => {
     setAnnLoading(true);
@@ -352,6 +358,18 @@ export default function TeacherClassesPage() {
     anchor.download = `${selectedClass.name.replace(/[\\/:*?"<>|]/g, "-")}.csv`;
     anchor.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  function addStudentToRoster(student: Student) {
+    if (!selectedClass) return;
+    const students = [...selectedClass.students, student].sort((left, right) =>
+      left.profile.full_name.localeCompare(
+        right.profile.full_name,
+        lang === "sq" ? "sq" : "ar",
+      ),
+    );
+    replaceClass({ ...selectedClass, students });
+    invalidateCache("/api/teacher");
   }
 
   async function refreshData() {
@@ -586,6 +604,7 @@ export default function TeacherClassesPage() {
                 </div>
                 <div className="tc-roster-tools">
                   <label><Search size={15} /><input value={studentQuery} onChange={(event) => setStudentQuery(event.target.value)} placeholder={T.searchStudents} /></label>
+                  <button type="button" className="add-student" onClick={() => setManualStudentOpen(true)}><UserPlus size={15} />{T.addStudent}</button>
                   <button type="button" onClick={exportRoster} disabled={!selectedClass.students.length}><Download size={15} />{T.exportRoster}</button>
                 </div>
                 <div className="tc-students">
@@ -602,7 +621,7 @@ export default function TeacherClassesPage() {
                         style={{ animationDelay: `${i * 33}ms` }}
                       >
                         <span className={`tc-student-av${s.profile.avatar_url ? " has-image" : ""}`} style={s.profile.avatar_url ? { backgroundImage: `url(${JSON.stringify(s.profile.avatar_url)})` } : undefined}>{s.profile.avatar_url ? "" : s.profile.full_name.charAt(0)}</span>
-                        <span className="tc-student-copy"><strong>{s.profile.full_name}</strong><small>{[s.city, s.age ? `${s.age}` : null].filter(Boolean).join(" · ") || selectedClass.name}</small></span>
+                        <span className="tc-student-copy"><strong>{s.profile.full_name}</strong><small><span>{[s.city, s.age ? `${s.age}` : null].filter(Boolean).join(" · ") || selectedClass.name}</span>{s.is_manually_added && <em>{T.manuallyAdded}</em>}</small></span>
                         <span className="tc-profile-link">{T.openProfile}<ArrowUpRight size={14} /></span>
                       </Link>
                     ))
@@ -802,6 +821,16 @@ export default function TeacherClassesPage() {
         document.body,
       )}
 
+      {selectedClass && (
+        <ManualStudentDialog
+          classId={selectedClass.id}
+          className={selectedClass.name}
+          open={manualStudentOpen}
+          onClose={() => setManualStudentOpen(false)}
+          onAdded={addStudentToRoster}
+        />
+      )}
+
       <style>{styles}</style>
     </div>
   );
@@ -979,7 +1008,7 @@ const styles = `
   .tc-workspace-head{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #E5E0D5;border-radius:20px;background:#FFFBF5;padding:16px 18px;box-shadow:0 12px 32px rgba(107,30,45,.055)}.tc-workspace-title{display:flex;min-width:0;align-items:center;gap:12px}.tc-workspace-mark{display:grid;width:51px;height:51px;flex:none;place-items:center;border-radius:15px;background:linear-gradient(145deg,#32101A,#6B1E2D);color:#D9C9B0;font-size:18px;font-weight:900;box-shadow:0 8px 20px rgba(107,30,45,.17)}.tc-workspace-title>div{min-width:0}.tc-workspace-title small{color:#8F765B;font-size:8px;font-weight:900;letter-spacing:.08em}.tc-workspace-title h2{overflow:hidden;margin:2px 0;text-overflow:ellipsis;white-space:nowrap;color:#32101A;font-size:19px}.tc-workspace-title p{color:#796A62;font-size:9.5px;font-weight:700}.tc-workspace-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}.tc-workspace-actions button{display:flex;min-height:39px;align-items:center;justify-content:center;gap:6px;border-radius:11px;padding:0 11px;font:800 9.5px 'Cairo',sans-serif;cursor:pointer}.tc-workspace-actions button:disabled{opacity:.5;cursor:not-allowed}.tc-workspace-actions .primary{border:1px solid #6B1E2D;background:#6B1E2D;color:#FFFBF5}.tc-workspace-actions .secondary{border:1px solid #D9C9B0;background:#F7F3EB;color:#6B1E2D}.tc-workspace-actions .secondary.icon-only{width:39px;flex:none;padding:0}.tc-workspace-actions .attention{border:1px solid rgba(107,30,45,.18);background:#EFEAE0;color:#6B1E2D}.tc-workspace-actions .attention b{display:grid;min-width:19px;height:19px;place-items:center;border-radius:999px;background:#6B1E2D;color:#FFFBF5;font-size:8px}.tc-workspace-actions .spin{animation:sp .7s linear infinite}
   .tc-overview-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.tc-overview-strip>article,.tc-overview-strip>button{display:flex;min-width:0;align-items:center;gap:9px;border:1px solid #E5E0D5;border-radius:15px;background:#FFFBF5;padding:11px 12px;text-align:start;color:#32101A}.tc-overview-strip>button{cursor:pointer;font-family:'Cairo',sans-serif}.tc-overview-strip>button:hover{border-color:#D9C9B0;background:#F7F3EB}.tc-overview-strip>button.has-pending{border-color:rgba(107,30,45,.22);background:#F7F3EB}.tc-overview-strip>article>span,.tc-overview-strip>button>span{display:grid;width:37px;height:37px;flex:none;place-items:center;border-radius:11px;background:#EFEAE0;color:#6B1E2D}.tc-overview-strip>div{min-width:0}.tc-overview-strip small{display:block;color:#796A62;font-size:8px;font-weight:800}.tc-overview-strip strong{display:block;overflow:hidden;margin-top:1px;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.tc-overview-strip>button>svg{margin-inline-start:auto;color:#B8A082}
   .tc-grid{grid-template-columns:minmax(330px,.85fr) minmax(430px,1.15fr);gap:12px}.tc-card{border:1px solid #E5E0D5;border-radius:20px;background:#FFFBF5;box-shadow:0 12px 32px rgba(107,30,45,.05)}.tc-card-head{padding:14px 15px;border-bottom:1px solid #E5E0D5;background:linear-gradient(180deg,#FFFBF5,#F7F3EB)}.tc-card-icon{width:37px;height:37px;border:0;border-radius:11px;background:#32101A;color:#D9C9B0}.tc-card-heading{min-width:0;flex:1}.tc-card-heading h2{color:#32101A;font-size:13px}.tc-card-heading p{margin-top:1px;color:#796A62;font-size:8px}.tc-badge{border:0;background:#EFEAE0;color:#6B1E2D;padding:4px 9px}
-  .tc-roster-tools{display:flex;align-items:center;gap:7px;padding:10px 12px;border-bottom:1px solid #E5E0D5}.tc-roster-tools label{display:flex;min-width:0;flex:1;align-items:center;gap:7px;border:1px solid #E5E0D5;border-radius:10px;background:#F7F3EB;padding:0 10px;color:#8F765B}.tc-roster-tools input{min-width:0;height:37px;flex:1;border:0;background:transparent;color:#32101A;font:700 10px 'Cairo',sans-serif;outline:none}.tc-roster-tools button{display:flex;height:37px;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:10px;background:#FFFBF5;padding:0 9px;color:#6B1E2D;font:800 8.5px 'Cairo',sans-serif;cursor:pointer}.tc-roster-tools button:disabled{opacity:.4}.tc-students{max-height:430px;gap:5px;padding:10px}.tc-student-row{gap:9px;border:1px solid transparent;border-radius:12px;padding:9px}.tc-student-row:hover{border-color:#E5E0D5;background:#F7F3EB;transform:translateY(-1px)}[dir="rtl"] .tc-student-row:hover{transform:translateY(-1px)}.tc-student-av,.tc-request-avatar{display:grid;width:38px;height:38px;flex:none;place-items:center;border:0;border-radius:11px;background:#EFEAE0 center/cover no-repeat;color:#6B1E2D;font-size:12px;font-weight:900}.tc-student-av.has-image,.tc-request-avatar.has-image{box-shadow:inset 0 0 0 1px rgba(107,30,45,.12)}.tc-student-copy{display:flex;min-width:0;flex:1;flex-direction:column}.tc-student-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#32101A;font-size:11px}.tc-student-copy small{color:#796A62;font-size:8px}.tc-profile-link{display:flex;align-items:center;gap:4px;color:#8F765B;font-size:8px;font-weight:900}.tc-inner-empty{padding:36px 12px;color:#796A62;font-size:10px}
+  .tc-roster-tools{display:flex;align-items:center;gap:7px;padding:10px 12px;border-bottom:1px solid #E5E0D5}.tc-roster-tools label{display:flex;min-width:0;flex:1;align-items:center;gap:7px;border:1px solid #E5E0D5;border-radius:10px;background:#F7F3EB;padding:0 10px;color:#8F765B}.tc-roster-tools input{min-width:0;height:37px;flex:1;border:0;background:transparent;color:#32101A;font:700 10px 'Cairo',sans-serif;outline:none}.tc-roster-tools button{display:flex;height:37px;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:10px;background:#FFFBF5;padding:0 9px;color:#6B1E2D;font:800 8.5px 'Cairo',sans-serif;cursor:pointer;white-space:nowrap}.tc-roster-tools button.add-student{border-color:#6B1E2D;background:#6B1E2D;color:#FFFBF5}.tc-roster-tools button:disabled{opacity:.4}.tc-students{max-height:430px;gap:5px;padding:10px}.tc-student-row{gap:9px;border:1px solid transparent;border-radius:12px;padding:9px}.tc-student-row:hover{border-color:#E5E0D5;background:#F7F3EB;transform:translateY(-1px)}[dir="rtl"] .tc-student-row:hover{transform:translateY(-1px)}.tc-student-av,.tc-request-avatar{display:grid;width:38px;height:38px;flex:none;place-items:center;border:0;border-radius:11px;background:#EFEAE0 center/cover no-repeat;color:#6B1E2D;font-size:12px;font-weight:900}.tc-student-av.has-image,.tc-request-avatar.has-image{box-shadow:inset 0 0 0 1px rgba(107,30,45,.12)}.tc-student-copy{display:flex;min-width:0;flex:1;flex-direction:column}.tc-student-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#32101A;font-size:11px}.tc-student-copy small{display:flex;align-items:center;gap:6px;color:#796A62;font-size:8px}.tc-student-copy small>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tc-student-copy em{flex:none;border-radius:999px;background:#EFEAE0;padding:2px 6px;color:#6B1E2D;font-size:7px;font-style:normal;font-weight:900}.tc-profile-link{display:flex;align-items:center;gap:4px;color:#8F765B;font-size:8px;font-weight:900}.tc-inner-empty{padding:36px 12px;color:#796A62;font-size:10px}
   .tc-composer{gap:8px;padding:12px 14px}.tc-textarea{min-height:105px;border:1px solid #E5E0D5;border-radius:12px;background:#F7F3EB;padding:12px;color:#32101A;font-size:11px}.tc-textarea:focus{border-color:#B8A082;background:#FFFBF5;box-shadow:0 0 0 3px rgba(184,160,130,.12)}.tc-composer-meta{display:flex;align-items:center;justify-content:space-between;color:#8F765B;font-size:8px}.tc-composer-meta b{font-size:8px}.tc-post-btn{min-height:41px;border-radius:11px;background:#6B1E2D;color:#FFFBF5;font-size:10px}.tc-post-btn:hover:not(:disabled){background:#4A0E1C;color:#FFFBF5}.tc-action-error{border-radius:9px;background:rgba(107,30,45,.07);padding:7px 9px;color:#6B1E2D;font-size:9px;font-weight:800}.tc-ann-list{max-height:360px;padding:8px 14px}.tc-ann-item{padding:12px 0}.tc-ann-bar{background:#B8A082}.tc-ann-text{color:#32101A;font-size:11.5px}.tc-ann-meta{font-size:8.5px}
   .tc-settings-overlay{position:fixed;z-index:2147483000;inset:0;display:grid;place-items:center;background:rgba(107,30,45,.72);padding:18px;backdrop-filter:blur(12px)}.tc-settings-panel{display:flex;width:min(980px,100%);max-height:calc(100dvh - 36px);overflow:hidden;flex-direction:column;border:1px solid rgba(217,201,176,.34);border-radius:25px;background:#F7F3EB;box-shadow:0 38px 110px rgba(107,30,45,.38);font-family:'Cairo',sans-serif;color:#32101A}.tc-settings-head{min-height:91px;flex:none;background:radial-gradient(circle at 12% -15%,rgba(217,201,176,.18),transparent 32%),linear-gradient(135deg,#32101A,#6B1E2D);padding:16px 19px}.tc-settings-identity{display:flex;align-items:center;gap:11px}.tc-settings-identity>span{display:grid;width:48px;height:48px;flex:none;place-items:center;border:1px solid rgba(217,201,176,.25);border-radius:14px;background:rgba(217,201,176,.12);color:#D9C9B0;font-size:17px;font-weight:900}.tc-settings-identity>div{min-width:0}.tc-settings-identity small{color:#D9C9B0;font-size:8px;font-weight:900;letter-spacing:.08em}.tc-settings-identity h2{overflow:hidden;margin:1px 0;text-overflow:ellipsis;white-space:nowrap;color:#FFFBF5;font-size:18px}.tc-settings-identity p{color:#D9C9B0;font-size:9px}.tc-settings-head>button{width:39px;height:39px;border-radius:11px}
   .tc-settings-layout{display:grid;min-height:0;flex:1;grid-template-columns:205px minmax(0,1fr)}.tc-settings-nav{display:flex;min-height:0;flex-direction:column;gap:5px;border-inline-end:1px solid #E5E0D5;background:#EFEAE0;padding:13px}.tc-settings-nav button{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:45px;border:1px solid transparent;border-radius:11px;background:transparent;padding:7px 8px;color:#655B53;text-align:start;font:800 9.5px 'Cairo',sans-serif;cursor:pointer}.tc-settings-nav button:hover{background:#F7F3EB;color:#6B1E2D}.tc-settings-nav button.active{border-color:#D9C9B0;background:#FFFBF5;color:#6B1E2D;box-shadow:0 6px 16px rgba(107,30,45,.06)}.tc-settings-nav button>svg{width:28px;height:28px;border-radius:8px;background:#F7F3EB;padding:6px}.tc-settings-nav button.active>svg{background:#6B1E2D;color:#FFFBF5}.tc-settings-nav b{display:grid;min-width:19px;height:19px;place-items:center;border-radius:999px;background:#D9C9B0;padding:0 5px;color:#655B53;font-size:8px}.tc-settings-nav b.live{background:rgba(27,94,32,.09);color:#1B5E20}.tc-settings-nav b.alert{background:#6B1E2D;color:#FFFBF5}
