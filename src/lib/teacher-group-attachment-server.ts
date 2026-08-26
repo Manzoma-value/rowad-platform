@@ -6,6 +6,7 @@ import {
   MAX_GROUP_ATTACHMENTS,
   MAX_GROUP_DOCUMENT_SIZE,
   MAX_GROUP_VIDEO_SIZE,
+  MAX_GROUP_VIDEO_STORAGE_FALLBACK_SIZE,
   parseStoredTeacherGroupAttachments,
   safeAttachmentName,
   TEACHER_GROUP_ATTACHMENT_BUCKET,
@@ -36,6 +37,44 @@ function sameContext(
   return value.groupId === auth.groupId && value.schoolId === auth.schoolId && value.profileId === auth.profileId;
 }
 
+async function createStorageUpload(
+  auth: TeacherGroupAttachmentAuth,
+  attachment: {
+    id: string;
+    kind: "IMAGE" | "VIDEO" | "PDF";
+    name: string;
+    mime: string;
+    size: number;
+  },
+  fallbackReason?: string,
+) {
+  const ext = attachmentExtension(attachment.name, attachment.kind);
+  const storagePath = `schools/${auth.schoolId}/groups/${auth.groupId}/${attachment.id}.${ext}`;
+  const { data, error } = await adminSupabase().storage
+    .from(TEACHER_GROUP_ATTACHMENT_BUCKET)
+    .createSignedUploadUrl(storagePath);
+  if (error || !data) {
+    console.error("[teacher-group attachment upload URL]", error?.message);
+    return NextResponse.json({ error: "upload_url_failed" }, { status: 500 });
+  }
+  const attachmentToken = createTeacherGroupAttachmentClaim({
+    ...auth,
+    id: attachment.id,
+    kind: attachment.kind,
+    name: attachment.name,
+    mime_type: attachment.mime,
+    size_bytes: attachment.size,
+    storage: "SUPABASE",
+    storage_path: storagePath,
+  });
+  return NextResponse.json({
+    upload_strategy: "SUPABASE",
+    signed_url: data.signedUrl,
+    attachment_token: attachmentToken,
+    ...(fallbackReason ? { fallback_reason: fallbackReason } : {}),
+  });
+}
+
 export async function createTeacherGroupUpload(request: Request, auth: TeacherGroupAttachmentAuth) {
   const body = await request.json().catch(() => null) as {
     filename?: string;
@@ -54,30 +93,7 @@ export async function createTeacherGroupUpload(request: Request, auth: TeacherGr
 
   const attachmentId = crypto.randomUUID();
   if (kind !== "VIDEO") {
-    const ext = attachmentExtension(name, kind);
-    const storagePath = `schools/${auth.schoolId}/groups/${auth.groupId}/${attachmentId}.${ext}`;
-    const { data, error } = await adminSupabase().storage
-      .from(TEACHER_GROUP_ATTACHMENT_BUCKET)
-      .createSignedUploadUrl(storagePath);
-    if (error || !data) {
-      console.error("[teacher-group attachment upload URL]", error?.message);
-      return NextResponse.json({ error: "upload_url_failed" }, { status: 500 });
-    }
-    const attachmentToken = createTeacherGroupAttachmentClaim({
-      ...auth,
-      id: attachmentId,
-      kind,
-      name,
-      mime_type: mime,
-      size_bytes: size,
-      storage: "SUPABASE",
-      storage_path: storagePath,
-    });
-    return NextResponse.json({
-      upload_strategy: "SUPABASE",
-      signed_url: data.signedUrl,
-      attachment_token: attachmentToken,
-    });
+    return createStorageUpload(auth, { id: attachmentId, kind, name, mime, size });
   }
 
   let accessToken: string;
@@ -88,7 +104,12 @@ export async function createTeacherGroupUpload(request: Request, auth: TeacherGr
       Promise.resolve(googleDriveUploadFolderId()),
     ]);
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "drive_upload_not_configured" }, { status: 503 });
+    const code = error instanceof Error ? error.message : "drive_upload_not_configured";
+    if (size <= MAX_GROUP_VIDEO_STORAGE_FALLBACK_SIZE) {
+      console.warn("[teacher-group Drive upload] using private-storage fallback", code);
+      return createStorageUpload(auth, { id: attachmentId, kind, name, mime, size }, code);
+    }
+    return NextResponse.json({ error: code }, { status: 503 });
   }
 
   const response = await fetch(
@@ -109,7 +130,11 @@ export async function createTeacherGroupUpload(request: Request, auth: TeacherGr
   if (!response.ok || !uploadUrl) {
     const detail = await response.text().catch(() => "");
     console.error("[teacher-group Drive upload session]", response.status, detail.slice(0, 500));
-    return NextResponse.json({ error: response.status === 403 ? "drive_folder_not_writable" : "drive_upload_session_failed" }, { status: 502 });
+    const code = response.status === 403 ? "drive_folder_not_writable" : "drive_upload_session_failed";
+    if (size <= MAX_GROUP_VIDEO_STORAGE_FALLBACK_SIZE) {
+      return createStorageUpload(auth, { id: attachmentId, kind, name, mime, size }, code);
+    }
+    return NextResponse.json({ error: code }, { status: 502 });
   }
 
   return NextResponse.json({

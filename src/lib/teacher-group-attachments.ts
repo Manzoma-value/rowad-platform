@@ -2,6 +2,7 @@ export const TEACHER_GROUP_ATTACHMENT_BUCKET = "teacher-group-attachments";
 export const MAX_GROUP_ATTACHMENTS = 4;
 export const MAX_GROUP_DOCUMENT_SIZE = 40 * 1024 * 1024;
 export const MAX_GROUP_VIDEO_SIZE = 2 * 1024 * 1024 * 1024;
+export const MAX_GROUP_VIDEO_STORAGE_FALLBACK_SIZE = 350 * 1024 * 1024;
 
 export type TeacherGroupAttachmentKind = "IMAGE" | "VIDEO" | "PDF";
 export type TeacherGroupAttachmentStorage = "SUPABASE" | "GOOGLE_DRIVE";
