@@ -177,6 +177,15 @@ const UI = {
     memberGroupLbl: "مجموعة الأعضاء",
     allMemberGroups: "كل مجموعات الأعضاء",
     memberGroupHelp: "اعرض أعضاء مجموعة واحدة فقط داخل نتائج هذا النموذج.",
+    evaluationStatusLbl: "حالة التقييم",
+    allEvaluationStatuses: "كل الحالات",
+    evaluatedOnly: "من قيّموا فقط",
+    notEvaluated: "لم يقيّموا بعد",
+    evaluationFilterHelp: "فلترة حسب المشرفين الذين أرسلوا تقييماً واحداً على الأقل في هذا النموذج.",
+    detailMembers: "أعضاء النموذج",
+    evaluators: "أجروا تقييماً",
+    totalRatings: "إجمالي التقييمات",
+    givenRatings: (n: number) => `أرسل ${n} تقييم${n === 1 ? "اً" : "ات"}`,
     membersShown: (shown: number, total: number) => `${shown} من ${total} أعضاء`,
     resultFilterAll: "كل السمات",
     perTraitHead: "متوسط كل سمة لكل عضو",
@@ -312,6 +321,15 @@ const UI = {
     memberGroupLbl: "Grupi i anëtarëve",
     allMemberGroups: "Të gjitha grupet e anëtarëve",
     memberGroupHelp: "Shfaq vetëm anëtarët e një grupi në rezultatet e këtij modeli.",
+    evaluationStatusLbl: "Gjendja e vlerësimit",
+    allEvaluationStatuses: "Të gjitha gjendjet",
+    evaluatedOnly: "Ata që kanë vlerësuar",
+    notEvaluated: "Nuk kanë vlerësuar ende",
+    evaluationFilterHelp: "Filtro sipas edukatorëve që kanë dërguar të paktën një vlerësim në këtë model.",
+    detailMembers: "Anëtarë të modelit",
+    evaluators: "Kanë vlerësuar",
+    totalRatings: "Vlerësime gjithsej",
+    givenRatings: (n: number) => `${n} vlerësim${n === 1 ? "" : "e"} të dërguara`,
     membersShown: (shown: number, total: number) => `${shown} nga ${total} anëtarë`,
     resultFilterAll: "Të gjitha tiparet",
     perTraitHead: "Mesatarja e çdo tipari për secilin anëtar",
@@ -372,6 +390,7 @@ export default function AssessmentsHubPage() {
   // ── Detail-level filters ──
   const [teacherSearch, setTeacherSearch] = useState("");
   const [memberGroupFilter, setMemberGroupFilter] = useState("");
+  const [evaluationFilter, setEvaluationFilter] = useState<"all" | "evaluated" | "pending">("all");
   const [traitFilter, setTraitFilter] = useState<number | null>(null);
   const [showMatrix, setShowMatrix] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -429,6 +448,7 @@ export default function AssessmentsHubPage() {
     if (selectedId) loadDetail(selectedId);
     setTeacherSearch("");
     setMemberGroupFilter("");
+    setEvaluationFilter("all");
     setTraitFilter(null);
     setShowMatrix(false);
     setShowAnalytics(false);
@@ -628,24 +648,28 @@ export default function AssessmentsHubPage() {
   const aggregation = useMemo(() => {
     if (!detail) return [];
     const byTarget = new Map<string, ScoresTuple[]>();
+    const givenByRater = new Map<string, number>();
     for (const r of detail.ratings) {
       const arr = byTarget.get(r.target_teacher_id) ?? [];
       arr.push(r.scores);
       byTarget.set(r.target_teacher_id, arr);
+      givenByRater.set(r.rater_teacher_id, (givenByRater.get(r.rater_teacher_id) ?? 0) + 1);
     }
     return detail.members.map((m) => {
       const tuples = byTarget.get(m.teacher_id) ?? [];
       const avg = averageTuples(tuples);
       const d = avg ? derive(avg) : null;
-      return { member: m, count: tuples.length, avg, derive: d };
+      return { member: m, count: tuples.length, givenCount: givenByRater.get(m.teacher_id) ?? 0, avg, derive: d };
     });
   }, [detail]);
 
   const visibleAggregation = useMemo(() => {
     const needle = teacherSearch.trim().toLowerCase();
-    return aggregation.filter(({ member, derive: d }) => {
+    return aggregation.filter(({ member, derive: d, givenCount }) => {
       if (needle && !member.profile.full_name.toLowerCase().includes(needle)) return false;
       if (memberGroupFilter && !member.group_ids.includes(memberGroupFilter)) return false;
+      if (evaluationFilter === "evaluated" && givenCount === 0) return false;
+      if (evaluationFilter === "pending" && givenCount > 0) return false;
       if (traitFilter !== null) {
         if (!d) return false;
         const resultIdx = d.hasCore && d.coreIdx !== null ? d.coreIdx : d.connectingIdx;
@@ -653,7 +677,16 @@ export default function AssessmentsHubPage() {
       }
       return true;
     });
-  }, [aggregation, teacherSearch, memberGroupFilter, traitFilter]);
+  }, [aggregation, teacherSearch, memberGroupFilter, evaluationFilter, traitFilter]);
+
+  const evaluatedMembers = useMemo(() => aggregation.filter((entry) => entry.givenCount > 0).length, [aggregation]);
+  const hasDetailFilters = Boolean(teacherSearch.trim() || memberGroupFilter || evaluationFilter !== "all" || traitFilter !== null);
+  const resetDetailFilters = () => {
+    setTeacherSearch("");
+    setMemberGroupFilter("");
+    setEvaluationFilter("all");
+    setTraitFilter(null);
+  };
 
   const visibleMemberIds = useMemo(() => new Set(visibleAggregation.map((a) => a.member.teacher_id)), [visibleAggregation]);
   const visibleRatings = useMemo(
@@ -886,7 +919,13 @@ export default function AssessmentsHubPage() {
                 </div>
               </header>
 
-              {/* ── Detail-level filters: teacher search + result (core trait) chips ── */}
+              <div className="am-detail-stats" aria-label={T.detailMembers}>
+                <div><Users2 size={15} /><strong>{detail.members.length}</strong><span>{T.detailMembers}</span></div>
+                <div><UserCheck size={15} /><strong>{evaluatedMembers}</strong><span>{T.evaluators}</span></div>
+                <div><Activity size={15} /><strong>{detail.ratings.length}</strong><span>{T.totalRatings}</span></div>
+              </div>
+
+              {/* ── Detail-level filters: search, group, evaluation status, and trait ── */}
               <div className="am-detail-filters">
                 <div className="am-search-box am-search-box--detail">
                   <Search size={13} strokeWidth={2} />
@@ -904,6 +943,19 @@ export default function AssessmentsHubPage() {
                     {detail.groups.map((group) => (
                       <option key={group.id} value={group.id}>{group.name}</option>
                     ))}
+                  </select>
+                </label>
+                <label className="am-member-group-filter am-evaluation-filter" title={T.evaluationFilterHelp}>
+                  <UserCheck size={14} strokeWidth={2} />
+                  <span>{T.evaluationStatusLbl}</span>
+                  <select
+                    value={evaluationFilter}
+                    onChange={(event) => setEvaluationFilter(event.target.value as "all" | "evaluated" | "pending")}
+                    aria-label={T.evaluationStatusLbl}
+                  >
+                    <option value="all">{T.allEvaluationStatuses}</option>
+                    <option value="evaluated">{T.evaluatedOnly}</option>
+                    <option value="pending">{T.notEvaluated}</option>
                   </select>
                 </label>
                 <div className="am-trait-chips">
@@ -929,6 +981,12 @@ export default function AssessmentsHubPage() {
                 <span className="am-member-filter-count" title={T.memberGroupHelp}>
                   {T.membersShown(visibleAggregation.length, aggregation.length)}
                 </span>
+                {hasDetailFilters && (
+                  <button className="am-detail-filters-reset" onClick={resetDetailFilters} title={T.resetFilters}>
+                    <X size={12} strokeWidth={2.5} />
+                    {T.resetFilters}
+                  </button>
+                )}
               </div>
 
               <section className="am-collective">
@@ -1031,7 +1089,7 @@ export default function AssessmentsHubPage() {
                   <section className="am-sub">
                     <div className="am-sub-head"><h3>{T.aggHead}</h3><p>{T.aggSub}</p></div>
                     <div className="am-agg-grid">
-                      {visibleAggregation.map(({ member, count, avg }) => {
+                      {visibleAggregation.map(({ member, count, givenCount, avg }) => {
                         const cardKey = `member:${member.teacher_id}`;
                         const expanded = expandedCards.has(cardKey);
                         const memberRatings = detail.ratings.filter((rating) => rating.target_teacher_id === member.teacher_id);
@@ -1044,6 +1102,9 @@ export default function AssessmentsHubPage() {
                             <header className="am-spectrum-card-head">
                               <span><UserCheck size={15} /></span>
                               <strong>{member.profile.full_name}</strong>
+                              <em className={`am-member-status ${givenCount > 0 ? "is-done" : "is-pending"}`}>
+                                {givenCount > 0 ? T.evaluatedOnly : T.notEvaluated}
+                              </em>
                             </header>
                             {!avg ? (
                               <div className="am-agg-empty">{T.noRating}</div>
@@ -1064,10 +1125,13 @@ export default function AssessmentsHubPage() {
                               <div className="am-card-details">
                                 <div className="am-member-identity">
                                   <div><Mail size={13} /><span>{member.profile.email ?? T.noEmail}</span></div>
-                                  <span className="am-received-pill" title={T.memberHelp}>{T.receivedRatings(count)}</span>
+                                  <span className={`am-received-pill ${givenCount > 0 ? "is-done" : "is-pending"}`} title={T.evaluationFilterHelp}>
+                                    {givenCount > 0 ? T.givenRatings(givenCount) : T.notEvaluated}
+                                  </span>
                                 </div>
                                 <div className="am-insight-grid">
                                   <div title={T.receivedRatings(count)}><strong>{count}</strong><span>{T.ratingsCount}</span></div>
+                                  <div title={T.evaluationFilterHelp}><strong>{givenCount}</strong><span>{T.evaluators}</span></div>
                                   <div title={T.distinctRaters}><strong>{distinctRaters}</strong><span>{T.distinctRaters}</span></div>
                                   <div title={T.latestRating}><strong>{latest ? formatRatingDate(latest) : "—"}</strong><span>{T.latestRating}</span></div>
                                 </div>
@@ -1709,6 +1773,11 @@ const styles = `
   .am-icon-btn:hover { background:rgba(184,160,130,.2); color:#6B1E2D; }
   .am-detail-meta { display:inline-flex; align-items:center; gap:6px; margin-top:6px; font-size:12px; color:#8F765B; font-weight:700; }
   .am-detail-actions { display:flex; gap:7px; flex-wrap:wrap; }
+  .am-detail-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:-4px 0 15px; }
+  .am-detail-stats>div { display:grid; grid-template-columns:22px minmax(0,1fr); grid-template-rows:auto auto; column-gap:7px; align-items:center; min-width:0; border:1px solid rgba(107,30,45,.12); border-radius:13px; background:#FFFDF9; padding:9px 11px; box-shadow:0 4px 12px rgba(50,16,26,.035); }
+  .am-detail-stats svg { grid-row:1 / -1; color:#8F765B; }
+  .am-detail-stats strong { color:#32101A; font:900 16px ui-monospace,Consolas,monospace; line-height:1.1; }
+  .am-detail-stats span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#796A62; font-size:9.5px; font-weight:800; }
 
   .am-btn { display:inline-flex; align-items:center; gap:6px; background:#FFF; border:1.5px solid rgba(184,160,130,.32); color:#6B1E2D; padding:8px 14px; border-radius:11px; font-family:inherit; font-size:12px; font-weight:800; cursor:pointer; transition:all .16s ease; }
   .am-btn:hover:not(:disabled) { border-color:#B8A082; transform:translateY(-1px); }
@@ -1722,7 +1791,13 @@ const styles = `
   .am-member-group-filter>svg { flex:none; color:#8F765B; }
   .am-member-group-filter>span { flex:none; color:#6B1E2D; font-size:10px; font-weight:900; }
   .am-member-group-filter select { min-width:0; flex:1; border:0; outline:0; background:transparent; color:#32101A; font:800 11.5px 'Cairo',sans-serif; cursor:pointer; }
+  .am-evaluation-filter { border-color:rgba(27,94,32,.18); }
+  .am-evaluation-filter:focus-within { border-color:rgba(27,94,32,.46); box-shadow:0 0 0 4px rgba(27,94,32,.07); }
+  .am-evaluation-filter>svg { color:#1B5E20; }
+  .am-evaluation-filter>span { color:#1B5E20; }
   .am-member-filter-count { margin-inline-start:auto; flex:none; border:1px solid rgba(107,30,45,.16); border-radius:999px; background:#FFFBF5; padding:5px 10px; color:#6B1E2D; font-size:10px; font-weight:900; white-space:nowrap; }
+  .am-detail-filters-reset { display:inline-flex; align-items:center; gap:4px; flex:none; border:1px solid rgba(107,30,45,.2); border-radius:999px; background:rgba(107,30,45,.06); padding:5px 10px; color:#6B1E2D; font:800 10px 'Cairo',sans-serif; cursor:pointer; transition:background .16s ease, border-color .16s ease; }
+  .am-detail-filters-reset:hover { border-color:rgba(107,30,45,.38); background:rgba(107,30,45,.12); }
   .am-trait-chips { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .am-trait-chip { display:inline-flex; align-items:center; gap:7px; border:1.5px solid rgba(184,160,130,.30); background:#FFFFFF; color:#655B53; padding:7px 13px; border-radius:999px; font:700 11.5px 'Cairo',sans-serif; cursor:pointer; transition:all .16s ease; }
   .am-trait-chip i { width:10px; height:10px; flex:none; border:1px solid rgba(26,26,26,.20); border-radius:4px; box-shadow:0 0 0 2px rgba(255,255,255,.72); }
@@ -1998,6 +2073,10 @@ const styles = `
   .am-spectrum-card-head { display:flex; align-items:center; gap:9px; margin:0 2px 10px; }
   .am-spectrum-card-head>span { display:grid; place-items:center; width:31px; height:31px; flex:none; border-radius:10px; background:#EFE7DC; color:#6B1E2D; }
   .am-spectrum-card-head>strong { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-family:var(--font-head); font-size:14px; }
+  .am-member-card .am-spectrum-card-head>strong { flex:1; }
+  .am-member-status { flex:none; border:1px solid; border-radius:999px; padding:4px 8px; font-size:9px; font-style:normal; font-weight:900; white-space:nowrap; }
+  .am-member-status.is-done { border-color:rgba(27,94,32,.18); background:rgba(27,94,32,.08); color:#1B5E20; }
+  .am-member-status.is-pending { border-color:rgba(184,160,130,.32); background:rgba(184,160,130,.12); color:#8F765B; }
   .am-card-toggle { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:10px; border:1px solid rgba(107,30,45,.18); border-radius:12px; background:#F5EEE4; padding:9px 14px; color:#6B1E2D; font:800 11.5px 'Cairo',sans-serif; cursor:pointer; transition:background .18s ease,border-color .18s ease; }
   .am-card-toggle:hover { background:#EDE2D4; border-color:rgba(107,30,45,.32); }
   .am-card-toggle svg:last-child { margin-inline-start:auto; transition:transform .2s ease; }
@@ -2021,6 +2100,7 @@ const styles = `
   .am-member-identity>div { display:flex; align-items:center; gap:6px; min-width:0; color:#655B53; font-size:10.5px; font-weight:700; }
   .am-member-identity>div span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .am-received-pill { flex:none; border:1px solid rgba(27,94,32,.15); border-radius:999px; background:rgba(27,94,32,.07); padding:4px 9px; color:#1B5E20; font-size:9.5px; font-weight:900; }
+  .am-received-pill.is-pending { border-color:rgba(184,160,130,.3); background:rgba(184,160,130,.12); color:#8F765B; }
   .am-activity { margin-top:12px; overflow:hidden; border:1px solid rgba(107,30,45,.12); border-radius:14px; background:#FFF; }
   .am-activity-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-bottom:1px solid rgba(107,30,45,.10); background:#F3EADF; }
   .am-activity-head>span { display:flex; align-items:center; gap:6px; color:#4A0E1C; font-size:10.5px; font-weight:900; }
