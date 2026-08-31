@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Icons } from "./icons";
 import type { Stage } from "./types";
 import { ModuleCard } from "./module-card";
+import { ItemEditorModal } from "./item-editor-modal";
 import { StageTraitsPanel } from "./stage-traits-panel";
 import { useConfirm } from "@/lib/confirm-dialog";
 
@@ -23,6 +24,7 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
   const [savingQualification, setSavingQualification] = useState(false);
   const [qualificationSaved, setQualificationSaved] = useState(false);
   const [qualificationError, setQualificationError] = useState("");
+  const [editingStage, setEditingStage] = useState(false);
 
   const traits = stage.traits ?? [];
 
@@ -124,9 +126,19 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
           </span>
         </button>
 
-        <button className="rb-btn-danger-sm" onClick={deleteStage}>
-          {Icons.trash} حذف
-        </button>
+        <div className="rb-stage-actions">
+          <button
+            className="rb-icon-btn on-dark"
+            onClick={() => setEditingStage(true)}
+            title="تعديل اسم المرحلة"
+            aria-label="تعديل اسم المرحلة"
+          >
+            {Icons.edit}
+          </button>
+          <button className="rb-btn-danger-sm" onClick={deleteStage}>
+            {Icons.trash} حذف
+          </button>
+        </div>
       </div>
 
       {/* Stage Body */}
@@ -204,6 +216,18 @@ export function StageCard({ stage, stageIndex, onRefresh }: Props) {
             onRefresh={onRefresh}
           />
         </div>
+      )}
+      {editingStage && (
+        <ItemEditorModal
+          endpoint={`/api/school-admin/roadmap/stages/${stage.id}`}
+          entityLabel="المرحلة"
+          initialTitle={stage.title}
+          onClose={() => setEditingStage(false)}
+          onSaved={() => {
+            setEditingStage(false);
+            onRefresh();
+          }}
+        />
       )}
     </div>
   );

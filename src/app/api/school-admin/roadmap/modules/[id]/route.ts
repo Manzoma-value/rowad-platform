@@ -20,16 +20,19 @@ export async function PUT(
 
   const body = await req.json().catch(() => ({}));
   const { title, order } = body;
+  const hasDescription = typeof body.description === "string";
+  const trimmedTitle = typeof title === "string" ? title.trim() : "";
 
-  if (!title?.trim() && typeof order !== "number") {
+  if ((typeof title === "string" && !trimmedTitle) || (!trimmedTitle && typeof order !== "number" && !hasDescription)) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
   const updated = await prisma.roadmapModule.update({
     where: { id },
     data: {
-      ...(title?.trim() && { title: title.trim() }),
+      ...(trimmedTitle && { title: trimmedTitle }),
       ...(typeof order === "number" && { order }),
+      ...(hasDescription && { description: body.description.trim() || null }),
     },
   });
 

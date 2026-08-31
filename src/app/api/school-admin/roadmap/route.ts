@@ -101,3 +101,25 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ roadmap }, { status: 201 });
 }
+
+export async function PUT(req: Request) {
+  const auth = await requireSchoolAdminWriter();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json().catch(() => ({}));
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  if (!title) return NextResponse.json({ error: "Title required" }, { status: 400 });
+
+  const roadmap = await prisma.roadmap.findUnique({
+    where: { school_id: auth.school.id },
+    select: { id: true },
+  });
+  if (!roadmap) return NextResponse.json({ error: "Roadmap not found" }, { status: 404 });
+
+  const updated = await prisma.roadmap.update({
+    where: { id: roadmap.id },
+    data: { title },
+    select: { id: true, title: true },
+  });
+  return NextResponse.json({ roadmap: updated });
+}

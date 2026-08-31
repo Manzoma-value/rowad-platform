@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Icons } from "./components/icons";
 import { StageCard } from "./components/stage-card";
+import { ItemEditorModal } from "./components/item-editor-modal";
 import { css } from "./components/css";
 import type { Roadmap } from "./components/types";
 
@@ -11,6 +12,7 @@ export default function RoadmapPage() {
   const [loading, setLoading] = useState(true);
   const [stageName, setStageName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [editingRoadmap, setEditingRoadmap] = useState(false);
 
   const load = async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -117,6 +119,17 @@ export default function RoadmapPage() {
                   إدارة مراحل التعلم والوحدات وبنك الأسئلة
                 </p>
               </div>
+              <button
+                className="rb-header-edit"
+                onClick={() => setEditingRoadmap(true)}
+                title="تعديل اسم بنك الأسئلة"
+              >
+                {Icons.edit} تخصيص الاسم
+              </button>
+            </div>
+            <div className="rb-admin-guidance">
+              <span className="rb-admin-guidance-dot" />
+              لديك تحكم كامل: عدّل الأسماء، المحتوى، الأسئلة، السمات وترتيبها في أي وقت.
             </div>
           </div>
 
@@ -155,7 +168,10 @@ export default function RoadmapPage() {
           {/* Stages */}
           <div className="rb-stages">
             <div className="rb-section-hd">
-              <span className="rb-section-title">المراحل التعليمية</span>
+              <div>
+                <span className="rb-section-title">المراحل التعليمية</span>
+                <span className="rb-section-help">افتح أي مرحلة لإدارة تفاصيلها</span>
+              </div>
               <span className="rb-section-count">{roadmap.stages.length}</span>
             </div>
 
@@ -201,6 +217,19 @@ export default function RoadmapPage() {
             </div>
           </div>
         </>
+      )}
+
+      {roadmap && editingRoadmap && (
+        <ItemEditorModal
+          endpoint="/api/school-admin/roadmap"
+          entityLabel="بنك الأسئلة"
+          initialTitle={roadmap.title}
+          onClose={() => setEditingRoadmap(false)}
+          onSaved={() => {
+            setEditingRoadmap(false);
+            load();
+          }}
+        />
       )}
 
       <style>{css}</style>

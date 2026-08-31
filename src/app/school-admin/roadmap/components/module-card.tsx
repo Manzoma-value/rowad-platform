@@ -6,6 +6,7 @@ import type { Module, ModuleContent, Question, StageTrait } from "./types";
 import { TextModal, ImageModal, VideoModal } from "./content-modals";
 import { QuestionModal } from "./question-modal";
 import { ModuleTraitTargetsSelector } from "./module-trait-targets-selector";
+import { ItemEditorModal } from "./item-editor-modal";
 import { SortableList } from "@/components/SortableList";
 import { useConfirm } from "@/lib/confirm-dialog";
 
@@ -26,6 +27,7 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
   );
   const [addingQuestion, setAddingQuestion] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+  const [editingModule, setEditingModule] = useState(false);
 
   const deleteModule = async () => {
     if (!(await confirm({
@@ -209,13 +211,23 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
               {Icons.chevronDown}
             </span>
           </button>
-          <button
-            className="rb-icon-btn danger"
-            onClick={deleteModule}
-            title="حذف المستوى"
-          >
-            {Icons.trash}
-          </button>
+          <div className="rb-module-actions">
+            <button
+              className="rb-icon-btn"
+              onClick={() => setEditingModule(true)}
+              title="تعديل اسم ووصف المستوى"
+              aria-label="تعديل اسم ووصف المستوى"
+            >
+              {Icons.edit}
+            </button>
+            <button
+              className="rb-icon-btn danger"
+              onClick={deleteModule}
+              title="حذف المستوى"
+            >
+              {Icons.trash}
+            </button>
+          </div>
         </div>
 
         {/* Module Body */}
@@ -480,6 +492,20 @@ export function ModuleCard({ mod, stageTraits, onRefresh }: Props) {
           onClose={() => setEditingQuestion(null)}
           onSaved={() => {
             setEditingQuestion(null);
+            onRefresh();
+          }}
+        />
+      )}
+      {editingModule && (
+        <ItemEditorModal
+          endpoint={`/api/school-admin/roadmap/modules/${mod.id}`}
+          entityLabel="المستوى"
+          initialTitle={mod.title}
+          initialDescription={mod.description}
+          showDescription
+          onClose={() => setEditingModule(false)}
+          onSaved={() => {
+            setEditingModule(false);
             onRefresh();
           }}
         />
