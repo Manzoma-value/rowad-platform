@@ -18,6 +18,7 @@ export type TeacherPointsRow = {
   profile_id: string;
   full_name: string;
   email: string | null;
+  phone: string | null;
   avatar_url: string | null;
   onboarding_status: string;
   created_at: string;
@@ -93,7 +94,7 @@ export async function collectTeacherPoints(schoolId: string): Promise<TeacherPoi
         onboarding_status: true,
         workshop_signup_id: true,
         profile: { select: { id: true, full_name: true, email: true, avatar_url: true } },
-        application: { select: { submitted_at: true } },
+        application: { select: { submitted_at: true, phone: true } },
         group_memberships: { select: { group: { select: { id: true, name: true } } } },
         classes: { select: { id: true } },
         workshop_enrollments: {
@@ -477,6 +478,7 @@ export async function collectTeacherPoints(schoolId: string): Promise<TeacherPoi
       profile_id: teacher.profile.id,
       full_name: teacher.profile.full_name,
       email: teacher.profile.email,
+      phone: teacher.application?.phone ?? null,
       avatar_url: teacher.profile.avatar_url,
       onboarding_status: teacher.onboarding_status,
       created_at: teacher.created_at.toISOString(),

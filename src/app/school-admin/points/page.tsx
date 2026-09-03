@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 // before anything is saved.
 // ─────────────────────────────────────────────────────────────────────
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import MandalaLoader from "@/components/MandalaLoader";
 import { useViewOnly } from "@/lib/view-only-context";
@@ -43,15 +43,20 @@ import {
   Award,
   Check,
   ChevronDown,
+  Copy,
   Crown,
   Download,
   Medal,
   Pencil,
+  Phone,
+  Plus,
   RotateCcw,
   Save,
   Search,
   SlidersHorizontal,
   Sparkles,
+  Star,
+  Trash2,
   Trophy,
   Users,
   X,
@@ -64,6 +69,7 @@ type ApiTeacher = {
   profile_id: string;
   full_name: string;
   email: string | null;
+  phone: string | null;
   avatar_url: string | null;
   onboarding_status: string;
   created_at: string;
@@ -80,10 +86,20 @@ type ApiAdjustment = {
   note: string | null;
 };
 
-type ApiPayload = {
+// A saved template has a real `id`; a school with none yet gets a single
+// virtual "التوزيع الافتراضي" entry with `id: null` — it becomes a real row
+// the moment the admin edits and saves it (see `saveTemplate`).
+type ApiTemplate = {
+  id: string | null;
+  name: string;
+  is_active: boolean;
   rules: PointsRule[];
-  config_updated_at: string | null;
-  is_custom: boolean;
+  updated_at: string | null;
+  created_at: string | null;
+};
+
+type ApiPayload = {
+  templates: ApiTemplate[];
   teachers: ApiTeacher[];
   groups: { id: string; name: string }[];
   workshops: { id: string; title: string }[];
@@ -115,6 +131,24 @@ const initialsOf = (name: string) =>
 
 export default function PointsPage() {
   const viewOnly = useViewOnly();
+  // A small local confirm modal, hardcoded Arabic — this page never follows
+  // the site-wide language toggle, so it can't reuse the shared confirm
+  // dialog (that one renders its Cancel/Confirm chrome in whatever language
+  // the admin's toggle happens to be set to).
+  const [confirmState, setConfirmState] = useState<{ title: string; message: string } | null>(null);
+  const confirmResolveRef = useRef<((value: boolean) => void) | null>(null);
+  const confirmDanger = useCallback((opts: { title: string; message: string }) => {
+    return new Promise<boolean>((resolve) => {
+      confirmResolveRef.current = resolve;
+      setConfirmState(opts);
+    });
+  }, []);
+  const settleConfirm = (result: boolean) => {
+    const resolve = confirmResolveRef.current;
+    confirmResolveRef.current = null;
+    setConfirmState(null);
+    resolve?.(result);
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -122,11 +156,20 @@ export default function PointsPage() {
 
   const [tab, setTab] = useState<"board" | "rules">("board");
 
-  // Saved distribution vs. the one being edited (previewed live).
-  const [savedRules, setSavedRules] = useState<PointsRule[]>(DEFAULT_RULES);
+  // Templates: the school's saved point distributions. One is always
+  // `is_active` — that is the one the real leaderboard scores with. The
+  // template picked in `selectedTemplateId` is only what the editor shows;
+  // it does not have to be the active one.
+  const [templates, setTemplates] = useState<ApiTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [draftRules, setDraftRules] = useState<PointsRule[]>(DEFAULT_RULES);
-  const [savingRules, setSavingRules] = useState(false);
-  const [rulesSavedAt, setRulesSavedAt] = useState<number | null>(null);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateSavedAt, setTemplateSavedAt] = useState<number | null>(null);
+  const [templateBusy, setTemplateBusy] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+  const [creatingNew, setCreatingNew] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState("");
 
   const [adjustments, setAdjustments] = useState<Record<string, MetricAdjustment>>({});
 
@@ -142,15 +185,23 @@ export default function PointsPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ teacher: string; metric: string } | null>(null);
 
-  const load = useCallback(async () => {
+  const applyTemplateSelection = useCallback((list: ApiTemplate[], preferId?: string | null) => {
+    const chosen = (preferId ? list.find((t) => t.id === preferId) : null)
+      ?? list.find((t) => t.is_active)
+      ?? list[0]
+      ?? null;
+    setSelectedTemplateId(chosen?.id ?? null);
+    setDraftRules(chosen ? resolvePointsRules(chosen.rules) : DEFAULT_RULES);
+  }, []);
+
+  const load = useCallback(async (preferTemplateId?: string | null) => {
     try {
       const response = await fetch("/api/school-admin/points", { cache: "no-store" });
       if (!response.ok) throw new Error("failed");
       const payload: ApiPayload = await response.json();
-      const rules = resolvePointsRules(payload.rules);
       setData(payload);
-      setSavedRules(rules);
-      setDraftRules(rules);
+      setTemplates(payload.templates);
+      applyTemplateSelection(payload.templates, preferTemplateId);
       setAdjustments(
         Object.fromEntries(
           payload.adjustments.map((entry) => [
@@ -169,13 +220,23 @@ export default function PointsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyTemplateSelection]);
 
   useEffect(() => { void load(); }, [load]);
 
-  // The board always scores with the draft, so a weight change re-ranks the
-  // leaderboard live — the admin sees the outcome before committing it.
-  const activeRules = draftRules;
+  const selectedTemplate = useMemo(
+    () => templates.find((t) => t.id === selectedTemplateId) ?? templates[0] ?? null,
+    [templates, selectedTemplateId],
+  );
+  const activeTemplate = useMemo(() => templates.find((t) => t.is_active) ?? templates[0] ?? null, [templates]);
+
+  // The real leaderboard — the one that decides the $200 — always scores
+  // with the school's ACTIVE, saved template. Unsaved edits in the template
+  // editor never move it; that only happens once a template is activated.
+  const activeRules = useMemo(
+    () => (activeTemplate ? resolvePointsRules(activeTemplate.rules) : DEFAULT_RULES),
+    [activeTemplate],
+  );
 
   const ranked: Ranked[] = useMemo(() => {
     if (!data) return [];
@@ -197,6 +258,19 @@ export default function PointsPage() {
     return scored;
   }, [data, activeRules, adjustments]);
 
+  // The template editor's own live preview — scores the DRAFT rules being
+  // edited (which may not be the active template) against the same real
+  // activity, purely so the admin sees the effect before saving/activating.
+  const previewRanked: Ranked[] = useMemo(() => {
+    if (!data) return [];
+    const scored = data.teachers.map((teacher) => ({
+      ...teacher, score: scoreTeacher(draftRules, teacher.raws, {}), rank: 0,
+    }));
+    scored.sort((left, right) => right.score.total - left.score.total || left.full_name.localeCompare(right.full_name, "ar"));
+    scored.forEach((row, index) => { row.rank = index + 1; });
+    return scored;
+  }, [data, draftRules]);
+
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const rows = ranked.filter((row) => {
@@ -204,7 +278,12 @@ export default function PointsPage() {
       if (groupFilter !== "all" && !row.groups.some((group) => group.id === groupFilter)) return false;
       if (workshopFilter !== "all" && !row.workshops.some((shop) => shop.id === workshopFilter)) return false;
       if (statusFilter !== "all" && row.onboarding_status !== statusFilter) return false;
-      if (needle && !`${row.full_name} ${row.email ?? ""}`.toLowerCase().includes(needle)) return false;
+      if (needle) {
+        const haystack = `${row.full_name} ${row.email ?? ""} ${row.phone ?? ""}`.toLowerCase();
+        const digits = needle.replace(/[^\d+]/g, "");
+        const matchesPhone = digits.length >= 3 && (row.phone ?? "").replace(/[^\d+]/g, "").includes(digits);
+        if (!haystack.includes(needle) && !matchesPhone) return false;
+      }
       return true;
     });
 
@@ -244,49 +323,159 @@ export default function PointsPage() {
 
   const draftTotal = rulesTotal(draftRules);
   const rulesDirty = useMemo(
-    () => JSON.stringify(draftRules) !== JSON.stringify(savedRules),
-    [draftRules, savedRules],
+    () => JSON.stringify(draftRules) !== JSON.stringify(selectedTemplate ? resolvePointsRules(selectedTemplate.rules) : DEFAULT_RULES),
+    [draftRules, selectedTemplate],
   );
 
-  /* ── Mutations ── */
+  /* ── Template mutations ── */
 
-  async function saveRules() {
-    if (viewOnly) return;
-    setSavingRules(true);
+  function selectTemplate(id: string | null) {
+    applyTemplateSelection(templates, id);
+  }
+
+  // Persist the currently-edited rules onto the selected template. A brand
+  // new school has no real row yet (`selectedTemplate.id === null`) — the
+  // very first save materialises it via the create endpoint instead.
+  async function saveTemplateRules() {
+    if (viewOnly || !selectedTemplate) return;
+    setSavingTemplate(true);
     try {
-      const response = await fetch("/api/school-admin/points/config", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rules: draftRules }),
-      });
+      let response: Response;
+      if (selectedTemplate.id) {
+        response = await fetch(`/api/school-admin/points/templates/${selectedTemplate.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rules: draftRules }),
+        });
+      } else {
+        response = await fetch("/api/school-admin/points/templates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: selectedTemplate.name }),
+        });
+      }
       if (!response.ok) throw new Error("failed");
       const payload = await response.json();
-      const rules = resolvePointsRules(payload.rules);
-      setSavedRules(rules);
-      setDraftRules(rules);
-      setRulesSavedAt(Date.now());
+      const saved: ApiTemplate = payload.template;
+      // Persisting a virtual default needs a second call to write its rules.
+      if (!selectedTemplate.id) {
+        const second = await fetch(`/api/school-admin/points/templates/${saved.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rules: draftRules }),
+        });
+        if (!second.ok) throw new Error("failed");
+        const secondPayload = await second.json();
+        Object.assign(saved, secondPayload.template);
+      }
+      setTemplates((current) => {
+        const withoutOld = current.filter((t) => t.id !== selectedTemplate.id && t.id !== null);
+        return [...withoutOld, saved];
+      });
+      setSelectedTemplateId(saved.id);
+      setDraftRules(resolvePointsRules(saved.rules));
+      setTemplateSavedAt(Date.now());
     } catch {
       setError(true);
     } finally {
-      setSavingRules(false);
+      setSavingTemplate(false);
     }
   }
 
-  async function resetRules() {
+  async function createTemplate(duplicateFrom?: string | null) {
     if (viewOnly) return;
-    setSavingRules(true);
+    const name = newTemplateName.trim() || (duplicateFrom
+      ? `${templates.find((t) => t.id === duplicateFrom)?.name ?? "توزيع"} (نسخة)`
+      : "توزيع جديد");
+    setTemplateBusy(duplicateFrom ? `duplicate:${duplicateFrom}` : "create");
     try {
-      const response = await fetch("/api/school-admin/points/config", { method: "DELETE" });
+      const response = await fetch("/api/school-admin/points/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, duplicate_from: duplicateFrom ?? undefined }),
+      });
       if (!response.ok) throw new Error("failed");
       const payload = await response.json();
-      const rules = resolvePointsRules(payload.rules);
-      setSavedRules(rules);
-      setDraftRules(rules);
-      setRulesSavedAt(Date.now());
+      const created: ApiTemplate = payload.template;
+      setTemplates((current) => [...current.filter((t) => t.id !== null), created]);
+      setSelectedTemplateId(created.id);
+      setDraftRules(resolvePointsRules(created.rules));
+      setNewTemplateName("");
+      setCreatingNew(false);
     } catch {
       setError(true);
     } finally {
-      setSavingRules(false);
+      setTemplateBusy(null);
+    }
+  }
+
+  async function renameTemplate() {
+    if (viewOnly || !selectedTemplate) return;
+    const name = renameValue.trim();
+    if (!name || name === selectedTemplate.name) { setRenaming(false); return; }
+    if (!selectedTemplate.id) {
+      // Not saved yet — just rename it locally, the next save persists it.
+      setTemplates((current) => current.map((t) => (t === selectedTemplate ? { ...t, name } : t)));
+      setRenaming(false);
+      return;
+    }
+    setTemplateBusy(`rename:${selectedTemplate.id}`);
+    try {
+      const response = await fetch(`/api/school-admin/points/templates/${selectedTemplate.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) throw new Error("failed");
+      const payload = await response.json();
+      const saved: ApiTemplate = payload.template;
+      setTemplates((current) => current.map((t) => (t.id === saved.id ? { ...t, name: saved.name, updated_at: saved.updated_at } : t)));
+      setRenaming(false);
+    } catch {
+      setError(true);
+    } finally {
+      setTemplateBusy(null);
+    }
+  }
+
+  async function activateTemplate(id: string) {
+    if (viewOnly) return;
+    setTemplateBusy(`activate:${id}`);
+    try {
+      const response = await fetch(`/api/school-admin/points/templates/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activate: true }),
+      });
+      if (!response.ok) throw new Error("failed");
+      setTemplates((current) => current.map((t) => ({ ...t, is_active: t.id === id })));
+    } catch {
+      setError(true);
+    } finally {
+      setTemplateBusy(null);
+    }
+  }
+
+  async function deleteTemplate(id: string) {
+    if (viewOnly) return;
+    const target = templates.find((t) => t.id === id);
+    if (!target) return;
+    const ok = await confirmDanger({
+      title: "حذف التوزيع",
+      message: `سيتم حذف توزيع "${target.name}" نهائيًا. هذا لا يؤثر على النقاط المحفوظة يدويًا لأي مشرف.`,
+    });
+    if (!ok) return;
+    setTemplateBusy(`delete:${id}`);
+    try {
+      const response = await fetch(`/api/school-admin/points/templates/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("failed");
+      const next = templates.filter((t) => t.id !== id);
+      setTemplates(next);
+      applyTemplateSelection(next);
+    } catch {
+      setError(true);
+    } finally {
+      setTemplateBusy(null);
     }
   }
 
@@ -324,7 +513,7 @@ export default function PointsPage() {
 
   function exportCsv() {
     const header = [
-      "الترتيب", "الاسم", "البريد", "المجموعة", "الحالة",
+      "الترتيب", "الاسم", "البريد", "الهاتف", "المجموعة", "الحالة",
       ...CATEGORY_DEFS.map((category) => category.labelAr),
       "المجموع", "النسبة",
     ];
@@ -332,6 +521,7 @@ export default function PointsPage() {
       row.rank,
       row.full_name,
       row.email ?? "",
+      row.phone ?? "",
       row.groups.map((group) => group.name).join(" / "),
       STATUS_LABELS[row.onboarding_status] ?? row.onboarding_status,
       ...row.score.categories.map((category) => fmt(category.points)),
@@ -399,9 +589,9 @@ export default function PointsPage() {
           <Trophy size={14} /> لوحة الصدارة
         </button>
         <button className={tab === "rules" ? "active" : ""} onClick={() => setTab("rules")}>
-          <SlidersHorizontal size={14} /> توزيع النقاط
+          <SlidersHorizontal size={14} /> قوالب التوزيع
         </button>
-        {rulesDirty && <span className="pts-tabs-flag">معاينة توزيع غير محفوظ</span>}
+        {rulesDirty && <span className="pts-tabs-flag">تعديلات غير محفوظة على القالب</span>}
       </nav>
 
       {tab === "board" ? (
@@ -423,7 +613,7 @@ export default function PointsPage() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="ابحث بالاسم أو البريد الإلكتروني"
+                placeholder="ابحث بالاسم أو البريد أو رقم الهاتف"
               />
               {query && <button onClick={() => setQuery("")} aria-label="مسح"><X size={13} /></button>}
             </div>
@@ -535,23 +725,79 @@ export default function PointsPage() {
           )}
         </>
       ) : (
-        <RulesEditor
+        <TemplatesEditor
+          templates={templates}
+          selected={selectedTemplate}
+          onSelect={selectTemplate}
           rules={draftRules}
-          savedRules={savedRules}
-          onChange={setDraftRules}
-          onSave={() => void saveRules()}
-          onReset={() => void resetRules()}
+          onChangeRules={setDraftRules}
+          onSave={() => void saveTemplateRules()}
           dirty={rulesDirty}
-          saving={savingRules}
-          savedAt={rulesSavedAt}
+          saving={savingTemplate}
+          savedAt={templateSavedAt}
           total={draftTotal}
           viewOnly={viewOnly}
-          preview={ranked.slice(0, 5)}
-          isCustom={data?.is_custom ?? false}
+          preview={previewRanked.slice(0, 5)}
+          busy={templateBusy}
+          renaming={renaming}
+          renameValue={renameValue}
+          onStartRename={() => { setRenameValue(selectedTemplate?.name ?? ""); setRenaming(true); }}
+          onCancelRename={() => setRenaming(false)}
+          onRenameValueChange={setRenameValue}
+          onCommitRename={() => void renameTemplate()}
+          creatingNew={creatingNew}
+          newTemplateName={newTemplateName}
+          onStartCreate={() => { setNewTemplateName(""); setCreatingNew(true); }}
+          onCancelCreate={() => setCreatingNew(false)}
+          onNewTemplateNameChange={setNewTemplateName}
+          onCommitCreate={() => void createTemplate(null)}
+          onDuplicate={(id) => void createTemplate(id)}
+          onActivate={(id) => void activateTemplate(id)}
+          onDelete={(id) => void deleteTemplate(id)}
+        />
+      )}
+
+      {confirmState && (
+        <ConfirmModal
+          title={confirmState.title}
+          message={confirmState.message}
+          onCancel={() => settleConfirm(false)}
+          onConfirm={() => settleConfirm(true)}
         />
       )}
 
       <Styles />
+    </div>
+  );
+}
+
+/* ─────────────────────── Confirm modal (Arabic-only) ─────────────────────── */
+
+function ConfirmModal({
+  title, message, onCancel, onConfirm,
+}: { title: string; message: string; onCancel: () => void; onConfirm: () => void }) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") { event.preventDefault(); onCancel(); }
+      if (event.key === "Enter") { event.preventDefault(); onConfirm(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); };
+  }, [onCancel, onConfirm]);
+
+  return (
+    <div className="pts-confirm-overlay" role="dialog" aria-modal="true" onClick={onCancel} dir="rtl">
+      <div className="pts-confirm-card" onClick={(event) => event.stopPropagation()}>
+        <span className="pts-confirm-icon"><Trash2 size={24} /></span>
+        <h3>{title}</h3>
+        <p>{message}</p>
+        <p className="pts-confirm-irrev">هذه العملية لا يمكن التراجع عنها.</p>
+        <div className="pts-confirm-actions">
+          <button className="pts-btn ghost" onClick={onCancel} autoFocus>إلغاء</button>
+          <button className="pts-confirm-danger" onClick={onConfirm}>حذف نهائيًا</button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -678,6 +924,7 @@ function LeaderRow({
             <span className="pts-who-meta">
               {row.groups.map((group) => group.name).join(" · ") || "بلا مجموعة"}
               {" · "}{students} مستفيد
+              {row.phone && <><span className="pts-who-phone"><Phone size={10} />{row.phone}</span></>}
             </span>
           </div>
           {row.score.overall_adjustment && <span className="pts-flag" title="عليه تعديل يدوي على المجموع">معدَّل</span>}
@@ -908,24 +1155,43 @@ function OverallEditor({
 
 /* ─────────────────────── Distribution editor ─────────────────────── */
 
-function RulesEditor({
-  rules, savedRules, onChange, onSave, onReset, dirty, saving, savedAt, total, viewOnly, preview, isCustom,
+function TemplatesEditor({
+  templates, selected, onSelect, rules, onChangeRules, onSave, dirty, saving, savedAt, total, viewOnly, preview, busy,
+  renaming, renameValue, onStartRename, onCancelRename, onRenameValueChange, onCommitRename,
+  creatingNew, newTemplateName, onStartCreate, onCancelCreate, onNewTemplateNameChange, onCommitCreate,
+  onDuplicate, onActivate, onDelete,
 }: {
+  templates: ApiTemplate[];
+  selected: ApiTemplate | null;
+  onSelect: (id: string | null) => void;
   rules: PointsRule[];
-  savedRules: PointsRule[];
-  onChange: (next: PointsRule[]) => void;
+  onChangeRules: (next: PointsRule[]) => void;
   onSave: () => void;
-  onReset: () => void;
   dirty: boolean;
   saving: boolean;
   savedAt: number | null;
   total: number;
   viewOnly: boolean;
   preview: Ranked[];
-  isCustom: boolean;
+  busy: string | null;
+  renaming: boolean;
+  renameValue: string;
+  onStartRename: () => void;
+  onCancelRename: () => void;
+  onRenameValueChange: (value: string) => void;
+  onCommitRename: () => void;
+  creatingNew: boolean;
+  newTemplateName: string;
+  onStartCreate: () => void;
+  onCancelCreate: () => void;
+  onNewTemplateNameChange: (value: string) => void;
+  onCommitCreate: () => void;
+  onDuplicate: (id: string | null) => void;
+  onActivate: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const patch = (key: MetricKey, changes: Partial<PointsRule>) => {
-    onChange(rules.map((rule) => (rule.key === key ? { ...rule, ...changes } : rule)));
+    onChangeRules(rules.map((rule) => (rule.key === key ? { ...rule, ...changes } : rule)));
   };
 
   const off = total !== 100;
@@ -934,31 +1200,128 @@ function RulesEditor({
     <div className="pts-rules">
       <header className="pts-rules-head">
         <div>
-          <h2>توزيع النقاط</h2>
+          <h2>قوالب التوزيع</h2>
           <p>
-            سبعة محاور تصنع رصيد المشرف. عدّل وزن أي بند أو أوقفه، وسترى أثر التعديل مباشرة على الترتيب
-            قبل الحفظ. التوزيع الافتراضي مطابق لدليل المسابقة: 10 · 15 · 35 · 10 · 15 · 10 · 5.
+            احتفظ بأكثر من توزيع نقاط — جرّب أوزانًا مختلفة، أو استورد التوزيع الحالي كنسخة وعدّل عليها،
+            دون المساس بالتوزيع المُعتمد فعليًا. القالب <b>النشط</b> فقط هو ما يحسم لوحة الصدارة والفائزين.
           </p>
         </div>
         <div className={`pts-rules-total${off ? " off" : ""}`}>
           <strong>{fmt(total)}</strong>
-          <span>مجموع التوزيع</span>
+          <span>مجموع القالب</span>
           {off && <em>لا يساوي 100</em>}
         </div>
       </header>
+
+      {/* ── Template switcher ── */}
+      <section className="pts-templates">
+        <div className="pts-template-list">
+          {templates.map((template) => {
+            const isSelected = template.id === selected?.id || (template.id === null && selected?.id === null);
+            const key = template.id ?? "__default__";
+            return (
+              <div key={key} className={`pts-template-chip${isSelected ? " selected" : ""}${template.is_active ? " active" : ""}`}>
+                <button className="pts-template-chip-main" onClick={() => onSelect(template.id)}>
+                  {template.is_active && <Star size={12} className="pts-template-star" />}
+                  <span>{template.name}</span>
+                  {!template.id && <em>غير محفوظ</em>}
+                </button>
+                {!viewOnly && (
+                  <div className="pts-template-chip-actions">
+                    {!template.is_active && template.id && (
+                      <button
+                        title="اجعله القالب النشط"
+                        disabled={busy === `activate:${template.id}`}
+                        onClick={() => onActivate(template.id!)}
+                      >
+                        <Star size={12} />
+                      </button>
+                    )}
+                    <button
+                      title="استيراد كنسخة جديدة"
+                      disabled={!template.id || busy === `duplicate:${template.id}`}
+                      onClick={() => onDuplicate(template.id)}
+                    >
+                      <Copy size={12} />
+                    </button>
+                    {!template.is_active && template.id && templates.length > 1 && (
+                      <button
+                        title="حذف"
+                        className="danger"
+                        disabled={busy === `delete:${template.id}`}
+                        onClick={() => onDelete(template.id!)}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {!viewOnly && !creatingNew && (
+            <button className="pts-template-add" onClick={onStartCreate}>
+              <Plus size={13} /> قالب جديد
+            </button>
+          )}
+          {!viewOnly && creatingNew && (
+            <div className="pts-template-new">
+              <input
+                autoFocus
+                value={newTemplateName}
+                placeholder="اسم القالب الجديد"
+                maxLength={80}
+                onChange={(event) => onNewTemplateNameChange(event.target.value)}
+                onKeyDown={(event) => { if (event.key === "Enter") onCommitCreate(); if (event.key === "Escape") onCancelCreate(); }}
+              />
+              <button className="pts-btn primary" onClick={onCommitCreate}><Check size={12} /></button>
+              <button className="pts-btn ghost" onClick={onCancelCreate}><X size={12} /></button>
+            </div>
+          )}
+        </div>
+
+        {selected && (
+          <div className="pts-template-current">
+            {renaming ? (
+              <div className="pts-template-rename">
+                <input
+                  autoFocus
+                  value={renameValue}
+                  maxLength={80}
+                  onChange={(event) => onRenameValueChange(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === "Enter") onCommitRename(); if (event.key === "Escape") onCancelRename(); }}
+                />
+                <button className="pts-btn primary" onClick={onCommitRename}><Check size={12} /> حفظ الاسم</button>
+                <button className="pts-btn ghost" onClick={onCancelRename}>إلغاء</button>
+              </div>
+            ) : (
+              <>
+                <span>القالب الحالي: <strong>{selected.name}</strong>{selected.is_active && <em className="pts-template-active-flag">نشط الآن</em>}</span>
+                {!viewOnly && (
+                  <button className="pts-btn ghost" onClick={onStartRename}><Pencil size={12} /> إعادة تسمية</button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </section>
 
       <div className="pts-rules-actions">
         {!viewOnly && (
           <>
             <button className="pts-btn primary" onClick={onSave} disabled={!dirty || saving}>
-              <Save size={13} /> {saving ? "جارٍ الحفظ…" : "حفظ التوزيع"}
+              <Save size={13} /> {saving ? "جارٍ الحفظ…" : "حفظ القالب"}
             </button>
-            <button className="pts-btn ghost" onClick={() => onChange(savedRules)} disabled={!dirty || saving}>
-              <RotateCcw size={13} /> استرجاع المحفوظ
-            </button>
-            <button className="pts-btn ghost" onClick={onReset} disabled={saving || !isCustom}>
-              العودة للتوزيع الافتراضي
-            </button>
+            {selected && !selected.is_active && selected.id && (
+              <button
+                className="pts-btn ghost"
+                disabled={busy === `activate:${selected.id}`}
+                onClick={() => onActivate(selected.id!)}
+              >
+                <Star size={13} /> اجعله النشط
+              </button>
+            )}
           </>
         )}
         {viewOnly && <span className="pts-editor-hint">حسابك للعرض فقط — التعديل غير متاح.</span>}
@@ -968,7 +1331,7 @@ function RulesEditor({
 
       {preview.length > 0 && (
         <section className="pts-preview">
-          <h3>أثر التوزيع الحالي على المقدمة</h3>
+          <h3>معاينة: أثر هذا القالب على المقدمة (لن يُطبَّق إلا إذا كان نشطًا)</h3>
           <div className="pts-preview-list">
             {preview.map((row) => (
               <div key={row.teacher_id} className="pts-preview-row">
@@ -1201,6 +1564,7 @@ function Styles() {
         text-overflow: ellipsis; white-space: nowrap; }
       .pts-who-meta { display: block; font-size: 11px; color: #8C8274; font-weight: 700; overflow: hidden;
         text-overflow: ellipsis; white-space: nowrap; }
+      .pts-who-phone { display: inline-flex; align-items: center; gap: 3px; margin-inline-start: 8px; direction: ltr; unicode-bidi: embed; }
 
       .pts-axes { display: flex; gap: 3px; min-width: 0; }
       .pts-axis { flex: 1; height: 22px; border-radius: 5px; background: rgba(184,160,130,0.16); overflow: hidden;
@@ -1293,6 +1657,43 @@ function Styles() {
       .pts-rules-total span { font-size: 10.5px; font-weight: 800; color: #6B1E2D; }
       .pts-rules-total.off { background: linear-gradient(160deg,#EFEAE0,#B8A082); }
       .pts-rules-total em { display: block; margin-top: 3px; font-size: 10px; font-weight: 800; color: #6B1E2D; font-style: normal; }
+      .pts-rules-head p b { color: #6B1E2D; }
+
+      /* ── Template switcher ── */
+      .pts-templates { display: flex; flex-direction: column; gap: 10px; background: #FFFBF5;
+        border: 1px solid rgba(26,26,26,0.07); border-radius: 16px; padding: 14px 16px; }
+      .pts-template-list { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .pts-template-chip { display: inline-flex; align-items: stretch; border-radius: 11px; overflow: hidden;
+        border: 1.5px solid rgba(194,160,89,0.32); background: #FFF; }
+      .pts-template-chip.selected { border-color: #6B1E2D; box-shadow: 0 0 0 2px rgba(107,30,45,0.12); }
+      .pts-template-chip.active { border-color: #B8A082; }
+      .pts-template-chip-main { display: inline-flex; align-items: center; gap: 5px; background: none; border: none;
+        padding: 8px 12px; font-family: inherit; font-size: 12.5px; font-weight: 800; color: #4A0E1C; cursor: pointer; }
+      .pts-template-chip.selected .pts-template-chip-main { color: #6B1E2D; }
+      .pts-template-star { color: #B8892E; fill: #E9C874; }
+      .pts-template-chip-main em { font-style: normal; font-size: 10px; font-weight: 700; color: #8C8274;
+        background: rgba(140,130,116,0.14); border-radius: 99px; padding: 1px 7px; }
+      .pts-template-chip-actions { display: flex; align-items: center; gap: 1px; padding-inline-end: 5px; border-inline-start: 1px solid rgba(26,26,26,0.06); }
+      .pts-template-chip-actions button { background: none; border: none; color: #8F765B; cursor: pointer;
+        display: inline-flex; padding: 6px; border-radius: 7px; }
+      .pts-template-chip-actions button:hover { background: rgba(184,160,130,0.16); }
+      .pts-template-chip-actions button:disabled { opacity: .4; cursor: not-allowed; }
+      .pts-template-chip-actions button.danger:hover { background: rgba(107,30,45,0.12); color: #6B1E2D; }
+      .pts-template-add { display: inline-flex; align-items: center; gap: 5px; background: none; border: 1.5px dashed rgba(184,160,130,0.5);
+        color: #6B1E2D; border-radius: 11px; padding: 8px 13px; font-family: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; }
+      .pts-template-add:hover { background: rgba(184,160,130,0.08); }
+      .pts-template-new { display: inline-flex; align-items: center; gap: 6px; }
+      .pts-template-new input { background: #FFF; border: 1.5px solid rgba(194,160,89,0.34); border-radius: 9px;
+        padding: 7px 10px; font-family: inherit; font-size: 12.5px; font-weight: 700; color: #32101A; outline: none; width: 180px; }
+      .pts-template-current { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 9px;
+        border-top: 1px dashed rgba(184,160,130,0.35); font-size: 12px; font-weight: 700; color: #655B53; }
+      .pts-template-current strong { color: #32101A; }
+      .pts-template-active-flag { font-style: normal; margin-inline-start: 7px; font-size: 10px; font-weight: 800; color: #1B5E20;
+        background: rgba(27,94,32,0.12); border-radius: 99px; padding: 2px 8px; }
+      .pts-template-rename { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+      .pts-template-rename input { background: #FFF; border: 1.5px solid rgba(194,160,89,0.34); border-radius: 9px;
+        padding: 7px 10px; font-family: inherit; font-size: 12.5px; font-weight: 700; color: #32101A; outline: none; width: 220px; }
+
       .pts-rules-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
       .pts-preview { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 16px; padding: 15px 17px; }
@@ -1366,6 +1767,27 @@ function Styles() {
         .pts-editor input { width: 100%; }
         .pts-editor label { flex: 1; min-width: 120px; }
       }
+
+      /* ── Confirm modal ── */
+      .pts-confirm-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center;
+        justify-content: center; padding: 18px; background: rgba(11,11,12,0.55);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+      .pts-confirm-card { max-width: 420px; width: 100%; background: linear-gradient(160deg,#FFFBF5,#F7F3EB);
+        border: 1.5px solid rgba(107,30,45,0.4); border-radius: 20px; padding: 26px 24px 20px; text-align: center;
+        display: flex; flex-direction: column; align-items: center; gap: 7px;
+        box-shadow: 0 28px 72px rgba(80,60,20,0.32); }
+      .pts-confirm-icon { width: 54px; height: 54px; border-radius: 50%; display: flex; align-items: center;
+        justify-content: center; margin-bottom: 4px; color: #6B1E2D; background: rgba(107,30,45,0.1); }
+      .pts-confirm-card h3 { margin: 0; font-size: 19px; font-weight: 900; color: #6B1E2D; }
+      .pts-confirm-card p { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: #5A4A30; line-height: 1.75; max-width: 340px; }
+      .pts-confirm-irrev { font-size: 11.5px !important; font-weight: 800 !important; margin-top: 4px !important;
+        padding: 5px 12px; border-radius: 99px; background: rgba(107,30,45,0.1); color: #6B1E2D !important; }
+      .pts-confirm-actions { display: flex; gap: 9px; margin-top: 14px; width: 100%; }
+      .pts-confirm-actions .pts-btn { flex: 1; justify-content: center; min-height: 42px; }
+      .pts-confirm-danger { flex: 1; min-height: 42px; border: 1px solid rgba(255,200,170,0.45); border-radius: 9px;
+        background: linear-gradient(135deg,#8E2424,#6B1E2D); color: #FFE9D6; font-family: inherit; font-size: 12.5px;
+        font-weight: 800; cursor: pointer; }
+      .pts-confirm-danger:hover { background: linear-gradient(135deg,#9C2A2A,#882323); }
     `}</style>
   );
 }

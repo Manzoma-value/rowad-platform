@@ -551,7 +551,7 @@ model School {
   group_assessments           GroupAssessment[]
   teacher_group_join_requests TeacherGroupJoinRequest[]
   teacher_group_leave_events  TeacherGroupLeaveEvent[]
-  points_config               PointsConfig?
+  points_configs              PointsConfig[]
   points_adjustments          PointsAdjustment[]
 
   @@map("schools")
@@ -2148,9 +2148,18 @@ model Notification {
 //     2. PointsAdjustment — the admin's manual corrections on top of the
 //        computed value (override a single rule, add a bonus, or replace
 //        the total outright), each with an auditable reason.
+/// A named point-distribution template. A school can keep several — draft
+/// variations, last season's weights, an experiment — and switch which one
+/// is `is_active` at any time. Only the active template's rules score the
+/// real leaderboard (the one that decides the $200 winner); every other
+/// template is just a saved "what if" the admin can preview and tune.
+/// Exactly one row per school may have `is_active = true`, enforced by a
+/// partial unique index (see the migration).
 model PointsConfig {
   id         String   @id @default(uuid()) @db.Uuid
-  school_id  String   @unique @db.Uuid
+  school_id  String   @db.Uuid
+  name       String
+  is_active  Boolean  @default(false)
   /// Ordered rule set: [{ key, enabled, max_points, points_per_unit, target }].
   /// Unknown keys are ignored and missing ones fall back to the shipped
   /// defaults, so adding a metric never requires a migration.
@@ -2160,6 +2169,7 @@ model PointsConfig {
 
   school School @relation(fields: [school_id], references: [id], onDelete: Cascade)
 
+  @@index([school_id])
   @@map("points_configs")
 }
 
