@@ -37,6 +37,7 @@ import {
   FileText,
   ListChecks,
   ShieldCheck,
+  Trophy,
   X,
   LucideIcon,
 } from "lucide-react";
@@ -210,6 +211,11 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       href: "/school-admin/assessments", sublabel: "Measurement Models", exact: false, icon: Target,
       label: lang === "ar" ? "نماذج القياس" : lang === "sq" ? "Modelet e Matjes" : "Measurement Models",
+      group: "models",
+    },
+    {
+      href: "/school-admin/points", sublabel: "Supervisor Points", exact: false, icon: Trophy,
+      label: lang === "ar" ? "النقاط" : lang === "sq" ? "Pikët" : "Points",
       group: "models",
     },
     {

@@ -551,6 +551,8 @@ model School {
   group_assessments           GroupAssessment[]
   teacher_group_join_requests TeacherGroupJoinRequest[]
   teacher_group_leave_events  TeacherGroupLeaveEvent[]
+  points_config               PointsConfig?
+  points_adjustments          PointsAdjustment[]
 
   @@map("schools")
 }
@@ -607,6 +609,7 @@ model Teacher {
   class_join_requests              ClassJoinRequest[]
   group_join_request               TeacherGroupJoinRequest?
   group_leave_events               TeacherGroupLeaveEvent[]
+  points_adjustments               PointsAdjustment[]
 
   @@index([school_id])
   @@map("teachers")
@@ -2130,4 +2133,54 @@ model Notification {
 
   @@index([recipient_id, read_at, created_at(sort: Desc)])
   @@map("notifications")
+}
+
+// ─── Supervisor points — the "أفضل 10 مشرفين" competition ledger.
+//
+//     Points are never stored per teacher: they are recomputed from live
+//     platform activity (beneficiaries, workshop attendance and answers,
+//     authored lessons/quizzes, community posts, trait evaluations, games)
+//     every time the admin opens the page. Only two things are persisted:
+//
+//     1. PointsConfig — the school's own distribution: which rules count,
+//        how many points each one is worth, and the per-unit rate. Editing
+//        it re-scores every supervisor instantly with no data migration.
+//     2. PointsAdjustment — the admin's manual corrections on top of the
+//        computed value (override a single rule, add a bonus, or replace
+//        the total outright), each with an auditable reason.
+model PointsConfig {
+  id         String   @id @default(uuid()) @db.Uuid
+  school_id  String   @unique @db.Uuid
+  /// Ordered rule set: [{ key, enabled, max_points, points_per_unit, target }].
+  /// Unknown keys are ignored and missing ones fall back to the shipped
+  /// defaults, so adding a metric never requires a migration.
+  rules      Json     @default("[]")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  school School @relation(fields: [school_id], references: [id], onDelete: Cascade)
+
+  @@map("points_configs")
+}
+
+model PointsAdjustment {
+  id              String   @id @default(uuid()) @db.Uuid
+  school_id       String   @db.Uuid
+  teacher_id      String   @db.Uuid
+  /// A metric key, or the literal "OVERALL" for a whole-score correction.
+  metric_key      String
+  /// Replaces the computed value for this metric when set.
+  override_points Float?
+  /// Added on top of the (possibly overridden) value. May be negative.
+  bonus_points    Float    @default(0)
+  note            String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  school  School  @relation(fields: [school_id], references: [id], onDelete: Cascade)
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+
+  @@unique([teacher_id, metric_key])
+  @@index([school_id])
+  @@map("points_adjustments")
 }
