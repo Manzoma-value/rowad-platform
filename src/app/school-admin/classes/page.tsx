@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  BookOpen, Check, CheckCircle2, Copy, ExternalLink, Filter, Link2, Link2Off,
+  ArrowDownUp, BookOpen, Check, CheckCircle2, Copy, ExternalLink, Filter, Link2, Link2Off,
   Pencil, Plus, Search, ShieldCheck, Sparkles, Trash2, UserRound,
   UserRoundCheck, UsersRound, X,
 } from "lucide-react";
@@ -28,6 +28,7 @@ interface ClassItem {
 
 interface Teacher { id: string; profile: { full_name: string } }
 type GroupFilter = "all" | "assigned" | "unassigned" | "activeInvite";
+type SortOption = "recent" | "studentsDesc" | "studentsAsc" | "name";
 
 export default function SchoolAdminClassesPage() {
   const { lang } = useLang();
@@ -50,6 +51,7 @@ export default function SchoolAdminClassesPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<GroupFilter>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("recent");
 
   const copy = lang === "ar" ? {
     eyebrow: "إدارة المجموعات التعليمية", title: "مساحة المجموعات",
@@ -59,6 +61,7 @@ export default function SchoolAdminClassesPage() {
     createTitle: "أنشئ مجموعة تعليمية جديدة", createHint: "اكتب اسمًا واضحًا يسهّل على المشرف والمستفيد معرفة المجموعة.",
     nameLabel: "اسم المجموعة", searchPlaceholder: "ابحث باسم المجموعة أو المشرف…",
     all: "كل المجموعات", assignedFilter: "بإشراف مشرف", unassigned: "بدون مشرف",
+    sortBy: "الترتيب", sortRecent: "الترتيب الافتراضي", sortStudentsDesc: "الأكثر أعضاءً", sortStudentsAsc: "الأقل أعضاءً", sortName: "الاسم (أ-ي)",
     activeInvite: "رابط فعّال", results: "نتيجة ظاهرة", noResults: "لا توجد مجموعات مطابقة",
     noResultsHint: "جرّب تغيير كلمة البحث أو عامل التصفية.", clearFilters: "مسح التصفية",
     noGroupsHint: "ابدأ بإنشاء أول مجموعة ثم عيّن لها مشرفًا.", supervisor: "المشرف المسؤول",
@@ -79,6 +82,7 @@ export default function SchoolAdminClassesPage() {
     createTitle: "Krijo një grup të ri mësimor", createHint: "Përdor një emër të qartë që edukatori dhe pjesëmarrësi ta njohin lehtë.",
     nameLabel: "Emri i grupit", searchPlaceholder: "Kërko grupin ose edukatorin…",
     all: "Të gjitha grupet", assignedFilter: "Me edukator", unassigned: "Pa edukator",
+    sortBy: "Rendit sipas", sortRecent: "Rendi i zakonshëm", sortStudentsDesc: "Më shumë anëtarë", sortStudentsAsc: "Më pak anëtarë", sortName: "Emri (A-Zh)",
     activeInvite: "Lidhje aktive", results: "rezultate", noResults: "Nuk u gjet asnjë grup",
     noResultsHint: "Provo një kërkim ose filtër tjetër.", clearFilters: "Pastro filtrat",
     noGroupsHint: "Krijo grupin e parë dhe më pas cakto një edukator.", supervisor: "Edukatori përgjegjës",
@@ -123,7 +127,7 @@ export default function SchoolAdminClassesPage() {
   const filteredClasses = useMemo(() => {
     const locale = lang === "ar" ? "ar" : "sq";
     const normalizedQuery = query.trim().toLocaleLowerCase(locale);
-    return classes.filter((cls) => {
+    const matched = classes.filter((cls) => {
       const matchesQuery = !normalizedQuery || [cls.name, cls.teacher?.profile.full_name ?? ""]
         .some((value) => value.toLocaleLowerCase(locale).includes(normalizedQuery));
       const matchesFilter = filter === "all"
@@ -132,7 +136,13 @@ export default function SchoolAdminClassesPage() {
         || (filter === "activeInvite" && Boolean(cls.invite?.is_active));
       return matchesQuery && matchesFilter;
     });
-  }, [classes, filter, lang, query]);
+    if (sortBy === "recent") return matched;
+    const sorted = [...matched];
+    if (sortBy === "studentsDesc") sorted.sort((a, b) => b._count.students - a._count.students);
+    else if (sortBy === "studentsAsc") sorted.sort((a, b) => a._count.students - b._count.students);
+    else if (sortBy === "name") sorted.sort((a, b) => a.name.localeCompare(b.name, locale));
+    return sorted;
+  }, [classes, filter, lang, query, sortBy]);
 
   async function handleCreate() {
     if (!newName.trim()) { setError(tr.enterClassName); return; }
@@ -267,7 +277,15 @@ export default function SchoolAdminClassesPage() {
           onChange={(event) => setFilter(event.target.value as GroupFilter)} aria-label={copy.all}>
           <option value="all">{copy.all}</option><option value="assigned">{copy.assignedFilter}</option>
           <option value="unassigned">{copy.unassigned}</option><option value="activeInvite">{copy.activeInvite}</option>
-        </select></label><span className={styles.resultCount}>{filteredClasses.length} {copy.results}</span>
+        </select></label>
+        <label className={styles.filter}><ArrowDownUp size={16} /><select value={sortBy}
+          onChange={(event) => setSortBy(event.target.value as SortOption)} aria-label={copy.sortBy}>
+          <option value="recent">{copy.sortRecent}</option>
+          <option value="studentsDesc">{copy.sortStudentsDesc}</option>
+          <option value="studentsAsc">{copy.sortStudentsAsc}</option>
+          <option value="name">{copy.sortName}</option>
+        </select></label>
+        <span className={styles.resultCount}>{filteredClasses.length} {copy.results}</span>
       </section>}
 
       {classes.length === 0 ? <EmptyState icon={<BookOpen />} title={tr.noClassesYet} body={copy.noGroupsHint}
@@ -295,7 +313,7 @@ export default function SchoolAdminClassesPage() {
             </div>}
           </header>
 
-          <div className={styles.memberStat}><span><UsersRound size={19} /></span>
+          <div className={`${styles.memberStat} ${cls._count.students === 0 ? styles.needsAttention : ""}`}><span><UsersRound size={19} /></span>
             <div><strong>{cls._count.students}</strong><small>{copy.members}</small></div><span className={styles.memberPulse} aria-hidden="true" />
           </div>
 

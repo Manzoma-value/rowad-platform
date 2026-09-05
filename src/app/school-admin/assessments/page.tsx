@@ -182,6 +182,22 @@ const UI = {
     evaluatedOnly: "من قيّموا فقط",
     notEvaluated: "لم يقيّموا بعد",
     evaluationFilterHelp: "فلترة حسب المشرفين الذين أرسلوا تقييماً واحداً على الأقل في هذا النموذج.",
+    memberGroupHelpMulti: "اختر مجموعة واحدة أو أكثر لعرض أعضائها معاً داخل نتائج هذا النموذج.",
+    groupBreakdownHead: "حالة التقييم حسب المجموعة",
+    groupBreakdownSub: "لكل مجموعة: من أرسل تقييماً على الأقل ومن لم يُرسل بعد — جاهزة للمتابعة المباشرة.",
+    groupBreakdownOf: (done: number, total: number) => `${done} من ${total} قيّموا`,
+    pendingListHead: "لم يقيّموا بعد",
+    pendingListEmpty: "الجميع قيّم في هذه المجموعة 🎉",
+    copyPendingNames: "نسخ الأسماء",
+    copiedNames: "تم النسخ",
+    exportReport: "تصدير التقرير (CSV)",
+    exportReportHelp: "يصدّر الأعضاء الظاهرين حالياً بعد تطبيق البحث والمجموعات وحالة التقييم.",
+    csvHeaderName: "الاسم",
+    csvHeaderEmail: "البريد الإلكتروني",
+    csvHeaderGroups: "المجموعات",
+    csvHeaderStatus: "حالة التقييم",
+    csvHeaderGiven: "تقييمات أرسلها",
+    csvHeaderReceived: "تقييمات استلمها",
     detailMembers: "أعضاء النموذج",
     evaluators: "أجروا تقييماً",
     totalRatings: "إجمالي التقييمات",
@@ -326,6 +342,22 @@ const UI = {
     evaluatedOnly: "Ata që kanë vlerësuar",
     notEvaluated: "Nuk kanë vlerësuar ende",
     evaluationFilterHelp: "Filtro sipas edukatorëve që kanë dërguar të paktën një vlerësim në këtë model.",
+    memberGroupHelpMulti: "Zgjidh një ose më shumë grupe për të parë anëtarët e tyre së bashku në rezultatet e këtij modeli.",
+    groupBreakdownHead: "Gjendja e vlerësimit sipas grupit",
+    groupBreakdownSub: "Për çdo grup: kush ka dërguar të paktën një vlerësim dhe kush jo — gati për ndjekje të drejtpërdrejtë.",
+    groupBreakdownOf: (done: number, total: number) => `${done} nga ${total} kanë vlerësuar`,
+    pendingListHead: "Nuk kanë vlerësuar ende",
+    pendingListEmpty: "Të gjithë kanë vlerësuar në këtë grup 🎉",
+    copyPendingNames: "Kopjo emrat",
+    copiedNames: "U kopjua",
+    exportReport: "Eksporto raportin (CSV)",
+    exportReportHelp: "Eksporton anëtarët e shfaqur aktualisht pas kërkimit, grupeve dhe gjendjes së vlerësimit.",
+    csvHeaderName: "Emri",
+    csvHeaderEmail: "Email",
+    csvHeaderGroups: "Grupet",
+    csvHeaderStatus: "Gjendja e vlerësimit",
+    csvHeaderGiven: "Vlerësime të dërguara",
+    csvHeaderReceived: "Vlerësime të marra",
     detailMembers: "Anëtarë të modelit",
     evaluators: "Kanë vlerësuar",
     totalRatings: "Vlerësime gjithsej",
@@ -389,9 +421,12 @@ export default function AssessmentsHubPage() {
 
   // ── Detail-level filters ──
   const [teacherSearch, setTeacherSearch] = useState("");
-  const [memberGroupFilter, setMemberGroupFilter] = useState("");
+  // Multiple groups can be selected at once — a member matches when they
+  // belong to ANY of the selected groups. Empty = every group.
+  const [memberGroupFilters, setMemberGroupFilters] = useState<string[]>([]);
   const [evaluationFilter, setEvaluationFilter] = useState<"all" | "evaluated" | "pending">("all");
   const [traitFilter, setTraitFilter] = useState<number | null>(null);
+  const [copiedGroupId, setCopiedGroupId] = useState<string | null>(null);
   const [showMatrix, setShowMatrix] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -447,7 +482,7 @@ export default function AssessmentsHubPage() {
   useEffect(() => {
     if (selectedId) loadDetail(selectedId);
     setTeacherSearch("");
-    setMemberGroupFilter("");
+    setMemberGroupFilters([]);
     setEvaluationFilter("all");
     setTraitFilter(null);
     setShowMatrix(false);
@@ -667,7 +702,7 @@ export default function AssessmentsHubPage() {
     const needle = teacherSearch.trim().toLowerCase();
     return aggregation.filter(({ member, derive: d, givenCount }) => {
       if (needle && !member.profile.full_name.toLowerCase().includes(needle)) return false;
-      if (memberGroupFilter && !member.group_ids.includes(memberGroupFilter)) return false;
+      if (memberGroupFilters.length > 0 && !member.group_ids.some((id) => memberGroupFilters.includes(id))) return false;
       if (evaluationFilter === "evaluated" && givenCount === 0) return false;
       if (evaluationFilter === "pending" && givenCount > 0) return false;
       if (traitFilter !== null) {
@@ -677,16 +712,78 @@ export default function AssessmentsHubPage() {
       }
       return true;
     });
-  }, [aggregation, teacherSearch, memberGroupFilter, evaluationFilter, traitFilter]);
+  }, [aggregation, teacherSearch, memberGroupFilters, evaluationFilter, traitFilter]);
+
+  // Per-group breakdown — for the currently selected groups (or every group
+  // the model targets, when none are selected), who has sent at least one
+  // rating and who hasn't yet. This is what the admin hands to whoever is
+  // following up with supervisors before the deadline.
+  const groupBreakdown = useMemo(() => {
+    if (!detail) return [];
+    const groups = memberGroupFilters.length > 0
+      ? detail.groups.filter((group) => memberGroupFilters.includes(group.id))
+      : detail.groups;
+    return groups.map((group) => {
+      const members = aggregation.filter((entry) => entry.member.group_ids.includes(group.id));
+      const evaluated = members.filter((entry) => entry.givenCount > 0);
+      const pending = members.filter((entry) => entry.givenCount === 0);
+      return { group, total: members.length, evaluated, pending };
+    });
+  }, [detail, aggregation, memberGroupFilters]);
 
   const evaluatedMembers = useMemo(() => aggregation.filter((entry) => entry.givenCount > 0).length, [aggregation]);
-  const hasDetailFilters = Boolean(teacherSearch.trim() || memberGroupFilter || evaluationFilter !== "all" || traitFilter !== null);
+  const hasDetailFilters = Boolean(teacherSearch.trim() || memberGroupFilters.length > 0 || evaluationFilter !== "all" || traitFilter !== null);
   const resetDetailFilters = () => {
     setTeacherSearch("");
-    setMemberGroupFilter("");
+    setMemberGroupFilters([]);
     setEvaluationFilter("all");
     setTraitFilter(null);
   };
+
+  function toggleGroupFilter(groupId: string) {
+    setMemberGroupFilters((current) => (
+      current.includes(groupId) ? current.filter((id) => id !== groupId) : [...current, groupId]
+    ));
+  }
+
+  async function copyPendingNames(group: GroupRef, pendingNames: string[]) {
+    if (pendingNames.length === 0) return;
+    try {
+      await navigator.clipboard.writeText(pendingNames.join("\n"));
+      setCopiedGroupId(group.id);
+      window.setTimeout(() => setCopiedGroupId((current) => (current === group.id ? null : current)), 1600);
+    } catch {
+      // Clipboard access can be blocked (permissions, insecure context) —
+      // the button simply stays inert rather than throwing.
+    }
+  }
+
+  // Exports exactly what's on screen right now — search, selected groups,
+  // and evaluation status all apply — so the file always matches the view
+  // the admin is looking at when they click it.
+  function exportMembersCsv() {
+    if (!detail) return;
+    const groupNameById = new Map(detail.groups.map((group) => [group.id, group.name]));
+    const header = [T.csvHeaderName, T.csvHeaderEmail, T.csvHeaderGroups, T.csvHeaderStatus, T.csvHeaderGiven, T.csvHeaderReceived];
+    const rows = visibleAggregation.map(({ member, count, givenCount }) => [
+      member.profile.full_name,
+      member.profile.email ?? "",
+      member.group_ids.map((id) => groupNameById.get(id) ?? "").filter(Boolean).join(" / "),
+      givenCount > 0 ? T.evaluatedOnly : T.notEvaluated,
+      String(givenCount),
+      String(count),
+    ]);
+    const csv = [header, ...rows]
+      .map((cells) => cells.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob([`﻿${csv}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${detail.title}-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   const visibleMemberIds = useMemo(() => new Set(visibleAggregation.map((a) => a.member.teacher_id)), [visibleAggregation]);
   const visibleRatings = useMemo(
@@ -931,20 +1028,27 @@ export default function AssessmentsHubPage() {
                   <Search size={13} strokeWidth={2} />
                   <input value={teacherSearch} onChange={(e) => setTeacherSearch(e.target.value)} placeholder={T.teacherSearch} />
                 </div>
-                <label className="am-member-group-filter" title={T.memberGroupHelp}>
-                  <Users2 size={14} strokeWidth={2} />
-                  <span>{T.memberGroupLbl}</span>
-                  <select
-                    value={memberGroupFilter}
-                    onChange={(event) => setMemberGroupFilter(event.target.value)}
-                    aria-label={T.memberGroupLbl}
-                  >
-                    <option value="">{T.allMemberGroups}</option>
+                <div className="am-group-chip-filter" title={T.memberGroupHelpMulti} role="group" aria-label={T.memberGroupLbl}>
+                  <span><Users2 size={14} strokeWidth={2} />{T.memberGroupLbl}</span>
+                  <div className="am-trait-chips">
+                    <button
+                      className={`am-trait-chip ${memberGroupFilters.length === 0 ? "active" : ""}`}
+                      onClick={() => setMemberGroupFilters([])}
+                    >
+                      {T.allMemberGroups}
+                    </button>
                     {detail.groups.map((group) => (
-                      <option key={group.id} value={group.id}>{group.name}</option>
+                      <button
+                        key={group.id}
+                        className={`am-trait-chip ${memberGroupFilters.includes(group.id) ? "active" : ""}`}
+                        onClick={() => toggleGroupFilter(group.id)}
+                        aria-pressed={memberGroupFilters.includes(group.id)}
+                      >
+                        {group.name}
+                      </button>
                     ))}
-                  </select>
-                </label>
+                  </div>
+                </div>
                 <label className="am-member-group-filter am-evaluation-filter" title={T.evaluationFilterHelp}>
                   <UserCheck size={14} strokeWidth={2} />
                   <span>{T.evaluationStatusLbl}</span>
@@ -981,6 +1085,10 @@ export default function AssessmentsHubPage() {
                 <span className="am-member-filter-count" title={T.memberGroupHelp}>
                   {T.membersShown(visibleAggregation.length, aggregation.length)}
                 </span>
+                <button className="am-detail-filters-reset am-export-csv" onClick={exportMembersCsv} title={T.exportReportHelp}>
+                  <Download size={12} strokeWidth={2.5} />
+                  {T.exportReport}
+                </button>
                 {hasDetailFilters && (
                   <button className="am-detail-filters-reset" onClick={resetDetailFilters} title={T.resetFilters}>
                     <X size={12} strokeWidth={2.5} />
@@ -988,6 +1096,50 @@ export default function AssessmentsHubPage() {
                   </button>
                 )}
               </div>
+
+              <section className="am-group-breakdown">
+                <div className="am-collective-head">
+                  <div>
+                    <span><UserCheck size={16} />{T.groupBreakdownHead}</span>
+                    <p>{T.groupBreakdownSub}</p>
+                  </div>
+                </div>
+                <div className="am-group-breakdown-grid">
+                  {groupBreakdown.map(({ group, total, evaluated, pending }) => {
+                    const pendingNames = pending.map((entry) => entry.member.profile.full_name);
+                    const pct = total > 0 ? Math.round((evaluated.length / total) * 100) : 0;
+                    return (
+                      <article className="am-breakdown-card" key={group.id}>
+                        <header>
+                          <span><Users2 size={15} /></span>
+                          <strong>{group.name}</strong>
+                          <em>{T.groupBreakdownOf(evaluated.length, total)}</em>
+                        </header>
+                        <div className="am-detail-progress" title={T.groupBreakdownOf(evaluated.length, total)}>
+                          <span style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="am-breakdown-pending">
+                          <div className="am-breakdown-pending-head">
+                            <span>{T.pendingListHead} ({pending.length})</span>
+                            {pending.length > 0 && (
+                              <button onClick={() => void copyPendingNames(group, pendingNames)}>
+                                {copiedGroupId === group.id ? <><ShieldCheck size={12} />{T.copiedNames}</> : <>{T.copyPendingNames}</>}
+                              </button>
+                            )}
+                          </div>
+                          {pending.length === 0 ? (
+                            <p className="am-breakdown-empty">{T.pendingListEmpty}</p>
+                          ) : (
+                            <ul className="am-breakdown-names">
+                              {pendingNames.map((name, index) => <li key={`${group.id}:${index}`}>{name}</li>)}
+                            </ul>
+                          )}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
 
               <section className="am-collective">
                 <div className="am-collective-head">
@@ -1804,6 +1956,27 @@ const styles = `
   .am-trait-chip:hover { border-color:rgba(184,160,130,.65); background:#FFFDF9; box-shadow:0 5px 12px rgba(50,16,26,.08); transform:translateY(-1px); }
   .am-trait-chip.active { border-color:transparent; color:#FFFBF5; font-weight:800; }
   .am-trait-chip.active i { border-color:rgba(255,255,255,.72); box-shadow:0 0 0 2px rgba(50,16,26,.18); }
+
+  .am-group-chip-filter { display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-height:42px; }
+  .am-group-chip-filter > span { display:inline-flex; align-items:center; gap:6px; flex:none; color:#6B1E2D; font:900 10px 'Cairo',sans-serif; }
+  .am-export-csv { color:#1B5E20; border-color:rgba(27,94,32,.28); background:rgba(27,94,32,.06); }
+  .am-export-csv:hover { border-color:rgba(27,94,32,.5); background:rgba(27,94,32,.12); }
+
+  .am-group-breakdown { margin:4px 0 18px; padding:16px; border:1px solid rgba(107,30,45,.16); border-radius:18px; background:linear-gradient(150deg,#FFFDF9,#F5EEE4); box-shadow:0 10px 24px rgba(50,16,26,.05); }
+  .am-group-breakdown-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:12px; }
+  .am-breakdown-card { min-width:0; border:1px solid rgba(184,160,130,.30); border-radius:16px; background:#FFFBF5; padding:13px; }
+  .am-breakdown-card > header { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+  .am-breakdown-card > header > span { display:grid; place-items:center; width:26px; height:26px; flex:none; border-radius:9px; background:#EFEAE0; color:#6B1E2D; }
+  .am-breakdown-card > header > strong { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#32101A; font-size:12.5px; }
+  .am-breakdown-card > header > em { flex:none; font-style:normal; color:#6B1E2D; font-size:10.5px; font-weight:800; background:rgba(107,30,45,.08); border-radius:999px; padding:3px 9px; }
+  .am-breakdown-pending { margin-top:10px; }
+  .am-breakdown-pending-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:7px; }
+  .am-breakdown-pending-head > span { color:#8F765B; font-size:10.5px; font-weight:800; }
+  .am-breakdown-pending-head > button { display:inline-flex; align-items:center; gap:4px; border:1px solid rgba(107,30,45,.22); border-radius:999px; background:#FFFFFF; color:#6B1E2D; padding:4px 10px; font:800 10px 'Cairo',sans-serif; cursor:pointer; transition:all .16s ease; }
+  .am-breakdown-pending-head > button:hover { border-color:rgba(107,30,45,.4); background:#FFFDF9; }
+  .am-breakdown-names { display:flex; flex-direction:column; gap:5px; max-height:180px; overflow-y:auto; margin:0; padding:0; list-style:none; }
+  .am-breakdown-names li { border:1px solid rgba(184,160,130,.24); border-radius:10px; background:#F7F3EB; padding:6px 10px; color:#4A0E1C; font-size:11.5px; font-weight:700; }
+  .am-breakdown-empty { margin:0; color:#1B5E20; font-size:11.5px; font-weight:700; }
 
   .am-collective { margin:4px 0 24px; padding:18px; border:1px solid rgba(107,30,45,.18); border-radius:20px; background:linear-gradient(145deg,#F1EBE2,#FFFBF5 48%,#EFEAE0); box-shadow:0 14px 32px rgba(50,16,26,.07); }
   .am-collective-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; }
