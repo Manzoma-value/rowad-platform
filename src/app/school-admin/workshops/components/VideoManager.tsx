@@ -29,6 +29,11 @@ const T = {
     editQuestion: "تعديل السؤال",
     deleteQuestion: "حذف السؤال",
     deleteVideo: "حذف الفيديو",
+    renameVideo: "تعديل اسم الفيديو",
+    renameLabel: "اسم الفيديو",
+    save: "حفظ",
+    saving: "جارٍ الحفظ",
+    cancel: "إلغاء",
     results: "من شاهد وأجاب",
     mcq: "اختيار",
     singleAnswer: "إجابة واحدة",
@@ -58,6 +63,11 @@ const T = {
     editQuestion: "Modifiko pyetjen",
     deleteQuestion: "Fshi pyetjen",
     deleteVideo: "Fshi videon",
+    renameVideo: "Riemërto videon",
+    renameLabel: "Titulli i videos",
+    save: "Ruaj",
+    saving: "Duke ruajtur",
+    cancel: "Anulo",
     results: "Kush e pa dhe u përgjigj",
     mcq: "Opsione",
     singleAnswer: "Një përgjigje",
@@ -117,6 +127,7 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
   const [resultsFor, setResultsFor] = useState<WorkshopVideo | null>(null);
   const [busyVideo, setBusyVideo] = useState<string | null>(null);
   const [busyQuestion, setBusyQuestion] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<{ id: string; title: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -207,6 +218,29 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
       const response = await fetch(`/api/school-admin/workshops/${workshopId}/videos/${videoId}`, { method: "DELETE" });
       if (!response.ok) throw new Error("failed");
       setVideos((current) => (current ?? []).filter((video) => video.id !== videoId));
+    } catch {
+      setError(t.error);
+    } finally {
+      setBusyVideo(null);
+    }
+  }
+
+  async function saveVideoTitle() {
+    if (viewOnly || !renaming) return;
+    const title = renaming.title.trim();
+    if (!title) return;
+    setError("");
+    setBusyVideo(renaming.id);
+    try {
+      const response = await fetch(`/api/school-admin/workshops/${workshopId}/videos/${renaming.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!response.ok) throw new Error("failed");
+      const payload = await response.json();
+      setVideos((current) => (current ?? []).map((video) => (video.id === renaming.id ? { ...video, title: payload.video.title } : video)));
+      setRenaming(null);
     } catch {
       setError(t.error);
     } finally {
@@ -310,7 +344,27 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
                 <video src={video.url} controls playsInline preload="metadata" className="vm-preview" />
                 <div className="vm-video-body">
                   <div className="vm-video-title">
-                    <strong>{video.title}</strong>
+                    {renaming?.id === video.id ? (
+                      <div className="vm-rename">
+                        <input
+                          autoFocus
+                          aria-label={t.renameLabel}
+                          value={renaming.title}
+                          disabled={busyVideo === video.id}
+                          onChange={(event) => setRenaming({ id: video.id, title: event.target.value })}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") { event.preventDefault(); void saveVideoTitle(); }
+                            if (event.key === "Escape") setRenaming(null);
+                          }}
+                        />
+                        <button className="vm-btn" onClick={() => void saveVideoTitle()} disabled={busyVideo === video.id || !renaming.title.trim()}>
+                          {busyVideo === video.id ? t.saving : t.save}
+                        </button>
+                        <button className="vm-btn ghost" onClick={() => setRenaming(null)} disabled={busyVideo === video.id}>{t.cancel}</button>
+                      </div>
+                    ) : (
+                      <strong title={video.title}>{video.title}</strong>
+                    )}
                     <div className="vm-video-tags">
                       <span className={`vm-tag${video.questions.length === 0 ? " warn" : ""}`}>
                         <HelpCircle size={11} />{t.questionCount(video.questions.length)}
@@ -328,6 +382,15 @@ export function VideoManager({ workshopId, viewOnly, lang }: { workshopId: strin
                       <>
                         <button className="vm-btn" onClick={() => setQuestionModal({ video })}>
                           <Plus size={14} /><span>{t.addQuestion}</span>
+                        </button>
+                        <button
+                          className="vm-icon-btn"
+                          onClick={() => setRenaming({ id: video.id, title: video.title })}
+                          disabled={busyVideo === video.id}
+                          aria-label={t.renameVideo}
+                          title={t.renameVideo}
+                        >
+                          <Pencil size={15} />
                         </button>
                         <button
                           className="vm-icon-btn danger"
@@ -443,6 +506,11 @@ const styles = `
 .vm-video-body{display:flex;flex-direction:column;justify-content:space-between;gap:11px;min-width:0}
 .vm-video-title{min-width:0}
 .vm-video-title strong{display:block;font-size:14px;color:#32101A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vm-rename{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.vm-rename input{flex:1;min-width:180px;min-height:36px;box-sizing:border-box;border:1px solid #6B1E2D;border-radius:9px;background:#fff;padding:0 10px;font:inherit;font-size:13px;color:#32101A}
+.vm-rename input:focus{outline:none;box-shadow:0 0 0 3px rgba(107,30,45,.1)}
+.vm-rename .vm-btn{min-height:36px}
+.vm-btn:disabled{opacity:.5;cursor:not-allowed}
 .vm-video-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 .vm-tag{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 10px;background:#EFEAE0;color:#655B53;font-size:10px;font-weight:800}
 .vm-tag.warn{background:rgba(107,30,45,.09);color:#6B1E2D}

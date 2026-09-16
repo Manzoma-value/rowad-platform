@@ -107,6 +107,44 @@ function isPdfMaterial(material: WorkshopMaterial) {
   return material.mime?.toLowerCase() === "application/pdf" || material.title.toLowerCase().endsWith(".pdf") || material.url.toLowerCase().split(/[?#]/)[0].endsWith(".pdf");
 }
 
+function materialSize(material: WorkshopMaterial) {
+  if (!material.size) return material.mime || material.type;
+  const mb = material.size / 1024 / 1024;
+  return `${mb >= 1 ? mb.toFixed(1) : (material.size / 1024).toFixed(0) + " KB"}${mb >= 1 ? " MB" : ""}`;
+}
+
+/** Strings for the material cards — kept apart from the giant UI blob below. */
+const MAT_T = {
+  ar: {
+    open: "فتح",
+    rename: "تعديل الاسم",
+    renameTitle: "اسم المادة",
+    save: "حفظ",
+    cancel: "إلغاء",
+    remove: "حذف",
+    confirmRemove: "سيتم حذف هذه المادة وسجل من فتحها. المتابعة؟",
+    viewersOne: "مشرف واحد فتح الملف",
+    viewersMany: (n: number) => `${n} مشرفين فتحوا الملف`,
+    viewersNone: "لم يفتح هذا الملف أحد بعد",
+    viewersAdminOnly: "هذه الأسماء لا تظهر إلا للإدارة",
+    renameError: "تعذر حفظ الاسم الجديد.",
+  },
+  sq: {
+    open: "Hap",
+    rename: "Riemërto",
+    renameTitle: "Emri i materialit",
+    save: "Ruaj",
+    cancel: "Anulo",
+    remove: "Fshi",
+    confirmRemove: "Kjo fshin materialin dhe regjistrin e hapjeve. Vazhdo?",
+    viewersOne: "1 edukator e hapi skedarin",
+    viewersMany: (n: number) => `${n} edukatorë e hapën skedarin`,
+    viewersNone: "Askush nuk e ka hapur ende",
+    viewersAdminOnly: "Këta emra shfaqen vetëm për administratën",
+    renameError: "Emri i ri nuk u ruajt.",
+  },
+} as const;
+
 const UI = {
   ar: {
     back: "العودة للورش",
@@ -292,6 +330,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const L = lang === "sq" ? "sq" : "ar";
   const T = UI[L];
   const O = OPS[L];
+  const M = MAT_T[L];
   const E = EDIT[L];
   const dir = L === "ar" ? "rtl" : "ltr";
   const P = L === "ar" ? {
@@ -369,6 +408,9 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const [linkType, setLinkType] = useState<"LINK" | "VIDEO" | "READING">("LINK");
   const [showLink, setShowLink] = useState(false);
   const [materialError, setMaterialError] = useState("");
+  const [renamingMaterial, setRenamingMaterial] = useState<{ id: string; title: string } | null>(null);
+  const [busyMaterial, setBusyMaterial] = useState<string | null>(null);
+  const [openViewers, setOpenViewers] = useState<string[]>([]);
   const [messageDraft, setMessageDraft] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [messageError, setMessageError] = useState("");
@@ -702,13 +744,34 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
     finally { setUploading(false); }
   }
   async function removeMaterial(materialId: string) {
-    setMaterialError("");
+    if (viewOnly || busyMaterial) return;
+    if (!(await confirm({ message: M.confirmRemove }))) return;
+    setMaterialError(""); setBusyMaterial(materialId);
     try {
       const r = await fetch(`/api/school-admin/workshops/${id}/materials?materialId=${encodeURIComponent(materialId)}`, { method: "DELETE" });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error || "delete_failed");
       setDetail((v) => v ? { ...v, workshop: { ...v.workshop, materials: d.materials } } : v);
     } catch { setMaterialError(T.materialError); }
+    finally { setBusyMaterial(null); }
+  }
+  async function saveMaterialTitle() {
+    if (viewOnly || !renamingMaterial) return;
+    const title = renamingMaterial.title.trim();
+    if (!title) return;
+    setMaterialError(""); setBusyMaterial(renamingMaterial.id);
+    try {
+      const r = await fetch(`/api/school-admin/workshops/${id}/materials`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ materialId: renamingMaterial.id, title }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "rename_failed");
+      setDetail((v) => v ? { ...v, workshop: { ...v.workshop, materials: d.materials } } : v);
+      setRenamingMaterial(null);
+    } catch { setMaterialError(M.renameError); }
+    finally { setBusyMaterial(null); }
   }
   async function publishMessage() {
     const body = messageDraft.trim();
@@ -830,7 +893,60 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
         <div className="wd-table-head"><div><h2>{T.content}</h2><p>{T.contentHelp}</p></div>{!viewOnly&&<div className="wd-content-actions"><label className="wd-small-btn"><Upload size={14}/>{uploading?T.saving:T.addFile}<input hidden type="file" accept="image/*,.pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx" onChange={e=>e.target.files?.[0]&&void uploadMaterial(e.target.files[0])}/></label><button className="wd-small-btn ghost" onClick={()=>setShowLink(v=>!v)}><Plus size={14}/>{T.addLink}</button></div>}</div>
         {showLink&&<div className="wd-link-form"><select value={linkType} onChange={e=>setLinkType(e.target.value as typeof linkType)}><option value="LINK">Link</option><option value="VIDEO">Video link</option><option value="READING">Reading</option></select><input placeholder={T.linkTitle} value={linkForm.title} onChange={e=>setLinkForm({...linkForm,title:e.target.value})}/><input dir="ltr" placeholder={T.linkUrl} value={linkForm.url} onChange={e=>setLinkForm({...linkForm,url:e.target.value})}/><button className="wd-small-btn" onClick={addLink} disabled={uploading}>{T.add}</button></div>}
         {materialError&&<p className="wd-material-error" role="alert">{materialError}</p>}
-        {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=>{const viewers=detail.workshop.material_views.filter(view=>view.material_id===m.id);return <div className={`wd-material${isPdfMaterial(m)?" pdf":""}`} key={m.id}>{m.type==="IMAGE"?<ImageIcon/>:m.type==="VIDEO"?<Video/>:m.type==="LINK"?<Link2/>:<FileText/>}<div><strong>{m.title}</strong><small>{m.mime || m.type}</small></div><a href={m.url} target="_blank" rel="noreferrer" aria-label={m.title}><ExternalLink size={17}/></a>{!viewOnly&&<button onClick={()=>void removeMaterial(m.id)} aria-label={T.remove}><Trash2 size={16}/></button>}{isPdfMaterial(m)&&<div className="wd-pdf-insight"><div><Eye size={15}/><strong>{viewers.length}</strong><span>{L==="ar"?"مشرفون فتحوا الملف":"edukatorë e hapën"}</span></div>{viewers.length===0?<small>{L==="ar"?"لم يفتح هذا الملف أحد بعد":"Askush nuk e ka hapur ende"}</small>:<div className="wd-pdf-viewers">{viewers.map(view=><span key={view.teacher.id} title={`${view.open_count} × · ${fmtTime(view.last_opened_at)}`}><b>{view.teacher.profile.full_name}</b><small>{view.open_count}× · {fmtDate(view.last_opened_at)}</small></span>)}</div>}</div>}</div>})}</div>}
+        {detail.workshop.materials.length===0?<div className="wd-empty">{T.noContent}</div>:<div className="wd-material-grid">{detail.workshop.materials.map(m=>{
+          const viewers=detail.workshop.material_views.filter(view=>view.material_id===m.id);
+          const tracked=isPdfMaterial(m);
+          const editing=renamingMaterial?.id===m.id?renamingMaterial:null;
+          const busy=busyMaterial===m.id;
+          const viewersShown=openViewers.includes(m.id);
+          return (
+            <div className="wd-material" key={m.id}>
+              <div className="wd-material-main">
+                <span className="wd-material-icon">{m.type==="IMAGE"?<ImageIcon size={18}/>:m.type==="VIDEO"?<Video size={18}/>:m.type==="LINK"?<Link2 size={18}/>:<FileText size={18}/>}</span>
+                {editing?(
+                  <div className="wd-material-rename">
+                    <input autoFocus aria-label={M.renameTitle} value={editing.title} disabled={busy}
+                      onChange={e=>setRenamingMaterial({id:m.id,title:e.target.value})}
+                      onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void saveMaterialTitle();}if(e.key==="Escape")setRenamingMaterial(null);}}/>
+                    <div className="wd-material-rename-actions">
+                      <button className="wd-mat-btn primary" onClick={()=>void saveMaterialTitle()} disabled={busy||!editing.title.trim()}><Save size={13}/>{busy?T.saving:M.save}</button>
+                      <button className="wd-mat-btn" onClick={()=>setRenamingMaterial(null)} disabled={busy}><X size={13}/>{M.cancel}</button>
+                    </div>
+                  </div>
+                ):(
+                  <div className="wd-material-info"><strong title={m.title}>{m.title}</strong><small>{materialSize(m)}</small></div>
+                )}
+                {!editing&&(
+                  <div className="wd-material-actions">
+                    <a className="wd-mat-icon" href={m.url} target="_blank" rel="noreferrer" title={M.open} aria-label={`${M.open}: ${m.title}`}><ExternalLink size={15}/></a>
+                    {!viewOnly&&<button className="wd-mat-icon" onClick={()=>setRenamingMaterial({id:m.id,title:m.title})} title={M.rename} aria-label={`${M.rename}: ${m.title}`}><Pencil size={15}/></button>}
+                    {!viewOnly&&<button className="wd-mat-icon danger" onClick={()=>void removeMaterial(m.id)} disabled={busy} title={M.remove} aria-label={`${M.remove}: ${m.title}`}><Trash2 size={15}/></button>}
+                  </div>
+                )}
+              </div>
+              {tracked&&(
+                <div className="wd-material-views">
+                  <button className={`wd-views-toggle${viewersShown?" open":""}`} disabled={viewers.length===0}
+                    onClick={()=>setOpenViewers(prev=>prev.includes(m.id)?prev.filter(x=>x!==m.id):[...prev,m.id])}>
+                    <Eye size={14}/>
+                    <span>{viewers.length===0?M.viewersNone:viewers.length===1?M.viewersOne:M.viewersMany(viewers.length)}</span>
+                  </button>
+                  {viewersShown&&viewers.length>0&&(
+                    <div className="wd-views-list">
+                      <small className="wd-views-note"><ShieldCheck size={11}/>{M.viewersAdminOnly}</small>
+                      {viewers.map(view=>(
+                        <span key={view.teacher.id} title={`${view.open_count} \u00d7 \u00b7 ${fmtTime(view.last_opened_at)}`}>
+                          <b>{view.teacher.profile.full_name}</b>
+                          <small>{view.open_count}× · {fmtDate(view.last_opened_at)}</small>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}</div>}
         {detail.workshop.notes&&<div className="wd-notes"><b>{T.notes}</b><p>{detail.workshop.notes}</p></div>}
       </section>
             ),
@@ -1082,8 +1198,8 @@ const styles = `
 .wd-no-code{min-height:260px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px dashed rgba(184,155,94,.34);border-radius:14px;color:#8C8274;font-weight:800;background:rgba(194,160,89,.04);padding:24px}
 .wd-material-error{margin:0 0 10px!important;padding:9px 11px;background:#F7F3EB;border-inline-start:3px solid #6B1E2D;color:#6B1E2D!important;font-size:11px!important;font-weight:700}
 .wd-discussion{margin-bottom:14px}.wd-messages{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto}.wd-message{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:11px;border:1px solid #E5E0D5;background:#fff}.wd-message.admin{background:#F7F3EB;border-color:#D9C9B0;border-inline-start:3px solid #6B1E2D}.wd-message-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.wd-message-meta strong{font-size:11px}.wd-message-meta b{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:#EFEAE0;color:#655B53;font-size:8px}.wd-message-meta b.admin{background:#6B1E2D;color:#F7F3EB}.wd-message-meta time{margin-inline-start:auto;font-size:9px;color:#8C8274}.wd-message p{margin:5px 0 0!important;white-space:pre-wrap;font-size:12px!important;color:#32101A!important}.wd-composer{margin-top:10px;padding:10px;border:1px solid #D9C9B0;background:#FFFBF5}.wd-composer textarea{width:100%;min-height:80px;resize:vertical;border:0;outline:0;background:transparent;color:#32101A;font:inherit;font-size:12px}.wd-composer>div{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #E5E0D5;padding-top:8px}.wd-composer span{font-size:9px;color:#8C8274}.wd-message-error{color:#6B1E2D!important;font-size:10px!important;margin-top:6px!important}
-.wd-program,.wd-materials{margin-bottom:14px}.wd-days{display:flex;gap:0;overflow:auto;padding:12px 0}.wd-day{position:relative;min-width:155px;border-top:3px solid #4C6B3C;background:#F3F0E8;padding:13px}.wd-day:not(:last-child):after{content:'';position:absolute;top:20px;inset-inline-end:-10px;width:20px;height:2px;background:#B8A082}.wd-day.rest{border-color:#8B8178;background:#ECE9E5}.wd-day b{display:grid;place-items:center;width:24px;height:24px;background:#32101A;color:#E8DCBC;border-radius:50%;font-size:11px}.wd-day span,.wd-day strong,.wd-day small{display:block;margin-top:5px;font-size:11px}.wd-day strong{font-size:12px}.wd-day small{color:#6C625A}.wd-content-actions,.wd-export{display:flex;gap:7px;flex-wrap:wrap}.wd-content-actions label,.wd-export button{display:inline-flex;align-items:center;gap:5px}.wd-link-form{display:grid;grid-template-columns:1fr 1.5fr auto;gap:8px;margin-bottom:12px}.wd-link-form input{border:1px solid #D7CBB9;background:#fff;padding:9px 11px;font:inherit;font-size:12px}.wd-material-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.wd-material{display:grid;grid-template-columns:28px 1fr 30px 30px;align-items:center;gap:8px;border:1px solid #E0D7C9;background:#fff;padding:11px}.wd-material>svg{color:#7A5C32}.wd-material strong,.wd-material small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-material strong{font-size:12px}.wd-material small{font-size:10px;color:#796F66}.wd-material a,.wd-material button{display:grid;place-items:center;border:0;background:none;color:#6B1E2D;cursor:pointer}.wd-notes{margin-top:12px;border-inline-start:3px solid #B8A082;background:#F5F0E7;padding:12px}.wd-notes b{font-size:12px}.wd-notes p{white-space:pre-wrap;margin-top:4px!important}
-.wd-material.pdf{align-items:start}.wd-pdf-insight{grid-column:1/-1;display:flex;flex-direction:column;gap:7px;margin:3px -2px -2px;padding:9px;border-radius:9px;background:#F7F3EB;border:1px solid #E5D9C8}.wd-pdf-insight>div:first-child{display:flex;align-items:center;gap:6px;color:#6B1E2D}.wd-pdf-insight>div:first-child strong{font-size:13px}.wd-pdf-insight>div:first-child span{font-size:9px;font-weight:800}.wd-pdf-insight>small{font-size:9px;color:#8C8274}.wd-pdf-viewers{display:flex;flex-direction:column;gap:4px;max-height:130px;overflow:auto}.wd-pdf-viewers>span{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #E5D9C8;padding-top:5px}.wd-pdf-viewers b{font-size:9.5px}.wd-pdf-viewers small{font-size:8px;color:#8C8274}
+.wd-program,.wd-materials{margin-bottom:14px}.wd-days{display:flex;gap:0;overflow:auto;padding:12px 0}.wd-day{position:relative;min-width:155px;border-top:3px solid #4C6B3C;background:#F3F0E8;padding:13px}.wd-day:not(:last-child):after{content:'';position:absolute;top:20px;inset-inline-end:-10px;width:20px;height:2px;background:#B8A082}.wd-day.rest{border-color:#8B8178;background:#ECE9E5}.wd-day b{display:grid;place-items:center;width:24px;height:24px;background:#32101A;color:#E8DCBC;border-radius:50%;font-size:11px}.wd-day span,.wd-day strong,.wd-day small{display:block;margin-top:5px;font-size:11px}.wd-day strong{font-size:12px}.wd-day small{color:#6C625A}.wd-content-actions,.wd-export{display:flex;gap:7px;flex-wrap:wrap}.wd-content-actions label,.wd-export button{display:inline-flex;align-items:center;gap:5px}.wd-link-form{display:grid;grid-template-columns:1fr 1.5fr auto;gap:8px;margin-bottom:12px}.wd-link-form input{border:1px solid #D7CBB9;background:#fff;padding:9px 11px;font:inherit;font-size:12px}.wd-material-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}.wd-material{display:flex;flex-direction:column;gap:9px;border:1px solid #E0D7C9;border-radius:12px;background:#fff;padding:11px}.wd-material-main{display:grid;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:9px}.wd-material-icon{display:grid;place-items:center;width:32px;height:32px;border-radius:9px;background:#F3EEE4;color:#7A5C32}.wd-material-info{min-width:0}.wd-material-info strong,.wd-material-info small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wd-material-info strong{font-size:12.5px}.wd-material-info small{font-size:10px;color:#796F66;margin-top:2px}.wd-material-actions{display:flex;gap:5px;flex:none}.wd-mat-icon{width:31px;height:31px;flex:none;display:grid;place-items:center;border:1px solid #E0D7C9;border-radius:8px;background:#FFFBF5;color:#6B1E2D;cursor:pointer;text-decoration:none}.wd-mat-icon:hover{background:#6B1E2D;color:#fff;border-color:#6B1E2D}.wd-mat-icon.danger:hover{background:#8A1F2B;border-color:#8A1F2B}.wd-mat-icon:disabled{opacity:.45;cursor:progress}.wd-material-rename{grid-column:2/-1;display:flex;flex-direction:column;gap:6px;min-width:0}.wd-material-rename input{width:100%;box-sizing:border-box;border:1px solid #6B1E2D;border-radius:8px;background:#fff;padding:8px 10px;font:inherit;font-size:12px;color:#32101A}.wd-material-rename input:focus{outline:none;box-shadow:0 0 0 3px rgba(107,30,45,.1)}.wd-material-rename-actions{display:flex;gap:6px}.wd-mat-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid #D9C9B0;border-radius:8px;background:#FFFBF5;color:#6B1E2D;padding:6px 10px;font:800 11px 'Cairo',sans-serif;cursor:pointer}.wd-mat-btn.primary{border-color:#6B1E2D;background:#6B1E2D;color:#F7F3EB}.wd-mat-btn:disabled{opacity:.5;cursor:not-allowed}.wd-notes{margin-top:12px;border-inline-start:3px solid #B8A082;background:#F5F0E7;padding:12px}.wd-notes b{font-size:12px}.wd-notes p{white-space:pre-wrap;margin-top:4px!important}
+.wd-material-views{border-top:1px solid #EFE9DC;padding-top:8px}.wd-views-toggle{width:100%;display:flex;align-items:center;gap:7px;border:0;border-radius:8px;background:#F7F3EB;color:#6B1E2D;padding:7px 9px;font:800 10.5px 'Cairo',sans-serif;text-align:start;cursor:pointer}.wd-views-toggle:hover:not(:disabled){background:#EFE7D9}.wd-views-toggle:disabled{background:transparent;color:#8C8274;cursor:default;padding-inline:0}.wd-views-toggle.open{background:#6B1E2D;color:#F7F3EB}.wd-views-list{display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto;margin-top:7px}.wd-views-note{display:flex;align-items:center;gap:4px;font-size:8.5px;color:#8C8274;font-weight:800}.wd-views-list>span{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #E5D9C8;padding-top:5px}.wd-views-list b{font-size:10px}.wd-views-list small{font-size:8.5px;color:#8C8274;white-space:nowrap}
 .wd-empty{padding:40px 20px;text-align:center;border:1px dashed rgba(184,155,94,.34);border-radius:14px;color:#8C8274;font-weight:800;background:#FFFBF5}.wd-table-wrap{overflow:auto;border:1px solid rgba(26,26,26,.08);border-radius:13px}.wd-table{width:100%;border-collapse:collapse;min-width:860px;background:#fff}.wd-table th{background:#F6F0E6;color:#6B1E2D;font-size:11px;font-weight:900;padding:10px;border-bottom:1px solid rgba(184,155,94,.22);white-space:nowrap}.wd-table td{padding:10px;border-bottom:1px solid rgba(26,26,26,.06);text-align:center;font-size:12.5px;color:#4A0E1C}.wd-table tr:last-child td{border-bottom:0}.wd-teacher{text-align:start!important;font-weight:900;color:#32101A!important}.wd-total{font-weight:900;color:#32101A!important}.wd-table td.present{background:rgba(76,107,60,.14);color:#3E642E;font-weight:900}.wd-table td.unrecorded{background:#FFFBF5;color:#8C8274}
 @media(max-width:980px){.wd-qr-grid,.wd-stats{grid-template-columns:1fr}.wd-hero{padding:20px}.wd-link-form{grid-template-columns:1fr}}
 

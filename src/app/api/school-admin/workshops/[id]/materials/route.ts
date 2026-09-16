@@ -1,3 +1,7 @@
+// /api/school-admin/workshops/[id]/materials
+//   POST   — upload a file or attach a link.
+//   PATCH  — rename a material (title only).
+//   DELETE — remove a material, its view records and its stored file.
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
@@ -28,6 +32,22 @@ async function appendMaterial(id: string, initial: Awaited<ReturnType<typeof wor
       data: { materials: next as unknown as Prisma.InputJsonValue },
     });
     if (updated.count === 1) return next;
+    current = await prisma.workshop.findUnique({ where: { id }, select: { id: true, title: true, materials: true, updated_at: true } });
+  }
+  throw new Error("material_update_conflict");
+}
+
+async function renameMaterial(id: string, initial: Awaited<ReturnType<typeof workshopForAdmin>>, materialId: string, title: string) {
+  let current = initial;
+  for (let attempt = 0; attempt < 4 && current; attempt += 1) {
+    const materials = Array.isArray(current.materials) ? current.materials as unknown as WorkshopMaterial[] : [];
+    if (!materials.some((item) => item.id === materialId)) return { next: materials, renamed: null };
+    const next = materials.map((item) => (item.id === materialId ? { ...item, title } : item));
+    const updated = await prisma.workshop.updateMany({
+      where: { id, updated_at: current.updated_at },
+      data: { materials: next as unknown as Prisma.InputJsonValue },
+    });
+    if (updated.count === 1) return { next, renamed: next.find((item) => item.id === materialId) ?? null };
     current = await prisma.workshop.findUnique({ where: { id }, select: { id: true, title: true, materials: true, updated_at: true } });
   }
   throw new Error("material_update_conflict");
@@ -104,6 +124,28 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   } catch (error) {
     if (material.path) await adminSupabase().storage.from(BUCKET).remove([material.path]).catch(() => null);
     console.error("[workshop-materials update]", error);
+    return NextResponse.json({ error: "material update conflict" }, { status: 409 });
+  }
+}
+
+export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
+  const auth = await requireSchoolAdminWriter();
+  if (!auth) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { id } = await context.params;
+  const workshop = await workshopForAdmin(id, auth.school.id);
+  if (!workshop) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const body = await req.json().catch(() => null) as { materialId?: string; title?: string } | null;
+  const materialId = body?.materialId?.trim();
+  const title = body?.title?.trim().slice(0, 160);
+  if (!materialId || !title) return NextResponse.json({ error: "materialId and title required" }, { status: 400 });
+
+  try {
+    const { next, renamed } = await renameMaterial(id, workshop, materialId, title);
+    if (!renamed) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ material: renamed, materials: next });
+  } catch (error) {
+    console.error("[workshop-materials rename]", error);
     return NextResponse.json({ error: "material update conflict" }, { status: 409 });
   }
 }
