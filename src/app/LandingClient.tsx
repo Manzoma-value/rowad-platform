@@ -71,7 +71,7 @@ export default function LandingClient() {
   return (
     <main id="top" className={styles.root} dir={lang === "ar" ? "rtl" : "ltr"} lang={lang}>
       <header className={styles.header}>
-        <Link href="/" className={styles.brand}><span className={styles.mark}><img src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-maroon.svg" alt="" /></span><span>{tr.brand}<small>{tr.tagline}</small></span></Link>
+        <Link href="/" className={styles.brand} aria-label={tr.brand}><img className={styles.brandLockup} src="/binaa-brand/landing/lockup-horizontal.png" alt={tr.brand} /></Link>
         <nav className={styles.desktopNav} aria-label={lang === "ar" ? "القائمة الرئيسية" : "Main navigation"}>{links.map((id, i) => <a key={id} href={`#${id}`}>{tr.nav[i]}</a>)}</nav>
         <div className={styles.headerActions}>
           <button className={styles.language} onClick={() => { const next = lang === "ar" ? "en" : "ar"; setLang(next); localStorage.setItem("lang", next); }} aria-label={lang === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{lang === "ar" ? "EN" : "عربي"}</button>
@@ -90,6 +90,7 @@ export default function LandingClient() {
           <p className={styles.heroNote}><ShieldCheck size={16} />{tr.note}</p>
         </div>
         <div className={styles.previewScene}>
+          <img className={styles.heroArtwork} src="/binaa-brand/landing/hero-artwork.png" alt="" aria-hidden="true" />
           <div className={styles.preview}>
             <div className={styles.previewTop}><span><Layers3 size={18} />{tr.platformName}</span><span className={styles.previewBadge}>{tr.preview}</span></div>
             <div className={styles.previewBody}>
