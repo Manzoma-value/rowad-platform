@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { createClient } from "../../lib/supabase/client";
 import MandalaLoader from "@/components/MandalaLoader";
-import { authPremiumCss } from "@/lib/auth-premium-css";
+import { whiteLabelLoginCss } from "./white-label-login-css";
 
 /* ─── Geometry ─── */
 const r2 = (n: number) => Math.round(n * 1000) / 1000;
@@ -49,8 +49,8 @@ const STRINGS = {
   ar: {
     dir: "rtl" as const,
     brand: "منصة رواد",
-    tagline: "نظام أبيض قابل للتخصيص لكل مدرسة وجهة تعليمية",
-    albania: "بيئة العرض العامة لإدارة المدارس والبرامج",
+    tagline: "مساحة تجمع مجتمع مدرستك وتفتح آفاق التعلّم والنمو.",
+    albania: "رؤيتك. هويتك. منصتك.",
     albanianValues: "إدارة · تعلم · قياس · مجتمع",
     welcome: "مرحبًا بعودتك",
     loginTitle: "تسجيل الدخول",
@@ -77,12 +77,12 @@ const STRINGS = {
   en: {
     dir: "ltr" as const,
     brand: "Rowad Platform",
-    tagline: "A white-label operating system for every school and program",
-    albania: "General presentation environment for school operations",
+    tagline: "A space to bring your school together and open new possibilities.",
+    albania: "Your vision. Your identity. Your platform.",
     albanianValues: "Manage · Learn · Measure · Community",
     welcome: "Welcome back",
     loginTitle: "Sign in",
-    sub: "Use your owner or admin account to enter the presentation workspace",
+    sub: "Your people, programs, and progress. All in one place.",
     emailLabel: "Email",
     passLabel: "Password",
     btn: "Sign in",
@@ -240,7 +240,7 @@ export default function LoginPage() {
           <div className="lp-panel-inner">
             <div className="lp-location" dir="ltr">
               <span className="lp-location-dot"/>
-              ROWAD DEMO <span>WHITE-LABEL WORKSPACE</span>
+              ROWAD <span>{lang === "ar" ? "مساحة تتسع للطموح" : "A SPACE FOR POSSIBILITY"}</span>
             </div>
             <div className="lp-brand-emblem">
               <Mandala size={176} className="lp-mandala"/>
@@ -254,7 +254,7 @@ export default function LoginPage() {
               <Rule/>
             </div>
             <div className="lp-albanian-values" dir="ltr">
-              <span className="lp-albania-monogram">AL</span>
+              <span className="lp-albania-monogram">R</span>
               <span>{L.albanianValues}</span>
             </div>
             <LangToggle lang={lang} onChange={handleLangChange}/>
@@ -266,10 +266,11 @@ export default function LoginPage() {
 
         {/* ── Form panel ── */}
         <div className="lp-form-side">
+          <Link href="/" className="lp-back-home">{lang === "ar" ? "العودة إلى المنصة" : "Back to Rowad"}<span aria-hidden="true">↗</span></Link>
           <div className="lp-form-wrap">
             <div className="lp-form-topline">
               <span className="lp-form-eyebrow">{L.welcome}</span>
-              <span className="lp-secure-badge"><i/> SECURE PORTAL</span>
+              <span className="lp-secure-badge"><i/> {lang === "ar" ? "دخول آمن" : "SECURE ACCESS"}</span>
             </div>
             <div className="lp-lang-toggle-mobile">
               <LangToggle lang={lang} onChange={handleLangChange}/>
@@ -343,8 +344,7 @@ export default function LoginPage() {
                     type="button"
                     className="lp-eye"
                     onClick={() => setShowPw((v) => !v)}
-                    aria-label={showPw ? "Hide password" : "Show password"}
-                    tabIndex={-1}
+                    aria-label={showPw ? (lang === "ar" ? "إخفاء كلمة المرور" : "Hide password") : (lang === "ar" ? "إظهار كلمة المرور" : "Show password")}
                   >
                     {showPw ? (
                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
@@ -360,7 +360,7 @@ export default function LoginPage() {
                 </div>
                 {capsOn && password.length > 0 && (
                   <span className="lp-field-msg lp-field-msg--warn">
-                    {lang === "ar" ? "Caps Lock مُفعَّل" : "Caps Lock është aktiv"}
+                    {lang === "ar" ? "Caps Lock مُفعَّل" : "Caps Lock is on"}
                   </span>
                 )}
               </div>
@@ -556,4 +556,4 @@ const css = `
     .lp-lang-toggle{width:100px;}
     .lp-lang-btn{padding:6px 0;font-size:11.5px;}
   }
-` + authPremiumCss;
+` + whiteLabelLoginCss;

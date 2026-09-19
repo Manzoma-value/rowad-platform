@@ -18,7 +18,7 @@ async function preferredSchoolIdFromCurrentRequest(): Promise<string | null> {
   // Callers also check the mapped slug. That lets them distinguish an
   // unscoped host from a mapped host whose school is missing, and fail closed
   // in the latter case.
-  return school?.id;
+  return school?.id ?? null;
 }
 
 export async function resolveSchoolAdminMembership(profileId: string) {
