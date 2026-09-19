@@ -5,8 +5,8 @@ import { LanguageProvider } from "@/lib/language-context";
 import { ConfirmProvider } from "@/lib/confirm-dialog";
 
 export const metadata: Metadata = {
-  title: "منصة الرواد التعليمية",
-  description: "نظام تعليمي متكامل للمستفيدين والمشرفين والمنصات",
+  title: "منصة بناء الأهلية (الرواد)",
+  description: "منصة متكاملة للمستفيدين والمشرفين والجهات",
 };
 
 export default function RootLayout({

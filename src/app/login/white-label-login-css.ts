@@ -1,4 +1,4 @@
-// Deliberately local to the general login; school-branded login pages keep
+// Deliberately local to the general login; tenant-branded login pages keep
 // their own identity and styling.
 export const whiteLabelLoginCss = `
 .lp-shell{height:auto;min-height:100dvh;overflow:visible;background:#FFFBF5;color:#4A0E1C;font-family:'Tajawal',Arial,sans-serif}
@@ -7,8 +7,8 @@ export const whiteLabelLoginCss = `
 .lp-shell :is(a,button):focus-visible{outline:3px solid #B8A082;outline-offset:4px}
 .lp-identity-watermark,.lp-corner{display:none}
 .lp-panel{width:45%;min-height:100dvh;background:#32101A;box-shadow:none;border:0}
-.lp-panel::before{inset:0;background:radial-gradient(ellipse at 30% 90%,#6B1E2D66,transparent 60%);opacity:1;filter:none}
-.lp-panel::after{width:530px;height:530px;inset:auto;bottom:-260px;inset-inline-start:-170px;border:1px solid #B8A08240;border-radius:50%;box-shadow:0 0 0 50px #B8A0820d,0 0 0 100px #B8A08208}
+.lp-panel::before{inset:0;background:linear-gradient(145deg,rgba(107,30,46,.96),rgba(23,19,19,.98)),url('/binaa-brand/bina-alahliyya-brand-kit-v2/06-Patterns/pattern-original-fine-dark.svg') center/cover;opacity:1;filter:none}
+.lp-panel::after{display:none}
 .lp-panel-inner{padding:105px 12%;align-items:flex-start;gap:30px;text-align:start}
 .lp-location{position:absolute;top:45px;display:flex;gap:12px;align-items:center;color:#FFFBF5;font-size:12px;font-weight:700;letter-spacing:.1em}
 .lp-location span:last-child{font-size:8px;font-weight:400;color:#D9C9B0;letter-spacing:.08em}

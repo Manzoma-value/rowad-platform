@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 
 // ─────────────────────────────────────────────────────────────────────
-// النقاط — مسابقة "أفضل 10 مشرفين".
+// النقاط — مساحة مرنة لإدارة مسابقة المشرفين.
 //
 // Arabic-only by design: the competition guide, its wording and its five
 // scoring areas exist in Arabic, and the jury reads this page in Arabic.
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // does not follow the language toggle.
 //
 // Scores are never fetched pre-computed. The API hands over each
-// supervisor's raw measurements plus the school's distribution, and the
+// supervisor's raw measurements plus the active distribution, and the
 // page runs the very same scoring engine the server would — so dragging a
 // weight in the distribution editor re-ranks the leaderboard instantly,
 // before anything is saved.
@@ -24,6 +24,7 @@ import {
   CATEGORY_DEFS,
   CATEGORY_BY_KEY,
   DEFAULT_RULES,
+  DEFAULT_POINTS_SETTINGS,
   METRIC_DEFS,
   METRIC_BY_KEY,
   OVERALL_KEY,
@@ -36,6 +37,7 @@ import {
   type MetricKey,
   type MetricRaw,
   type PointsRule,
+  type PointsSettings,
   type ScoredTeacher,
 } from "@/lib/teacher-points";
 import {
@@ -94,6 +96,7 @@ type ApiTemplate = {
   name: string;
   is_active: boolean;
   rules: PointsRule[];
+  settings: PointsSettings;
   updated_at: string | null;
   created_at: string | null;
 };
@@ -110,8 +113,6 @@ type ApiPayload = {
 type Ranked = ApiTeacher & { score: ScoredTeacher; rank: number };
 
 type SortKey = "total" | "students" | "name" | CategoryKey;
-
-const PRIZE_WINNERS = 10;
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: "مُعتمد",
@@ -163,6 +164,7 @@ export default function PointsPage() {
   const [templates, setTemplates] = useState<ApiTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [draftRules, setDraftRules] = useState<PointsRule[]>(DEFAULT_RULES);
+  const [draftSettings, setDraftSettings] = useState<PointsSettings>(DEFAULT_POINTS_SETTINGS);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [templateSavedAt, setTemplateSavedAt] = useState<number | null>(null);
   const [templateBusy, setTemplateBusy] = useState<string | null>(null);
@@ -192,6 +194,7 @@ export default function PointsPage() {
       ?? null;
     setSelectedTemplateId(chosen?.id ?? null);
     setDraftRules(chosen ? resolvePointsRules(chosen.rules) : DEFAULT_RULES);
+    setDraftSettings(chosen?.settings ?? DEFAULT_POINTS_SETTINGS);
   }, []);
 
   const load = useCallback(async (preferTemplateId?: string | null) => {
@@ -230,13 +233,16 @@ export default function PointsPage() {
   );
   const activeTemplate = useMemo(() => templates.find((t) => t.is_active) ?? templates[0] ?? null, [templates]);
 
-  // The real leaderboard — the one that decides the $200 — always scores
+  // The real leaderboard — the one that decides the configured prize — always scores
   // with the school's ACTIVE, saved template. Unsaved edits in the template
   // editor never move it; that only happens once a template is activated.
   const activeRules = useMemo(
     () => (activeTemplate ? resolvePointsRules(activeTemplate.rules) : DEFAULT_RULES),
     [activeTemplate],
   );
+
+  const settings = activeTemplate?.settings ?? DEFAULT_POINTS_SETTINGS;
+  const prizeWinners = settings.winner_count;
 
   const ranked: Ranked[] = useMemo(() => {
     if (!data) return [];
@@ -274,7 +280,7 @@ export default function PointsPage() {
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const rows = ranked.filter((row) => {
-      if (topOnly && row.rank > PRIZE_WINNERS) return false;
+      if (topOnly && row.rank > prizeWinners) return false;
       if (groupFilter !== "all" && !row.groups.some((group) => group.id === groupFilter)) return false;
       if (workshopFilter !== "all" && !row.workshops.some((shop) => shop.id === workshopFilter)) return false;
       if (statusFilter !== "all" && row.onboarding_status !== statusFilter) return false;
@@ -302,7 +308,7 @@ export default function PointsPage() {
         : (a as number) - (b as number);
       return sortDesc ? -cmp : cmp;
     });
-  }, [ranked, query, groupFilter, workshopFilter, statusFilter, topOnly, sortKey, sortDesc]);
+  }, [ranked, query, groupFilter, workshopFilter, statusFilter, topOnly, sortKey, sortDesc, prizeWinners]);
 
   const stats = useMemo(() => {
     const attainable = rulesTotal(activeRules);
@@ -310,7 +316,7 @@ export default function PointsPage() {
       return { count: 0, average: 0, best: 0, cutoff: 0, attainable, active: 0 };
     }
     const totals = ranked.map((row) => row.score.total);
-    const cutoff = ranked[Math.min(PRIZE_WINNERS, ranked.length) - 1]?.score.total ?? 0;
+    const cutoff = ranked[Math.min(prizeWinners, ranked.length) - 1]?.score.total ?? 0;
     return {
       count: ranked.length,
       average: totals.reduce((sum, value) => sum + value, 0) / totals.length,
@@ -319,12 +325,13 @@ export default function PointsPage() {
       attainable,
       active: ranked.filter((row) => row.score.total > 0).length,
     };
-  }, [ranked, activeRules]);
+  }, [ranked, activeRules, prizeWinners]);
 
   const draftTotal = rulesTotal(draftRules);
   const rulesDirty = useMemo(
-    () => JSON.stringify(draftRules) !== JSON.stringify(selectedTemplate ? resolvePointsRules(selectedTemplate.rules) : DEFAULT_RULES),
-    [draftRules, selectedTemplate],
+    () => JSON.stringify(draftRules) !== JSON.stringify(selectedTemplate ? resolvePointsRules(selectedTemplate.rules) : DEFAULT_RULES)
+      || JSON.stringify(draftSettings) !== JSON.stringify(selectedTemplate?.settings ?? DEFAULT_POINTS_SETTINGS),
+    [draftRules, draftSettings, selectedTemplate],
   );
 
   /* ── Template mutations ── */
@@ -345,7 +352,7 @@ export default function PointsPage() {
         response = await fetch(`/api/school-admin/points/templates/${selectedTemplate.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rules: draftRules }),
+          body: JSON.stringify({ rules: draftRules, settings: draftSettings }),
         });
       } else {
         response = await fetch("/api/school-admin/points/templates", {
@@ -362,7 +369,7 @@ export default function PointsPage() {
         const second = await fetch(`/api/school-admin/points/templates/${saved.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rules: draftRules }),
+          body: JSON.stringify({ rules: draftRules, settings: draftSettings }),
         });
         if (!second.ok) throw new Error("failed");
         const secondPayload = await second.json();
@@ -400,6 +407,7 @@ export default function PointsPage() {
       setTemplates((current) => [...current.filter((t) => t.id !== null), created]);
       setSelectedTemplateId(created.id);
       setDraftRules(resolvePointsRules(created.rules));
+      setDraftSettings(created.settings);
       setNewTemplateName("");
       setCreatingNew(false);
     } catch {
@@ -550,17 +558,14 @@ export default function PointsPage() {
       <header className="pts-hero">
         <div className="pts-hero-glow" aria-hidden="true" />
         <div className="pts-hero-copy">
-          <span className="pts-eyebrow"><Sparkles size={13} /> رحلة المشرف المتميز</span>
-          <h1 className="pts-title">النقاط</h1>
-          <p className="pts-sub">
-            من الالتزام إلى الأثر — رصيد كل مشرف من {fmt(stats.attainable)} نقطة، مبنيّ على نشاطه الفعلي
-            داخل المنصة. المنافسة ليست سباقًا لإنجاز أكبر عدد من المهام؛ إنها رحلة لإظهار أفضل قيادة وأفضل أثر.
-          </p>
+          <span className="pts-eyebrow"><Sparkles size={13} /> {settings.period_label}</span>
+          <h1 className="pts-title">{settings.title}</h1>
+          <p className="pts-sub">{settings.subtitle} الرصيد المتاح: {fmt(stats.attainable)} نقطة.</p>
         </div>
         <div className="pts-prize">
           <Trophy size={20} />
-          <strong>أفضل {PRIZE_WINNERS} مشرفين</strong>
-          <span>جائزة 200$</span>
+          <strong>أفضل {prizeWinners} مشرفين</strong>
+          <span>{settings.prize_label} {fmt(settings.prize_value)}{settings.prize_currency}</span>
         </div>
       </header>
 
@@ -579,17 +584,17 @@ export default function PointsPage() {
         <StatCard
           icon={<Medal size={16} />}
           value={fmt(stats.cutoff)}
-          label={`حدّ التأهل لأفضل ${PRIZE_WINNERS}`}
+          label={`حدّ التأهل لأفضل ${prizeWinners}`}
         />
       </section>
 
       {/* ── Tabs ── */}
       <nav className="pts-tabs">
         <button className={tab === "board" ? "active" : ""} onClick={() => setTab("board")}>
-          <Trophy size={14} /> لوحة الصدارة
+          <Trophy size={14} /> {settings.leaderboard_label}
         </button>
         <button className={tab === "rules" ? "active" : ""} onClick={() => setTab("rules")}>
-          <SlidersHorizontal size={14} /> قوالب التوزيع
+          <SlidersHorizontal size={14} /> {settings.template_label}
         </button>
         {rulesDirty && <span className="pts-tabs-flag">تعديلات غير محفوظة على القالب</span>}
       </nav>
@@ -673,7 +678,7 @@ export default function PointsPage() {
                 className={`pts-chip${topOnly ? " on" : ""}`}
                 onClick={() => setTopOnly((value) => !value)}
               >
-                <Crown size={13} /> أفضل {PRIZE_WINNERS} فقط
+                <Crown size={13} /> أفضل {prizeWinners} فقط
               </button>
               <button className="pts-chip" onClick={exportCsv}>
                 <Download size={13} /> تصدير CSV
@@ -731,6 +736,8 @@ export default function PointsPage() {
           onSelect={selectTemplate}
           rules={draftRules}
           onChangeRules={setDraftRules}
+          settings={draftSettings}
+          onChangeSettings={setDraftSettings}
           onSave={() => void saveTemplateRules()}
           dirty={rulesDirty}
           saving={savingTemplate}
@@ -1156,7 +1163,7 @@ function OverallEditor({
 /* ─────────────────────── Distribution editor ─────────────────────── */
 
 function TemplatesEditor({
-  templates, selected, onSelect, rules, onChangeRules, onSave, dirty, saving, savedAt, total, viewOnly, preview, busy,
+  templates, selected, onSelect, rules, onChangeRules, settings, onChangeSettings, onSave, dirty, saving, savedAt, total, viewOnly, preview, busy,
   renaming, renameValue, onStartRename, onCancelRename, onRenameValueChange, onCommitRename,
   creatingNew, newTemplateName, onStartCreate, onCancelCreate, onNewTemplateNameChange, onCommitCreate,
   onDuplicate, onActivate, onDelete,
@@ -1166,6 +1173,8 @@ function TemplatesEditor({
   onSelect: (id: string | null) => void;
   rules: PointsRule[];
   onChangeRules: (next: PointsRule[]) => void;
+  settings: PointsSettings;
+  onChangeSettings: (next: PointsSettings) => void;
   onSave: () => void;
   dirty: boolean;
   saving: boolean;
@@ -1305,6 +1314,26 @@ function TemplatesEditor({
             )}
           </div>
         )}
+      </section>
+
+      <section className="pts-settings-card">
+        <div className="pts-settings-head">
+          <div>
+            <h3>إعدادات العرض والجائزة</h3>
+            <p>عدّل كل النصوص وعدد الفائزين وقيمة الجائزة والعملة كما تريد. تُحفظ هذه الإعدادات داخل القالب الحالي.</p>
+          </div>
+        </div>
+        <div className="pts-settings-grid">
+          <label className="pts-settings-wide"><span>عنوان الصفحة</span><input value={settings.title} disabled={viewOnly} maxLength={60} onChange={(event) => onChangeSettings({ ...settings, title: event.target.value })} /></label>
+          <label><span>اسم المناسبة</span><input value={settings.period_label} disabled={viewOnly} maxLength={80} onChange={(event) => onChangeSettings({ ...settings, period_label: event.target.value })} /></label>
+          <label><span>اسم لوحة الترتيب</span><input value={settings.leaderboard_label} disabled={viewOnly} maxLength={40} onChange={(event) => onChangeSettings({ ...settings, leaderboard_label: event.target.value })} /></label>
+          <label><span>اسم قسم القوالب</span><input value={settings.template_label} disabled={viewOnly} maxLength={40} onChange={(event) => onChangeSettings({ ...settings, template_label: event.target.value })} /></label>
+          <label><span>عدد الفائزين</span><input type="number" min={1} max={100} value={settings.winner_count} disabled={viewOnly} onChange={(event) => onChangeSettings({ ...settings, winner_count: Math.max(1, Number(event.target.value) || 1) })} /></label>
+          <label><span>قيمة الجائزة</span><input type="number" min={0} step="0.01" value={settings.prize_value} disabled={viewOnly} onChange={(event) => onChangeSettings({ ...settings, prize_value: Math.max(0, Number(event.target.value) || 0) })} /></label>
+          <label><span>العملة</span><input value={settings.prize_currency} disabled={viewOnly} maxLength={12} onChange={(event) => onChangeSettings({ ...settings, prize_currency: event.target.value })} /></label>
+          <label><span>وصف الجائزة</span><input value={settings.prize_label} disabled={viewOnly} maxLength={40} onChange={(event) => onChangeSettings({ ...settings, prize_label: event.target.value })} /></label>
+          <label className="pts-settings-wide"><span>الوصف التعريفي</span><textarea value={settings.subtitle} disabled={viewOnly} maxLength={240} rows={3} onChange={(event) => onChangeSettings({ ...settings, subtitle: event.target.value })} /></label>
+        </div>
       </section>
 
       <div className="pts-rules-actions">
@@ -1696,6 +1725,17 @@ function Styles() {
 
       .pts-rules-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
+      .pts-settings-card { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 16px; padding: 17px 18px; }
+      .pts-settings-head h3 { margin: 0 0 4px; font-size: 15px; font-weight: 900; color: #32101A; }
+      .pts-settings-head p { margin: 0; font-size: 11.5px; color: #796A62; line-height: 1.8; }
+      .pts-settings-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-top: 15px; }
+      .pts-settings-grid label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+      .pts-settings-grid label span { font-size: 10.5px; font-weight: 800; color: #796A62; }
+      .pts-settings-grid input, .pts-settings-grid textarea { width: 100%; resize: vertical; background: #FFF; border: 1.5px solid rgba(194,160,89,0.32); border-radius: 9px; padding: 8px 9px; font-family: inherit; font-size: 12px; font-weight: 700; color: #32101A; outline: none; }
+      .pts-settings-grid input:focus, .pts-settings-grid textarea:focus { border-color: #B8A082; }
+      .pts-settings-grid :is(input, textarea):disabled { opacity: .65; cursor: not-allowed; background: #F6F1E9; }
+      .pts-settings-wide { grid-column: span 2; }
+
       .pts-preview { background: #FFFBF5; border: 1px solid rgba(26,26,26,0.07); border-radius: 16px; padding: 15px 17px; }
       .pts-preview h3 { margin: 0 0 11px; font-size: 12.5px; font-weight: 900; color: #32101A; }
       .pts-preview-list { display: flex; flex-direction: column; gap: 8px; }
@@ -1758,6 +1798,7 @@ function Styles() {
         .pts-caret { grid-area: caret; }
         .pts-metric-main { grid-template-columns: minmax(0,1fr) auto auto; }
         .pts-metric-bar { grid-column: 1 / -1; }
+        .pts-settings-grid { grid-template-columns: 1fr 1fr; }
       }
       @media (max-width: 560px) {
         .pts-title { font-size: 25px; }
@@ -1766,6 +1807,8 @@ function Styles() {
         .pts-selects { grid-template-columns: 1fr; }
         .pts-editor input { width: 100%; }
         .pts-editor label { flex: 1; min-width: 120px; }
+        .pts-settings-grid { grid-template-columns: 1fr; }
+        .pts-settings-wide { grid-column: auto; }
       }
 
       /* ── Confirm modal ── */

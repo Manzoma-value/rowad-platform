@@ -431,6 +431,33 @@ export type PointsRule = {
   target: number;
 };
 
+/** Presentation controls for the points experience. They live beside the
+ * rules inside the existing JSON column so every admin can customize the
+ * competition without a database migration. */
+export type PointsSettings = {
+  title: string;
+  subtitle: string;
+  leaderboard_label: string;
+  template_label: string;
+  winner_count: number;
+  prize_value: number;
+  prize_currency: string;
+  prize_label: string;
+  period_label: string;
+};
+
+export const DEFAULT_POINTS_SETTINGS: PointsSettings = {
+  title: "النقاط",
+  subtitle: "من الالتزام إلى الأثر — رصيد كل مشرف مبنيّ على نشاطه الفعلي داخل المنصة.",
+  leaderboard_label: "لوحة الصدارة",
+  template_label: "قوالب التوزيع",
+  winner_count: 10,
+  prize_value: 200,
+  prize_currency: "$",
+  prize_label: "جائزة",
+  period_label: "رحلة المشرف المتميز",
+};
+
 export const DEFAULT_RULES: PointsRule[] = METRIC_DEFS.map((metric) => ({
   key: metric.key,
   enabled: true,
@@ -453,9 +480,12 @@ function clampNumber(value: unknown, min: number, max: number, fallback: number)
  * a newly added metric appears with its default weight and no migration.
  */
 export function resolvePointsRules(stored: unknown): PointsRule[] {
+  const source = stored && typeof stored === "object" && !Array.isArray(stored)
+    ? (stored as { rules?: unknown }).rules
+    : stored;
   const overrides = new Map<string, Record<string, unknown>>();
-  if (Array.isArray(stored)) {
-    for (const raw of stored) {
+  if (Array.isArray(source)) {
+    for (const raw of source) {
       if (!raw || typeof raw !== "object") continue;
       const entry = raw as Record<string, unknown>;
       const key = String(entry.key ?? "");
@@ -473,6 +503,35 @@ export function resolvePointsRules(stored: unknown): PointsRule[] {
       target: clampNumber(entry.target, 0, 100000, fallback.target),
     };
   });
+}
+
+function cleanText(value: unknown, fallback: string, max: number) {
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, max) : fallback;
+}
+
+export function resolvePointsSettings(stored: unknown): PointsSettings {
+  const source = stored && typeof stored === "object" && !Array.isArray(stored)
+    ? (stored as { settings?: Record<string, unknown> }).settings
+    : undefined;
+  const finite = (value: unknown, fallback: number, min: number, max: number) => {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.min(max, Math.max(min, Math.round(number * 100) / 100)) : fallback;
+  };
+  return {
+    title: cleanText(source?.title, DEFAULT_POINTS_SETTINGS.title, 80),
+    subtitle: cleanText(source?.subtitle, DEFAULT_POINTS_SETTINGS.subtitle, 300),
+    leaderboard_label: cleanText(source?.leaderboard_label, DEFAULT_POINTS_SETTINGS.leaderboard_label, 50),
+    template_label: cleanText(source?.template_label, DEFAULT_POINTS_SETTINGS.template_label, 50),
+    winner_count: finite(source?.winner_count, DEFAULT_POINTS_SETTINGS.winner_count, 1, 100),
+    prize_value: finite(source?.prize_value, DEFAULT_POINTS_SETTINGS.prize_value, 0, 10000000),
+    prize_currency: cleanText(source?.prize_currency, DEFAULT_POINTS_SETTINGS.prize_currency, 12),
+    prize_label: cleanText(source?.prize_label, DEFAULT_POINTS_SETTINGS.prize_label, 40),
+    period_label: cleanText(source?.period_label, DEFAULT_POINTS_SETTINGS.period_label, 80),
+  };
+}
+
+export function serializePointsConfig(rules: PointsRule[], settings: PointsSettings) {
+  return { rules: resolvePointsRules(rules), settings: resolvePointsSettings({ settings }) };
 }
 
 /** One measured signal for one supervisor. `total` is only used by RATIO. */

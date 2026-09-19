@@ -8,16 +8,16 @@ import styles from "./white-label.module.css";
 type Lang = "ar" | "en";
 const copy = {
   en: {
-    brand: "Rowad", tagline: "A space for possibility", nav: ["The platform", "Your experience", "Built for you"], login: "Sign in", enter: "Enter your workspace", explore: "Explore the platform",
-    eyebrow: "YOUR VISION. YOUR IDENTITY. YOUR PLATFORM.", title: "Great learning starts", accent: "with connection.", intro: "Bring your people, programs, and progress together. One beautifully connected platform, shaped around your school.", note: "For owners, administrators, supervisors, and beneficiaries.",
-    preview: "Workspace preview", school: "Your school", overview: "Overview", welcome: "A clearer view of every journey.", sample: "Illustrative workspace", tabs: ["Overview", "Learning", "Community"],
-    metrics: ["Role-based portals", "School identity", "Connected experience"], metricValues: ["04", "Your own", "All in one"],
-    previewLabels: ["People & groups", "Learning pathways", "School insights"], previewValues: ["Bring people together", "Give progress direction", "See the bigger picture"], activity: "A connected learning journey", activityItems: ["Welcome & placement", "Learn & participate", "Measure & grow"],
-    strip: ["School management", "Learning & workshops", "Assessment & insights", "Community"],
+    brand: "Binaa Al-Ahliyyah", tagline: "Al Rowad platform", nav: ["The platform", "Your experience", "Built for you"], login: "Sign in", enter: "Enter your workspace", explore: "Explore the platform",
+    eyebrow: "YOUR VISION. YOUR IDENTITY. YOUR PLATFORM.", title: "Great learning starts", accent: "with connection.", intro: "Bring your people, programs, and progress together. One beautifully connected platform, shaped around your organization.", note: "For owners, administrators, supervisors, and beneficiaries.",
+    preview: "Workspace preview", platformName: "Your platform", overview: "Overview", welcome: "A clearer view of every journey.", sample: "Illustrative workspace", tabs: ["Overview", "Learning", "Community"],
+    metrics: ["Role-based portals", "Distinct identity", "Connected experience"], metricValues: ["04", "Your own", "All in one"],
+    previewLabels: ["People & groups", "Learning pathways", "Platform insights"], previewValues: ["Bring people together", "Give progress direction", "See the bigger picture"], activity: "A connected learning journey", activityItems: ["Welcome & placement", "Learn & participate", "Measure & grow"],
+    strip: ["Platform management", "Learning & workshops", "Assessment & insights", "Community"],
     featuresLabel: "ONE PLATFORM. EVERY PERSPECTIVE.", featuresTitle: "A place for everyone.", featuresSub: "Give each person the tools they need, with a shared view of what matters.",
     roles: [
-      { title: "Lead with clarity.", role: "For platform owners", body: "Bring schools, permissions, and institutional reports into a central view. Build the next chapter from a stronger foundation.", tags: ["Multiple schools", "Central oversight"] },
-      { title: "Make every day flow.", role: "For administrators", body: "Coordinate people, groups, applications, and workshops with the information you need close at hand.", tags: ["School operations", "Reviews & reports"] },
+      { title: "Lead with clarity.", role: "For platform owners", body: "Bring communities, permissions, and organization-wide reports into a central view. Build the next chapter from a stronger foundation.", tags: ["Flexible spaces", "Central oversight"] },
+      { title: "Make every day flow.", role: "For administrators", body: "Coordinate people, groups, applications, and workshops with the information you need close at hand.", tags: ["Platform operations", "Reviews & reports"] },
       { title: "Create room to grow.", role: "For supervisors", body: "Deliver lessons, guide groups, and understand each beneficiary’s development along the way.", tags: ["Lessons & quizzes", "Development"] },
       { title: "Own your journey.", role: "For beneficiaries", body: "Learn, participate, and connect through purposeful content, educational games, and community.", tags: ["Personal learning", "Community"] },
     ],
@@ -26,21 +26,21 @@ const copy = {
       { title: "Bring learning to life", body: "Create space for lessons, workshops, groups, and participation." },
       { title: "Turn progress into perspective", body: "Use assessments and reports to guide the next step." },
     ],
-    identityLabel: "BUILT AROUND YOUR SCHOOL", identityTitle: "Your identity.\nA world of possibility.", identitySub: "Make the experience feel like yours, from your school’s name and colors to the features your community uses.", benefits: ["Your own school branding and domain", "Dedicated school data and permissions", "Arabic and English experiences", "Features you can tailor to your school"],
+    identityLabel: "BUILT AROUND YOUR IDENTITY", identityTitle: "Your identity.\nA world of possibility.", identitySub: "Make the experience feel like yours, from your organization’s name and colors to the features your community uses.", benefits: ["Your own brand and domain", "Dedicated data and permissions", "Arabic and English experiences", "Features you can tailor to your organization"],
     identityCard: "Make it your own", identitySmall: "A familiar identity. A connected experience.", identityChips: ["Your name", "Your colors", "Your community"],
-    finalLabel: "YOUR NEXT CHAPTER STARTS HERE", finalTitle: "Bring your school together.", finalSub: "Step inside Rowad and explore a more connected way to learn, lead, and grow.", signup: "Create a beneficiary account", footer: "Built for people. Designed for progress.", back: "Back to top",
+    finalLabel: "YOUR NEXT CHAPTER STARTS HERE", finalTitle: "Bring your community together.", finalSub: "Step inside Al Rowad and explore a more connected way to learn, lead, and grow.", signup: "Create a beneficiary account", footer: "Built for people. Designed for progress.", back: "Back to top",
   },
   ar: {
-    brand: "رواد", tagline: "مساحة تتسع للطموح", nav: ["المنصة", "تجربتك", "على هويتك"], login: "تسجيل الدخول", enter: "ادخل إلى مساحتك", explore: "اكتشف المنصة",
-    eyebrow: "رؤيتك. هويتك. منصتك.", title: "التعلّم الملهم يبدأ", accent: "بالتواصل.", intro: "اجمع أفراد مدرستك وبرامجها ورحلات نموها في مكان واحد. تجربة متكاملة تتشكّل حول احتياجاتك وتحمل هويتك.", note: "للمالك والإدارة والمشرفين والمستفيدين.",
-    preview: "نظرة على المنصة", school: "مدرستك", overview: "نظرة عامة", welcome: "رؤية أوضح لكل رحلة تعلّم.", sample: "نموذج توضيحي للواجهة", tabs: ["نظرة عامة", "التعلّم", "المجتمع"],
-    metrics: ["بوابات حسب الدور", "هوية المدرسة", "تجربة متكاملة"], metricValues: ["04", "بصمتك", "مكان واحد"],
-    previewLabels: ["الأفراد والمجموعات", "مسارات التعلّم", "رؤى المدرسة"], previewValues: ["مجتمع يلتقي وينمو", "تقدّم له اتجاه", "الصورة الكاملة أمامك"], activity: "رحلة تعلّم مترابطة", activityItems: ["ترحيب وتصنيف", "تعلّم ومشاركة", "قياس ونمو"],
-    strip: ["إدارة المدرسة", "التعلّم والورش", "القياس والتقارير", "المجتمع"],
+    brand: "منصة بناء الأهلية", tagline: "(الرواد)", nav: ["المنصة", "تجربتك", "على هويتك"], login: "تسجيل الدخول", enter: "ادخل إلى مساحتك", explore: "اكتشف المنصة",
+    eyebrow: "رؤيتك. هويتك. منصتك.", title: "التعلّم الملهم يبدأ", accent: "بالتواصل.", intro: "اجمع أفراد جهتك وبرامجها ورحلات نموها في مكان واحد. تجربة متكاملة تتشكّل حول احتياجاتك وتحمل هويتك.", note: "للمالك والإدارة والمشرفين والمستفيدين.",
+    preview: "نظرة على المنصة", platformName: "منصتك", overview: "نظرة عامة", welcome: "رؤية أوضح لكل رحلة تعلّم.", sample: "نموذج توضيحي للواجهة", tabs: ["نظرة عامة", "التعلّم", "المجتمع"],
+    metrics: ["بوابات حسب الدور", "هوية الجهة", "تجربة متكاملة"], metricValues: ["04", "بصمتك", "مكان واحد"],
+    previewLabels: ["الأفراد والمجموعات", "مسارات التعلّم", "رؤى المنصة"], previewValues: ["مجتمع يلتقي وينمو", "تقدّم له اتجاه", "الصورة الكاملة أمامك"], activity: "رحلة تعلّم مترابطة", activityItems: ["ترحيب وتصنيف", "تعلّم ومشاركة", "قياس ونمو"],
+    strip: ["إدارة المنصة", "التعلّم والورش", "القياس والتقارير", "المجتمع"],
     featuresLabel: "منصة واحدة. آفاق متعددة.", featuresTitle: "لكل فرد مساحته.", featuresSub: "أدوات تناسب كل دور، ورؤية مشتركة لما يصنع الفرق.",
     roles: [
-      { title: "قُد برؤية واضحة.", role: "لمالك المنصة", body: "اجمع المدارس والصلاحيات والتقارير المؤسسية في لوحة مركزية، وابنِ المرحلة القادمة على أساس واضح.", tags: ["مدارس متعددة", "إشراف مركزي"] },
-      { title: "يوم أكثر انسيابية.", role: "لإدارة المدرسة", body: "نظّم الأفراد والمجموعات والطلبات والورش، واجعل المعلومات التي تحتاجها في متناولك.", tags: ["تشغيل المدرسة", "مراجعات وتقارير"] },
+      { title: "قُد برؤية واضحة.", role: "لمالك المنصة", body: "اجمع المجتمعات والصلاحيات والتقارير المؤسسية في لوحة مركزية، وابنِ المرحلة القادمة على أساس واضح.", tags: ["مساحات متعددة", "إشراف مركزي"] },
+      { title: "يوم أكثر انسيابية.", role: "لإدارة المنصة", body: "نظّم الأفراد والمجموعات والطلبات والورش، واجعل المعلومات التي تحتاجها في متناولك.", tags: ["تشغيل المنصة", "مراجعات وتقارير"] },
       { title: "افتح آفاق النمو.", role: "للمشرفين", body: "قدّم الدروس ووجّه المجموعات وتابع تطوّر كل مستفيد خلال رحلته.", tags: ["دروس واختبارات", "متابعة التطوّر"] },
       { title: "اصنع رحلتك.", role: "للمستفيدين", body: "تعلّم وشارك وتواصل من خلال محتوى هادف وألعاب تعليمية ومجتمع يتعلّم معك.", tags: ["تعلّم شخصي", "مجتمع متفاعل"] },
     ],
@@ -49,9 +49,9 @@ const copy = {
       { title: "امنح التعلّم حياة", body: "مساحة للدروس والورش والمجموعات والمشاركة الفاعلة." },
       { title: "حوّل التقدّم إلى رؤية", body: "استفد من التقييمات والتقارير لتوجيه الخطوة القادمة." },
     ],
-    identityLabel: "مصمّمة حول مدرستك", identityTitle: "هويتك الخاصة.\nوإمكانات واسعة.", identitySub: "تجربة تشبهك، من اسم المدرسة وألوانها إلى الوظائف التي يحتاجها مجتمعك.", benefits: ["علامة مدرستك ونطاقها الخاص", "بيانات وصلاحيات مستقلة لكل مدرسة", "تجربة بالعربية والإنجليزية", "وظائف تختارها لتناسب مدرستك"],
+    identityLabel: "مصمّمة حول هويتك", identityTitle: "هويتك الخاصة.\nوإمكانات واسعة.", identitySub: "تجربة تشبهك، من اسم جهتك وألوانها إلى الوظائف التي يحتاجها مجتمعك.", benefits: ["علامتك ونطاقك الخاص", "بيانات وصلاحيات مستقلة", "تجربة بالعربية والإنجليزية", "وظائف تختارها لتناسب جهتك"],
     identityCard: "اجعلها على هويتك", identitySmall: "هوية مألوفة. تجربة متكاملة.", identityChips: ["اسمك", "ألوانك", "مجتمعك"],
-    finalLabel: "هنا يبدأ فصلك القادم", finalTitle: "اجمع مدرستك على رؤية واحدة.", finalSub: "اكتشف مع رواد تجربة أكثر ترابطًا في التعلّم والقيادة والنمو.", signup: "إنشاء حساب مستفيد", footer: "للإنسان أولًا. وللنمو دائمًا.", back: "العودة للأعلى",
+    finalLabel: "هنا يبدأ فصلك القادم", finalTitle: "اجمع مجتمعك على رؤية واحدة.", finalSub: "اكتشف مع الرواد تجربة أكثر ترابطًا في التعلّم والقيادة والنمو.", signup: "إنشاء حساب مستفيد", footer: "للإنسان أولًا. وللنمو دائمًا.", back: "العودة للأعلى",
   },
 };
 const roleIcons = [Layers3, LayoutDashboard, BookOpen, GraduationCap];
@@ -71,7 +71,7 @@ export default function LandingClient() {
   return (
     <main id="top" className={styles.root} dir={lang === "ar" ? "rtl" : "ltr"} lang={lang}>
       <header className={styles.header}>
-        <Link href="/" className={styles.brand}><span className={styles.mark}><Layers3 size={23} /></span><span>{tr.brand}<small>{tr.tagline}</small></span></Link>
+        <Link href="/" className={styles.brand}><span className={styles.mark}><img src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-maroon.svg" alt="" /></span><span>{tr.brand}<small>{tr.tagline}</small></span></Link>
         <nav className={styles.desktopNav} aria-label={lang === "ar" ? "القائمة الرئيسية" : "Main navigation"}>{links.map((id, i) => <a key={id} href={`#${id}`}>{tr.nav[i]}</a>)}</nav>
         <div className={styles.headerActions}>
           <button className={styles.language} onClick={() => { const next = lang === "ar" ? "en" : "ar"; setLang(next); localStorage.setItem("lang", next); }} aria-label={lang === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{lang === "ar" ? "EN" : "عربي"}</button>
@@ -83,16 +83,15 @@ export default function LandingClient() {
 
       <section className={styles.hero}>
         <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}><span />{tr.eyebrow}</p>
+          <p className={styles.eyebrow}>{tr.eyebrow}</p>
           <h1>{tr.title}<em>{tr.accent}</em></h1>
           <p className={styles.intro}>{tr.intro}</p>
           <div className={styles.actions}><Link href="/login" className={styles.primary}>{tr.enter}<Arrow size={19} /></Link><a href="#platform" className={styles.secondary}>{tr.explore}<ArrowRight size={17} /></a></div>
           <p className={styles.heroNote}><ShieldCheck size={16} />{tr.note}</p>
         </div>
         <div className={styles.previewScene}>
-          <div className={styles.orbit} aria-hidden="true" />
           <div className={styles.preview}>
-            <div className={styles.previewTop}><span><Layers3 size={18} />{tr.school}</span><span className={styles.previewBadge}>{tr.preview}</span></div>
+            <div className={styles.previewTop}><span><Layers3 size={18} />{tr.platformName}</span><span className={styles.previewBadge}>{tr.preview}</span></div>
             <div className={styles.previewBody}>
               <div className={styles.previewTabs}>{tr.tabs.map((tab, i) => <span className={i === 0 ? styles.selectedTab : ""} key={tab}>{tab}</span>)}</div>
               <div className={styles.previewHeading}><div><small>{tr.overview}</small><h2>{tr.welcome}</h2></div><span className={styles.miniMark}><Sparkles size={23} /></span></div>
@@ -100,7 +99,7 @@ export default function LandingClient() {
               <div className={styles.pathway}><div className={styles.pathwayTitle}><strong>{tr.activity}</strong><ArrowUpRight size={18} /></div>{tr.activityItems.map((item, i) => <div className={styles.pathwayRow} key={item}><span>{String(i + 1).padStart(2, "0")}</span><p>{item}</p><Check size={15} /></div>)}</div>
             </div>
           </div>
-          <div className={styles.floatingNote}><ShieldCheck size={22} /><div><strong>{lang === "ar" ? "مساحة خاصة بمدرستك" : "A space that’s yours"}</strong><span>{lang === "ar" ? "هوية مستقلة · مجتمع مترابط" : "Your identity · Connected community"}</span></div></div>
+          <div className={styles.floatingNote}><ShieldCheck size={22} /><div><strong>{lang === "ar" ? "مساحة خاصة بجهتك" : "A space that’s yours"}</strong><span>{lang === "ar" ? "هوية مستقلة · مجتمع مترابط" : "Your identity · Connected community"}</span></div></div>
           <p className={styles.previewCaption}>{tr.sample}</p>
         </div>
       </section>
@@ -123,7 +122,7 @@ export default function LandingClient() {
       </section>
 
       <section className={styles.closing}><p className={styles.eyebrow}>{tr.finalLabel}</p><h2>{tr.finalTitle}</h2><p>{tr.finalSub}</p><div className={styles.actions}><Link href="/login" className={styles.primary}>{tr.enter}<ArrowUpRight size={19} /></Link><Link href="/signup" className={styles.secondary}>{tr.signup}</Link></div></section>
-      <footer className={styles.footer}><Link href="/" className={styles.footerBrand}><Layers3 size={21} />{tr.brand}</Link><p>{tr.footer}</p><span>© {new Date().getFullYear()} Manzoma</span><a href="#top">{tr.back}<ArrowUpRight size={15} /></a></footer>
+      <footer className={styles.footer}><Link href="/" className={styles.footerBrand}><img src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-maroon.svg" alt="" />{tr.brand}</Link><p>{tr.footer}</p><span>© {new Date().getFullYear()} Manzoma</span><a href="#top">{tr.back}<ArrowUpRight size={15} /></a></footer>
     </main>
   );
 }

@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
-import { DEFAULT_RULES, resolvePointsRules } from "@/lib/teacher-points";
+import { DEFAULT_POINTS_SETTINGS, DEFAULT_RULES, resolvePointsRules, resolvePointsSettings, serializePointsConfig } from "@/lib/teacher-points";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,7 @@ export async function POST(req: Request) {
   const duplicateFrom = typeof body?.duplicate_from === "string" ? body.duplicate_from : null;
 
   let rules = DEFAULT_RULES;
+  let settings = DEFAULT_POINTS_SETTINGS;
   if (duplicateFrom) {
     const source = await prisma.pointsConfig.findFirst({
       where: { id: duplicateFrom, school_id: auth.school.id },
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
     });
     if (!source) return NextResponse.json({ error: "Template not found" }, { status: 404 });
     rules = resolvePointsRules(source.rules);
+    settings = resolvePointsSettings(source.rules);
   }
 
   // The very first template a school creates starts active — otherwise
@@ -41,11 +43,11 @@ export async function POST(req: Request) {
     data: {
       school_id: auth.school.id,
       name,
-      rules,
+      rules: serializePointsConfig(rules, settings),
       is_active: existingCount === 0,
     },
     select: { id: true, name: true, is_active: true, rules: true, updated_at: true, created_at: true },
   });
 
-  return NextResponse.json({ template: { ...template, rules: resolvePointsRules(template.rules) } });
+  return NextResponse.json({ template: { ...template, rules: resolvePointsRules(template.rules), settings: resolvePointsSettings(template.rules) } });
 }

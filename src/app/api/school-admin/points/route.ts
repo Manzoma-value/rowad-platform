@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
 import { requireSchoolAdmin } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
 import { collectTeacherPoints } from "@/lib/teacher-points-server";
-import { DEFAULT_RULES, resolvePointsRules } from "@/lib/teacher-points";
+import { DEFAULT_POINTS_SETTINGS, DEFAULT_RULES, resolvePointsRules, resolvePointsSettings } from "@/lib/teacher-points";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +43,17 @@ export async function GET() {
   // as a virtual, unsaved "الافتراضي" template rather than 404ing. It is
   // materialised into a real row the first time the admin saves anything.
   const templates = configs.length > 0
-    ? configs.map((config) => ({ ...config, rules: resolvePointsRules(config.rules) }))
+    ? configs.map((config) => ({
+        ...config,
+        rules: resolvePointsRules(config.rules),
+        settings: resolvePointsSettings(config.rules),
+      }))
     : [{
         id: null as string | null,
         name: "التوزيع الافتراضي",
         is_active: true,
         rules: DEFAULT_RULES,
+        settings: DEFAULT_POINTS_SETTINGS,
         updated_at: null as string | null,
         created_at: null as string | null,
       }];

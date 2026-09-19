@@ -48,8 +48,8 @@ function Mandala({ size = 200, className = "" }: { size?: number; className?: st
 const STRINGS = {
   ar: {
     dir: "rtl" as const,
-    brand: "منصة رواد",
-    tagline: "مساحة تجمع مجتمع مدرستك وتفتح آفاق التعلّم والنمو.",
+    brand: "منصة بناء الأهلية (الرواد)",
+    tagline: "مساحة تجمع مجتمعك وتفتح آفاق التعلّم والنمو.",
     albania: "رؤيتك. هويتك. منصتك.",
     albanianValues: "إدارة · تعلم · قياس · مجتمع",
     welcome: "مرحبًا بعودتك",
@@ -76,8 +76,8 @@ const STRINGS = {
   },
   en: {
     dir: "ltr" as const,
-    brand: "Rowad Platform",
-    tagline: "A space to bring your school together and open new possibilities.",
+    brand: "Binaa Al-Ahliyyah (Al Rowad)",
+    tagline: "A space to bring your community together and open new possibilities.",
     albania: "Your vision. Your identity. Your platform.",
     albanianValues: "Manage · Learn · Measure · Community",
     welcome: "Welcome back",
@@ -240,11 +240,10 @@ export default function LoginPage() {
           <div className="lp-panel-inner">
             <div className="lp-location" dir="ltr">
               <span className="lp-location-dot"/>
-              ROWAD <span>{lang === "ar" ? "مساحة تتسع للطموح" : "A SPACE FOR POSSIBILITY"}</span>
+              BINAA AL-AHLIYYAH <span>{lang === "ar" ? "منصة الرواد" : "AL ROWAD PLATFORM"}</span>
             </div>
             <div className="lp-brand-emblem">
-              <Mandala size={176} className="lp-mandala"/>
-              <Image src="/newIdentityBG.png" alt="" fill sizes="92px" className="lp-brand-logo" aria-hidden="true" priority />
+              <Image src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-gold.svg" alt="" fill sizes="92px" className="lp-brand-logo" aria-hidden="true" priority />
             </div>
             <div className="lp-brand-text">
               <Rule/>

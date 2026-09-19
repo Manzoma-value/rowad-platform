@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import { requireSchoolAdminWriter } from "@/lib/school-admin-auth";
 import { prisma } from "@/lib/prisma";
-import { resolvePointsRules } from "@/lib/teacher-points";
+import { resolvePointsRules, resolvePointsSettings, serializePointsConfig, type PointsSettings } from "@/lib/teacher-points";
 
 export const dynamic = "force-dynamic";
 
@@ -19,20 +19,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const existing = await prisma.pointsConfig.findFirst({
     where: { id, school_id: auth.school.id },
-    select: { id: true },
+    select: { id: true, rules: true },
   });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = await req.json().catch(() => null);
-  const data: { name?: string; rules?: ReturnType<typeof resolvePointsRules> } = {};
+  const data: { name?: string; rules?: ReturnType<typeof serializePointsConfig> } = {};
 
   if (typeof body?.name === "string") {
     const name = body.name.trim().slice(0, 80);
     if (!name) return NextResponse.json({ error: "name cannot be empty" }, { status: 400 });
     data.name = name;
   }
-  if (Array.isArray(body?.rules)) {
-    data.rules = resolvePointsRules(body.rules);
+  if (Array.isArray(body?.rules) || body?.settings) {
+    const rules = Array.isArray(body?.rules) ? resolvePointsRules(body.rules) : resolvePointsRules(existing.rules);
+    const settings = resolvePointsSettings({ settings: body?.settings ?? resolvePointsSettings(existing.rules) }) as PointsSettings;
+    data.rules = serializePointsConfig(rules, settings);
   }
 
   const activate = body?.activate === true;
@@ -51,7 +53,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
   });
 
-  return NextResponse.json({ template: { ...template, rules: resolvePointsRules(template.rules) } });
+  return NextResponse.json({ template: { ...template, rules: resolvePointsRules(template.rules), settings: resolvePointsSettings(template.rules) } });
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
