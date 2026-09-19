@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, BarChart3, BookOpen, Check, CircleGauge, Compass, Globe2, Layers3, Menu, PlayCircle, Route, ShieldCheck, Sparkles, Target, Users, Workflow, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, BarChart3, BookOpen, Check, CircleGauge, Compass, Globe2, Layers3, Menu, PlayCircle, Route, ShieldCheck, Sparkles, Target, Users, Workflow, X } from "lucide-react";
 import styles from "./white-label.module.css";
 
 type Lang = "ar" | "en";
@@ -44,18 +44,43 @@ const measureIcons = [Layers3, BarChart3, Compass];
 export default function LandingClient() {
   const [lang, setLang] = useState<Lang>("ar");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showOpening, setShowOpening] = useState(false);
   useEffect(() => {
     const saved = localStorage.getItem("lang");
     // Restore the visitor's existing preference after hydration.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === "ar" || saved === "en") setLang(saved);
   }, []);
+  useEffect(() => {
+    const openingSeen = localStorage.getItem("binaa-opening-seen-v1");
+    if (openingSeen) return;
+    localStorage.setItem("binaa-opening-seen-v1", "1");
+    // The opening is intentionally client-only and appears once per browser.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowOpening(true);
+    const timer = window.setTimeout(() => setShowOpening(false), 3400);
+    return () => window.clearTimeout(timer);
+  }, []);
   const tr = content[lang];
-  const Arrow = lang === "ar" ? ArrowRight : ArrowUpRight;
+  const Arrow = lang === "ar" ? ArrowLeft : ArrowRight;
   const navIds = ["model", "operation", "measurement", "journey"];
   const switchLanguage = () => { const next = lang === "ar" ? "en" : "ar"; setLang(next); localStorage.setItem("lang", next); };
   return (
     <main id="top" className={styles.root} dir={lang === "ar" ? "rtl" : "ltr"} lang={lang}>
+      {showOpening && (
+        <div className={styles.opening} role="dialog" aria-modal="true" aria-label={lang === "ar" ? "افتتاح منصة بناء الأهلية" : "Opening Binaa Al-Ahliyyah"}>
+          <div className={styles.openingPattern} aria-hidden="true" />
+          <div className={styles.openingContent}>
+            <div className={styles.openingSymbol}><Image src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-gold.svg" alt="" width={150} height={150} priority /></div>
+            <div className={styles.openingRule} aria-hidden="true" />
+            <p>{lang === "ar" ? "منصة" : "PLATFORM"}</p>
+            <h2>{lang === "ar" ? "بناء الأهلية" : "Binaa Al-Ahliyyah"}</h2>
+            <span>{lang === "ar" ? "فكرةٌ تتحوّل إلى أثر" : "From concept to measurable impact"}</span>
+          </div>
+          <button type="button" className={styles.openingSkip} onClick={() => setShowOpening(false)}>{lang === "ar" ? "تخطي" : "Skip"}</button>
+          <div className={styles.openingProgress} aria-hidden="true"><i /></div>
+        </div>
+      )}
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label={tr.kicker}><Image src="/binaa-brand/header/wordmark.png" alt={lang === "ar" ? "بناء الأهلية" : "Binaa Al-Ahliyyah"} width={175} height={64} priority /><small>{lang === "ar" ? "الرواد" : "AL ROWAD"}</small></Link>
         <nav className={styles.desktopNav}>{navIds.map((id, i) => <a key={id} href={`#${id}`}>{tr.nav[i]}</a>)}</nav>
