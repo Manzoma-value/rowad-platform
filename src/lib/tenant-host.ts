@@ -4,7 +4,7 @@
 // Each school lives on its own subdomain: <slug>.manzoma.sa
 // A few subdomains are RESERVED for the main / owner experience and are
 // NOT treated as tenant schools:
-//   - rowad        → the owner console (kept per the product decision)
+//   - rowad        → the white-label owner/demo host
 //   - www / app / admin / "" (apex) → main site
 //
 // This helper is pure (no Next.js imports) so it runs in middleware AND in
@@ -17,6 +17,14 @@ export const ROOT_DOMAIN =
 
 /** Subdomains that are NOT tenant schools (main site / owner console). */
 const RESERVED = new Set(["", "www", "app", "admin", "rowad"]);
+
+/** The reserved host used for the investor/demo white-label experience. */
+export const WHITE_LABEL_HOST = "rowad";
+
+/** The school slug whose demo data powers school-admin views on rowad.manzoma.sa. */
+export const WHITE_LABEL_DEMO_SCHOOL_SLUG =
+  process.env.NEXT_PUBLIC_WHITE_LABEL_DEMO_SCHOOL_SLUG?.toLowerCase() ||
+  "rowad-demo";
 
 export interface HostInfo {
   /** The school slug when this host is a tenant subdomain, else null. */
@@ -65,6 +73,45 @@ export function parseHost(rawHost: string | null | undefined): HostInfo {
 
   if (RESERVED.has(sub)) return NOT_TENANT;
   return { slug: sub, isTenant: true };
+}
+
+function subdomainFromHost(rawHost: string | null | undefined): string | null {
+  if (!rawHost) return null;
+
+  const host = rawHost.split(":")[0].trim().toLowerCase();
+  if (!host) return null;
+
+  let sub: string;
+
+  if (host.endsWith("." + ROOT_DOMAIN)) {
+    sub = host.slice(0, -(ROOT_DOMAIN.length + 1));
+  } else if (host === ROOT_DOMAIN) {
+    sub = "";
+  } else if (host.endsWith(".localhost")) {
+    sub = host.slice(0, -".localhost".length);
+  } else if (host === "localhost") {
+    sub = "";
+  } else {
+    return null;
+  }
+
+  return sub.split(".")[0] ?? "";
+}
+
+export function isWhiteLabelHost(rawHost: string | null | undefined): boolean {
+  return subdomainFromHost(rawHost) === WHITE_LABEL_HOST;
+}
+
+/**
+ * The school slug that should scope school-bound data for the current host.
+ * Tenant subdomains use their own slug. The reserved rowad host uses a demo
+ * school so admins can present a clean white-label environment.
+ */
+export function preferredSchoolSlugFromHost(rawHost: string | null | undefined): string | null {
+  const tenant = parseHost(rawHost);
+  if (tenant.slug) return tenant.slug;
+  if (isWhiteLabelHost(rawHost)) return WHITE_LABEL_DEMO_SCHOOL_SLUG;
+  return null;
 }
 
 /**

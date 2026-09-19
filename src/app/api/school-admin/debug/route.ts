@@ -8,6 +8,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import {
+  preferredSchoolSlugFromCurrentRequest,
+  resolveSchoolAdminMembership,
+} from "@/lib/school-context";
 
 export async function GET() {
   const steps: Record<string, unknown> = {};
@@ -43,10 +47,10 @@ export async function GET() {
   }
 
   // Step 4 — School membership lookup
-  const membership = await prisma.schoolAdminMember.findFirst({
-    where: { profile_id: profile.id },
-    select: { school: { select: { id: true, name: true } } },
-  });
+  const preferredSlug = await preferredSchoolSlugFromCurrentRequest();
+  steps.step4_preferred_school_slug = preferredSlug ?? "none";
+
+  const membership = await resolveSchoolAdminMembership(profile.id);
   steps.step4_school = membership?.school ?? "NOT FOUND";
 
   // Also list every school_admins row for diagnostics

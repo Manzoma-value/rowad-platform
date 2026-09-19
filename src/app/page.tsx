@@ -4,9 +4,9 @@ import LandingClient from "./LandingClient";
 export const dynamic = "force-static";
 
 export const metadata = {
-  title: "جيل الرواد — Generation of Pioneers",
+  title: "منصة رواد — Rowad Platform",
   description:
-    "An integrated qualification program that prepares conscious, capable, responsible young leaders through a structured journey of 5 levels and 25 learning modules.",
+    "A white-label school operating platform for owner, admin, supervisor, and beneficiary workflows, with isolated data for each school.",
 };
 
 export default function HomePage() {

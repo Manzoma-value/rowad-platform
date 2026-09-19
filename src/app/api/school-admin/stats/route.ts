@@ -1,34 +1,24 @@
 // api/school-admin/stats/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { requireSchoolAdmin } from "@/lib/school-admin-auth";
 
 // Auth-dependent response — must never be cached across users/sessions.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireSchoolAdmin();
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let school;
-  let adminName: string | null = null;
-  try {
-    const membership = await prisma.schoolAdminMember.findFirst({
-      where: { profile_id: user.id },
-      select: {
-        school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } },
-        profile: { select: { full_name: true } },
-      },
-    });
-    school = membership?.school ?? null;
-    adminName = membership?.profile?.full_name ?? null;
-  } catch (err) {
-    console.error("[school-admin/stats] DB error:", err);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
-  }
-  if (!school)
-    return NextResponse.json({ error: "Platform not found" }, { status: 404 });
+  const school = {
+    id: auth.school.id,
+    name: auth.school.name,
+    name_alt: auth.school.name_alt,
+    language: auth.school.language,
+    slug: auth.school.slug,
+    is_active: auth.school.is_active,
+  };
+  const adminName = auth.profile.full_name;
 
   if (!school.is_active)
     return NextResponse.json({ error: "school_deactivated", school });

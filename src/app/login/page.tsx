@@ -48,10 +48,10 @@ function Mandala({ size = 200, className = "" }: { size?: number; className?: st
 const STRINGS = {
   ar: {
     dir: "rtl" as const,
-    brand: "بناء الأهلية",
-    tagline: "جيل الرواد · تمكين الإنسان · بناء المستقبل",
-    albania: "من ألبانيا إلى مستقبلٍ يصنعه الرواد",
-    albanianValues: "Dije · Vlerë · E ardhme",
+    brand: "منصة رواد",
+    tagline: "نظام أبيض قابل للتخصيص لكل مدرسة وجهة تعليمية",
+    albania: "بيئة العرض العامة لإدارة المدارس والبرامج",
+    albanianValues: "إدارة · تعلم · قياس · مجتمع",
     welcome: "مرحبًا بعودتك",
     loginTitle: "تسجيل الدخول",
     sub: "أدخل بياناتك للوصول إلى لوحتك",
@@ -74,37 +74,37 @@ const STRINGS = {
     emailSuccess: "بريد إلكتروني صحيح ✓",
     poweredBy: "جميع الحقوق محفوظة © منظومة 2026",
   },
-  sq: {
+  en: {
     dir: "ltr" as const,
-    brand: "Binaa Al-Ahliya",
-    tagline: "Brezi i pionierëve · Fuqizimi i njeriut · Ndërtimi i së ardhmes",
-    albania: "Nga Shqipëria drejt një të ardhmeje të ndërtuar nga pionierët",
-    albanianValues: "Dije · Vlerë · E ardhme",
-    welcome: "Mirë se u ktheve",
-    loginTitle: "Hyr",
-    sub: "Fut të dhënat për të hyrë në panelin tënd",
-    emailLabel: "E-mail",
-    passLabel: "Fjalëkalimi",
-    btn: "Hyr",
-    loadingBtn: "Po hyn...",
-    forgotPw: "Harrove fjalëkalimin?",
-    noAccount: "Nuk ke llogari?",
-    signup: "Krijo një",
-    workshopNoAccount: "Nuk ke llogari edukatori?",
-    workshopSignup: "Krijo një llogari dhe plotëso formularin e aplikimit",
-    or: "ose",
-    errEmpty: "Të lutem fut e-mail-in dhe fjalëkalimin",
-    errEmailInvalid: "Formati i e-mail-it nuk është i saktë",
-    errWrong: "E-mail-i ose fjalëkalimi është i pasaktë",
-    errNotConfirmed: "Të lutem konfirmo fillimisht e-mail-in — kontrollo kutinë hyrëse dhe kliko lidhjen e verifikimit",
-    errProfile: "Nuk u ngarkuan të dhënat e llogarisë",
-    errServer: "Lidhja dështoi, provo përsëri",
-    emailSuccess: "E-mail i vlefshëm ✓",
-    poweredBy: "Të gjitha të drejtat e rezervuara © Manzoma 2026",
+    brand: "Rowad Platform",
+    tagline: "A white-label operating system for every school and program",
+    albania: "General presentation environment for school operations",
+    albanianValues: "Manage · Learn · Measure · Community",
+    welcome: "Welcome back",
+    loginTitle: "Sign in",
+    sub: "Use your owner or admin account to enter the presentation workspace",
+    emailLabel: "Email",
+    passLabel: "Password",
+    btn: "Sign in",
+    loadingBtn: "Signing in...",
+    forgotPw: "Forgot password?",
+    noAccount: "Need a beneficiary account?",
+    signup: "Create one",
+    workshopNoAccount: "Need a supervisor account?",
+    workshopSignup: "Create an account and continue the application",
+    or: "or",
+    errEmpty: "Please enter your email and password",
+    errEmailInvalid: "Please enter a valid email address",
+    errWrong: "Email or password is incorrect",
+    errNotConfirmed: "Please confirm your email first — check your inbox and open the confirmation link",
+    errProfile: "Could not load account details",
+    errServer: "Could not connect to the server, please try again",
+    emailSuccess: "Valid email ✓",
+    poweredBy: "All rights reserved © Manzoma 2026",
   },
 } as const;
 
-type Lang = "ar" | "sq";
+type Lang = "ar" | "en";
 const isValidEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 /* ─── Language toggle ─── */
@@ -118,12 +118,12 @@ function LangToggle({ lang, onChange }: { lang: Lang; onChange: (l: Lang) => voi
       />
       <button
         type="button"
-        className={`lp-lang-btn${lang === "sq" ? " lp-lang-btn--active" : ""}`}
-        onClick={() => onChange("sq")}
-        aria-pressed={lang === "sq"}
-        aria-label="Shqip"
+        className={`lp-lang-btn${lang === "en" ? " lp-lang-btn--active" : ""}`}
+        onClick={() => onChange("en")}
+        aria-pressed={lang === "en"}
+        aria-label="English"
       >
-        <span className="lp-lang-name">SQ</span>
+        <span className="lp-lang-name">EN</span>
       </button>
       <button
         type="button"
@@ -150,7 +150,7 @@ function Rule() {
 }
 
 export default function LoginPage() {
-  const [lang, setLang] = useState<Lang>("sq");
+  const [lang, setLang] = useState<Lang>("en");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
@@ -166,11 +166,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("lang") as Lang | null;
-    // Albanian is the default for this Albania-focused platform. Honour a
-    // saved Arabic/Albanian preference; anything else (e.g. legacy "en")
-    // falls back to Albanian.
-    const effectiveLang: Lang = saved === "sq" || saved === "ar" ? saved : "sq";
-    if (effectiveLang !== "sq") setLang(effectiveLang);
+    const effectiveLang: Lang = saved === "en" || saved === "ar" ? saved : "en";
+    if (effectiveLang !== "en") setLang(effectiveLang);
     const params = new URLSearchParams(window.location.search);
     const rd  = params.get("redirectTo") ?? "";
     const su  = params.get("signupTo") ?? "";
@@ -178,9 +175,9 @@ export default function LoginPage() {
     if (rd.startsWith("/") && !rd.startsWith("//")) setRedirectTo(rd);
     if (su.startsWith("/") && !su.startsWith("//")) setSignupTo(su);
     const isAr = effectiveLang === "ar";
-    if (err === "link_invalid")       setError(isAr ? "رابط التأكيد غير صالح أو منتهي الصلاحية" : "Lidhja e verifikimit është e pavlefshme ose ka skaduar");
-    else if (err === "oauth_failed")  setError(isAr ? "فشل تسجيل الدخول" : "Hyrja dështoi");
-    else if (err === "session_error") setError(isAr ? "حدث خطأ في الجلسة" : "Gabim në sesion, provo përsëri");
+    if (err === "link_invalid")       setError(isAr ? "رابط التأكيد غير صالح أو منتهي الصلاحية" : "The confirmation link is invalid or expired");
+    else if (err === "oauth_failed")  setError(isAr ? "فشل تسجيل الدخول" : "Sign-in failed");
+    else if (err === "session_error") setError(isAr ? "حدث خطأ في الجلسة" : "Session error, please try again");
   }, []);
 
   const handleLangChange = (l: Lang) => { setLang(l); setError(""); localStorage.setItem("lang", l); };
@@ -210,7 +207,7 @@ export default function LoginPage() {
         setRedirecting(true);
         window.location.href = dest;
       } else {
-        setError(lang === "ar" ? "نوع الحساب غير معروف: " + profile.role : "Lloj llogarie i panjohur: " + profile.role);
+        setError(lang === "ar" ? "نوع الحساب غير معروف: " + profile.role : "Unknown account type: " + profile.role);
       }
     } catch { setError(L.errServer); }
     finally { setLoading(false); }
@@ -225,8 +222,8 @@ export default function LoginPage() {
         background: "radial-gradient(ellipse at center, rgba(184,160,130,0.06), transparent 60%), #EFEAE0",
       }}>
         <MandalaLoader
-          label={lang === "ar" ? "جارٍ تحويلك..." : "Po ju ridrejtojmë..."}
-          sublabel={lang === "ar" ? "لحظة من فضلك" : "Një moment, të lutem"}
+          label={lang === "ar" ? "جارٍ تحويلك..." : "Redirecting you..."}
+          sublabel={lang === "ar" ? "لحظة من فضلك" : "One moment please"}
         />
       </div>
     );
@@ -243,7 +240,7 @@ export default function LoginPage() {
           <div className="lp-panel-inner">
             <div className="lp-location" dir="ltr">
               <span className="lp-location-dot"/>
-              TIRANË <span>41.3275° N · 19.8187° E</span>
+              ROWAD DEMO <span>WHITE-LABEL WORKSPACE</span>
             </div>
             <div className="lp-brand-emblem">
               <Mandala size={176} className="lp-mandala"/>

@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { isViewOnlyAccessExpired } from "@/lib/view-only-access";
+import { resolveSchoolAdminMembership } from "@/lib/school-context";
 
 export async function requireSchoolAdmin() {
   const supabase = await createClient();
@@ -35,10 +36,7 @@ export async function requireSchoolAdmin() {
   // must bubble up as a 500 (and get retried by the prisma-level retry
   // wrapper) — NOT be silently converted into "unauthorized". The old catch
   // made every stale-connection hiccup render as a blank 403/404 page.
-  const membership = await prisma.schoolAdminMember.findFirst({
-    where: { profile_id: profile.id },
-    include: { school: true },
-  });
+  const membership = await resolveSchoolAdminMembership(profile.id);
   if (!membership) {
     console.error("[requireSchoolAdmin] FAIL step 4 — no school_admins membership for profile:", profile.id, "(user:", user.id, ")");
     return null;
@@ -76,6 +74,7 @@ export async function getSchoolAdminStatus(): Promise<"ok" | "deactivated" | "ex
   const profile = await prisma.profile.findUnique({
     where: { id: user.id },
     select: {
+      id: true,
       role: true,
       is_active: true,
       is_view_only: true,
@@ -85,5 +84,7 @@ export async function getSchoolAdminStatus(): Promise<"ok" | "deactivated" | "ex
   if (!profile || profile.role !== "SCHOOL_ADMIN") return "unauthorized";
   if (!profile.is_active) return "deactivated";
   if (isViewOnlyAccessExpired(profile)) return "expired";
+  const membership = await resolveSchoolAdminMembership(profile.id);
+  if (!membership) return "unauthorized";
   return "ok";
 }

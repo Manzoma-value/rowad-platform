@@ -13,7 +13,7 @@
 //    previews, raw IPs, or any non-manzoma host (so local dev is untouched).
 //  - No-op when already on the correct subdomain (prevents redirect loops).
 
-import { parseHost, ROOT_DOMAIN } from "@/lib/tenant-host";
+import { isWhiteLabelHost, parseHost, ROOT_DOMAIN } from "@/lib/tenant-host";
 
 export function enforceTenantSubdomain(slug?: string | null): void {
   if (typeof window === "undefined") return;
@@ -25,6 +25,7 @@ export function enforceTenantSubdomain(slug?: string | null): void {
   // Only enforce on the real root domain (skip localhost / previews / IPs / dev).
   const onRootDomain = hostname === ROOT_DOMAIN || hostname.endsWith("." + ROOT_DOMAIN);
   if (!onRootDomain) return;
+  if (isWhiteLabelHost(host)) return;
 
   // Current subdomain's slug (null for the apex / reserved owner host).
   const current = parseHost(host).slug;

@@ -11,6 +11,7 @@
     "fix:theme-colors": "node scripts/check-theme-colors.mjs --fix",
     "test:view-only-admin": "node --no-warnings --experimental-strip-types scripts/check-view-only-admin-access.mjs",
     "test:teacher-smoke": "node scripts/teacher-prelaunch-smoke.mjs",
+    "seed:white-label-demo": "npx tsx prisma/seed-white-label-demo.ts",
     "start": "next start",
     "lint": "eslint"
   },

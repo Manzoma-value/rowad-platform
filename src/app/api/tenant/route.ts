@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { resolveFeatures } from "@/lib/features";
+import { resolveProfileSchoolId } from "@/lib/school-context";
 
 export const revalidate = 0; // always fresh — feature flags must reflect changes promptly
 
@@ -18,18 +19,14 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Resolve the user's school via whichever role record they have.
-  // A user is exactly one of: student / teacher / school-admin.
+  // Resolve the user's school via whichever role record they have. For
+  // school-admins with multiple memberships, the request host selects the
+  // intended school (tenant subdomain or rowad demo host).
   let profile;
   try {
     profile = await prisma.profile.findUnique({
       where: { id: user.id },
-      select: {
-        role: true,
-        student: { select: { school_id: true } },
-        teacher: { select: { school_id: true } },
-        school_admin_memberships: { take: 1, select: { school_id: true } },
-      },
+      select: { id: true },
     });
   } catch (err) {
     console.error("[api/tenant] DB error:", err);
@@ -40,11 +37,7 @@ export async function GET() {
     return NextResponse.json({ error: "Profile not found" }, { status: 404 });
   }
 
-  const schoolId =
-    profile.school_admin_memberships[0]?.school_id ??
-    profile.teacher?.school_id ??
-    profile.student?.school_id ??
-    null;
+  const schoolId = await resolveProfileSchoolId(user.id);
 
   if (!schoolId) {
     // Owner, or a user not yet attached to a school. No tenant to return.

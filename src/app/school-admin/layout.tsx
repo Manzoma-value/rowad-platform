@@ -12,6 +12,7 @@ import Image from "next/image";
 import { cachedFetch, clearCache } from "@/lib/api-cache";
 import { ViewOnlyProvider } from "@/lib/view-only-context";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
+import { isWhiteLabelHost } from "@/lib/tenant-host";
 import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import IdentityBackdrop from "@/components/IdentityBackdrop";
@@ -405,7 +406,9 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
     await supabase.auth.signOut();
     const slug = schoolSlugRef.current;
-    window.location.href = slug ? `/schools/${slug}` : "/login";
+    window.location.href = isWhiteLabelHost(window.location.host)
+      ? "/login"
+      : slug ? `/schools/${slug}` : "/login";
   }
 
   const isActive = (href: string, exact: boolean) =>
