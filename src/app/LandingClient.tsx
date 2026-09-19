@@ -2,127 +2,81 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ArrowRight, BookOpen, ChartNoAxesCombined, Check, GraduationCap, Layers3, LayoutDashboard, Menu, ShieldCheck, Sparkles, Users, X } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, ArrowUpRight, BarChart3, BookOpen, Check, CircleGauge, Compass, Globe2, Layers3, Menu, PlayCircle, Route, ShieldCheck, Sparkles, Target, Users, Workflow, X } from "lucide-react";
 import styles from "./white-label.module.css";
 
 type Lang = "ar" | "en";
-const copy = {
-  en: {
-    brand: "Binaa Al-Ahliyyah", tagline: "Al Rowad platform", nav: ["The platform", "Your experience", "Built for you"], login: "Sign in", enter: "Enter your workspace", explore: "Explore the platform",
-    eyebrow: "YOUR VISION. YOUR IDENTITY. YOUR PLATFORM.", title: "Great learning starts", accent: "with connection.", intro: "Bring your people, programs, and progress together. One beautifully connected platform, shaped around your organization.", note: "For owners, administrators, supervisors, and beneficiaries.",
-    preview: "Workspace preview", platformName: "Your platform", overview: "Overview", welcome: "A clearer view of every journey.", sample: "Illustrative workspace", tabs: ["Overview", "Learning", "Community"],
-    metrics: ["Role-based portals", "Distinct identity", "Connected experience"], metricValues: ["04", "Your own", "All in one"],
-    previewLabels: ["People & groups", "Learning pathways", "Platform insights"], previewValues: ["Bring people together", "Give progress direction", "See the bigger picture"], activity: "A connected learning journey", activityItems: ["Welcome & placement", "Learn & participate", "Measure & grow"],
-    strip: ["Platform management", "Learning & workshops", "Assessment & insights", "Community"],
-    featuresLabel: "ONE PLATFORM. EVERY PERSPECTIVE.", featuresTitle: "A place for everyone.", featuresSub: "Give each person the tools they need, with a shared view of what matters.",
-    roles: [
-      { title: "Lead with clarity.", role: "For platform owners", body: "Bring communities, permissions, and organization-wide reports into a central view. Build the next chapter from a stronger foundation.", tags: ["Flexible spaces", "Central oversight"] },
-      { title: "Make every day flow.", role: "For administrators", body: "Coordinate people, groups, applications, and workshops with the information you need close at hand.", tags: ["Platform operations", "Reviews & reports"] },
-      { title: "Create room to grow.", role: "For supervisors", body: "Deliver lessons, guide groups, and understand each beneficiary’s development along the way.", tags: ["Lessons & quizzes", "Development"] },
-      { title: "Own your journey.", role: "For beneficiaries", body: "Learn, participate, and connect through purposeful content, educational games, and community.", tags: ["Personal learning", "Community"] },
-    ],
-    journeyLabel: "FROM THE FIRST STEP TO THE NEXT MILESTONE", journeyTitle: "Less scattered.\nMore connected.", journeySub: "Keep the learning journey moving, from a warm welcome to a meaningful view of progress.", steps: [
-      { title: "Welcome your people", body: "Connect registration, applications, and placement in one journey." },
-      { title: "Bring learning to life", body: "Create space for lessons, workshops, groups, and participation." },
-      { title: "Turn progress into perspective", body: "Use assessments and reports to guide the next step." },
-    ],
-    identityLabel: "BUILT AROUND YOUR IDENTITY", identityTitle: "Your identity.\nA world of possibility.", identitySub: "Make the experience feel like yours, from your organization’s name and colors to the features your community uses.", benefits: ["Your own brand and domain", "Dedicated data and permissions", "Arabic and English experiences", "Features you can tailor to your organization"],
-    identityCard: "Make it your own", identitySmall: "A familiar identity. A connected experience.", identityChips: ["Your name", "Your colors", "Your community"],
-    finalLabel: "YOUR NEXT CHAPTER STARTS HERE", finalTitle: "Bring your community together.", finalSub: "Step inside Al Rowad and explore a more connected way to learn, lead, and grow.", signup: "Create a beneficiary account", footer: "Built for people. Designed for progress.", back: "Back to top",
-  },
+const content = {
   ar: {
-    brand: "منصة بناء الأهلية", tagline: "(الرواد)", nav: ["المنصة", "تجربتك", "على هويتك"], login: "تسجيل الدخول", enter: "ادخل إلى مساحتك", explore: "اكتشف المنصة",
-    eyebrow: "رؤيتك. هويتك. منصتك.", title: "التعلّم الملهم يبدأ", accent: "بالتواصل.", intro: "اجمع أفراد جهتك وبرامجها ورحلات نموها في مكان واحد. تجربة متكاملة تتشكّل حول احتياجاتك وتحمل هويتك.", note: "للمالك والإدارة والمشرفين والمستفيدين.",
-    preview: "نظرة على المنصة", platformName: "منصتك", overview: "نظرة عامة", welcome: "رؤية أوضح لكل رحلة تعلّم.", sample: "نموذج توضيحي للواجهة", tabs: ["نظرة عامة", "التعلّم", "المجتمع"],
-    metrics: ["بوابات حسب الدور", "هوية الجهة", "تجربة متكاملة"], metricValues: ["04", "بصمتك", "مكان واحد"],
-    previewLabels: ["الأفراد والمجموعات", "مسارات التعلّم", "رؤى المنصة"], previewValues: ["مجتمع يلتقي وينمو", "تقدّم له اتجاه", "الصورة الكاملة أمامك"], activity: "رحلة تعلّم مترابطة", activityItems: ["ترحيب وتصنيف", "تعلّم ومشاركة", "قياس ونمو"],
-    strip: ["إدارة المنصة", "التعلّم والورش", "القياس والتقارير", "المجتمع"],
-    featuresLabel: "منصة واحدة. آفاق متعددة.", featuresTitle: "لكل فرد مساحته.", featuresSub: "أدوات تناسب كل دور، ورؤية مشتركة لما يصنع الفرق.",
-    roles: [
-      { title: "قُد برؤية واضحة.", role: "لمالك المنصة", body: "اجمع المجتمعات والصلاحيات والتقارير المؤسسية في لوحة مركزية، وابنِ المرحلة القادمة على أساس واضح.", tags: ["مساحات متعددة", "إشراف مركزي"] },
-      { title: "يوم أكثر انسيابية.", role: "لإدارة المنصة", body: "نظّم الأفراد والمجموعات والطلبات والورش، واجعل المعلومات التي تحتاجها في متناولك.", tags: ["تشغيل المنصة", "مراجعات وتقارير"] },
-      { title: "افتح آفاق النمو.", role: "للمشرفين", body: "قدّم الدروس ووجّه المجموعات وتابع تطوّر كل مستفيد خلال رحلته.", tags: ["دروس واختبارات", "متابعة التطوّر"] },
-      { title: "اصنع رحلتك.", role: "للمستفيدين", body: "تعلّم وشارك وتواصل من خلال محتوى هادف وألعاب تعليمية ومجتمع يتعلّم معك.", tags: ["تعلّم شخصي", "مجتمع متفاعل"] },
-    ],
-    journeyLabel: "من الخطوة الأولى إلى الإنجاز القادم", journeyTitle: "تفاصيل أقل تشتّتًا.\nتجربة أكثر ترابطًا.", journeySub: "رحلة متواصلة تبدأ باستقبال المستفيد، وتمتد إلى فهم أعمق لتقدّمه.", steps: [
-      { title: "رحّب بمجتمعك", body: "اربط التسجيل والطلبات والتصنيف في رحلة واضحة." },
-      { title: "امنح التعلّم حياة", body: "مساحة للدروس والورش والمجموعات والمشاركة الفاعلة." },
-      { title: "حوّل التقدّم إلى رؤية", body: "استفد من التقييمات والتقارير لتوجيه الخطوة القادمة." },
-    ],
-    identityLabel: "مصمّمة حول هويتك", identityTitle: "هويتك الخاصة.\nوإمكانات واسعة.", identitySub: "تجربة تشبهك، من اسم جهتك وألوانها إلى الوظائف التي يحتاجها مجتمعك.", benefits: ["علامتك ونطاقك الخاص", "بيانات وصلاحيات مستقلة", "تجربة بالعربية والإنجليزية", "وظائف تختارها لتناسب جهتك"],
-    identityCard: "اجعلها على هويتك", identitySmall: "هوية مألوفة. تجربة متكاملة.", identityChips: ["اسمك", "ألوانك", "مجتمعك"],
-    finalLabel: "هنا يبدأ فصلك القادم", finalTitle: "اجمع مجتمعك على رؤية واحدة.", finalSub: "اكتشف مع الرواد تجربة أكثر ترابطًا في التعلّم والقيادة والنمو.", signup: "إنشاء حساب مستفيد", footer: "للإنسان أولًا. وللنمو دائمًا.", back: "العودة للأعلى",
+    nav: ["النموذج", "كيف يعمل", "القياس", "الرحلة"], login: "تسجيل الدخول", decision: "اطلب جلسة تعريفية",
+    kicker: "بناء الأهلية — الرواد", heroTitle: "جهتكم تبني أهلية منسوبيها", heroAccent: "بنظامٍ مقيس.", heroBody: "نظام تكويني متكامل يحوّل المفاهيم إلى سلوك، والسلوك إلى أثر يمكن قراءته وتطويره.", supervisor: "دخول المشرفين", beneficiary: "دخول المستفيدين", operated: "بتشغيل منصة بناء الأهلية", proof: ["نموذج واحد", "5 مستويات", "3 طبقات قياس"],
+    aboutLabel: "ما بناء الأهلية", aboutTitle: "ليس برنامجًا تدريبيًا.", aboutBody: "الأهلية بنية داخلية؛ إذا اكتملت أنتجت فعلًا صحيحًا بصورة تلقائية. لذلك يجمع النموذج بين البيئة التي تضبط وتُشغّل، والإنسان الذي تتغيّر سماته وتتجه مفاهيمه.", equationLabel: "المعادلة الحاكمة", environment: "البيئة", human: "الإنسان", eligibility: "الأهلية", origins: "الأصول + النظام", person: "السمات + المفاهيم",
+    levelsLabel: "المستويات الخمسة", levelsTitle: "سلّم استحقاق لا يُقفز عليه.", levelsBody: "لا يُعبر مستوى قبل اكتمال ما تحته، فتظل الرحلة واضحة والتقدّم قابلًا للإثبات.", levels: ["الاتباع", "التفاعل", "القيادة", "التمكين", "الريادة"],
+    operationLabel: "كيف يعمل البرنامج", operationTitle: "وحدة تشغيل واحدة تتكرر مع كل مفهوم.", operation: ["إدخال غير مباشر", "ربط بالسمة", "اختبار المفهوم", "فعل ظاهر", "قياس التحوّل", "إعادة ضبط المسار"],
+    pathLabel: "مسار الجهة", pathTitle: "نظام واحد، مُعايَر على فئتكم.", pathBody: "يتغيّر ما يصنع ملاءمة المسار، بينما تبقى بنية النموذج ومنطق القياس ثابتين لحماية جودة النتائج وقابليتها للمقارنة.", pathItems: ["الحاجة المحرّكة", "المقصد المتصدّر", "مؤشرات القياس", "المستفيد النهائي"],
+    measureLabel: "نظام القياس", measureTitle: "الأثر رقمٌ، لا رواية.", measureBody: "نظام واحد بثلاث طبقات متكاملة يصف نقطة البداية، يتابع التحوّل، ويكشف فجوة الإدراك دون أحكام نجاح أو فشل.", measures: [{ title: "بطاقة المفاهيم", body: "قراءة متدرجة من 1 إلى 6 لكل مفهوم." }, { title: "مقياس السمات", body: "قراءة مئوية توضح اتجاه التحوّل." }, { title: "مقياس الرشد", body: "يُظهر فجوة الإدراك ويوجّه الخطوة التالية." }],
+    platformLabel: "المنصة", platformTitle: "التشغيل والقياس والتقرير في نظام واحد.", platformBody: "تشغيل ذاتي، واجهة ثنائية اللغة، وصلاحيات واضحة لكل دور؛ مع فصل الهوية البصرية عن نتائج القياس.", roles: ["مالك المنصة", "مدير الجهة", "حساب عرض", "المشرف", "المستفيد"],
+    journeyLabel: "رحلة المستفيد", journeyTitle: "من الدعوة إلى الشهادة.", journey: ["دعوة", "ترحيب", "خريطة المراحل", "دروس واختبارات", "أنشطة", "قراءة السمات", "شهادة"],
+    impactLabel: "الأثر", impactTitle: "أثرٌ مقيس بحلقتين.", direct: "الأثر المباشر", directBody: "كوادر الجهة التي تخوض رحلة التكوين والتشغيل.", indirect: "الأثر غير المباشر", indirectBody: "المستفيدون الذين يصل إليهم الفعل بعد تحوّل الكوادر.",
+    faqLabel: "الأسئلة الشائعة", faqTitle: "إجابات قبل السؤال.", faqs: [["ما الفرق عن التدريب؟", "التدريب ينقل معرفة أو مهارة، بينما يبني هذا النموذج بنية داخلية تربط المفهوم بالسمة والفعل والقياس."], ["ما الذي يتغيّر لكل جهة؟", "الهوية والثيم واللغة والتسميات والنطاق وبوابة الوصول والمسار، مع بقاء بنية النموذج ومنطق القياس ثابتين."], ["هل تدعم المنصة لغتين؟", "نعم، في الواجهة وفي حقول المحتوى، مع تجربة متماسكة بالعربية والإنجليزية."], ["كيف تُحمى النتائج؟", "تفصل المنصة بيانات كل جهة وصلاحيات أدوارها، وتحافظ على منطق قياس موحّد وقابل للتدقيق."]],
+    closingLabel: "الخطوة التالية", closingTitle: "ابدؤوا من حاجة جهتكم.", closingBody: "جلسة تعريفية قصيرة توضّح المسار الأنسب، وما يحتاجه التشغيل، وكيف سيُقرأ الأثر.", footer: "منتج من منتجات منظومة", rights: "جميع الحقوق محفوظة", back: "العودة للأعلى",
   },
-};
-const roleIcons = [Layers3, LayoutDashboard, BookOpen, GraduationCap];
+  en: {
+    nav: ["The model", "How it works", "Measurement", "Journey"], login: "Sign in", decision: "Request an introduction",
+    kicker: "Binaa Al-Ahliyyah — Al Rowad", heroTitle: "Build your people’s capability", heroAccent: "through a measured system.", heroBody: "An integrated formation system that turns concepts into behavior, and behavior into impact that can be read and improved.", supervisor: "Supervisor access", beneficiary: "Beneficiary access", operated: "Powered by the Binaa Al-Ahliyyah platform", proof: ["One model", "5 levels", "3 measurement layers"],
+    aboutLabel: "What is capability building?", aboutTitle: "More than a training program.", aboutBody: "Capability is an inner structure that produces sound action once complete. The model connects an environment that governs and operates with a person whose traits develop and concepts gain direction.", equationLabel: "The governing equation", environment: "Environment", human: "Person", eligibility: "Capability", origins: "Principles + system", person: "Traits + concepts",
+    levelsLabel: "Five levels", levelsTitle: "A progression that cannot be skipped.", levelsBody: "Each level must be earned before the next opens, keeping the journey clear and progress demonstrable.", levels: ["Following", "Engagement", "Leadership", "Empowerment", "Pioneering"],
+    operationLabel: "How the program works", operationTitle: "One operating unit, repeated with every concept.", operation: ["Indirect input", "Trait connection", "Concept test", "Visible action", "Transformation measure", "Path recalibration"],
+    pathLabel: "Your organization’s pathway", pathTitle: "One system, calibrated to your audience.", pathBody: "The pathway adapts where relevance matters while the model and measurement logic remain stable, protecting quality and comparability.", pathItems: ["Driving need", "Leading purpose", "Measurement indicators", "Final beneficiary"],
+    measureLabel: "Measurement system", measureTitle: "Impact is a number, not a narrative.", measureBody: "One system with three connected layers describes the starting point, tracks transformation, and reveals the perception gap without pass-or-fail judgments.", measures: [{ title: "Concept card", body: "A graded reading from 1 to 6 for every concept." }, { title: "Trait scale", body: "A percentage view of the direction of change." }, { title: "Maturity scale", body: "Reveals the perception gap and guides what comes next." }],
+    platformLabel: "The platform", platformTitle: "Operate, measure, and report in one system.", platformBody: "Self-service operations, a bilingual experience, and clear permissions for every role, with visual identity kept separate from measurement results.", roles: ["Platform owner", "Organization admin", "View-only", "Supervisor", "Beneficiary"],
+    journeyLabel: "Beneficiary journey", journeyTitle: "From invitation to certificate.", journey: ["Invitation", "Welcome", "Stage map", "Lessons & quizzes", "Activities", "Trait reading", "Certificate"],
+    impactLabel: "Impact", impactTitle: "Measured in two connected circles.", direct: "Direct impact", directBody: "The organization’s people who complete the formation and operating journey.", indirect: "Indirect impact", indirectBody: "The beneficiaries reached by better action after the people’s transformation.",
+    faqLabel: "Frequently asked questions", faqTitle: "Answers before you ask.", faqs: [["How is this different from training?", "Training transfers knowledge or a skill. This model builds an inner structure connecting concept, trait, action, and measurement."], ["What changes for each organization?", "Identity, theme, language, labels, domain, access gateway, and pathway adapt while the model and measurement logic stay stable."], ["Is the platform bilingual?", "Yes. Both the interface and content fields support a coherent Arabic and English experience."], ["How are results protected?", "Each organization’s data and permissions are isolated while the measurement logic remains consistent and auditable."]],
+    closingLabel: "The next step", closingTitle: "Start with your organization’s need.", closingBody: "A short introduction clarifies the right pathway, operating requirements, and how impact will be read.", footer: "A Manzoma product", rights: "All rights reserved", back: "Back to top",
+  },
+} as const;
+
+const operationIcons = [BookOpen, Sparkles, CircleGauge, PlayCircle, BarChart3, Route];
+const measureIcons = [Layers3, BarChart3, Compass];
 
 export default function LandingClient() {
   const [lang, setLang] = useState<Lang>("ar");
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const saved = localStorage.getItem("lang");
-    // Restore the existing language preference after hydration.
+    // Restore the visitor's existing preference after hydration.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === "ar" || saved === "en") setLang(saved);
   }, []);
-  const tr = copy[lang];
-  const links = ["platform", "experience", "identity"];
+  const tr = content[lang];
   const Arrow = lang === "ar" ? ArrowRight : ArrowUpRight;
+  const navIds = ["model", "operation", "measurement", "journey"];
+  const switchLanguage = () => { const next = lang === "ar" ? "en" : "ar"; setLang(next); localStorage.setItem("lang", next); };
   return (
     <main id="top" className={styles.root} dir={lang === "ar" ? "rtl" : "ltr"} lang={lang}>
       <header className={styles.header}>
-        <Link href="/" className={styles.brand}><span className={styles.mark}><img src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-maroon.svg" alt="" /></span><span>{tr.brand}<small>{tr.tagline}</small></span></Link>
-        <nav className={styles.desktopNav} aria-label={lang === "ar" ? "القائمة الرئيسية" : "Main navigation"}>{links.map((id, i) => <a key={id} href={`#${id}`}>{tr.nav[i]}</a>)}</nav>
-        <div className={styles.headerActions}>
-          <button className={styles.language} onClick={() => { const next = lang === "ar" ? "en" : "ar"; setLang(next); localStorage.setItem("lang", next); }} aria-label={lang === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{lang === "ar" ? "EN" : "عربي"}</button>
-          <Link className={styles.headerLogin} href="/login">{tr.login}<ArrowUpRight size={16} /></Link>
-          <button className={styles.menuButton} aria-expanded={menuOpen} aria-controls="white-label-nav" aria-label={lang === "ar" ? "القائمة" : "Menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
-        </div>
+        <Link href="/" className={styles.brand} aria-label={tr.kicker}><Image src="/binaa-brand/header/wordmark.png" alt={lang === "ar" ? "بناء الأهلية" : "Binaa Al-Ahliyyah"} width={175} height={64} priority /><small>{lang === "ar" ? "الرواد" : "AL ROWAD"}</small></Link>
+        <nav className={styles.desktopNav}>{navIds.map((id, i) => <a key={id} href={`#${id}`}>{tr.nav[i]}</a>)}</nav>
+        <div className={styles.headerActions}><button className={styles.language} onClick={switchLanguage}>{lang === "ar" ? "EN" : "عربي"}</button><Link className={styles.headerLogin} href="/login">{tr.login}<ArrowUpRight size={16} /></Link><button className={styles.menuButton} aria-expanded={menuOpen} aria-controls="main-nav" aria-label={lang === "ar" ? "القائمة" : "Menu"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button></div>
       </header>
-      {menuOpen && <nav id="white-label-nav" className={styles.mobileNav}>{links.map((id, i) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>{tr.nav[i]}</a>)}</nav>}
-
+      {menuOpen && <nav id="main-nav" className={styles.mobileNav}>{navIds.map((id, i) => <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>{tr.nav[i]}</a>)}</nav>}
       <section className={styles.hero}>
-        <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>{tr.eyebrow}</p>
-          <h1>{tr.title}<em>{tr.accent}</em></h1>
-          <p className={styles.intro}>{tr.intro}</p>
-          <div className={styles.actions}><Link href="/login" className={styles.primary}>{tr.enter}<Arrow size={19} /></Link><a href="#platform" className={styles.secondary}>{tr.explore}<ArrowRight size={17} /></a></div>
-          <p className={styles.heroNote}><ShieldCheck size={16} />{tr.note}</p>
-        </div>
-        <div className={styles.previewScene}>
-          <div className={styles.preview}>
-            <div className={styles.previewTop}><span><Layers3 size={18} />{tr.platformName}</span><span className={styles.previewBadge}>{tr.preview}</span></div>
-            <div className={styles.previewBody}>
-              <div className={styles.previewTabs}>{tr.tabs.map((tab, i) => <span className={i === 0 ? styles.selectedTab : ""} key={tab}>{tab}</span>)}</div>
-              <div className={styles.previewHeading}><div><small>{tr.overview}</small><h2>{tr.welcome}</h2></div><span className={styles.miniMark}><Sparkles size={23} /></span></div>
-              <div className={styles.previewCards}>{[Users, BookOpen, ChartNoAxesCombined].map((Icon, i) => <div key={i}><Icon size={20} /><small>{tr.previewLabels[i]}</small><strong>{tr.previewValues[i]}</strong></div>)}</div>
-              <div className={styles.pathway}><div className={styles.pathwayTitle}><strong>{tr.activity}</strong><ArrowUpRight size={18} /></div>{tr.activityItems.map((item, i) => <div className={styles.pathwayRow} key={item}><span>{String(i + 1).padStart(2, "0")}</span><p>{item}</p><Check size={15} /></div>)}</div>
-            </div>
-          </div>
-          <div className={styles.floatingNote}><ShieldCheck size={22} /><div><strong>{lang === "ar" ? "مساحة خاصة بجهتك" : "A space that’s yours"}</strong><span>{lang === "ar" ? "هوية مستقلة · مجتمع مترابط" : "Your identity · Connected community"}</span></div></div>
-          <p className={styles.previewCaption}>{tr.sample}</p>
-        </div>
+        <div className={styles.heroCopy}><p className={styles.eyebrow}>{tr.kicker}</p><h1>{tr.heroTitle}<em>{tr.heroAccent}</em></h1><p className={styles.intro}>{tr.heroBody}</p><div className={styles.actions}><Link href="/login" className={styles.primary}>{tr.supervisor}<Arrow size={18} /></Link><Link href="/login" className={styles.secondary}>{tr.beneficiary}<Arrow size={17} /></Link></div><p className={styles.heroNote}><ShieldCheck size={16} />{tr.operated}</p></div>
+        <div className={styles.heroSystem}><div className={styles.systemHalo}><Image src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-gold.svg" alt="" width={530} height={530} /></div><div className={styles.systemCard}><span>{tr.equationLabel}</span><div className={styles.systemEquation}><div><small>{tr.environment}</small><strong>{tr.origins}</strong></div><b>+</b><div><small>{tr.human}</small><strong>{tr.person}</strong></div><b>=</b><div className={styles.result}><small>{tr.eligibility}</small><strong>{lang === "ar" ? "فعلٌ صحيح" : "Sound action"}</strong></div></div></div><div className={styles.proofRow}>{tr.proof.map((item, i) => <span key={item}><b>0{i + 1}</b>{item}</span>)}</div></div>
       </section>
-
-      <div className={styles.capabilityStrip}>{tr.strip.map((label, i) => <span key={label}><span className={styles.stripDot} />{label}<small>0{i + 1}</small></span>)}</div>
-
-      <section id="platform" className={styles.section}>
-        <div className={styles.sectionHeading}><div><p className={styles.eyebrow}>{tr.featuresLabel}</p><h2>{tr.featuresTitle}</h2></div><p>{tr.featuresSub}</p></div>
-        <div className={styles.roleGrid}>{tr.roles.map((role, i) => { const Icon = roleIcons[i]; return <article className={styles.roleCard} key={role.role}><div className={styles.roleTop}><span className={styles.roleIcon}><Icon size={25} /></span><span className={styles.roleNumber}>0{i + 1}</span></div><p className={styles.roleLabel}>{role.role}</p><h3>{role.title}</h3><p className={styles.roleBody}>{role.body}</p><div className={styles.tags}>{role.tags.map(tag => <span key={tag}>{tag}</span>)}</div></article>; })}</div>
-      </section>
-
-      <section id="experience" className={styles.journey}>
-        <div><p className={styles.eyebrow}>{tr.journeyLabel}</p><h2>{tr.journeyTitle}</h2><p className={styles.journeyIntro}>{tr.journeySub}</p><Link href="/login" className={styles.lightLink}>{tr.enter}<ArrowUpRight size={20} /></Link></div>
-        <ol className={styles.steps}>{tr.steps.map((step, i) => <li key={step.title}><span>0{i + 1}</span><div><h3>{step.title}</h3><p>{step.body}</p></div></li>)}</ol>
-      </section>
-
-      <section id="identity" className={`${styles.section} ${styles.identity}`}>
-        <div className={styles.identityVisual}><div className={styles.identityCard}><div className={styles.identityCardTop}><Layers3 size={24} /><span>ROWAD / {lang === "ar" ? "مساحتك" : "YOUR SPACE"}</span></div><div className={styles.identitySymbol}><GraduationCap size={48} strokeWidth={1.2} /></div><h3>{tr.identityCard}</h3><p>{tr.identitySmall}</p><div className={styles.swatches} aria-hidden="true"><i /><i /><i /><i /></div><div className={styles.identityChips}>{tr.identityChips.map(text => <span key={text}>{text}</span>)}</div></div></div>
-        <div><p className={styles.eyebrow}>{tr.identityLabel}</p><h2>{tr.identityTitle}</h2><p className={styles.identityIntro}>{tr.identitySub}</p><ul className={styles.benefits}>{tr.benefits.map(item => <li key={item}><Check size={17} />{item}</li>)}</ul></div>
-      </section>
-
-      <section className={styles.closing}><p className={styles.eyebrow}>{tr.finalLabel}</p><h2>{tr.finalTitle}</h2><p>{tr.finalSub}</p><div className={styles.actions}><Link href="/login" className={styles.primary}>{tr.enter}<ArrowUpRight size={19} /></Link><Link href="/signup" className={styles.secondary}>{tr.signup}</Link></div></section>
-      <footer className={styles.footer}><Link href="/" className={styles.footerBrand}><img src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-maroon.svg" alt="" />{tr.brand}</Link><p>{tr.footer}</p><span>© {new Date().getFullYear()} Manzoma</span><a href="#top">{tr.back}<ArrowUpRight size={15} /></a></footer>
+      <section id="model" className={`${styles.section} ${styles.modelSection}`}><div className={styles.sectionLabel}>{tr.aboutLabel}</div><div className={styles.modelGrid}><div><h2>{tr.aboutTitle}</h2><p>{tr.aboutBody}</p></div><div className={styles.equationPanel}><span>{tr.equationLabel}</span><p>({tr.origins}) <b>+</b> ({tr.person}) <b>=</b> {tr.eligibility}</p></div></div></section>
+      <section className={`${styles.section} ${styles.levelsSection}`}><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>{tr.levelsLabel}</p><h2>{tr.levelsTitle}</h2></div><p>{tr.levelsBody}</p></div><ol className={styles.levels}>{tr.levels.map((level, i) => <li key={level}><span>0{i + 1}</span><strong>{level}</strong>{i < tr.levels.length - 1 && <i />}</li>)}</ol></section>
+      <section id="operation" className={styles.darkSection}><div className={styles.darkIntro}><p className={styles.eyebrow}>{tr.operationLabel}</p><h2>{tr.operationTitle}</h2></div><div className={styles.operationFlow}>{tr.operation.map((step, i) => { const Icon = operationIcons[i]; return <div key={step}><span><Icon size={20} /></span><b>0{i + 1}</b><strong>{step}</strong></div>; })}</div></section>
+      <section className={`${styles.section} ${styles.pathSection}`}><div className={styles.pathCopy}><p className={styles.eyebrow}>{tr.pathLabel}</p><h2>{tr.pathTitle}</h2><p>{tr.pathBody}</p></div><div className={styles.pathList}>{tr.pathItems.map((item, i) => <div key={item}><span>0{i + 1}</span><strong>{item}</strong><Check size={17} /></div>)}</div></section>
+      <section id="measurement" className={`${styles.section} ${styles.measureSection}`}><div className={styles.sectionHeading}><div><p className={styles.eyebrow}>{tr.measureLabel}</p><h2>{tr.measureTitle}</h2></div><p>{tr.measureBody}</p></div><div className={styles.measureGrid}>{tr.measures.map((measure, i) => { const Icon = measureIcons[i]; return <article key={measure.title}><span><Icon size={24} /></span><small>0{i + 1}</small><h3>{measure.title}</h3><p>{measure.body}</p></article>; })}</div></section>
+      <section className={styles.platformBand}><div><p className={styles.eyebrow}>{tr.platformLabel}</p><h2>{tr.platformTitle}</h2><p>{tr.platformBody}</p></div><div className={styles.roleRail}>{tr.roles.map((role, i) => <span key={role}><b>0{i + 1}</b>{role}</span>)}</div><div className={styles.platformMarks}><span><Workflow size={17} />{lang === "ar" ? "تشغيل ذاتي" : "Self-service"}</span><span><Globe2 size={17} />{lang === "ar" ? "ثنائية اللغة" : "Bilingual"}</span><span><ShieldCheck size={17} />{lang === "ar" ? "صلاحيات محكومة" : "Governed access"}</span></div></section>
+      <section id="journey" className={`${styles.section} ${styles.journeySection}`}><div className={styles.journeyHeader}><p className={styles.eyebrow}>{tr.journeyLabel}</p><h2>{tr.journeyTitle}</h2></div><div className={styles.journeyTrack}>{tr.journey.map((step, i) => <div key={step}><span>{i + 1}</span><strong>{step}</strong></div>)}</div></section>
+      <section className={`${styles.section} ${styles.impactSection}`}><div className={styles.impactTitle}><p className={styles.eyebrow}>{tr.impactLabel}</p><h2>{tr.impactTitle}</h2></div><article><span><Users size={22} /></span><small>01</small><h3>{tr.direct}</h3><p>{tr.directBody}</p></article><article><span><Target size={22} /></span><small>02</small><h3>{tr.indirect}</h3><p>{tr.indirectBody}</p></article></section>
+      <section className={`${styles.section} ${styles.faqSection}`}><div><p className={styles.eyebrow}>{tr.faqLabel}</p><h2>{tr.faqTitle}</h2></div><div className={styles.faqList}>{tr.faqs.map(([q, a]) => <details key={q}><summary>{q}<span>+</span></summary><p>{a}</p></details>)}</div></section>
+      <section className={styles.closing}><p className={styles.eyebrow}>{tr.closingLabel}</p><h2>{tr.closingTitle}</h2><p>{tr.closingBody}</p><div className={styles.actions}><Link href="/login" className={styles.primary}>{tr.login}<ArrowUpRight size={18} /></Link><a href="mailto:info@manzoma.sa" className={styles.secondary}>{tr.decision}<ArrowUpRight size={17} /></a></div></section>
+      <footer className={styles.footer}><Link href="/" className={styles.footerBrand}><Image src="/binaa-brand/bina-alahliyya-brand-kit-v2/05-Symbols/symbol-original-maroon.svg" alt="" width={28} height={28} />{tr.footer}</Link><span>© {new Date().getFullYear()} Manzoma · {tr.rights}</span><a href="#top">{tr.back}<ArrowUpRight size={15} /></a></footer>
     </main>
   );
 }
