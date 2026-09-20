@@ -206,10 +206,7 @@ export async function proxy(request: NextRequest) {
   // Logged-out + non-dashboard (e.g. /login, /signup, /reset-password, /iceCream).
   if (!user) {
     if (whiteLabelHost && pathname === "/signup") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set("error", "invite_only");
-      return NextResponse.redirect(url);
+      return rewriteTo(request, "/white-label-signup");
     }
     // On a tenant subdomain, route the bare /login and /signup to the
     // school-branded pages so the URL stays clean (rowad-albania.manzoma.sa/login).
