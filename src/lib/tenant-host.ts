@@ -26,6 +26,15 @@ export const WHITE_LABEL_DEMO_SCHOOL_SLUG =
   process.env.NEXT_PUBLIC_WHITE_LABEL_DEMO_SCHOOL_SLUG?.toLowerCase() ||
   "rowad-demo";
 
+/** The sole account allowed to authenticate on the investor/demo host. */
+export const WHITE_LABEL_ADMIN_EMAIL =
+  process.env.WHITE_LABEL_ADMIN_EMAIL?.trim().toLowerCase() ||
+  "manzoma@rowad.com";
+
+export function isWhiteLabelAccountAllowed(email: string | null | undefined): boolean {
+  return email?.trim().toLowerCase() === WHITE_LABEL_ADMIN_EMAIL;
+}
+
 export interface HostInfo {
   /** The school slug when this host is a tenant subdomain, else null. */
   slug: string | null;

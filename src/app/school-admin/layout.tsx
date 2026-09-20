@@ -141,6 +141,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   const [deactivated, setDeactivated] = useState(false);
   const [viewOnly, setViewOnly] = useState(false);
   const [schoolLang, setSchoolLang] = useState<"ar" | "sq" | "en">("sq");
+  const [whiteLabelHost, setWhiteLabelHost] = useState(false);
   const [openNavGroups, setOpenNavGroups] = useState<Record<string, boolean>>({
     teachers: false,
     learning: false,
@@ -148,6 +149,13 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
     operations: false,
   });
   const schoolSlugRef = useRef<string>("");
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setWhiteLabelHost(isWhiteLabelHost(window.location.host));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const navItems: NavItem[] = [
     {
@@ -505,7 +513,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
             fontFamily: "'Cairo', sans-serif", fontSize: 14, fontWeight: 700, cursor: "pointer",
           }}
         >
-          {lang === "ar" ? "تسجيل الخروج" : "Dalje"}
+          {lang === "ar" ? "تسجيل الخروج" : lang === "sq" ? "Dalje" : "Sign out"}
         </button>
       </div>
     );
@@ -526,7 +534,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="sa-sidebar-glow" aria-hidden="true" />
 
         {/* Logo */}
-        <div className="sa-logo-block">
+        <div className={`sa-logo-block${whiteLabelHost ? " sa-logo-block--white-label" : ""}`}>
           <Link
             href="/school-admin"
             className="sa-logo-home"
@@ -534,13 +542,18 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
             aria-label={lang === "ar" ? "العودة إلى لوحة التحكم" : lang === "sq" ? "Kthehu te paneli" : "Back to dashboard"}
           >
             <Image
-              src="/headerlogo.png"
-              alt="بناء الأهلية"
+              src={whiteLabelHost ? "/binaa-brand/header/wordmark.png" : "/headerlogo.png"}
+              alt={whiteLabelHost ? "منصة بناء الأهلية (الرواد)" : "بناء الأهلية"}
               fill
-              style={{ objectFit: "cover", objectPosition: "center" }}
+              sizes="280px"
+              style={{
+                objectFit: whiteLabelHost ? "contain" : "cover",
+                objectPosition: "center",
+                padding: whiteLabelHost ? "18px 28px" : 0,
+              }}
               priority
             />
-            <div className="sa-logo-frame" aria-hidden="true" />
+            {!whiteLabelHost && <div className="sa-logo-frame" aria-hidden="true" />}
             <span className="sa-logo-home-hint">
               {lang === "ar" ? "لوحة التحكم" : lang === "sq" ? "Paneli" : "Dashboard"}
               <b aria-hidden="true">↗</b>
@@ -572,7 +585,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
         {showToggle && (
           <div style={{ padding: "0 14px 10px" }}>
             {/* Admin pages are always AR + EN (not the school's display language) */}
-            <LangToggle dark secondaryLang={schoolLang === "ar" ? "sq" : schoolLang} />
+            <LangToggle dark secondaryLang={whiteLabelHost ? "en" : schoolLang === "ar" ? "sq" : schoolLang} />
           </div>
         )}
 
@@ -672,7 +685,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
               <div className="sa-user-info">
                 <span className="sa-user-name">
-                  {name || (lang === "ar" ? "المدير" : "Drejtori")}
+                  {name || (lang === "ar" ? "المدير" : lang === "sq" ? "Drejtori" : "Admin")}
                 </span>
                 <span className="sa-user-role">
                   {lang === "ar" ? "مدير الجهة" : lang === "sq" ? "Drejtori" : "Admin"}
@@ -683,7 +696,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
               className="sa-logout-btn"
               onClick={handleLogout}
               disabled={loggingOut}
-              title={lang === "ar" ? "تسجيل الخروج" : "Dalje"}
+              title={lang === "ar" ? "تسجيل الخروج" : lang === "sq" ? "Dalje" : "Sign out"}
               type="button"
             >
               {loggingOut ? <div className="sa-spin" /> : <LogOut size={15} strokeWidth={1.7} />}
@@ -1606,5 +1619,17 @@ const brandStyles = `
   .sa-bottom-band line,
   .sa-bottom-band circle {
     stroke: rgba(184,160,130,0.34);
+  }
+
+  .sa-logo-block.sa-logo-block--white-label {
+    background: linear-gradient(135deg,#FBF8F1,#EFEAE0) !important;
+    border-top-color: rgba(184,160,130,0.58) !important;
+    border-bottom-color: rgba(107,30,45,0.18) !important;
+    box-shadow: 0 8px 28px rgba(18,7,11,0.2), inset 0 -1px 0 rgba(184,160,130,0.16) !important;
+  }
+
+  .sa-logo-block--white-label .sa-logo-home:hover img,
+  .sa-logo-block--white-label .sa-logo-home:focus-visible img {
+    filter: saturate(1.06) contrast(1.03);
   }
 `;

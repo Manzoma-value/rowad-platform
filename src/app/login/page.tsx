@@ -6,43 +6,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "../../lib/supabase/client";
 import MandalaLoader from "@/components/MandalaLoader";
 import { whiteLabelLoginCss } from "./white-label-login-css";
-
-/* ─── Geometry ─── */
-const r2 = (n: number) => Math.round(n * 1000) / 1000;
-const STAR_LINES = Array.from({ length: 12 }, (_, i) => {
-  const a1 = (i * 30 * Math.PI) / 180;
-  const a2 = ((i * 30 + 15) * Math.PI) / 180;
-  return { x1: r2(100 + 80 * Math.sin(a1)), y1: r2(100 - 80 * Math.cos(a1)), x2: r2(100 + 40 * Math.sin(a2)), y2: r2(100 - 40 * Math.cos(a2)) };
-});
-const PETAL_CIRCLES = Array.from({ length: 8 }, (_, i) => { const a = (i * 45 * Math.PI) / 180; return { cx: r2(100 + 52 * Math.sin(a)), cy: r2(100 - 52 * Math.cos(a)) }; });
-const INNER_PETALS  = Array.from({ length: 4 }, (_, i) => { const a = (i * 90 * Math.PI) / 180; return { cx: r2(100 + 24 * Math.sin(a)), cy: r2(100 - 24 * Math.cos(a)) }; });
-
-function Mandala({ size = 200, className = "" }: { size?: number; className?: string }) {
-  return (
-    <div className={className} style={{ width: size, height: size, flexShrink: 0 }}>
-      <svg viewBox="0 0 200 200" fill="none" width="100%" height="100%">
-        <circle cx="100" cy="100" r="92" stroke="#B8A082" strokeWidth="0.3" opacity="0.08"/>
-        <circle cx="100" cy="100" r="86" stroke="#B8A082" strokeWidth="0.3" opacity="0.06"/>
-        {PETAL_CIRCLES.map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="52" stroke="#B8A082" strokeWidth="0.5" opacity="0.13" fill="none"/>)}
-        <circle cx="100" cy="100" r="74" stroke="#B8A082" strokeWidth="0.4" opacity="0.16" strokeDasharray="3 8"/>
-        <circle cx="100" cy="100" r="62" stroke="#B8A082" strokeWidth="0.35" opacity="0.13"/>
-        <circle cx="100" cy="100" r="50" stroke="#B8A082" strokeWidth="0.5" opacity="0.18" strokeDasharray="5 5"/>
-        <circle cx="100" cy="100" r="38" stroke="#B8A082" strokeWidth="0.35" opacity="0.15"/>
-        <circle cx="100" cy="100" r="28" stroke="#B8A082" strokeWidth="0.45" opacity="0.22" strokeDasharray="3 4"/>
-        <circle cx="100" cy="100" r="18" stroke="#B8A082" strokeWidth="0.35" opacity="0.24"/>
-        <circle cx="100" cy="100" r="9"  stroke="#B8A082" strokeWidth="0.55" opacity="0.30"/>
-        {STAR_LINES.map((l, i) => <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#B8A082" strokeWidth="0.35" opacity="0.16"/>)}
-        {INNER_PETALS.map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="24" stroke="#B8A082" strokeWidth="0.45" opacity="0.20" fill="none"/>)}
-        <line x1="100" y1="73" x2="100" y2="127" stroke="#B8A082" strokeWidth="0.6" opacity="0.24"/>
-        <line x1="76"  y1="87" x2="124" y2="113" stroke="#B8A082" strokeWidth="0.6" opacity="0.24"/>
-        <line x1="124" y1="87" x2="76"  y2="113" stroke="#B8A082" strokeWidth="0.6" opacity="0.24"/>
-        <circle cx="100" cy="100" r="7" fill="none" stroke="#B8A082" strokeWidth="0.7" opacity="0.45"/>
-        <circle cx="100" cy="100" r="4" fill="none" stroke="#B8A082" strokeWidth="0.45" opacity="0.55"/>
-        <circle cx="100" cy="100" r="2" fill="#B8A082" opacity="0.7"/>
-      </svg>
-    </div>
-  );
-}
+import { isWhiteLabelAccountAllowed, isWhiteLabelHost } from "@/lib/tenant-host";
 
 /* ─── i18n ─── */
 const STRINGS = {
@@ -70,6 +34,8 @@ const STRINGS = {
     errWrong: "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     errNotConfirmed: "يرجى تأكيد بريدك الإلكتروني أولاً — تحقق من صندوق الوارد وانقر على رابط التأكيد",
     errProfile: "تعذر جلب بيانات الحساب",
+    errUnauthorized: "هذا الحساب غير مصرح له بالدخول إلى منصة بناء الأهلية (الرواد)",
+    inviteOnly: "الدخول إلى هذه المنصة مخصص للحسابات المعتمدة فقط",
     errServer: "تعذر الاتصال بالخادم، حاول مرة أخرى",
     emailSuccess: "بريد إلكتروني صحيح ✓",
     poweredBy: "جميع الحقوق محفوظة © منظومة 2026",
@@ -98,6 +64,8 @@ const STRINGS = {
     errWrong: "Email or password is incorrect",
     errNotConfirmed: "Please confirm your email first — check your inbox and open the confirmation link",
     errProfile: "Could not load account details",
+    errUnauthorized: "This account is not authorized to access Binaa Al-Ahliyyah (Al Rowad)",
+    inviteOnly: "Access to this platform is limited to approved accounts",
     errServer: "Could not connect to the server, please try again",
     emailSuccess: "Valid email ✓",
     poweredBy: "All rights reserved © Manzoma 2026",
@@ -161,10 +129,14 @@ export default function LoginPage() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [redirectTo, setRedirectTo]     = useState("");
   const [signupTo, setSignupTo]         = useState("");
+  const [whiteLabelHost, setWhiteLabelHost] = useState(true);
 
   const L = STRINGS[lang];
 
   useEffect(() => {
+    const hostTimer = window.setTimeout(() => {
+      setWhiteLabelHost(isWhiteLabelHost(window.location.host));
+    }, 0);
     const saved = localStorage.getItem("lang") as Lang | null;
     const effectiveLang: Lang = saved === "en" || saved === "ar" ? saved : "en";
     if (effectiveLang !== "en") setLang(effectiveLang);
@@ -178,6 +150,9 @@ export default function LoginPage() {
     if (err === "link_invalid")       setError(isAr ? "رابط التأكيد غير صالح أو منتهي الصلاحية" : "The confirmation link is invalid or expired");
     else if (err === "oauth_failed")  setError(isAr ? "فشل تسجيل الدخول" : "Sign-in failed");
     else if (err === "session_error") setError(isAr ? "حدث خطأ في الجلسة" : "Session error, please try again");
+    else if (err === "not_authorized") setError(isAr ? STRINGS.ar.errUnauthorized : STRINGS.en.errUnauthorized);
+    else if (err === "invite_only") setError(isAr ? STRINGS.ar.inviteOnly : STRINGS.en.inviteOnly);
+    return () => window.clearTimeout(hostTimer);
   }, []);
 
   const handleLangChange = (l: Lang) => { setLang(l); setError(""); localStorage.setItem("lang", l); };
@@ -198,6 +173,11 @@ export default function LoginPage() {
         return;
       }
       if (!data.user) { setError(L.errWrong); return; }
+      if (isWhiteLabelHost(window.location.host) && !isWhiteLabelAccountAllowed(data.user.email)) {
+        await supabase.auth.signOut();
+        setError(L.errUnauthorized);
+        return;
+      }
       const { data: profile, error: profileError } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
       if (profileError || !profile) { setError(L.errProfile); return; }
       const roleRoutes: Record<string, string> = { OWNER: "/owner", SCHOOL_ADMIN: "/school-admin", TEACHER: "/teacher", STUDENT: "/student" };
@@ -380,18 +360,21 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <div className="lp-divider">
-              <div className="lp-divider-line"/>
-              <span className="lp-divider-text">{L.or}</span>
-              <div className="lp-divider-line"/>
-            </div>
-
-            <p className="lp-footer-text">
-              {signupTo ? L.workshopNoAccount : L.noAccount}{" "}
-              <Link href={signupTo || "/signup"} className="lp-link">
-                {signupTo ? L.workshopSignup : L.signup}
-              </Link>
-            </p>
+            {!whiteLabelHost && (
+              <>
+                <div className="lp-divider">
+                  <div className="lp-divider-line"/>
+                  <span className="lp-divider-text">{L.or}</span>
+                  <div className="lp-divider-line"/>
+                </div>
+                <p className="lp-footer-text">
+                  {signupTo ? L.workshopNoAccount : L.noAccount}{" "}
+                  <Link href={signupTo || "/signup"} className="lp-link">
+                    {signupTo ? L.workshopSignup : L.signup}
+                  </Link>
+                </p>
+              </>
+            )}
 
             <div className="lp-form-ornament" style={{ marginTop: 28 }}><Rule/></div>
           </div>

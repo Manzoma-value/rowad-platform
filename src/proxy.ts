@@ -1,6 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { parseHost } from "@/lib/tenant-host";
+import {
+  isWhiteLabelAccountAllowed,
+  isWhiteLabelHost,
+  parseHost,
+} from "@/lib/tenant-host";
 import {
   isViewOnlyAccessExpired,
   isViewOnlySchoolAdminWrite,
@@ -49,9 +53,20 @@ function rewriteTo(request: NextRequest, pathname: string) {
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const whiteLabelHost = isWhiteLabelHost(request.headers.get("host"));
 
   // ── Resolve the tenant from the subdomain (cheap, no DB) ──
   const { slug, isTenant } = parseHost(request.headers.get("host"));
+
+  // Never expose another tenant's public/login surface through the reserved
+  // white-label hostname. Tenant pages remain available only on their own
+  // subdomain.
+  if (whiteLabelHost && pathname.startsWith("/schools/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("error", "not_authorized");
+    return NextResponse.redirect(url);
+  }
 
   // On a tenant subdomain, the ROOT is the school's public landing page.
   // Rewrite before any auth work — the landing is fully public.
@@ -100,6 +115,30 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  // The investor/demo host is a closed environment. Authentication on any
+  // other Rowad tenant does not grant access here, even when the browser has
+  // a valid Supabase session cookie.
+  if (whiteLabelHost && user && !isWhiteLabelAccountAllowed(user.email)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Account is not authorized for this platform" }, { status: 403 });
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/white-label-signout";
+    url.searchParams.set("error", "not_authorized");
+    return NextResponse.redirect(url);
+  }
+
+  // No self-registration is exposed on the white-label host. Its single
+  // administrator is provisioned server-side.
+  if (
+    whiteLabelHost &&
+    (pathname === "/api/auth/signup" ||
+      pathname === "/api/auth/school-signup" ||
+      pathname === "/api/workshop-signup")
+  ) {
+    return NextResponse.json({ error: "Registration is invitation-only" }, { status: 403 });
+  }
+
   // ════ API routes ════
   if (pathname.startsWith("/api/")) {
     if (user) {
@@ -111,6 +150,10 @@ export async function proxy(request: NextRequest) {
 
       if (apiProfile?.is_active === false) {
         return NextResponse.json({ error: "Account deactivated" }, { status: 403 });
+      }
+
+      if (whiteLabelHost && apiProfile?.role !== "SCHOOL_ADMIN") {
+        return NextResponse.json({ error: "Account is not authorized for this platform" }, { status: 403 });
       }
 
       if (
@@ -162,6 +205,12 @@ export async function proxy(request: NextRequest) {
 
   // Logged-out + non-dashboard (e.g. /login, /signup, /reset-password, /iceCream).
   if (!user) {
+    if (whiteLabelHost && pathname === "/signup") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("error", "invite_only");
+      return NextResponse.redirect(url);
+    }
     // On a tenant subdomain, route the bare /login and /signup to the
     // school-branded pages so the URL stays clean (rowad-albania.manzoma.sa/login).
     if (isTenant && slug) {
@@ -199,6 +248,13 @@ export async function proxy(request: NextRequest) {
         view_only_expires_at: profile.view_only_expires_at as string | null,
       })
     : false;
+
+  if (whiteLabelHost && role !== "SCHOOL_ADMIN") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/white-label-signout";
+    url.searchParams.set("error", "not_authorized");
+    return NextResponse.redirect(url);
+  }
 
   // ── Deactivation gate ──
   // Only act on explicit false — null/undefined means "unknown, let through".

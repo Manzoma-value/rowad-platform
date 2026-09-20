@@ -1,9 +1,8 @@
 // Re-runnable presentation seed for rowad.manzoma.sa.
 //
-// It creates a separate demo school, copies the existing rowad-albania
-// school-admin memberships to it, and adds safe fictional data. Therefore the
-// same real admin accounts can demonstrate the platform without ever seeing
-// Albania's records on the white-label host.
+// It creates a separate demo environment, provisions its sole administrator,
+// removes every other admin membership from that environment, and adds safe
+// fictional data. Albania credentials are never copied or reused here.
 //
 // Run after deployment with production environment variables available:
 //   npm run seed:white-label-demo
@@ -12,6 +11,7 @@ import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { createClient } from "@supabase/supabase-js";
 import { seedRowadModel } from "./rowad-concepts";
 
 const databaseUrl =
@@ -21,12 +21,20 @@ const databaseUrl =
 
 if (!databaseUrl) throw new Error("Missing DATABASE_URL");
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+if (!serviceRoleKey) throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: databaseUrl }),
 });
+const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 const DEMO_SLUG = process.env.NEXT_PUBLIC_WHITE_LABEL_DEMO_SCHOOL_SLUG ?? "rowad-demo";
-const SOURCE_SLUG = "rowad-albania";
+const ADMIN_EMAIL = (process.env.WHITE_LABEL_ADMIN_EMAIL ?? "manzoma@rowad.com").trim().toLowerCase();
+const ADMIN_PASSWORD = process.env.WHITE_LABEL_ADMIN_PASSWORD;
+const ADMIN_NAME = process.env.WHITE_LABEL_ADMIN_NAME ?? "Manzoma Admin";
 
 const demoTeachers = [
   { email: "sara.hassan@rowad-demo.example", fullName: "Sara Hassan" },
@@ -49,16 +57,84 @@ async function findOrCreateClass(schoolId: string, name: string, teacherId: stri
   return prisma.class.create({ data: { school_id: schoolId, name, teacher_id: teacherId } });
 }
 
+async function findAuthUserId(email: string): Promise<string | null> {
+  const rows = await prisma.$queryRaw<{ id: string }[]>`
+    SELECT id::text FROM auth.users WHERE lower(email) = ${email} LIMIT 1
+  `;
+  return rows[0]?.id ?? null;
+}
+
+async function provisionWhiteLabelAdmin(schoolId: string) {
+  let userId = await findAuthUserId(ADMIN_EMAIL);
+
+  if (!userId) {
+    if (!ADMIN_PASSWORD) {
+      throw new Error("WHITE_LABEL_ADMIN_PASSWORD is required when creating the white-label administrator");
+    }
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: ADMIN_NAME, role: "SCHOOL_ADMIN" },
+    });
+    if (error || !data.user) throw new Error(`Could not create white-label administrator: ${error?.message}`);
+    userId = data.user.id;
+  } else if (ADMIN_PASSWORD) {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: ADMIN_PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: ADMIN_NAME, role: "SCHOOL_ADMIN" },
+    });
+    if (error) throw new Error(`Could not update white-label administrator: ${error.message}`);
+  }
+
+  const conflictingProfile = await prisma.profile.findUnique({ where: { email: ADMIN_EMAIL } });
+  if (conflictingProfile && conflictingProfile.id !== userId) {
+    throw new Error("The white-label email belongs to a profile with a different authentication id");
+  }
+
+  await prisma.profile.upsert({
+    where: { id: userId },
+    update: {
+      email: ADMIN_EMAIL,
+      full_name: ADMIN_NAME,
+      role: "SCHOOL_ADMIN",
+      is_active: true,
+      is_view_only: false,
+      view_only_expires_at: null,
+    },
+    create: {
+      id: userId,
+      email: ADMIN_EMAIL,
+      full_name: ADMIN_NAME,
+      role: "SCHOOL_ADMIN",
+      is_active: true,
+    },
+  });
+
+  await prisma.schoolAdminMember.upsert({
+    where: { school_id_profile_id: { school_id: schoolId, profile_id: userId } },
+    update: {},
+    create: { school_id: schoolId, profile_id: userId },
+  });
+
+  const revoked = await prisma.schoolAdminMember.deleteMany({
+    where: { school_id: schoolId, profile_id: { not: userId } },
+  });
+
+  return revoked.count;
+}
+
 async function main() {
   console.log("Seeding Rowad white-label presentation environment...");
 
   const school = await prisma.school.upsert({
     where: { slug: DEMO_SLUG },
     update: {
-      name: "مدرسة رواد النموذجية",
-      name_alt: "Rowad Demo School",
+      name: "منصة بناء الأهلية (الرواد)",
+      name_alt: "Binaa Al-Ahliyyah (Al Rowad)",
       language: "en",
-      description: "A fictional white-label school used for product demonstrations.",
+      description: "A private white-label environment used for product demonstrations.",
       is_active: true,
       color_bg: "#0B0B0C",
       color_primary: "#6B1E2D",
@@ -66,11 +142,11 @@ async function main() {
       features: {},
     },
     create: {
-      name: "مدرسة رواد النموذجية",
-      name_alt: "Rowad Demo School",
+      name: "منصة بناء الأهلية (الرواد)",
+      name_alt: "Binaa Al-Ahliyyah (Al Rowad)",
       slug: DEMO_SLUG,
       language: "en",
-      description: "A fictional white-label school used for product demonstrations.",
+      description: "A private white-label environment used for product demonstrations.",
       color_bg: "#0B0B0C",
       color_primary: "#6B1E2D",
       color_secondary: "#B8A082",
@@ -79,26 +155,7 @@ async function main() {
   });
 
   await seedRowadModel(prisma, school.id);
-
-  const sourceSchool = await prisma.school.findUnique({
-    where: { slug: SOURCE_SLUG },
-    select: { id: true },
-  });
-  if (!sourceSchool) {
-    throw new Error(`Source school '${SOURCE_SLUG}' was not found; cannot copy administrator access.`);
-  }
-
-  const sourceAdmins = await prisma.schoolAdminMember.findMany({
-    where: { school_id: sourceSchool.id },
-    select: { profile_id: true },
-  });
-  if (!sourceAdmins.length) {
-    throw new Error(`No school administrators found for '${SOURCE_SLUG}'.`);
-  }
-  await prisma.schoolAdminMember.createMany({
-    data: sourceAdmins.map(({ profile_id }) => ({ school_id: school.id, profile_id })),
-    skipDuplicates: true,
-  });
+  const revokedAdminCount = await provisionWhiteLabelAdmin(school.id);
 
   const teachers = [] as { id: string; profile_id: string }[];
   for (const person of demoTeachers) {
@@ -173,7 +230,7 @@ async function main() {
     }
   }
 
-  const announcement = "Welcome to the Rowad Demo School — this fictional workspace is ready for your presentation.";
+  const announcement = "Welcome to Binaa Al-Ahliyyah (Al Rowad) — this private workspace is ready for your presentation.";
   const existingAnnouncement = await prisma.announcement.findFirst({
     where: { school_id: school.id, class_id: foundation.id, content: announcement },
     select: { id: true },
@@ -184,8 +241,8 @@ async function main() {
     });
   }
 
-  console.log(`Done. ${sourceAdmins.length} existing Albania admin account(s) can now use rowad.manzoma.sa.`);
-  console.log(`Demo school: ${school.name_alt} (${DEMO_SLUG})`);
+  console.log(`Done. White-label access is assigned to one administrator; ${revokedAdminCount} previous membership(s) revoked.`);
+  console.log(`Demo environment: ${school.name_alt} (${DEMO_SLUG})`);
 }
 
 main()
