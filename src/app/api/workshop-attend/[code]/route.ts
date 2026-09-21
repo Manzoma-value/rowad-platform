@@ -4,16 +4,20 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { isWorkshopWorkDay, workshopDateKey, workshopDayDate } from "@/lib/workshops";
+import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, context: { params: Promise<{ code: string }> }) {
+export async function GET(req: Request, context: { params: Promise<{ code: string }> }) {
   const { code } = await context.params;
   const workshop = await prisma.workshop.findUnique({
     where: { attendance_token: code },
     select: { id: true, title: true, status: true, school: { select: { slug: true } } },
   });
   if (!workshop) return NextResponse.json({ error: "invalid_code" }, { status: 404 });
+  if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), workshop.school.slug)) {
+    return NextResponse.json({ error: "invalid_code" }, { status: 404 });
+  }
   return NextResponse.json({
     workshop_id: workshop.id,
     workshop_title: workshop.title,
@@ -22,7 +26,7 @@ export async function GET(_req: Request, context: { params: Promise<{ code: stri
   });
 }
 
-export async function POST(_req: Request, context: { params: Promise<{ code: string }> }) {
+export async function POST(req: Request, context: { params: Promise<{ code: string }> }) {
   const { code } = await context.params;
   if (!code) return NextResponse.json({ error: "no_code" }, { status: 400 });
 
@@ -52,9 +56,13 @@ export async function POST(_req: Request, context: { params: Promise<{ code: str
       schedule: true,
       start_date: true,
       end_date: true,
+      school: { select: { slug: true } },
     },
   });
   if (!workshop) return NextResponse.json({ error: "invalid_code" }, { status: 404 });
+  if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), workshop.school.slug)) {
+    return NextResponse.json({ error: "invalid_code" }, { status: 404 });
+  }
   if (workshop.school_id !== profile.teacher.school_id) {
     return NextResponse.json({ error: "wrong_school" }, { status: 403 });
   }

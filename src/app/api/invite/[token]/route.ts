@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import { requestOrigin } from "@/lib/request-origin";
+import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
 import { z } from "zod";
 
 const InviteBodySchema = z.object({
@@ -45,6 +46,7 @@ type InviteState =
         school_name: string;
         school_name_alt: string | null;
         school_language: string;
+        school_slug: string;
       };
     };
 
@@ -59,7 +61,7 @@ async function resolveInvite(token: string): Promise<InviteState> {
       max_uses: true,
       expires_at: true,
       school_id: true,
-      school: { select: { name: true, name_alt: true, language: true } },
+      school: { select: { name: true, name_alt: true, language: true, slug: true } },
     },
   });
 
@@ -77,6 +79,7 @@ async function resolveInvite(token: string): Promise<InviteState> {
       school_name: invite.school.name,
       school_name_alt: invite.school.name_alt ?? null,
       school_language: invite.school.language,
+      school_slug: invite.school.slug,
     },
   };
 }
@@ -84,7 +87,7 @@ async function resolveInvite(token: string): Promise<InviteState> {
 // ── GET /api/invite/[token] ────────────────────────────────────────────────
 
 export async function GET(
-  _req: Request,
+  req: Request,
   context: { params: Promise<{ token: string }> }
 ) {
   const { token } = await context.params;
@@ -92,6 +95,9 @@ export async function GET(
 
   if (!state.valid) {
     return NextResponse.json({ valid: false, reason: state.reason });
+  }
+  if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), state.invite.school_slug)) {
+    return NextResponse.json({ valid: false, reason: "not_found" });
   }
 
   return NextResponse.json({
@@ -153,6 +159,9 @@ export async function POST(
       used:      "تم استخدام هذه الدعوة مسبقاً.",
     };
     return NextResponse.json({ error: messages[state.reason] }, { status: 410 });
+  }
+  if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), state.invite.school_slug)) {
+    return NextResponse.json({ error: "رابط الدعوة غير صالح." }, { status: 410 });
   }
 
   // ── Parse body (JSON or multipart) ────────────────────────────────────

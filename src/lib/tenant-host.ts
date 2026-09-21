@@ -124,6 +124,21 @@ export function preferredSchoolSlugFromHost(rawHost: string | null | undefined):
 }
 
 /**
+ * Bind a school-scoped public token or request body to the current hostname.
+ * Unknown/apex hosts remain unscoped for previews and owner tooling; tenant
+ * and white-label hosts may only resolve records belonging to their mapped
+ * school.
+ */
+export function isSchoolSlugAllowedOnHost(
+  rawHost: string | null | undefined,
+  schoolSlug: string | null | undefined,
+): boolean {
+  const expectedSlug = preferredSchoolSlugFromHost(rawHost);
+  if (!expectedSlug) return true;
+  return schoolSlug?.trim().toLowerCase() === expectedSlug;
+}
+
+/**
  * Build the absolute base URL for a given school slug, e.g.
  *   originForSlug("rowad-albania", "https:")  → "https://rowad-albania.manzoma.sa"
  * Used when we must redirect a user to their correct subdomain.

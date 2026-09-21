@@ -6,6 +6,7 @@ import { requestOrigin } from "@/lib/request-origin";
 import { resolveLandingFlow } from "@/lib/landing-flow";
 import { findValidClassInvite } from "@/lib/class-invites";
 import { notifyProfiles } from "@/lib/notifications";
+import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
 import { z } from "zod";
 
 const SchoolSignupSchema = z.object({
@@ -44,6 +45,10 @@ export async function POST(req: Request) {
 
     const { school_slug, full_name, password, city, age, class_invite_token } = result.data;
     const email = result.data.email.toLowerCase();
+
+    if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), school_slug)) {
+      return NextResponse.json({ error: "المنصة غير موجودة" }, { status: 404 });
+    }
 
     // Verify school exists
     const school = await prisma.school.findUnique({

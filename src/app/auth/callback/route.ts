@@ -36,6 +36,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { requestOrigin } from "@/lib/request-origin";
+import { isWhiteLabelAccountAllowed, isWhiteLabelHost } from "@/lib/tenant-host";
 
 const ROLE_ROUTES: Record<string, string> = {
   OWNER: "/owner",
@@ -87,6 +88,17 @@ export async function GET(request: NextRequest) {
   if (getUserError || !user) {
     console.error("[auth/callback] getUser error:", getUserError?.message);
     return NextResponse.redirect(`${origin}/login?error=session_error`);
+  }
+
+  // A confirmation/recovery link opened on the closed white-label host must
+  // obey the same account allowlist as password login. Clear any newly-issued
+  // session immediately so an Albania account never becomes active here.
+  if (
+    isWhiteLabelHost(request.headers.get("host")) &&
+    !isWhiteLabelAccountAllowed(user.email)
+  ) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(`${origin}/login?error=not_authorized`);
   }
 
   // ── 3. Password-recovery flow — send to reset page, skip role lookup ────

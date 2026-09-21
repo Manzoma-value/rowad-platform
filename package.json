@@ -10,6 +10,8 @@
     "check:terminology": "node scripts/check-product-terminology.mjs",
     "fix:theme-colors": "node scripts/check-theme-colors.mjs --fix",
     "test:view-only-admin": "node --no-warnings --experimental-strip-types scripts/check-view-only-admin-access.mjs",
+    "test:tenant-isolation": "node --no-warnings --experimental-strip-types scripts/check-tenant-isolation.mjs",
+    "audit:white-label-isolation": "npx tsx prisma/audit-white-label-isolation.ts",
     "test:teacher-smoke": "node scripts/teacher-prelaunch-smoke.mjs",
     "seed:white-label-demo": "npx tsx prisma/seed-white-label-demo.ts",
     "start": "next start",

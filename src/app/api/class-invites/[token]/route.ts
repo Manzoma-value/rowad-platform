@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { findValidClassInvite } from "@/lib/class-invites";
+import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_req: Request, context: { params: Promise<{ token: string }> }) {
+export async function GET(req: Request, context: { params: Promise<{ token: string }> }) {
   const { token } = await context.params;
   const invite = await findValidClassInvite(token);
   if (!invite) {
+    return NextResponse.json({ error: "invite_unavailable" }, { status: 410 });
+  }
+  if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), invite.school.slug)) {
     return NextResponse.json({ error: "invite_unavailable" }, { status: 410 });
   }
 

@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   context: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await context.params;
+
+  if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), slug)) {
+    return NextResponse.json({ error: "Platform not found" }, { status: 404 });
+  }
 
   const school = await prisma.school.findUnique({
     where: { slug },

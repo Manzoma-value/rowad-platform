@@ -1,6 +1,7 @@
 // student auth helper
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { isSchoolIdAllowedForCurrentRequest } from "@/lib/school-context";
 
 export async function requireStudent() {
   const supabase = await createClient();
@@ -24,7 +25,8 @@ export async function requireStudent() {
       onboarding_status: true,
     },
   });
-  if (!student) return null;
+  if (!student?.school_id) return null;
+  if (!(await isSchoolIdAllowedForCurrentRequest(student.school_id))) return null;
 
   return { profile, student };
 }

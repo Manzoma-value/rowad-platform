@@ -21,6 +21,13 @@ async function preferredSchoolIdFromCurrentRequest(): Promise<string | null> {
   return school?.id ?? null;
 }
 
+export async function isSchoolIdAllowedForCurrentRequest(schoolId: string): Promise<boolean> {
+  const preferredSchoolSlug = await preferredSchoolSlugFromCurrentRequest();
+  if (!preferredSchoolSlug) return true;
+  const preferredSchoolId = await preferredSchoolIdFromCurrentRequest();
+  return preferredSchoolId === schoolId;
+}
+
 export async function resolveSchoolAdminMembership(profileId: string) {
   const preferredSchoolSlug = await preferredSchoolSlugFromCurrentRequest();
   const preferredSchoolId = await preferredSchoolIdFromCurrentRequest();

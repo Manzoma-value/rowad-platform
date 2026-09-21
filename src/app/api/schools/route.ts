@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { preferredSchoolSlugFromHost } from "@/lib/tenant-host";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const scopedSlug = preferredSchoolSlugFromHost(req.headers.get("host"));
   const schools = await prisma.school.findMany({
+    where: scopedSlug ? { slug: scopedSlug } : undefined,
     select: {
       id: true,
       name: true,

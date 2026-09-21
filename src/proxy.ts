@@ -68,6 +68,19 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Public invite/workshop flows belong to tenant environments. The closed
+  // white-label host presents its own access page instead of rendering or
+  // redeeming another tenant's onboarding UI.
+  if (
+    whiteLabelHost &&
+    (pathname.startsWith("/invite/") || pathname.startsWith("/workshop/"))
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/signup";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
   // On a tenant subdomain, the ROOT is the school's public landing page.
   // Rewrite before any auth work — the landing is fully public.
   if (isTenant && slug && pathname === "/") {
@@ -83,7 +96,10 @@ export async function proxy(request: NextRequest) {
 
   // Teacher APIs enforce role and activation in their route handlers. Avoid
   // repeating auth and profile network calls for every teacher-page request.
-  if (pathname === "/api/teacher" || pathname.startsWith("/api/teacher/")) {
+  if (
+    !whiteLabelHost &&
+    (pathname === "/api/teacher" || pathname.startsWith("/api/teacher/"))
+  ) {
     const apiResponse = NextResponse.next({ request });
     apiResponse.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
     apiResponse.headers.set("Vary", "Cookie");
@@ -130,11 +146,14 @@ export async function proxy(request: NextRequest) {
 
   // No self-registration is exposed on the white-label host. Its single
   // administrator is provisioned server-side.
+  const isInviteRedemption =
+    pathname.startsWith("/api/invite/") && request.method === "POST";
   if (
     whiteLabelHost &&
     (pathname === "/api/auth/signup" ||
       pathname === "/api/auth/school-signup" ||
-      pathname === "/api/workshop-signup")
+      pathname === "/api/workshop-signup" ||
+      isInviteRedemption)
   ) {
     return NextResponse.json({ error: "Registration is invitation-only" }, { status: 403 });
   }

@@ -1,6 +1,7 @@
 // teacher auth helper — mirrors school-admin-auth pattern
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { isSchoolIdAllowedForCurrentRequest } from "@/lib/school-context";
 
 export async function requireTeacher() {
   const supabase = await createClient();
@@ -23,6 +24,7 @@ export async function requireTeacher() {
     select: { id: true, school_id: true, onboarding_status: true },
   });
   if (!teacher) return null;
+  if (!(await isSchoolIdAllowedForCurrentRequest(teacher.school_id))) return null;
 
   return { profile, teacher };
 }

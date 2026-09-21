@@ -9,6 +9,7 @@ import { NextResponse } from "next/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
 import { isWorkshopWorkDay, workshopDateKey, workshopDayDate } from "@/lib/workshops";
+import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
 
 export const dynamic = "force-dynamic";
 
@@ -48,9 +49,13 @@ export async function POST(req: Request) {
       schedule: true,
       start_date: true,
       end_date: true,
+      school: { select: { slug: true } },
     },
   });
   if (!workshop) return NextResponse.json({ error: "invalid_token" }, { status: 404 });
+  if (!isSchoolSlugAllowedOnHost(req.headers.get("host"), workshop.school.slug)) {
+    return NextResponse.json({ error: "invalid_token" }, { status: 404 });
+  }
   if (workshop.status === "CLOSED") {
     return NextResponse.json({ error: "workshop_closed" }, { status: 410 });
   }
