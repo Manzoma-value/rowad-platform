@@ -90,6 +90,23 @@ assert.match(callbackSource, /isWhiteLabelAccountAllowed/);
 assert.match(callbackSource, /isWhiteLabelAccountRoleAllowed/);
 
 for (const relativePath of [
+  "src/app/school-admin/layout.tsx",
+  "src/app/teacher/layout.tsx",
+  "src/app/student/layout.tsx",
+]) {
+  const source = readFileSync(join(root, relativePath), "utf8");
+  assert.match(source, /isWhiteLabelHost/);
+  assert.match(source, /\/binaa-brand\/header\/wordmark\.png/);
+}
+
+const languageSource = readFileSync(join(root, "src/lib/language-context.tsx"), "utf8");
+assert.match(
+  languageSource,
+  /whiteLabel \? "ar" : "sq"/,
+  "Arabic must remain the white-label default language",
+);
+
+for (const relativePath of [
   "src/lib/teacher-auth.ts",
   "src/lib/student-auth.ts",
   "src/lib/player-auth.ts",

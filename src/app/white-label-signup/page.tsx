@@ -52,10 +52,15 @@ const copy = {
 };
 
 export default function WhiteLabelSignupPage() {
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useState<Lang>("ar");
   const text = copy[lang];
 
   useEffect(() => {
+    if (localStorage.getItem("white_label_ar_default_v1") !== "1") {
+      localStorage.setItem("white_label_ar_default_v1", "1");
+      localStorage.setItem("lang", "ar");
+      return;
+    }
     const saved = localStorage.getItem("lang");
     if (saved === "ar" || saved === "en") {
       // eslint-disable-next-line react-hooks/set-state-in-effect

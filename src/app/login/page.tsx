@@ -122,7 +122,7 @@ function Rule() {
 }
 
 export default function LoginPage() {
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useState<Lang>("ar");
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
@@ -138,12 +138,17 @@ export default function LoginPage() {
   const L = STRINGS[lang];
 
   useEffect(() => {
+    const isWhiteLabel = isWhiteLabelHost(window.location.host);
     const hostTimer = window.setTimeout(() => {
-      setWhiteLabelHost(isWhiteLabelHost(window.location.host));
+      setWhiteLabelHost(isWhiteLabel);
     }, 0);
+    if (isWhiteLabel && localStorage.getItem("white_label_ar_default_v1") !== "1") {
+      localStorage.setItem("white_label_ar_default_v1", "1");
+      localStorage.setItem("lang", "ar");
+    }
     const saved = localStorage.getItem("lang") as Lang | null;
-    const effectiveLang: Lang = saved === "en" || saved === "ar" ? saved : "en";
-    if (effectiveLang !== "en") setLang(effectiveLang);
+    const effectiveLang: Lang = saved === "en" || saved === "ar" ? saved : isWhiteLabel ? "ar" : "en";
+    if (effectiveLang !== "ar") setLang(effectiveLang);
     const params = new URLSearchParams(window.location.search);
     const rd  = params.get("redirectTo") ?? "";
     const su  = params.get("signupTo") ?? "";

@@ -17,6 +17,7 @@ import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import IdentityBackdrop from "@/components/IdentityBackdrop";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { isWhiteLabelHost } from "@/lib/tenant-host";
 import {
   LayoutDashboard,
   Users,
@@ -172,13 +173,15 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const { lang, setLang } = useLang();
   const tr = t[lang];
   const isRtl = lang === "ar";
+  const [whiteLabelHost, setWhiteLabelHost] = useState(false);
 
-  // Albanian is the default language for teachers. Only apply it when the
-  // user hasn't already chosen a language on this device — an explicit
-  // choice (saved under "lang") always wins.
+  // Apply the host-specific default only when the user has not chosen one.
   useEffect(() => {
     try {
-      if (!localStorage.getItem("lang")) setLang("sq");
+      const whiteLabel = isWhiteLabelHost(window.location.host);
+      const timer = window.setTimeout(() => setWhiteLabelHost(whiteLabel), 0);
+      if (!localStorage.getItem("lang")) setLang(whiteLabel ? "ar" : "sq");
+      return () => window.clearTimeout(timer);
     } catch { /* localStorage unavailable — keep the provider default */ }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -369,7 +372,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
           }}
         >
           <div style={{ flex: 1 }} />
-          {showToggle && <LangToggle dark secondaryLang={schoolLang} />}
+          {showToggle && <LangToggle dark secondaryLang={whiteLabelHost ? "en" : schoolLang} />}
           <div
             style={{
               display: "flex",
@@ -468,7 +471,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
         <div className="tl-sidebar-glow" aria-hidden="true" />
 
         {/* Logo */}
-        <div className="tl-logo-block">
+        <div className={`tl-logo-block${whiteLabelHost ? " tl-logo-block--white-label" : ""}`}>
           <Link
             href="/teacher"
             className="tl-logo-home"
@@ -476,13 +479,18 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
             aria-label={lang === "ar" ? "العودة إلى لوحة المشرف" : lang === "sq" ? "Kthehu te paneli i edukatorit" : "Back to supervisor dashboard"}
           >
             <Image
-              src="/headerlogo.png"
-              alt="بناء الأهلية"
+              src={whiteLabelHost ? "/binaa-brand/header/wordmark.png" : "/headerlogo.png"}
+              alt={whiteLabelHost ? "منصة بناء الأهلية (الرواد)" : "بناء الأهلية"}
               fill
-              style={{ objectFit: "cover", objectPosition: "center" }}
+              unoptimized={whiteLabelHost}
+              style={{
+                objectFit: whiteLabelHost ? "contain" : "cover",
+                objectPosition: "center",
+                padding: whiteLabelHost ? "18px 28px" : 0,
+              }}
               priority
             />
-            <div className="tl-logo-frame" aria-hidden="true" />
+            {!whiteLabelHost && <div className="tl-logo-frame" aria-hidden="true" />}
             <span className="tl-logo-home-hint">
               {lang === "ar" ? "لوحة المشرف" : lang === "sq" ? "Paneli i edukatorit" : "Supervisor dashboard"}
               <b aria-hidden="true">↗</b>
@@ -513,7 +521,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
 
         {showToggle && (
           <div style={{ padding: "0 14px 10px" }}>
-            <LangToggle dark secondaryLang={schoolLang} />
+            <LangToggle dark secondaryLang={whiteLabelHost ? "en" : schoolLang} />
           </div>
         )}
 
@@ -843,6 +851,16 @@ const styles = `
     border-top: 1.5px solid rgba(184,160,130,0.55);
     border-bottom: 1px solid rgba(184,160,130,0.20);
     box-shadow: 0 6px 28px rgba(184,160,130,0.07), inset 0 -1px 0 rgba(184,160,130,0.08);
+  }
+  .tl-logo-block.tl-logo-block--white-label {
+    background: linear-gradient(135deg,#F7F3EB,#EFEAE0);
+    border-top-color: rgba(184,160,130,0.58);
+    border-bottom-color: rgba(107,30,45,0.18);
+    box-shadow: 0 8px 28px rgba(26,26,26,0.2), inset 0 -1px 0 rgba(184,160,130,0.16);
+  }
+  .tl-logo-block--white-label .tl-logo-home:hover img,
+  .tl-logo-block--white-label .tl-logo-home:focus-visible img {
+    filter: saturate(1.06) contrast(1.03);
   }
   .tl-logo-home { position:absolute; inset:0; z-index:1; display:block; color:#FFFBF5; text-decoration:none; outline:none; }
   .tl-logo-home img { transition:transform .35s var(--tl-ease-out),filter .35s ease; }

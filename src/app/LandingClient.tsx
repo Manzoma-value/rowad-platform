@@ -46,6 +46,11 @@ export default function LandingClient() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showOpening, setShowOpening] = useState(false);
   useEffect(() => {
+    if (localStorage.getItem("white_label_ar_default_v1") !== "1") {
+      localStorage.setItem("white_label_ar_default_v1", "1");
+      localStorage.setItem("lang", "ar");
+      return;
+    }
     const saved = localStorage.getItem("lang");
     // Restore the visitor's existing preference after hydration.
     // eslint-disable-next-line react-hooks/set-state-in-effect

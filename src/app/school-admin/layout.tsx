@@ -546,6 +546,7 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
               alt={whiteLabelHost ? "منصة بناء الأهلية (الرواد)" : "بناء الأهلية"}
               fill
               sizes="280px"
+              unoptimized={whiteLabelHost}
               style={{
                 objectFit: whiteLabelHost ? "contain" : "cover",
                 objectPosition: "center",

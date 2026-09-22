@@ -15,6 +15,7 @@ import { TenantProvider, useTenant } from "@/lib/tenant-context";
 import { featureForPath, type FeatureKey } from "@/lib/features";
 import IdentityBackdrop from "@/components/IdentityBackdrop";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { isWhiteLabelHost } from "@/lib/tenant-host";
 import {
   LayoutDashboard,
   Users,
@@ -172,6 +173,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
   const [avatarUrl, setAvatarUrl]         = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen]     = useState(false);
   const [loggingOut, setLoggingOut]       = useState(false);
+  const [whiteLabelHost, setWhiteLabelHost] = useState(false);
   // Always show the toggle — users can swap language anytime.
   const [showToggle] = useState(true);
   const [schoolLang, setSchoolLang]       = useState("sq");
@@ -186,6 +188,14 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
   const { hasFeature, loading: tenantLoading } = useTenant();
   const visibleNav = navItems.filter((i) => !i.feature || hasFeature(i.feature));
   const showCommunity = hasFeature("hub");
+
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => setWhiteLabelHost(isWhiteLabelHost(window.location.host)),
+      0,
+    );
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // Route guard: bounce away from a module the school disabled. Only relevant
   // once the student has full nav (CLASS_ASSIGNED); onboarding paths aren't
@@ -315,15 +325,20 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="sl-sidebar-glow" aria-hidden="true" />
 
         {/* Logo */}
-        <div className="sl-logo-block">
+        <div className={`sl-logo-block${whiteLabelHost ? " sl-logo-block--white-label" : ""}`}>
           <Image
-            src="/headerlogo.png"
-            alt="بناء الأهلية"
+            src={whiteLabelHost ? "/binaa-brand/header/wordmark.png" : "/headerlogo.png"}
+            alt={whiteLabelHost ? "منصة بناء الأهلية (الرواد)" : "بناء الأهلية"}
             fill
-            style={{ objectFit: "cover", objectPosition: "center" }}
+            unoptimized={whiteLabelHost}
+            style={{
+              objectFit: whiteLabelHost ? "contain" : "cover",
+              objectPosition: "center",
+              padding: whiteLabelHost ? "18px 28px" : 0,
+            }}
             priority
           />
-          <div className="sl-logo-frame" aria-hidden="true" />
+          {!whiteLabelHost && <div className="sl-logo-frame" aria-hidden="true" />}
           <button className="sl-close-btn" onClick={() => setSidebarOpen(false)} aria-label="إغلاق">
             <X size={14} strokeWidth={2} />
           </button>
@@ -345,7 +360,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
 
         {showToggle && (
           <div style={{ padding: "0 14px 10px" }}>
-            <LangToggle dark secondaryLang={schoolLang} />
+            <LangToggle dark secondaryLang={whiteLabelHost ? "en" : schoolLang} />
           </div>
         )}
 
@@ -662,6 +677,12 @@ const styles = `
     border-top: 1.5px solid rgba(184,160,130,0.55);
     border-bottom: 1px solid rgba(184,160,130,0.20);
     box-shadow: 0 6px 28px rgba(184,160,130,0.07), inset 0 -1px 0 rgba(184,160,130,0.08);
+  }
+  .sl-logo-block.sl-logo-block--white-label {
+    background: linear-gradient(135deg,#F7F3EB,#EFEAE0);
+    border-top-color: rgba(184,160,130,0.58);
+    border-bottom-color: rgba(107,30,45,0.18);
+    box-shadow: 0 8px 28px rgba(26,26,26,0.2), inset 0 -1px 0 rgba(184,160,130,0.16);
   }
   .sl-logo-frame {
     position: absolute; inset: 0; pointer-events: none; z-index: 2;

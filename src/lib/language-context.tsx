@@ -24,24 +24,31 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("lang") as Lang;
     const hasChosenLanguage = localStorage.getItem("language_preference_v2") === "1";
     const whiteLabel = isWhiteLabelHost(window.location.host);
-    const defaultLanguage: Lang = whiteLabel ? "en" : "sq";
+    const needsWhiteLabelArabicDefault =
+      whiteLabel && localStorage.getItem("white_label_ar_default_v1") !== "1";
+    const defaultLanguage: Lang = whiteLabel ? "ar" : "sq";
     const allowedSavedLanguage = whiteLabel
       ? saved === "ar" || saved === "en"
       : saved === "ar" || saved === "sq" || saved === "en";
-    // Old Arabic preferences came from the former default. Migrate them to
-    // Albanian once; any choice made from now on remains respected.
-    if (hasChosenLanguage && allowedSavedLanguage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLangState(saved);
-      document.documentElement.dir = saved === "ar" ? "rtl" : "ltr";
-      document.documentElement.lang = saved;
+    let nextLanguage: Lang;
+
+    if (needsWhiteLabelArabicDefault) {
+      localStorage.setItem("white_label_ar_default_v1", "1");
+      localStorage.setItem("lang", "ar");
+      localStorage.setItem("language_preference_v2", "1");
+      nextLanguage = "ar";
+    } else if (hasChosenLanguage && allowedSavedLanguage) {
+      nextLanguage = saved;
     } else {
       localStorage.setItem("lang", defaultLanguage);
       localStorage.setItem("language_preference_v2", "1");
-      document.documentElement.dir = "ltr";
-      document.documentElement.lang = defaultLanguage;
-      setLangState(defaultLanguage);
+      nextLanguage = defaultLanguage;
     }
+
+    document.documentElement.dir = nextLanguage === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = nextLanguage;
+    const timer = window.setTimeout(() => setLangState(nextLanguage), 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function setLang(l: Lang) {
