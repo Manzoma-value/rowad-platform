@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import {
   isSchoolSlugAllowedOnHost,
   isWhiteLabelAccountAllowed,
+  isWhiteLabelAccountRoleAllowed,
   isWhiteLabelHost,
   parseHost,
   preferredSchoolSlugFromHost,
@@ -23,9 +24,16 @@ assert.deepEqual(parseHost("rowad-albania.manzoma.sa"), {
 assert.equal(preferredSchoolSlugFromHost("rowad.manzoma.sa"), "rowad-demo");
 assert.equal(preferredSchoolSlugFromHost("rowad-albania.manzoma.sa"), "rowad-albania");
 
-assert.equal(isWhiteLabelAccountAllowed("MANZOMA@ROWAD.COM"), true);
+assert.equal(isWhiteLabelAccountAllowed("ADMIN@MANZOMA.SA"), true);
+assert.equal(isWhiteLabelAccountAllowed("teacher@manzoma.sa"), true);
+assert.equal(isWhiteLabelAccountAllowed("student@manzoma.sa"), true);
+assert.equal(isWhiteLabelAccountAllowed("manzoma@rowad.com"), false);
 assert.equal(isWhiteLabelAccountAllowed("admin@rowad-albania.example"), false);
 assert.equal(isWhiteLabelAccountAllowed(null), false);
+assert.equal(isWhiteLabelAccountRoleAllowed("admin@manzoma.sa", "SCHOOL_ADMIN"), true);
+assert.equal(isWhiteLabelAccountRoleAllowed("teacher@manzoma.sa", "TEACHER"), true);
+assert.equal(isWhiteLabelAccountRoleAllowed("student@manzoma.sa", "STUDENT"), true);
+assert.equal(isWhiteLabelAccountRoleAllowed("teacher@manzoma.sa", "SCHOOL_ADMIN"), false);
 
 assert.equal(isSchoolSlugAllowedOnHost("rowad.manzoma.sa", "rowad-demo"), true);
 assert.equal(isSchoolSlugAllowedOnHost("rowad.manzoma.sa", "rowad-albania"), false);
@@ -67,6 +75,7 @@ assert.equal(
 
 const proxySource = readFileSync(join(root, "src/proxy.ts"), "utf8");
 assert.match(proxySource, /isWhiteLabelAccountAllowed/);
+assert.match(proxySource, /isWhiteLabelAccountRoleAllowed/);
 assert.match(proxySource, /pathname\.startsWith\("\/schools\/"\)/);
 assert.match(proxySource, /pathname\.startsWith\("\/invite\/"\)/);
 assert.match(proxySource, /pathname\.startsWith\("\/workshop\/"\)/);
@@ -78,6 +87,7 @@ assert.match(
 
 const callbackSource = readFileSync(join(root, "src/app/auth/callback/route.ts"), "utf8");
 assert.match(callbackSource, /isWhiteLabelAccountAllowed/);
+assert.match(callbackSource, /isWhiteLabelAccountRoleAllowed/);
 
 for (const relativePath of [
   "src/lib/teacher-auth.ts",

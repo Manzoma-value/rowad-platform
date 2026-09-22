@@ -1,8 +1,8 @@
 // Re-runnable presentation seed for rowad.manzoma.sa.
 //
-// It creates a separate demo environment, provisions its sole administrator,
-// removes every other admin membership from that environment, and adds safe
-// fictional data. Albania credentials are never copied or reused here.
+// It creates a separate demo environment, provisions its closed role-based
+// access accounts, removes every other admin membership from that environment,
+// and adds safe fictional data. Albania credentials are never copied here.
 //
 // Run after deployment with production environment variables available:
 //   npm run seed:white-label-demo
@@ -32,9 +32,16 @@ const prisma = new PrismaClient({
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 const DEMO_SLUG = process.env.NEXT_PUBLIC_WHITE_LABEL_DEMO_SCHOOL_SLUG ?? "rowad-demo";
-const ADMIN_EMAIL = (process.env.WHITE_LABEL_ADMIN_EMAIL ?? "manzoma@rowad.com").trim().toLowerCase();
-const ADMIN_PASSWORD = process.env.WHITE_LABEL_ADMIN_PASSWORD;
+const ADMIN_EMAIL = "admin@manzoma.sa";
+const TEACHER_EMAIL = "teacher@manzoma.sa";
+const STUDENT_EMAIL = "student@manzoma.sa";
+const LEGACY_ADMIN_EMAIL = "manzoma@rowad.com";
+const ACCESS_PASSWORD = process.env.WHITE_LABEL_ACCESS_PASSWORD ?? process.env.WHITE_LABEL_ADMIN_PASSWORD;
 const ADMIN_NAME = process.env.WHITE_LABEL_ADMIN_NAME ?? "Manzoma Admin";
+const TEACHER_NAME = process.env.WHITE_LABEL_TEACHER_NAME ?? "Manzoma Teacher";
+const STUDENT_NAME = process.env.WHITE_LABEL_STUDENT_NAME ?? "Manzoma Student";
+
+type AccessRole = "SCHOOL_ADMIN" | "TEACHER" | "STUDENT";
 
 const demoTeachers = [
   { email: "sara.hassan@rowad-demo.example", fullName: "Sara Hassan" },
@@ -64,52 +71,76 @@ async function findAuthUserId(email: string): Promise<string | null> {
   return rows[0]?.id ?? null;
 }
 
-async function provisionWhiteLabelAdmin(schoolId: string) {
-  let userId = await findAuthUserId(ADMIN_EMAIL);
+async function provisionAccessProfile({
+  email,
+  fullName,
+  role,
+  legacyEmail,
+}: {
+  email: string;
+  fullName: string;
+  role: AccessRole;
+  legacyEmail?: string;
+}) {
+  let userId = await findAuthUserId(email);
+  if (!userId && legacyEmail) userId = await findAuthUserId(legacyEmail);
 
-  if (!userId) {
-    if (!ADMIN_PASSWORD) {
-      throw new Error("WHITE_LABEL_ADMIN_PASSWORD is required when creating the white-label administrator");
-    }
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: ADMIN_EMAIL,
-      password: ADMIN_PASSWORD,
-      email_confirm: true,
-      user_metadata: { full_name: ADMIN_NAME, role: "SCHOOL_ADMIN" },
-    });
-    if (error || !data.user) throw new Error(`Could not create white-label administrator: ${error?.message}`);
-    userId = data.user.id;
-  } else if (ADMIN_PASSWORD) {
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-      password: ADMIN_PASSWORD,
-      email_confirm: true,
-      user_metadata: { full_name: ADMIN_NAME, role: "SCHOOL_ADMIN" },
-    });
-    if (error) throw new Error(`Could not update white-label administrator: ${error.message}`);
+  if (!ACCESS_PASSWORD) {
+    throw new Error("WHITE_LABEL_ACCESS_PASSWORD (or WHITE_LABEL_ADMIN_PASSWORD) is required");
   }
 
-  const conflictingProfile = await prisma.profile.findUnique({ where: { email: ADMIN_EMAIL } });
+  if (!userId) {
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: ACCESS_PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, role },
+    });
+    if (error || !data.user) throw new Error(`Could not create ${email}: ${error?.message}`);
+    userId = data.user.id;
+  } else {
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      email,
+      password: ACCESS_PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, role },
+    });
+    if (error) throw new Error(`Could not update ${email}: ${error.message}`);
+  }
+
+  const conflictingProfile = await prisma.profile.findUnique({ where: { email } });
   if (conflictingProfile && conflictingProfile.id !== userId) {
-    throw new Error("The white-label email belongs to a profile with a different authentication id");
+    throw new Error(`${email} belongs to a profile with a different authentication id`);
   }
 
   await prisma.profile.upsert({
     where: { id: userId },
     update: {
-      email: ADMIN_EMAIL,
-      full_name: ADMIN_NAME,
-      role: "SCHOOL_ADMIN",
+      email,
+      full_name: fullName,
+      role,
       is_active: true,
       is_view_only: false,
       view_only_expires_at: null,
     },
     create: {
       id: userId,
-      email: ADMIN_EMAIL,
-      full_name: ADMIN_NAME,
-      role: "SCHOOL_ADMIN",
+      email,
+      full_name: fullName,
+      role,
       is_active: true,
     },
+  });
+
+  return userId;
+}
+
+async function provisionWhiteLabelAdmin(schoolId: string) {
+  const userId = await provisionAccessProfile({
+    email: ADMIN_EMAIL,
+    fullName: ADMIN_NAME,
+    role: "SCHOOL_ADMIN",
+    legacyEmail: LEGACY_ADMIN_EMAIL,
   });
 
   await prisma.schoolAdminMember.upsert({
@@ -176,6 +207,52 @@ async function main() {
   const foundation = await findOrCreateClass(school.id, "Foundation Cohort", teachers[0].id);
   const leadership = await findOrCreateClass(school.id, "Leadership Cohort", teachers[1].id);
 
+  const accessTeacherProfileId = await provisionAccessProfile({
+    email: TEACHER_EMAIL,
+    fullName: TEACHER_NAME,
+    role: "TEACHER",
+  });
+  const accessTeacher = await prisma.teacher.upsert({
+    where: { profile_id: accessTeacherProfileId },
+    update: { school_id: school.id, onboarding_status: "ACTIVE" },
+    create: {
+      profile_id: accessTeacherProfileId,
+      school_id: school.id,
+      onboarding_status: "ACTIVE",
+    },
+    select: { id: true },
+  });
+  const presentation = await findOrCreateClass(
+    school.id,
+    "Presentation Cohort",
+    accessTeacher.id,
+  );
+
+  const accessStudentProfileId = await provisionAccessProfile({
+    email: STUDENT_EMAIL,
+    fullName: STUDENT_NAME,
+    role: "STUDENT",
+  });
+  await prisma.student.upsert({
+    where: { profile_id: accessStudentProfileId },
+    update: {
+      school_id: school.id,
+      class_id: presentation.id,
+      city: "Riyadh",
+      age: 16,
+      onboarding_status: "CLASS_ASSIGNED",
+      is_manually_added: false,
+    },
+    create: {
+      profile_id: accessStudentProfileId,
+      school_id: school.id,
+      class_id: presentation.id,
+      city: "Riyadh",
+      age: 16,
+      onboarding_status: "CLASS_ASSIGNED",
+    },
+  });
+
   const students = [] as { id: string; status: string }[];
   for (let index = 0; index < demoStudents.length; index += 1) {
     const person = demoStudents[index];
@@ -241,7 +318,7 @@ async function main() {
     });
   }
 
-  console.log(`Done. White-label access is assigned to one administrator; ${revokedAdminCount} previous membership(s) revoked.`);
+  console.log(`Done. White-label access is assigned to admin, teacher, and student accounts; ${revokedAdminCount} previous admin membership(s) revoked.`);
   console.log(`Demo environment: ${school.name_alt} (${DEMO_SLUG})`);
 }
 

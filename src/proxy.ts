@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   isWhiteLabelAccountAllowed,
+  isWhiteLabelAccountRoleAllowed,
   isWhiteLabelHost,
   parseHost,
 } from "@/lib/tenant-host";
@@ -171,7 +172,10 @@ export async function proxy(request: NextRequest) {
         return NextResponse.json({ error: "Account deactivated" }, { status: 403 });
       }
 
-      if (whiteLabelHost && apiProfile?.role !== "SCHOOL_ADMIN") {
+      if (
+        whiteLabelHost &&
+        !isWhiteLabelAccountRoleAllowed(user.email, apiProfile?.role)
+      ) {
         return NextResponse.json({ error: "Account is not authorized for this platform" }, { status: 403 });
       }
 
@@ -265,7 +269,7 @@ export async function proxy(request: NextRequest) {
       })
     : false;
 
-  if (whiteLabelHost && role !== "SCHOOL_ADMIN") {
+  if (whiteLabelHost && !isWhiteLabelAccountRoleAllowed(user.email, role)) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/white-label-signout";
     url.searchParams.set("error", "not_authorized");

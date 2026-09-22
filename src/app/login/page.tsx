@@ -6,7 +6,11 @@ import { useState, useEffect } from "react";
 import { createClient } from "../../lib/supabase/client";
 import MandalaLoader from "@/components/MandalaLoader";
 import { whiteLabelLoginCss } from "./white-label-login-css";
-import { isWhiteLabelAccountAllowed, isWhiteLabelHost } from "@/lib/tenant-host";
+import {
+  isWhiteLabelAccountAllowed,
+  isWhiteLabelAccountRoleAllowed,
+  isWhiteLabelHost,
+} from "@/lib/tenant-host";
 
 /* ─── i18n ─── */
 const STRINGS = {
@@ -180,6 +184,14 @@ export default function LoginPage() {
       }
       const { data: profile, error: profileError } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
       if (profileError || !profile) { setError(L.errProfile); return; }
+      if (
+        isWhiteLabelHost(window.location.host) &&
+        !isWhiteLabelAccountRoleAllowed(data.user.email, profile.role)
+      ) {
+        await supabase.auth.signOut();
+        setError(L.errUnauthorized);
+        return;
+      }
       const roleRoutes: Record<string, string> = { OWNER: "/owner", SCHOOL_ADMIN: "/school-admin", TEACHER: "/teacher", STUDENT: "/student" };
       const dest = redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : roleRoutes[profile.role];
       if (dest) {

@@ -36,7 +36,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { requestOrigin } from "@/lib/request-origin";
-import { isWhiteLabelAccountAllowed, isWhiteLabelHost } from "@/lib/tenant-host";
+import {
+  isWhiteLabelAccountAllowed,
+  isWhiteLabelAccountRoleAllowed,
+  isWhiteLabelHost,
+} from "@/lib/tenant-host";
 
 const ROLE_ROUTES: Record<string, string> = {
   OWNER: "/owner",
@@ -123,6 +127,14 @@ export async function GET(request: NextRequest) {
   const profile = await prisma.profile
     .findUnique({ where: { id: user.id }, select: { role: true } })
     .catch(() => null);
+
+  if (
+    isWhiteLabelHost(request.headers.get("host")) &&
+    !isWhiteLabelAccountRoleAllowed(user.email, profile?.role)
+  ) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(`${origin}/login?error=not_authorized`);
+  }
 
   const dest = profile?.role ? (ROLE_ROUTES[profile.role] ?? "/student") : "/student";
   return NextResponse.redirect(`${origin}${dest}`);

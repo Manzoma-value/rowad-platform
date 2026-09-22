@@ -26,13 +26,34 @@ export const WHITE_LABEL_DEMO_SCHOOL_SLUG =
   process.env.NEXT_PUBLIC_WHITE_LABEL_DEMO_SCHOOL_SLUG?.toLowerCase() ||
   "rowad-demo";
 
-/** The sole account allowed to authenticate on the investor/demo host. */
-export const WHITE_LABEL_ADMIN_EMAIL =
-  process.env.WHITE_LABEL_ADMIN_EMAIL?.trim().toLowerCase() ||
-  "manzoma@rowad.com";
+/** Closed accounts allowed to authenticate on the investor/demo host. */
+export const WHITE_LABEL_ADMIN_EMAIL = "admin@manzoma.sa";
+
+export const WHITE_LABEL_TEACHER_EMAIL = "teacher@manzoma.sa";
+
+export const WHITE_LABEL_STUDENT_EMAIL = "student@manzoma.sa";
+
+export type WhiteLabelRole = "SCHOOL_ADMIN" | "TEACHER" | "STUDENT";
+
+export function whiteLabelRoleForEmail(
+  email: string | null | undefined,
+): WhiteLabelRole | null {
+  const normalized = email?.trim().toLowerCase();
+  if (normalized === WHITE_LABEL_ADMIN_EMAIL) return "SCHOOL_ADMIN";
+  if (normalized === WHITE_LABEL_TEACHER_EMAIL) return "TEACHER";
+  if (normalized === WHITE_LABEL_STUDENT_EMAIL) return "STUDENT";
+  return null;
+}
 
 export function isWhiteLabelAccountAllowed(email: string | null | undefined): boolean {
-  return email?.trim().toLowerCase() === WHITE_LABEL_ADMIN_EMAIL;
+  return whiteLabelRoleForEmail(email) !== null;
+}
+
+export function isWhiteLabelAccountRoleAllowed(
+  email: string | null | undefined,
+  role: string | null | undefined,
+): boolean {
+  return whiteLabelRoleForEmail(email) === role;
 }
 
 export interface HostInfo {
