@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState, useRef } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import {
   Activity, BarChart3, BookOpenCheck, ChevronDown, CircleGauge,
   Search, Sparkles, TrendingUp, UserRoundCheck, UsersRound,
@@ -690,8 +691,7 @@ export default function SchoolAdminReportsPage() {
   const [performanceFilter, setPerformanceFilter] = useState<"all" | "strong" | "developing" | "attention">("all");
 
   useEffect(() => {
-    fetch("/api/school-admin/reports/classes")
-      .then((r) => r.json())
+    cachedFetch<{ classes: ClassData[] }>("/api/school-admin/reports/classes", 60_000)
       .then((d) => {
         setClasses(d.classes ?? []);
         setLoading(false);
@@ -715,11 +715,10 @@ export default function SchoolAdminReportsPage() {
     setStudentTraits(null);
     setDetailLoading(true);
     try {
-      const [detailRes, traitRes] = await Promise.all([
-        fetch(`/api/school-admin/reports/classes/${cls.id}`),
-        fetch(`/api/school-admin/reports/classes/${cls.id}/traits`),
+      const [d, t] = await Promise.all([
+        cachedFetch<ClassDetail>(`/api/school-admin/reports/classes/${cls.id}`, 60_000),
+        cachedFetch<ClassTraitData>(`/api/school-admin/reports/classes/${cls.id}/traits`, 60_000),
       ]);
-      const [d, t] = await Promise.all([detailRes.json(), traitRes.json()]);
       setDetail(d);
       setTraitData(t);
     } finally {
@@ -736,10 +735,9 @@ export default function SchoolAdminReportsPage() {
     setSelectedStudent(studentId);
     setStudentTraits(null);
     try {
-      const res = await fetch(
-        `/api/school-admin/reports/students/${studentId}/traits`,
+      const d = await cachedFetch<{ trait_radar: StudentTraitDetail[] }>(
+        `/api/school-admin/reports/students/${studentId}/traits`, 60_000,
       );
-      const d = await res.json();
       setStudentTraits(d.trait_radar ?? []);
     } catch {
       setStudentTraits([]);

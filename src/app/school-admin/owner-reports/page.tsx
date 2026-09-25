@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch } from "@/lib/api-cache";
 import MandalaLoader from "@/components/MandalaLoader";
 
 type Row = {
@@ -47,8 +48,7 @@ export default function AdminOwnerReportsListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/school-admin/owner-reports", { cache: "no-store" })
-      .then((r) => r.json())
+    cachedFetch<{ reports: Row[] }>("/api/school-admin/owner-reports", 60_000)
       .then((d) => setRows(d?.reports ?? []))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ExternalLink, GraduationCap, Save, School, ShieldCheck } from "lucide-react";
 import MandalaLoader from "@/components/MandalaLoader";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch } from "@/lib/api-cache";
 import type { LandingFlow } from "@/lib/landing-flow";
 
 type AccessResponse = {
@@ -74,11 +75,7 @@ export default function LandingAccessPage() {
   const [message, setMessage] = useState<"saved" | "error" | null>(null);
 
   useEffect(() => {
-    fetch("/api/school-admin/landing-access", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("load_failed");
-        return res.json() as Promise<AccessResponse>;
-      })
+    cachedFetch<AccessResponse>("/api/school-admin/landing-access", 60_000)
       .then((value) => {
         setData(value);
         setSelected(value.flow);

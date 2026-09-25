@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { cachedFetch, invalidateCache, invalidatePrefix } from "@/lib/api-cache";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
 import MandalaLoader from "@/components/MandalaLoader";
@@ -268,8 +269,7 @@ export default function SchoolAdminTeachersPage() {
   };
 
   useEffect(() => {
-    fetch("/api/school-admin/teachers")
-      .then((r) => r.json())
+    cachedFetch<{ teachers: Teacher[] }>("/api/school-admin/teachers", 60_000)
       .then((d) => setTeachers(d.teachers ?? []))
       .finally(() => setLoading(false));
   }, []);
@@ -397,6 +397,8 @@ export default function SchoolAdminTeachersPage() {
         setToggleError(d.error ?? (lang === "ar" ? "حدث خطأ" : "Something went wrong"));
         return;
       }
+      invalidatePrefix("/api/school-admin/teachers");
+      invalidateCache("/api/school-admin/stats");
       setTeachers((prev) =>
         prev.map((teacher) =>
           teacher.id === teacherId
@@ -422,6 +424,8 @@ export default function SchoolAdminTeachersPage() {
         setDeleteError(d.error ?? (lang === "ar" ? "تعذر حذف المشرف" : lang === "sq" ? "Fshirja dështoi" : "Failed to delete supervisor"));
         return;
       }
+      invalidatePrefix("/api/school-admin/teachers");
+      invalidateCache("/api/school-admin/stats");
       setTeachers((prev) => prev.filter((teacher) => teacher.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch {

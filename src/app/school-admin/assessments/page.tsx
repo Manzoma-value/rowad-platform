@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import { createPortal } from "react-dom";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
@@ -452,8 +453,7 @@ export default function AssessmentsHubPage() {
   const loadList = useCallback(async () => {
     setLoadingList(true);
     try {
-      const r = await fetch(`/api/school-admin/assessments`, { cache: "no-store" });
-      const d = await r.json();
+      const d = await cachedFetch<{ assessments: AssessmentRow[]; groups: GroupRef[] }>("/api/school-admin/assessments", 30_000);
       const assessments = d?.assessments ?? [];
       setList(assessments);
       setGroups(d?.groups ?? []);
@@ -464,11 +464,11 @@ export default function AssessmentsHubPage() {
   const loadDetail = useCallback(async (aid: string) => {
     setLoadingDetail(true);
     try {
-      const r = await fetch(`/api/school-admin/assessments/${aid}`, { cache: "no-store" });
-      if (!r.ok) { setDetail(null); return; }
-      const d = await r.json();
+      const d = await cachedFetch<{ assessment: AssessmentFull }>(`/api/school-admin/assessments/${aid}`, 30_000);
       const assessment = d?.assessment as AssessmentFull | undefined;
       setDetail(assessment ? { ...assessment, traits: canonicalizeDefaultTraits(assessment.traits) } : null);
+    } catch {
+      setDetail(null);
     } finally { setLoadingDetail(false); }
   }, []);
 

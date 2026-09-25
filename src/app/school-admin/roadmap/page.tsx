@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import { Icons } from "./components/icons";
 import { StageCard } from "./components/stage-card";
 import { ItemEditorModal } from "./components/item-editor-modal";
@@ -17,8 +18,7 @@ export default function RoadmapPage() {
   const load = async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
-      const res = await fetch("/api/school-admin/roadmap");
-      const data = await res.json();
+      const data = await cachedFetch<{ roadmap: Roadmap | null }>("/api/school-admin/roadmap", 60_000);
       setRoadmap(data.roadmap ?? null);
     } finally {
       setLoading(false);

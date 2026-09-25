@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import IdentityStar from "@/components/IdentityStar";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -291,8 +292,7 @@ export default function InvitesPage() {
   const [newInvite, setNewInvite] = useState<Invite | null>(null);
 
   useEffect(() => {
-    fetch("/api/school-admin/invites")
-      .then((r) => r.json())
+    cachedFetch<{ invites: Invite[] }>("/api/school-admin/invites", 60_000)
       .then((d) => {
         setInvites(d.invites ?? []);
         setLoading(false);

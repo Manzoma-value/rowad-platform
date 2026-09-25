@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
 import { t } from "@/lib/translations";
-import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { cachedFetch, invalidateCache, invalidatePrefix } from "@/lib/api-cache";
 
 interface Option {
   id: string;
@@ -119,7 +119,7 @@ export default function SchoolAdminSubmissionDetailPage() {
         return;
       }
       invalidateCache(`/api/school-admin/submissions/${id}`);
-      invalidateCache("/api/school-admin/submissions");
+      invalidatePrefix("/api/school-admin/submissions");
       router.push("/school-admin/submissions");
     } finally {
       setSubmitting(false);

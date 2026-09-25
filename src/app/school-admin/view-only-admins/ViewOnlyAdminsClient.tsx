@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import { CalendarDays, Check, Clock3, Eye, ShieldCheck, UserRoundX } from "lucide-react";
 import { useLang } from "@/lib/language-context";
 
@@ -133,9 +134,7 @@ export default function ViewOnlyAdminsClient() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/school-admin/view-only-admins", { cache: "no-store" });
-      if (!response.ok) throw new Error("load");
-      const data = (await response.json()) as { admins?: ViewOnlyAdmin[] };
+      const data = await cachedFetch<{ admins?: ViewOnlyAdmin[] }>("/api/school-admin/view-only-admins", 60_000);
       const list = data.admins ?? [];
       setAdmins(list);
       setDraftDates(Object.fromEntries(list.map((admin) => [admin.id, inputDate(admin.view_only_expires_at)])));

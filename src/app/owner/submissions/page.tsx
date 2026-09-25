@@ -186,8 +186,7 @@ function SubmissionsContent() {
     const url = statusFilter
       ? `/api/owner/submissions?status=${statusFilter}`
       : "/api/owner/submissions";
-    fetch(url)
-      .then((r) => r.json())
+    cachedFetch<{ submissions: Submission[] }>(url, 15_000)
       .then((d) => setSubmissions(d.submissions ?? []))
       .finally(() => setLoading(false));
   }, [statusFilter]);

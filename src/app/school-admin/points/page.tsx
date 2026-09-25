@@ -17,6 +17,7 @@ export const dynamic = "force-dynamic";
 // ─────────────────────────────────────────────────────────────────────
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import Image from "next/image";
 import MandalaLoader from "@/components/MandalaLoader";
 import { useViewOnly } from "@/lib/view-only-context";
@@ -199,9 +200,7 @@ export default function PointsPage() {
 
   const load = useCallback(async (preferTemplateId?: string | null) => {
     try {
-      const response = await fetch("/api/school-admin/points", { cache: "no-store" });
-      if (!response.ok) throw new Error("failed");
-      const payload: ApiPayload = await response.json();
+      const payload = await cachedFetch<ApiPayload>("/api/school-admin/points", 30_000);
       setData(payload);
       setTemplates(payload.templates);
       applyTemplateSelection(payload.templates, preferTemplateId);

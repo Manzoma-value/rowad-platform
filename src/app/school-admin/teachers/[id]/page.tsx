@@ -11,6 +11,7 @@ import {
   Target, Trophy, UserRoundCheck, Users, WandSparkles,
 } from "lucide-react";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch } from "@/lib/api-cache";
 import MandalaLoader from "@/components/MandalaLoader";
 import IdentityMandala from "@/components/IdentityMandala";
 import TraitSpectrumPanel from "@/components/TraitSpectrumPanel";
@@ -203,8 +204,7 @@ export default function TeacherProfilePage({ params }: { params: Promise<{ id: s
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/school-admin/teachers/${id}`, { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : Promise.reject())
+    cachedFetch<{ teacher: TeacherProfile }>(`/api/school-admin/teachers/${id}`, 60_000)
       .then((payload) => { if (active) setTeacher(payload.teacher ?? null); })
       .catch(() => { if (active) setError(true); })
       .finally(() => { if (active) setLoading(false); });

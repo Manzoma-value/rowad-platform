@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 
 import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { cachedFetch, invalidatePrefix } from "@/lib/api-cache";
 import Link from "next/link";
 import { useLang } from "@/lib/language-context";
 import { useViewOnly } from "@/lib/view-only-context";
@@ -441,14 +442,13 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
   const loadAll = useCallback(async () => {
     setError(false);
     try {
-      const [detailRes, attendanceRes, codeRes] = await Promise.all([
-        fetch(`/api/school-admin/workshops/${id}`, { cache: "no-store" }),
-        fetch(`/api/school-admin/workshops/${id}/attendance`, { cache: "no-store" }),
+      const [detailData, attendanceData, codeRes] = await Promise.all([
+        cachedFetch<DetailPayload>(`/api/school-admin/workshops/${id}`, 15_000),
+        cachedFetch<AttendancePayload>(`/api/school-admin/workshops/${id}/attendance`, 10_000),
         fetch(`/api/school-admin/workshops/${id}/attendance-code`, { cache: "no-store" }),
       ]);
-      if (!detailRes.ok) throw new Error("detail");
-      setDetail(await detailRes.json());
-      setAttendance(attendanceRes.ok ? await attendanceRes.json() : null);
+      setDetail(detailData);
+      setAttendance(attendanceData);
       setCode(codeRes.ok ? await codeRes.json() : { code: null });
     } catch {
       setError(true);
@@ -1058,7 +1058,7 @@ export default function WorkshopDetailPage({ params }: { params: Promise<{ id: s
             )}
             <button className="wd-small-btn ghost" onClick={() => void exportAttendance("xlsx")}><Download size={14}/>{T.exportExcel}</button>
             <button className="wd-small-btn ghost" onClick={() => void exportAttendance("pdf")}><Download size={14}/>{T.exportPdf}</button>
-            <button className="wd-small-btn ghost" onClick={() => void loadAll()}>{T.refresh}</button>
+            <button className="wd-small-btn ghost" onClick={() => { invalidatePrefix(`/api/school-admin/workshops/${id}`); void loadAll(); }}>{T.refresh}</button>
           </div>
         </div>
 

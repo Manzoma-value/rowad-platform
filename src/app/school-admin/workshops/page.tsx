@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 import Link from "next/link";
 import {
   Activity, ArrowDown, ArrowUp, CalendarDays, Check, ChevronRight,
@@ -37,8 +38,8 @@ export default function WorkshopsPage(){
   const [query,setQuery]=useState(""),[status,setStatus]=useState("ALL"),[from,setFrom]=useState(""),[to,setTo]=useState(""),[audienceFilter,setAudienceFilter]=useState<string[]>([]);
   const [draggedId,setDraggedId]=useState<string|null>(null),[dragOverId,setDragOverId]=useState<string|null>(null),[orderState,setOrderState]=useState<"idle"|"saving"|"saved"|"error">("idle");
   const [form,setForm]=useState({title:"",description:"",notes:"",start_date:"",end_date:"",audience:["TEACHERS"],audience_other:"",schedule:[] as WorkshopDay[],delivery_mode:"OFFLINE" as "ONLINE"|"OFFLINE",venue:"",meeting_url:""});
-  const load=()=>{setLoading(true);fetch("/api/school-admin/workshops",{cache:"no-store"}).then(r=>r.json()).then(d=>setRows(d.workshops??[])).finally(()=>setLoading(false));};
-  useEffect(()=>{fetch("/api/school-admin/workshops",{cache:"no-store"}).then(r=>r.json()).then(d=>setRows(d.workshops??[])).finally(()=>setLoading(false));},[]);
+  const load=()=>{setLoading(true);cachedFetch<{workshops:Row[]}>("/api/school-admin/workshops",30_000).then(d=>setRows(d.workshops??[])).finally(()=>setLoading(false));};
+  useEffect(()=>{load();},[]);
   const labels:Record<string,string>={TEACHERS:T.teachers,SUPERVISORS:T.supervisors,ADMINS:T.admins,PARENTS:T.parents,STUDENTS:T.students,OTHER:T.other};
   const filtered=useMemo(()=>rows.filter(w=>{
     const hay=`${w.title} ${w.description??""}`.toLowerCase(); const start=isoDate(w.start_date),end=isoDate(w.end_date)||start;
@@ -54,12 +55,13 @@ export default function WorkshopsPage(){
     if(target==="filter") setAudienceFilter(v=>v.includes(key)?v.filter(x=>x!==key):[...v,key]);
     else setForm(v=>({...v,audience:v.audience.includes(key)?v.audience.filter(x=>x!==key):[...v.audience,key]}));
   }
-  async function create(){ if(!form.title.trim()||!form.audience.length||!form.schedule.length)return; setCreating(true); const r=await fetch("/api/school-admin/workshops",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)}); setCreating(false); if(r.ok){setDialog(false);setForm({title:"",description:"",notes:"",start_date:"",end_date:"",audience:["TEACHERS"],audience_other:"",schedule:[],delivery_mode:"OFFLINE",venue:"",meeting_url:""});load();}}
+  async function create(){ if(!form.title.trim()||!form.audience.length||!form.schedule.length)return; setCreating(true); const r=await fetch("/api/school-admin/workshops",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)}); setCreating(false); if(r.ok){invalidateCache("/api/school-admin/workshops");setDialog(false);setForm({title:"",description:"",notes:"",start_date:"",end_date:"",audience:["TEACHERS"],audience_other:"",schedule:[],delivery_mode:"OFFLINE",venue:"",meeting_url:""});load();}}
   async function persistOrder(nextRows:Row[],previousRows:Row[]){
     setOrderState("saving");
     try{
       const response=await fetch("/api/school-admin/workshops",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({ordered_ids:nextRows.map(row=>row.id)})});
       if(!response.ok) throw new Error("reorder failed");
+      invalidateCache("/api/school-admin/workshops");
       setOrderState("saved");
       window.setTimeout(()=>setOrderState(state=>state==="saved"?"idle":state),1800);
     }catch{

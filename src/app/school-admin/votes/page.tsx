@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import { useViewOnly } from "@/lib/view-only-context";
 import { useConfirm } from "@/lib/confirm-dialog";
 import MandalaLoader from "@/components/MandalaLoader";
@@ -72,8 +73,7 @@ export default function VotesPage() {
   const loadList = useCallback(async () => {
     setLoadingList(true);
     try {
-      const r = await fetch("/api/school-admin/votes", { cache: "no-store" });
-      const d = await r.json();
+      const d = await cachedFetch<{ votes: VoteRow[]; eligible_teachers: number }>("/api/school-admin/votes", 30_000);
       const votes: VoteRow[] = d?.votes ?? [];
       setList(votes);
       setEligibleTeachers(d?.eligible_teachers ?? 0);
@@ -86,11 +86,11 @@ export default function VotesPage() {
   const loadDetail = useCallback(async (id: string) => {
     setLoadingDetail(true);
     try {
-      const r = await fetch(`/api/school-admin/votes/${id}`, { cache: "no-store" });
-      if (!r.ok) { setDetail(null); return; }
-      const d = await r.json();
+      const d = await cachedFetch<{ vote: VoteDetail; eligible_teachers: number }>(`/api/school-admin/votes/${id}`, 30_000);
       setDetail(d?.vote ?? null);
       setEligibleTeachers(d?.eligible_teachers ?? 0);
+    } catch {
+      setDetail(null);
     } finally {
       setLoadingDetail(false);
     }

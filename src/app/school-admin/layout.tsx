@@ -9,7 +9,7 @@ import { useLang } from "@/lib/language-context";
 import LangToggle from "@/lib/LangToggle";
 import { t } from "@/lib/translations";
 import Image from "next/image";
-import { cachedFetch, clearCache } from "@/lib/api-cache";
+import { cachedFetch, clearCache, invalidatePrefix } from "@/lib/api-cache";
 import { ViewOnlyProvider } from "@/lib/view-only-context";
 import { enforceTenantSubdomain } from "@/lib/enforce-subdomain";
 import { isWhiteLabelHost } from "@/lib/tenant-host";
@@ -293,11 +293,9 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   }, [pathname, router, viewOnly]);
 
   useEffect(() => {
-    // Layout fetches run in parallel + cached so navigation is instant.
-    // Activation is enforced by the proxy/auth helper; view-only metadata is
-    // included in /stats so we do not make a second, duplicate auth request.
-    // /stats — 60s TTL (the dashboard sometimes refreshes counts)
-    cachedFetch<any>("/api/school-admin/stats", 60_000)
+    // The shared shell needs identity and school settings, not the dashboard's
+    // six aggregate queries. Cache this lightweight response across navigation.
+    cachedFetch<any>("/api/school-admin/me", 60_000)
       .then((d) => {
         if (d?.error === "school_deactivated" && d?.school?.slug) {
           setDeactivated(true);
@@ -333,33 +331,32 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   }, []);
 
-  // ── Defence-in-depth: when this is a view-only session, monkey-patch
-  //    window.fetch so any non-GET request to /api/school-admin/* is
-  //    intercepted before it leaves the browser. The server already refuses
-  //    these, but blocking client-side means a stray button click never
-  //    even hits the wire.
+  // Keep admin reads fresh after a successful write, including writes made
+  // from detail pages. The same wrapper enforces view-only mode in the UI.
   useEffect(() => {
-    if (!viewOnly) return;
     const realFetch = window.fetch.bind(window);
-    const isWriteAdminCall = (input: RequestInfo | URL, init?: RequestInit) => {
-      const method = (init?.method ?? "GET").toUpperCase();
-      if (method === "GET" || method === "HEAD" || method === "OPTIONS") return false;
+    const requestInfo = (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       try {
         const u = new URL(url, window.location.origin);
-        return u.pathname.startsWith("/api/");
-      } catch { return false; }
+        return { method, isApi: u.origin === window.location.origin && u.pathname.startsWith("/api/") };
+      } catch { return { method, isApi: false }; }
     };
-    window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
-      if (isWriteAdminCall(input, init)) {
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const { method, isApi } = requestInfo(input, init);
+      const isWrite = method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
+      if (viewOnly && isApi && isWrite) {
         console.warn("[view-only] blocked write call to", input);
         showViewOnlyToast();
-        return Promise.resolve(new Response(
+        return new Response(
           JSON.stringify({ error: "view_only", message: "This demo account is read-only." }),
           { status: 403, headers: { "Content-Type": "application/json" } },
-        ));
+        );
       }
-      return realFetch(input, init);
+      const response = await realFetch(input, init);
+      if (isApi && isWrite && response.ok) invalidatePrefix("/api/school-admin/");
+      return response;
     };
 
     // Tiny one-off toast injector — appended to <body>, fades after 2.4s.

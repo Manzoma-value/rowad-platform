@@ -13,6 +13,7 @@ import IdentityMandala from "@/components/IdentityMandala";
 import MandalaLoader from "@/components/MandalaLoader";
 import StudentSupportCircle from "@/components/StudentSupportCircle";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch } from "@/lib/api-cache";
 import type { StudentSupportCircle as StudentSupportCircleValue } from "@/lib/student-support";
 
 type Lang = "ar" | "sq" | "en";
@@ -67,7 +68,7 @@ function Empty({ children }: { children: ReactNode }) { return <div className="s
 export default function AdminStudentProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params); const { lang: rawLang } = useLang(); const lang = (rawLang === "sq" ? "sq" : rawLang === "en" ? "en" : "ar") as Lang; const T = COPY[lang]; const dir = lang === "ar" ? "rtl" : "ltr";
   const [student, setStudent] = useState<Student | null>(null); const [loading, setLoading] = useState(true); const [error, setError] = useState(false); const [tab, setTab] = useState<Tab>("overview");
-  useEffect(() => { let active = true; fetch(`/api/school-admin/students?id=${encodeURIComponent(id)}`, { cache: "no-store" }).then((response) => response.ok ? response.json() : Promise.reject()).then((payload) => { if (active) setStudent((payload.students ?? [])[0] ?? null); }).catch(() => { if (active) setError(true); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [id]);
+  useEffect(() => { let active = true; cachedFetch<{ students: Student[] }>(`/api/school-admin/students?id=${encodeURIComponent(id)}`, 30_000).then((payload) => { if (active) setStudent((payload.students ?? [])[0] ?? null); }).catch(() => { if (active) setError(true); }).finally(() => { if (active) setLoading(false); }); return () => { active = false; }; }, [id]);
   if (loading) return <div className="stp-loading"><MandalaLoader /><style>{styles}</style></div>;
   if (error || !student) return <main className="stp-shell" dir={dir}><Link href="/school-admin/students" className="stp-back"><ArrowLeft size={16} />{T.back}</Link><div className="stp-error">{T.loadError}</div><style>{styles}</style></main>;
   const tabs: Array<{ id: Tab; label: string; icon: ReactNode }> = [{ id: "overview", label: T.overview, icon: <Activity /> }, { id: "journey", label: T.journey, icon: <Route /> }, { id: "spectrum", label: T.spectrum, icon: <Radar /> }, { id: "profile", label: T.profile, icon: <CircleUserRound /> }];

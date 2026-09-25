@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import { useLang } from "@/lib/language-context";
 import MandalaLoader from "@/components/MandalaLoader";
 import { Check, Clock3, MapPin, Trophy, Users, X } from "lucide-react";
@@ -223,8 +224,7 @@ export default function GameScoresPage() {
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
-    fetch("/api/school-admin/game-scores", { cache: "no-store" })
-      .then((r) => r.json())
+    cachedFetch<{ overview: Overview; modelRows: ModelRow[]; miniRows: MiniRow[]; inProgressRows: InProgressRow[] }>("/api/school-admin/game-scores", 30_000)
       .then((d) => {
         setOverview(d?.overview ?? null);
         setModelRows(d?.modelRows ?? []);

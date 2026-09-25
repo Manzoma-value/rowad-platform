@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import Link from "next/link";
 import {
   Bell, BookOpenCheck, ChevronLeft, ChevronRight, Crown, Eye, EyeOff,
@@ -278,8 +279,7 @@ export default function TeacherGroupsPage() {
   const loadList = useCallback(async () => {
     setLoadingList(true);
     try {
-      const r = await fetch("/api/school-admin/teacher-groups", { cache: "no-store" });
-      const d = await r.json();
+      const d = await cachedFetch<{ groups: GroupRow[]; openVisibility: boolean }>("/api/school-admin/teacher-groups", 30_000);
       const nextGroups = d?.groups ?? [];
       setGroups(nextGroups);
       setSelectedId((current) => current ?? nextGroups[0]?.id ?? null);
@@ -310,9 +310,7 @@ export default function TeacherGroupsPage() {
     setLoadingDetail(true);
     setDetail(null);
     try {
-      const r = await fetch(`/api/school-admin/teacher-groups/${id}`, { cache: "no-store" });
-      if (!r.ok) { setDetail(null); return; }
-      const d = await r.json();
+      const d = await cachedFetch<{ group: GroupDetail }>(`/api/school-admin/teacher-groups/${id}`, 30_000);
       setDetail(d?.group ?? null);
       setPickedRequests(new Set());
       setRequestError("");
@@ -328,8 +326,7 @@ export default function TeacherGroupsPage() {
   const loadAnnouncements = useCallback(async (id: string) => {
     setLoadingAnnouncements(true);
     try {
-      const r = await fetch(`/api/school-admin/teacher-groups/${id}/announcements`, { cache: "no-store" });
-      const d = await r.json();
+      const d = await cachedFetch<{ announcements: GroupAnnouncement[] }>(`/api/school-admin/teacher-groups/${id}/announcements`, 30_000);
       setAnnouncements(Array.isArray(d?.announcements) ? d.announcements : []);
     } finally { setLoadingAnnouncements(false); }
   }, []);

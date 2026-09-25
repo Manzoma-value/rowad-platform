@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { cachedFetch, invalidateCache } from "@/lib/api-cache";
+import { cachedFetch, invalidateCache, invalidatePrefix } from "@/lib/api-cache";
 interface Option {
   id: string;
   text: string;
@@ -106,7 +106,7 @@ export default function OwnerSubmissionDetailPage() {
         return;
       }
       invalidateCache(`/api/owner/submissions/${id}`);
-      invalidateCache("/api/owner/submissions");
+      invalidatePrefix("/api/owner/submissions");
       invalidateCache("/api/owner/stats");
       router.push("/owner/submissions");
     } finally {

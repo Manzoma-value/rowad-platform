@@ -2,6 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
+import { cachedFetch } from "@/lib/api-cache";
 import Link from "next/link";
 import { ArrowDownUp, CalendarDays, Download, Filter, RotateCcw, Search, Users } from "lucide-react";
 import { useLang } from "@/lib/language-context";
@@ -167,22 +168,21 @@ export default function ApplicationsListPage() {
   }, [status, debouncedQ, currentRole, qualification, years, gender, country, dateScope, sort, hasApplication]);
 
   useEffect(() => {
-    const controller = new AbortController();
+    let active = true;
     setLoading(true);
-    fetch(`/api/school-admin/applications?${params}`, { cache: "no-store", signal: controller.signal })
-      .then((r) => r.json())
+    cachedFetch<{ teachers: typeof rows; meta: typeof meta }>(`/api/school-admin/applications?${params}`, 15_000)
       .then((d) => {
-        if (controller.signal.aborted) return;
+        if (!active) return;
         setRows(d?.teachers ?? []);
         setMeta(d?.meta ?? { total: 0, capped: false, status_counts: {} });
       })
       .catch(() => {
-        if (!controller.signal.aborted) setRows([]);
+        if (active) setRows([]);
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (active) setLoading(false);
       });
-    return () => controller.abort();
+    return () => { active = false; };
   }, [params]);
 
   const activeFilterCount = [
