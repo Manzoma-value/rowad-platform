@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export const revalidate = 60;
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await prisma.student.findUnique({
@@ -14,7 +13,7 @@ export async function GET() {
     select: {
       id: true,
       onboarding_status: true,
-      profile: { select: { full_name: true } },
+      profile: { select: { full_name: true, avatar_url: true } },
       school: { select: { id: true, name: true, name_alt: true, language: true, slug: true, is_active: true } },
       class: {
         select: {

@@ -1,8 +1,8 @@
 // src/app/api/hub/posts/[id]/reactions/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { profileSchoolId } from "@/lib/hub-auth";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 type ReactionType = "LIKE" | "LOVE" | "DISLIKE" | "HAHA" | "SAD";
 const VALID: ReactionType[] = ["LIKE", "LOVE", "DISLIKE", "HAHA", "SAD"];
@@ -16,8 +16,7 @@ export async function POST(
   req: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [{ id: postId }, body] = await Promise.all([

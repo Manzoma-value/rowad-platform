@@ -1,11 +1,11 @@
 // src/app/api/hub/posts/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { profileSchoolId } from "@/lib/hub-auth";
 import { hubImageExtension, validateHubImage } from "@/lib/hub-image";
 import { notifyProfiles, schoolProfileIds } from "@/lib/notifications";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 function adminSupabase() {
   return createSupabaseAdmin(
@@ -27,8 +27,7 @@ const POST_SELECT = {
 
 // GET /api/hub/posts?school_id=xxx&cursor=xxx&limit=50
 export async function GET(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
@@ -65,8 +64,7 @@ export async function GET(req: Request) {
 
 // POST /api/hub/posts  (multipart/form-data or JSON)
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const profile = await prisma.profile.findUnique({

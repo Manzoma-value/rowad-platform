@@ -23,9 +23,16 @@ export async function GET() {
   if (!school.is_active)
     return NextResponse.json({ error: "school_deactivated", school });
 
-  // Batch 1 — counts
-  const [teacherCount, studentCount, classCount, pendingPlacements] =
-    await Promise.all([
+  // All independent aggregates start together. The previous two-batch shape
+  // added an avoidable database round trip to every dashboard load.
+  const [
+    teacherCount,
+    studentCount,
+    classCount,
+    pendingPlacements,
+    hasPlacementAssessment,
+    studentsByStatus,
+  ] = await Promise.all([
       prisma.teacher.count({
         where: {
           school_id: school.id,
@@ -41,12 +48,7 @@ export async function GET() {
           review_status: "PENDING",
         },
       }),
-    ]);
-
-  // Batch 2 — assessment check + status breakdown
-  const [hasPlacementAssessment, studentsByStatus] = await Promise.all([
-    prisma.assessment
-      .findFirst({
+      prisma.assessment.findFirst({
         where: { school_id: school.id, type: "SCHOOL_PLACEMENT" },
         select: { id: true },
       })
@@ -56,11 +58,14 @@ export async function GET() {
       where: { school_id: school.id },
       _count: { onboarding_status: true },
     }),
-  ]);
+    ]);
 
   return NextResponse.json({
     school,
     adminName,
+    avatar_url: auth.profile.avatar_url,
+    is_view_only: auth.profile.is_view_only,
+    view_only_expires_at: auth.profile.view_only_expires_at?.toISOString() ?? null,
     teacherCount,
     studentCount,
     classCount,

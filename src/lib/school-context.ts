@@ -7,9 +7,13 @@ export async function preferredSchoolSlugFromCurrentRequest(): Promise<string | 
   return preferredSchoolSlugFromHost(headerList.get("host"));
 }
 
-async function preferredSchoolIdFromCurrentRequest(): Promise<string | null> {
-  const slug = await preferredSchoolSlugFromCurrentRequest();
-  if (!slug) return null;
+async function preferredSchoolFromCurrentRequest(): Promise<{
+  slug: string | null;
+  id: string | null;
+}> {
+  const headerList = await headers();
+  const slug = preferredSchoolSlugFromHost(headerList.get("host"));
+  if (!slug) return { slug: null, id: null };
 
   const school = await prisma.school.findUnique({
     where: { slug },
@@ -18,24 +22,22 @@ async function preferredSchoolIdFromCurrentRequest(): Promise<string | null> {
   // Callers also check the mapped slug. That lets them distinguish an
   // unscoped host from a mapped host whose school is missing, and fail closed
   // in the latter case.
-  return school?.id ?? null;
+  return { slug, id: school?.id ?? null };
 }
 
 export async function isSchoolIdAllowedForCurrentRequest(schoolId: string): Promise<boolean> {
-  const preferredSchoolSlug = await preferredSchoolSlugFromCurrentRequest();
-  if (!preferredSchoolSlug) return true;
-  const preferredSchoolId = await preferredSchoolIdFromCurrentRequest();
-  return preferredSchoolId === schoolId;
+  const preferred = await preferredSchoolFromCurrentRequest();
+  if (!preferred.slug) return true;
+  return preferred.id === schoolId;
 }
 
 export async function resolveSchoolAdminMembership(profileId: string) {
-  const preferredSchoolSlug = await preferredSchoolSlugFromCurrentRequest();
-  const preferredSchoolId = await preferredSchoolIdFromCurrentRequest();
+  const preferred = await preferredSchoolFromCurrentRequest();
 
-  if (preferredSchoolSlug) {
-    if (!preferredSchoolId) return null;
+  if (preferred.slug) {
+    if (!preferred.id) return null;
     return prisma.schoolAdminMember.findFirst({
-      where: { profile_id: profileId, school_id: preferredSchoolId },
+      where: { profile_id: profileId, school_id: preferred.id },
       include: { school: true },
     });
   }
@@ -47,17 +49,16 @@ export async function resolveSchoolAdminMembership(profileId: string) {
 }
 
 export async function resolveProfileSchoolId(profileId: string): Promise<string | null> {
-  const preferredSchoolSlug = await preferredSchoolSlugFromCurrentRequest();
-  const preferredSchoolId = await preferredSchoolIdFromCurrentRequest();
+  const preferred = await preferredSchoolFromCurrentRequest();
 
   // On a tenant or the white-label host, a missing mapped school is a
   // configuration error, not permission to expose a different school's data.
-  if (preferredSchoolSlug && !preferredSchoolId) return null;
+  if (preferred.slug && !preferred.id) return null;
 
   const [admin, teacher, student] = await Promise.all([
-    preferredSchoolId
+    preferred.id
       ? prisma.schoolAdminMember.findFirst({
-          where: { profile_id: profileId, school_id: preferredSchoolId },
+          where: { profile_id: profileId, school_id: preferred.id },
           select: { school_id: true },
         })
       : prisma.schoolAdminMember.findFirst({
@@ -67,14 +68,14 @@ export async function resolveProfileSchoolId(profileId: string): Promise<string 
     prisma.teacher.findUnique({
       where: {
         profile_id: profileId,
-        ...(preferredSchoolId ? { school_id: preferredSchoolId } : {}),
+        ...(preferred.id ? { school_id: preferred.id } : {}),
       },
       select: { school_id: true },
     }),
     prisma.student.findUnique({
       where: {
         profile_id: profileId,
-        ...(preferredSchoolId ? { school_id: preferredSchoolId } : {}),
+        ...(preferred.id ? { school_id: preferred.id } : {}),
       },
       select: { school_id: true },
     }),

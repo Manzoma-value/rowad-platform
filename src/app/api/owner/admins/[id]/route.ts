@@ -1,21 +1,9 @@
 // PATCH /api/owner/admins/[id] — toggle is_active on a school admin's profile
 // [id] is the profile.id of the admin
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-
-async function requireOwner() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { id: true, role: true },
-  });
-  if (!profile || profile.role !== "OWNER") return null;
-  return profile;
-}
+import { requireOwner } from "@/lib/owner-auth";
 
 const ActivationSchema = z.object({
   is_active: z.boolean(),

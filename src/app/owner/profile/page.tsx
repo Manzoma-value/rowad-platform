@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 interface ProfileData {
   id: string;
@@ -42,8 +43,7 @@ export default function OwnerProfilePage() {
   const supabase = createClient();
 
   useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => r.json())
+    cachedFetch<{ profile?: ProfileData; email?: string }>("/api/profile", 600_000)
       .then((d) => {
         if (d?.profile) setProfile({ ...d.profile, email: d.email });
       })
@@ -93,6 +93,7 @@ export default function OwnerProfilePage() {
         }),
       });
       if (!res.ok) throw new Error("update failed");
+      invalidateCache("/api/profile");
 
       setProfile((p) =>
         p ? { ...p, avatar_url: urlData.publicUrl, avatar_path: path } : p,
@@ -111,6 +112,7 @@ export default function OwnerProfilePage() {
     try {
       const res = await fetch("/api/profile", { method: "DELETE" });
       if (!res.ok) throw new Error();
+      invalidateCache("/api/profile");
       setProfile((p) =>
         p ? { ...p, avatar_url: null, avatar_path: null } : p,
       );

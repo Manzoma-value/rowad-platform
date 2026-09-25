@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { isWorkshopWorkDay, workshopDateKey, workshopDayDate } from "@/lib/workshops";
 import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   let body: { token?: string };

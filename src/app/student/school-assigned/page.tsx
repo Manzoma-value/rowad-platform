@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/lib/language-context";
+import { cachedFetch } from "@/lib/api-cache";
 
 const S = {
   ar: {
@@ -54,13 +55,11 @@ export default function StudentSchoolAssignedPage() {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
-    fetch("/api/student")
-      .then((r) => r.json())
+    cachedFetch<StudentData>("/api/student", 60_000)
       .then((d) => setStudent(d))
       .catch((e) => console.log("student error:", e));
 
-    fetch("/api/student/intake-result")
-      .then((r) => r.json())
+    cachedFetch<{ attempt: IntakeAttempt | null }>("/api/student/intake-result", 60_000)
       .then((d) => setAttempt(d.attempt ?? null))
       .catch((e) => console.log("intake-result error:", e))
       .finally(() => {

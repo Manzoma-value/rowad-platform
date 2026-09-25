@@ -567,6 +567,7 @@ model SchoolAdminMember {
   profile    Profile  @relation(fields: [profile_id], references: [id], onDelete: Cascade)
 
   @@unique([school_id, profile_id])
+  @@index([profile_id])
   @@map("school_admins")
 }
 
@@ -1179,6 +1180,8 @@ model Assessment {
   questions  AssessmentQuestion[]
   school     School?              @relation(fields: [school_id], references: [id], onDelete: Cascade)
 
+  @@index([type, is_active])
+  @@index([school_id, type])
   @@map("assessments")
 }
 
@@ -1194,6 +1197,7 @@ model AssessmentQuestion {
   options        AssessmentOption[]
   assessment     Assessment         @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
 
+  @@index([assessment_id, order])
   @@map("assessment_questions")
 }
 
@@ -1205,6 +1209,7 @@ model AssessmentOption {
   created_at  DateTime           @default(now())
   question    AssessmentQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
+  @@index([question_id, order])
   @@map("assessment_options")
 }
 
@@ -1228,6 +1233,8 @@ model AssessmentAttempt {
   reviewer           Profile?               @relation("AssessmentReviewedBy", fields: [reviewer_id], references: [id])
   student            Student                @relation(fields: [student_id], references: [id], onDelete: Cascade)
 
+  @@index([assessment_id, review_status])
+  @@index([student_id, submitted_at(sort: Desc)])
   @@map("assessment_attempts")
 }
 
@@ -1241,6 +1248,7 @@ model AssessmentAnswer {
   attempt     AssessmentAttempt  @relation(fields: [attempt_id], references: [id], onDelete: Cascade)
   question    AssessmentQuestion @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
+  @@index([attempt_id])
   @@map("assessment_answers")
 }
 

@@ -11,11 +11,11 @@ export async function GET() {
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   if (auth.teacher.onboarding_status === "ACTIVE") {
-    await prisma.$transaction((tx) => ensureTeacherPersonalClass(tx, {
+    await ensureTeacherPersonalClass(prisma, {
       teacherId: auth.teacher.id,
       schoolId: auth.teacher.school_id,
       fullName: auth.profile.full_name,
-    }));
+    });
   }
 
   const teacher = await prisma.teacher.findUnique({
@@ -24,7 +24,7 @@ export async function GET() {
       id: true,
       school_id: true,
       onboarding_status: true,
-      profile: { select: { id: true, full_name: true } },
+      profile: { select: { id: true, full_name: true, avatar_url: true } },
       school: {
         select: {
           id: true, name: true, name_alt: true,

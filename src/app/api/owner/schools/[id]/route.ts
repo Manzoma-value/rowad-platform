@@ -1,22 +1,10 @@
 // api/owner/schools/[id]/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
 import { resolveFeatures } from "@/lib/features";
+import { requireOwner } from "@/lib/owner-auth";
 
 export const revalidate = 60;
-
-async function requireOwner() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const profile = await prisma.profile.findUnique({
-    where: { id: user.id },
-    select: { id: true, role: true },
-  });
-  if (!profile || profile.role !== "OWNER") return null;
-  return profile;
-}
 
 export async function GET(
   _req: Request,

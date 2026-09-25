@@ -207,7 +207,10 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
   }, [pathname, tenantLoading, hasFeature, router]);
 
   useEffect(() => {
-    cachedFetch<any>("/api/student", 60_000)
+    // The dashboard needs the roster-rich payload; every other route only
+    // needs the small shell identity/status response.
+    const bootstrapEndpoint = pathname === "/student" ? "/api/student" : "/api/student/me";
+    cachedFetch<any>(bootstrapEndpoint, 60_000)
       .then((data) => {
         if (data.error === "school_deactivated" && data.school?.slug) {
           window.location.href = `/schools/${data.school.slug}`;
@@ -221,6 +224,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
             data.profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join(""),
           );
         }
+        if (data?.profile?.avatar_url) setAvatarUrl(data.profile.avatar_url);
         if (data?.school?.name) setSchoolName(data.school.name);
         setSchoolNameAlt(data?.school?.name_alt ?? null);
         if (data?.school?.slug) {
@@ -267,9 +271,6 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
       })
       .catch(() => router.push("/login"));
 
-    cachedFetch<{ profile?: { avatar_url?: string } }>("/api/profile", 600_000)
-      .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
-      .catch(() => {});
   }, [pathname, router, setLang]);
 
   async function handleLogout() {

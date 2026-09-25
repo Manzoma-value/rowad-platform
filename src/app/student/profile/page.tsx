@@ -22,6 +22,7 @@ import StudentSupportCircle from "@/components/StudentSupportCircle";
 import IdentityMandala from "@/components/IdentityMandala";
 import MandalaLoader from "@/components/MandalaLoader";
 import type { StudentSupportCircle as StudentSupportCircleValue } from "@/lib/student-support";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 type Lang = "ar" | "sq";
 type ProfileData = {
@@ -124,14 +125,12 @@ export default function StudentProfilePage() {
   useEffect(() => {
     let active = true;
     Promise.all([
-      fetch("/api/profile", { cache: "no-store" }),
-      fetch("/api/student/support-circle", { cache: "no-store" }),
-    ]).then(async ([profileResponse, circleResponse]) => {
-      if (!profileResponse.ok) throw new Error();
-      const [profilePayload, circlePayload] = await Promise.all([
-        profileResponse.json(),
-        circleResponse.ok ? circleResponse.json() : Promise.resolve({}),
-      ]);
+      cachedFetch<{ profile?: ProfileData; email?: string }>("/api/profile", 600_000),
+      fetch("/api/student/support-circle", { cache: "no-store" }).then(
+        async (response): Promise<{ support_circle?: StudentSupportCircleValue }> =>
+          response.ok ? response.json() : {},
+      ),
+    ]).then(([profilePayload, circlePayload]) => {
       if (!active) return;
       setProfile(profilePayload.profile ? { ...profilePayload.profile, email: profilePayload.email } : null);
       setSupportCircle(circlePayload.support_circle ?? EMPTY_CIRCLE);
@@ -169,6 +168,7 @@ export default function StudentProfilePage() {
         body: JSON.stringify({ avatar_url: data.publicUrl, avatar_path: path }),
       });
       if (!response.ok) throw new Error();
+      invalidateCache("/api/profile");
       setProfile((current) => current ? { ...current, avatar_url: data.publicUrl, avatar_path: path } : current);
       showToast(t.toastOk, true);
     } catch {
@@ -184,6 +184,7 @@ export default function StudentProfilePage() {
     try {
       const response = await fetch("/api/profile", { method: "DELETE" });
       if (!response.ok) throw new Error();
+      invalidateCache("/api/profile");
       setProfile((current) => current ? { ...current, avatar_url: null, avatar_path: null } : current);
       showToast(t.toastRemove, true);
     } catch {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { profileSchoolId } from "@/lib/hub-auth";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +9,7 @@ export async function GET(
   _req: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const callerSchoolId = await profileSchoolId(user.id);

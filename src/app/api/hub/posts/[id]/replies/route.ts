@@ -1,11 +1,11 @@
 // src/app/api/hub/posts/[id]/replies/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
 import { profileSchoolId } from "@/lib/hub-auth";
 import { hubImageExtension, validateHubImage } from "@/lib/hub-image";
 import { notifyProfiles, schoolProfileIds } from "@/lib/notifications";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 function adminSupabase() {
   return createSupabaseAdmin(
@@ -30,8 +30,7 @@ export async function GET(
   _req: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: postId } = await context.params;
@@ -63,8 +62,7 @@ export async function POST(
   req: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: postId } = await context.params;

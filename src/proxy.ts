@@ -130,7 +130,17 @@ export async function proxy(request: NextRequest) {
     },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // Verified claims avoid a remote Auth request on every page and API call.
+  // Supabase still refreshes expiring tokens and safely falls back to the
+  // Auth server for projects using legacy symmetric signing keys.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  const user = typeof claims?.sub === "string"
+    ? {
+        id: claims.sub,
+        email: typeof claims.email === "string" ? claims.email : undefined,
+      }
+    : null;
 
   // The investor/demo host is a closed environment. Authentication on any
   // other Rowad tenant does not grant access here, even when the browser has

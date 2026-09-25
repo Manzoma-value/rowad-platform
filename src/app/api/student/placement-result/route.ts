@@ -6,12 +6,11 @@
 // The file used to contain the announcements code by mistake (copy/paste),
 // which caused the welcome page to silently never show the score.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await prisma.student.findUnique({

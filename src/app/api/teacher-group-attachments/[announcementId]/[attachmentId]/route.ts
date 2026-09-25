@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { googleDriveAccessToken } from "@/lib/google-drive";
 import {
   parseStoredTeacherGroupAttachments,
   TEACHER_GROUP_ATTACHMENT_BUCKET,
 } from "@/lib/teacher-group-attachments";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -17,8 +17,7 @@ function adminSupabase() {
 }
 
 async function accessibleAnnouncement(announcementId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return null;
   const [profile, announcement] = await Promise.all([
     prisma.profile.findUnique({ where: { id: user.id }, select: { role: true, is_active: true } }),

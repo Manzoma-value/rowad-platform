@@ -10,6 +10,7 @@ import IdentityStar from "@/components/IdentityStar";
 import IdentityMandala from "@/components/IdentityMandala";
 import { useViewOnly } from "@/lib/view-only-context";
 import { NotificationFeed } from "@/components/NotificationCenter";
+import { cachedFetch, invalidateCache } from "@/lib/api-cache";
 
 interface Stats {
   school: { name: string; name_alt?: string | null };
@@ -47,11 +48,7 @@ export default function SchoolAdminDashboard() {
 
   const [retryTick, setRetryTick] = useState(0);
   useEffect(() => {
-    fetch("/api/school-admin/stats", { cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) throw new Error("Failed to load dashboard stats");
-        return response.json() as Promise<Stats>;
-      })
+    cachedFetch<Stats>("/api/school-admin/stats", 60_000)
       .then((d) => {
         if (d?.school) setStats(d);
         else setError(true);
@@ -63,6 +60,7 @@ export default function SchoolAdminDashboard() {
   function retry() {
     setError(false);
     setLoading(true);
+    invalidateCache("/api/school-admin/stats");
     setRetryTick((n) => n + 1);
   }
 

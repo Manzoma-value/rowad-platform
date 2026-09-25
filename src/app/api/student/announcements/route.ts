@@ -4,14 +4,13 @@
 // must be authenticated AND the classId must equal their assigned class.
 // Without this guard, anyone could enumerate announcements across schools.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export const revalidate = 30;
 
 export async function GET(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);

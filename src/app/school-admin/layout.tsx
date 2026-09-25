@@ -293,24 +293,20 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
   }, [pathname, router, viewOnly]);
 
   useEffect(() => {
-    // All three layout fetches in parallel + cached so navigation is instant.
-    // /me — 10 min TTL (activation rarely changes in a session)
+    // Layout fetches run in parallel + cached so navigation is instant.
+    // Activation is enforced by the proxy/auth helper; view-only metadata is
+    // included in /stats so we do not make a second, duplicate auth request.
     // /stats — 60s TTL (the dashboard sometimes refreshes counts)
-    // /profile — 10 min TTL (avatar doesn't change between page views)
-    cachedFetch<{ status?: string; is_view_only?: boolean }>("/api/school-admin/me", 60_000)
-      .then((d) => {
-        if (d?.status === "deactivated" || d?.status === "expired") setDeactivated(true);
-        if (d?.is_view_only) setViewOnly(true);
-      })
-      .catch(() => {});
-
     cachedFetch<any>("/api/school-admin/stats", 60_000)
       .then((d) => {
         if (d?.error === "school_deactivated" && d?.school?.slug) {
+          setDeactivated(true);
           window.location.href = `/schools/${d.school.slug}`;
           return;
         }
         if (d?.school) {
+          if (d?.is_view_only) setViewOnly(true);
+          if (d?.avatar_url) setAvatarUrl(d.avatar_url);
           setSchoolName(d.school.name ?? "");
           setSchoolNameAlt(d.school.name_alt ?? null);
           if (d.school?.slug) {
@@ -335,9 +331,6 @@ function SchoolAdminLayoutInner({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {});
 
-    cachedFetch<{ profile?: { avatar_url?: string } }>("/api/profile", 600_000)
-      .then((d) => { if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url); })
-      .catch(() => {});
   }, []);
 
   // ── Defence-in-depth: when this is a view-only session, monkey-patch

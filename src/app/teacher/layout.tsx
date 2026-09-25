@@ -234,7 +234,12 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
   const schoolSlugRef = useRef<string>("");
 
   useEffect(() => {
-    cachedFetch<any>("/api/teacher", 300_000)
+    // Avoid downloading every class roster just to render the shell on
+    // lessons, reports, roadmap, profile, and workshop pages.
+    const bootstrapEndpoint = window.location.pathname === "/teacher"
+      ? "/api/teacher"
+      : "/api/teacher/me";
+    cachedFetch<any>(bootstrapEndpoint, 300_000)
       .then((d) => {
         if (d?.error === "school_deactivated" && d?.school?.slug) {
           window.location.href = `/schools/${d.school.slug}`;
@@ -256,6 +261,7 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
               .join(""),
           );
         }
+        if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url);
         if (d?.school?.language) {
           // Use the school's secondary language as the alternate option.
           // If the school IS Arabic, default the secondary to Albanian.
@@ -268,12 +274,6 @@ function TeacherLayoutInner({ children }: Readonly<{ children: React.ReactNode }
       .catch(() => {})
       .finally(() => setStatusLoaded(true));
 
-    // Cache profile — avatar doesn't change between page navigations.
-    cachedFetch<{ profile?: { id?: string; avatar_url?: string } }>("/api/profile", 600_000)
-      .then((d) => {
-        if (d?.profile?.avatar_url) setAvatarUrl(d.profile.avatar_url);
-      })
-      .catch(() => {});
   }, []);
 
   async function handleLogout() {

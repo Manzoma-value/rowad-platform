@@ -1,11 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
 import { isSchoolIdAllowedForCurrentRequest } from "@/lib/school-context";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 /** Active teacher/student identity used by the shared Rowad games. */
 export async function requireActivePlayer() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return null;
 
   const profile = await prisma.profile.findUnique({

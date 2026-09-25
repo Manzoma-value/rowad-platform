@@ -1,10 +1,10 @@
 // The permanent QR identifies the workshop. The server resolves the current
 // calendar day on every scan and records at most one check-in per teacher/day.
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { isWorkshopWorkDay, workshopDateKey, workshopDayDate } from "@/lib/workshops";
 import { isSchoolSlugAllowedOnHost } from "@/lib/tenant-host";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +30,7 @@ export async function POST(req: Request, context: { params: Promise<{ code: stri
   const { code } = await context.params;
   if (!code) return NextResponse.json({ error: "no_code" }, { status: 400 });
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "not_signed_in" }, { status: 401 });
 
   const profile = await prisma.profile.findUnique({

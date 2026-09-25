@@ -1,7 +1,7 @@
 // api/student/intake/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "../../../../lib/supabase/server";
 import { prisma } from "../../../../lib/prisma";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 async function getStudent(userId: string) {
   return prisma.student.findUnique({ where: { profile_id: userId } });
@@ -9,8 +9,7 @@ async function getStudent(userId: string) {
 
 // GET — fetch the active platform intake assessment
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await getStudent(user.id);
@@ -40,8 +39,7 @@ export async function GET() {
 
 // POST — submit answers
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const student = await getStudent(user.id);

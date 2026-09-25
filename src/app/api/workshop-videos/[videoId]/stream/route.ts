@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
 import { googleDriveAccessToken } from "@/lib/google-drive";
+import { getVerifiedUser } from "@/lib/auth/verified-user";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 300;
 
 async function accessibleDriveVideo(videoId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getVerifiedUser();
   if (!user) return null;
 
   const video = await prisma.workshopVideo.findUnique({
